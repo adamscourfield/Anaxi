@@ -86,7 +86,7 @@ export function SignalTileGroup({
             {option.guidance && (
               <p
                 className={`mt-1.5 text-[0.8125rem] leading-relaxed ${
-                  isSelected ? "text-on-tertiary-container/70" : "text-muted"
+                  isSelected ? "text-tertiary-fixed" : "text-muted"
                 }`}
               >
                 {option.guidance}
