@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClickableRow } from "@/components/ui/clickable-row";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -337,10 +338,10 @@ export default async function SignalsPage({
                   const colors = getPriorityColor(priority);
                   const barWidth = maxDriftRate > 0 ? (row.driftRate / maxDriftRate) * 100 : 0;
                   return (
-                    <tr
+                    <ClickableRow
                       key={row.signalKey}
+                      href={`/analysis/cpd/${encodeURIComponent(row.signalKey)}`}
                       className={`group table-row calm-transition cursor-pointer border-l-[3px] ${colors.border}`}
-                      onClick={() => window.location.href = `/analysis/cpd/${encodeURIComponent(row.signalKey)}`}
                     >
                       <td className="py-3.5 pl-4 pr-3 font-medium text-text">
                         <Link
@@ -384,7 +385,7 @@ export default async function SignalsPage({
                       <td className="px-3 py-3.5 text-right tabular-nums font-semibold text-[var(--success)]">
                         {pct(row.improvingRate)}
                       </td>
-                    </tr>
+                    </ClickableRow>
                   );
                 })}
               </tbody>
