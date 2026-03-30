@@ -154,7 +154,7 @@ export default async function AssessmentsPage() {
                     {cycle.points.map((point) => (
                       <Link
                         key={point.id}
-                        href={`/assessments/${cycle.id}/${point.id}/upload`}
+                        href={`/assessments/upload/${cycle.id}/${point.id}`}
                         className="flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-2 text-sm transition-colors hover:border-accent/30 hover:bg-surface"
                       >
                         <span className="font-medium text-text">{point.label}</span>

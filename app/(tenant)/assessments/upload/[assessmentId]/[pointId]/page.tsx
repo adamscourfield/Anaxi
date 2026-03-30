@@ -25,7 +25,7 @@ const GRADE_FORMAT_LABELS: Record<GradeFormat, string> = {
 };
 
 export default function AssessmentUploadPage() {
-  const { pointId } = useParams<{ cycleId: string; pointId: string }>();
+  const { pointId } = useParams<{ assessmentId: string; pointId: string }>();
   const router = useRouter();
 
   const [step, setStep] = useState<Step>("define");
