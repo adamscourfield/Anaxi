@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { createAssessmentCycle } from "@/modules/assessments/import";
 
 export async function GET() {
   const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "ASSESSMENTS");
 
   const cycles = await prisma.assessmentCycle.findMany({
     where: { tenantId: user.tenantId },
@@ -22,6 +24,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "ASSESSMENTS");
   const body = await req.json();
 
   const { label, startDate, endDate } = body;

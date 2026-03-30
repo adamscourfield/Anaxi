@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import {
   computeThresholdMetric,
@@ -25,6 +26,7 @@ import type { MetricRule, AggregationDimension } from "@/modules/assessments/met
  */
 export async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "ASSESSMENTS");
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");
 

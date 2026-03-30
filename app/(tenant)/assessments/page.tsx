@@ -1,4 +1,5 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import Link from "next/link";
 
 export default async function AssessmentsPage() {
   const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "ASSESSMENTS");
 
   const cycles = await prisma.assessmentCycle.findMany({
     where: { tenantId: user.tenantId },
@@ -48,6 +50,12 @@ export default async function AssessmentsPage() {
         />
         <div className="flex gap-2">
           <Link
+            href="/assessments/upload-bulk"
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text hover:bg-surface"
+          >
+            Upload CSV
+          </Link>
+          <Link
             href="/assessments/adhoc"
             className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text hover:bg-surface"
           >
@@ -63,7 +71,16 @@ export default async function AssessmentsPage() {
       </div>
 
       {/* Quick-access feature links */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Link
+          href="/assessments/key-measures"
+          className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-accent/30 hover:bg-surface"
+        >
+          <span className="text-sm font-semibold text-text">Key Measures</span>
+          <span className="text-xs text-muted">
+            GCSE Basics, A-Level thresholds, PP &amp; SEND gap analysis
+          </span>
+        </Link>
         <Link
           href="/assessments/dashboard"
           className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-accent/30 hover:bg-surface"
@@ -170,6 +187,12 @@ export default async function AssessmentsPage() {
           </div>
 
           <div className="flex gap-3 flex-wrap">
+            <Link
+              href="/assessments/key-measures"
+              className="rounded-lg border border-border px-4 py-2 text-sm text-text hover:bg-surface"
+            >
+              Key Measures →
+            </Link>
             <Link
               href="/assessments/dashboard"
               className="rounded-lg border border-border px-4 py-2 text-sm text-text hover:bg-surface"

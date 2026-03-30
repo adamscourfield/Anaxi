@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { createAssessment } from "@/modules/assessments/import";
 import type { GradeFormat } from "@prisma/client";
 
 export async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "ASSESSMENTS");
   const { searchParams } = new URL(req.url);
   const pointId = searchParams.get("pointId");
   const subject = searchParams.get("subject");
@@ -30,6 +32,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "ASSESSMENTS");
   const body = await req.json();
 
   const { pointId, subject, yearGroup, title, gradeFormat, maxScore } = body;
