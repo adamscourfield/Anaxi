@@ -180,16 +180,12 @@ export default async function AssessmentDashboardPage({
 
       {/* Cycle selector */}
       {cycles.length > 1 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="segmented-toggle">
           {cycles.map((c) => (
             <Link
               key={c.id}
               href={`/assessments/dashboard?cycleId=${c.id}`}
-              className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
-                c.id === selectedCycle.id
-                  ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                  : "border-[var(--outline-variant)] text-[var(--on-surface-muted)] hover:border-[var(--accent)]/40"
-              }`}
+              className={`segmented-toggle-btn ${c.id === selectedCycle.id ? "segmented-toggle-btn-active" : ""}`}
             >
               {c.label}
               {c.isActive && (

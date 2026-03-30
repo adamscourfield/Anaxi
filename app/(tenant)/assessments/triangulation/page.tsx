@@ -91,10 +91,10 @@ export default async function TriangulationPage({
         <span className="text-sm text-muted">Filter:</span>
 
         {/* Year group */}
-        <div className="flex flex-wrap gap-1">
+        <div className="segmented-toggle">
           <Link
             href={`/assessments/triangulation?window=${windowDays}&threshold=${threshold}`}
-            className={`rounded-lg border px-3 py-1 text-xs font-medium ${!yearFilter ? "border-accent bg-accent/10 text-accent" : "border-border text-muted hover:border-accent/40"}`}
+            className={`segmented-toggle-btn ${!yearFilter ? "segmented-toggle-btn-active" : ""}`}
           >
             All years
           </Link>
@@ -102,7 +102,7 @@ export default async function TriangulationPage({
             <Link
               key={yg}
               href={`/assessments/triangulation?window=${windowDays}&threshold=${threshold}&yearGroup=${encodeURIComponent(yg!)}`}
-              className={`rounded-lg border px-3 py-1 text-xs font-medium ${yearFilter === yg ? "border-accent bg-accent/10 text-accent" : "border-border text-muted hover:border-accent/40"}`}
+              className={`segmented-toggle-btn ${yearFilter === yg ? "segmented-toggle-btn-active" : ""}`}
             >
               {yg}
             </Link>
@@ -110,12 +110,12 @@ export default async function TriangulationPage({
         </div>
 
         {/* Band */}
-        <div className="flex gap-1">
+        <div className="segmented-toggle">
           {["URGENT", "PRIORITY"].map((band) => (
             <Link
               key={band}
               href={`/assessments/triangulation?window=${windowDays}&threshold=${threshold}${yearFilter ? `&yearGroup=${encodeURIComponent(yearFilter)}` : ""}&band=${band}`}
-              className={`rounded-lg border px-3 py-1 text-xs font-medium ${bandFilter === band ? "border-accent bg-accent/10 text-accent" : "border-border text-muted hover:border-accent/40"}`}
+              className={`segmented-toggle-btn ${bandFilter === band ? "segmented-toggle-btn-active" : ""}`}
             >
               {BAND_LABELS[band]}
             </Link>

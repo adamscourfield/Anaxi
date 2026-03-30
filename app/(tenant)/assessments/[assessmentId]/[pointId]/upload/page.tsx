@@ -25,7 +25,11 @@ const GRADE_FORMAT_LABELS: Record<GradeFormat, string> = {
 };
 
 export default function AssessmentUploadPage() {
+<<<<<<<< HEAD:app/(tenant)/assessments/[id]/[pointId]/upload/page.tsx
   const { pointId } = useParams<{ id: string; pointId: string }>();
+========
+  const { pointId } = useParams<{ assessmentId: string; pointId: string }>();
+>>>>>>>> origin/main:app/(tenant)/assessments/[assessmentId]/[pointId]/upload/page.tsx
   const router = useRouter();
 
   const [step, setStep] = useState<Step>("define");
