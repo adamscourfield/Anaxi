@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClickableRow } from "@/components/ui/clickable-row";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -592,10 +593,10 @@ export default async function ExplorerTeachersPage({
                     {pagedRiskRows.map((row) => {
                       const drift = formatDrift(row.normalizedIDS);
                       return (
-                        <tr
+                        <ClickableRow
                           key={row.teacherMembershipId}
+                          href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
                           className="group table-row calm-transition cursor-pointer"
-                          onClick={() => window.location.href = `/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
                         >
                           <td className="whitespace-nowrap px-5 py-4">
                             <Link
@@ -659,7 +660,7 @@ export default async function ExplorerTeachersPage({
                                 })
                               : "—"}
                           </td>
-                        </tr>
+                        </ClickableRow>
                       );
                     })}
                   </tbody>

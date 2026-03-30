@@ -61,7 +61,10 @@ export async function decideLoaRequest(formData: FormData) {
   if (!canManage) throw new Error("FORBIDDEN");
   if (request.status !== "PENDING") throw new Error("ALREADY_DECIDED");
 
-  const status = decisionType === "DENIED" ? "DENIED" : "APPROVED";
+  const VALID_DECISIONS = ["APPROVED_WITH_PAY", "APPROVED_WITHOUT_PAY", "DENIED"] as const;
+  type Decision = (typeof VALID_DECISIONS)[number];
+  if (!VALID_DECISIONS.includes(decisionType as Decision)) throw new Error("INVALID_DECISION");
+  const status = decisionType as Decision;
 
   const auditComment = decisionNotes
     ? `[Decision ${status} by ${user.fullName} on ${new Date().toLocaleString("en-GB")}] ${decisionNotes}`
