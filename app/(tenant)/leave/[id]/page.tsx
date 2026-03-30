@@ -34,6 +34,24 @@ const STATUS_STYLES: Record<string, { badge: string; icon: React.ReactNode; labe
       </svg>
     ),
   },
+  APPROVED_WITH_PAY: {
+    badge: "border-status-approved-border bg-status-approved-bg text-status-approved-text",
+    label: "Approved with pay",
+    icon: (
+      <svg className="h-4 w-4 text-scale-strong-bar" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    ),
+  },
+  APPROVED_WITHOUT_PAY: {
+    badge: "border-scale-some-border bg-scale-some-bg text-scale-some-text",
+    label: "Approved without pay",
+    icon: (
+      <svg className="h-4 w-4 text-scale-some-bar" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    ),
+  },
   APPROVED: {
     badge: "border-status-approved-border bg-status-approved-bg text-status-approved-text",
     label: "Approved",
@@ -168,37 +186,30 @@ export default async function LeaveDetailPage({ params, searchParams }: { params
             <input type="hidden" name="requestId" value={request.id} />
 
             {/* Decision buttons */}
-            <div className="grid grid-cols-2 gap-3">
-              {(["APPROVED", "DENIED"] as const).map((val) => (
-                <label
-                  key={val}
-                  className={`flex cursor-pointer items-center gap-2.5 rounded-xl border p-3.5 calm-transition has-[:checked]:ring-1 ${
-                    val === "APPROVED"
-                      ? "border-status-approved-border bg-status-approved-bg/60 has-[:checked]:border-status-approved has-[:checked]:ring-status-approved-border/50"
-                      : "border-error/20 bg-error-container/30 has-[:checked]:border-error has-[:checked]:ring-error/20"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="decisionType"
-                    value={val}
-                    defaultChecked={val === "APPROVED"}
-                    className="sr-only"
-                  />
-                  {val === "APPROVED" ? (
-                    <svg className="h-4 w-4 text-scale-strong-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  ) : (
-                    <svg className="h-4 w-4 text-scale-limited-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  )}
-                  <span className={`text-[0.875rem] font-semibold ${val === "APPROVED" ? "text-scale-strong-text" : "text-scale-limited-text"}`}>
-                    {val === "APPROVED" ? "Approve" : "Deny"}
-                  </span>
-                </label>
-              ))}
+            <div className="grid grid-cols-3 gap-3">
+              <label className="flex cursor-pointer flex-col gap-1.5 rounded-xl border border-status-approved-border bg-status-approved-bg/60 p-3.5 calm-transition has-[:checked]:ring-1 has-[:checked]:border-status-approved has-[:checked]:ring-status-approved-border/50">
+                <input type="radio" name="decisionType" value="APPROVED_WITH_PAY" defaultChecked className="sr-only" />
+                <svg className="h-4 w-4 text-scale-strong-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span className="text-[0.8125rem] font-semibold leading-tight text-scale-strong-text">Approve with pay</span>
+              </label>
+
+              <label className="flex cursor-pointer flex-col gap-1.5 rounded-xl border border-scale-some-border bg-scale-some-bg/60 p-3.5 calm-transition has-[:checked]:ring-1 has-[:checked]:border-scale-some-bar has-[:checked]:ring-scale-some-border/50">
+                <input type="radio" name="decisionType" value="APPROVED_WITHOUT_PAY" className="sr-only" />
+                <svg className="h-4 w-4 text-scale-some-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span className="text-[0.8125rem] font-semibold leading-tight text-scale-some-text">Approve without pay</span>
+              </label>
+
+              <label className="flex cursor-pointer flex-col gap-1.5 rounded-xl border border-error/20 bg-error-container/30 p-3.5 calm-transition has-[:checked]:ring-1 has-[:checked]:border-error has-[:checked]:ring-error/20">
+                <input type="radio" name="decisionType" value="DENIED" className="sr-only" />
+                <svg className="h-4 w-4 text-scale-limited-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+                <span className="text-[0.8125rem] font-semibold leading-tight text-scale-limited-text">Deny</span>
+              </label>
             </div>
 
             {/* Notes */}
