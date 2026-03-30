@@ -50,9 +50,7 @@ export default async function AssessmentsPage() {
       points: {
         orderBy: { ordinal: "asc" },
         include: {
-          assessments: {
-            select: { subject: true, entryCount: true, matchedStudentCount: true },
-          },
+          assessments: true,
         },
       },
     },
