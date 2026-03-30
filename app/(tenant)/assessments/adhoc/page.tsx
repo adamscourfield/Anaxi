@@ -256,7 +256,7 @@ export default function AdhocPage() {
             </div>
           )}
           <div className="flex gap-3">
-            <Button onClick={() => assessmentId && router.push(`/assessments/${assessmentId}/results`)}>
+            <Button onClick={() => assessmentId && router.push(`/assessments/results/${assessmentId}`)}>
               View results
             </Button>
             <Button variant="ghost" onClick={() => router.push("/assessments")}>
