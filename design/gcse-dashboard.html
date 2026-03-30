@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Year 11 GCSE Mock Dashboard</title>
+<style>
+:root{
+  --navy:#1e3a5f;--blue:#2563eb;--teal:#0d9488;--bg:#f5f7fb;--surface:#fff;
+  --border:#eaecf2;--text:#111827;--text2:#4b5563;--muted:#9ca3af;
+  --g9:#0f7950;--g8:#059669;--g7:#16a34a;--g6:#2563eb;--g5:#7c3aed;
+  --g4:#d97706;--g3:#ea580c;--g2:#dc2626;--g1:#b91c1c;--gu:#7f1d1d;
+  --pp:#6d28d9;--send:#0369a1;
+  --improved:#059669;--declined:#dc2626;--same:#9ca3af;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 8px rgba(0,0,0,.04);
+  --shadow-lg:0 8px 28px rgba(0,0,0,.10);
+  --r:14px;--r-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+
+.header{background:linear-gradient(130deg,#1e3a5f 0%,#26517f 100%);color:#fff;padding:22px 36px;display:flex;align-items:center;justify-content:space-between;}
+.header h1{font-size:21px;font-weight:700;letter-spacing:-.3px;}
+.header p{font-size:12.5px;opacity:.6;margin-top:3px;}
+.header-badges{display:flex;gap:10px;}
+.hbadge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:9px 16px;text-align:center;font-size:11.5px;min-width:64px;}
+.hbadge strong{display:block;font-size:18px;font-weight:700;line-height:1.2;}
+
+.nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 36px;gap:2px;}
+.nav-btn{padding:14px 18px;border:none;background:none;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--muted);border-bottom:2.5px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;letter-spacing:-.1px;}
+.nav-btn:hover{color:var(--blue);}
+.nav-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+.content{padding:26px 36px;max-width:1400px;margin:0 auto;}
+.page{display:none;}.page.active{display:block;}
+
+/* Cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:16px;margin-bottom:22px;}
+.card{background:var(--surface);border-radius:var(--r);padding:22px 22px;box-shadow:var(--shadow);}
+.card-label{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:8px;font-weight:600;}
+.card-value{font-size:32px;font-weight:700;line-height:1;letter-spacing:-1px;}
+.card-sub{font-size:12px;color:var(--text2);margin-top:7px;}
+.green{color:var(--improved);}.blue{color:var(--blue);}.navy{color:var(--navy);}
+.purple{color:var(--pp);}.teal{color:var(--send);}
+
+/* Basics row */
+.basics-row{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:22px;}
+.basics-card{background:var(--surface);border-radius:var(--r);padding:22px;box-shadow:var(--shadow);}
+.basics-card h3{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:14px;letter-spacing:-.1px;}
+.basics-threshold{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.bt-label{font-size:12px;font-weight:700;width:24px;text-align:center;padding:3px 4px;border-radius:6px;color:#fff;}
+.bt-label.t7{background:var(--g7);}
+.bt-label.t5{background:var(--g5);}
+.bt-label.t4{background:var(--g4);}
+.bt-bars{flex:1;display:flex;flex-direction:column;gap:4px;}
+.bt-bar{height:13px;border-radius:4px;min-width:2px;}
+.bt-pcts{font-size:11px;color:var(--muted);white-space:nowrap;width:82px;text-align:right;}
+.bt-change{font-size:11.5px;font-weight:700;width:46px;text-align:right;}
+
+/* Overview grid */
+.ov-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+@media(max-width:800px){.ov-row{grid-template-columns:1fr;}}
+.chart-card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:22px;}
+.chart-card h3{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:16px;letter-spacing:-.1px;}
+.chart-sub{font-size:11.5px;color:var(--muted);margin-bottom:10px;}
+
+/* Heatmap */
+.heatmap{overflow-x:auto;}
+.heatmap table{border-collapse:collapse;font-size:12px;width:100%;}
+.heatmap th{padding:6px 9px;text-align:center;font-weight:700;font-size:10px;color:var(--muted);white-space:nowrap;}
+.heatmap th:first-child{text-align:left;}
+.heatmap td{padding:5px 9px;text-align:center;border-radius:5px;font-weight:700;}
+.heatmap td:first-child{text-align:left;font-weight:600;background:none!important;font-size:12px;}
+.cell-pct{font-size:12px;}
+
+/* Grade bands (heatmap) */
+.band-9{background:#ccfbf1;color:#0f4e46;}
+.band-8{background:#a7f3d0;color:#064e3b;}
+.band-7{background:#6ee7b7;color:#065f46;}
+.band-6{background:#bfdbfe;color:#1e3a8a;}
+.band-5{background:#e9d5ff;color:#4c1d95;}
+.band-4{background:#fde68a;color:#78350f;}
+.band-3{background:#fed7aa;color:#7c2d12;}
+.band-2{background:#fca5a5;color:#7f1d1d;}
+.band-1{background:#f87171;color:#fff;}
+.band-u{background:#dc2626;color:#fff;}
+.band-na{background:#f9fafb;color:#d1d5db;font-size:10px;}
+
+/* Toolbar */
+.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.search-wrap{position:relative;flex:1;min-width:180px;}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.35;}
+.search{width:100%;padding:10px 13px 10px 36px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13.5px;outline:none;background:var(--surface);color:var(--text);transition:border-color .15s,box-shadow .15s;}
+.search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+select.filter{padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13.5px;background:var(--surface);color:var(--text);outline:none;cursor:pointer;transition:border-color .15s;}
+select.filter:focus{border-color:var(--blue);}
+
+/* Student table */
+.table-wrap{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;overflow-x:auto;}
+table.main{width:100%;border-collapse:collapse;min-width:900px;}
+table.main thead tr{background:#f9fafb;}
+table.main th{padding:12px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.main td{padding:10px 14px;border-bottom:1px solid #f3f4f6;vertical-align:middle;font-size:12.5px;}
+table.main tr:last-child td{border-bottom:none;}
+table.main tr:hover td{background:#eff6ff;}
+.sname{font-weight:600;color:var(--navy);cursor:pointer;}
+.sname:hover{color:var(--blue);text-decoration:underline;}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;margin-right:3px;}
+.badge-pp{background:#ede9fe;color:#5b21b6;}
+.badge-send{background:#e0f2fe;color:#0369a1;}
+.badge-girl{background:#fce7f3;color:#9d174d;}
+.badge-boy{background:#eff6ff;color:#1d4ed8;}
+
+/* Grade pill */
+.gp{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;padding:0 5px;border-radius:6px;font-weight:700;font-size:12px;color:#fff;}
+.gp-9{background:var(--g9);}.gp-8{background:var(--g8);}.gp-7{background:var(--g7);}
+.gp-6{background:var(--g6);}.gp-5{background:var(--g5);}.gp-4{background:var(--g4);}
+.gp-3{background:var(--g3);}.gp-2{background:var(--g2);}.gp-1{background:var(--g1);}
+.gp-u{background:var(--gu);}.gp-x{background:#e5e7eb;color:#9ca3af;font-size:10px;}
+.gp-a{background:#d1d5db;color:#374151;}
+
+/* Change arrows */
+.chg{display:inline-flex;align-items:center;gap:3px;font-weight:700;font-size:11px;padding:3px 8px;border-radius:20px;}
+.chg-up{background:#dcfce7;color:#16a34a;}
+.chg-dn{background:#fee2e2;color:#dc2626;}
+.chg-eq{background:#f3f4f6;color:var(--muted);}
+.chg-na{background:#f3f4f6;color:#d1d5db;font-size:10px;}
+
+/* Subject cards */
+.subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;}
+.subj-card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.subj-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.subj-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.subj-title h3{font-size:14px;font-weight:700;color:var(--navy);}
+.subj-title span{font-size:11px;color:var(--muted);}
+.threshold-bars{margin-bottom:10px;}
+.th-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.th-label{font-size:11px;font-weight:700;width:26px;color:var(--text);}
+.th-track{flex:1;background:#f3f4f6;border-radius:5px;overflow:hidden;}
+.th-inner{display:flex;gap:0;}
+.th-bar{height:16px;transition:width .4s;}
+.th-vals{font-size:10px;color:var(--muted);width:90px;text-align:right;}
+.subj-dist{display:flex;gap:3px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.dist-col{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;}
+.dist-bar-wrap{height:40px;display:flex;align-items:flex-end;width:100%;}
+.dist-bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;}
+.dist-label{font-size:9px;color:var(--muted);font-weight:700;}
+.dist-count{font-size:9px;color:var(--muted);}
+.subj-legend{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
+.sleg{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text2);}
+.sleg-dot{width:10px;height:10px;border-radius:3px;}
+
+/* Behaviour cards */
+.beh-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
+.beh-card{background:var(--surface);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);text-align:center;}
+.beh-card .val{font-size:28px;font-weight:700;line-height:1;margin:5px 0;letter-spacing:-1px;}
+.beh-card .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600;}
+.beh-card .sub{font-size:10.5px;color:var(--text2);margin-top:4px;}
+
+/* Scatter */
+.scatter-wrap{position:relative;width:100%;}
+svg.scatter{width:100%;border-radius:10px;background:#fafbff;}
+.dot{cursor:pointer;transition:r .1s;}
+.dot:hover{r:7;}
+.scatter-tooltip{position:fixed;background:#1e3a5f;color:#fff;padding:9px 13px;border-radius:10px;font-size:12px;pointer-events:none;display:none;z-index:999;line-height:1.7;max-width:220px;box-shadow:var(--shadow-lg);}
+
+/* Behaviour table */
+.beh-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.beh-tbl th{padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;}
+.beh-tbl th:hover{color:var(--blue);}
+.beh-tbl th.sort-active{color:var(--blue);}
+.beh-tbl td{padding:9px 12px;border-bottom:1px solid #f3f4f6;}
+.beh-tbl tr:last-child td{border-bottom:none;}
+.beh-tbl tr:hover td{background:#f9fafb;}
+.sort-arrow{display:inline-block;margin-left:4px;opacity:.3;font-size:10px;}
+.sort-active .sort-arrow{opacity:1;}
+table.main th{cursor:pointer;user-select:none;}
+table.main th:hover{color:var(--blue);}
+table.main th.sort-active{color:var(--blue);}
+table.main th:last-child{cursor:default;}
+table.main th:last-child:hover{color:var(--muted);}
+.att-bar{height:8px;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:6px;}
+
+/* Groups */
+.groups-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:700px){.groups-grid{grid-template-columns:1fr;}}
+.group-card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;}
+.group-card h3{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--navy);}
+.group-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.group-label{font-size:12px;font-weight:600;width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.group-bars{flex:1;display:flex;flex-direction:column;gap:4px;}
+.group-bar-wrap{display:flex;align-items:center;gap:6px;}
+.group-bar{height:12px;border-radius:4px;min-width:2px;}
+.group-pct{font-size:10px;color:var(--muted);width:35px;}
+.gap-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.gap-pos{background:#fee2e2;color:#dc2626;}
+.gap-neg{background:#dcfce7;color:#16a34a;}
+.gap-neu{background:#f3f4f6;color:var(--muted);}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:18px;width:92%;max-width:700px;max-height:85vh;overflow-y:auto;padding:28px;box-shadow:var(--shadow-lg);}
+.modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:12px;}
+.modal-close{background:#f3f4f6;border:none;font-size:16px;cursor:pointer;color:var(--text2);padding:7px 10px;border-radius:8px;line-height:1;}
+.modal-close:hover{background:#e5e7eb;color:var(--text);}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:500px){.modal-grid{grid-template-columns:1fr;}}
+.modal-section{background:#f9fafb;border-radius:10px;padding:16px;}
+.modal-section h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px;}
+.modal-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.modal-tbl td{padding:6px 9px;border-bottom:1px solid #f3f4f6;}
+.modal-tbl tr:last-child td{border-bottom:none;}
+.modal-tbl td:last-child{text-align:right;}
+.beh-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12.5px;}
+.beh-item:last-child{border-bottom:none;}
+
+.no-results{text-align:center;color:var(--muted);padding:48px;font-size:14px;}
+.hidden{display:none!important;}
+.bar-legend{display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+.bl-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);}
+.bl-dot{width:12px;height:8px;border-radius:3px;}
+
+/* Priority page */
+.priority-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px;}
+.priority-card{background:var(--surface);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);border-left:4px solid #e2e8f0;}
+.priority-card .pc-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.priority-card .pc-val{font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1;}
+.priority-card .pc-sub{font-size:11.5px;color:var(--text2);margin-top:5px;}
+.priority-card.red{border-color:#dc2626;}.priority-card.red .pc-val{color:#dc2626;}
+.priority-card.amber{border-color:#d97706;}.priority-card.amber .pc-val{color:#d97706;}
+.priority-card.purple{border-color:#6d28d9;}.priority-card.purple .pc-val{color:#6d28d9;}
+.priority-card.tealc{border-color:#0369a1;}.priority-card.tealc .pc-val{color:#0369a1;}
+.status-badge{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.status-both{background:#fee2e2;color:#991b1b;}
+.status-eng{background:#fff7ed;color:#9a3412;}
+.status-maths{background:#fff7ed;color:#92400e;}
+.status-ok{background:#f0fdf4;color:#166534;}
+.pri-section-hdr{font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--border);}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>Year 11 GCSE Mock Exam Dashboard</h1>
+    <p>Mock 1 vs Mock 2 — Grades, Progress &amp; Behaviour</p>
+  </div>
+  <div class="header-badges">
+    <div class="hbadge"><strong id="hdr-total">110</strong>Students</div>
+    <div class="hbadge"><strong id="hdr-pp" style="color:#d4a0ff;">41</strong>PP</div>
+    <div class="hbadge"><strong id="hdr-send" style="color:#a0e0ff;">8</strong>SEND</div>
+    <div class="hbadge"><strong id="hdr-em4" style="color:#7ee8bc;">—</strong>E&amp;M 4+</div>
+    <div class="hbadge"><strong id="hdr-em5" style="color:#7dc6f5;">—</strong>E&amp;M 5+</div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('overview')">Overview</button>
+  <button class="nav-btn" onclick="showPage('students')">Students</button>
+  <button class="nav-btn" onclick="showPage('subjects')">Subjects</button>
+  <button class="nav-btn" onclick="showPage('behaviour')">Behaviour</button>
+  <button class="nav-btn" onclick="showPage('groups')">Groups</button>
+  <button class="nav-btn" onclick="showPage('priority')" style="color:#dc2626;font-weight:700;">⚠ Below Floor</button>
+</nav>
+
+<!-- OVERVIEW -->
+<div id="page-overview" class="page active content">
+  <div class="cards" id="ov-cards"></div>
+  <h3 style="font-size:15px;color:var(--navy);margin-bottom:12px;font-weight:700;">📊 English &amp; Maths — Key Thresholds (Mock 1 → Mock 2)</h3>
+  <div class="basics-row" id="basics-row"></div>
+  <div class="ov-row">
+    <div class="chart-card">
+      <h3>Grade Distribution — All Subjects</h3>
+      <div class="bar-legend">
+        <div class="bl-item"><div class="bl-dot" style="background:var(--navy)"></div>Mock 1</div>
+        <div class="bl-item"><div class="bl-dot" style="background:var(--blue)"></div>Mock 2</div>
+      </div>
+      <div id="all-dist"></div>
+    </div>
+    <div class="chart-card">
+      <h3>Both E&amp;M Combined — Key Thresholds (Mock 1 → Mock 2)</h3>
+      <div id="em-combined"></div>
+    </div>
+  </div>
+  <div class="ov-row">
+    <div class="chart-card">
+      <h3>Subject 4+ Rates — Mock 1 vs Mock 2</h3>
+      <div id="subj-4plus"></div>
+    </div>
+    <div class="chart-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3 id="top-imp-title" style="margin:0;">Top 10 Improvers (avg grade change)</h3>
+        <button id="top-imp-toggle" onclick="toggleImp()" style="font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-weight:600;white-space:nowrap;">Show Worst ▼</button>
+      </div>
+      <div id="top-imp"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENTS -->
+<div id="page-students" class="page content">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search" id="st-search" placeholder="Search students…" oninput="filterSt()">
+    </div>
+    <select class="filter" id="st-pp" onchange="filterSt()">
+      <option value="">All Students</option>
+      <option value="pp">PP Only</option>
+      <option value="nonpp">Non-PP Only</option>
+    </select>
+    <select class="filter" id="st-send" onchange="filterSt()">
+      <option value="">All SEND</option>
+      <option value="send">SEND Only</option>
+      <option value="nonsend">Non-SEND Only</option>
+    </select>
+    <select class="filter" id="st-gender" onchange="filterSt()">
+      <option value="">All Genders</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table class="main">
+      <thead><tr id="st-thead">
+        <th onclick="stSortBy('name')">Student <span class="sort-arrow">↕</span></th>
+        <th>Flags</th>
+        <th onclick="stSortBy('maths')">Maths M2 <span class="sort-arrow">↕</span></th>
+        <th onclick="stSortBy('eng')">Eng Best M2 <span class="sort-arrow">↕</span></th>
+        <th onclick="stSortBy('sci')">Science M2 <span class="sort-arrow">↕</span></th>
+        <th onclick="stSortBy('chg')">Avg Change <span class="sort-arrow">↕</span></th>
+        <th onclick="stSortBy('att')">Attendance <span class="sort-arrow">↕</span></th>
+        <th onclick="stSortBy('dta')">DTAs <span class="sort-arrow">↕</span></th>
+        <th onclick="stSortBy('rer')">Reroutings <span class="sort-arrow">↕</span></th>
+        <th onclick="stSortBy('nav')">Nav <span class="sort-arrow">↕</span></th>
+        <th>Detail</th>
+      </tr></thead>
+      <tbody id="st-tbody"></tbody>
+    </table>
+    <div class="no-results hidden" id="st-no">No students match your filters.</div>
+  </div>
+</div>
+
+<!-- SUBJECTS -->
+<div id="page-subjects" class="page content">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search" id="subj-search" placeholder="Search subjects…" oninput="filterSubj()">
+    </div>
+  </div>
+  <div class="subj-grid" id="subj-grid"></div>
+</div>
+
+<!-- BEHAVIOUR -->
+<div id="page-behaviour" class="page content">
+  <div class="beh-cards" id="beh-cards"></div>
+  <div class="ov-row">
+    <div class="chart-card">
+      <h3>Attendance vs Average Grade (Mock 2)</h3>
+      <p class="chart-sub">Each dot = one student. Hover for detail. Colour = PP status.</p>
+      <div class="scatter-wrap">
+        <svg class="scatter" id="scatter-svg" viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
+        <div class="bl-item"><div class="bl-dot" style="background:#2c7be5;border-radius:50%;width:10px;height:10px;"></div>Non-PP</div>
+        <div class="bl-item"><div class="bl-dot" style="background:#9b59b6;border-radius:50%;width:10px;height:10px;"></div>PP</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Behaviour by Group</h3>
+      <div id="beh-by-group"></div>
+    </div>
+  </div>
+  <div class="chart-card" style="margin-bottom:16px;">
+    <h3>Student Behaviour Ranking</h3>
+    <p class="chart-sub" style="margin-bottom:10px;">Click any column header to sort. Colour-coded DTAs = positive engagement.</p>
+    <div class="toolbar" style="margin-bottom:12px;">
+      <div class="search-wrap" style="min-width:160px;flex:1;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search" id="beh-search" placeholder="Search students…" oninput="filterBeh()">
+      </div>
+      <select class="filter" id="beh-pp" onchange="filterBeh()">
+        <option value="">All Students</option>
+        <option value="pp">PP Only</option>
+        <option value="nonpp">Non-PP Only</option>
+      </select>
+      <select class="filter" id="beh-send" onchange="filterBeh()">
+        <option value="">All SEND</option>
+        <option value="send">SEND Only</option>
+        <option value="nonsend">Non-SEND Only</option>
+      </select>
+      <select class="filter" id="beh-att" onchange="filterBeh()">
+        <option value="">All Attendance</option>
+        <option value="below90">Below 90%</option>
+        <option value="90to95">90–95%</option>
+        <option value="above95">Above 95%</option>
+      </select>
+    </div>
+    <div style="overflow-x:auto;"><table class="beh-tbl" id="beh-table"></table></div>
+    <div class="no-results hidden" id="beh-no" style="text-align:center;color:var(--muted);padding:28px;font-size:13px;">No students match your filters.</div>
+  </div>
+</div>
+
+<!-- PRIORITY / BELOW FLOOR -->
+<div id="page-priority" class="page content">
+  <div class="priority-cards" id="pri-cards"></div>
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search" id="pri-search" placeholder="Search students…" oninput="buildPriorityTable()">
+    </div>
+    <select class="filter" id="pri-filter" onchange="buildPriorityTable()">
+      <option value="both">Below 4 in Both E&amp;M</option>
+      <option value="eng">Below 4 in English (any)</option>
+      <option value="maths">Below 4 in Maths (any)</option>
+      <option value="any">Any Below 4 in E or M</option>
+    </select>
+    <select class="filter" id="pri-mock" onchange="buildPriorityTable()">
+      <option value="m2">Mock 2 grades</option>
+      <option value="m1">Mock 1 grades</option>
+    </select>
+    <select class="filter" id="pri-pp" onchange="buildPriorityTable()">
+      <option value="">All Students</option>
+      <option value="pp">PP Only</option>
+      <option value="nonpp">Non-PP Only</option>
+    </select>
+    <select class="filter" id="pri-send" onchange="buildPriorityTable()">
+      <option value="">All SEND</option>
+      <option value="send">SEND Only</option>
+      <option value="nonsend">Non-SEND Only</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table class="main" style="min-width:700px;">
+      <thead><tr>
+        <th>Student</th>
+        <th>Flags</th>
+        <th>English Best (M1 → M2)</th>
+        <th>Maths (M1 → M2)</th>
+        <th>Status</th>
+        <th>Avg Change</th>
+      </tr></thead>
+      <tbody id="pri-tbody"></tbody>
+    </table>
+    <div class="no-results hidden" id="pri-no">No students match your filters.</div>
+  </div>
+</div>
+
+<!-- GROUPS -->
+<div id="page-groups" class="page content">
+  <div style="display:grid;gap:16px;">
+    <div class="chart-card">
+      <h3>PP vs Non-PP — Key Threshold Comparison (Mock 2)</h3>
+      <p class="chart-sub">Gap shown as PP minus Non-PP percentage points. Negative = PP students below Non-PP.</p>
+      <div id="pp-grid"></div>
+    </div>
+    <div class="chart-card">
+      <h3>SEND vs Non-SEND — Key Threshold Comparison (Mock 2)</h3>
+      <p class="chart-sub">Gap shown as SEND minus Non-SEND percentage points.</p>
+      <div id="send-grid"></div>
+    </div>
+    <div class="groups-grid">
+      <div class="group-card">
+        <h3 style="color:var(--pp);">👥 PP Group — English &amp; Maths Progress</h3>
+        <div id="pp-em"></div>
+      </div>
+      <div class="group-card">
+        <h3 style="color:var(--send);">📋 SEND Group — English &amp; Maths Progress</h3>
+        <div id="send-em"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scatter Tooltip -->
+<div class="scatter-tooltip" id="scatter-tt"></div>
+
+<!-- Subject Modal -->
+<div class="modal-bg" id="subj-modal-bg" onclick="closeSubjModal(event)">
+  <div class="modal" style="max-width:800px;">
+    <div class="modal-header">
+      <div>
+        <h2 id="subj-modal-name" style="color:var(--navy);font-size:16px;"></h2>
+        <p id="subj-modal-stats" style="font-size:12px;margin-top:4px;"></p>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('subj-modal-bg').classList.remove('open')">✕</button>
+    </div>
+    <div class="table-wrap" style="max-height:50vh;overflow-y:auto;">
+      <table class="main" style="min-width:100%;">
+        <thead style="position:sticky;top:0;background:#f9fafb;z-index:1;"><tr>
+          <th>Student</th>
+          <th>Flags</th>
+          <th style="text-align:center;">Mock 1</th>
+          <th style="text-align:center;">Mock 2</th>
+          <th style="text-align:center;">Avg Other Subj (M2)</th>
+          <th style="text-align:center;">Detail</th>
+        </tr></thead>
+        <tbody id="subj-modal-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h2 id="modal-name" style="color:var(--navy);font-size:16px;"></h2>
+        <p id="modal-flags" style="font-size:12px;margin-top:4px;"></p>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('modal-bg').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-grid">
+      <div class="modal-section">
+        <h4>Grades</h4>
+        <table class="modal-tbl" id="modal-grades"></table>
+      </div>
+      <div class="modal-section">
+        <h4>Behaviour Data</h4>
+        <div id="modal-beh"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STUDENTS = [{"name":"Victor Abiola","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":8.0,"m2":9},"English Lang":{"m1":7.0,"m2":6},"English Lit":{"m1":8.0,"m2":7},"English Best":{"m1":8.0,"m2":7},"Biology":{"m1":8.0,"m2":9},"Chemistry":{"m1":9.0,"m2":9},"Physics":{"m1":8.0,"m2":9},"Avg Science":{"m1":8.3,"m2":9},"History":{"m1":7.0,"m2":8},"French":{"m1":6.0,"m2":null},"Statistics":{"m1":7.0,"m2":8}},"behaviour":{"Attendance":100.0,"Lateness":0.0,"Reroutings":2,"Navigation":0,"DTAs":201}},{"name":"Rishi Bassan","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":8},"English Lang":{"m1":7.0,"m2":9},"English Lit":{"m1":7.0,"m2":8},"English Best":{"m1":7.0,"m2":9},"Biology":{"m1":6.0,"m2":6},"Chemistry":{"m1":8.0,"m2":8},"Physics":{"m1":8.0,"m2":9},"Avg Science":{"m1":7.3,"m2":8},"History":{"m1":7.0,"m2":7},"French":{"m1":8.0,"m2":null},"Statistics":{"m1":7.0,"m2":8}},"behaviour":{"Attendance":100.0,"Lateness":0.0,"Reroutings":0,"Navigation":0,"DTAs":277}},{"name":"David Damian","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":5.0,"m2":6},"English Lang":{"m1":5.0,"m2":7},"English Lit":{"m1":7.0,"m2":7},"English Best":{"m1":7.0,"m2":7},"Science Combined":{"m1":4.0,"m2":5.5},"Avg Science":{"m1":4.0,"m2":6},"History":{"m1":7.0,"m2":6},"French":{"m1":5.0,"m2":null},"RE":{"m1":3.0,"m2":4},"Sociology":{"m1":6.0,"m2":6}},"behaviour":{"Attendance":95.8,"Lateness":2.2,"Reroutings":21,"Navigation":7,"DTAs":168}},{"name":"Jessica Jacobs","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":3.0,"m2":4},"English Lang":{"m1":3.0,"m2":6},"English Lit":{"m1":3.0,"m2":5},"English Best":{"m1":3.0,"m2":6},"Science Combined":{"m1":3.5,"m2":3.5},"Avg Science":{"m1":3.5,"m2":4},"Geography":{"m1":3.0,"m2":5},"RE":{"m1":"U","m2":3},"Sociology":{"m1":6.0,"m2":3}},"behaviour":{"Attendance":86.6,"Lateness":23.2,"Reroutings":3,"Navigation":3,"DTAs":192}},{"name":"Alistair Johnson","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":5.0,"m2":6},"English Lang":{"m1":7.0,"m2":8},"English Lit":{"m1":5.0,"m2":8},"English Best":{"m1":7.0,"m2":8},"Biology":{"m1":6.0,"m2":6},"Chemistry":{"m1":6.0,"m2":6},"Physics":{"m1":8.0,"m2":7},"Avg Science":{"m1":6.7,"m2":6},"Geography":{"m1":8.0,"m2":7},"French":{"m1":7.0,"m2":null},"Sociology":{"m1":5.0,"m2":6}},"behaviour":{"Attendance":97.5,"Lateness":0.86,"Reroutings":5,"Navigation":0,"DTAs":162}},{"name":"Jonathan Kosoko","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":3.0,"m2":3},"English Lang":{"m1":3.0,"m2":4},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":4.0,"m2":6},"Science Combined":{"m1":3.0,"m2":4},"Avg Science":{"m1":3.0,"m2":"U"},"History":{"m1":3.0,"m2":3},"French":{"m1":3.0,"m2":null},"RE":{"m1":3.0,"m2":3},"Sociology":{"m1":4.0,"m2":3}},"behaviour":{"Attendance":100.0,"Lateness":3.3,"Reroutings":159,"Navigation":12,"DTAs":123}},{"name":"Tajus Kuzmenkovas","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":7.0,"m2":8},"English Lang":{"m1":6.0,"m2":8},"English Lit":{"m1":6.0,"m2":7},"English Best":{"m1":6.0,"m2":8},"Biology":{"m1":6.0,"m2":6},"Chemistry":{"m1":8.0,"m2":7},"Physics":{"m1":9.0,"m2":7},"Avg Science":{"m1":7.7,"m2":7},"Geography":{"m1":7.0,"m2":7},"French":{"m1":7.0,"m2":null},"Statistics":{"m1":7.0,"m2":9}},"behaviour":{"Attendance":98.3,"Lateness":0.0,"Reroutings":5,"Navigation":0,"DTAs":168}},{"name":"Josaiah-Rose Lebaga-Idubor","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":2},"English Lang":{"m1":4.0,"m2":5},"English Lit":{"m1":4.0,"m2":5},"English Best":{"m1":4.0,"m2":5},"Science Combined":{"m1":4.5,"m2":4},"Avg Science":{"m1":4.5,"m2":4},"Geography":{"m1":5.0,"m2":5},"French":{"m1":3.0,"m2":null},"Sociology":{"m1":5.0,"m2":1}},"behaviour":{"Attendance":94.6,"Lateness":10.6,"Reroutings":79,"Navigation":2,"DTAs":169}},{"name":"Kaydee Lewis","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":7.0,"m2":9},"English Lang":{"m1":7.0,"m2":8},"English Lit":{"m1":6.0,"m2":7},"English Best":{"m1":7.0,"m2":8},"Biology":{"m1":8.0,"m2":9},"Chemistry":{"m1":7.0,"m2":7},"Physics":{"m1":9.0,"m2":8},"Avg Science":{"m1":8.0,"m2":8},"Geography":{"m1":9.0,"m2":8},"French":{"m1":7.0,"m2":null},"Graphics":{"m1":7.0,"m2":6}},"behaviour":{"Attendance":95.0,"Lateness":0.44,"Reroutings":3,"Navigation":0,"DTAs":151}},{"name":"Brooke Poole","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":6.0,"m2":7},"English Lang":{"m1":7.0,"m2":9},"English Lit":{"m1":6.0,"m2":8},"English Best":{"m1":7.0,"m2":9},"Science Combined":{"m1":4.5,"m2":5},"Avg Science":{"m1":4.5,"m2":5},"Geography":{"m1":7.0,"m2":7},"French":{"m1":7.0,"m2":null},"Drama":{"m1":6.0,"m2":9},"Graphics":{"m1":7.0,"m2":6}},"behaviour":{"Attendance":100.0,"Lateness":0.84,"Reroutings":15,"Navigation":0,"DTAs":245}},{"name":"Domas Smirinenka","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":5},"English Lang":{"m1":4.0,"m2":7},"English Lit":{"m1":4.0,"m2":4},"English Best":{"m1":4.0,"m2":7},"Science Combined":{"m1":4.0,"m2":4},"Avg Science":{"m1":4.0,"m2":4},"History":{"m1":3.0,"m2":3},"French":{"m1":5.0,"m2":null},"PE":{"m1":2.0,"m2":6},"Statistics":{"m1":4.0,"m2":5}},"behaviour":{"Attendance":98.3,"Lateness":2.6,"Reroutings":15,"Navigation":0,"DTAs":152}},{"name":"Kajus Virketis","pp":false,"send":true,"gender":"Male","subjects":{"Maths":{"m1":3.0,"m2":4},"English Lang":{"m1":5.0,"m2":6},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":5.0,"m2":6},"Science Combined":{"m1":3.5,"m2":3.5},"Avg Science":{"m1":3.5,"m2":4},"History":{"m1":4.0,"m2":3},"French":{"m1":4.0,"m2":null},"Drama":{"m1":3.0,"m2":2},"Graphics":{"m1":4.0,"m2":3}},"behaviour":{"Attendance":97.5,"Lateness":2.1,"Reroutings":46,"Navigation":10,"DTAs":144}},{"name":"Brishna Yaqub","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":3},"English Lang":{"m1":3.0,"m2":3},"English Lit":{"m1":3.0,"m2":3},"English Best":{"m1":3.0,"m2":3},"Science Combined":{"m1":2.0,"m2":2.5},"Avg Science":{"m1":2.0,"m2":3},"Geography":{"m1":3.0,"m2":4},"Art":{"m1":4.0,"m2":4},"Statistics":{"m1":"U","m2":4}},"behaviour":{"Attendance":95.0,"Lateness":39.6,"Reroutings":193,"Navigation":18,"DTAs":185}},{"name":"Connor Jordan","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":4},"English Lang":{"m1":3.0,"m2":6},"English Lit":{"m1":2.0,"m2":4},"English Best":{"m1":3.0,"m2":6},"Science Combined":{"m1":4.0,"m2":4},"Avg Science":{"m1":4.0,"m2":4},"History":{"m1":1.0,"m2":1},"French":{"m1":4.0,"m2":null},"Statistics":{"m1":"Absent","m2":5},"Sociology":{"m1":"Absent","m2":1}},"behaviour":{"Attendance":81.2,"Lateness":13.4,"Reroutings":77,"Navigation":31,"DTAs":125}},{"name":"Arnas Vaicekauskas","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":5},"English Lang":{"m1":3.0,"m2":3},"English Lit":{"m1":4.0,"m2":4},"English Best":{"m1":4.0,"m2":4},"Science Combined":{"m1":4.0,"m2":5.4},"Avg Science":{"m1":4.0,"m2":0},"Geography":{"m1":4.0,"m2":3},"French":{"m1":3.0,"m2":null},"Graphics":{"m1":4.0,"m2":3}},"behaviour":{"Attendance":96.2,"Lateness":0.43,"Reroutings":33,"Navigation":4,"DTAs":64}},{"name":"Sophie Young","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":5.0,"m2":7},"English Lang":{"m1":6.0,"m2":7},"English Lit":{"m1":5.0,"m2":8},"English Best":{"m1":6.0,"m2":8},"Biology":{"m1":6.0,"m2":6},"Chemistry":{"m1":6.0,"m2":5},"Physics":{"m1":5.0,"m2":6},"Avg Science":{"m1":5.7,"m2":6},"History":{"m1":6.0,"m2":6},"French":{"m1":6.0,"m2":null},"Sociology":{"m1":7.0,"m2":6}},"behaviour":{"Attendance":97.9,"Lateness":1.7,"Reroutings":21,"Navigation":0,"DTAs":151}},{"name":"Ruby-Lee Seaton","pp":false,"send":true,"gender":"Female","subjects":{"Maths":{"m1":3.0,"m2":4},"English Lang":{"m1":2.0,"m2":3},"English Lit":{"m1":3.0,"m2":3},"English Best":{"m1":3.0,"m2":3},"Science Combined":{"m1":2.5,"m2":2.5},"Avg Science":{"m1":2.5,"m2":3},"Geography":{"m1":1.0,"m2":2},"Graphics":{"m1":5.0,"m2":4}},"behaviour":{"Attendance":96.2,"Lateness":1.3,"Reroutings":22,"Navigation":0,"DTAs":130}},{"name":"Iyanu Awolaja","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":7.0,"m2":8},"English Lang":{"m1":8.0,"m2":8},"English Lit":{"m1":9.0,"m2":8},"English Best":{"m1":9.0,"m2":8},"Science Combined":{"m1":8.5,"m2":8.5},"Avg Science":{"m1":8.5,"m2":9},"Geography":{"m1":8.0,"m2":8},"French":{"m1":5.0,"m2":null},"Graphics":{"m1":5.0,"m2":5},"Statistics":{"m1":7.0,"m2":8}},"behaviour":{"Attendance":100.0,"Lateness":0.42,"Reroutings":64,"Navigation":0,"DTAs":154}},{"name":"Grace Dina","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":4.0,"m2":4},"English Lit":{"m1":3.0,"m2":6},"English Best":{"m1":4.0,"m2":6},"Biology":{"m1":6.0,"m2":6},"Chemistry":{"m1":6.0,"m2":6},"Physics":{"m1":6.0,"m2":6},"Avg Science":{"m1":6.0,"m2":6},"History":{"m1":6.0,"m2":4},"French":{"m1":4.0,"m2":null},"PE":{"m1":4.0,"m2":4}},"behaviour":{"Attendance":100.0,"Lateness":1.3,"Reroutings":37,"Navigation":3,"DTAs":129}},{"name":"Jayda Sullivan","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":5.0,"m2":5},"English Lang":{"m1":8.0,"m2":7},"English Lit":{"m1":6.0,"m2":8},"English Best":{"m1":8.0,"m2":8},"Science Combined":{"m1":4.5,"m2":4.5},"Avg Science":{"m1":4.5,"m2":5},"History":{"m1":7.0,"m2":6},"French":{"m1":6.0,"m2":null},"RE":{"m1":5.0,"m2":8},"Drama":{"m1":7.0,"m2":9}},"behaviour":{"Attendance":88.7,"Lateness":15.1,"Reroutings":33,"Navigation":2,"DTAs":187}},{"name":"Michael Apooyin Lawrence","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":4.0,"m2":4},"English Lit":{"m1":5.0,"m2":6},"English Best":{"m1":5.0,"m2":6},"Science Combined":{"m1":6.5,"m2":5},"Avg Science":{"m1":6.5,"m2":5},"History":{"m1":4.0,"m2":4},"French":{"m1":6.0,"m2":null},"PE":{"m1":3.0,"m2":4},"Statistics":{"m1":5.0,"m2":6}},"behaviour":{"Attendance":98.7,"Lateness":3.0,"Reroutings":19,"Navigation":0,"DTAs":115}},{"name":"Alejandro Zambrano Perez","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":8.0,"m2":9},"English Lang":{"m1":8.0,"m2":9},"English Lit":{"m1":7.0,"m2":7},"English Best":{"m1":8.0,"m2":9},"Science Combined":{"m1":9.0,"m2":9},"Avg Science":{"m1":9.0,"m2":9},"Geography":{"m1":9.0,"m2":9},"French":{"m1":9.0,"m2":null},"PE":{"m1":7.0,"m2":9},"Statistics":{"m1":8.0,"m2":9}},"behaviour":{"Attendance":97.5,"Lateness":0.0,"Reroutings":1,"Navigation":0,"DTAs":311}},{"name":"Attila Adekeye","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":7},"English Lang":{"m1":7.0,"m2":7},"English Lit":{"m1":5.0,"m2":6},"English Best":{"m1":7.0,"m2":7},"Biology":{"m1":8.0,"m2":8},"Chemistry":{"m1":"Absent","m2":4},"Physics":{"m1":9.0,"m2":"U"},"Avg Science":{"m1":8.5,"m2":6},"History":{"m1":null,"m2":5},"French":{"m1":7.0,"m2":null},"Music":{"m1":4.0,"m2":6}},"behaviour":{"Attendance":94.1,"Lateness":0.89,"Reroutings":30,"Navigation":2,"DTAs":180}},{"name":"Michele Adu Gyamfi","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":7.0,"m2":8},"English Lang":{"m1":8.0,"m2":9},"English Lit":{"m1":8.0,"m2":8},"English Best":{"m1":8.0,"m2":9},"Biology":{"m1":9.0,"m2":9},"Chemistry":{"m1":8.0,"m2":7},"Physics":{"m1":8.0,"m2":8},"Avg Science":{"m1":8.3,"m2":8},"History":{"m1":7.0,"m2":9},"French":{"m1":7.0,"m2":null},"RE":{"m1":5.0,"m2":9}},"behaviour":{"Attendance":100.0,"Lateness":10.0,"Reroutings":38,"Navigation":0,"DTAs":278}},{"name":"Maya Agoni","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":3},"English Lang":{"m1":5.0,"m2":6},"English Lit":{"m1":5.0,"m2":6},"English Best":{"m1":5.0,"m2":6},"Science Combined":{"m1":4.0,"m2":4},"Avg Science":{"m1":4.0,"m2":4},"Geography":{"m1":5.0,"m2":5},"French":{"m1":6.0,"m2":null},"PE":{"m1":3.0,"m2":5},"Drama":{"m1":4.0,"m2":3}},"behaviour":{"Attendance":97.5,"Lateness":0.86,"Reroutings":26,"Navigation":2,"DTAs":198}},{"name":"Ruth Ajidahun","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":7.0,"m2":6},"English Lit":{"m1":7.0,"m2":6},"English Best":{"m1":7.0,"m2":6},"Biology":{"m1":6.0,"m2":5},"Chemistry":{"m1":6.0,"m2":6},"Physics":{"m1":5.0,"m2":6},"Avg Science":{"m1":5.7,"m2":6},"History":{"m1":7.0,"m2":7},"French":{"m1":7.0,"m2":null},"RE":{"m1":6.0,"m2":7}},"behaviour":{"Attendance":100.0,"Lateness":0.0,"Reroutings":14,"Navigation":0,"DTAs":186}},{"name":"Kirsty Amoah","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":3.0,"m2":3},"English Lang":{"m1":4.0,"m2":6},"English Lit":{"m1":4.0,"m2":5},"English Best":{"m1":4.0,"m2":6},"Science Combined":{"m1":6.0,"m2":6},"Avg Science":{"m1":6.0,"m2":6},"History":{"m1":4.0,"m2":6},"French":{"m1":6.0,"m2":null},"PE":{"m1":3.0,"m2":4},"Sociology":{"m1":5.0,"m2":4}},"behaviour":{"Attendance":100.0,"Lateness":0.42,"Reroutings":9,"Navigation":3,"DTAs":132}},{"name":"Jada Amponsah-Boateng","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":2},"English Lang":{"m1":3.0,"m2":3},"English Lit":{"m1":2.0,"m2":4},"English Best":{"m1":3.0,"m2":4},"Science Combined":{"m1":2.0,"m2":2.5},"Avg Science":{"m1":2.0,"m2":3},"History":{"m1":1.0,"m2":2},"French":{"m1":3.0,"m2":null},"Art":{"m1":4.0,"m2":3},"Sociology":{"m1":3.0,"m2":2}},"behaviour":{"Attendance":99.2,"Lateness":3.8,"Reroutings":206,"Navigation":26,"DTAs":104}},{"name":"Olivia Bedi","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":5.0,"m2":6},"English Lang":{"m1":5.0,"m2":7},"English Lit":{"m1":6.0,"m2":7},"English Best":{"m1":6.0,"m2":7},"Science Combined":{"m1":5.5,"m2":6},"Avg Science":{"m1":5.5,"m2":6},"Geography":{"m1":6.0,"m2":7},"French":{"m1":6.0,"m2":null},"Statistics":{"m1":6.0,"m2":7},"Sociology":{"m1":7.0,"m2":8}},"behaviour":{"Attendance":97.9,"Lateness":0.43,"Reroutings":6,"Navigation":0,"DTAs":100}},{"name":"Nojus Budreckis","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":4},"English Lang":{"m1":2.0,"m2":3},"English Lit":{"m1":2.0,"m2":3},"English Best":{"m1":2.0,"m2":3},"Science Combined":{"m1":5.0,"m2":4.5},"Avg Science":{"m1":5.0,"m2":5},"Geography":{"m1":4.0,"m2":3},"French":{"m1":3.0,"m2":null},"Art":{"m1":4.0,"m2":4},"Sociology":{"m1":2.0,"m2":2}},"behaviour":{"Attendance":93.8,"Lateness":6.2,"Reroutings":107,"Navigation":45,"DTAs":91}},{"name":"Dominic Copot","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":5.0,"m2":4},"English Lit":{"m1":6.0,"m2":5},"English Best":{"m1":6.0,"m2":5},"Biology":{"m1":7.0,"m2":6},"Chemistry":{"m1":6.0,"m2":6},"Physics":{"m1":6.0,"m2":6},"Avg Science":{"m1":6.3,"m2":6},"Geography":{"m1":7.0,"m2":6},"French":{"m1":7.0,"m2":null},"Music":{"m1":6.0,"m2":6}},"behaviour":{"Attendance":94.1,"Lateness":0.44,"Reroutings":34,"Navigation":2,"DTAs":173}},{"name":"Sachin Dohal","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":7.0,"m2":8},"English Lang":{"m1":8.0,"m2":7},"English Lit":{"m1":7.0,"m2":8},"English Best":{"m1":8.0,"m2":8},"Biology":{"m1":8.0,"m2":9},"Chemistry":{"m1":8.0,"m2":7},"Physics":{"m1":7.0,"m2":7},"Avg Science":{"m1":7.7,"m2":8},"Geography":{"m1":8.0,"m2":8},"French":{"m1":6.0,"m2":null},"Statistics":{"m1":8.0,"m2":8}},"behaviour":{"Attendance":99.2,"Lateness":0.84,"Reroutings":0,"Navigation":0,"DTAs":171}},{"name":"Assiatou Fadera","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":6.0,"m2":5},"English Lang":{"m1":9.0,"m2":6},"English Lit":{"m1":8.0,"m2":7},"English Best":{"m1":9.0,"m2":7},"Biology":{"m1":9.0,"m2":9},"Chemistry":{"m1":6.0,"m2":7},"Physics":{"m1":7.0,"m2":8},"Avg Science":{"m1":7.3,"m2":8},"History":{"m1":7.0,"m2":9},"French":{"m1":4.0,"m2":null},"RE":{"m1":9.0,"m2":9}},"behaviour":{"Attendance":99.2,"Lateness":5.5,"Reroutings":16,"Navigation":0,"DTAs":130}},{"name":"Rebekkah Fekadu","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":5.0,"m2":7},"English Lit":{"m1":6.0,"m2":8},"English Best":{"m1":6.0,"m2":8},"Science Combined":{"m1":6.5,"m2":7},"Avg Science":{"m1":6.5,"m2":7},"Geography":{"m1":6.0,"m2":6},"French":{"m1":5.0,"m2":null},"RE":{"m1":5.0,"m2":8},"Statistics":{"m1":6.0,"m2":8}},"behaviour":{"Attendance":95.4,"Lateness":13.6,"Reroutings":132,"Navigation":4,"DTAs":146}},{"name":"Natasha Gadd","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":1.0,"m2":1},"English Lang":{"m1":3.0,"m2":4},"English Lit":{"m1":2.0,"m2":3},"English Best":{"m1":3.0,"m2":4},"Science Combined":{"m1":1.5,"m2":2},"Avg Science":{"m1":1.5,"m2":2},"History":{"m1":2.0,"m2":1},"French":{"m1":2.0,"m2":null},"Sociology":{"m1":4.0,"m2":2}},"behaviour":{"Attendance":92.5,"Lateness":18.6,"Reroutings":119,"Navigation":19,"DTAs":142}},{"name":"Nathan Geberde","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":5.0,"m2":5},"English Lang":{"m1":4.0,"m2":4},"English Lit":{"m1":4.0,"m2":5},"English Best":{"m1":4.0,"m2":5},"Science Combined":{"m1":4.5,"m2":4.5},"Avg Science":{"m1":4.5,"m2":5},"Geography":{"m1":1.0,"m2":"U"},"French":{"m1":3.0,"m2":null},"RE":{"m1":5.0,"m2":3}},"behaviour":{"Attendance":91.7,"Lateness":8.6,"Reroutings":130,"Navigation":47,"DTAs":99}},{"name":"Eliza Gregory-Pierre","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":5.0,"m2":5},"English Lit":{"m1":5.0,"m2":5},"English Best":{"m1":5.0,"m2":5},"Science Combined":{"m1":6.5,"m2":7.5},"Avg Science":{"m1":6.5,"m2":8},"Geography":{"m1":6.0,"m2":6},"French":{"m1":5.0,"m2":null},"Graphics":{"m1":5.0,"m2":5},"Sociology":{"m1":5.0,"m2":5}},"behaviour":{"Attendance":100.0,"Lateness":2.9,"Reroutings":9,"Navigation":0,"DTAs":185}},{"name":"Ben Griffiths","pp":false,"send":true,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":5},"English Lang":{"m1":4.0,"m2":4},"English Lit":{"m1":3.0,"m2":4},"English Best":{"m1":4.0,"m2":4},"Science Combined":{"m1":4.0,"m2":4.5},"Avg Science":{"m1":4.0,"m2":5},"History":{"m1":3.0,"m2":3},"Graphics":{"m1":5.0,"m2":4},"Sociology":{"m1":4.0,"m2":4}},"behaviour":{"Attendance":95.0,"Lateness":0.44,"Reroutings":60,"Navigation":0,"DTAs":159}},{"name":"Alisha Hussain","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":6.0,"m2":7},"English Lang":{"m1":6.0,"m2":9},"English Lit":{"m1":7.0,"m2":7},"English Best":{"m1":7.0,"m2":9},"Science Combined":{"m1":8.5,"m2":8.5},"Avg Science":{"m1":8.5,"m2":9},"History":{"m1":7.0,"m2":5},"French":{"m1":6.0,"m2":null},"RE":{"m1":6.0,"m2":7},"Art":{"m1":7.0,"m2":7}},"behaviour":{"Attendance":100.0,"Lateness":4.2,"Reroutings":31,"Navigation":0,"DTAs":208}},{"name":"Thomas Johnson-Hedaux","pp":false,"send":true,"gender":"Male","subjects":{"Maths":{"m1":1.0,"m2":2},"English Lang":{"m1":2.0,"m2":3},"English Lit":{"m1":3.0,"m2":3},"English Best":{"m1":3.0,"m2":3},"Science Combined":{"m1":"Absent","m2":1.5},"Avg Science":{"m1":"Absent","m2":2},"History":{"m1":2.0,"m2":1},"Graphics":{"m1":5.0,"m2":4}},"behaviour":{"Attendance":89.5,"Lateness":8.4,"Reroutings":42,"Navigation":5,"DTAs":126}},{"name":"William Jose","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":1.0,"m2":2},"English Lang":{"m1":2.0,"m2":3},"English Lit":{"m1":4.0,"m2":5},"English Best":{"m1":4.0,"m2":5},"Science Combined":{"m1":2.0,"m2":2},"Avg Science":{"m1":2.0,"m2":2},"History":{"m1":2.0,"m2":2},"French":{"m1":3.0,"m2":null},"RE":{"m1":1.0,"m2":3},"Statistics":{"m1":3.0,"m2":3}},"behaviour":{"Attendance":96.2,"Lateness":3.5,"Reroutings":149,"Navigation":17,"DTAs":112}},{"name":"Laura Leonte","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":5.0,"m2":7},"English Lang":{"m1":4.0,"m2":8},"English Lit":{"m1":4.0,"m2":7},"English Best":{"m1":4.0,"m2":8},"Science Combined":{"m1":6.5,"m2":6},"Avg Science":{"m1":6.5,"m2":6},"History":{"m1":4.0,"m2":4},"French":{"m1":8.0,"m2":null},"Art":{"m1":8.0,"m2":7},"Statistics":{"m1":5.0,"m2":7}},"behaviour":{"Attendance":98.3,"Lateness":1.3,"Reroutings":1,"Navigation":0,"DTAs":134}},{"name":"Emilian Leonte","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":5.0,"m2":7},"English Lang":{"m1":4.0,"m2":7},"English Lit":{"m1":5.0,"m2":6},"English Best":{"m1":5.0,"m2":7},"Science Combined":{"m1":5.5,"m2":5.5},"Avg Science":{"m1":5.5,"m2":6},"Geography":{"m1":5.0,"m2":5},"French":{"m1":6.0,"m2":null},"Art":{"m1":6.0,"m2":6},"Statistics":{"m1":5.0,"m2":7}},"behaviour":{"Attendance":100.0,"Lateness":0.0,"Reroutings":4,"Navigation":0,"DTAs":118}},{"name":"Pavel Mitev","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":3.0,"m2":4},"English Lang":{"m1":2.0,"m2":4},"English Lit":{"m1":3.0,"m2":5},"English Best":{"m1":3.0,"m2":5},"Science Combined":{"m1":3.0,"m2":3},"Avg Science":{"m1":3.0,"m2":3},"Geography":{"m1":4.0,"m2":5},"French":{"m1":3.0,"m2":null},"RE":{"m1":2.0,"m2":3},"Statistics":{"m1":3.0,"m2":4}},"behaviour":{"Attendance":95.4,"Lateness":1.3,"Reroutings":58,"Navigation":10,"DTAs":148}},{"name":"Desmond Moffa","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":3.0,"m2":5},"English Lit":{"m1":5.0,"m2":6},"English Best":{"m1":5.0,"m2":6},"Science Combined":{"m1":8.0,"m2":6.5},"Avg Science":{"m1":8.0,"m2":7},"History":{"m1":4.0,"m2":4},"French":{"m1":4.0,"m2":null},"PE":{"m1":4.0,"m2":4},"Statistics":{"m1":6.0,"m2":6}},"behaviour":{"Attendance":96.7,"Lateness":8.2,"Reroutings":66,"Navigation":4,"DTAs":95}},{"name":"Maida Mohammad","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":8.0,"m2":9},"English Lang":{"m1":4.0,"m2":5},"English Lit":{"m1":6.0,"m2":6},"English Best":{"m1":6.0,"m2":6},"Biology":{"m1":8.0,"m2":9},"Chemistry":{"m1":8.0,"m2":9},"Physics":{"m1":8.0,"m2":9},"Avg Science":{"m1":8.0,"m2":9},"Geography":{"m1":6.0,"m2":6},"French":{"m1":6.0,"m2":null},"Statistics":{"m1":8.0,"m2":7}},"behaviour":{"Attendance":92.9,"Lateness":0.45,"Reroutings":6,"Navigation":1,"DTAs":126}},{"name":"Jacqueline Sampong","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":2},"English Lang":{"m1":3.0,"m2":3},"English Lit":{"m1":3.0,"m2":4},"English Best":{"m1":3.0,"m2":4},"Science Combined":{"m1":3.0,"m2":3},"Avg Science":{"m1":3.0,"m2":3},"History":{"m1":2.0,"m2":2},"French":{"m1":4.0,"m2":null},"Sociology":{"m1":4.0,"m2":2}},"behaviour":{"Attendance":99.2,"Lateness":16.0,"Reroutings":173,"Navigation":5,"DTAs":140}},{"name":"Imikan Samuel-Imaikop","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":8.0,"m2":7},"English Lang":{"m1":8.0,"m2":7},"English Lit":{"m1":6.0,"m2":8},"English Best":{"m1":8.0,"m2":8},"Science Combined":{"m1":8.5,"m2":7.5},"Avg Science":{"m1":8.5,"m2":8},"History":{"m1":8.0,"m2":7},"French":{"m1":8.0,"m2":null},"Statistics":{"m1":7.0,"m2":8},"Sociology":{"m1":8.0,"m2":9}},"behaviour":{"Attendance":100.0,"Lateness":5.9,"Reroutings":15,"Navigation":0,"DTAs":269}},{"name":"Kai- Lemar Sinclair","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":3.0,"m2":4},"English Lang":{"m1":3.0,"m2":5},"English Lit":{"m1":5.0,"m2":6},"English Best":{"m1":5.0,"m2":6},"Science Combined":{"m1":3.5,"m2":3.5},"Avg Science":{"m1":3.5,"m2":0},"History":{"m1":4.0,"m2":4},"French":{"m1":5.0,"m2":null},"RE":{"m1":3.0,"m2":2},"Sociology":{"m1":4.0,"m2":4}},"behaviour":{"Attendance":91.2,"Lateness":2.3,"Reroutings":73,"Navigation":13,"DTAs":119}},{"name":"Elizabeth Solola","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":3.0,"m2":3},"English Lang":{"m1":4.0,"m2":6},"English Lit":{"m1":6.0,"m2":5},"English Best":{"m1":6.0,"m2":6},"Science Combined":{"m1":5.0,"m2":6},"Avg Science":{"m1":5.0,"m2":6},"Geography":{"m1":6.0,"m2":7},"French":{"m1":6.0,"m2":null},"RE":{"m1":5.0,"m2":6},"Sociology":{"m1":7.0,"m2":6}},"behaviour":{"Attendance":66.9,"Lateness":33.8,"Reroutings":6,"Navigation":0,"DTAs":116}},{"name":"Osezuamen Ukegheson","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":7.0,"m2":7},"English Lang":{"m1":6.0,"m2":7},"English Lit":{"m1":7.0,"m2":5},"English Best":{"m1":7.0,"m2":7},"Biology":{"m1":6.0,"m2":7},"Chemistry":{"m1":7.0,"m2":9},"Physics":{"m1":8.0,"m2":9},"Avg Science":{"m1":7.0,"m2":8},"History":{"m1":8.0,"m2":8},"French":{"m1":9.0,"m2":null},"Music":{"m1":6.0,"m2":7}},"behaviour":{"Attendance":100.0,"Lateness":0.0,"Reroutings":1,"Navigation":0,"DTAs":321}},{"name":"Francesca Vatavu","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":5.0,"m2":5},"English Lang":{"m1":6.0,"m2":5},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":6.0,"m2":6},"Science Combined":{"m1":5.5,"m2":5.5},"Avg Science":{"m1":5.5,"m2":6},"History":{"m1":5.0,"m2":5},"French":{"m1":7.0,"m2":null},"RE":{"m1":5.0,"m2":5}},"behaviour":{"Attendance":97.5,"Lateness":4.3,"Reroutings":71,"Navigation":6,"DTAs":168}},{"name":"Israel Ladipo","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":7},"English Lang":{"m1":3.0,"m2":7},"English Lit":{"m1":5.0,"m2":6},"English Best":{"m1":5.0,"m2":7},"Science Combined":{"m1":6.5,"m2":7},"Avg Science":{"m1":6.5,"m2":7},"Geography":{"m1":6.0,"m2":6},"French":{"m1":6.0,"m2":null},"Graphics":{"m1":5.0,"m2":4},"Statistics":{"m1":6.0,"m2":8}},"behaviour":{"Attendance":99.2,"Lateness":6.3,"Reroutings":86,"Navigation":5,"DTAs":84}},{"name":"Ansaar Ahmed","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":9},"English Lang":{"m1":5.0,"m2":7},"English Lit":{"m1":6.0,"m2":7},"English Best":{"m1":6.0,"m2":7},"Biology":{"m1":6.0,"m2":6},"Chemistry":{"m1":7.0,"m2":6},"Physics":{"m1":7.0,"m2":6},"Avg Science":{"m1":6.7,"m2":6},"Geography":{"m1":5.0,"m2":6},"French":{"m1":5.0,"m2":null},"RE":{"m1":5.0,"m2":8}},"behaviour":{"Attendance":98.7,"Lateness":5.5,"Reroutings":111,"Navigation":2,"DTAs":159}},{"name":"Denzell Ogunsakin","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":3.0,"m2":4},"English Lang":{"m1":4.0,"m2":6},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":4.0,"m2":6},"Science Combined":{"m1":4.0,"m2":4.5},"Avg Science":{"m1":4.0,"m2":5},"History":{"m1":3.0,"m2":4},"French":{"m1":3.0,"m2":null},"Statistics":{"m1":4.0,"m2":5},"Sociology":{"m1":4.0,"m2":6}},"behaviour":{"Attendance":97.1,"Lateness":13.3,"Reroutings":146,"Navigation":17,"DTAs":158}},{"name":"David Olaru","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":4.0,"m2":5},"English Lit":{"m1":5.0,"m2":7},"English Best":{"m1":5.0,"m2":7},"Science Combined":{"m1":5.0,"m2":5},"Avg Science":{"m1":5.0,"m2":5},"History":{"m1":4.0,"m2":5},"French":{"m1":5.0,"m2":null},"Graphics":{"m1":5.0,"m2":5},"Statistics":{"m1":5.0,"m2":7}},"behaviour":{"Attendance":93.7,"Lateness":0.45,"Reroutings":12,"Navigation":4,"DTAs":161}},{"name":"Suha Islam","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":6.0,"m2":7},"English Lit":{"m1":6.0,"m2":7},"English Best":{"m1":6.0,"m2":7},"Biology":{"m1":6.0,"m2":6},"Chemistry":{"m1":7.0,"m2":7},"Physics":{"m1":8.0,"m2":7},"Avg Science":{"m1":7.0,"m2":7},"History":{"m1":6.0,"m2":5},"French":{"m1":6.0,"m2":null},"RE":{"m1":4.0,"m2":6}},"behaviour":{"Attendance":100.0,"Lateness":0.84,"Reroutings":29,"Navigation":1,"DTAs":164}},{"name":"Aminata Jawara Kabba","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":5.0,"m2":5},"English Lang":{"m1":9.0,"m2":9},"English Lit":{"m1":8.0,"m2":8},"English Best":{"m1":9.0,"m2":9},"Science Combined":{"m1":6.5,"m2":6.5},"Avg Science":{"m1":6.5,"m2":7},"History":{"m1":6.0,"m2":5},"French":{"m1":4.0,"m2":null},"RE":{"m1":3.0,"m2":5}},"behaviour":{"Attendance":95.0,"Lateness":10.6,"Reroutings":130,"Navigation":1,"DTAs":232}},{"name":"Sebastine Nnabuikem Achukwu-Jacob","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":4},"English Lang":{"m1":4.0,"m2":5},"English Lit":{"m1":5.0,"m2":5},"English Best":{"m1":5.0,"m2":5},"Science Combined":{"m1":4.0,"m2":4.5},"Avg Science":{"m1":4.0,"m2":5},"Geography":{"m1":3.0,"m2":5},"French":{"m1":5.0,"m2":null},"PE":{"m1":3.0,"m2":5},"Art":{"m1":5.0,"m2":3}},"behaviour":{"Attendance":95.8,"Lateness":29.1,"Reroutings":157,"Navigation":52,"DTAs":52}},{"name":"Muhammad Anas Arslan","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":6.0,"m2":7},"English Lit":{"m1":7.0,"m2":8},"English Best":{"m1":7.0,"m2":8},"Science Combined":{"m1":5.0,"m2":5.5},"Avg Science":{"m1":5.0,"m2":6},"History":{"m1":6.0,"m2":6},"French":{"m1":5.0,"m2":null},"RE":{"m1":4.0,"m2":6},"Statistics":{"m1":7.0,"m2":7}},"behaviour":{"Attendance":99.2,"Lateness":0.42,"Reroutings":18,"Navigation":0,"DTAs":150}},{"name":"David Sorinolu","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":2.0,"m2":3},"English Lang":{"m1":1.0,"m2":2},"English Lit":{"m1":2.0,"m2":3},"English Best":{"m1":2.0,"m2":3},"Science Combined":{"m1":2.5,"m2":2},"Avg Science":{"m1":2.5,"m2":2},"Geography":{"m1":1.0,"m2":null},"Graphics":{"m1":3.0,"m2":3},"Statistics":{"m1":"U","m2":4}},"behaviour":{"Attendance":88.7,"Lateness":3.8,"Reroutings":68,"Navigation":20,"DTAs":121}},{"name":"Ismail Hussain","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":6},"English Lang":{"m1":3.0,"m2":6},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":4.0,"m2":6},"Science Combined":{"m1":6.0,"m2":6},"Avg Science":{"m1":6.0,"m2":6},"History":{"m1":3.0,"m2":5},"Graphics":{"m1":5.0,"m2":5}},"behaviour":{"Attendance":100.0,"Lateness":7.1,"Reroutings":22,"Navigation":0,"DTAs":102}},{"name":"Md Arafat Hossain","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":7},"English Lang":{"m1":4.0,"m2":6},"English Lit":{"m1":6.0,"m2":7},"English Best":{"m1":6.0,"m2":7},"Science Combined":{"m1":5.0,"m2":7.5},"Avg Science":{"m1":5.0,"m2":8},"History":{"m1":6.0,"m2":8},"RE":{"m1":6.0,"m2":7}},"behaviour":{"Attendance":96.7,"Lateness":3.5,"Reroutings":18,"Navigation":0,"DTAs":113}},{"name":"Eniola Orodele","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":7.0,"m2":8},"English Lang":{"m1":8.0,"m2":9},"English Lit":{"m1":7.0,"m2":8},"English Best":{"m1":8.0,"m2":9},"Biology":{"m1":6.0,"m2":7},"Chemistry":{"m1":6.0,"m2":7},"Physics":{"m1":7.0,"m2":7},"Avg Science":{"m1":6.3,"m2":7},"History":{"m1":8.0,"m2":7},"RE":{"m1":7.0,"m2":9}},"behaviour":{"Attendance":98.3,"Lateness":0.85,"Reroutings":6,"Navigation":0,"DTAs":164}},{"name":"Elijah Scott-Hall","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":5.0,"m2":6},"English Lang":{"m1":5.0,"m2":5},"English Lit":{"m1":3.0,"m2":6},"English Best":{"m1":5.0,"m2":6},"Biology":{"m1":6.0,"m2":7},"Chemistry":{"m1":6.0,"m2":5},"Physics":{"m1":7.0,"m2":6},"Avg Science":{"m1":6.3,"m2":6},"History":{"m1":3.0,"m2":3},"RE":{"m1":3.0,"m2":4}},"behaviour":{"Attendance":99.2,"Lateness":14.8,"Reroutings":46,"Navigation":1,"DTAs":95}},{"name":"Matas Montvydas","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":5},"English Lang":{"m1":3.0,"m2":5},"English Lit":{"m1":4.0,"m2":4},"English Best":{"m1":4.0,"m2":5},"Science Combined":{"m1":3.0,"m2":3.5},"Avg Science":{"m1":3.0,"m2":4},"Geography":{"m1":5.0,"m2":4},"Statistics":{"m1":3.0,"m2":5},"Sociology":{"m1":5.0,"m2":4}},"behaviour":{"Attendance":92.9,"Lateness":0.0,"Reroutings":76,"Navigation":17,"DTAs":161}},{"name":"Zahra Sadat","pp":false,"send":false,"gender":"Female","subjects":{"Maths":{"m1":3.0,"m2":4},"English Lang":{"m1":4.0,"m2":6},"English Lit":{"m1":4.0,"m2":5},"English Best":{"m1":4.0,"m2":6},"Science Combined":{"m1":4.0,"m2":5},"Avg Science":{"m1":4.0,"m2":5},"Geography":{"m1":6.0,"m2":6},"RE":{"m1":3.0,"m2":4},"Sociology":{"m1":4.0,"m2":5}},"behaviour":{"Attendance":98.3,"Lateness":1.3,"Reroutings":9,"Navigation":0,"DTAs":224}},{"name":"Moses Bamidele","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":"U","m2":1},"English Lang":{"m1":2.0,"m2":2},"English Lit":{"m1":1.0,"m2":2},"English Best":{"m1":2.0,"m2":2},"Science Combined":{"m1":"U","m2":2.5},"Avg Science":{"m1":"U","m2":0},"History":{"m1":"U","m2":1},"French":{"m1":2.0,"m2":null},"Statistics":{"m1":"U","m2":3}},"behaviour":{"Attendance":99.6,"Lateness":5.5,"Reroutings":46,"Navigation":3,"DTAs":105}},{"name":"Hashim Salim","pp":false,"send":false,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":5},"English Lang":{"m1":5.0,"m2":3},"English Lit":{"m1":4.0,"m2":4},"English Best":{"m1":5.0,"m2":4},"Science Combined":{"m1":3.5,"m2":null},"Avg Science":{"m1":3.5,"m2":null},"Geography":{"m1":5.0,"m2":5},"Statistics":{"m1":4.0,"m2":5},"Sociology":{"m1":7.0,"m2":4}},"behaviour":{"Attendance":99.2,"Lateness":8.9,"Reroutings":91,"Navigation":9,"DTAs":101}},{"name":"Henry Glensman","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":7.0,"m2":8},"English Lang":{"m1":7.0,"m2":9},"English Lit":{"m1":7.0,"m2":8},"English Best":{"m1":7.0,"m2":9},"Biology":{"m1":6.0,"m2":7},"Chemistry":{"m1":8.0,"m2":8},"Physics":{"m1":9.0,"m2":8},"Avg Science":{"m1":7.7,"m2":8},"Geography":{"m1":9.0,"m2":8},"French":{"m1":9.0,"m2":null},"Music":{"m1":8.0,"m2":8}},"behaviour":{"Attendance":98.3,"Lateness":0.43,"Reroutings":0,"Navigation":0,"DTAs":289}},{"name":"Madison Newman","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":5.0,"m2":6},"English Lang":{"m1":6.0,"m2":6},"English Lit":{"m1":6.0,"m2":6},"English Best":{"m1":6.0,"m2":6},"Science Combined":{"m1":6.5,"m2":6.5},"Avg Science":{"m1":6.5,"m2":7},"Geography":{"m1":5.0,"m2":5},"French":{"m1":6.0,"m2":null},"Music":{"m1":5.0,"m2":6},"Art":{"m1":8.0,"m2":8}},"behaviour":{"Attendance":96.2,"Lateness":0.43,"Reroutings":0,"Navigation":1,"DTAs":171}},{"name":"Subhana Mehezabin","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":8.0,"m2":8},"English Lang":{"m1":7.0,"m2":8},"English Lit":{"m1":7.0,"m2":9},"English Best":{"m1":7.0,"m2":9},"Biology":{"m1":9.0,"m2":9},"Chemistry":{"m1":9.0,"m2":9},"Physics":{"m1":9.0,"m2":9},"Avg Science":{"m1":9.0,"m2":9},"History":{"m1":8.0,"m2":7},"French":{"m1":9.0,"m2":null},"Sociology":{"m1":8.0,"m2":8}},"behaviour":{"Attendance":93.7,"Lateness":0.89,"Reroutings":3,"Navigation":0,"DTAs":186}},{"name":"Adrian Twumasi Antwi","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":5.0,"m2":4},"English Lang":{"m1":3.0,"m2":5},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":4.0,"m2":6},"Science Combined":{"m1":6.0,"m2":5},"Avg Science":{"m1":6.0,"m2":5},"History":{"m1":5.0,"m2":5},"French":{"m1":5.0,"m2":null},"Statistics":{"m1":5.0,"m2":5},"Sociology":{"m1":6.0,"m2":6}},"behaviour":{"Attendance":98.7,"Lateness":8.5,"Reroutings":76,"Navigation":9,"DTAs":117}},{"name":"Adama Touray","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":3.0,"m2":7},"English Lit":{"m1":6.0,"m2":7},"English Best":{"m1":6.0,"m2":7},"Biology":{"m1":8.0,"m2":8},"Chemistry":{"m1":6.0,"m2":6},"Physics":{"m1":6.0,"m2":6},"Avg Science":{"m1":6.7,"m2":7},"Geography":{"m1":7.0,"m2":7},"French":{"m1":7.0,"m2":null},"RE":{"m1":7.0,"m2":7}},"behaviour":{"Attendance":100.0,"Lateness":0.84,"Reroutings":8,"Navigation":0,"DTAs":107}},{"name":"Keira Bryant","pp":true,"send":true,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":1},"English Lang":{"m1":3.0,"m2":3},"English Lit":{"m1":4.0,"m2":4},"English Best":{"m1":4.0,"m2":4},"Science Combined":{"m1":2.5,"m2":2.5},"Avg Science":{"m1":2.5,"m2":3},"History":{"m1":2.0,"m2":2},"French":{"m1":3.0,"m2":null},"Music":{"m1":3.0,"m2":3},"Drama":{"m1":3.0,"m2":2}},"behaviour":{"Attendance":96.2,"Lateness":0.0,"Reroutings":6,"Navigation":0,"DTAs":203}},{"name":"Joel Peprah","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":1.0,"m2":2},"English Lang":{"m1":1.0,"m2":2},"English Lit":{"m1":1.0,"m2":2},"English Best":{"m1":1.0,"m2":2},"Science Combined":{"m1":1.0,"m2":1.5},"Avg Science":{"m1":1.0,"m2":2},"Geography":{"m1":1.0,"m2":1},"RE":{"m1":"U","m2":2},"Statistics":{"m1":"U","m2":1}},"behaviour":{"Attendance":97.9,"Lateness":13.2,"Reroutings":142,"Navigation":9,"DTAs":125}},{"name":"Derryn Hailes","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":4},"English Lang":{"m1":6.0,"m2":5},"English Lit":{"m1":5.0,"m2":6},"English Best":{"m1":6.0,"m2":6},"Science Combined":{"m1":5.0,"m2":5},"Avg Science":{"m1":5.0,"m2":5},"Geography":{"m1":6.0,"m2":6},"French":{"m1":6.0,"m2":null},"Music":{"m1":4.0,"m2":4},"Drama":{"m1":4.0,"m2":5}},"behaviour":{"Attendance":99.2,"Lateness":0.84,"Reroutings":4,"Navigation":0,"DTAs":149}},{"name":"Zac Cacoujat","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":4.0,"m2":4},"English Lang":{"m1":3.0,"m2":3},"English Lit":{"m1":3.0,"m2":4},"English Best":{"m1":3.0,"m2":4},"Science Combined":{"m1":3.5,"m2":3.5},"Avg Science":{"m1":3.5,"m2":4},"Geography":{"m1":3.0,"m2":2},"French":{"m1":5.0,"m2":null},"PE":{"m1":2.0,"m2":4},"Sociology":{"m1":5.0,"m2":3}},"behaviour":{"Attendance":96.7,"Lateness":8.7,"Reroutings":76,"Navigation":13,"DTAs":108}},{"name":"Hamza Khan","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":8},"English Lang":{"m1":7.0,"m2":8},"English Lit":{"m1":7.0,"m2":7},"English Best":{"m1":7.0,"m2":8},"Biology":{"m1":8.0,"m2":7},"Chemistry":{"m1":7.0,"m2":7},"Physics":{"m1":5.0,"m2":6},"Avg Science":{"m1":6.7,"m2":7},"Geography":{"m1":9.0,"m2":7},"French":{"m1":5.0,"m2":null},"Statistics":{"m1":7.0,"m2":9}},"behaviour":{"Attendance":97.9,"Lateness":1.3,"Reroutings":42,"Navigation":2,"DTAs":153}},{"name":"Muzzmel Ahmed","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":3.0,"m2":5},"English Lang":{"m1":3.0,"m2":5},"English Lit":{"m1":3.0,"m2":5},"English Best":{"m1":3.0,"m2":5},"Science Combined":{"m1":"U","m2":4.5},"Avg Science":{"m1":"U","m2":0},"Geography":{"m1":4.0,"m2":4},"French":{"m1":7.0,"m2":null},"Statistics":{"m1":4.0,"m2":5},"Sociology":{"m1":3.0,"m2":5}},"behaviour":{"Attendance":98.3,"Lateness":0.43,"Reroutings":96,"Navigation":18,"DTAs":105}},{"name":"Kyrese Ayeh","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":5.0,"m2":7},"English Lang":{"m1":5.0,"m2":7},"English Lit":{"m1":6.0,"m2":8},"English Best":{"m1":6.0,"m2":8},"Biology":{"m1":6.0,"m2":6},"Chemistry":{"m1":6.0,"m2":6},"Physics":{"m1":6.0,"m2":6},"Avg Science":{"m1":6.0,"m2":6},"History":{"m1":5.0,"m2":8},"French":{"m1":7.0,"m2":null},"Graphics":{"m1":7.0,"m2":6}},"behaviour":{"Attendance":97.5,"Lateness":2.1,"Reroutings":24,"Navigation":0,"DTAs":167}},{"name":"Owen Furey","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":3.0,"m2":4},"English Lang":{"m1":5.0,"m2":5},"English Lit":{"m1":4.0,"m2":4},"English Best":{"m1":5.0,"m2":5},"Science Combined":{"m1":4.5,"m2":4.5},"Avg Science":{"m1":4.5,"m2":5},"History":{"m1":3.0,"m2":4},"French":{"m1":5.0,"m2":null},"Statistics":{"m1":4.0,"m2":5}},"behaviour":{"Attendance":87.4,"Lateness":6.7,"Reroutings":117,"Navigation":42,"DTAs":99}},{"name":"Lola Gale","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":4.0,"m2":5},"English Lang":{"m1":6.0,"m2":8},"English Lit":{"m1":6.0,"m2":7},"English Best":{"m1":6.0,"m2":8},"Science Combined":{"m1":4.0,"m2":4.5},"Avg Science":{"m1":4.0,"m2":5},"History":{"m1":3.0,"m2":6},"French":{"m1":7.0,"m2":null},"Music":{"m1":6.0,"m2":8},"Art":{"m1":6.0,"m2":6}},"behaviour":{"Attendance":87.0,"Lateness":8.2,"Reroutings":1,"Navigation":0,"DTAs":205}},{"name":"Chris Collins Hodzi","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":3.0,"m2":3},"English Lang":{"m1":3.0,"m2":6},"English Lit":{"m1":3.0,"m2":6},"English Best":{"m1":3.0,"m2":6},"Science Combined":{"m1":3.5,"m2":2.5},"Avg Science":{"m1":3.5,"m2":3},"History":{"m1":3.0,"m2":4},"French":{"m1":4.0,"m2":null},"RE":{"m1":3.0,"m2":4}},"behaviour":{"Attendance":90.8,"Lateness":11.5,"Reroutings":53,"Navigation":10,"DTAs":150}},{"name":"Keira Honour-Cahill","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":3},"English Lang":{"m1":6.0,"m2":7},"English Lit":{"m1":5.0,"m2":6},"English Best":{"m1":6.0,"m2":7},"Science Combined":{"m1":4.5,"m2":4.5},"Avg Science":{"m1":4.5,"m2":5},"Geography":{"m1":4.0,"m2":4},"French":{"m1":6.0,"m2":null},"Graphics":{"m1":6.0,"m2":6},"Sociology":{"m1":6.0,"m2":5}},"behaviour":{"Attendance":98.3,"Lateness":2.6,"Reroutings":11,"Navigation":0,"DTAs":184}},{"name":"Asma Idriss","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":4.0,"m2":4},"English Lang":{"m1":7.0,"m2":7},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":7.0,"m2":7},"Science Combined":{"m1":3.5,"m2":4.5},"Avg Science":{"m1":3.5,"m2":5},"History":{"m1":3.0,"m2":4},"French":{"m1":7.0,"m2":null},"RE":{"m1":4.0,"m2":4},"Drama":{"m1":5.0,"m2":5}},"behaviour":{"Attendance":90.0,"Lateness":21.9,"Reroutings":39,"Navigation":2,"DTAs":172}},{"name":"Ramelia Kuzulu","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":3},"English Lang":{"m1":3.0,"m2":6},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":4.0,"m2":6},"Science Combined":{"m1":4.5,"m2":3},"Avg Science":{"m1":4.5,"m2":0},"History":{"m1":3.0,"m2":3},"French":{"m1":6.0,"m2":null},"Drama":{"m1":3.0,"m2":3},"Sociology":{"m1":5.0,"m2":4}},"behaviour":{"Attendance":97.1,"Lateness":9.1,"Reroutings":116,"Navigation":6,"DTAs":193}},{"name":"Ryan Kuzulu","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":5.0,"m2":6},"English Lang":{"m1":3.0,"m2":7},"English Lit":{"m1":5.0,"m2":7},"English Best":{"m1":5.0,"m2":7},"Science Combined":{"m1":5.5,"m2":5},"Avg Science":{"m1":5.5,"m2":5},"Geography":{"m1":5.0,"m2":6},"French":{"m1":7.0,"m2":null},"PE":{"m1":4.0,"m2":7},"Statistics":{"m1":5.0,"m2":6}},"behaviour":{"Attendance":100.0,"Lateness":0.0,"Reroutings":1,"Navigation":6,"DTAs":224}},{"name":"Reggie Roberts","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":3.0,"m2":4},"English Lang":{"m1":5.0,"m2":7},"English Lit":{"m1":5.0,"m2":5},"English Best":{"m1":5.0,"m2":7},"Science Combined":{"m1":"Absent","m2":3.5},"Avg Science":{"m1":"Absent","m2":4},"History":{"m1":4.0,"m2":4},"French":{"m1":4.0,"m2":null},"PE":{"m1":2.0,"m2":5},"Statistics":{"m1":3.0,"m2":5}},"behaviour":{"Attendance":98.3,"Lateness":1.7,"Reroutings":26,"Navigation":0,"DTAs":197}},{"name":"Sukhraj Singh","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":8},"English Lang":{"m1":3.0,"m2":6},"English Lit":{"m1":5.0,"m2":6},"English Best":{"m1":5.0,"m2":6},"Biology":{"m1":6.0,"m2":6},"Chemistry":{"m1":7.0,"m2":6},"Physics":{"m1":6.0,"m2":6},"Avg Science":{"m1":6.3,"m2":6},"History":{"m1":6.0,"m2":5},"French":{"m1":6.0,"m2":null},"Statistics":{"m1":6.0,"m2":8}},"behaviour":{"Attendance":98.3,"Lateness":8.1,"Reroutings":25,"Navigation":0,"DTAs":182}},{"name":"Milly Smart","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":3},"English Lang":{"m1":1.0,"m2":2},"English Lit":{"m1":1.0,"m2":3},"English Best":{"m1":1.0,"m2":3},"Science Combined":{"m1":3.5,"m2":4},"Avg Science":{"m1":3.5,"m2":4},"History":{"m1":"U","m2":2},"Art":{"m1":5.0,"m2":4},"Sociology":{"m1":2.0,"m2":2}},"behaviour":{"Attendance":85.8,"Lateness":30.2,"Reroutings":78,"Navigation":3,"DTAs":71}},{"name":"Giovanni Umoru","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":6},"English Lang":{"m1":4.0,"m2":5},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":4.0,"m2":6},"Science Combined":{"m1":5.5,"m2":5.5},"Avg Science":{"m1":5.5,"m2":6},"History":{"m1":4.0,"m2":5},"French":{"m1":5.0,"m2":null},"PE":{"m1":3.0,"m2":5},"Art":{"m1":null,"m2":null},"Statistics":{"m1":5.0,"m2":7}},"behaviour":{"Attendance":98.8,"Lateness":11.4,"Reroutings":75,"Navigation":6,"DTAs":118}},{"name":"Kye Ward","pp":true,"send":true,"gender":"Male","subjects":{"Maths":{"m1":1.0,"m2":2},"English Lang":{"m1":1.0,"m2":2},"English Lit":{"m1":1.0,"m2":2},"English Best":{"m1":1.0,"m2":2},"Science Combined":{"m1":2.0,"m2":2},"Avg Science":{"m1":2.0,"m2":2},"Geography":{"m1":1.0,"m2":2},"Sociology":{"m1":1.0,"m2":1}},"behaviour":{"Attendance":94.1,"Lateness":16.4,"Reroutings":138,"Navigation":27,"DTAs":118}},{"name":"Alfie White","pp":true,"send":true,"gender":"Male","subjects":{"Maths":{"m1":1.0,"m2":1},"English Lang":{"m1":2.0,"m2":4},"English Lit":{"m1":3.0,"m2":5},"English Best":{"m1":3.0,"m2":5},"Science Combined":{"m1":2.0,"m2":2},"Avg Science":{"m1":2.0,"m2":2},"History":{"m1":1.0,"m2":2},"French":{"m1":4.0,"m2":null},"Drama":{"m1":2.0,"m2":2},"Graphics":{"m1":5.0,"m2":5}},"behaviour":{"Attendance":96.2,"Lateness":0.0,"Reroutings":5,"Navigation":1,"DTAs":252}},{"name":"Menaal Zein","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":5.0,"m2":6},"English Lang":{"m1":4.0,"m2":6},"English Lit":{"m1":5.0,"m2":7},"English Best":{"m1":5.0,"m2":7},"Science Combined":{"m1":6.0,"m2":6},"Avg Science":{"m1":6.0,"m2":6},"History":{"m1":4.0,"m2":3},"French":{"m1":6.0,"m2":null},"RE":{"m1":5.0,"m2":5},"Art":{"m1":9.0,"m2":6}},"behaviour":{"Attendance":95.4,"Lateness":3.9,"Reroutings":18,"Navigation":0,"DTAs":112}},{"name":"Thayer Khan","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":3.0,"m2":3},"English Lang":{"m1":3.0,"m2":4},"English Lit":{"m1":3.0,"m2":5},"English Best":{"m1":3.0,"m2":5},"Science Combined":{"m1":2.0,"m2":3},"Avg Science":{"m1":2.0,"m2":3},"Geography":{"m1":3.0,"m2":3},"PE":{"m1":1.0,"m2":2},"Art":{"m1":null,"m2":null},"Statistics":{"m1":3.0,"m2":3}},"behaviour":{"Attendance":93.7,"Lateness":3.6,"Reroutings":29,"Navigation":4,"DTAs":172}},{"name":"Ahona Ahmed","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":6.0,"m2":7},"English Lang":{"m1":6.0,"m2":6},"English Lit":{"m1":6.0,"m2":6},"English Best":{"m1":6.0,"m2":6},"Biology":{"m1":9.0,"m2":8},"Chemistry":{"m1":9.0,"m2":8},"Physics":{"m1":9.0,"m2":9},"Avg Science":{"m1":9.0,"m2":8},"Geography":{"m1":5.0,"m2":7},"Statistics":{"m1":7.0,"m2":8}},"behaviour":{"Attendance":96.7,"Lateness":0.43,"Reroutings":6,"Navigation":0,"DTAs":95}},{"name":"Mahmood Rahman","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":5.0,"m2":5},"English Lang":{"m1":4.0,"m2":4},"English Lit":{"m1":4.0,"m2":5},"English Best":{"m1":4.0,"m2":5},"Science Combined":{"m1":6.0,"m2":6.5},"Avg Science":{"m1":6.0,"m2":7},"Geography":{"m1":5.0,"m2":5},"French":{"m1":6.0,"m2":null},"Statistics":{"m1":4.0,"m2":5}},"behaviour":{"Attendance":100.0,"Lateness":2.1,"Reroutings":7,"Navigation":0,"DTAs":233}},{"name":"Bella Izebere","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":3.0,"m2":3},"English Lang":{"m1":4.0,"m2":5},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":4.0,"m2":6},"Science Combined":{"m1":3.0,"m2":3},"Avg Science":{"m1":3.0,"m2":3},"History":{"m1":3.0,"m2":3},"French":{"m1":2.0,"m2":null},"Art":{"m1":5.0,"m2":4},"Sociology":{"m1":4.0,"m2":4}},"behaviour":{"Attendance":94.1,"Lateness":12.0,"Reroutings":121,"Navigation":22,"DTAs":63}},{"name":"Fatima Al-Shemary","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":2},"English Lang":{"m1":2.0,"m2":2},"English Lit":{"m1":3.0,"m2":3},"English Best":{"m1":3.0,"m2":3},"Science Combined":{"m1":3.0,"m2":2.5},"Avg Science":{"m1":3.0,"m2":3},"Geography":{"m1":2.0,"m2":2},"RE":{"m1":2.0,"m2":3},"Art":{"m1":null,"m2":null},"Statistics":{"m1":3.0,"m2":3}},"behaviour":{"Attendance":95.8,"Lateness":19.2,"Reroutings":128,"Navigation":4,"DTAs":156}},{"name":"Ghazal Borai","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":1},"English Lang":{"m1":3.0,"m2":6},"English Lit":{"m1":3.0,"m2":5},"English Best":{"m1":3.0,"m2":6},"Science Combined":{"m1":4.0,"m2":4.5},"Avg Science":{"m1":4.0,"m2":5},"Geography":{"m1":5.0,"m2":5},"French":{"m1":3.0,"m2":null},"RE":{"m1":4.0,"m2":5},"Sociology":{"m1":6.0,"m2":6}},"behaviour":{"Attendance":94.6,"Lateness":6.6,"Reroutings":44,"Navigation":1,"DTAs":239}},{"name":"Ahnaf Hassan","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":8.0,"m2":8},"English Lang":{"m1":9.0,"m2":9},"English Lit":{"m1":9.0,"m2":8},"English Best":{"m1":9.0,"m2":9},"Science Combined":{"m1":9.0,"m2":9},"Avg Science":{"m1":9.0,"m2":9},"History":{"m1":8.0,"m2":9},"French":{"m1":8.0,"m2":null},"Art":{"m1":7.0,"m2":7},"Statistics":{"m1":8.0,"m2":9}},"behaviour":{"Attendance":98.3,"Lateness":0.0,"Reroutings":16,"Navigation":0,"DTAs":158}},{"name":"Lamaar Majid Seif","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":8.0,"m2":8},"English Lang":{"m1":9.0,"m2":9},"English Lit":{"m1":8.0,"m2":7},"English Best":{"m1":9.0,"m2":9},"Biology":{"m1":6.0,"m2":8},"Chemistry":{"m1":8.0,"m2":8},"Physics":{"m1":8.0,"m2":8},"Avg Science":{"m1":7.3,"m2":8},"History":{"m1":8.0,"m2":9},"French":{"m1":8.0,"m2":null},"Art":{"m1":null,"m2":null},"Sociology":{"m1":8.0,"m2":9}},"behaviour":{"Attendance":99.2,"Lateness":0.0,"Reroutings":4,"Navigation":0,"DTAs":255}},{"name":"Tia Omoregbee","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":4.0,"m2":5},"English Lang":{"m1":4.0,"m2":5},"English Lit":{"m1":5.0,"m2":5},"English Best":{"m1":5.0,"m2":5},"Science Combined":{"m1":3.5,"m2":2.5},"Avg Science":{"m1":3.5,"m2":3},"History":{"m1":2.0,"m2":3},"French":{"m1":3.0,"m2":null},"Drama":{"m1":3.0,"m2":5},"Graphics":{"m1":4.0,"m2":4}},"behaviour":{"Attendance":98.3,"Lateness":12.3,"Reroutings":124,"Navigation":10,"DTAs":224}},{"name":"Kelsey Francis","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":3.0,"m2":3},"English Lang":{"m1":3.0,"m2":5},"English Lit":{"m1":4.0,"m2":5},"English Best":{"m1":4.0,"m2":5},"Science Combined":{"m1":"Absent","m2":2.5},"Avg Science":{"m1":"Absent","m2":3},"History":{"m1":3.0,"m2":2},"French":{"m1":4.0,"m2":null},"Art":{"m1":4.0,"m2":4},"Sociology":{"m1":6.0,"m2":2}},"behaviour":{"Attendance":92.9,"Lateness":9.5,"Reroutings":42,"Navigation":5,"DTAs":129}},{"name":"Yildiz Sahin","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":1.0,"m2":1},"English Lang":{"m1":1.0,"m2":2},"English Lit":{"m1":1.0,"m2":1},"English Best":{"m1":1.0,"m2":2},"Science Combined":{"m1":1.0,"m2":1},"Avg Science":{"m1":1.0,"m2":1},"Geography":{"m1":"U","m2":"U"},"PE":{"m1":"U","m2":null},"Art":{"m1":null,"m2":null},"Sociology":{"m1":"U","m2":1}},"behaviour":{"Attendance":95.4,"Lateness":3.5,"Reroutings":96,"Navigation":11,"DTAs":133}},{"name":"Hope Alexander","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":2.0,"m2":3},"English Lang":{"m1":3.0,"m2":4},"English Lit":{"m1":3.0,"m2":4},"English Best":{"m1":3.0,"m2":4},"Science Combined":{"m1":"Absent","m2":2.5},"Avg Science":{"m1":"Absent","m2":3},"History":{"m1":2.0,"m2":3},"French":{"m1":3.0,"m2":null},"Statistics":{"m1":3.0,"m2":3},"Sociology":{"m1":4.0,"m2":2}},"behaviour":{"Attendance":95.8,"Lateness":10.0,"Reroutings":123,"Navigation":14,"DTAs":82}},{"name":"Wonder Alexander","pp":true,"send":false,"gender":"Female","subjects":{"Maths":{"m1":4.0,"m2":5},"English Lang":{"m1":3.0,"m2":3},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":4.0,"m2":6},"Science Combined":{"m1":"Absent","m2":4.5},"Avg Science":{"m1":"Absent","m2":5},"History":{"m1":3.0,"m2":5},"French":{"m1":5.0,"m2":null},"Art":{"m1":9.0,"m2":7},"Sociology":{"m1":6.0,"m2":5}},"behaviour":{"Attendance":95.4,"Lateness":3.9,"Reroutings":42,"Navigation":0,"DTAs":82}},{"name":"Muktar Ajisegiri","pp":true,"send":false,"gender":"Male","subjects":{"Maths":{"m1":6.0,"m2":7},"English Lang":{"m1":3.0,"m2":7},"English Lit":{"m1":4.0,"m2":6},"English Best":{"m1":4.0,"m2":7},"Biology":{"m1":6.0,"m2":7},"Chemistry":{"m1":6.0,"m2":6},"Physics":{"m1":6.0,"m2":6},"Avg Science":{"m1":6.0,"m2":6},"Geography":{"m1":6.0,"m2":8},"Art":{"m1":null,"m2":null},"Statistics":{"m1":5.0,"m2":8}},"behaviour":{"Attendance":100.0,"Lateness":1.7,"Reroutings":43,"Navigation":6,"DTAs":68}},{"name":"May Ergonul","pp":true,"send":true,"gender":"Female","subjects":{"Maths":{"m1":4.0,"m2":6},"English Lang":{"m1":6.0,"m2":8},"English Lit":{"m1":7.0,"m2":8},"English Best":{"m1":7.0,"m2":8},"Science Combined":{"m1":4.0,"m2":5.5},"Avg Science":{"m1":4.0,"m2":6},"History":{"m1":4.0,"m2":6},"French":{"m1":5.0,"m2":null},"Graphics":{"m1":4.0,"m2":4},"Sociology":{"m1":5.0,"m2":5}},"behaviour":{"Attendance":98.3,"Lateness":6.0,"Reroutings":16,"Navigation":0,"DTAs":131}}];
+
+// ─── CONSTANTS ───────────────────────────────
+const CORE_SUBJECTS = ['Maths','English Lang','English Lit','English Best','Science Combined','Biology','Chemistry','Physics','Avg Science'];
+const OPT_SUBJECTS = ['History','Geography','French','RE','Music','PE','Drama','Art','Graphics','Statistics','Sociology'];
+const ALL_SUBJ = [...CORE_SUBJECTS,...OPT_SUBJECTS];
+const DISPLAY_SUBJ = ALL_SUBJ.filter(s=>s!=='English Lang'&&s!=='English Lit'&&s!=='Avg Science');
+
+function gradeNum(g){
+  if(g===null||g===undefined||g==='Absent') return null;
+  if(g==='U') return 0;
+  return typeof g==='number'?g:parseFloat(g)||0;
+}
+function passAt(g,t){const n=gradeNum(g);return n!==null&&n>=t;}
+function gradeClass(g){
+  const n=gradeNum(g);if(n===null) return 'gp-x';
+  if(g==='U') return 'gp-u';
+  if(n>=9) return 'gp-9';if(n>=8) return 'gp-8';if(n>=7) return 'gp-7';
+  if(n>=6) return 'gp-6';if(n>=5) return 'gp-5';if(n>=4) return 'gp-4';
+  if(n>=3) return 'gp-3';if(n>=2) return 'gp-2';return 'gp-1';
+}
+function gradeHTML(g){
+  if(g===null||g===undefined) return '<span class="gp gp-x">—</span>';
+  const disp=typeof g==='number'?(Number.isInteger(g)?g:g.toFixed(1)):g;
+  return `<span class="gp ${gradeClass(g)}">${disp}</span>`;
+}
+function gradeColor(g){
+  const n=gradeNum(g);if(n===null)return '#ddd';
+  if(n>=9)return '#00441b';if(n>=8)return '#006d2c';if(n>=7)return '#238b45';
+  if(n>=6)return '#2166ac';if(n>=5)return '#4393c3';if(n>=4)return '#e0a000';
+  if(n>=3)return '#e07020';if(n>=2)return '#c0392b';return '#8b0000';
+}
+function avgGrades(student,mock,subjects){
+  const vs=(subjects||ALL_SUBJ).map(s=>student.subjects[s]?gradeNum(student.subjects[s][mock]):null).filter(v=>v!==null);
+  return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null;
+}
+function netChange(student){
+  let tot=0,cnt=0;
+  for(const d of Object.values(student.subjects)){
+    const n1=gradeNum(d.m1),n2=gradeNum(d.m2);
+    if(n1!==null&&n2!==null){tot+=n2-n1;cnt++;}
+  }
+  return cnt?tot/cnt:null;
+}
+function pctAt(group,subj,mock,threshold){
+  const eligible=group.filter(s=>s.subjects[subj]&&gradeNum(s.subjects[subj][mock])!==null);
+  if(!eligible.length) return null;
+  return Math.round(eligible.filter(s=>passAt(s.subjects[subj][mock],threshold)).length/eligible.length*100);
+}
+function emPct(group,mock,threshold){
+  const eligible=group.filter(s=>{
+    const eb=s.subjects['English Best'];const m=s.subjects['Maths'];
+    return eb&&m&&gradeNum(eb[mock])!==null&&gradeNum(m[mock])!==null;
+  });
+  if(!eligible.length) return null;
+  return Math.round(eligible.filter(s=>passAt(s.subjects['English Best'][mock],threshold)&&passAt(s.subjects['Maths'][mock],threshold)).length/eligible.length*100);
+}
+
+// ─── PAGE NAV ────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{if(b.textContent.toLowerCase().includes(id))b.classList.add('active');});
+}
+
+// ─── OVERVIEW CARDS ──────────────────────────
+function buildOvCards(){
+  const em4m1=emPct(STUDENTS,'m1',4),em4m2=emPct(STUDENTS,'m2',4);
+  const em5m1=emPct(STUDENTS,'m1',5),em5m2=emPct(STUDENTS,'m2',5);
+  const em7m1=emPct(STUDENTS,'m1',7),em7m2=emPct(STUDENTS,'m2',7);
+  document.getElementById('hdr-em4').textContent=em4m2+'%';
+  document.getElementById('hdr-em5').textContent=em5m2+'%';
+  let improved=0,declined=0,same=0;
+  STUDENTS.forEach(s=>{const n=netChange(s);if(n===null)return;if(n>0.1)improved++;else if(n<-0.1)declined++;else same++;});
+  const total=improved+declined+same;
+  document.getElementById('ov-cards').innerHTML=`
+    <div class="card"><div class="card-label">Total Students</div><div class="card-value navy">110</div><div class="card-sub">Year 11 cohort</div></div>
+    <div class="card"><div class="card-label">E&M 4+ (Mock 2)</div><div class="card-value" style="color:var(--g4)">${em4m2}%</div><div class="card-sub">${em4m1}% in Mock 1 (${em4m2-em4m1>=0?'▲+':'▼'}${em4m2-em4m1}pp)</div></div>
+    <div class="card"><div class="card-label">E&M 5+ (Mock 2)</div><div class="card-value" style="color:var(--g5)">${em5m2}%</div><div class="card-sub">${em5m1}% in Mock 1 (${em5m2-em5m1>=0?'▲+':'▼'}${em5m2-em5m1}pp)</div></div>
+    <div class="card"><div class="card-label">E&M 7+ (Mock 2)</div><div class="card-value" style="color:var(--g7)">${em7m2}%</div><div class="card-sub">${em7m1}% in Mock 1 (${em7m2-em7m1>=0?'▲+':'▼'}${em7m2-em7m1}pp)</div></div>
+    <div class="card"><div class="card-label">Students Improved</div><div class="card-value green">${improved}</div><div class="card-sub">${Math.round(improved/total*100)}% of cohort</div></div>
+    <div class="card"><div class="card-label">Students Declined</div><div class="card-value" style="color:var(--declined)">${declined}</div><div class="card-sub">${Math.round(declined/total*100)}% of cohort</div></div>
+  `;
+}
+
+// ─── BASICS TRACKER ──────────────────────────
+function buildBasicsRow(){
+  const subjects=['English Best','Maths'];
+  const cards=[
+    {title:'English Best',subj:'English Best',group:STUDENTS},
+    {title:'Maths',subj:'Maths',group:STUDENTS}
+  ];
+  let html='';
+  cards.forEach(c=>{
+    html+=`<div class="basics-card"><h3>${c.title}</h3>`;
+    [7,5,4].forEach(t=>{
+      let p1,p2;
+      if(c.subj){
+        p1=pctAt(c.group,c.subj,'m1',t);p2=pctAt(c.group,c.subj,'m2',t);
+      } else {
+        p1=emPct(c.group,'m1',t);p2=emPct(c.group,'m2',t);
+      }
+      if(p1===null&&p2===null){html+=`<div class="basics-threshold"><div class="bt-label t${t>6?7:t>4?5:4}">${t}+</div><div class="bt-bars"><div style="color:var(--muted);font-size:11px;">No data</div></div></div>`;return;}
+      p1=p1||0;p2=p2||0;
+      const diff=p2-p1;
+      const diffStr=(diff>=0?'▲+':'▼')+diff+'pp';
+      const diffCol=diff>0?'var(--improved)':diff<0?'var(--declined)':'var(--same)';
+      const lbl=t>=7?'t7':t>=5?'t5':'t4';
+      const barCol=t>=7?'var(--g7)':t>=5?'var(--g5)':'var(--g4)';
+      html+=`<div class="basics-threshold">
+        <div class="bt-label ${lbl}">${t}+</div>
+        <div class="bt-bars">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-size:10px;color:var(--muted);width:40px;">Mock 1</div>
+            <div style="flex:1;background:#f0f4f8;border-radius:3px;height:11px;overflow:hidden;">
+              <div style="width:${p1}%;height:100%;background:var(--navy);border-radius:3px;"></div>
+            </div>
+            <div style="font-size:10px;font-weight:700;color:var(--navy);width:32px;text-align:right;">${p1}%</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-size:10px;color:var(--muted);width:40px;">Mock 2</div>
+            <div style="flex:1;background:#f0f4f8;border-radius:3px;height:11px;overflow:hidden;">
+              <div style="width:${p2}%;height:100%;background:${barCol};border-radius:3px;"></div>
+            </div>
+            <div style="font-size:10px;font-weight:700;width:32px;text-align:right;color:${barCol};">${p2}%</div>
+          </div>
+        </div>
+        <div class="bt-change" style="color:${diffCol};">${diffStr}</div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('basics-row').innerHTML=html;
+}
+
+// ─── ALL GRADE DIST ───────────────────────────
+function buildAllDist(){
+  const grades=[9,8,7,6,5,4,3,2,1,'U','Absent'];
+  const c1={},c2={};
+  grades.forEach(g=>{c1[g]=0;c2[g]=0;});
+  STUDENTS.forEach(s=>Object.values(s.subjects).forEach(d=>{
+    const g1=d.m1===null?'—':d.m1;const g2=d.m2===null?'—':d.m2;
+    const k1=typeof g1==='number'?Math.round(g1):g1;
+    const k2=typeof g2==='number'?Math.round(g2):g2;
+    if(c1[k1]!==undefined)c1[k1]++;
+    if(c2[k2]!==undefined)c2[k2]++;
+  }));
+  const maxV=Math.max(...Object.values(c1),...Object.values(c2),1);
+  let html='';
+  [9,8,7,6,5,4,3,2,1,'U'].forEach(g=>{
+    const v1=c1[g]||0,v2=c2[g]||0;
+    const w1=Math.round(v1/maxV*100),w2=Math.round(v2/maxV*100);
+    const col=gradeColor(g==='U'?'U':g);
+    html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <div style="font-size:11px;font-weight:700;color:${col};width:16px;text-align:right;">${g}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px;">
+        <div style="height:10px;border-radius:2px;background:var(--navy);width:${Math.max(2,w1)}%;"></div>
+        <div style="height:10px;border-radius:2px;background:var(--blue);opacity:0.85;width:${Math.max(2,w2)}%;"></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);width:50px;">${v1} / ${v2}</div>
+    </div>`;
+  });
+  document.getElementById('all-dist').innerHTML=html;
+}
+
+// ─── E&M COMBINED CARD ───────────────────────
+function buildEMCombined(){
+  const thresholds=[
+    {t:7,label:'7+',barCol:'var(--g7)',lblClass:'t7'},
+    {t:5,label:'5+',barCol:'var(--g5)',lblClass:'t5'},
+    {t:4,label:'4+',barCol:'var(--g4)',lblClass:'t4'}
+  ];
+  let html='';
+  thresholds.forEach(({t,label,barCol,lblClass})=>{
+    const p1=emPct(STUDENTS,'m1',t)||0;
+    const p2=emPct(STUDENTS,'m2',t)||0;
+    const diff=p2-p1;
+    const diffStr=(diff>=0?'▲+':'▼')+diff+'pp';
+    const diffCol=diff>0?'var(--improved)':diff<0?'var(--declined)':'var(--same)';
+    html+=`
+    <div style="margin-bottom:18px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="display:inline-block;padding:2px 8px;border-radius:5px;font-size:13px;font-weight:700;color:white;background:${barCol};">${label}</span>
+        <span style="font-size:13px;font-weight:700;color:${diffCol};">${diffStr}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+        <div style="font-size:11px;color:var(--muted);width:44px;">Mock 1</div>
+        <div style="flex:1;background:#f0f4f8;border-radius:4px;height:22px;overflow:hidden;position:relative;">
+          <div style="width:${p1}%;height:100%;background:var(--navy);border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;">
+            ${p1>8?`<span style="font-size:11px;font-weight:700;color:white;">${p1}%</span>`:''}
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--navy);width:34px;text-align:right;">${p1}%</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="font-size:11px;color:var(--muted);width:44px;">Mock 2</div>
+        <div style="flex:1;background:#f0f4f8;border-radius:4px;height:22px;overflow:hidden;position:relative;">
+          <div style="width:${p2}%;height:100%;background:${barCol};border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;">
+            ${p2>8?`<span style="font-size:11px;font-weight:700;color:white;">${p2}%</span>`:''}
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:700;width:34px;text-align:right;color:${barCol};">${p2}%</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('em-combined').innerHTML=html;
+}
+
+// ─── SUBJECT 4+ RATES ────────────────────────
+function buildSubj4plus(){
+  const SHOW=['Maths','English Best','Science Combined','Biology','Chemistry','Physics','History','Geography','RE','Sociology'];
+  let html='';
+  SHOW.forEach(subj=>{
+    const p1=pctAt(STUDENTS,subj,'m1',4);
+    const p2=pctAt(STUDENTS,subj,'m2',4);
+    if(p1===null&&p2===null)return;
+    const v1=p1||0,v2=p2||0;
+    const diff=v2-v1;
+    const diffCol=diff>0?'var(--improved)':diff<0?'var(--declined)':'var(--same)';
+    html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+      <div style="font-size:11px;color:var(--text);width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${subj}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px;">
+        <div style="height:10px;border-radius:2px;background:var(--navy);width:${Math.max(2,v1)}%;"></div>
+        <div style="height:10px;border-radius:2px;background:var(--blue);width:${Math.max(2,v2)}%;"></div>
+      </div>
+      <div style="font-size:10px;width:60px;text-align:right;">${v1}%→${v2}% <span style="font-weight:700;color:${diffCol};">${diff>=0?'+':''}${diff}pp</span></div>
+    </div>`;
+  });
+  document.getElementById('subj-4plus').innerHTML=html;
+}
+
+// ─── TOP IMPROVERS ───────────────────────────
+let showWorstImp=false;
+function toggleImp(){
+  showWorstImp=!showWorstImp;
+  document.getElementById('top-imp-toggle').textContent=showWorstImp?'Show Best ▲':'Show Worst ▼';
+  document.getElementById('top-imp-title').textContent=showWorstImp?'Bottom 10 (avg grade change)':'Top 10 Improvers (avg grade change)';
+  buildTopImp();
+}
+function buildTopImp(){
+  const all=STUDENTS.map(s=>({name:s.name,net:netChange(s)})).filter(s=>s.net!==null).sort((a,b)=>b.net-a.net);
+  const ranked=showWorstImp?all.slice(-10).reverse():all.slice(0,10);
+  const max=Math.max(...ranked.map(s=>Math.abs(s.net)),0.01);
+  let html='';
+  ranked.forEach(s=>{
+    const pct=Math.max(4,Math.round(Math.abs(s.net)/max*100));
+    const col=s.net>0?'var(--improved)':s.net<0?'var(--declined)':'var(--same)';
+    const sign=s.net>0?'+':'';
+    html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+      <div style="font-size:11px;color:var(--text);width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</div>
+      <div style="flex:1;background:#f0f4f8;border-radius:3px;height:12px;">
+        <div style="width:${pct}%;background:${col};height:100%;border-radius:3px;"></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:${col};width:40px;text-align:right;">${sign}${s.net.toFixed(2)}</div>
+    </div>`;
+  });
+  document.getElementById('top-imp').innerHTML=html;
+}
+
+// ─── STUDENT TABLE ───────────────────────────
+let filtSt=[...STUDENTS];
+let stSortCol='name', stSortDir=1;
+
+function stGradeVal(s,subj,mock){
+  const d=s.subjects[subj];return d?gradeNum(d[mock])??-1:-1;
+}
+function stSortBy(col){
+  if(stSortCol===col) stSortDir*=-1; else{stSortCol=col;stSortDir=col==='name'?1:-1;}
+  applyStSort();buildStTable();updateStHeaders();
+}
+function applyStSort(){
+  const d=stSortDir;
+  const fns={
+    name:(a,b)=>d*a.name.localeCompare(b.name),
+    maths:(a,b)=>d*(stGradeVal(b,'Maths','m2')-stGradeVal(a,'Maths','m2')),
+    eng:(a,b)=>d*(stGradeVal(b,'English Best','m2')-stGradeVal(a,'English Best','m2')),
+    sci:(a,b)=>d*((stGradeVal(b,'Science Combined','m2')||stGradeVal(b,'Avg Science','m2'))-(stGradeVal(a,'Science Combined','m2')||stGradeVal(a,'Avg Science','m2'))),
+    chg:(a,b)=>d*((netChange(b)??-999)-(netChange(a)??-999)),
+    att:(a,b)=>d*((a.behaviour.Attendance??101)-(b.behaviour.Attendance??101)),
+    dta:(a,b)=>d*((b.behaviour.DTAs??-1)-(a.behaviour.DTAs??-1)),
+    rer:(a,b)=>d*((b.behaviour.Reroutings??-1)-(a.behaviour.Reroutings??-1)),
+    nav:(a,b)=>d*((b.behaviour.Navigation??-1)-(a.behaviour.Navigation??-1)),
+  };
+  filtSt.sort(fns[stSortCol]||fns.name);
+}
+function updateStHeaders(){
+  document.querySelectorAll('#st-thead th').forEach(th=>{
+    th.classList.remove('sort-active');
+    const arrow=th.querySelector('.sort-arrow');
+    if(arrow) arrow.textContent='↕';
+  });
+  const cols=['name',null,'maths','eng','sci','chg','att','dta','rer','nav'];
+  const idx=cols.indexOf(stSortCol);
+  if(idx>=0){
+    const th=document.querySelectorAll('#st-thead th')[idx];
+    if(th){th.classList.add('sort-active');const a=th.querySelector('.sort-arrow');if(a)a.textContent=stSortDir===1?'▲':'▼';}
+  }
+}
+function buildStTable(){
+  const tbody=document.getElementById('st-tbody');
+  if(!filtSt.length){tbody.innerHTML='';document.getElementById('st-no').classList.remove('hidden');return;}
+  document.getElementById('st-no').classList.add('hidden');
+  tbody.innerHTML=filtSt.map(s=>{
+    const net=netChange(s);
+    const chg=net===null?'<span class="chg chg-na">N/A</span>':
+      net>0.1?`<span class="chg chg-up">▲ +${net.toFixed(2)}</span>`:
+      net<-0.1?`<span class="chg chg-dn">▼ ${net.toFixed(2)}</span>`:
+      `<span class="chg chg-eq">= 0</span>`;
+    const m=s.subjects['Maths'],eb=s.subjects['English Best'],sc=s.subjects['Science Combined']||s.subjects['Avg Science'];
+    const att=s.behaviour.Attendance;
+    const attStr=att===null?'—':`${att.toFixed(1)}%`;
+    const attCol=att===null?'var(--muted)':att>=95?'var(--improved)':att>=85?'var(--g4)':'var(--declined)';
+    const flags=(s.pp?'<span class="badge badge-pp">PP</span>':'')+(s.send?'<span class="badge badge-send">SEND</span>':'');
+    const nm=s.name.replace(/'/g,"\\'");
+    return `<tr>
+      <td><span class="sname" onclick="openModal('${nm}')">${s.name}</span></td>
+      <td>${flags}${s.gender==='Female'?'<span class="badge badge-girl">F</span>':'<span class="badge badge-boy">M</span>'}</td>
+      <td>${gradeHTML(m?.m1)} → ${gradeHTML(m?.m2)}</td>
+      <td>${gradeHTML(eb?.m1)} → ${gradeHTML(eb?.m2)}</td>
+      <td>${gradeHTML(sc?.m1)} → ${gradeHTML(sc?.m2)}</td>
+      <td>${chg}</td>
+      <td style="font-weight:700;color:${attCol};">${attStr}</td>
+      <td>${s.behaviour.DTAs??'—'}</td>
+      <td>${s.behaviour.Reroutings??'—'}</td>
+      <td>${s.behaviour.Navigation??'—'}</td>
+      <td><button onclick="openModal('${nm}')" style="background:var(--blue);color:white;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px;">View</button></td>
+    </tr>`;
+  }).join('');
+}
+function filterSt(){
+  const q=document.getElementById('st-search').value.toLowerCase();
+  const pp=document.getElementById('st-pp').value;
+  const send=document.getElementById('st-send').value;
+  const gen=document.getElementById('st-gender').value;
+  filtSt=STUDENTS.filter(s=>{
+    if(q&&!s.name.toLowerCase().includes(q))return false;
+    if(pp==='pp'&&!s.pp)return false;
+    if(pp==='nonpp'&&s.pp)return false;
+    if(send==='send'&&!s.send)return false;
+    if(send==='nonsend'&&s.send)return false;
+    if(gen&&s.gender!==gen)return false;
+    return true;
+  });
+  applyStSort();buildStTable();
+}
+
+// ─── SUBJECTS GRID ───────────────────────────
+function buildSubjGrid(){
+  const grades=[9,8,7,6,5,4,3,2,1,'U'];
+  let html='';
+  DISPLAY_SUBJ.forEach(subj=>{
+    const entries=STUDENTS.filter(s=>s.subjects[subj]&&(s.subjects[subj].m1!==null||s.subjects[subj].m2!==null));
+    if(!entries.length)return;
+    const c1={},c2={};grades.forEach(g=>{c1[g]=0;c2[g]=0;});
+    entries.forEach(s=>{
+      const d=s.subjects[subj];
+      if(d.m1!==null){const k=typeof d.m1==='number'?Math.round(d.m1):d.m1;if(c1[k]!==undefined)c1[k]++;}
+      if(d.m2!==null){const k=typeof d.m2==='number'?Math.round(d.m2):d.m2;if(c2[k]!==undefined)c2[k]++;}
+    });
+    const p1_7=pctAt(entries,subj,'m1',7),p2_7=pctAt(entries,subj,'m2',7);
+    const p1_5=pctAt(entries,subj,'m1',5),p2_5=pctAt(entries,subj,'m2',5);
+    const p1_4=pctAt(entries,subj,'m1',4),p2_4=pctAt(entries,subj,'m2',4);
+    function thRow(t,color1,color2,l1,l2){
+      const v1=l1||0,v2=l2||0;
+      if(l1===null&&l2===null)return'';
+      const diff=v2-v1;
+      const dc=diff>0?'var(--improved)':diff<0?'var(--declined)':'var(--same)';
+      return`<div class="th-row">
+        <div class="th-label">${t}+</div>
+        <div class="th-track">
+          <div class="th-inner" style="display:flex;flex-direction:column;gap:2px;padding:2px;">
+            <div class="th-bar" style="width:${v1}%;background:${color1};"></div>
+            <div class="th-bar" style="width:${v2}%;background:${color2};"></div>
+          </div>
+        </div>
+        <div class="th-vals">${v1}% → ${v2}% <span style="font-weight:700;color:${dc};">${diff>=0?'+':''}${diff}pp</span></div>
+      </div>`;
+    }
+    // Mini dist bars
+    const maxC=Math.max(...grades.map(g=>Math.max(c1[g]||0,c2[g]||0)),1);
+    const distHTML=grades.filter(g=>(c1[g]||0)+(c2[g]||0)>0).map(g=>{
+      const h1=Math.round((c1[g]||0)/maxC*36),h2=Math.round((c2[g]||0)/maxC*36);
+      return`<div class="dist-col">
+        <div class="dist-bar-wrap" style="gap:1px;">
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
+            <div class="dist-bar" style="height:${h1}px;background:var(--navy);"></div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;">
+            <div class="dist-bar" style="height:${h2}px;background:var(--blue);"></div>
+          </div>
+        </div>
+        <div class="dist-label">${g}</div>
+      </div>`;
+    }).join('');
+    html+=`<div class="subj-card" data-subj="${subj}" onclick="openSubjModal('${subj}')">
+      <div class="subj-title"><h3>${subj}</h3><span>${entries.length} students</span></div>
+      <div class="threshold-bars">
+        ${thRow(7,'var(--navy)','var(--blue)',p1_7,p2_7)}
+        ${thRow(5,'var(--navy)','var(--blue)',p1_5,p2_5)}
+        ${thRow(4,'var(--navy)','var(--blue)',p1_4,p2_4)}
+      </div>
+      <div class="subj-dist">${distHTML}</div>
+      <div class="subj-legend">
+        <div class="sleg"><div class="sleg-dot" style="background:var(--navy);"></div>Mock 1</div>
+        <div class="sleg"><div class="sleg-dot" style="background:var(--blue);"></div>Mock 2</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('subj-grid').innerHTML=html;
+}
+function filterSubj(){
+  const q=document.getElementById('subj-search').value.toLowerCase();
+  document.querySelectorAll('.subj-card').forEach(c=>{
+    c.style.display=(!q||c.dataset.subj.toLowerCase().includes(q))?'':'none';
+  });
+}
+
+// ─── BEHAVIOUR ───────────────────────────────
+function buildBehCards(){
+  const atts=STUDENTS.map(s=>s.behaviour.Attendance).filter(v=>v!==null);
+  const lats=STUDENTS.map(s=>s.behaviour.Lateness).filter(v=>v!==null);
+  const dtas=STUDENTS.map(s=>s.behaviour.DTAs).filter(v=>v!==null);
+  const rers=STUDENTS.map(s=>s.behaviour.Reroutings).filter(v=>v!==null);
+  const navs=STUDENTS.map(s=>s.behaviour.Navigation).filter(v=>v!==null);
+  const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;
+  document.getElementById('beh-cards').innerHTML=`
+    <div class="beh-card"><div class="lbl">Avg Attendance</div><div class="val" style="color:var(--g7)">${avg(atts).toFixed(1)}%</div><div class="sub">Whole cohort</div></div>
+    <div class="beh-card"><div class="lbl">Avg Lateness</div><div class="val" style="color:var(--g4)">${avg(lats).toFixed(1)}%</div><div class="sub">Of lessons late</div></div>
+    <div class="beh-card"><div class="lbl">Avg DTAs</div><div class="val" style="color:var(--g6)">${Math.round(avg(dtas))}</div><div class="sub">Positive points</div></div>
+    <div class="beh-card"><div class="lbl">Total Reroutings</div><div class="val" style="color:var(--g3)">${rers.reduce((a,b)=>a+b,0)}</div><div class="sub">Across cohort</div></div>
+    <div class="beh-card"><div class="lbl">Total Navigation</div><div class="val" style="color:var(--declined)">${navs.reduce((a,b)=>a+b,0)}</div><div class="sub">Internal exclusions</div></div>
+    <div class="beh-card"><div class="lbl">Below 90% Att</div><div class="val" style="color:var(--declined)">${STUDENTS.filter(s=>s.behaviour.Attendance!==null&&s.behaviour.Attendance<90).length}</div><div class="sub">Students</div></div>
+  `;
+}
+
+function buildScatter(){
+  const svg=document.getElementById('scatter-svg');
+  const W=520,H=300,pad={l:50,r:20,t:20,b:40};
+  const iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+  let svgHTML=`<line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${H-pad.b}" stroke="#ddd" stroke-width="1"/>
+    <line x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}" stroke="#ddd" stroke-width="1"/>`;
+  // Y axis labels (avg grade 0-9)
+  for(let g=0;g<=9;g+=3){
+    const y=H-pad.b-g/9*iH;
+    svgHTML+=`<text x="${pad.l-6}" y="${y+4}" text-anchor="end" font-size="9" fill="#999">${g}</text>
+      <line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#eee" stroke-width="0.5"/>`;
+  }
+  // X axis labels (70-100%)
+  for(let a=70;a<=100;a+=10){
+    const x=pad.l+(a-70)/30*iW;
+    svgHTML+=`<text x="${x}" y="${H-pad.b+16}" text-anchor="middle" font-size="9" fill="#999">${a}%</text>`;
+  }
+  svgHTML+=`<text x="${pad.l+iW/2}" y="${H-2}" text-anchor="middle" font-size="10" fill="#666">Attendance (%)</text>
+    <text x="12" y="${pad.t+iH/2}" text-anchor="middle" font-size="10" fill="#666" transform="rotate(-90,12,${pad.t+iH/2})">Avg Grade</text>`;
+  const dots=[];
+  STUDENTS.forEach(s=>{
+    const att=s.behaviour.Attendance;
+    const avg2=avgGrades(s,'m2',['Maths','English Best','Avg Science','History','Geography']);
+    if(att===null||avg2===null)return;
+    const x=pad.l+Math.max(0,Math.min(1,(att-70)/30))*iW;
+    const y=H-pad.b-(avg2/9)*iH;
+    const col=s.pp?'#9b59b6':'#2c7be5';
+    dots.push({x,y,col,name:s.name,att,avg2,pp:s.pp,send:s.send});
+    svgHTML+=`<circle class="dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${col}" opacity="0.75" stroke="white" stroke-width="1"
+      data-name="${s.name}" data-att="${att}" data-avg="${avg2.toFixed(2)}" data-pp="${s.pp}" data-send="${s.send}"
+      onmouseenter="showTT(event,this)" onmouseleave="hideTT()"/>`;
+  });
+  svg.innerHTML=svgHTML;
+}
+
+function showTT(e,el){
+  const tt=document.getElementById('scatter-tt');
+  const pp=el.dataset.pp==='true';const send=el.dataset.send==='true';
+  tt.innerHTML=`<strong>${el.dataset.name}</strong><br>Attendance: ${el.dataset.att}%<br>Avg Grade: ${el.dataset.avg}${pp?' · <span style="color:#d4a0ff">PP</span>':''}${send?' · <span style="color:#a0e0ff">SEND</span>':''}`;
+  tt.style.display='block';tt.style.left=(e.clientX+12)+'px';tt.style.top=(e.clientY-10)+'px';
+}
+function hideTT(){document.getElementById('scatter-tt').style.display='none';}
+
+function buildBehByGroup(){
+  const groups=[
+    {label:'PP Students',color:'var(--pp)',filter:s=>s.pp},
+    {label:'Non-PP',color:'var(--blue)',filter:s=>!s.pp},
+    {label:'SEND',color:'var(--send)',filter:s=>s.send},
+    {label:'Non-SEND',color:'var(--navy)',filter:s=>!s.send},
+  ];
+  const metrics=['Attendance','DTAs','Reroutings','Navigation'];
+  const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;
+  let html='<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+  html+='<thead><tr><th style="text-align:left;padding:6px 8px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--border);">Group</th>';
+  metrics.forEach(m=>{html+=`<th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--border);">${m}</th>`;});
+  html+='</tr></thead><tbody>';
+  groups.forEach(g=>{
+    const grp=STUDENTS.filter(g.filter);
+    html+=`<tr><td style="padding:7px 8px;font-weight:600;border-bottom:1px solid #f0f4f8;"><span style="color:${g.color}">${g.label}</span> <span style="color:var(--muted);font-size:10px;">(${grp.length})</span></td>`;
+    metrics.forEach(m=>{
+      const vals=grp.map(s=>s.behaviour[m]).filter(v=>v!==null);
+      const v=avg(vals);
+      const disp=m==='Attendance'?v.toFixed(1)+'%':Math.round(v).toString();
+      html+=`<td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f0f4f8;font-weight:700;color:var(--navy);">${disp}</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('beh-by-group').innerHTML=html;
+}
+
+// ─── BEHAVIOUR TABLE ─────────────────────────
+let behSortCol='att', behSortDir=1;
+
+function behSortBy(col){
+  if(behSortCol===col) behSortDir*=-1; else{behSortCol=col;behSortDir=1;}
+  buildBehTable();
+}
+function filterBeh(){ buildBehTable(); }
+
+function buildBehTable(){
+  const q=(document.getElementById('beh-search')?.value||'').toLowerCase();
+  const pp=document.getElementById('beh-pp')?.value||'';
+  const send=document.getElementById('beh-send')?.value||'';
+  const att=document.getElementById('beh-att')?.value||'';
+
+  let rows=STUDENTS.filter(s=>{
+    if(q&&!s.name.toLowerCase().includes(q))return false;
+    if(pp==='pp'&&!s.pp)return false;
+    if(pp==='nonpp'&&s.pp)return false;
+    if(send==='send'&&!s.send)return false;
+    if(send==='nonsend'&&s.send)return false;
+    const a=s.behaviour.Attendance;
+    if(att==='below90'&&(a===null||a>=90))return false;
+    if(att==='90to95'&&(a===null||a<90||a>=95))return false;
+    if(att==='above95'&&(a===null||a<95))return false;
+    return true;
+  });
+
+  const d=behSortDir;
+  const sortFns={
+    name:(a,b)=>d*a.name.localeCompare(b.name),
+    att:(a,b)=>d*((a.behaviour.Attendance??101)-(b.behaviour.Attendance??101)),
+    late:(a,b)=>d*((b.behaviour.Lateness??-1)-(a.behaviour.Lateness??-1)),
+    dta:(a,b)=>d*((b.behaviour.DTAs??-1)-(a.behaviour.DTAs??-1)),
+    rer:(a,b)=>d*((b.behaviour.Reroutings??-1)-(a.behaviour.Reroutings??-1)),
+    nav:(a,b)=>d*((b.behaviour.Navigation??-1)-(a.behaviour.Navigation??-1)),
+    avg:(a,b)=>d*((avgGrades(b,'m2')??-1)-(avgGrades(a,'m2')??-1)),
+  };
+  rows.sort(sortFns[behSortCol]||sortFns.att);
+
+  const noRes=document.getElementById('beh-no');
+  if(!rows.length){document.getElementById('beh-table').innerHTML='';noRes?.classList.remove('hidden');return;}
+  noRes?.classList.add('hidden');
+
+  const cols=[
+    {key:'name',label:'Student'},
+    {key:null, label:'Flags'},
+    {key:'att', label:'Attendance'},
+    {key:'late',label:'Lateness'},
+    {key:'dta', label:'DTAs'},
+    {key:'rer', label:'Reroutings'},
+    {key:'nav', label:'Navigation'},
+    {key:'avg', label:'Avg Grade M2'},
+  ];
+  const thead='<thead><tr>'+cols.map(c=>{
+    if(!c.key) return`<th style="cursor:default;">${c.label}</th>`;
+    const active=behSortCol===c.key;
+    const arrow=active?(behSortDir===1?'▲':'▼'):'↕';
+    return`<th onclick="behSortBy('${c.key}')" class="${active?'sort-active':''}">${c.label} <span class="sort-arrow">${arrow}</span></th>`;
+  }).join('')+'</tr></thead>';
+
+  const tbody='<tbody>'+rows.map(s=>{
+    const a=s.behaviour.Attendance;
+    const attCol=a===null?'var(--muted)':a>=95?'var(--improved)':a>=85?'var(--g4)':'var(--declined)';
+    const avg2=avgGrades(s,'m2');
+    const flags=(s.pp?'<span class="badge badge-pp">PP</span>':'')+(s.send?'<span class="badge badge-send">SEND</span>':'');
+    const nm=s.name.replace(/'/g,"\\'");
+    return`<tr>
+      <td><span class="sname" onclick="openModal('${nm}')" style="font-size:12px;">${s.name}</span></td>
+      <td>${flags}</td>
+      <td><span style="font-weight:700;color:${attCol};">${a!==null?a.toFixed(1)+'%':'—'}</span></td>
+      <td>${s.behaviour.Lateness!==null?s.behaviour.Lateness.toFixed(1)+'%':'—'}</td>
+      <td style="color:var(--g6);font-weight:600;">${s.behaviour.DTAs??'—'}</td>
+      <td style="color:var(--g3);font-weight:600;">${s.behaviour.Reroutings??'—'}</td>
+      <td style="color:var(--declined);font-weight:600;">${s.behaviour.Navigation??'—'}</td>
+      <td style="font-weight:600;">${avg2?avg2.toFixed(2):'—'}</td>
+    </tr>`;
+  }).join('')+'</tbody>';
+
+  document.getElementById('beh-table').innerHTML=thead+tbody;
+}
+
+// ─── GROUPS PAGE ─────────────────────────────
+function buildGroupsPage(){
+  const pp=STUDENTS.filter(s=>s.pp),nonpp=STUDENTS.filter(s=>!s.pp);
+  const send=STUDENTS.filter(s=>s.send),nonsend=STUDENTS.filter(s=>!s.send);
+  const KEY_SUBJ=['Maths','English Best','Science Combined','History','Geography'];
+  function groupTable(g1,g2,l1,l2,containerId){
+    let html='<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    html+=`<thead><tr><th style="text-align:left;padding:6px 8px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--border);">Subject / Metric</th>
+      <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--border);">Threshold</th>
+      <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--border);">${l1} (${g1.length})</th>
+      <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--border);">${l2} (${g2.length})</th>
+      <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:11px;border-bottom:1px solid var(--border);">Gap</th>
+    </tr></thead><tbody>`;
+    // E&M rows first
+    [4,5,7].forEach(t=>{
+      const v1=emPct(g1,'m2',t),v2=emPct(g2,'m2',t);
+      if(v1===null&&v2===null)return;
+      const gap=(v1||0)-(v2||0);
+      const gc=gap<-5?'gap-pos':gap>5?'gap-neg':'gap-neu';
+      html+=`<tr style="background:#fafbff;"><td style="padding:7px 8px;font-weight:600;border-bottom:1px solid #f0f4f8;">E&M Combined</td>
+        <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f0f4f8;"><span style="font-weight:700;font-size:11px;">${t}+</span></td>
+        <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f0f4f8;font-weight:700;">${v1??'—'}%</td>
+        <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f0f4f8;font-weight:700;">${v2??'—'}%</td>
+        <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f0f4f8;"><span class="gap-badge ${gc}">${gap>=0?'+':''}${gap}pp</span></td>
+      </tr>`;
+    });
+    KEY_SUBJ.forEach(subj=>{
+      [4,5,7].forEach(t=>{
+        const v1=pctAt(g1,subj,'m2',t),v2=pctAt(g2,subj,'m2',t);
+        if(v1===null&&v2===null)return;
+        const gap=(v1||0)-(v2||0);
+        const gc=gap<-5?'gap-pos':gap>5?'gap-neg':'gap-neu';
+        html+=`<tr><td style="padding:7px 8px;border-bottom:1px solid #f0f4f8;">${subj}</td>
+          <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f0f4f8;font-size:11px;font-weight:700;">${t}+</td>
+          <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f0f4f8;font-weight:700;">${v1??'—'}%</td>
+          <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f0f4f8;font-weight:700;">${v2??'—'}%</td>
+          <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f0f4f8;"><span class="gap-badge ${gc}">${gap>=0?'+':''}${gap}pp</span></td>
+        </tr>`;
+      });
+    });
+    html+='</tbody></table>';
+    document.getElementById(containerId).innerHTML=html;
+  }
+  groupTable(pp,nonpp,'PP','Non-PP','pp-grid');
+  groupTable(send,nonsend,'SEND','Non-SEND','send-grid');
+
+  // E&M progress for PP group
+  function emProgress(group,containerId,color){
+    let html='';
+    [4,5,7].forEach(t=>{
+      const p1=emPct(group,'m1',t)||0;
+      const p2=emPct(group,'m2',t)||0;
+      const diff=p2-p1;
+      const dc=diff>0?'var(--improved)':diff<0?'var(--declined)':'var(--same)';
+      html+=`<div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:12px;font-weight:700;">${t}+ (E&M Combined)</span>
+          <span style="font-size:11px;font-weight:700;color:${dc};">${diff>=0?'▲+':'▼'}${diff}pp</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <div style="font-size:10px;color:var(--muted);width:42px;">Mock 1</div>
+          <div style="flex:1;background:#f0f4f8;border-radius:3px;height:11px;">
+            <div style="width:${p1}%;height:100%;background:var(--navy);border-radius:3px;"></div>
+          </div>
+          <div style="font-size:10px;font-weight:700;color:var(--navy);width:30px;text-align:right;">${p1}%</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="font-size:10px;color:var(--muted);width:42px;">Mock 2</div>
+          <div style="flex:1;background:#f0f4f8;border-radius:3px;height:11px;">
+            <div style="width:${p2}%;height:100%;background:${color};border-radius:3px;"></div>
+          </div>
+          <div style="font-size:10px;font-weight:700;width:30px;text-align:right;color:${color};">${p2}%</div>
+        </div>
+      </div>`;
+    });
+    document.getElementById(containerId).innerHTML=html;
+  }
+  emProgress(pp,'pp-em','var(--pp)');
+  emProgress(send,'send-em','var(--send)');
+}
+
+// ─── MODAL ───────────────────────────────────
+function openModal(name){
+  const s=STUDENTS.find(st=>st.name===name);if(!s)return;
+  document.getElementById('modal-name').textContent=name;
+  const flags=[(s.pp?'<span class="badge badge-pp">PP</span>':''),
+    (s.send?'<span class="badge badge-send">SEND</span>':''),
+    `<span class="badge ${s.gender==='Female'?'badge-girl':'badge-boy'}">${s.gender}</span>`].join('');
+  document.getElementById('modal-flags').innerHTML=flags;
+  let ghtml='<tr style="background:#f0f4f8;"><th style="padding:5px 8px;text-align:left;font-size:10px;text-transform:uppercase;color:var(--muted);">Subject</th><th style="padding:5px 8px;text-align:center;font-size:10px;text-transform:uppercase;color:var(--muted);">M1</th><th style="padding:5px 8px;text-align:center;font-size:10px;text-transform:uppercase;color:var(--muted);">M2</th><th style="padding:5px 8px;text-align:right;font-size:10px;text-transform:uppercase;color:var(--muted);">Δ</th></tr>';
+  for(const[subj,d] of Object.entries(s.subjects)){
+    if(subj==='English Lang'||subj==='English Lit'||subj==='Avg Science') continue;
+    const n1=gradeNum(d.m1),n2=gradeNum(d.m2);
+    const chg=n1===null||n2===null?'<span class="chg chg-na">—</span>':
+      n2-n1>0?`<span class="chg chg-up">▲+${(n2-n1).toFixed(1)}</span>`:
+      n2-n1<0?`<span class="chg chg-dn">▼${(n2-n1).toFixed(1)}</span>`:
+      `<span class="chg chg-eq">=0</span>`;
+    ghtml+=`<tr><td class="modal-tbl" style="padding:6px 8px;border-bottom:1px solid #f0f4f8;">${subj}</td>
+      <td style="padding:6px 8px;text-align:center;border-bottom:1px solid #f0f4f8;">${gradeHTML(d.m1)}</td>
+      <td style="padding:6px 8px;text-align:center;border-bottom:1px solid #f0f4f8;">${gradeHTML(d.m2)}</td>
+      <td style="padding:6px 8px;text-align:right;border-bottom:1px solid #f0f4f8;">${chg}</td></tr>`;
+  }
+  document.getElementById('modal-grades').innerHTML=ghtml;
+  const b=s.behaviour;
+  document.getElementById('modal-beh').innerHTML=`
+    <div class="beh-item"><span>Attendance</span><strong style="color:${(b.Attendance||0)>=95?'var(--improved)':(b.Attendance||0)>=85?'var(--g4)':'var(--declined)'};">${b.Attendance!==null?b.Attendance.toFixed(1)+'%':'—'}</strong></div>
+    <div class="beh-item"><span>Lateness</span><strong>${b.Lateness!==null?b.Lateness.toFixed(1)+'%':'—'}</strong></div>
+    <div class="beh-item"><span>DTAs (Positive Points)</span><strong style="color:var(--g6);">${b.DTAs??'—'}</strong></div>
+    <div class="beh-item"><span>Reroutings (Detentions)</span><strong style="color:var(--g3);">${b.Reroutings??'—'}</strong></div>
+    <div class="beh-item"><span>Navigation (Int. Exclusion)</span><strong style="color:var(--declined);">${b.Navigation??'—'}</strong></div>
+  `;
+  document.getElementById('modal-bg').classList.add('open');
+}
+function closeModal(e){if(e.target===document.getElementById('modal-bg'))document.getElementById('modal-bg').classList.remove('open');}
+
+function openSubjModal(subj){
+  const entries=STUDENTS.filter(s=>s.subjects[subj]&&(s.subjects[subj].m1!==null||s.subjects[subj].m2!==null));
+  if(!entries.length)return;
+  entries.sort((a,b)=>{
+    let v2a=gradeNum(a.subjects[subj].m2)??-1, v2b=gradeNum(b.subjects[subj].m2)??-1;
+    if(v2b!==v2a) return v2b-v2a;
+    let v1a=gradeNum(a.subjects[subj].m1)??-1, v1b=gradeNum(b.subjects[subj].m1)??-1;
+    return v1b-v1a;
+  });
+  document.getElementById('subj-modal-name').textContent=subj+' Students';
+  document.getElementById('subj-modal-stats').textContent=entries.length+' students';
+  let tbody='';
+  entries.forEach(s=>{
+    const flags=(s.pp?'<span class="badge badge-pp">PP</span>':'')+(s.send?'<span class="badge badge-send">SEND</span>':'')+(s.gender==='Female'?'<span class="badge badge-girl">F</span>':'<span class="badge badge-boy">M</span>');
+    const nm=s.name.replace(/'/g,"\\\\'");
+    let oSum=0,oCnt=0;
+    for(const[k,v] of Object.entries(s.subjects)){
+      if(k!==subj&&k!=='Avg Science'&&k!=='English Lang'&&k!=='English Lit'){
+        let val=gradeNum(v.m2);
+        if(val!==null){oSum+=val;oCnt++;}
+      }
+    }
+    const oAvg=oCnt>0?(oSum/oCnt).toFixed(2):'—';
+    tbody+=`<tr>
+      <td><span class="sname" onclick="openModal('${nm}')">${s.name}</span></td>
+      <td>${flags}</td>
+      <td style="text-align:center;">${gradeHTML(s.subjects[subj].m1)}</td>
+      <td style="text-align:center;">${gradeHTML(s.subjects[subj].m2)}</td>
+      <td style="text-align:center;font-weight:600;">${oAvg}</td>
+      <td style="text-align:center;"><button onclick="openModal('${nm}')" style="background:var(--blue);color:white;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:11px;">View</button></td>
+    </tr>`;
+  });
+  document.getElementById('subj-modal-tbody').innerHTML=tbody;
+  document.getElementById('subj-modal-bg').classList.add('open');
+}
+function closeSubjModal(e){if(e.target===document.getElementById('subj-modal-bg'))document.getElementById('subj-modal-bg').classList.remove('open');}
+
+// ─── PRIORITY / BELOW FLOOR ──────────────────
+function buildPriorityCards(){
+  const eg=s=>gradeNum(s.subjects['English Best']?.m2);
+  const mg=s=>gradeNum(s.subjects['Maths']?.m2);
+  const hasEM=s=>eg(s)!==null&&mg(s)!==null;
+  const eligible=STUDENTS.filter(hasEM);
+  const bothBelow=eligible.filter(s=>eg(s)<4&&mg(s)<4);
+  const engOnly=eligible.filter(s=>eg(s)<4&&mg(s)>=4);
+  const mathsOnly=eligible.filter(s=>mg(s)<4&&eg(s)>=4);
+  const ppBelow=bothBelow.filter(s=>s.pp);
+  const sendBelow=bothBelow.filter(s=>s.send);
+  document.getElementById('pri-cards').innerHTML=`
+    <div class="priority-card red"><div class="pc-lbl">Below 4 in Both (M2)</div><div class="pc-val">${bothBelow.length}</div><div class="pc-sub">${Math.round(bothBelow.length/eligible.length*100)}% of cohort with E&amp;M grades</div></div>
+    <div class="priority-card amber"><div class="pc-lbl">Below 4 English only</div><div class="pc-val">${engOnly.length}</div><div class="pc-sub">Maths at 4+ but English below</div></div>
+    <div class="priority-card amber"><div class="pc-lbl">Below 4 Maths only</div><div class="pc-val">${mathsOnly.length}</div><div class="pc-sub">English at 4+ but Maths below</div></div>
+    <div class="priority-card purple"><div class="pc-lbl">PP Below Floor</div><div class="pc-val">${ppBelow.length}</div><div class="pc-sub">of ${bothBelow.length} below floor (both)</div></div>
+    <div class="priority-card tealc"><div class="pc-lbl">SEND Below Floor</div><div class="pc-val">${sendBelow.length}</div><div class="pc-sub">of ${bothBelow.length} below floor (both)</div></div>
+  `;
+}
+function buildPriorityTable(){
+  const mock=document.getElementById('pri-mock').value;
+  const filter=document.getElementById('pri-filter').value;
+  const q=document.getElementById('pri-search').value.toLowerCase();
+  const pp=document.getElementById('pri-pp').value;
+  const send=document.getElementById('pri-send').value;
+  const eg=s=>gradeNum(s.subjects['English Best']?.[mock]);
+  const mg=s=>gradeNum(s.subjects['Maths']?.[mock]);
+  let list=STUDENTS.filter(s=>{
+    const e=eg(s),m=mg(s);
+    if(filter==='both') return e!==null&&m!==null&&e<4&&m<4;
+    if(filter==='eng')  return e!==null&&e<4;
+    if(filter==='maths') return m!==null&&m<4;
+    return (e!==null&&e<4)||(m!==null&&m<4); // any
+  });
+  if(q) list=list.filter(s=>s.name.toLowerCase().includes(q));
+  if(pp==='pp') list=list.filter(s=>s.pp);
+  if(pp==='nonpp') list=list.filter(s=>!s.pp);
+  if(send==='send') list=list.filter(s=>s.send);
+  if(send==='nonsend') list=list.filter(s=>!s.send);
+  list.sort((a,b)=>a.name.localeCompare(b.name));
+  const tbody=document.getElementById('pri-tbody');
+  const noRes=document.getElementById('pri-no');
+  if(!list.length){tbody.innerHTML='';noRes.classList.remove('hidden');return;}
+  noRes.classList.add('hidden');
+  tbody.innerHTML=list.map(s=>{
+    const eb=s.subjects['English Best'],mt=s.subjects['Maths'];
+    const e2=eg(s),m2=mg(s);
+    const eBad=e2!==null&&e2<4,mBad=m2!==null&&m2<4;
+    const status=eBad&&mBad?'<span class="status-badge status-both">Both below 4</span>':
+      eBad?'<span class="status-badge status-eng">English below 4</span>':
+      '<span class="status-badge status-maths">Maths below 4</span>';
+    const net=netChange(s);
+    const chg=net===null?'<span class="chg chg-na">N/A</span>':
+      net>0.1?`<span class="chg chg-up">▲ +${net.toFixed(2)}</span>`:
+      net<-0.1?`<span class="chg chg-dn">▼ ${net.toFixed(2)}</span>`:
+      `<span class="chg chg-eq">= 0</span>`;
+    const flags=(s.pp?'<span class="badge badge-pp">PP</span>':'')+(s.send?'<span class="badge badge-send">SEND</span>':'')+(s.gender==='Female'?'<span class="badge badge-girl">F</span>':'<span class="badge badge-boy">M</span>');
+    const nm=s.name.replace(/'/g,"\\'");
+    return `<tr>
+      <td><span class="sname" onclick="openModal('${nm}')">${s.name}</span></td>
+      <td>${flags}</td>
+      <td>${gradeHTML(eb?.m1)} → ${gradeHTML(eb?.m2)}</td>
+      <td>${gradeHTML(mt?.m1)} → ${gradeHTML(mt?.m2)}</td>
+      <td>${status}</td>
+      <td>${chg}</td>
+    </tr>`;
+  }).join('');
+}
+function buildPriorityPage(){
+  buildPriorityCards();
+  buildPriorityTable();
+}
+
+// ─── INIT ────────────────────────────────────
+function init(){
+  buildOvCards();buildBasicsRow();buildAllDist();buildEMCombined();buildSubj4plus();buildTopImp();
+  filtSt=[...STUDENTS].sort((a,b)=>a.name.localeCompare(b.name));buildStTable();updateStHeaders();
+  buildSubjGrid();
+  buildBehCards();buildScatter();buildBehByGroup();buildBehTable();
+  buildGroupsPage();
+  buildPriorityPage();
+}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
