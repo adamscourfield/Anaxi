@@ -76,13 +76,13 @@ const FEATURES = [
   "STUDENTS_IMPORT",
   "BEHAVIOUR_IMPORT",
   "LEAVE",
-  "LEAVE_OF_ABSENCE",
   "ON_CALL",
   "MEETINGS",
   "TIMETABLE",
   "ADMIN",
   "ADMIN_SETTINGS",
   "ANALYSIS",
+  "ASSESSMENTS",
 ] as const;
 
 const VOCAB_ROWS = [

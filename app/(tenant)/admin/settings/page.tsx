@@ -17,7 +17,6 @@ const FEATURE_FRIENDLY_NAMES: Record<string, string> = {
   STUDENTS_IMPORT: "Student Import",
   BEHAVIOUR_IMPORT: "Behaviour Import",
   LEAVE: "Leave of Absence",
-  LEAVE_OF_ABSENCE: "Leave (Legacy)",
   ON_CALL: "On Call",
   MEETINGS: "Meetings",
   TIMETABLE: "Timetable",
@@ -25,6 +24,7 @@ const FEATURE_FRIENDLY_NAMES: Record<string, string> = {
   ADMIN_SETTINGS: "Admin Settings",
   ANALYSIS: "Analytics & Insights",
   STUDENT_ANALYSIS: "Student Analysis",
+  ASSESSMENTS: "Assessments",
 };
 
 const FEATURE_DESCRIPTIONS: Record<string, string> = {
@@ -34,7 +34,6 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
   STUDENTS_IMPORT: "Student import tooling and mapping workflows.",
   BEHAVIOUR_IMPORT: "Behaviour snapshot and attendance import workflows.",
   LEAVE: "Leave request and approval workflows.",
-  LEAVE_OF_ABSENCE: "Legacy alias for leave module availability.",
   ON_CALL: "On-call request, inbox, and response workflows.",
   MEETINGS: "Meeting agendas, attendees, and actions.",
   TIMETABLE: "Timetable upload and class context enrichment.",
@@ -42,6 +41,7 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
   ADMIN_SETTINGS: "Tenant-level settings and configuration pages.",
   ANALYSIS: "Teacher and school analysis dashboards.",
   STUDENT_ANALYSIS: "Student risk and student-level analysis pages.",
+  ASSESSMENTS: "Assessment cycles, results upload, and attainment reporting.",
 };
 
 export default async function AdminSettingsPage({ searchParams }: { searchParams?: { tab?: string } }) {

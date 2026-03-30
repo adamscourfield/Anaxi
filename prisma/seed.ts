@@ -6,8 +6,8 @@ import { seedDemo } from "./seed.demo";
 const prisma = new PrismaClient();
 const FEATURES = [
   "OBSERVATIONS", "SIGNALS", "STUDENTS", "STUDENTS_IMPORT", "BEHAVIOUR_IMPORT",
-  "LEAVE", "LEAVE_OF_ABSENCE", "ON_CALL", "MEETINGS", "TIMETABLE", "ADMIN", "ADMIN_SETTINGS",
-  "ANALYSIS"
+  "LEAVE", "ON_CALL", "MEETINGS", "TIMETABLE", "ADMIN", "ADMIN_SETTINGS",
+  "ANALYSIS", "ASSESSMENTS"
 ] as const;
 
 async function main() {
