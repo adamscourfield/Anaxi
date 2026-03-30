@@ -65,9 +65,13 @@ export function FormSelect({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`field flex w-full items-center justify-between gap-2 text-left cursor-pointer ${triggerClassName}`}
+        className={`field !flex w-full flex-nowrap items-center justify-between gap-2 text-left cursor-pointer ${triggerClassName}`}
       >
-        <span className={selectedOption ? "text-text truncate" : "text-muted opacity-60 truncate"}>
+        <span
+          className={`min-w-0 flex-1 truncate ${
+            selectedOption ? "text-text" : "text-muted opacity-60"
+          }`}
+        >
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <svg
