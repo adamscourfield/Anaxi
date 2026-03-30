@@ -130,7 +130,30 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <input type="hidden" name="tenantId" value={switchTo} />
+                {switchTo ? (
+                  <input type="hidden" name="tenantId" value={switchTo} />
+                ) : (
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="tenantId"
+                      className="block text-[11px] font-bold tracking-widest uppercase ml-1"
+                      style={{ color: "var(--on-surface-variant)" }}
+                    >
+                      School / tenant ID <span className="font-normal normal-case tracking-normal">(optional)</span>
+                    </label>
+                    <input
+                      id="tenantId"
+                      name="tenantId"
+                      type="text"
+                      placeholder="e.g. tenant_demo"
+                      className="field"
+                      autoComplete="organization"
+                    />
+                    <p className="text-[12px] leading-snug" style={{ color: "var(--on-surface-variant)" }}>
+                      Use <span className="font-mono">tenant_demo</span> for the default seeded database. Leave blank if your email exists in only one school.
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-end">
                   <a
