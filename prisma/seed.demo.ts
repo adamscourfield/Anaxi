@@ -1073,7 +1073,7 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
           yearGroup: "Y11",
           title: `${subject} — Y11 ${point.label}`,
           gradeFormat: "GCSE",
-          createdByUserId: adminUser.id,
+          createdByUserId: admin.id,
         },
       });
 
@@ -1228,7 +1228,7 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
           yearGroup: "Y13",
           title: `${subject} — Y13 ${point.label}`,
           gradeFormat: "A_LEVEL",
-          createdByUserId: adminUser.id,
+          createdByUserId: admin.id,
         },
       });
 
