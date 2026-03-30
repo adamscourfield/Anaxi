@@ -57,7 +57,7 @@ export function ReviewList({
   const sessionLabel = [yearLabel, draft.context.subject].filter(Boolean).join(" — ");
 
   return (
-    <ObservationStageLayout currentStep={3}>
+    <ObservationStageLayout currentStep={3} maxWidthClassName="max-w-6xl">
       <form action={action}>
         {/* Hidden context fields */}
         <input type="hidden" name="observedTeacherId" value={draft.context.teacherId} />
@@ -87,12 +87,12 @@ export function ReviewList({
         </div>
 
         {/* Two-column layout */}
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_340px]">
+        <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[1fr_380px]">
 
           {/* ── Left: Signal Summary ── */}
-          <div className="overflow-hidden rounded-2xl glass-card">
-            <div className="flex items-center justify-between border-b border-border/20 px-6 py-4">
-              <h3 className="text-[0.875rem] font-semibold text-text">Signal Summary</h3>
+          <div className="flex flex-col rounded-2xl bg-surface-container-low p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-[1rem] font-bold text-text">Signal Summary</h3>
               <button
                 type="button"
                 onClick={() => router.push("/observe/new/signals")}
@@ -106,8 +106,7 @@ export function ReviewList({
               </button>
             </div>
 
-            {/* Signal grid — 2 columns on sm+ */}
-            <div className="grid grid-cols-1 sm:grid-cols-2">
+            <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
               {orderedSignals.map((signal, index) => {
                 const state = draft.signalState[signal.key];
                 const displayName = labelMap[signal.key]?.displayName || signal.displayNameDefault;
@@ -115,66 +114,59 @@ export function ReviewList({
                 const display = scaleKey ? SCALE_DISPLAY[scaleKey] : null;
                 const isSkipped = state?.notObserved && !state?.valueKey;
 
-                // Border logic for 2-column grid
-                const total = orderedSignals.length;
-                const isEven = index % 2 === 0; // left column
-                const lastRowStart = total % 2 === 0 ? total - 2 : total - 1;
-                const isLastRow = index >= lastRowStart;
-
                 return (
                   <button
                     key={signal.key}
                     type="button"
                     onClick={() => router.push(`/observe/new/signals?index=${index}`)}
-                    className={[
-                      "group flex items-center justify-between gap-3 px-5 py-3.5 text-left calm-transition hover:bg-surface-container-lowest/50",
-                      !isLastRow ? "border-b border-border/20" : "",
-                      isEven ? "sm:border-r sm:border-border/20" : "",
-                    ].join(" ")}
+                    className="group flex items-center justify-between gap-3 rounded-xl border border-border/15 bg-surface-container-lowest px-4 py-3.5 text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] calm-transition hover:border-border/30 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
                   >
-                    {/* Icon + name */}
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-container-low">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-container">
                         <SignalIcon />
                       </div>
-                      <span className="truncate text-[0.8125rem] font-medium text-text">{displayName}</span>
+                      <div className="min-w-0">
+                        <p className="text-[0.625rem] font-bold uppercase tracking-[0.08em] text-muted">
+                          {displayName}
+                        </p>
+                        <p className="mt-0.5 truncate text-[0.875rem] font-bold text-text">
+                          {display ? display.label : isSkipped ? "Skipped" : "Pending"}
+                        </p>
+                      </div>
                     </div>
-
-                    {/* Rating indicator */}
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      <span className={`h-2 w-2 rounded-full ${
-                        display ? display.dot :
-                        isSkipped ? "bg-outline-variant" :
-                        "bg-surface-container-high"
-                      }`} />
-                      <span className={`text-[0.75rem] font-semibold ${
-                        display ? display.text :
-                        isSkipped ? "text-muted" :
-                        "text-muted"
-                      }`}>
-                        {display ? display.label : isSkipped ? "Skipped" : "Pending"}
-                      </span>
-                    </div>
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full ${
+                        display ? display.dot : isSkipped ? "bg-outline-variant" : "bg-surface-container-high"
+                      }`}
+                      aria-hidden
+                    />
                   </button>
                 );
               })}
+            </div>
+
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-[#e8c4c4] bg-[#fff0f0] px-4 py-3">
+              <span
+                className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#c94a4a] text-[0.625rem] font-bold text-white"
+                aria-hidden
+              >
+                i
+              </span>
+              <p className="text-[0.8125rem] leading-relaxed text-[#5c3d3d]">
+                Once submitted, this observation will be locked for 24 hours while the Ledger processes the institutional
+                confidence score. You may request a correction link via support if required.
+              </p>
             </div>
           </div>
 
           {/* ── Right: Concluding Notes + Context + Actions ── */}
           <div className="flex flex-col gap-4">
-            <div className="overflow-hidden rounded-2xl glass-card">
-              {/* Textarea */}
-              <div className="px-6 pt-5 pb-4">
-                <label className="block text-[0.875rem] font-semibold text-text">
-                  Concluding Notes
-                </label>
-                <p className="mt-0.5 text-[0.75rem] text-muted">
-                  Enter final reflections on the observation session, identifying key strengths and immediate areas for intervention.
-                </p>
+            <div className="flex flex-1 flex-col rounded-2xl bg-surface-container-low p-5 shadow-sm">
+              <h3 className="text-[1rem] font-bold text-text">Concluding Notes</h3>
+              <div className="mt-4 flex flex-1 flex-col rounded-xl border border-border/15 bg-surface-container-lowest p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
                 <textarea
                   name="contextNote"
-                  className="field mt-3 min-h-[120px] resize-y"
+                  className="field min-h-[140px] flex-1 resize-y border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
                   placeholder="Enter final reflections on the observation session, identifying key strengths and immediate areas for intervention…"
                   rows={5}
                   value={draft.context.contextNote}
@@ -184,29 +176,26 @@ export function ReviewList({
                     persistDraft(draftKey, next);
                   }}
                 />
-                <div className="mt-2 flex items-center justify-end">
-                  <span className="text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">
+                <div className="mt-3 flex justify-end border-t border-border/10 pt-3">
+                  <span className="rounded border border-border/50 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">
                     Required
                   </span>
                 </div>
               </div>
 
-              {/* Session context */}
-              <div className="border-t border-border/20 px-6 py-4">
-                <p className="mb-2.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">
-                  Session Context
-                </p>
-                <div className="space-y-2">
+              <div className="mt-4 rounded-xl border border-border/15 bg-surface-container-lowest p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                <p className="mb-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">Session Context</p>
+                <div className="space-y-2.5">
                   {sessionLabel && (
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="text-[0.75rem] text-muted">Class</span>
-                      <span className="text-right text-[0.75rem] font-semibold text-text">{sessionLabel}</span>
+                    <div className="flex items-baseline justify-between gap-4">
+                      <span className="text-[0.8125rem] text-muted">Class</span>
+                      <span className="text-right text-[0.8125rem] font-semibold text-text">{sessionLabel}</span>
                     </div>
                   )}
                   {draft.context.observedAt && (
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="text-[0.75rem] text-muted">Date</span>
-                      <span className="text-right text-[0.75rem] font-semibold text-text">
+                    <div className="flex items-baseline justify-between gap-4">
+                      <span className="text-[0.8125rem] text-muted">Date</span>
+                      <span className="text-right text-[0.8125rem] font-semibold text-text">
                         {new Date(draft.context.observedAt).toLocaleDateString("en-GB", {
                           day: "numeric",
                           month: "short",
@@ -215,9 +204,9 @@ export function ReviewList({
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-[0.75rem] text-muted">Signals rated</span>
-                    <span className="text-right text-[0.75rem] font-semibold text-text">
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="text-[0.8125rem] text-muted">Signals rated</span>
+                    <span className="text-right text-[0.8125rem] font-semibold text-text">
                       {rated} rated{skipped > 0 ? `, ${skipped} skipped` : ""}
                     </span>
                   </div>
@@ -230,10 +219,10 @@ export function ReviewList({
               <button
                 type="submit"
                 disabled={!allDone}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-[0.875rem] font-semibold text-on-primary shadow-sm calm-transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-container px-6 py-3.5 text-[0.875rem] font-semibold text-on-primary shadow-sm calm-transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="20 6 9 17 4 12" />
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                 </svg>
                 Submit Observation
               </button>
@@ -241,7 +230,7 @@ export function ReviewList({
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="flex w-full items-center justify-center gap-2 text-[0.875rem] font-medium text-muted calm-transition hover:text-text"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/30 bg-surface-container px-6 py-3.5 text-[0.875rem] font-medium text-text calm-transition hover:bg-surface-container-high"
               >
                 <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
                   <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />

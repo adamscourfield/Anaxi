@@ -9,12 +9,15 @@ const STEPS = [
 export function ObservationStageLayout({
   currentStep,
   children,
+  maxWidthClassName = "max-w-4xl",
 }: {
   currentStep: 1 | 2 | 3;
   children: React.ReactNode;
+  /** Wider layout for review step two-column content */
+  maxWidthClassName?: string;
 }) {
   return (
-    <div className="mx-auto max-w-4xl pb-12">
+    <div className={`mx-auto pb-12 ${maxWidthClassName}`}>
       {/* Breadcrumb */}
       <div className="mb-1">
         <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
