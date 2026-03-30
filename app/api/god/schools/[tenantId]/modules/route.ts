@@ -9,7 +9,6 @@ const ALLOWED_MODULES = new Set([
   "STUDENTS_IMPORT",
   "BEHAVIOUR_IMPORT",
   "LEAVE",
-  "LEAVE_OF_ABSENCE",
   "ON_CALL",
   "MEETINGS",
   "TIMETABLE",
@@ -17,6 +16,7 @@ const ALLOWED_MODULES = new Set([
   "ADMIN_SETTINGS",
   "ANALYSIS",
   "STUDENT_ANALYSIS",
+  "ASSESSMENTS",
 ]);
 
 export async function POST(req: Request, { params }: { params: { tenantId: string } }) {

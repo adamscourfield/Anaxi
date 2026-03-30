@@ -6,7 +6,6 @@ export type FeatureKey =
   | "STUDENTS_IMPORT"
   | "BEHAVIOUR_IMPORT"
   | "LEAVE"
-  | "LEAVE_OF_ABSENCE"
   | "ON_CALL"
   | "MEETINGS"
   | "TIMETABLE"

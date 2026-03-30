@@ -16,9 +16,10 @@ const ALL_MODULES = [
   { key: "BEHAVIOUR_IMPORT", label: "Behaviour Import" },
   { key: "ON_CALL", label: "On Call" },
   { key: "MEETINGS", label: "Meetings" },
-  { key: "LEAVE_OF_ABSENCE", label: "Leave of Absence" },
+  { key: "LEAVE", label: "Leave of Absence" },
   { key: "TIMETABLE", label: "Timetable" },
   { key: "ADMIN_SETTINGS", label: "Admin Settings" },
+  { key: "ASSESSMENTS", label: "Assessments" },
 ] as const;
 
 const BEHAVIOUR_FIELDS = [

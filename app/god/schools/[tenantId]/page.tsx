@@ -14,7 +14,6 @@ const MODULES = [
   "STUDENTS_IMPORT",
   "BEHAVIOUR_IMPORT",
   "LEAVE",
-  "LEAVE_OF_ABSENCE",
   "ON_CALL",
   "MEETINGS",
   "TIMETABLE",
@@ -22,6 +21,7 @@ const MODULES = [
   "ADMIN_SETTINGS",
   "ANALYSIS",
   "STUDENT_ANALYSIS",
+  "ASSESSMENTS",
 ] as const;
 
 export default async function SchoolDetailPage({ params, searchParams }: { params: { tenantId: string }, searchParams?: { invite?: string } }) {
