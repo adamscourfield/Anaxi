@@ -13,6 +13,8 @@ interface FormSelectProps {
   defaultValue?: string;
   placeholder?: string;
   className?: string;
+  /** Extra classes for the trigger button (e.g. background overrides) */
+  triggerClassName?: string;
   searchable?: boolean;
   onChange?: (value: string) => void;
 }
@@ -23,6 +25,7 @@ export function FormSelect({
   defaultValue = "",
   placeholder = "Select…",
   className = "",
+  triggerClassName = "",
   searchable = false,
   onChange,
 }: FormSelectProps) {
@@ -62,7 +65,7 @@ export function FormSelect({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="field flex w-full items-center justify-between gap-2 text-left cursor-pointer"
+        className={`field flex w-full items-center justify-between gap-2 text-left cursor-pointer ${triggerClassName}`}
       >
         <span className={selectedOption ? "text-text truncate" : "text-muted opacity-60 truncate"}>
           {selectedOption ? selectedOption.label : placeholder}

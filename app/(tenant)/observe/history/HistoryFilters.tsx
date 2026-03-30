@@ -26,31 +26,39 @@ export function HistoryFilters({
   showTeacherFilters,
   hasFilters,
 }: HistoryFiltersProps) {
+  const triggerWhite = "!bg-surface-container-lowest rounded-[10px]";
+
   return (
-    <div className="filter-bar">
-      <form className="flex flex-wrap items-end gap-4 w-full">
+    <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-sm md:p-6">
+      <form
+        method="get"
+        action="/observe/history"
+        className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4"
+      >
         {showTeacherFilters && (
           <>
-            <label className="flex flex-col gap-1.5 min-w-[140px]">
+            <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
               <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Teacher</span>
               <FormSelect
                 name="teacherId"
                 defaultValue={defaults.teacherId}
                 placeholder="All Teachers"
                 searchable
+                triggerClassName={triggerWhite}
                 options={[
                   { value: "", label: "All Teachers" },
                   ...teachers.map((t) => ({ value: t.id, label: t.fullName })),
                 ]}
               />
             </label>
-            <label className="flex flex-col gap-1.5 min-w-[140px]">
+            <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
               <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Observer</span>
               <FormSelect
                 name="observerId"
                 defaultValue={defaults.observerId}
                 placeholder="All Observers"
                 searchable
+                triggerClassName={triggerWhite}
                 options={[
                   { value: "", label: "All Observers" },
                   ...observers.map((o) => ({ value: o.id, label: o.fullName })),
@@ -59,37 +67,43 @@ export function HistoryFilters({
             </label>
           </>
         )}
-        <label className="flex flex-col gap-1.5 min-w-[140px]">
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Subject / Year</span>
           <FormSelect
             name="subject"
             defaultValue={defaults.subject}
             placeholder="All Curricula"
+            triggerClassName={triggerWhite}
             options={[
               { value: "", label: "All Curricula" },
               ...subjects.map((s) => ({ value: s, label: s })),
             ]}
           />
         </label>
-        <label className="flex flex-col gap-1.5">
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">From Date</span>
-          <input name="from" type="date" defaultValue={defaults.from} className="field" />
+          <input
+            name="from"
+            type="date"
+            defaultValue={defaults.from}
+            className={`field ${triggerWhite}`}
+          />
         </label>
-        <label className="flex flex-col gap-1.5">
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">To Date</span>
-          <input name="to" type="date" defaultValue={defaults.to} className="field" />
+          <input name="to" type="date" defaultValue={defaults.to} className={`field ${triggerWhite}`} />
         </label>
-        <div className="flex items-end gap-2 ml-auto">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
           <button
             type="submit"
-            className="rounded-lg bg-primary px-5 py-2 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:opacity-90"
+            className="field flex w-full items-center justify-center border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
           >
             Apply Filters
           </button>
           {hasFilters && (
             <Link
               href="/observe/history"
-              className="rounded-lg border border-border/40 bg-surface-container-lowest px-4 py-2 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text"
+              className="field flex w-full items-center justify-center border border-border/40 bg-surface-container-lowest py-2.5 text-center text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[100px] lg:w-auto"
             >
               Clear
             </Link>
