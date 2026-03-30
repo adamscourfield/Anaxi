@@ -113,24 +113,22 @@ export default async function CpdSignalDrilldownPage({
       {/* Window selector */}
       <div className="flex items-center gap-2">
         <MetaText className="mr-1">Window:</MetaText>
-        {WINDOW_OPTIONS.map((w) => {
-          const p = new URLSearchParams();
-          p.set("window", String(w));
-          if (departmentId) p.set("department", departmentId);
-          return (
-            <Link
-              key={w}
-              href={`/analysis/cpd/${signalKey}?${p.toString()}`}
-              className={`calm-transition rounded-lg border px-4 py-2 text-sm font-medium transition duration-200 ease-calm ${
-                w === windowDays
-                  ? "border-accent bg-[var(--accent-tint)] text-text"
-                  : "border-border bg-surface text-text hover:border-accentHover"
-              }`}
-            >
-              {w} days
-            </Link>
-          );
-        })}
+        <div className="segmented-toggle">
+          {WINDOW_OPTIONS.map((w) => {
+            const p = new URLSearchParams();
+            p.set("window", String(w));
+            if (departmentId) p.set("department", departmentId);
+            return (
+              <Link
+                key={w}
+                href={`/analysis/cpd/${signalKey}?${p.toString()}`}
+                className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}
+              >
+                {w} days
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* Summary metrics card */}

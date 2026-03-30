@@ -73,7 +73,7 @@ export function MyActionsGrouped({ grouped: initial, currentUserId }: MyActionsG
   return (
     <div className="space-y-4">
       {/* Tab bar */}
-      <div className="flex items-center gap-1 rounded-lg border border-border bg-surface-container-lowest p-1 shadow-sm">
+      <div className="segmented-toggle">
         {TABS.map((tab) => {
           const count = countForTab(tab);
           const isActive = activeTab === tab;
@@ -81,17 +81,13 @@ export function MyActionsGrouped({ grouped: initial, currentUserId }: MyActionsG
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`calm-transition flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-[0.8125rem] font-medium ${
-                isActive
-                  ? "bg-[var(--accent-tint)] text-accent shadow-sm"
-                  : "text-muted hover:text-text"
-              }`}
+              className={`segmented-toggle-btn flex items-center gap-1.5 ${isActive ? "segmented-toggle-btn-active" : ""}`}
             >
               {tab !== "All" && (
                 <span className={`h-1.5 w-1.5 rounded-full ${isActive ? TAB_DOT[tab] : "bg-border"}`} />
               )}
               {tab}
-              <span className={`text-[0.6875rem] tabular-nums ${isActive ? "text-accent/70" : "text-muted/70"}`}>
+              <span className={`text-[0.6875rem] tabular-nums ${isActive ? "text-on-surface/50" : "text-muted/70"}`}>
                 {count}
               </span>
             </button>

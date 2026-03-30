@@ -112,19 +112,17 @@ export default async function TeacherProfilePage({
       {/* Window selector */}
       <div className="flex items-center gap-2">
         <MetaText className="mr-1">Window:</MetaText>
-        {WINDOW_OPTIONS.map((w) => (
-          <Link
-            key={w}
-            href={`/analysis/teachers/${teacherId}?window=${w}`}
-            className={`calm-transition rounded-lg border px-4 py-2 text-sm font-medium transition duration-200 ease-calm ${
-              w === windowDays
-                ? "border-accent bg-[var(--accent-tint)] text-text"
-                : "border-border bg-surface text-text hover:border-accentHover"
-            }`}
-          >
-            {w} days
-          </Link>
-        ))}
+        <div className="segmented-toggle">
+          {WINDOW_OPTIONS.map((w) => (
+            <Link
+              key={w}
+              href={`/analysis/teachers/${teacherId}?window=${w}`}
+              className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}
+            >
+              {w} days
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Signal table */}

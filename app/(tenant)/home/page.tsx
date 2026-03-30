@@ -54,18 +54,72 @@ function roleVariant(role: UserRole): "leadership" | "hod" | "teacher" {
   return "teacher";
 }
 
+function leaveGovernanceQuarterLabel(): string {
+  const month = new Date().getMonth();
+  const quarter = Math.floor(month / 3) + 1;
+  return `Q${quarter}`;
+}
+
+function leaveSubmissionLabel(createdAt: string): string {
+  const d = new Date(createdAt);
+  const today = new Date();
+  const sameDay =
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate();
+  if (sameDay) return "Today";
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+const LEAVE_SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+
+function leaveDateRangeLabel(startDate: string, endDate: string): string {
+  const s = new Date(startDate);
+  const e = new Date(endDate);
+  const same =
+    s.getFullYear() === e.getFullYear() &&
+    s.getMonth() === e.getMonth() &&
+    s.getDate() === e.getDate();
+  const mon = (d: Date) => LEAVE_SHORT_MONTHS[d.getMonth()];
+  if (same) return `${mon(s)} ${s.getDate()}`;
+  const sameMonth = s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth();
+  if (sameMonth) return `${mon(s)} ${s.getDate()} - ${e.getDate()}`;
+  return `${mon(s)} ${s.getDate()} - ${mon(e)} ${e.getDate()}`;
+}
+
+function LeaveCalendarIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  );
+}
+
+function LeaveCloseIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+function LeaveCheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  );
+}
+
 function WindowSelector({ windowDays }: { windowDays: number }) {
   return (
-    <div className="flex items-center rounded-lg border border-border bg-surface-container-lowest p-1 shadow-sm">
+    <div className="segmented-toggle">
       {[7, 14, 21, 28].map((w) => (
         <Link
           key={w}
           href={`/home?window=${w}`}
-          className={`rounded-md px-3 py-1 text-[0.75rem] font-medium calm-transition ${
-            windowDays === w
-              ? "bg-accent text-on-primary shadow-sm"
-              : "text-muted hover:text-text"
-          }`}
+          className={`segmented-toggle-btn ${windowDays === w ? "segmented-toggle-btn-active" : ""}`}
         >
           {w}d
         </Link>
@@ -268,66 +322,107 @@ function LeadershipHome({
 
       {/* ═══ Hero Section 2: Leave Governance ═══ */}
       {hasLeaveFeature && (
-        <section>
-          <Card className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-[1.1rem] font-bold tracking-[-0.01em] text-text">Leave Governance</h2>
-                <p className="mt-0.5 text-[13px] text-muted">Pending administrative approvals</p>
-              </div>
-              <Link href="/leave/pending" className="text-[0.8rem] font-medium text-text underline decoration-text/30 underline-offset-2 calm-transition hover:decoration-text">View All Requests →</Link>
+        <section className="rounded-xl bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] p-6 shadow-inner ring-1 ring-[var(--outline-variant)]/10 sm:p-8">
+          <div
+            className={`flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${pendingLeaveDetails.length > 0 ? "mb-8" : "mb-4"}`}
+          >
+            <div>
+              <h2 className="text-2xl font-bold tracking-[-0.02em] text-text">Leave Governance</h2>
+              <p className="mt-1 text-sm text-muted">
+                Pending administrative approvals for {leaveGovernanceQuarterLabel()}
+              </p>
             </div>
-            {pendingLeaveDetails.length === 0 ? (
-              <MetaText>No pending leave requests.</MetaText>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {pendingLeaveDetails.map((leave) => {
-                  const reasonUpper = (leave.reasonLabel ?? "PERSONAL").toUpperCase();
-                  const isEmergency = reasonUpper.includes("EMERGENCY") || reasonUpper.includes("URGENT");
-                  const isCpd = reasonUpper.includes("CPD") || reasonUpper.includes("TRAINING");
-                  const pillVariant: PillVariant = isEmergency ? "error" : isCpd ? "accent" : "neutral";
-                  return (
-                    <Link
-                      key={leave.id}
-                      href={`/leave/${leave.id}`}
-                      className={`block rounded-2xl border p-4 calm-transition hover:shadow-md hover:bg-[var(--surface-container-low)] ${isEmergency ? "border-[var(--pill-error-ring)]" : "border-border/60"}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <StatusPill variant={pillVariant} size="sm">
-                          {leave.reasonLabel?.toUpperCase() ?? "PERSONAL"}
-                        </StatusPill>
-                        <span className="text-[11px] text-muted">
-                          Sub: {new Date(leave.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+            <Link
+              href="/leave/pending"
+              className="group inline-flex shrink-0 items-center gap-1 text-sm font-bold text-text calm-transition hover:opacity-80"
+            >
+              View All Requests
+              <span className="inline-block transition-transform group-hover:translate-x-0.5" aria-hidden>
+                →
+              </span>
+            </Link>
+          </div>
+          {pendingLeaveDetails.length === 0 ? (
+            <MetaText>No pending leave requests.</MetaText>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {pendingLeaveDetails.map((leave) => {
+                const reasonUpper = (leave.reasonLabel ?? "PERSONAL").toUpperCase();
+                const isEmergency = reasonUpper.includes("EMERGENCY") || reasonUpper.includes("URGENT");
+                const isCpd = reasonUpper.includes("CPD") || reasonUpper.includes("TRAINING");
+                const pillVariant: PillVariant = isEmergency ? "error" : isCpd ? "accent" : "neutral";
+                const rangeLabel = leaveDateRangeLabel(leave.startDate, leave.endDate);
+                return (
+                  <article
+                    key={leave.id}
+                    className={`flex flex-col rounded-xl bg-surface-container-lowest p-5 shadow-sm transition-shadow hover:shadow-md ${
+                      isEmergency
+                        ? "border border-[var(--outline-variant)]/15 border-l-4 border-l-[#6b1619]"
+                        : "border border-[var(--outline-variant)]/15"
+                    }`}
+                  >
+                    <Link href={`/leave/${leave.id}`} className="block min-w-0 flex-1 calm-transition">
+                      <div className="flex items-start justify-between gap-2">
+                        {isEmergency ? (
+                          <span className="inline-flex items-center rounded-full bg-[#3d060b] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#fecdd3]">
+                            {leave.reasonLabel?.toUpperCase() ?? "EMERGENCY"}
+                          </span>
+                        ) : isCpd ? (
+                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700 ring-1 ring-inset ring-blue-100">
+                            {leave.reasonLabel?.toUpperCase() ?? "CPD TRAINING"}
+                          </span>
+                        ) : (
+                          <StatusPill variant={pillVariant} size="sm" className="!rounded-full !text-[10px] !font-bold !uppercase !tracking-wide">
+                            {leave.reasonLabel?.toUpperCase() ?? "PERSONAL"}
+                          </StatusPill>
+                        )}
+                        <span className="shrink-0 text-[10px] font-medium text-muted">
+                          Sub: {leaveSubmissionLabel(leave.createdAt)}
                         </span>
                       </div>
-                      <p className="mt-3 text-sm font-semibold text-text">{leave.requesterName}</p>
-                      {leave.notes && (
-                        <p className="mt-0.5 text-xs italic text-muted">&ldquo;{leave.notes}&rdquo;</p>
+                      <p className="mt-4 text-sm font-bold text-text">{leave.requesterName}</p>
+                      {leave.notes ? (
+                        <p className="mt-1 text-xs italic text-muted">&ldquo;{leave.notes}&rdquo;</p>
+                      ) : (
+                        <p className="mt-1 text-xs italic text-muted opacity-60">No reason provided.</p>
                       )}
-                      <div className="mt-4 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs text-muted">
-                          <span>📅</span>
-                          {new Date(leave.startDate).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}
-                          {" – "}
-                          {new Date(leave.endDate).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}
-                        </div>
-                        {isEmergency ? (
-                          <Link href="/leave/pending" className="rounded-lg border border-text bg-surface-container-lowest px-3 py-1 text-[11px] font-semibold text-text calm-transition hover:bg-[var(--surface-container-low)]">
-                            APPROVE NOW
-                          </Link>
-                        ) : (
-                          <div className="flex gap-2">
-                            <Link href="/leave/pending" aria-label={`Deny leave for ${leave.requesterName}`} className="text-[var(--error)] calm-transition hover:opacity-70">✕</Link>
-                            <Link href="/leave/pending" aria-label={`Approve leave for ${leave.requesterName}`} className="text-positive calm-transition hover:opacity-70">✓</Link>
-                          </div>
-                        )}
-                      </div>
                     </Link>
-                  );
-                })}
-              </div>
-            )}
-          </Card>
+                    <div className="mt-4 flex items-center justify-between border-t border-[var(--outline-variant)]/15 pt-4">
+                      <div className="flex items-center gap-2 text-xs font-medium">
+                        <LeaveCalendarIcon className="shrink-0 text-muted" />
+                        <span className={isEmergency ? "text-[#c06c6c]" : "text-muted"}>{rangeLabel}</span>
+                      </div>
+                      {isEmergency ? (
+                        <Link
+                          href="/leave/pending"
+                          className="shrink-0 rounded bg-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-on-primary calm-transition hover:bg-[var(--accent-hover)]"
+                        >
+                          APPROVE NOW
+                        </Link>
+                      ) : (
+                        <div className="flex shrink-0 gap-1">
+                          <Link
+                            href="/leave/pending"
+                            aria-label={`Deny leave for ${leave.requesterName}`}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#c06c6c] calm-transition hover:bg-red-50"
+                          >
+                            <LeaveCloseIcon />
+                          </Link>
+                          <Link
+                            href="/leave/pending"
+                            aria-label={`Approve leave for ${leave.requesterName}`}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-positive calm-transition hover:bg-emerald-50"
+                          >
+                            <LeaveCheckIcon />
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 
@@ -511,16 +606,12 @@ function HodHome({
       </div>
 
       {allDepts.length > 1 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="segmented-toggle">
           {allDepts.map((d) => (
             <Link
               key={d.id}
               href={`/home?dept=${d.id}&window=${windowDays}`}
-              className={`rounded-full border px-3 py-1 text-xs calm-transition ${
-                d.id === activeDeptId
-                  ? "border-accent bg-[var(--accent-tint)] font-medium text-accent"
-                  : "border-border text-muted hover:border-accent/40 hover:text-text"
-              }`}
+              className={`segmented-toggle-btn ${d.id === activeDeptId ? "segmented-toggle-btn-active" : ""}`}
             >
               {d.name}
             </Link>

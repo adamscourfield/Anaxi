@@ -89,7 +89,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     <Link
       key={value}
       href={`/admin/settings?tab=${value}`}
-      className={`rounded-lg border px-3 py-1.5 text-sm calm-transition ${tab === value ? "border-transparent bg-primary text-on-primary" : "border-border bg-surface text-text hover:bg-bg/80"}`}
+      className={`segmented-toggle-btn ${tab === value ? "segmented-toggle-btn-active" : ""}`}
     >
       {label}
     </Link>
@@ -100,7 +100,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
       <Link href="/admin" className="text-xs text-accent hover:underline">← Back to Admin</Link>
       <PageHeader title="Platform" subtitle="Configure school metadata, thresholds, and module availability." />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="segmented-toggle">
         {tabLink("school", "School settings")}
         {tabLink("modules", "Modules")}
       </div>
