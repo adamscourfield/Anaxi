@@ -23,10 +23,10 @@ const STATUS_BADGE: Record<string, string> = {
 export default async function AssessmentResultsPage({
   params,
 }: {
-  params: { assessmentId: string };
+  params: { id: string };
 }) {
   const user = await getSessionUserOrThrow();
-  const { assessmentId } = params;
+  const assessmentId = params.id;
 
   const assessment = await prisma.assessment.findFirst({
     where: { id: assessmentId, tenantId: user.tenantId },
