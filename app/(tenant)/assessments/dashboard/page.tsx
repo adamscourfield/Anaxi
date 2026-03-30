@@ -336,7 +336,7 @@ export default async function AssessmentDashboardPage({
                           <td key={yg} className="py-2 pr-2 text-center">
                             {cell ? (
                               <Link
-                                href={`/assessments/${cell.assessmentId}/results`}
+                                href={`/assessments/results/${cell.assessmentId}`}
                                 className={`inline-flex items-center justify-center rounded-lg px-2 py-1 text-xs font-semibold tabular-nums transition-opacity hover:opacity-80 ${heatColour(cell.mean)}`}
                                 title={`${subject} · ${yg}: ${cell.count} results`}
                               >

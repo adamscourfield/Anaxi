@@ -74,7 +74,7 @@ export default async function AssessmentResultsPage({
           subtitle={`${assessment.subject} · ${assessment.yearGroup} · ${assessment.point.cycle.label} / ${assessment.point.label} · ${FORMAT_LABELS[assessment.gradeFormat]}`}
         />
         <Link
-          href={`/assessments/${assessmentId}/results`}
+          href={`/assessments/results/${assessmentId}`}
           className="text-sm text-accent"
         >
           ← Back

@@ -161,7 +161,7 @@ export default function AssessmentUploadPage() {
             )}
           </div>
           <div className="flex gap-3">
-            <Button onClick={() => router.push(`/assessments/${assessmentId}/results`)}>
+            <Button onClick={() => router.push(`/assessments/results/${assessmentId}`)}>
               View results
             </Button>
             <Button variant="ghost" onClick={() => router.push("/assessments")}>
