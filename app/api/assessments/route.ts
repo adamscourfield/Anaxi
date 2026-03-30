@@ -45,17 +45,22 @@ export async function POST(req: Request) {
 
   const validFormats: GradeFormat[] = ["GCSE", "A_LEVEL", "PERCENTAGE", "RAW"];
   if (!validFormats.includes(gradeFormat)) {
-    return NextResponse.json({ error: `Invalid gradeFormat. Must be one of: ${validFormats.join(", ")}` }, { status: 400 });
+    return NextResponse.json(
+      { error: `Invalid gradeFormat. Must be one of: ${validFormats.join(", ")}` },
+      { status: 400 }
+    );
   }
   if (gradeFormat === "RAW" && !maxScore) {
-    return NextResponse.json({ error: "maxScore is required for RAW format assessments" }, { status: 400 });
+    return NextResponse.json(
+      { error: "maxScore is required for RAW format assessments" },
+      { status: 400 }
+    );
   }
 
-  // Verify point belongs to tenant
   const point = await prisma.assessmentPoint.findFirst({
     where: { id: pointId, tenantId: user.tenantId },
   });
-  if (!point) return NextResponse.json({ error: "Assessment point not found" }, { status: 404 });
+  if (!point) return NextResponse.json({ error: "Result point not found" }, { status: 404 });
 
   const assessment = await createAssessment({
     tenantId: user.tenantId,

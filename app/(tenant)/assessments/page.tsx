@@ -3,8 +3,42 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
-import { SectionHeader } from "@/components/ui/section-header";
 import Link from "next/link";
+import type { QualificationType, PointType } from "@prisma/client";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const QUAL_LABELS: Record<QualificationType, string> = {
+  GCSE: "GCSE",
+  A_LEVEL: "A Level",
+  VOCATIONAL: "Vocational",
+  OTHER: "Other",
+};
+
+const QUAL_COLOURS: Record<QualificationType, string> = {
+  GCSE: "bg-blue-100 text-blue-700",
+  A_LEVEL: "bg-violet-100 text-violet-700",
+  VOCATIONAL: "bg-emerald-100 text-emerald-700",
+  OTHER: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
+};
+
+function totalEntries(cycle: {
+  points: Array<{ assessments: Array<{ entryCount: number }> }>;
+}): number {
+  return cycle.points.reduce(
+    (s, p) => s + p.assessments.reduce((ss, a) => ss + a.entryCount, 0),
+    0
+  );
+}
+
+function totalSubjects(cycle: {
+  points: Array<{ assessments: Array<unknown> }>;
+}): number {
+  const subjects = new Set<string>();
+  return cycle.points.reduce((s, p) => s + p.assessments.length, 0);
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default async function AssessmentsPage() {
   const user = await getSessionUserOrThrow();
@@ -16,204 +50,162 @@ export default async function AssessmentsPage() {
       points: {
         orderBy: { ordinal: "asc" },
         include: {
-          _count: { select: { assessments: true } },
+          assessments: {
+            select: { subject: true, entryCount: true, matchedStudentCount: true },
+          },
         },
       },
     },
     orderBy: [{ isActive: "desc" }, { startDate: "desc" }],
   });
 
-  const activeCycle = cycles.find((c) => c.isActive) ?? cycles[0] ?? null;
-
-  // Get summary stats for active cycle
-  let totalAssessments = 0;
-  let totalResults = 0;
-
-  if (activeCycle) {
-    const assessmentsInCycle = await prisma.assessment.findMany({
-      where: {
-        tenantId: user.tenantId,
-        point: { cycleId: activeCycle.id },
-      },
-      include: { _count: { select: { results: true } } },
-    });
-    totalAssessments = assessmentsInCycle.length;
-    totalResults = assessmentsInCycle.reduce((sum, a) => sum + a._count.results, 0);
-  }
+  const activeCycles = cycles.filter((c) => c.status === "active" && c.isActive);
+  const archivedCycles = cycles.filter((c) => c.status === "archived" || !c.isActive);
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="max-w-5xl space-y-8">
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <PageHeader
-          title="Assessments"
-          subtitle="Track student attainment across subjects and assessment points."
+          title="Attainment Cycles"
+          subtitle="Track cohort-level outcomes across the academic year — from baselines through to final results."
         />
-        <div className="flex gap-2">
+        <Link
+          href="/assessments/new"
+          className="shrink-0 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+        >
+          New cycle
+        </Link>
+      </div>
+
+      {cycles.length === 0 && (
+        <Card className="py-16 text-center">
+          <p className="text-lg font-medium text-[var(--on-surface)]">No attainment cycles yet</p>
+          <p className="mt-2 text-sm text-[var(--on-surface-muted)]">
+            Create a cycle for a cohort to start tracking attainment across the academic year.
+          </p>
           <Link
-            href="/assessments/upload-bulk"
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text hover:bg-surface"
+            href="/assessments/new"
+            className="mt-5 inline-block rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-white"
           >
-            Upload CSV
+            Create your first cycle
           </Link>
-          <Link
-            href="/assessments/adhoc"
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text hover:bg-surface"
-          >
-            Add ad-hoc data
-          </Link>
-          <Link
-            href="/assessments/setup"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
-          >
-            Set up cycle
-          </Link>
+        </Card>
+      )}
+
+      {/* Active cycles */}
+      {activeCycles.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
+            Active
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {activeCycles.map((cycle) => (
+              <CycleCard key={cycle.id} cycle={cycle} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Archived cycles */}
+      {archivedCycles.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
+            Archived
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {archivedCycles.map((cycle) => (
+              <CycleCard key={cycle.id} cycle={cycle} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function CycleCard({ cycle }: {
+  cycle: {
+    id: string;
+    label: string;
+    cohortLabel: string;
+    qualificationType: QualificationType;
+    academicYear: string;
+    isActive: boolean;
+    status: string;
+    points: Array<{
+      id: string;
+      label: string;
+      pointType: PointType;
+      assessments: Array<{ subject: string; entryCount: number; matchedStudentCount: number }>;
+    }>;
+  };
+}) {
+  const entries = totalEntries(cycle);
+  const subjectCount = new Set(cycle.points.flatMap((p) => p.assessments.map((a) => a.subject))).size;
+  const hasData = entries > 0;
+
+  return (
+    <Link
+      href={`/assessments/${cycle.id}`}
+      className="group block rounded-2xl bg-[var(--surface)] p-5 shadow-sm ring-1 ring-[var(--outline-variant)]/30 transition-all hover:ring-[var(--accent)]/40 hover:shadow-md"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${QUAL_COLOURS[cycle.qualificationType]}`}>
+              {QUAL_LABELS[cycle.qualificationType]}
+            </span>
+            {cycle.isActive && cycle.status === "active" && (
+              <span className="rounded-full bg-[var(--success)]/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--success)]">
+                Active
+              </span>
+            )}
+          </div>
+          <h3 className="mt-2 text-base font-semibold text-[var(--on-surface)] group-hover:text-[var(--accent)]">
+            {cycle.label}
+          </h3>
+          {cycle.cohortLabel && (
+            <p className="text-xs text-[var(--on-surface-muted)]">{cycle.cohortLabel}</p>
+          )}
+        </div>
+        <span className="shrink-0 text-sm text-[var(--on-surface-muted)] group-hover:text-[var(--accent)]">
+          →
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        <div className="rounded-xl bg-[var(--surface-container-low)] px-3 py-2">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">
+            Result points
+          </p>
+          <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--on-surface)]">
+            {cycle.points.length}
+          </p>
+        </div>
+        <div className="rounded-xl bg-[var(--surface-container-low)] px-3 py-2">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">
+            Subjects
+          </p>
+          <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--on-surface)]">
+            {subjectCount}
+          </p>
+        </div>
+        <div className="rounded-xl bg-[var(--surface-container-low)] px-3 py-2">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">
+            Entries
+          </p>
+          <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--on-surface)]">
+            {entries.toLocaleString()}
+          </p>
         </div>
       </div>
 
-      {/* Quick-access feature links */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Link
-          href="/assessments/key-measures"
-          className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-accent/30 hover:bg-surface"
-        >
-          <span className="text-sm font-semibold text-text">Key Measures</span>
-          <span className="text-xs text-muted">
-            GCSE Basics, A-Level thresholds, PP &amp; SEND gap analysis
-          </span>
-        </Link>
-        <Link
-          href="/assessments/dashboard"
-          className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-accent/30 hover:bg-surface"
-        >
-          <span className="text-sm font-semibold text-text">Dashboard</span>
-          <span className="text-xs text-muted">
-            Heatmap, distributions and attainment overview across cycles
-          </span>
-        </Link>
-        <Link
-          href="/assessments/compare"
-          className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-accent/30 hover:bg-surface"
-        >
-          <span className="text-sm font-semibold text-text">Compare datasets</span>
-          <span className="text-xs text-muted">
-            Side-by-side stats for any two assessments with delta analysis
-          </span>
-        </Link>
-        <Link
-          href="/assessments/progress"
-          className="flex flex-col gap-1 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-accent/30 hover:bg-surface"
-        >
-          <span className="text-sm font-semibold text-text">Progress tracker</span>
-          <span className="text-xs text-muted">
-            Student score deltas across multiple assessment points
-          </span>
-        </Link>
-      </div>
-
-      {cycles.length === 0 ? (
-        <Card className="py-12 text-center">
-          <p className="text-muted">No assessment cycles yet.</p>
-          <p className="mt-1 text-sm text-muted">
-            <Link href="/assessments/setup" className="text-accent underline underline-offset-2">
-              Create your first assessment cycle
-            </Link>{" "}
-            to get started.
-          </p>
-        </Card>
-      ) : (
-        <>
-          {/* Active cycle summary */}
-          {activeCycle && (
-            <div className="grid grid-cols-3 gap-4">
-              <Card className="space-y-1">
-                <p className="text-xs uppercase tracking-wide text-muted">Active cycle</p>
-                <p className="text-xl font-semibold text-text">{activeCycle.label}</p>
-                <p className="text-xs text-muted">
-                  {activeCycle.points.length} assessment point{activeCycle.points.length !== 1 ? "s" : ""}
-                </p>
-              </Card>
-              <Card className="space-y-1">
-                <p className="text-xs uppercase tracking-wide text-muted">Assessments uploaded</p>
-                <p className="text-xl font-semibold text-text">{totalAssessments}</p>
-              </Card>
-              <Card className="space-y-1">
-                <p className="text-xs uppercase tracking-wide text-muted">Results recorded</p>
-                <p className="text-xl font-semibold text-text">{totalResults.toLocaleString()}</p>
-              </Card>
-            </div>
-          )}
-
-          {/* Cycles list */}
-          <div className="space-y-4">
-            {cycles.map((cycle) => (
-              <Card key={cycle.id} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <SectionHeader title={cycle.label} />
-                    {cycle.isActive && (
-                      <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                  <Link
-                    href={`/assessments/metrics?cycleId=${cycle.id}`}
-                    className="text-sm text-accent"
-                  >
-                    View metrics →
-                  </Link>
-                </div>
-
-                {cycle.points.length === 0 ? (
-                  <p className="text-sm text-muted">No assessment points added yet.</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {cycle.points.map((point) => (
-                      <Link
-                        key={point.id}
-                        href={`/assessments/upload/${cycle.id}/${point.id}`}
-                        className="flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-2 text-sm transition-colors hover:border-accent/30 hover:bg-surface"
-                      >
-                        <span className="font-medium text-text">{point.label}</span>
-                        <span className="text-xs text-muted">
-                          {point._count.assessments} assessment{point._count.assessments !== 1 ? "s" : ""}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            ))}
-          </div>
-
-          <div className="flex gap-3 flex-wrap">
-            <Link
-              href="/assessments/key-measures"
-              className="rounded-lg border border-border px-4 py-2 text-sm text-text hover:bg-surface"
-            >
-              Key Measures →
-            </Link>
-            <Link
-              href="/assessments/dashboard"
-              className="rounded-lg border border-border px-4 py-2 text-sm text-text hover:bg-surface"
-            >
-              Dashboard →
-            </Link>
-            <Link
-              href="/assessments/compare"
-              className="rounded-lg border border-border px-4 py-2 text-sm text-text hover:bg-surface"
-            >
-              Compare datasets →
-            </Link>
-            <Link
-              href="/assessments/metrics"
-              className="rounded-lg border border-border px-4 py-2 text-sm text-text hover:bg-surface"
-            >
-              Metric builder →
-            </Link>
-          </div>
-        </>
+      {!hasData && (
+        <p className="mt-3 text-xs text-[var(--on-surface-muted)]">
+          No results uploaded yet
+        </p>
       )}
-    </div>
+    </Link>
   );
 }

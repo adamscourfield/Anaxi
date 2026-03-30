@@ -1,16 +1,17 @@
 /**
- * POST /api/assessments/bulk-import
+ * POST /api/assessments/points/[pointId]/upload
  *
- * Handles bulk CSV import for an assessment point.
- * The CSV can contain grades for multiple subjects in one file (wide format).
- * Each subject column becomes a separate Assessment record under the same point.
+ * Upload subject results into a result point.
+ * Accepts a CSV file and either:
+ *   - creates/upserts one Subject Result Set per detected subject column (wide format)
+ *   - or imports results into an existing Subject Result Set (single subject mode)
  *
  * Body (multipart/form-data):
- *   file          — the CSV file
- *   pointId       — the assessment point to import into
- *   yearGroup     — year group (e.g. "Year 11", "Year 13")
+ *   file          — CSV file
+ *   yearGroup     — e.g. "Year 11"
  *   gradeFormat   — GCSE | A_LEVEL | PERCENTAGE | RAW
- *   subjects      — JSON array of subject column names to import (all detected if omitted)
+ *   subjects      — JSON array of subject column names (wide: which to import)
+ *   subject       — single subject name (single-subject mode, creates one result set)
  *   previewOnly   — "true" to return preview without importing
  */
 
@@ -19,23 +20,38 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { parseAssessmentCsv, detectSubjectColumns } from "@/modules/assessments/csv";
-import { createAssessment, importAssessmentResults } from "@/modules/assessments/import";
+import { importAssessmentResults, createAssessment } from "@/modules/assessments/import";
 import type { GradeFormat } from "@prisma/client";
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: { pointId: string } }
+) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
 
+  const point = await prisma.assessmentPoint.findFirst({
+    where: { id: params.pointId, tenantId: user.tenantId },
+    include: { cycle: { select: { id: true, label: true, qualificationType: true } } },
+  });
+  if (!point) return NextResponse.json({ error: "Result point not found" }, { status: 404 });
+
+  if (point.resultStatus === "LOCKED") {
+    return NextResponse.json(
+      { error: "This result point is locked and cannot accept new uploads." },
+      { status: 403 }
+    );
+  }
+
   const form = await req.formData();
   const file = form.get("file") as File | null;
-  const pointId = String(form.get("pointId") || "");
   const yearGroup = String(form.get("yearGroup") || "");
   const gradeFormat = String(form.get("gradeFormat") || "GCSE") as GradeFormat;
   const subjectsRaw = String(form.get("subjects") || "");
+  const singleSubject = String(form.get("subject") || "");
   const previewOnly = form.get("previewOnly") === "true";
 
   if (!file) return NextResponse.json({ error: "file is required" }, { status: 400 });
-  if (!pointId) return NextResponse.json({ error: "pointId is required" }, { status: 400 });
   if (!yearGroup) return NextResponse.json({ error: "yearGroup is required" }, { status: 400 });
 
   const validFormats: GradeFormat[] = ["GCSE", "A_LEVEL", "PERCENTAGE", "RAW"];
@@ -43,51 +59,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid gradeFormat" }, { status: 400 });
   }
 
-  // Verify point belongs to tenant
-  const point = await prisma.assessmentPoint.findFirst({
-    where: { id: pointId, tenantId: user.tenantId },
-    include: { cycle: true },
-  });
-  if (!point) return NextResponse.json({ error: "Assessment point not found" }, { status: 404 });
-
   const csvText = await file.text();
-
-  // Detect subject columns from CSV
   const allDetected = detectSubjectColumns(csvText);
 
+  // Determine which subjects to import
   let subjectFilter: string[] | undefined;
-  if (subjectsRaw) {
+  if (singleSubject) {
+    subjectFilter = [singleSubject];
+  } else if (subjectsRaw) {
     try {
       subjectFilter = JSON.parse(subjectsRaw) as string[];
     } catch {
       subjectFilter = subjectsRaw.split(",").map((s) => s.trim()).filter(Boolean);
     }
   } else {
-    subjectFilter = allDetected; // import all detected subjects
+    subjectFilter = allDetected.length > 0 ? allDetected : undefined;
   }
 
-  if (!subjectFilter || subjectFilter.length === 0) {
-    return NextResponse.json({
-      detectedSubjects: allDetected,
-      error: "No subject columns detected in CSV. Check the file format.",
-    }, { status: 400 });
-  }
-
-  // Parse CSV — one record per student-subject combination
   const parseResult = parseAssessmentCsv(csvText, {
     gradeFormat,
     subjectFilter,
   });
 
   if (previewOnly) {
-    // Return detected subjects + preview records
     const subjectCounts = new Map<string, number>();
     for (const r of parseResult.records) {
       subjectCounts.set(r.subject, (subjectCounts.get(r.subject) ?? 0) + 1);
     }
     return NextResponse.json({
       detectedSubjects: allDetected,
-      selectedSubjects: subjectFilter,
+      selectedSubjects: subjectFilter ?? allDetected,
       preview: parseResult.records.slice(0, 30),
       errors: parseResult.errors.slice(0, 50),
       totalRecords: parseResult.records.length,
@@ -96,11 +97,18 @@ export async function POST(req: Request) {
     });
   }
 
-  // Group records by subject
+  // Group records by subject and import
   const recordsBySubject = new Map<string, typeof parseResult.records>();
   for (const rec of parseResult.records) {
     if (!recordsBySubject.has(rec.subject)) recordsBySubject.set(rec.subject, []);
     recordsBySubject.get(rec.subject)!.push(rec);
+  }
+
+  if (recordsBySubject.size === 0) {
+    return NextResponse.json(
+      { error: "No grade records found. Check the file format and grade format selection." },
+      { status: 400 }
+    );
   }
 
   const results: Array<{
@@ -110,17 +118,15 @@ export async function POST(req: Request) {
     rowsFailed: number;
   }> = [];
 
-  // For each subject, upsert the Assessment and import results
   for (const [subject, records] of recordsBySubject) {
-    // Find or create Assessment
     let assessment = await prisma.assessment.findFirst({
-      where: { tenantId: user.tenantId, pointId, subject, yearGroup },
+      where: { tenantId: user.tenantId, pointId: params.pointId, subject, yearGroup },
     });
 
     if (!assessment) {
       assessment = await createAssessment({
         tenantId: user.tenantId,
-        pointId,
+        pointId: params.pointId,
         subject,
         yearGroup,
         title: `${subject} — ${yearGroup} (${point.label})`,
@@ -131,10 +137,7 @@ export async function POST(req: Request) {
 
     const summary = await importAssessmentResults(
       records,
-      parseResult.errors.filter((e) => {
-        // Associate errors with this subject if field matches
-        return e.field === subject || e.field === "Name" || e.field === "UPN";
-      }),
+      [],
       {
         tenantId: user.tenantId,
         assessmentId: assessment.id,
@@ -143,6 +146,18 @@ export async function POST(req: Request) {
         fileName: file.name,
       }
     );
+
+    // Update assessment counts
+    await prisma.assessment.update({
+      where: { id: assessment.id },
+      data: {
+        entryCount: summary.rowsProcessed,
+        matchedStudentCount: summary.rowsProcessed,
+        rawFileName: file.name,
+        uploadStatus: summary.rowsFailed === 0 ? "VALIDATED" : "PARTIAL",
+        updatedAt: new Date(),
+      },
+    });
 
     results.push({
       subject,
@@ -167,10 +182,3 @@ export async function POST(req: Request) {
     { status: 201 }
   );
 }
-
-/**
- * GET /api/assessments/bulk-import?csvPreview=1&pointId=...
- * Returns detected subject columns for a given CSV (via query params).
- * Accepts a file via form data when method is GET is not feasible;
- * use POST with previewOnly=true instead.
- */

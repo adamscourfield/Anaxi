@@ -2,14 +2,26 @@ import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
-import { createAssessmentPoint } from "@/modules/assessments/import";
+import type { PointType, ResultStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
   const body = await req.json();
 
-  const { cycleId, label, ordinal, assessedAt } = body;
+  const {
+    cycleId,
+    label,
+    shortLabel,
+    ordinal,
+    pointType,
+    resultStatus,
+    sourceType,
+    isFinalPoint,
+    dateTaken,
+    assessedAt,
+  } = body;
+
   if (!cycleId || !label || ordinal === undefined || !assessedAt) {
     return NextResponse.json(
       { error: "cycleId, label, ordinal, and assessedAt are required" },
@@ -17,18 +29,43 @@ export async function POST(req: Request) {
     );
   }
 
-  // Verify cycle belongs to tenant
+  const validPointTypes: PointType[] = [
+    "BASELINE",
+    "INTERNAL_ASSESSMENT",
+    "INTERNAL_MOCK",
+    "TEACHER_PREDICTION",
+    "EXTERNAL_FINAL",
+    "OTHER",
+  ];
+  const resolvedType: PointType = validPointTypes.includes(pointType)
+    ? pointType
+    : "INTERNAL_MOCK";
+
+  const validStatuses: ResultStatus[] = ["DRAFT", "VALIDATED", "PUBLISHED", "LOCKED"];
+  const resolvedStatus: ResultStatus = validStatuses.includes(resultStatus)
+    ? resultStatus
+    : "DRAFT";
+
   const cycle = await prisma.assessmentCycle.findFirst({
     where: { id: cycleId, tenantId: user.tenantId },
   });
   if (!cycle) return NextResponse.json({ error: "Cycle not found" }, { status: 404 });
 
-  const point = await createAssessmentPoint({
-    tenantId: user.tenantId,
-    cycleId,
-    label,
-    ordinal: Number(ordinal),
-    assessedAt: new Date(assessedAt),
+  const point = await prisma.assessmentPoint.create({
+    data: {
+      tenantId: user.tenantId,
+      cycleId,
+      label,
+      shortLabel: shortLabel || null,
+      ordinal: Number(ordinal),
+      pointType: resolvedType,
+      resultStatus: resolvedStatus,
+      sourceType: sourceType || "csv_upload",
+      isFinalPoint: isFinalPoint === true || resolvedType === "EXTERNAL_FINAL",
+      comparisonEligible: true,
+      dateTaken: dateTaken ? new Date(dateTaken) : null,
+      assessedAt: new Date(assessedAt),
+    },
   });
 
   return NextResponse.json({ point }, { status: 201 });

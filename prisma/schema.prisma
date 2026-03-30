@@ -92,6 +92,38 @@ enum AssessmentResultStatus {
   PRESENT
   ABSENT
   WITHDRAWN
+  MISSING
+  NOT_ENTERED
+}
+
+enum QualificationType {
+  GCSE
+  A_LEVEL
+  VOCATIONAL
+  OTHER
+}
+
+enum PointType {
+  BASELINE
+  INTERNAL_ASSESSMENT
+  INTERNAL_MOCK
+  TEACHER_PREDICTION
+  EXTERNAL_FINAL
+  OTHER
+}
+
+enum ResultStatus {
+  DRAFT
+  VALIDATED
+  PUBLISHED
+  LOCKED
+}
+
+enum UploadStatus {
+  UPLOADED
+  VALIDATED
+  PARTIAL
+  ERROR
 }
 
 enum InsightScope {
@@ -939,72 +971,94 @@ model StrategyNote {
 // ─── Assessment Models ────────────────────────────────────────────────────────
 
 model AssessmentCycle {
-  id        String            @id @default(cuid())
-  tenantId  String
-  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  label     String            // e.g. "2024/25"
-  startDate DateTime
-  endDate   DateTime
-  isActive  Boolean           @default(true)
-  points    AssessmentPoint[]
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  id                String            @id @default(cuid())
+  tenantId          String
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  label             String            // e.g. "Year 11 GCSE 2024/25"
+  cohortLabel       String            @default("") // e.g. "Year 11"
+  qualificationType QualificationType @default(OTHER)
+  academicYear      String            @default("") // e.g. "2024/25"
+  startDate         DateTime
+  endDate           DateTime
+  isActive          Boolean           @default(true)
+  status            String            @default("active") // "active" | "archived"
+  points            AssessmentPoint[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@unique([tenantId, label])
   @@index([tenantId])
 }
 
 model AssessmentPoint {
-  id          String           @id @default(cuid())
-  tenantId    String
-  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cycleId     String
-  cycle       AssessmentCycle  @relation(fields: [cycleId], references: [id], onDelete: Cascade)
-  label       String           // e.g. "Autumn 1", "Spring 2"
-  ordinal     Int              // sort order within cycle
-  assessedAt  DateTime
-  assessments Assessment[]
-  createdAt   DateTime         @default(now())
+  id                  String           @id @default(cuid())
+  tenantId            String
+  tenant              Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cycleId             String
+  cycle               AssessmentCycle  @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  label               String           // e.g. "Mock 1", "Final GCSE Results"
+  shortLabel          String?          // optional compact label
+  ordinal             Int              // sort order within cycle
+  pointType           PointType        @default(INTERNAL_ASSESSMENT)
+  resultStatus        ResultStatus     @default(DRAFT)
+  sourceType          String           @default("csv_upload") // csv_upload | manual_entry | mis_sync
+  isFinalPoint        Boolean          @default(false)
+  comparisonEligible  Boolean          @default(true)
+  dateTaken           DateTime?
+  assessedAt          DateTime
+  assessments         Assessment[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   @@unique([tenantId, cycleId, label])
   @@index([tenantId, cycleId])
 }
 
 model Assessment {
-  id              String                     @id @default(cuid())
-  tenantId        String
-  tenant          Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  pointId         String
-  point           AssessmentPoint            @relation(fields: [pointId], references: [id], onDelete: Cascade)
-  subject         String
-  yearGroup       String
-  title           String
-  gradeFormat     GradeFormat
-  maxScore        Int?
-  createdByUserId String
-  results         AssessmentResult[]
-  subTopicMappings AssessmentSubTopicMapping[]
-  createdAt       DateTime                   @default(now())
-  updatedAt       DateTime                   @updatedAt
+  id                    String                     @id @default(cuid())
+  tenantId              String
+  tenant                Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pointId               String
+  point                 AssessmentPoint            @relation(fields: [pointId], references: [id], onDelete: Cascade)
+  subject               String
+  yearGroup             String
+  title                 String
+  gradeFormat           GradeFormat
+  maxScore              Int?
+  uploadStatus          UploadStatus               @default(UPLOADED)
+  rawFileName           String?
+  entryCount            Int                        @default(0)
+  matchedStudentCount   Int                        @default(0)
+  expectedStudentCount  Int?
+  notes                 String?
+  createdByUserId       String
+  results               AssessmentResult[]
+  subTopicMappings      AssessmentSubTopicMapping[]
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
 
   @@index([tenantId, pointId])
   @@index([tenantId, subject, yearGroup])
 }
 
 model AssessmentResult {
-  id              String                  @id @default(cuid())
-  tenantId        String
-  tenant          Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  assessmentId    String
-  assessment      Assessment              @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  studentId       String
-  student         Student                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  rawValue        String
-  normalizedScore Float?
-  status          AssessmentResultStatus  @default(PRESENT)
-  subTopicScores  AssessmentSubTopicScore[]
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
+  id                String                  @id @default(cuid())
+  tenantId          String
+  tenant            Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assessmentId      String
+  assessment        Assessment              @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  studentId         String
+  student           Student                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  rawValue          String
+  normalizedScore   Float?
+  normalisedGrade   String?                 // display grade derived from normalizedScore
+  candidateNumber   String?
+  status            AssessmentResultStatus  @default(PRESENT)
+  isValid           Boolean                 @default(true)
+  validationNotes   String?
+  subTopicScores    AssessmentSubTopicScore[]
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
 
   @@unique([tenantId, assessmentId, studentId])
   @@index([tenantId, assessmentId])

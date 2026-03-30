@@ -1015,14 +1015,18 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
 
   // ── GCSE: Year 11 Mock cycle ──
   const gcseCycle = await prisma.assessmentCycle.upsert({
-    where: { tenantId_label: { tenantId: tenant.id, label: "Year 11 GCSE Mocks 2024/25" } },
+    where: { tenantId_label: { tenantId: tenant.id, label: "Year 11 GCSE 2024/25" } },
     update: {},
     create: {
       tenantId: tenant.id,
-      label: "Year 11 GCSE Mocks 2024/25",
+      label: "Year 11 GCSE 2024/25",
+      cohortLabel: "Year 11",
+      qualificationType: "GCSE",
+      academicYear: "2024/25",
       startDate: new Date("2024-09-01"),
       endDate: new Date("2025-07-31"),
       isActive: true,
+      status: "active",
     },
   });
 
@@ -1033,7 +1037,12 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
       tenantId: tenant.id,
       cycleId: gcseCycle.id,
       label: "Mock 1",
+      shortLabel: "M1",
       ordinal: 1,
+      pointType: "INTERNAL_MOCK",
+      resultStatus: "PUBLISHED",
+      isFinalPoint: false,
+      comparisonEligible: true,
       assessedAt: new Date("2024-11-15"),
     },
   });
@@ -1045,7 +1054,12 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
       tenantId: tenant.id,
       cycleId: gcseCycle.id,
       label: "Mock 2",
+      shortLabel: "M2",
       ordinal: 2,
+      pointType: "INTERNAL_MOCK",
+      resultStatus: "PUBLISHED",
+      isFinalPoint: false,
+      comparisonEligible: true,
       assessedAt: new Date("2025-02-20"),
     },
   });
@@ -1059,9 +1073,15 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   // Create GCSE assessments for both mock points
   for (const point of [gcseMock1, gcseMock2]) {
     for (const subject of gcseSubjects) {
+      // Determine enrolled students first to set entryCount
+      const isCoreSubjectPre = ["Maths", "English Language", "English Literature"].includes(subject);
+      const preEnrolled = isCoreSubjectPre
+        ? y11Students
+        : y11Students.filter(() => rng() > 0.35);
+      const expectedCount = preEnrolled.length;
+
       const assessment = await prisma.assessment.upsert({
         where: {
-          // No unique on subject alone — use create with findFirst guard
           id: `demo-gcse-${point.id}-${subject.replace(/\s+/g, "_").toLowerCase()}`,
         },
         update: {},
@@ -1073,15 +1093,16 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
           yearGroup: "Y11",
           title: `${subject} — Y11 ${point.label}`,
           gradeFormat: "GCSE",
+          uploadStatus: "VALIDATED",
+          entryCount: expectedCount,
+          matchedStudentCount: expectedCount,
           createdByUserId: admin.id,
         },
       });
 
-      // Only seed ~60% of students per subject (elective subjects)
-      const isCoreSubject = ["Maths", "English Language", "English Literature"].includes(subject);
-      const enrolledStudents = isCoreSubject
-        ? y11Students
-        : y11Students.filter((_, i) => rng() > 0.35);
+      // Use pre-enrolled students (already computed above)
+      const isCoreSubject = isCoreSubjectPre;
+      const enrolledStudents = preEnrolled;
 
       for (const student of enrolledStudents) {
         // PP students slightly lower grades on average
@@ -1164,14 +1185,18 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   }
 
   const aLevelCycle = await prisma.assessmentCycle.upsert({
-    where: { tenantId_label: { tenantId: tenant.id, label: "Year 13 A-Level Mocks 2024/25" } },
+    where: { tenantId_label: { tenantId: tenant.id, label: "Year 13 A-Level 2024/25" } },
     update: {},
     create: {
       tenantId: tenant.id,
-      label: "Year 13 A-Level Mocks 2024/25",
+      label: "Year 13 A-Level 2024/25",
+      cohortLabel: "Year 13",
+      qualificationType: "A_LEVEL",
+      academicYear: "2024/25",
       startDate: new Date("2024-09-01"),
       endDate: new Date("2025-07-31"),
       isActive: true,
+      status: "active",
     },
   });
 
@@ -1182,7 +1207,12 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
       tenantId: tenant.id,
       cycleId: aLevelCycle.id,
       label: "Mock 1",
+      shortLabel: "M1",
       ordinal: 1,
+      pointType: "INTERNAL_MOCK",
+      resultStatus: "PUBLISHED",
+      isFinalPoint: false,
+      comparisonEligible: true,
       assessedAt: new Date("2024-11-10"),
     },
   });
@@ -1194,7 +1224,12 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
       tenantId: tenant.id,
       cycleId: aLevelCycle.id,
       label: "Mock 2",
+      shortLabel: "M2",
       ordinal: 2,
+      pointType: "INTERNAL_MOCK",
+      resultStatus: "PUBLISHED",
+      isFinalPoint: false,
+      comparisonEligible: true,
       assessedAt: new Date("2025-02-15"),
     },
   });
@@ -1228,6 +1263,9 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
           yearGroup: "Y13",
           title: `${subject} — Y13 ${point.label}`,
           gradeFormat: "A_LEVEL",
+          uploadStatus: "VALIDATED",
+          entryCount: studentsForSubject.length,
+          matchedStudentCount: studentsForSubject.length,
           createdByUserId: admin.id,
         },
       });
