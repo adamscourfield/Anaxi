@@ -66,7 +66,7 @@ function TabBar({
   windowDays: number;
 }) {
   return (
-    <div className="flex gap-1 rounded-lg border border-border bg-surface p-1">
+    <div className="segmented-toggle">
       {TABS.map((tab) => {
         const params = new URLSearchParams();
         params.set("tab", tab);
@@ -75,11 +75,7 @@ function TabBar({
           <Link
             key={tab}
             href={`/analytics?${params.toString()}`}
-            className={`rounded-md px-4 py-2 text-sm font-medium calm-transition ${
-              tab === activeTab
-                ? "bg-accent text-on-primary shadow-sm"
-                : "text-muted hover:bg-bg hover:text-text"
-            }`}
+            className={`segmented-toggle-btn ${tab === activeTab ? "segmented-toggle-btn-active" : ""}`}
           >
             {TAB_LABELS[tab]}
           </Link>
@@ -101,29 +97,27 @@ function WindowSelector({
   return (
     <div className="flex items-center gap-2">
       <MetaText className="mr-1">Window:</MetaText>
-      {WINDOW_OPTIONS.map((w) => {
-        const params = new URLSearchParams();
-        params.set("tab", activeTab);
-        params.set("window", String(w));
-        if (extraParams) {
-          for (const [k, v] of Object.entries(extraParams)) {
-            if (v) params.set(k, v);
+      <div className="segmented-toggle">
+        {WINDOW_OPTIONS.map((w) => {
+          const params = new URLSearchParams();
+          params.set("tab", activeTab);
+          params.set("window", String(w));
+          if (extraParams) {
+            for (const [k, v] of Object.entries(extraParams)) {
+              if (v) params.set(k, v);
+            }
           }
-        }
-        return (
-          <Link
-            key={w}
-            href={`/analytics?${params.toString()}`}
-            className={`calm-transition rounded-lg border px-4 py-2 text-sm font-medium transition duration-200 ease-calm ${
-              w === windowDays
-                ? "border-accent bg-[var(--accent-tint)] text-text"
-                : "border-border bg-surface text-text hover:border-accentHover"
-            }`}
-          >
-            {w} days
-          </Link>
-        );
-      })}
+          return (
+            <Link
+              key={w}
+              href={`/analytics?${params.toString()}`}
+              className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}
+            >
+              {w} days
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -323,15 +317,11 @@ async function CpdTab({
         {departmentOptions.length > 0 && (
           <div className="flex items-center gap-2">
             <MetaText className="mr-1">Department:</MetaText>
-            <div className="flex flex-wrap gap-2">
+            <div className="segmented-toggle">
               {!isHod && (
                 <Link
                   href={`/analytics?tab=cpd&window=${windowDays}`}
-                  className={`calm-transition rounded-lg border px-3 py-1.5 text-sm font-medium transition duration-200 ease-calm ${
-                    !departmentId
-                      ? "border-accent bg-[var(--accent-tint)] text-text"
-                      : "border-border bg-surface text-text hover:border-accentHover"
-                  }`}
+                  className={`segmented-toggle-btn ${!departmentId ? "segmented-toggle-btn-active" : ""}`}
                 >
                   All
                 </Link>
@@ -345,11 +335,7 @@ async function CpdTab({
                   <Link
                     key={dept.id}
                     href={`/analytics?${params.toString()}`}
-                    className={`calm-transition rounded-lg border px-3 py-1.5 text-sm font-medium transition duration-200 ease-calm ${
-                      departmentId === dept.id
-                        ? "border-accent bg-[var(--accent-tint)] text-text"
-                        : "border-border bg-surface text-text hover:border-accentHover"
-                    }`}
+                    className={`segmented-toggle-btn ${departmentId === dept.id ? "segmented-toggle-btn-active" : ""}`}
                   >
                     {dept.name}
                   </Link>

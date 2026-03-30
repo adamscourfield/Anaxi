@@ -249,16 +249,12 @@ export default async function ProgressPage({
             <label className="text-xs font-medium uppercase tracking-wide text-muted">
               Cycle
             </label>
-            <div className="flex flex-wrap gap-1">
+            <div className="segmented-toggle">
               {cycles.map((c) => (
                 <Link
                   key={c.id}
                   href={`/assessments/progress?cycleId=${c.id}${subject ? `&subject=${encodeURIComponent(subject)}` : ""}${yearGroup ? `&yearGroup=${encodeURIComponent(yearGroup)}` : ""}`}
-                  className={`rounded-lg border px-3 py-1.5 text-sm ${
-                    selectedCycle?.id === c.id
-                      ? "border-accent bg-accent/10 text-accent"
-                      : "border-border text-muted hover:border-accent/40"
-                  }`}
+                  className={`segmented-toggle-btn ${selectedCycle?.id === c.id ? "segmented-toggle-btn-active" : ""}`}
                 >
                   {c.label}
                 </Link>
@@ -271,16 +267,12 @@ export default async function ProgressPage({
             <label className="text-xs font-medium uppercase tracking-wide text-muted">
               Subject
             </label>
-            <div className="flex flex-wrap gap-1">
+            <div className="segmented-toggle">
               {subjects.map((s) => (
                 <Link
                   key={s}
                   href={`/assessments/progress?cycleId=${selectedCycle?.id ?? ""}${s ? `&subject=${encodeURIComponent(s)}` : ""}${yearGroup ? `&yearGroup=${encodeURIComponent(yearGroup)}` : ""}`}
-                  className={`rounded-lg border px-3 py-1.5 text-sm ${
-                    subject === s
-                      ? "border-accent bg-accent/10 text-accent"
-                      : "border-border text-muted hover:border-accent/40"
-                  }`}
+                  className={`segmented-toggle-btn ${subject === s ? "segmented-toggle-btn-active" : ""}`}
                 >
                   {s}
                 </Link>
@@ -296,16 +288,12 @@ export default async function ProgressPage({
             <label className="text-xs font-medium uppercase tracking-wide text-muted">
               Year group
             </label>
-            <div className="flex flex-wrap gap-1">
+            <div className="segmented-toggle">
               {yearGroups.map((yg) => (
                 <Link
                   key={yg}
                   href={`/assessments/progress?cycleId=${selectedCycle?.id ?? ""}${subject ? `&subject=${encodeURIComponent(subject)}` : ""}&yearGroup=${encodeURIComponent(yg)}`}
-                  className={`rounded-lg border px-3 py-1.5 text-sm ${
-                    yearGroup === yg
-                      ? "border-accent bg-accent/10 text-accent"
-                      : "border-border text-muted hover:border-accent/40"
-                  }`}
+                  className={`segmented-toggle-btn ${yearGroup === yg ? "segmented-toggle-btn-active" : ""}`}
                 >
                   {yg}
                 </Link>

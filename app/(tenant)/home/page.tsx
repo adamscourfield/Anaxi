@@ -56,16 +56,12 @@ function roleVariant(role: UserRole): "leadership" | "hod" | "teacher" {
 
 function WindowSelector({ windowDays }: { windowDays: number }) {
   return (
-    <div className="flex items-center rounded-lg border border-border bg-surface-container-lowest p-1 shadow-sm">
+    <div className="segmented-toggle">
       {[7, 14, 21, 28].map((w) => (
         <Link
           key={w}
           href={`/home?window=${w}`}
-          className={`rounded-md px-3 py-1 text-[0.75rem] font-medium calm-transition ${
-            windowDays === w
-              ? "bg-accent text-on-primary shadow-sm"
-              : "text-muted hover:text-text"
-          }`}
+          className={`segmented-toggle-btn ${windowDays === w ? "segmented-toggle-btn-active" : ""}`}
         >
           {w}d
         </Link>
@@ -511,16 +507,12 @@ function HodHome({
       </div>
 
       {allDepts.length > 1 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="segmented-toggle">
           {allDepts.map((d) => (
             <Link
               key={d.id}
               href={`/home?dept=${d.id}&window=${windowDays}`}
-              className={`rounded-full border px-3 py-1 text-xs calm-transition ${
-                d.id === activeDeptId
-                  ? "border-accent bg-[var(--accent-tint)] font-medium text-accent"
-                  : "border-border text-muted hover:border-accent/40 hover:text-text"
-              }`}
+              className={`segmented-toggle-btn ${d.id === activeDeptId ? "segmented-toggle-btn-active" : ""}`}
             >
               {d.name}
             </Link>
