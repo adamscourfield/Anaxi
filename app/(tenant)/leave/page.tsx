@@ -12,6 +12,40 @@ function fmt(date: Date) {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
+/** e.g. Oct 12 — Oct 15 (same year omitted on end when same month/year) */
+function fmtShortRange(start: Date, end: Date) {
+  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+  const a = start.toLocaleDateString("en-GB", opts);
+  if (start.toDateString() === end.toDateString()) return a;
+  const sameMonth =
+    start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth();
+  const b = end.toLocaleDateString("en-GB", sameMonth ? { day: "numeric" } : opts);
+  return `${a} — ${b}`;
+}
+
+function stripTime(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function daysSpan(rs: Date, re: Date) {
+  const a = stripTime(rs).getTime();
+  const b = stripTime(re).getTime();
+  return Math.round((b - a) / (86400 * 1000)) + 1;
+}
+
+function monthOverlapRange(rStart: Date, rEnd: Date, calStart: Date, calEnd: Date) {
+  const rs = stripTime(rStart);
+  const re = stripTime(rEnd);
+  const cs = stripTime(calStart);
+  const ce = stripTime(calEnd);
+  const os = rs > cs ? rs : cs;
+  const oe = re < ce ? re : ce;
+  if (os > oe) return null;
+  return { os, oe };
+}
+
 function businessDays(start: Date, end: Date): number {
   let count = 0;
   const cur = new Date(start);
@@ -125,8 +159,7 @@ export default async function LeavePage({
       : null;
   const avgResponseStr = avgDays !== null ? `${avgDays.toFixed(1)}d` : "—";
 
-  /* Table rows */
-  const tableRows: LeaveRow[] = (requests as any[]).slice(0, 50).map((r) => {
+  function mapToLeaveRow(r: any): LeaveRow {
     const start = new Date(r.startDate);
     const end = new Date(r.endDate);
     const name = r.requester?.fullName ?? null;
@@ -134,6 +167,7 @@ export default async function LeavePage({
       id: r.id,
       startDate: fmt(start),
       endDate: fmt(end),
+      dateRangeLine: fmtShortRange(start, end),
       days: businessDays(start, end),
       status: r.status as "PENDING" | "APPROVED" | "DENIED",
       reasonLabel: r.reason?.label ?? null,
@@ -141,7 +175,21 @@ export default async function LeavePage({
       requesterInitials: name ? initials(name) : null,
       requesterAvatarColor: name ? avatarColor(name) : null,
     };
-  });
+  }
+
+  const pendingRows: LeaveRow[] = (requests as any[])
+    .filter((r) => r.status === "PENDING")
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+    .slice(0, 50)
+    .map(mapToLeaveRow);
+
+  const completedRows: LeaveRow[] = (requests as any[])
+    .filter((r) => r.status === "APPROVED" || r.status === "DENIED")
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 50)
+    .map(mapToLeaveRow);
+
+  const hasAnyListRows = pendingRows.length > 0 || completedRows.length > 0;
 
   /* Calendar data */
   const calStart = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
@@ -154,7 +202,6 @@ export default async function LeavePage({
     59,
   );
   const calendarRequests = (requests as any[]).filter((r) => {
-    if (r.status === "DENIED") return false;
     const rStart = new Date(r.startDate);
     const rEnd = new Date(r.endDate);
     return rStart <= calEnd && rEnd >= calStart;
@@ -176,24 +223,46 @@ export default async function LeavePage({
 
   const isCalendar = view === "calendar";
 
+  function calendarTitleForRequest(request: any, day: Date, totalSpanDays: number) {
+    const reason = request.reason?.label ?? "Leave";
+    if (request.status === "DENIED" || totalSpanDays <= 1) return reason;
+    if (stripTime(day).getTime() === stripTime(new Date(request.startDate)).getTime()) {
+      return `${reason} (Starts)`;
+    }
+    return reason;
+  }
+
+  function continuationLabel(request: any) {
+    const name = request.requester?.fullName?.trim() || "Staff";
+    const parts = name.split(/\s+/);
+    const short = parts.length > 1 ? parts[parts.length - 1]! : parts[0]!;
+    const reason = request.reason?.label ?? "Leave";
+    const word = reason.split(/\s+/)[0] ?? reason;
+    return `${short} ${word} continued`;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[1.5rem] font-bold tracking-tight text-text">Leave of Absence</h1>
+        <h1 className="text-[1.5rem] font-semibold tracking-tight text-text">Leave of Absence</h1>
         <div className="flex flex-wrap items-center gap-3">
-          {/* List / Calendar toggle */}
-          <div className="flex items-center rounded-xl border border-border/60 bg-surface-container-lowest/70 p-1 backdrop-blur-sm">
+          {/* List / Calendar segmented control */}
+          <div
+            className="inline-flex items-center gap-0.5 rounded-[14px] bg-[#F1F3F5] p-1"
+            role="group"
+            aria-label="Leave view"
+          >
             <Link
               href="/leave?view=list"
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[0.8125rem] font-medium calm-transition ${
+              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium calm-transition ${
                 !isCalendar
-                  ? "bg-surface-container-low text-text shadow-sm"
+                  ? "bg-white text-text shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]"
                   : "text-muted hover:text-text"
               }`}
             >
               <svg
-                className="h-3.5 w-3.5"
+                className="h-3.5 w-3.5 shrink-0"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -204,17 +273,17 @@ export default async function LeavePage({
                   strokeLinecap="round"
                 />
               </svg>
-              List View
+              List view
             </Link>
             <Link
               href="/leave?view=calendar"
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[0.8125rem] font-medium calm-transition ${
+              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium calm-transition ${
                 isCalendar
-                  ? "bg-surface-container-low text-text shadow-sm"
+                  ? "bg-white text-text shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]"
                   : "text-muted hover:text-text"
               }`}
             >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none">
+              <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none">
                 <rect
                   x="3.5"
                   y="4.5"
@@ -235,10 +304,9 @@ export default async function LeavePage({
             </Link>
           </div>
 
-          {/* Request Leave button */}
           <Link
             href="/leave/request"
-            className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-[0.875rem] font-semibold text-on-primary shadow-sm calm-transition hover:bg-accentHover"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#131b2e] px-4 py-2.5 text-[0.875rem] font-semibold text-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] calm-transition hover:bg-[#1a2540]"
           >
             <svg
               className="h-3.5 w-3.5"
@@ -255,12 +323,35 @@ export default async function LeavePage({
         </div>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Total Pending" value={totalPending} />
-        <StatCard label="Approved (Month)" value={approvedThisMonth} accent="success" />
-        <StatCard label="Denied (Month)" value={deniedThisMonth} accent="error" />
-        <StatCard label="Average Response" value={avgResponseStr} accent="warning" />
+      {/* Stat cards — light grey panels per leave dashboard design */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard
+          label="Total pending"
+          value={String(totalPending).padStart(2, "0")}
+          tone="softGrey"
+          accent="accent"
+          accentPlacement="left"
+        />
+        <StatCard
+          label="Approved (month)"
+          value={String(approvedThisMonth).padStart(2, "0")}
+          tone="softBlueGrey"
+          accentPlacement="none"
+        />
+        <StatCard
+          label="Denied (month)"
+          value={String(deniedThisMonth).padStart(2, "0")}
+          tone="softBlueGrey"
+          accentPlacement="none"
+        />
+        <StatCard
+          label="Average response"
+          value={avgResponseStr}
+          tone="softWarm"
+          accentPlacement="none"
+          labelClassName="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8B3A3A]"
+          valueClassName="mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] text-[#8B3A3A]"
+        />
       </div>
 
       {/* Success banner */}
@@ -282,86 +373,79 @@ export default async function LeavePage({
       )}
 
       {isCalendar ? (
-        /* ── Calendar View ─────────────────────────────────────────── */
         <div className="space-y-4">
-          {/* Calendar toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Link
-                href={`/leave?view=calendar&month=${prevMonthParam}`}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 text-muted calm-transition hover:border-accent/30 hover:text-accent"
-                aria-label="Previous month"
-              >
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
-              <h2 className="min-w-[11rem] text-center text-[1rem] font-semibold text-text capitalize">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h2 className="text-[1.25rem] font-bold capitalize tracking-tight text-text">
                 {monthLabel}
               </h2>
-              <Link
-                href={`/leave?view=calendar&month=${nextMonthParam}`}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 text-muted calm-transition hover:border-accent/30 hover:text-accent"
-                aria-label="Next month"
-              >
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
+              <div className="flex items-center gap-0.5">
+                <Link
+                  href={`/leave?view=calendar&month=${prevMonthParam}`}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-[#eceef0] hover:text-text"
+                  aria-label="Previous month"
                 >
-                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Link>
+                <Link
+                  href={`/leave?view=calendar&month=${nextMonthParam}`}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-[#eceef0] hover:text-text"
+                  aria-label="Next month"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Link>
+              </div>
             </div>
 
-            {/* Legend */}
-            <div className="flex items-center gap-5 text-[0.75rem] text-muted">
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-scale-some-bar" />
+            <div className="flex flex-wrap items-center gap-5 text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
+              <span className="flex items-center gap-2">
+                <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[#9ca3af]" />
                 Pending
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-scale-strong-bar" />
+              <span className="flex items-center gap-2">
+                <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[#16a34a]" />
                 Approved
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-scale-limited-bar" />
+              <span className="flex items-center gap-2">
+                <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[#e11d48]" />
                 Declined
               </span>
             </div>
           </div>
 
-          {/* Calendar card */}
-          <div className="overflow-hidden rounded-2xl glass-card shadow-sm">
-            {/* Day-of-week headers */}
-            <div className="grid grid-cols-7 border-b border-border/30 bg-surface-container-lowest/50">
-              {WEEKDAYS.map((wd, i) => (
+          <div className="overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-sm">
+            <div className="grid grid-cols-7 border-b border-[#e5e7eb] bg-[#F1F3F5]">
+              {WEEKDAYS.map((wd) => (
                 <div
                   key={wd}
-                  className={`py-2.5 text-center text-[11px] font-semibold uppercase tracking-[0.07em] ${
-                    i === 0 || i === 6 ? "text-outline" : "text-muted"
-                  }`}
+                  className="border-r border-[#e5e7eb] py-2.5 text-center text-[10px] font-bold uppercase tracking-[0.09em] text-muted last:border-r-0"
                 >
                   {wd}
                 </div>
               ))}
             </div>
 
-            {/* Grid */}
             <div className="grid grid-cols-7">
-              {/* Leading empty cells */}
               {Array.from({ length: firstDayOfWeek }).map((_, i) => (
                 <div
                   key={`pad-${i}`}
-                  className="min-h-[100px] border-b border-r border-border/20 bg-surface-container-low/30"
+                  className="min-h-[112px] border-b border-r border-[#eceef0] bg-[#fafbfc] last:border-r-0"
                 />
               ))}
 
@@ -369,14 +453,7 @@ export default async function LeavePage({
                 const key = localDayKey(day);
                 const isToday = key === todayKey;
                 const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                const dayStart = new Date(
-                  day.getFullYear(),
-                  day.getMonth(),
-                  day.getDate(),
-                  0,
-                  0,
-                  0,
-                );
+                const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0);
                 const dayEnd = new Date(
                   day.getFullYear(),
                   day.getMonth(),
@@ -392,103 +469,174 @@ export default async function LeavePage({
                   return rStart <= dayEnd && rEnd >= dayStart;
                 });
 
+                const eventBlocks = entries.flatMap((request: any) => {
+                  const rStart = new Date(request.startDate);
+                  const rEnd = new Date(request.endDate);
+                  const span = daysSpan(rStart, rEnd);
+                  const range = monthOverlapRange(rStart, rEnd, calStart, calEnd);
+                  if (!range) return [];
+                  const d = stripTime(day);
+                  if (d < range.os || d > range.oe) return [];
+
+                  if (d.getTime() > range.os.getTime()) {
+                    return [
+                      {
+                        key: `${request.id}-cont`,
+                        type: "continuation" as const,
+                        request,
+                      },
+                    ];
+                  }
+
+                  const st = request.status as string;
+                  const bar =
+                    st === "APPROVED"
+                      ? "bg-[#16a34a]"
+                      : st === "DENIED"
+                        ? "bg-[#e11d48]"
+                        : "bg-[#9ca3af]";
+                  const wrap =
+                    st === "APPROVED"
+                      ? "bg-[#ecfdf5] border-[#bbf7d0]"
+                      : st === "DENIED"
+                        ? "bg-[#fff1f2] border-[#fecdd3]"
+                        : "bg-[#f3f4f6] border-[#e5e7eb]";
+                  const titleC =
+                    st === "APPROVED"
+                      ? "text-[#14532d]"
+                      : st === "DENIED"
+                        ? "text-[#881337]"
+                        : "text-[#111827]";
+                  const subC =
+                    st === "APPROVED"
+                      ? "text-[#166534]"
+                      : st === "DENIED"
+                        ? "text-[#9f1239]"
+                        : "text-[#6b7280]";
+
+                  return [
+                    {
+                      key: request.id,
+                      type: "event" as const,
+                      request,
+                      bar,
+                      wrap,
+                      titleC,
+                      subC,
+                      title: calendarTitleForRequest(request, day, span),
+                      showSpanDot: span > 1 && st !== "DENIED",
+                    },
+                  ];
+                });
+
                 return (
                   <div
                     key={key}
-                    className={`group relative min-h-[100px] border-b border-r border-border/20 p-2 transition-colors duration-150 ${
-                      isToday
-                        ? "bg-accent/[0.04]"
-                        : isWeekend
-                          ? "bg-surface-container-low/60"
-                          : "bg-transparent hover:bg-surface-container-lowest/40"
-                    }`}
+                    className={`group relative min-h-[112px] border-b border-r border-[#eceef0] p-1.5 last:border-r-0 ${
+                      isWeekend ? "bg-[#f9fafb]" : "bg-white"
+                    } ${isToday ? "ring-1 ring-inset ring-[#131b2e]/15" : ""}`}
                   >
-                    <div className="mb-1.5 flex items-center justify-between">
+                    <div className="mb-1 flex items-start justify-between gap-1">
                       <span
-                        className={`inline-flex h-[22px] w-[22px] items-center justify-center rounded-full text-[12px] font-semibold ${
-                          isToday
-                            ? "bg-accent text-on-primary"
-                            : isWeekend
-                              ? "text-outline"
-                              : "text-on-surface-variant"
+                        className={`text-[11px] font-bold tabular-nums ${
+                          isToday ? "text-[#131b2e]" : isWeekend ? "text-[#9ca3af]" : "text-text"
                         }`}
                       >
                         {day.getDate()}
                       </span>
-                      {!isWeekend && (
-                        <Link
-                          href={`/leave/request?date=${key}`}
-                          className="hidden h-[18px] w-[18px] items-center justify-center rounded-full bg-accent/10 text-accent text-[15px] leading-none calm-transition group-hover:flex hover:bg-accent hover:text-on-primary"
-                          title={`Request leave for ${day.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}
-                        >
-                          +
-                        </Link>
-                      )}
+                      <div className="flex shrink-0 items-center gap-1">
+                        {eventBlocks.some((b) => b.type === "event" && b.showSpanDot) && (
+                          <span
+                            className="mt-0.5 inline-block h-1.5 w-1.5 rounded-full bg-text"
+                            title="Multi-day leave"
+                          />
+                        )}
+                        {!isWeekend && (
+                          <Link
+                            href={`/leave/request?date=${key}`}
+                            className="flex h-5 w-5 items-center justify-center rounded-md text-[13px] font-semibold leading-none text-muted opacity-0 calm-transition hover:bg-[#eceef0] hover:text-text group-hover:opacity-100"
+                            title={`Request leave for ${day.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}
+                          >
+                            +
+                          </Link>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex flex-col gap-0.5">
-                      {entries.map((request: any) => (
-                        <Link
-                          key={request.id}
-                          href={`/leave/${request.id}`}
-                          className={`block truncate rounded px-1.5 py-[3px] text-[11px] font-medium leading-snug calm-transition ${
-                            request.status === "APPROVED"
-                              ? "bg-scale-strong-light text-scale-strong-text hover:bg-scale-strong-bg"
-                              : "bg-scale-some-light text-scale-some-text hover:bg-scale-some-bg"
-                          }`}
-                        >
-                          {manager
-                            ? (request.requester?.fullName?.split(" ")[0] ?? "Staff")
-                            : (request.reason?.label ?? "Leave")}
-                        </Link>
-                      ))}
+                    <div className="flex flex-col gap-1">
+                      {eventBlocks.map((block) =>
+                        block.type === "continuation" ? (
+                          <div
+                            key={block.key}
+                            className="rounded-lg bg-[#f3f4f6] px-1.5 py-1 text-[9px] font-medium leading-tight text-[#94a3b8]"
+                          >
+                            {continuationLabel(block.request)}
+                          </div>
+                        ) : (
+                          <Link
+                            key={block.key}
+                            href={`/leave/${block.request.id}`}
+                            className={`block overflow-hidden rounded-lg border calm-transition hover:brightness-[0.98] ${block.wrap}`}
+                          >
+                            <div className="flex gap-0">
+                              <div className={`w-1 shrink-0 self-stretch rounded-l-[7px] ${block.bar}`} />
+                              <div className="min-w-0 flex-1 py-1.5 pl-2 pr-1.5">
+                                <p
+                                  className={`truncate text-[10px] font-bold leading-tight ${block.titleC}`}
+                                >
+                                  {block.title}
+                                </p>
+                                <p className={`mt-0.5 truncate text-[9px] font-medium ${block.subC}`}>
+                                  {block.request.requester?.fullName ?? "Staff"}
+                                </p>
+                              </div>
+                            </div>
+                          </Link>
+                        ),
+                      )}
                     </div>
                   </div>
                 );
               })}
 
-              {/* Trailing empty cells */}
               {Array.from({
                 length: (7 - ((firstDayOfWeek + daysInMonth) % 7)) % 7,
               }).map((_, i) => (
                 <div
                   key={`trail-${i}`}
-                  className="min-h-[100px] border-b border-r border-border/20 bg-surface-container-low/30"
+                  className="min-h-[112px] border-b border-r border-[#eceef0] bg-[#fafbfc] last:border-r-0"
                 />
               ))}
             </div>
           </div>
         </div>
-      ) : (
-        /* ── List View ─────────────────────────────────────────────── */
-        tableRows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
-              <svg
-                className="h-6 w-6 text-accent"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-              >
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
-              </svg>
-            </div>
-            <p className="text-[0.875rem] font-semibold text-text">No leave requests yet</p>
-            <p className="mt-1 text-[0.8125rem] text-muted">
-              Submitted requests will appear here with approval status.
-            </p>
-            <Link
-              href="/leave/request"
-              className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-[0.875rem] font-semibold text-on-primary calm-transition hover:bg-accentHover"
+      ) : !hasAnyListRows ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#d1d5db] bg-white py-16">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f4f6]">
+            <svg
+              className="h-6 w-6 text-[#374151]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
             >
-              Submit first request
-            </Link>
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
+            </svg>
           </div>
-        ) : (
-          <LeaveTable rows={tableRows} isManager={manager} />
-        )
+          <p className="text-[0.875rem] font-semibold text-text">No leave requests yet</p>
+          <p className="mt-1 text-[0.8125rem] text-muted">
+            Submitted requests will appear here with approval status.
+          </p>
+          <Link
+            href="/leave/request"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#131b2e] px-4 py-2.5 text-[0.875rem] font-semibold text-white calm-transition hover:bg-[#1a2540]"
+          >
+            Submit first request
+          </Link>
+        </div>
+      ) : (
+        <LeaveTable pendingRows={pendingRows} completedRows={completedRows} isManager={manager} />
       )}
     </div>
   );
