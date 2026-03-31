@@ -5,6 +5,7 @@ import { MyActionsGrouped } from "@/components/actions/MyActionsGrouped";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
+import { StatCard } from "@/components/ui/stat-card";
 
 export default async function MyActionsPage() {
   const user = await getSessionUserOrThrow();
@@ -50,23 +51,30 @@ export default async function MyActionsPage() {
 
       {/* Stat strip */}
       <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: "Open", value: openCount, stripe: "bg-accent", textColor: openCount > 0 ? "text-text" : "text-muted" },
-          { label: "Blocked", value: blockedCount, stripe: "bg-scale-some-bar", textColor: blockedCount > 0 ? "text-scale-some-text" : "text-muted" },
-          { label: "Done", value: doneCount, stripe: "bg-scale-strong-bar", textColor: doneCount > 0 ? "text-scale-strong-text" : "text-muted" },
-        ].map((item) => (
-          <div key={item.label} className="relative overflow-hidden rounded-xl border border-border bg-surface-container-lowest shadow-sm">
-            <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${item.stripe}`} />
-            <div className="px-4 py-4 pl-5">
-              <p className={`text-[1.625rem] font-bold leading-none tracking-[-0.03em] ${item.textColor}`}>
-                {item.value}
-              </p>
-              <p className="mt-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                {item.label}
-              </p>
-            </div>
-          </div>
-        ))}
+        <StatCard
+          label="Open"
+          value={openCount}
+          tone="softGrey"
+          accent="accent"
+          accentPlacement="left"
+          valueClassName={`mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] ${openCount > 0 ? "text-text" : "text-muted"}`}
+        />
+        <StatCard
+          label="Blocked"
+          value={blockedCount}
+          tone="softBlueGrey"
+          accent="warning"
+          accentPlacement="left"
+          valueClassName={`mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] ${blockedCount > 0 ? "text-text" : "text-muted"}`}
+        />
+        <StatCard
+          label="Done"
+          value={doneCount}
+          tone="softGrey"
+          accent="success"
+          accentPlacement="left"
+          valueClassName={`mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] ${doneCount > 0 ? "text-text" : "text-muted"}`}
+        />
       </div>
 
       {/* Overdue notice */}

@@ -39,7 +39,8 @@ export function DepartmentsAdminTable({
 }: Props) {
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [editName, setEditName] = useState("");
-  const [addingMemberDept, setAddingMemberDept] = useState<Department | null>(null);
+  const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set());
+  const [addingMemberDeptId, setAddingMemberDeptId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState("");
 
   function openEdit(dept: Department) {
@@ -47,98 +48,248 @@ export function DepartmentsAdminTable({
     setEditName(dept.name);
   }
 
+  function toggleExpand(deptId: string) {
+    setExpandedDepts((prev) => {
+      const next = new Set(prev);
+      if (next.has(deptId)) {
+        next.delete(deptId);
+        if (addingMemberDeptId === deptId) setAddingMemberDeptId(null);
+      } else {
+        next.add(deptId);
+      }
+      return next;
+    });
+  }
+
   function openAddMember(dept: Department) {
-    setAddingMemberDept(dept);
     const existingIds = new Set(dept.memberships.map((m) => m.userId));
     const first = allUsers.find((u) => !existingIds.has(u.id));
     setSelectedUserId(first?.id ?? "");
+    setAddingMemberDeptId(dept.id);
+    setExpandedDepts((prev) => new Set([...prev, dept.id]));
   }
 
   return (
     <>
-      <div className="table-shell">
-        {/* Table head */}
-        <div className="table-head-row grid grid-cols-[1fr_1fr_140px_120px] items-center px-6 py-3">
-          <span>Department Name</span>
-          <span>Head of Department (HOD)</span>
-          <span className="text-center">Teacher Count</span>
-          <span className="text-center">Actions</span>
-        </div>
-
-        {/* Table body */}
+      <div className="space-y-3">
         {departments.map((dept) => {
           const hod = dept.memberships.find((m) => m.isHeadOfDepartment);
+          const isExpanded = expandedDepts.has(dept.id);
+          const existingIds = new Set(dept.memberships.map((m) => m.userId));
+          const availableToAdd = allUsers.filter((u) => !existingIds.has(u.id));
 
           return (
-            <div key={dept.id} className="table-row grid grid-cols-[1fr_1fr_140px_120px] items-center px-6 py-4">
-              <div>
-                <p className="text-[15px] font-semibold text-text leading-tight">{dept.name}</p>
-                {dept.faculty && (
-                  <p className="mt-0.5 text-xs text-muted">Faculty: {dept.faculty}</p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3">
-                {hod ? (
-                  <>
-                    <Avatar name={hod.user?.fullName ?? "?"} size="md" />
-                    <span className="text-sm text-text">{hod.user?.fullName}</span>
-                  </>
-                ) : (
-                  <span className="text-sm text-muted italic">No HOD assigned</span>
-                )}
-              </div>
-
-              <div className="text-center">
-                <span className="text-sm font-medium text-text">{dept.memberships.length}</span>
-              </div>
-
-              <div className="flex items-center justify-center gap-2">
-                {/* Edit department name */}
+            <div
+              key={dept.id}
+              className="rounded-xl border border-border bg-surface-container-lowest shadow-sm overflow-hidden"
+            >
+              {/* Department header row */}
+              <div className="flex items-center gap-4 px-5 py-4">
+                {/* Expand toggle */}
                 <button
                   type="button"
-                  onClick={() => openEdit(dept)}
-                  className="rounded-md p-1.5 text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
-                  title="Edit department"
+                  onClick={() => toggleExpand(dept.id)}
+                  className="shrink-0 rounded-md p-1 text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
+                  title={isExpanded ? "Collapse" : "Expand staff"}
                 >
-                  <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-9.07 9.07-3.87.968.968-3.87 9.144-9.143z" />
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    className={`h-4 w-4 calm-transition ${isExpanded ? "rotate-90" : ""}`}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M7 7l3 3 3-3" />
                   </svg>
                 </button>
 
-                {/* Add member */}
-                <button
-                  type="button"
-                  onClick={() => openAddMember(dept)}
-                  className="rounded-md p-1.5 text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
-                  title="Add member to department"
-                >
-                  <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 18v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                    <circle cx="10" cy="6" r="3" />
-                    <path d="M18 9l-2 2-2-2" />
-                  </svg>
-                </button>
+                {/* Dept info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-semibold text-text leading-tight">{dept.name}</p>
+                  {dept.faculty && (
+                    <p className="mt-0.5 text-xs text-muted">Faculty: {dept.faculty}</p>
+                  )}
+                </div>
 
-                {/* Delete */}
-                <form action={deleteDepartmentAction}>
-                  <input type="hidden" name="id" value={dept.id} />
+                {/* HOD chip */}
+                <div className="hidden sm:flex items-center gap-2 shrink-0">
+                  {hod ? (
+                    <div className="flex items-center gap-2">
+                      <Avatar name={hod.user?.fullName ?? "?"} size="sm" />
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted leading-none mb-0.5">HOD</p>
+                        <p className="text-sm font-medium text-text leading-tight">{hod.user?.fullName}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted italic">No HOD set</span>
+                  )}
+                </div>
+
+                {/* Staff count */}
+                <div className="hidden md:flex flex-col items-center shrink-0 w-16">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted leading-none mb-0.5">Staff</p>
+                  <p className="text-sm font-semibold text-text">{dept.memberships.length}</p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 shrink-0">
                   <button
-                    type="submit"
-                    className="rounded-md p-1.5 text-muted calm-transition hover:bg-error/10 hover:text-error"
-                    title="Delete department"
-                    onClick={(e) => {
-                      if (!confirm(`Delete "${dept.name}"? This cannot be undone.`)) {
-                        e.preventDefault();
-                      }
-                    }}
+                    type="button"
+                    onClick={() => openAddMember(dept)}
+                    className="rounded-md p-1.5 text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
+                    title="Add staff member"
                   >
                     <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 6h12M8 6V4h4v2M6 6v10a1 1 0 001 1h6a1 1 0 001-1V6" />
+                      <path d="M16 18v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                      <circle cx="10" cy="6" r="3" />
+                      <path d="M15 9v4M13 11h4" />
                     </svg>
                   </button>
-                </form>
+                  <button
+                    type="button"
+                    onClick={() => openEdit(dept)}
+                    className="rounded-md p-1.5 text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
+                    title="Rename department"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-9.07 9.07-3.87.968.968-3.87 9.144-9.143z" />
+                    </svg>
+                  </button>
+                  <form action={deleteDepartmentAction}>
+                    <input type="hidden" name="id" value={dept.id} />
+                    <button
+                      type="submit"
+                      className="rounded-md p-1.5 text-muted calm-transition hover:bg-error/10 hover:text-error"
+                      title="Delete department"
+                      onClick={(e) => {
+                        if (!confirm(`Delete "${dept.name}"? This cannot be undone.`)) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 6h12M8 6V4h4v2M6 6v10a1 1 0 001 1h6a1 1 0 001-1V6" />
+                      </svg>
+                    </button>
+                  </form>
+                </div>
               </div>
+
+              {/* Expanded staff panel */}
+              {isExpanded && (
+                <div className="border-t border-border/60 bg-bg/30 px-5 py-4 space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.07em] text-muted mb-3">
+                    Staff in {dept.name}
+                  </p>
+
+                  {dept.memberships.length === 0 && addingMemberDeptId !== dept.id && (
+                    <p className="text-sm text-muted italic">No staff assigned yet.</p>
+                  )}
+
+                  {dept.memberships.map((m) => (
+                    <div
+                      key={m.userId}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 bg-surface-container-lowest border border-border/50"
+                    >
+                      <Avatar name={m.user?.fullName ?? "?"} size="sm" />
+                      <span className="flex-1 text-sm font-medium text-text min-w-0 truncate">
+                        {m.user?.fullName}
+                      </span>
+
+                      {/* HOD toggle */}
+                      <form action={toggleHodAction}>
+                        <input type="hidden" name="departmentId" value={dept.id} />
+                        <input type="hidden" name="userId" value={m.userId} />
+                        <input type="hidden" name="current" value={String(m.isHeadOfDepartment)} />
+                        <button
+                          type="submit"
+                          title={m.isHeadOfDepartment ? "Remove as HOD" : "Set as HOD"}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.06em] calm-transition ${
+                            m.isHeadOfDepartment
+                              ? "bg-accent/10 text-accent border border-accent/30 hover:bg-error/10 hover:text-error hover:border-error/30"
+                              : "bg-surface-container-low text-muted border border-border hover:bg-accent/10 hover:text-accent hover:border-accent/30"
+                          }`}
+                        >
+                          {m.isHeadOfDepartment ? (
+                            <>
+                              <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
+                                <path d="M8 1.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM5 3a3 3 0 116 0 3 3 0 01-6 0z" />
+                                <path d="M8 7a5 5 0 00-4.546 2.916A.75.75 0 004 11h8a.75.75 0 00.546-1.284A5 5 0 008 7z" />
+                              </svg>
+                              HOD
+                            </>
+                          ) : (
+                            "Set HOD"
+                          )}
+                        </button>
+                      </form>
+
+                      {/* Remove member */}
+                      <form action={removeMemberAction}>
+                        <input type="hidden" name="departmentId" value={dept.id} />
+                        <input type="hidden" name="userId" value={m.userId} />
+                        <button
+                          type="submit"
+                          title="Remove from department"
+                          className="rounded-md p-1.5 text-muted calm-transition hover:bg-error/10 hover:text-error"
+                        >
+                          <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 10h12" />
+                          </svg>
+                        </button>
+                      </form>
+                    </div>
+                  ))}
+
+                  {/* Inline add member row */}
+                  {addingMemberDeptId === dept.id && availableToAdd.length > 0 && (
+                    <form
+                      action={addMemberAction}
+                      onSubmit={() => setAddingMemberDeptId(null)}
+                      className="flex items-center gap-2 rounded-lg border border-accent/30 bg-accent/[0.03] px-3 py-2.5"
+                    >
+                      <input type="hidden" name="departmentId" value={dept.id} />
+                      <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0 text-accent" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 18v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                        <circle cx="10" cy="6" r="3" />
+                        <path d="M15 9v4M13 11h4" />
+                      </svg>
+                      <select
+                        name="userId"
+                        value={selectedUserId}
+                        onChange={(e) => setSelectedUserId(e.target.value)}
+                        className="flex-1 rounded-lg border border-border bg-bg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                        required
+                      >
+                        <option value="">Select staff member…</option>
+                        {availableToAdd.map((u) => (
+                          <option key={u.id} value={u.id}>{u.fullName}</option>
+                        ))}
+                      </select>
+                      <button
+                        type="submit"
+                        className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white calm-transition hover:opacity-90"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAddingMemberDeptId(null)}
+                        className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted calm-transition hover:text-text"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  )}
+
+                  {addingMemberDeptId === dept.id && availableToAdd.length === 0 && (
+                    <p className="text-sm text-muted italic px-1">All staff are already members of this department.</p>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -152,13 +303,10 @@ export function DepartmentsAdminTable({
           onClick={(e) => e.target === e.currentTarget && setEditingDept(null)}
         >
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-bold text-text mb-4">Edit Department</h2>
-            <form
-              action={renameDepartmentAction}
-              onSubmit={() => setEditingDept(null)}
-            >
+            <h2 className="text-lg font-bold text-text mb-4">Rename Department</h2>
+            <form action={renameDepartmentAction} onSubmit={() => setEditingDept(null)}>
               <input type="hidden" name="id" value={editingDept.id} />
-              <label className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted mb-1">
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted mb-1.5">
                 Department Name
               </label>
               <input
@@ -181,67 +329,6 @@ export function DepartmentsAdminTable({
                   className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:opacity-90 calm-transition"
                 >
                   Save
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ── Add Member Dialog ──────────────────────────────────────────── */}
-      {addingMemberDept && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.35)" }}
-          onClick={(e) => e.target === e.currentTarget && setAddingMemberDept(null)}
-        >
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-bold text-text mb-1">Add Member</h2>
-            <p className="text-sm text-muted mb-4">Add a staff member to <strong>{addingMemberDept.name}</strong></p>
-            <form
-              action={addMemberAction}
-              onSubmit={() => setAddingMemberDept(null)}
-            >
-              <input type="hidden" name="departmentId" value={addingMemberDept.id} />
-              {(() => {
-                const existingIds = new Set(addingMemberDept.memberships.map((m) => m.userId));
-                const available = allUsers.filter((u) => !existingIds.has(u.id));
-                return (
-                  <>
-                    <label className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted mb-1">
-                      Staff Member
-                    </label>
-                    <select
-                      name="userId"
-                      value={selectedUserId}
-                      onChange={(e) => setSelectedUserId(e.target.value)}
-                      className="field w-full"
-                      required
-                    >
-                      <option value="">Select a staff member…</option>
-                      {available.map((u) => (
-                        <option key={u.id} value={u.id}>{u.fullName}</option>
-                      ))}
-                    </select>
-                    {available.length === 0 && (
-                      <p className="mt-2 text-sm text-muted">All staff are already members of this department.</p>
-                    )}
-                  </>
-                );
-              })()}
-              <div className="mt-4 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setAddingMemberDept(null)}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted hover:text-text calm-transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:opacity-90 calm-transition"
-                >
-                  Add
                 </button>
               </div>
             </form>
