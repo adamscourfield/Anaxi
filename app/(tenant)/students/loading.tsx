@@ -1,21 +1,33 @@
-import { Card } from "@/components/ui/card";
-
 function SkeletonRow() {
   return (
     <tr className="border-b border-border/50 last:border-0">
-      <td className="px-4 py-3">
+      <td className="px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="h-7 w-7 animate-pulse rounded-full bg-border/60" />
-          <div className="space-y-1.5">
-            <div className="h-3.5 w-32 animate-pulse rounded bg-border/60" />
-            <div className="h-2.5 w-16 animate-pulse rounded bg-border/40" />
-          </div>
+          <div className="h-9 w-9 animate-pulse rounded-md bg-border/60" />
+          <div className="h-4 w-36 animate-pulse rounded bg-border/60" />
         </div>
       </td>
-      <td className="px-4 py-3 text-center"><div className="mx-auto h-3.5 w-8 animate-pulse rounded bg-border/60" /></td>
-      <td className="px-4 py-3 text-center"><div className="mx-auto h-3.5 w-10 animate-pulse rounded bg-border/60" /></td>
-      <td className="px-4 py-3 text-center"><div className="mx-auto h-3.5 w-14 animate-pulse rounded bg-border/60" /></td>
-      <td className="px-4 py-3 text-right"><div className="ml-auto h-3.5 w-10 animate-pulse rounded bg-border/60" /></td>
+      <td className="px-4 py-4">
+        <div className="h-3.5 w-8 animate-pulse rounded bg-border/60" />
+      </td>
+      <td className="px-4 py-4">
+        <div className="h-5 w-14 animate-pulse rounded-md bg-border/50" />
+      </td>
+      <td className="px-4 py-4">
+        <div className="h-5 w-16 animate-pulse rounded-md bg-border/50" />
+      </td>
+      <td className="px-4 py-4">
+        <div className="space-y-1.5">
+          <div className="h-3 w-10 animate-pulse rounded bg-border/50" />
+          <div className="h-1.5 w-24 animate-pulse rounded-full bg-border/40" />
+        </div>
+      </td>
+      <td className="px-4 py-4">
+        <div className="h-3.5 w-20 animate-pulse rounded bg-border/50" />
+      </td>
+      <td className="px-5 py-4">
+        <div className="h-3.5 w-12 animate-pulse rounded bg-border/50" />
+      </td>
     </tr>
   );
 }
@@ -24,30 +36,29 @@ export default function StudentsLoading() {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <div className="h-8 w-40 animate-pulse rounded bg-border/60" />
-        <div className="h-4 w-64 animate-pulse rounded bg-border/40" />
+        <div className="h-8 w-48 animate-pulse rounded bg-border/60" />
+        <div className="h-4 w-40 animate-pulse rounded bg-border/40" />
       </div>
 
-      <Card className="p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="h-9 min-w-[180px] flex-1 animate-pulse rounded-lg bg-border/40" />
-          <div className="h-9 w-24 animate-pulse rounded-lg bg-border/40" />
-          <div className="h-9 w-20 animate-pulse rounded-lg bg-border/40" />
-          <div className="h-9 w-20 animate-pulse rounded-lg bg-border/40" />
-          <div className="h-9 w-20 animate-pulse rounded-lg bg-border/40" />
-          <div className="h-9 w-16 animate-pulse rounded-lg bg-border/60" />
+      <div className="rounded-2xl bg-surface-container-high/50 p-4 sm:p-5">
+        <div className="filter-bar items-center">
+          <div className="h-11 min-w-[200px] flex-1 animate-pulse rounded-xl bg-border/40" />
+          <div className="h-11 w-24 animate-pulse rounded-xl bg-border/35" />
+          <div className="hidden h-4 w-48 animate-pulse rounded bg-border/35 sm:ml-auto sm:block" />
         </div>
-      </Card>
+      </div>
 
-      <Card className="overflow-hidden p-0">
+      <div className="table-shell overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border/80 text-left text-xs uppercase tracking-wide text-muted">
-              <th className="px-4 py-3 font-medium">Student</th>
-              <th className="px-4 py-3 font-medium text-center">Year</th>
-              <th className="px-4 py-3 font-medium text-center">Attendance</th>
-              <th className="px-4 py-3 font-medium text-center">Last snapshot</th>
-              <th className="px-4 py-3 font-medium text-right">Action</th>
+            <tr className="table-head-row text-left">
+              <th className="px-5 py-4 font-semibold">Name</th>
+              <th className="px-4 py-4 font-semibold">Year</th>
+              <th className="px-4 py-4 font-semibold">Flags</th>
+              <th className="px-4 py-4 font-semibold">Band</th>
+              <th className="px-4 py-4 font-semibold">Attendance</th>
+              <th className="px-4 py-4 font-semibold">Last update</th>
+              <th className="px-5 py-4 font-semibold">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -56,7 +67,7 @@ export default function StudentsLoading() {
             ))}
           </tbody>
         </table>
-      </Card>
+      </div>
     </div>
   );
 }
