@@ -46,7 +46,7 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
 
 export default async function AdminSettingsPage({ searchParams }: { searchParams?: { tab?: string } }) {
   const user = await requireAdminUser();
-  const tab = (TABS.includes((searchParams?.tab as Tab) || "school") ? (searchParams?.tab as Tab) : "school") as Tab;
+  const tab = (TABS.includes(searchParams?.tab as Tab) ? (searchParams?.tab as Tab) : "school") as Tab;
 
   const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } });
   const features = await prisma.tenantFeature.findMany({ where: { tenantId: user.tenantId }, orderBy: { key: "asc" } });

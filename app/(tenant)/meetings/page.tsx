@@ -5,6 +5,7 @@ import { hasPermission } from "@/lib/rbac";
 import { listMeetings, getMeetingStats } from "@/modules/meetings/service";
 import { MEETING_TYPE_LABELS } from "@/modules/meetings/types";
 import { StatusPill } from "@/components/ui/status-pill";
+import { StatCard } from "@/components/ui/stat-card";
 import { PastMeetingsList } from "@/components/meetings/PastMeetingsList";
 
 function getInitials(name: string): string {
@@ -73,43 +74,50 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
 
       {/* ── Stats Cards ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {/* Total Open Actions */}
-        <div className="rounded-2xl border border-border/40 bg-surface-container-lowest px-5 py-4 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Total Open Actions</p>
-          <p className="mt-1 text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{stats.openActions}</p>
-          {stats.newActionsSinceMonday > 0 && (
-            <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-[var(--coral)]">
-              <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3">
-                <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              +{stats.newActionsSinceMonday} since Monday
-            </p>
-          )}
-        </div>
-
-        {/* Completion Rate */}
-        <div className="rounded-2xl border border-border/40 bg-surface-container-lowest px-5 py-4 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Completion Rate</p>
-          <p className="mt-1 text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{stats.completionRate}%</p>
-          <p className="mt-1.5 text-xs text-muted">Institutional Target: 95%</p>
-        </div>
-
-        {/* Next Up */}
-        <div className="rounded-2xl border border-border/40 bg-surface-container-lowest px-5 py-4 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Next Up</p>
-          {stats.nextMeeting ? (
-            <>
-              <p className="mt-1 text-lg font-bold leading-snug tracking-[-0.01em] text-text">
-                {stats.nextMeeting.title}
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                {formatTimeUntil(new Date(stats.nextMeeting.startDateTime))}
-                {stats.nextMeeting.location ? ` • ${stats.nextMeeting.location}` : ""}
-              </p>
-            </>
-          ) : (
-            <p className="mt-1 text-sm text-muted">No upcoming meetings</p>
-          )}
+        <StatCard
+          label="Open Actions"
+          value={stats.openActions}
+          tone="softGrey"
+          accent="accent"
+          accentPlacement="top"
+          context={
+            stats.newActionsSinceMonday > 0 ? (
+              <span className="flex items-center gap-1 text-[var(--coral)] font-medium">
+                <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3">
+                  <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                +{stats.newActionsSinceMonday} since Monday
+              </span>
+            ) : undefined
+          }
+        />
+        <StatCard
+          label="Completion Rate"
+          value={`${stats.completionRate}%`}
+          tone="softBlueGrey"
+          accent="success"
+          accentPlacement="top"
+          context="Institutional target: 95%"
+        />
+        {/* Next Up — custom card */}
+        <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-[#F1F3F5] shadow-none">
+          <div className="h-1 bg-accent" />
+          <div className="px-5 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Next Up</p>
+            {stats.nextMeeting ? (
+              <>
+                <p className="mt-1.5 text-lg font-bold leading-snug tracking-[-0.01em] text-text">
+                  {stats.nextMeeting.title}
+                </p>
+                <p className="mt-1 text-[12px] text-muted">
+                  {formatTimeUntil(new Date(stats.nextMeeting.startDateTime))}
+                  {stats.nextMeeting.location ? ` · ${stats.nextMeeting.location}` : ""}
+                </p>
+              </>
+            ) : (
+              <p className="mt-1.5 text-sm text-muted">No upcoming meetings</p>
+            )}
+          </div>
         </div>
       </div>
 
