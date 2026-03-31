@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -9,19 +10,54 @@ import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels
 import { ClearDraftOnSuccess } from "../components/ClearDraftOnSuccess";
 import { PrintExportButtons } from "../components/PrintExportButtons";
 
-const SCALE_DISPLAY: Record<string, { label: string; color: string; dot: string; bar: string }> = {
-  LIMITED:    { label: "Limited",    color: "bg-scale-limited-bg text-scale-limited-text",         dot: "bg-scale-limited-bar",    bar: "bg-scale-limited-bar" },
-  SOME:       { label: "Some",       color: "bg-scale-some-bg text-scale-some-text",               dot: "bg-scale-some-bar",       bar: "bg-scale-some-bar" },
-  CONSISTENT: { label: "Consistent", color: "bg-scale-consistent-bg text-scale-consistent-text",   dot: "bg-scale-consistent-bar", bar: "bg-scale-consistent-bar" },
-  STRONG:     { label: "Strong",     color: "bg-scale-strong-bg text-scale-strong-text",           dot: "bg-scale-strong-bar",     bar: "bg-scale-strong-bar" },
+/** Observation review badges: lavender (consistent) and coral (strong) per review UI spec */
+const SCALE_DISPLAY: Record<string, { label: string; pillClass: string }> = {
+  LIMITED: {
+    label: "Limited",
+    pillClass: "bg-scale-limited-bg text-scale-limited-text",
+  },
+  SOME: {
+    label: "Some",
+    pillClass: "bg-scale-some-bg text-scale-some-text",
+  },
+  CONSISTENT: {
+    label: "Consistent",
+    pillClass: "bg-[#ede9fe] text-[#5b21b6]",
+  },
+  STRONG: {
+    label: "Strong",
+    pillClass: "bg-[#ffe4e6] text-[#9f1239]",
+  },
 };
 
 function initials(name: string) {
-  return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
 }
 
 function formatRole(role: string) {
   return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function SectionHeader({
+  icon,
+  children,
+}: {
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex items-center gap-2">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-15 text-amber-800 [&_svg]:h-4 [&_svg]:w-4">
+        {icon}
+      </span>
+      <h2 className="text-[0.9375rem] font-semibold tracking-tight text-text">{children}</h2>
+    </div>
+  );
 }
 
 export default async function ObservationDetailPage({ params }: { params: { id: string } }) {
@@ -33,6 +69,14 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
     include: { observedTeacher: true, observer: true, signals: true },
   });
   if (!observation) notFound();
+
+  const priorObservationCount = await (prisma as any).observation.count({
+    where: {
+      tenantId: user.tenantId,
+      observedTeacherId: observation.observedTeacherId,
+      id: { not: observation.id },
+    },
+  });
 
   const [hodMemberships, coachAssignments, observedDeptMemberships] = await Promise.all([
     (prisma as any).departmentMembership.findMany({ where: { userId: user.id, isHeadOfDepartment: true } }),
@@ -61,259 +105,325 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
   const signalMap = new Map((observation.signals as any[]).map((s: any) => [s.signalKey, s]));
   const draftKey = `observation-draft:${user.tenantId}:${user.id}`;
 
-  // Teacher department name
   const teacherDept = (observedDeptMemberships as any[])[0]?.department?.fullName ?? null;
   const teacherName: string = observation.observedTeacher?.fullName ?? "Unknown Teacher";
   const observerName: string = observation.observer?.fullName ?? "—";
 
-  // Summary stats
-  const scaleCounts = { LIMITED: 0, SOME: 0, CONSISTENT: 0, STRONG: 0 };
-  for (const sig of SIGNAL_DEFINITIONS as any[]) {
-    const v = signalMap.get(sig.key)?.valueKey as keyof typeof scaleCounts;
-    if (v && v in scaleCounts) scaleCounts[v]++;
-  }
-
   const observedAt = new Date(observation.observedAt);
   const dateLabel = observedAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-  const dateTimeLabel = observedAt.toLocaleDateString("en-GB", {
-    day: "2-digit", month: "short", year: "numeric",
-  }).toUpperCase() + " · " + observedAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) + " GMT";
+  const dateTimeLabel =
+    observedAt
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+      .toUpperCase() +
+    " · " +
+    observedAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) +
+    " GMT";
 
-  const sessionLabel = [observation.subject, observation.yearGroup ? `Year ${observation.yearGroup}` : null]
-    .filter(Boolean).join(" — ");
+  const classLine = [
+    observation.yearGroup ? `Year ${observation.yearGroup}` : null,
+    observation.subject,
+    observation.classCode ? `(${observation.classCode})` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const roleLabel = formatRole(observation.observedTeacher?.role ?? "Teacher");
+  const subtitleLine = teacherDept ? `${roleLabel} · ${teacherDept}` : roleLabel;
+
+  const tenureLabel =
+    priorObservationCount === 0
+      ? "First observation on record"
+      : `${priorObservationCount} prior observation${priorObservationCount === 1 ? "" : "s"}`;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-12">
+    <div className="relative -mx-4 min-h-0 bg-background px-4 pb-14 pt-1 sm:-mx-6 sm:px-6">
       <ClearDraftOnSuccess draftKey={draftKey} />
 
-      {/* Page header */}
-      <div>
+      <div className="mx-auto max-w-6xl">
         <Link
           href="/observe/history"
           className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text print:hidden"
         >
           <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
-            <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M10 3.5 5.5 8l4.5 4.5"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           Observation history
         </Link>
 
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-          <div>
+        <div className="mt-3 flex flex-wrap items-start justify-between gap-6">
+          <div className="min-w-0">
             <h1 className="text-[1.625rem] font-bold leading-tight text-text">
               Observation Review — {dateLabel}
             </h1>
-            <p className="mt-1 text-[0.875rem] text-muted">
-              {observation.subject}{observation.classCode ? ` · ${observation.classCode}` : ""}
+            <p className="mt-1.5 max-w-2xl text-[0.875rem] leading-relaxed text-muted">
+              Final summative report for this observation session
+              {observation.subject ? ` · ${observation.subject}` : ""}
               {observation.yearGroup ? ` · Year ${observation.yearGroup}` : ""}
             </p>
           </div>
           <PrintExportButtons />
         </div>
-      </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_288px]">
+        <div className="mt-8 grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.86fr)_minmax(280px,1fr)]">
+          {/* Main column */}
+          <div className="min-w-0 space-y-10">
+            <section>
+              <SectionHeader
+                icon={
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M3 3v18h18" strokeLinecap="round" />
+                    <path d="M7 16l4-4 4 4 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                }
+              >
+                Signal Summary
+              </SectionHeader>
 
-        {/* ── Left: main content ── */}
-        <div className="space-y-6 min-w-0">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {(SIGNAL_DEFINITIONS as any[]).map((signal) => {
+                  const override = (labelMap as any)[signal.key];
+                  const displayName = override?.displayName || signal.displayNameDefault;
+                  const value = signalMap.get(signal.key);
+                  const scaleKey = value?.valueKey as string | undefined;
+                  const display = scaleKey ? SCALE_DISPLAY[scaleKey] : null;
+                  const isSkipped = value?.notObserved && !value?.valueKey;
 
-          {/* Signal Summary */}
-          <div className="overflow-hidden rounded-2xl glass-card">
-            <div className="border-b border-border/20 px-6 py-4">
-              <h2 className="text-[0.875rem] font-semibold text-text">Signal Summary</h2>
+                  return (
+                    <div
+                      key={signal.key}
+                      className="flex items-center justify-between gap-3 rounded-xl bg-surface-container-low px-4 py-3.5"
+                    >
+                      <span className="min-w-0 truncate text-[0.8125rem] font-medium text-text">{displayName}</span>
+                      <div className="shrink-0">
+                        {display ? (
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-1 text-[0.625rem] font-bold uppercase tracking-wide ${display.pillClass}`}
+                          >
+                            {display.label}
+                          </span>
+                        ) : isSkipped ? (
+                          <span className="text-[0.75rem] text-muted">Skipped</span>
+                        ) : (
+                          <span className="text-[0.75rem] text-muted">—</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {observation.contextNote && (
+              <section>
+                <SectionHeader
+                  icon={
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path
+                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  }
+                >
+                  Concluding Reflections
+                </SectionHeader>
+
+                <div className="overflow-hidden rounded-2xl border border-border/30 bg-surface-container-lowest shadow-sm">
+                  <div className="border-l-4 border-tertiary-container px-6 py-6 sm:px-8 sm:py-7">
+                    <blockquote className="text-[0.9375rem] font-medium leading-relaxed text-text italic">
+                      &ldquo;{observation.contextNote}&rdquo;
+                    </blockquote>
+                  </div>
+
+                  <div className="flex flex-col gap-4 border-t border-border/20 px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-8">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-container text-[0.6875rem] font-bold text-on-primary"
+                        aria-hidden
+                      >
+                        {initials(observerName)}
+                      </div>
+                      <div>
+                        <p className="text-[0.8125rem] font-semibold text-text">{observerName}</p>
+                        <p className="text-[0.75rem] text-muted">Observed &amp; Authenticated</p>
+                      </div>
+                    </div>
+                    <p className="text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">{dateTimeLabel}</p>
+                  </div>
+                </div>
+              </section>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <aside className="min-w-0 space-y-6">
+            <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-sm ring-1 ring-border/25">
+              <div
+                className="relative px-5 pb-8 pt-6 text-on-primary"
+                style={{
+                  backgroundColor: "var(--primary-container)",
+                  backgroundImage:
+                    "linear-gradient(135deg, rgba(255,255,255,0.07) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.07) 75%, transparent 75%, transparent)",
+                  backgroundSize: "20px 20px",
+                }}
+              >
+                <div className="relative flex flex-col items-center text-center">
+                  <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-xl bg-on-primary/15 text-lg font-bold text-on-primary ring-2 ring-on-primary/25">
+                    {initials(teacherName)}
+                  </div>
+                  <h3 className="mt-4 font-serif text-[1.125rem] font-semibold leading-snug text-on-primary">
+                    {teacherName}
+                  </h3>
+                  <p className="mt-1 text-[0.8125rem] text-on-primary/85">{subtitleLine}</p>
+                </div>
+
+                <ul className="relative mt-6 space-y-3 border-t border-on-primary/20 pt-5 text-left text-[0.8125rem] text-on-primary/90">
+                  <li className="flex gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-on-primary/10">
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                        <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                      </svg>
+                    </span>
+                    <span className="pt-1 leading-snug">Professional educator</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-on-primary/10">
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <path d="M16 2v4M8 2v4M3 10h18" />
+                      </svg>
+                    </span>
+                    <span className="pt-1 leading-snug">{tenureLabel}</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-on-primary/10">
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="8" r="6" />
+                        <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
+                      </svg>
+                    </span>
+                    <span className="pt-1 leading-snug">Teaching &amp; learning focus</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="p-4">
+                <Link
+                  href={`/explorer/teachers?teacherId=${observation.observedTeacherId}`}
+                  className="flex w-full items-center justify-center rounded-xl bg-surface-container-lowest py-3 text-[0.8125rem] font-semibold text-primary-container calm-transition hover:bg-surface-container-low"
+                >
+                  View Full Dossier
+                </Link>
+              </div>
             </div>
 
-            {/* Two-column signal table */}
-            <div className="grid grid-cols-1 sm:grid-cols-2">
-              {(SIGNAL_DEFINITIONS as any[]).map((signal, idx) => {
-                const override = (labelMap as any)[signal.key];
-                const displayName = override?.displayName || signal.displayNameDefault;
-                const value = signalMap.get(signal.key);
-                const scaleKey = value?.valueKey as string | undefined;
-                const display = scaleKey ? SCALE_DISPLAY[scaleKey] : null;
-                const isSkipped = value?.notObserved && !value?.valueKey;
-
-                const total = (SIGNAL_DEFINITIONS as any[]).length;
-                const isEven = idx % 2 === 0;
-                const lastRowStart = total % 2 === 0 ? total - 2 : total - 1;
-                const isLastRow = idx >= lastRowStart;
-
-                return (
+            <div>
+              <p className="mb-2 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted">Session Context</p>
+              <div className="space-y-0 overflow-hidden rounded-2xl border border-border/25 bg-surface-container-lowest shadow-sm">
+                {[
+                  {
+                    label: "Class",
+                    value: classLine || "—",
+                    icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    label: "Duration",
+                    value: "—",
+                    icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    label: "Observer",
+                    value: observerName,
+                    icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    label: "Status",
+                    value: "Completed",
+                    accent: true,
+                    icon: (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                    ),
+                  },
+                ].map((row, i, arr) => (
                   <div
-                    key={signal.key}
-                    className={[
-                      "flex items-center justify-between gap-3 px-5 py-3",
-                      !isLastRow ? "border-b border-border/20" : "",
-                      isEven ? "sm:border-r sm:border-border/20" : "",
-                    ].join(" ")}
+                    key={row.label}
+                    className={`flex items-start gap-3 px-4 py-4 ${i < arr.length - 1 ? "border-b border-border/20" : ""}`}
                   >
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${
-                        display?.dot ?? (isSkipped ? "bg-outline-variant" : "bg-surface-container-high")
-                      }`} />
-                      <span className="truncate text-[0.8125rem] font-medium text-text">{displayName}</span>
-                    </div>
-                    <div className="shrink-0">
-                      {display ? (
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.6875rem] font-bold uppercase tracking-wide ${display.color}`}>
-                          {display.label}
-                        </span>
-                      ) : isSkipped ? (
-                        <span className="text-[0.75rem] text-muted">Skipped</span>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant">
+                      {row.icon}
+                    </span>
+                    <div className="min-w-0 pt-0.5">
+                      <p className="text-[0.625rem] font-semibold uppercase tracking-wider text-muted">{row.label}</p>
+                      {row.accent ? (
+                        <p className="mt-1 flex items-center gap-2 text-[0.875rem] font-bold uppercase tracking-wide text-[#9f1239]">
+                          <span className="h-2 w-2 rounded-full bg-[#9f1239]" aria-hidden />
+                          {row.value}
+                        </p>
                       ) : (
-                        <span className="text-[0.75rem] text-muted">—</span>
+                        <p className="mt-1 text-[0.875rem] font-semibold text-text">{row.value}</p>
                       )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Scale count summary row */}
-            <div className="grid grid-cols-4 divide-x divide-border/30 border-t border-border/30">
-              {(["STRONG", "CONSISTENT", "SOME", "LIMITED"] as const).map((key) => {
-                const d = SCALE_DISPLAY[key];
-                return (
-                  <div key={key} className="flex flex-col items-center py-3">
-                    <span className={`text-[1.125rem] font-bold tabular-nums ${
-                      key === "LIMITED" ? "text-scale-limited-text" :
-                      key === "SOME" ? "text-scale-some-text" :
-                      key === "CONSISTENT" ? "text-scale-consistent-text" :
-                      "text-scale-strong-text"
-                    }`}>
-                      {scaleCounts[key]}
-                    </span>
-                    <span className="mt-0.5 text-[0.6875rem] font-medium text-muted">{d.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Concluding Reflections */}
-          {observation.contextNote && (
-            <div className="overflow-hidden rounded-2xl glass-card">
-              <div className="border-b border-border/20 px-6 py-4">
-                <h2 className="text-[0.875rem] font-semibold text-text">Concluding Reflections</h2>
-              </div>
-              <div className="px-6 py-5">
-                <blockquote className="border-l-2 border-accent/40 pl-4 text-[0.9375rem] leading-relaxed text-text italic">
-                  &ldquo;{observation.contextNote}&rdquo;
-                </blockquote>
-
-                {/* Observer sign-off */}
-                <div className="mt-5 flex items-center gap-3 border-t border-border/20 pt-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-[0.6875rem] font-bold text-accent">
-                    {initials(observerName)}
-                  </div>
-                  <div>
-                    <p className="text-[0.8125rem] font-semibold text-text">
-                      {observerName} · Observed &amp; Authenticated
-                    </p>
-                    <p className="text-[0.75rem] text-muted">{dateTimeLabel}</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
-          )}
-        </div>
 
-        {/* ── Right: Sidebar ── */}
-        <div className="space-y-4">
-
-          {/* Teacher profile card */}
-          <div className="overflow-hidden rounded-2xl bg-on-surface/5 ring-1 ring-border/40">
-            <div className="px-5 pt-5 pb-4">
-              {/* Avatar + name */}
-              <div className="mb-4 flex flex-col items-center text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/15 text-[0.9375rem] font-bold text-accent ring-2 ring-accent/20">
-                  {initials(teacherName)}
-                </div>
-                <h3 className="mt-3 text-[0.9375rem] font-bold leading-tight text-text">{teacherName}</h3>
-                {teacherDept && (
-                  <p className="mt-0.5 text-[0.75rem] text-muted">
-                    {formatRole(observation.observedTeacher?.role ?? "Teacher")} · {teacherDept}
-                  </p>
-                )}
-                {!teacherDept && (
-                  <p className="mt-0.5 text-[0.75rem] text-muted">
-                    {formatRole(observation.observedTeacher?.role ?? "Teacher")}
-                  </p>
-                )}
-              </div>
-
-              {/* View Full Dossier */}
-              <Link
-                href={`/explorer/teachers?teacherId=${observation.observedTeacherId}`}
-                className="flex w-full items-center justify-center rounded-lg border border-border/50 bg-surface-container-lowest/60 px-4 py-2 text-[0.8125rem] font-medium text-muted calm-transition hover:border-accent/30 hover:text-accent"
-              >
-                View Full Dossier
-              </Link>
-            </div>
-
-            {/* Session Context */}
-            <div className="border-t border-border/20 px-5 py-4">
-              <p className="mb-3 text-[0.5625rem] font-bold uppercase tracking-[0.1em] text-muted">
-                Session Context
-              </p>
-              <div className="space-y-2.5">
-                <div>
-                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wider text-muted">Class</p>
-                  <p className="mt-0.5 text-[0.8125rem] font-semibold text-text">{sessionLabel}</p>
-                </div>
-                <div>
-                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wider text-muted">Observer</p>
-                  <p className="mt-0.5 text-[0.8125rem] font-semibold text-text">{observerName}</p>
-                </div>
-                <div>
-                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wider text-muted">Status</p>
-                  <div className="mt-0.5 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-scale-strong-bar" />
-                    <span className="text-[0.8125rem] font-semibold text-scale-strong-text">Completed</span>
-                  </div>
-                </div>
+            <div>
+              <p className="mb-2 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted">Internal Links</p>
+              <div className="rounded-2xl bg-surface-container-low px-4 py-2 ring-1 ring-border/20">
+                <nav className="flex flex-col" aria-label="Related pages">
+                  <Link
+                    href={`/observe/history?teacherId=${observation.observedTeacherId}`}
+                    className="border-b border-border/20 py-3.5 text-[0.8125rem] font-medium text-text calm-transition last:border-0 hover:text-primary-container"
+                  >
+                    Previous Observations
+                  </Link>
+                  <Link
+                    href={`/explorer/teachers?teacherId=${observation.observedTeacherId}`}
+                    className="border-b border-border/20 py-3.5 text-[0.8125rem] font-medium text-text calm-transition last:border-0 hover:text-primary-container"
+                  >
+                    Lesson Plan Archive
+                  </Link>
+                  <Link
+                    href="/explorer/observations"
+                    className="py-3.5 text-[0.8125rem] font-medium text-text calm-transition hover:text-primary-container"
+                  >
+                    Department Standards
+                  </Link>
+                </nav>
               </div>
             </div>
-          </div>
-
-          {/* Internal Links */}
-          <div className="overflow-hidden rounded-2xl glass-card">
-            <div className="border-b border-border/20 px-5 py-3">
-              <p className="text-[0.5625rem] font-bold uppercase tracking-[0.1em] text-muted">Internal Links</p>
-            </div>
-            <div className="divide-y divide-border/20">
-              <Link
-                href={`/observe/history?teacherId=${observation.observedTeacherId}`}
-                className="flex items-center justify-between px-5 py-3 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text"
-              >
-                Previous Observations
-                <svg className="h-3.5 w-3.5 shrink-0 text-border" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
-              {user.role !== "TEACHER" && (
-                <Link
-                  href="/observe/new"
-                  className="flex items-center justify-between px-5 py-3 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text"
-                >
-                  New Observation
-                  <svg className="h-3.5 w-3.5 shrink-0 text-border" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </Link>
-              )}
-              <Link
-                href={`/explorer/observations`}
-                className="flex items-center justify-between px-5 py-3 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text"
-              >
-                Observation Explorer
-                <svg className="h-3.5 w-3.5 shrink-0 text-border" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
-            </div>
-          </div>
+          </aside>
         </div>
       </div>
     </div>
