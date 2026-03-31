@@ -253,3 +253,59 @@ Alice,Year 7,7A,No,No,#VALUE!,,80%,
     expect(warnings[0].message).toMatch(/unrecognised/i);
   });
 });
+
+// ─── computeRanks option ──────────────────────────────────────────────────────
+
+describe("parseAndRankAssessmentCsv — computeRanks option", () => {
+  it("computes ranks by default (no option passed)", () => {
+    const { students, ranksComputed } = parseAndRankAssessmentCsv(SIMPLE_CSV);
+    expect(ranksComputed).toBe(true);
+    const alice = students.find((s) => s.name === "Alice")!;
+    expect(alice.subjectRanks["Maths"]).not.toBeNull();
+    expect(alice.overallRank).not.toBeNull();
+  });
+
+  it("skips rank computation when computeRanks is false", () => {
+    const { students, ranksComputed } = parseAndRankAssessmentCsv(SIMPLE_CSV, {
+      computeRanks: false,
+    });
+    expect(ranksComputed).toBe(false);
+    students.forEach((student) => {
+      expect(student.overallRank).toBeNull();
+      for (const rank of Object.values(student.subjectRanks)) {
+        expect(rank).toBeNull();
+      }
+    });
+  });
+
+  it("still parses scores and overall average when computeRanks is false", () => {
+    const { students } = parseAndRankAssessmentCsv(SIMPLE_CSV, {
+      computeRanks: false,
+    });
+    const alice = students.find((s) => s.name === "Alice")!;
+    expect(alice.scores["Maths"]).toBe(80);
+    expect(alice.scores["English"]).toBe(60);
+    expect(alice.overallAverage).toBeCloseTo(70);
+  });
+
+  it("still includes subject rank keys (all null) when computeRanks is false", () => {
+    const { students, subjects } = parseAndRankAssessmentCsv(SIMPLE_CSV, {
+      computeRanks: false,
+    });
+    const alice = students.find((s) => s.name === "Alice")!;
+    // Keys exist for all detected subjects
+    for (const subject of subjects) {
+      expect(Object.keys(alice.subjectRanks)).toContain(subject);
+      expect(alice.subjectRanks[subject]).toBeNull();
+    }
+  });
+
+  it("computeRanks: true explicitly is equivalent to the default", () => {
+    const withDefault = parseAndRankAssessmentCsv(SIMPLE_CSV);
+    const withTrue = parseAndRankAssessmentCsv(SIMPLE_CSV, { computeRanks: true });
+    expect(withTrue.ranksComputed).toBe(true);
+    withTrue.students.forEach((student, i) => {
+      expect(student.overallRank).toBe(withDefault.students[i].overallRank);
+    });
+  });
+});

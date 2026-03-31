@@ -2,15 +2,22 @@
  * Assessment Ranking Module
  *
  * Parses a multi-subject assessment CSV (wide format with Score/Rank column
- * pairs) and recomputes all subject-level ranks and the overall average rank.
+ * pairs) and optionally recomputes all subject-level ranks and the overall
+ * average rank.
  *
  * Expected CSV layout:
  *   Name | Year Group | Teaching Group | SEN | PP |
  *   [Subject] Score | [Subject] Rank | ... |
  *   Overall Average | Overall Rank
  *
- * Pre-existing rank values are ignored and fully recomputed. Absent / blank
- * scores are excluded from ranking and are not counted in the overall average.
+ * Rank computation is optional (computeRanks option, default true). Schools
+ * may want to import scores without ranking — for example when grades are
+ * qualitative (GCSE 1–9, A-Level A*–U) and a simple rank order is not
+ * meaningful or desired.
+ *
+ * When computeRanks is true, pre-existing rank columns in the CSV are ignored
+ * and all ranks are recomputed. Absent / blank scores are excluded from
+ * ranking and are not counted in the overall average.
  *
  * Ranking uses standard competition ranking (1224): tied students share the
  * same rank and the next rank skips by the number of ties.
@@ -39,8 +46,19 @@ export type StudentRanking = {
 export type RankingResult = {
   subjects: string[];
   students: StudentRanking[];
+  /** Whether per-subject and overall ranks were computed */
+  ranksComputed: boolean;
   /** Row-level warnings (non-fatal data quality issues) */
   warnings: Array<{ row: number; field: string; message: string }>;
+};
+
+export type ParseAndRankOptions = {
+  /**
+   * When true (default), compute per-subject and overall competition ranks.
+   * Set to false to import scores only — useful for qualitative grade formats
+   * (GCSE, A-Level) where a numerical rank order may not be appropriate.
+   */
+  computeRanks?: boolean;
 };
 
 // ─── Score parsing ────────────────────────────────────────────────────────────
@@ -116,12 +134,17 @@ function detectSubjects(headers: string[]): string[] {
 }
 
 /**
- * Parse a multi-subject assessment CSV and compute all rankings.
+ * Parse a multi-subject assessment CSV and optionally compute rankings.
  *
  * The input CSV must follow the layout described at the top of this file.
- * Existing rank columns in the CSV are ignored — all ranks are recomputed.
+ * When computeRanks is true (the default), existing rank columns are ignored
+ * and all ranks are recomputed from the parsed scores.
  */
-export function parseAndRankAssessmentCsv(csvContent: string): RankingResult {
+export function parseAndRankAssessmentCsv(
+  csvContent: string,
+  options: ParseAndRankOptions = {}
+): RankingResult {
+  const { computeRanks = true } = options;
   const warnings: RankingResult["warnings"] = [];
 
   const rows = parse(csvContent, {
@@ -181,6 +204,12 @@ export function parseAndRankAssessmentCsv(csvContent: string): RankingResult {
         ? validScores.reduce((sum, s) => sum + s, 0) / validScores.length
         : null;
 
+    // Initialise all subject rank slots to null; filled below if computeRanks
+    const subjectRanks: Record<string, number | null> = {};
+    for (const subject of subjects) {
+      subjectRanks[subject] = null;
+    }
+
     return {
       name,
       yearGroup: (row["Year Group"] || "").trim(),
@@ -188,27 +217,29 @@ export function parseAndRankAssessmentCsv(csvContent: string): RankingResult {
       sen: senRaw === "yes" || senRaw === "true" || senRaw === "1",
       pp: ppRaw === "yes" || ppRaw === "true" || ppRaw === "1",
       scores,
-      subjectRanks: {}, // filled below
+      subjectRanks,
       overallAverage,
-      overallRank: null, // filled below
+      overallRank: null, // filled below if computeRanks
     };
   });
 
-  // Compute per-subject ranks
-  for (const subject of subjects) {
-    const subjectScores = students.map((s) => s.scores[subject]);
-    const ranks = competitionRank(subjectScores);
+  if (computeRanks) {
+    // Compute per-subject ranks
+    for (const subject of subjects) {
+      const subjectScores = students.map((s) => s.scores[subject]);
+      const ranks = competitionRank(subjectScores);
+      students.forEach((student, i) => {
+        student.subjectRanks[subject] = ranks[i];
+      });
+    }
+
+    // Compute overall ranks
+    const overallScores = students.map((s) => s.overallAverage);
+    const overallRanks = competitionRank(overallScores);
     students.forEach((student, i) => {
-      student.subjectRanks[subject] = ranks[i];
+      student.overallRank = overallRanks[i];
     });
   }
 
-  // Compute overall ranks
-  const overallScores = students.map((s) => s.overallAverage);
-  const overallRanks = competitionRank(overallScores);
-  students.forEach((student, i) => {
-    student.overallRank = overallRanks[i];
-  });
-
-  return { subjects, students, warnings };
+  return { subjects, students, ranksComputed: computeRanks, warnings };
 }
