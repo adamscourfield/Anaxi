@@ -116,7 +116,7 @@ export function StudentsFilterBar({
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && apply()}
             placeholder="Search students..."
-            className="field w-full !rounded-xl !border-border/40 !bg-surface-container-high/80 !py-2.5 pl-11 pr-4 text-[0.9375rem] shadow-none"
+            className="field w-full !rounded-xl !border-border/40 !bg-surface-container-high/80 !py-2.5 !pl-[2.875rem] pr-4 text-[0.9375rem] shadow-none"
           />
         </div>
 

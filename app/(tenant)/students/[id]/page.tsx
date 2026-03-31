@@ -12,10 +12,13 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
     where: { id: params.id, tenantId: user.tenantId },
     include: {
       snapshots: { orderBy: { snapshotDate: "asc" } },
-      subjects: { include: { subject: true, teacher: { select: { fullName: true, email: true } } }, where: { OR: [{ effectiveTo: null }, { effectiveTo: { gt: new Date() } }] } },
+      subjectTeachers: {
+        where: { OR: [{ effectiveTo: null }, { effectiveTo: { gt: new Date() } }] },
+        include: { subject: true, teacher: { select: { fullName: true, email: true } } },
+      },
       changeFlags: { orderBy: { createdAt: "desc" }, take: 50 },
-      onCallRequests: { orderBy: { createdAt: "desc" }, take: 20 }
-    }
+      onCallRequests: { orderBy: { createdAt: "desc" }, take: 20 },
+    },
   });
   if (!student) notFound();
 
@@ -29,7 +32,12 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
       <Card>
         <SectionHeader title="Teachers by subject (current)" />
         <ul className="mt-2 list-disc pl-5 text-sm">
-          {(student.subjects as any[]).map((x: any) => <li key={x.id}>{x.subject?.name}: {x.teacher?.fullName ?? "—"}{x.teacher?.email ? ` (${x.teacher.email})` : ""}</li>)}
+          {(student.subjectTeachers as any[]).map((x: any) => (
+            <li key={x.id}>
+              {x.subject?.name}: {x.teacher?.fullName ?? "—"}
+              {x.teacher?.email ? ` (${x.teacher.email})` : ""}
+            </li>
+          ))}
         </ul>
       </Card>
 
