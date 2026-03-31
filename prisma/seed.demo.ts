@@ -963,6 +963,348 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   }
   console.log("  ✓  Meetings + actions created");
 
+  // ─── Assessments ───────────────────────────────────────────────────────────
+
+  console.log("  →  Seeding assessment data…");
+
+  // GCSE Cycle: Year 11 Mock exams
+  const gcseSubjects = [
+    "Maths", "English Language", "English Literature",
+    "Biology", "Chemistry", "Physics",
+    "History", "Geography", "French", "RE",
+    "Statistics", "Sociology",
+  ];
+
+  const gcseGrades = [9, 8, 7, 6, 5, 4, 3, 2, 1] as const;
+  type GcseGrade = (typeof gcseGrades)[number];
+
+  // Grade distribution weights: bell-curve centred around 5-6
+  const gradeWeights = [2, 5, 10, 18, 22, 20, 13, 7, 3]; // 9,8,7,6,5,4,3,2,1
+
+  function pickGcseGrade(baseShift = 0): GcseGrade {
+    const weights = gradeWeights.map((w, i) => {
+      const shift = i + baseShift;
+      return Math.max(1, w + shift * (shift > 0 ? -1 : 2));
+    });
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = rng() * total;
+    for (let i = 0; i < weights.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return gcseGrades[i];
+    }
+    return 4;
+  }
+
+  const aLevelGrades = ["A*", "A", "B", "C", "D", "E", "U"] as const;
+  type ALevelGrade = (typeof aLevelGrades)[number];
+  const aLevelWeights = [8, 20, 28, 22, 13, 7, 2]; // A*, A, B, C, D, E, U
+
+  function pickALevelGrade(baseShift = 0): ALevelGrade {
+    const weights = aLevelWeights.map((w, i) => {
+      const shift = i + baseShift;
+      return Math.max(1, w - Math.abs(baseShift) * 1.5);
+    });
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = rng() * total;
+    for (let i = 0; i < weights.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return aLevelGrades[i];
+    }
+    return "C";
+  }
+
+  // ── GCSE: Year 11 Mock cycle ──
+  const gcseCycle = await prisma.assessmentCycle.upsert({
+    where: { tenantId_label: { tenantId: tenant.id, label: "Year 11 GCSE 2024/25" } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      label: "Year 11 GCSE 2024/25",
+      cohortLabel: "Year 11",
+      qualificationType: "GCSE",
+      academicYear: "2024/25",
+      startDate: new Date("2024-09-01"),
+      endDate: new Date("2025-07-31"),
+      isActive: true,
+      status: "active",
+    },
+  });
+
+  const gcseMock1 = await prisma.assessmentPoint.upsert({
+    where: { tenantId_cycleId_label: { tenantId: tenant.id, cycleId: gcseCycle.id, label: "Mock 1" } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      cycleId: gcseCycle.id,
+      label: "Mock 1",
+      shortLabel: "M1",
+      ordinal: 1,
+      pointType: "INTERNAL_MOCK",
+      resultStatus: "PUBLISHED",
+      isFinalPoint: false,
+      comparisonEligible: true,
+      assessedAt: new Date("2024-11-15"),
+    },
+  });
+
+  const gcseMock2 = await prisma.assessmentPoint.upsert({
+    where: { tenantId_cycleId_label: { tenantId: tenant.id, cycleId: gcseCycle.id, label: "Mock 2" } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      cycleId: gcseCycle.id,
+      label: "Mock 2",
+      shortLabel: "M2",
+      ordinal: 2,
+      pointType: "INTERNAL_MOCK",
+      resultStatus: "PUBLISHED",
+      isFinalPoint: false,
+      comparisonEligible: true,
+      assessedAt: new Date("2025-02-20"),
+    },
+  });
+
+  // Fetch Y11 students
+  const y11Students = await prisma.student.findMany({
+    where: { tenantId: tenant.id, yearGroup: "Y11" },
+    select: { id: true, upn: true, fullName: true, ppFlag: true, sendFlag: true },
+  });
+
+  // Create GCSE assessments for both mock points
+  for (const point of [gcseMock1, gcseMock2]) {
+    for (const subject of gcseSubjects) {
+      // Determine enrolled students first to set entryCount
+      const isCoreSubjectPre = ["Maths", "English Language", "English Literature"].includes(subject);
+      const preEnrolled = isCoreSubjectPre
+        ? y11Students
+        : y11Students.filter(() => rng() > 0.35);
+      const expectedCount = preEnrolled.length;
+
+      const assessment = await prisma.assessment.upsert({
+        where: {
+          id: `demo-gcse-${point.id}-${subject.replace(/\s+/g, "_").toLowerCase()}`,
+        },
+        update: {},
+        create: {
+          id: `demo-gcse-${point.id}-${subject.replace(/\s+/g, "_").toLowerCase()}`,
+          tenantId: tenant.id,
+          pointId: point.id,
+          subject,
+          yearGroup: "Y11",
+          title: `${subject} — Y11 ${point.label}`,
+          gradeFormat: "GCSE",
+          uploadStatus: "VALIDATED",
+          entryCount: expectedCount,
+          matchedStudentCount: expectedCount,
+          createdByUserId: admin.id,
+        },
+      });
+
+      // Use pre-enrolled students (already computed above)
+      const isCoreSubject = isCoreSubjectPre;
+      const enrolledStudents = preEnrolled;
+
+      for (const student of enrolledStudents) {
+        // PP students slightly lower grades on average
+        const baseShift = student.ppFlag ? 1 : student.sendFlag ? 2 : 0;
+        // Mock 2 = slight improvement on average
+        const mockShift = point.label === "Mock 2" ? -1 : 0;
+        const rawGrade = pickGcseGrade(baseShift + mockShift);
+
+        // 3% absent
+        const isAbsent = rng() < 0.03;
+        const rawValue = isAbsent ? "Absent" : String(rawGrade);
+        const status = isAbsent ? "ABSENT" : "PRESENT";
+        const normalizedScore = isAbsent ? null : rawGrade / 9;
+
+        await prisma.assessmentResult.upsert({
+          where: {
+            tenantId_assessmentId_studentId: {
+              tenantId: tenant.id,
+              assessmentId: assessment.id,
+              studentId: student.id,
+            },
+          },
+          update: { rawValue, normalizedScore, status },
+          create: {
+            tenantId: tenant.id,
+            assessmentId: assessment.id,
+            studentId: student.id,
+            rawValue,
+            normalizedScore,
+            status,
+          },
+        });
+      }
+    }
+  }
+  console.log("  ✓  GCSE Year 11 assessment data seeded");
+
+  // ── A-Level: Year 13 cycle ──
+  // First, create/upsert Year 13 students (not in the default YEAR_GROUPS)
+  const A_LEVEL_SUBJECTS = [
+    "Maths", "Further Maths", "Biology", "Chemistry", "Physics",
+    "History", "Geography", "Politics", "Sociology", "Psychology",
+    "English Literature", "Economics", "French",
+  ];
+
+  const y13StudentNames = [
+    "Adeyemi Praise", "Akinoso Grace", "Amjad Javeria", "Ampofo Charlotte",
+    "Asif Moaaz", "Atuegwu Ify", "Ayoola Abimbola", "Ayoola Abisola",
+    "Bamiduro Adenike", "Birch Keira", "Botnaru Adrian", "Crawford Alec",
+    "Dohal Pranay", "Durowoju Jordan", "E Steffi", "Ekunola Keyra",
+    "Etwijer Dkhil Lama", "Gogoman Denisa", "Gyamfi Princessa", "Heysman Jocelyn",
+    "Igbogbahaka Chisimdi", "Izuchukwu Sommie", "Jabang Lamin", "Kankam-Boadu Sharon",
+    "Kazmi Aziza", "Khan Adnan", "Kiani Nusayba", "Mahabubul Nila",
+    "Maimane Lwazi", "Migan Esther", "Mirza Shanzay", "Morris Jayden",
+    "Musaddiq Rohaan", "Nwobu Angel", "Odubola Josiah", "Ojukwu Chinenye",
+    "Okpoti-Paulo Claive", "Oriowo Michelle", "Rahman Jayan", "Saif Kazi Sidra",
+    "Salifu Amira", "Salim Zawad", "Sampong Jessica", "Sendi Rihana",
+    "Thomas Shayne Jacob", "Tolentino Summer", "Torchynovich Marharyta",
+    "Vatavu Cosmin", "Vickers Jessica", "Wireko Asante",
+  ];
+
+  const y13Students: Array<{ id: string; ppFlag: boolean; sendFlag: boolean }> = [];
+  for (let i = 0; i < y13StudentNames.length; i++) {
+    const name = y13StudentNames[i];
+    const upn = `D13${String(i + 1).padStart(3, "0")}`;
+    const student = await prisma.student.upsert({
+      where: { tenantId_upn: { tenantId: tenant.id, upn } },
+      update: { fullName: name, yearGroup: "Y13" },
+      create: {
+        tenantId: tenant.id,
+        upn,
+        fullName: name,
+        yearGroup: "Y13",
+        ppFlag: i % 7 === 0,
+        sendFlag: i % 12 === 0,
+        status: "ACTIVE",
+      },
+    });
+    y13Students.push({ id: student.id, ppFlag: student.ppFlag, sendFlag: student.sendFlag });
+  }
+
+  const aLevelCycle = await prisma.assessmentCycle.upsert({
+    where: { tenantId_label: { tenantId: tenant.id, label: "Year 13 A-Level 2024/25" } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      label: "Year 13 A-Level 2024/25",
+      cohortLabel: "Year 13",
+      qualificationType: "A_LEVEL",
+      academicYear: "2024/25",
+      startDate: new Date("2024-09-01"),
+      endDate: new Date("2025-07-31"),
+      isActive: true,
+      status: "active",
+    },
+  });
+
+  const aLevelMock1 = await prisma.assessmentPoint.upsert({
+    where: { tenantId_cycleId_label: { tenantId: tenant.id, cycleId: aLevelCycle.id, label: "Mock 1" } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      cycleId: aLevelCycle.id,
+      label: "Mock 1",
+      shortLabel: "M1",
+      ordinal: 1,
+      pointType: "INTERNAL_MOCK",
+      resultStatus: "PUBLISHED",
+      isFinalPoint: false,
+      comparisonEligible: true,
+      assessedAt: new Date("2024-11-10"),
+    },
+  });
+
+  const aLevelMock2 = await prisma.assessmentPoint.upsert({
+    where: { tenantId_cycleId_label: { tenantId: tenant.id, cycleId: aLevelCycle.id, label: "Mock 2" } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      cycleId: aLevelCycle.id,
+      label: "Mock 2",
+      shortLabel: "M2",
+      ordinal: 2,
+      pointType: "INTERNAL_MOCK",
+      resultStatus: "PUBLISHED",
+      isFinalPoint: false,
+      comparisonEligible: true,
+      assessedAt: new Date("2025-02-15"),
+    },
+  });
+
+  // Assign ~3 A-Level subjects per student
+  const studentSubjectMap = new Map<string, string[]>();
+  for (const student of y13Students) {
+    // Each student takes 3-4 subjects
+    const numSubjects = 3 + (rng() < 0.25 ? 1 : 0);
+    const shuffled = [...A_LEVEL_SUBJECTS].sort(() => rng() - 0.5);
+    studentSubjectMap.set(student.id, shuffled.slice(0, numSubjects));
+  }
+
+  for (const point of [aLevelMock1, aLevelMock2]) {
+    for (const subject of A_LEVEL_SUBJECTS) {
+      const studentsForSubject = y13Students.filter((s) =>
+        studentSubjectMap.get(s.id)?.includes(subject)
+      );
+      if (studentsForSubject.length === 0) continue;
+
+      const assessment = await prisma.assessment.upsert({
+        where: {
+          id: `demo-alevel-${point.id}-${subject.replace(/\s+/g, "_").toLowerCase()}`,
+        },
+        update: {},
+        create: {
+          id: `demo-alevel-${point.id}-${subject.replace(/\s+/g, "_").toLowerCase()}`,
+          tenantId: tenant.id,
+          pointId: point.id,
+          subject,
+          yearGroup: "Y13",
+          title: `${subject} — Y13 ${point.label}`,
+          gradeFormat: "A_LEVEL",
+          uploadStatus: "VALIDATED",
+          entryCount: studentsForSubject.length,
+          matchedStudentCount: studentsForSubject.length,
+          createdByUserId: admin.id,
+        },
+      });
+
+      for (const student of studentsForSubject) {
+        const baseShift = student.ppFlag ? 1 : 0;
+        const rawGrade = pickALevelGrade(baseShift);
+        const isAbsent = rng() < 0.02;
+        const rawValue = isAbsent ? "Absent" : rawGrade;
+        const status = isAbsent ? "ABSENT" : "PRESENT";
+
+        const A_LEVEL_SCORE: Record<string, number> = {
+          "A*": 1.0, A: 6 / 7, B: 5 / 7, C: 4 / 7, D: 3 / 7, E: 2 / 7, U: 0,
+        };
+        const normalizedScore = isAbsent ? null : (A_LEVEL_SCORE[rawGrade] ?? null);
+
+        await prisma.assessmentResult.upsert({
+          where: {
+            tenantId_assessmentId_studentId: {
+              tenantId: tenant.id,
+              assessmentId: assessment.id,
+              studentId: student.id,
+            },
+          },
+          update: { rawValue, normalizedScore, status },
+          create: {
+            tenantId: tenant.id,
+            assessmentId: assessment.id,
+            studentId: student.id,
+            rawValue,
+            normalizedScore,
+            status,
+          },
+        });
+      }
+    }
+  }
+  console.log("  ✓  A-Level Year 13 assessment data seeded");
+
   console.log(`
 ✅  Demo seed complete!
 

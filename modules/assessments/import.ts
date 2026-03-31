@@ -60,13 +60,28 @@ export async function importAssessmentResults(
     },
   });
 
-  // Build a UPN → studentId lookup for this tenant
+  // Build student lookup: prefer UPN, fall back to name-based matching
   const upns = [...new Set(records.map((r) => r.upn).filter(Boolean))];
-  const students = await prisma.student.findMany({
-    where: { tenantId, upn: { in: upns } },
-    select: { id: true, upn: true },
+  const names = [...new Set(records.map((r) => r.studentName).filter(Boolean))];
+
+  const allStudents = await prisma.student.findMany({
+    where: {
+      tenantId,
+      OR: [
+        ...(upns.length > 0 ? [{ upn: { in: upns } }] : []),
+        ...(names.length > 0 ? [{ fullName: { in: names } }] : []),
+      ],
+    },
+    select: { id: true, upn: true, fullName: true },
   });
-  const studentByUpn = new Map(students.map((s) => [s.upn!, s.id]));
+
+  const studentByUpn = new Map(
+    allStudents.filter((s) => s.upn).map((s) => [s.upn!, s.id])
+  );
+  // Name lookup: lowercase for case-insensitive matching
+  const studentByName = new Map(
+    allStudents.map((s) => [s.fullName.toLowerCase().trim(), s.id])
+  );
 
   let rowsProcessed = 0;
   let rowsFailed = 0;
@@ -76,12 +91,17 @@ export async function importAssessmentResults(
     const record = records[i];
     const rowNum = i + 2; // 1-indexed + header row
 
-    const studentId = studentByUpn.get(record.upn);
+    // Resolve student ID: UPN first, then name
+    let studentId = record.upn ? studentByUpn.get(record.upn) : undefined;
+    if (!studentId && record.studentName) {
+      studentId = studentByName.get(record.studentName.toLowerCase().trim());
+    }
     if (!studentId) {
+      const identifier = record.upn || record.studentName || "unknown";
       rowErrors.push({
         rowNumber: rowNum,
-        field: "UPN",
-        message: `No student found with UPN "${record.upn}"`,
+        field: record.upn ? "UPN" : "Name",
+        message: `No student found matching "${identifier}"`,
       });
       rowsFailed++;
       continue;

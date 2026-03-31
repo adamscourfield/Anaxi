@@ -41,7 +41,7 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
   ADMIN_SETTINGS: "Tenant-level settings and configuration pages.",
   ANALYSIS: "Teacher and school analysis dashboards.",
   STUDENT_ANALYSIS: "Student risk and student-level analysis pages.",
-  ASSESSMENTS: "Assessment cycles, results upload, and attainment reporting.",
+  ASSESSMENTS: "Assessment cycles, mock results, grade tracking, and key measures dashboards for GCSE and A Level.",
 };
 
 export default async function AdminSettingsPage({ searchParams }: { searchParams?: { tab?: string } }) {
