@@ -2,14 +2,20 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
+import { Label } from "@/components/ui/typography";
+import { TaxonomyTabSelect } from "./TaxonomyTabSelect";
 
 const TABS = ["loa-reasons", "loa-authorisers", "on-call-reasons", "on-call-locations", "on-call-recipients"] as const;
 type Tab = (typeof TABS)[number];
+
+const LEAVE_TABS: Tab[] = ["loa-reasons", "loa-authorisers"];
+const ON_CALL_TABS: Tab[] = ["on-call-reasons", "on-call-locations", "on-call-recipients"];
 
 const TAB_META: Record<Tab, { label: string; icon: JSX.Element; description: string }> = {
   "loa-reasons": {
@@ -64,6 +70,10 @@ const TAB_META: Record<Tab, { label: string; icon: JSX.Element; description: str
     ),
   },
 };
+
+const TAB_LABELS: Record<Tab, string> = Object.fromEntries(
+  (Object.keys(TAB_META) as Tab[]).map((k) => [k, TAB_META[k].label])
+) as Record<Tab, string>;
 
 export default async function AdminTaxonomiesPage({ searchParams }: { searchParams?: { tab?: string } }) {
   const user = await requireAdminUser();
@@ -183,20 +193,21 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
 
   // ---------- Helpers ----------
 
-  const tabLink = (value: Tab) => {
+  const tabNavLink = (value: Tab) => {
     const meta = TAB_META[value];
     const active = tab === value;
     return (
       <Link
         key={value}
         href={`/admin/taxonomies?tab=${value}`}
-        className={`group flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-sm font-medium calm-transition ${
+        scroll={false}
+        className={`group flex shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium calm-transition md:rounded-xl md:px-3.5 ${
           active
-            ? "border-accent/30 bg-accent/[0.06] text-accent shadow-sm"
-            : "border-border bg-surface-container-lowest text-muted hover:border-accent/20 hover:bg-accent/[0.03] hover:text-text"
+            ? "bg-[var(--surface-container-lowest)] text-accent shadow-ambient"
+            : "text-muted hover:bg-[var(--surface-container-high)] hover:text-text"
         }`}
       >
-        <span className={`shrink-0 ${active ? "text-accent" : "text-muted/60 group-hover:text-accent/60"}`}>
+        <span className={`shrink-0 ${active ? "text-accent" : "text-muted/60 group-hover:text-accent/70"}`}>
           {meta.icon}
         </span>
         {meta.label}
@@ -204,93 +215,147 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
     );
   };
 
-  const editableTaxonomy = (title: string, type: string, rows: any[], field: "label" | "email") => {
+  const editableTaxonomy = (
+    title: string,
+    type: string,
+    rows: any[],
+    field: "label" | "email",
+    opts?: { addItemNoun?: string; valueHeader?: string }
+  ) => {
+    const addItemNoun = opts?.addItemNoun ?? "item";
+    const valueHeader = opts?.valueHeader ?? (field === "email" ? "Email" : "Name");
     const activeCount = rows.filter((r) => r.active).length;
     const inactiveCount = rows.length - activeCount;
     const meta = TAB_META[tab];
+    const valueInputLabel = field === "email" ? "Email address" : valueHeader;
 
     return (
       <Card>
-        <SectionHeader title={title} subtitle={meta.description} />
-        <div className="mb-1 mt-3 flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-status-approved-bg px-2.5 py-1 text-xs font-medium text-status-approved-text">
-            <span className="h-1.5 w-1.5 rounded-full bg-status-approved" />
-            {activeCount} active
-          </span>
-          {inactiveCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container-low px-2.5 py-1 text-xs font-medium text-on-surface-variant">
-              <span className="h-1.5 w-1.5 rounded-full bg-outline-variant" />
-              {inactiveCount} inactive
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <SectionHeader title={title} subtitle={meta.description} className="mb-0 sm:min-w-0 sm:flex-1" />
+          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:pt-1">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-status-approved-bg px-2.5 py-1 text-xs font-medium text-status-approved-text">
+              <span className="h-1.5 w-1.5 rounded-full bg-status-approved" />
+              {activeCount} active
             </span>
-          )}
+            {inactiveCount > 0 ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--surface-container-low)] px-2.5 py-1 text-xs font-medium text-on-surface-variant">
+                <span className="h-1.5 w-1.5 rounded-full bg-outline-variant" />
+                {inactiveCount} inactive
+              </span>
+            ) : null}
+          </div>
         </div>
-        <div className="mt-4 space-y-2">
-          {rows.map((row) => (
-            <div
-              key={row.id}
-              className={`flex flex-wrap items-center gap-2 rounded-xl border p-3 text-sm calm-transition ${
-                row.active
-                  ? "border-border/70 bg-surface-container-lowest"
-                  : "border-border/40 bg-surface-container-low/60 opacity-70"
-              }`}
-            >
-              <form action={updateItem} className="flex min-w-0 flex-1 items-center gap-2">
-                <input type="hidden" name="type" value={type} />
-                <input type="hidden" name="id" value={row.id} />
-                <span
-                  className={`h-2 w-2 shrink-0 rounded-full ${
-                    row.active ? "bg-scale-strong-bar" : "bg-outline-variant"
-                  }`}
-                />
-                <input
-                  name="label"
-                  defaultValue={row[field]}
-                  className="min-w-0 flex-1 rounded-lg border border-border bg-bg px-3 py-1.5 text-sm focus:border-accent/40 focus:ring-1 focus:ring-accent/20"
-                  required
-                />
-                <Button type="submit" variant="ghost" className="px-3 py-1.5 text-xs">
-                  Save
-                </Button>
-              </form>
-              <form action={toggleActive}>
-                <input type="hidden" name="type" value={type} />
-                <input type="hidden" name="id" value={row.id} />
-                <input type="hidden" name="active" value={String(row.active)} />
-                <button
-                  type="submit"
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium calm-transition ${
-                    row.active
-                      ? "bg-status-pending-bg text-status-pending-text hover:bg-status-pending-light"
-                      : "bg-status-approved-bg text-status-approved-text hover:bg-status-approved-light"
+
+        {rows.length > 0 ? (
+          <div className="mt-5 overflow-x-auto rounded-[1rem]">
+            <div className="table-shell min-w-[min(100%,520px)]">
+              <div className="table-head-row hidden grid-cols-[minmax(0,1fr)_108px_132px] items-center gap-3 px-4 py-2.5 md:grid md:px-6">
+                <span>{valueHeader}</span>
+                <span className="text-center">Status</span>
+                <span className="text-right">Actions</span>
+              </div>
+              {rows.map((row) => (
+                <div
+                  key={row.id}
+                  className={`table-row grid grid-cols-1 gap-3 px-4 py-4 md:grid-cols-[minmax(0,1fr)_108px_132px] md:items-center md:gap-3 md:px-6 md:py-3 ${
+                    row.active ? "" : "opacity-[0.72]"
                   }`}
                 >
-                  {row.active ? "Deactivate" : "Activate"}
-                </button>
-              </form>
+                  <form
+                    action={updateItem}
+                    className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end"
+                  >
+                    <input type="hidden" name="type" value={type} />
+                    <input type="hidden" name="id" value={row.id} />
+                    <div className="min-w-0 flex-1">
+                      <Label htmlFor={`tax-${type}-${row.id}`} className="mb-1 md:sr-only">
+                        {valueInputLabel}
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`h-2 w-2 shrink-0 rounded-full ${
+                            row.active ? "bg-scale-strong-bar" : "bg-outline-variant"
+                          }`}
+                          title={row.active ? "Active" : "Inactive"}
+                        />
+                        <input
+                          id={`tax-${type}-${row.id}`}
+                          name="label"
+                          defaultValue={row[field]}
+                          aria-label={valueInputLabel}
+                          className="min-w-0 flex-1 rounded-lg border border-border bg-[var(--surface-container-lowest)] px-3 py-2 text-sm focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/15"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <Button type="submit" variant="secondary" className="w-full shrink-0 py-2 sm:w-auto sm:px-4">
+                      Save
+                    </Button>
+                  </form>
+                  <div className="flex items-center border-t border-[var(--divider-subtle)] pt-3 md:justify-center md:border-0 md:pt-0">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        row.active
+                          ? "bg-status-approved-bg text-status-approved-text"
+                          : "bg-[var(--surface-container-low)] text-on-surface-variant"
+                      }`}
+                    >
+                      {row.active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <form action={toggleActive} className="flex md:justify-end">
+                    <input type="hidden" name="type" value={type} />
+                    <input type="hidden" name="id" value={row.id} />
+                    <input type="hidden" name="active" value={String(row.active)} />
+                    <button
+                      type="submit"
+                      className={`w-full rounded-lg px-3 py-2 text-xs font-semibold calm-transition md:w-auto ${
+                        row.active
+                          ? "bg-status-pending-bg text-status-pending-text hover:bg-status-pending-light"
+                          : "bg-status-approved-bg text-status-approved-text hover:bg-status-approved-light"
+                      }`}
+                    >
+                      {row.active ? "Deactivate" : "Activate"}
+                    </button>
+                  </form>
+                </div>
+              ))}
             </div>
-          ))}
-          {rows.length === 0 && (
+          </div>
+        ) : (
+          <div className="mt-5">
             <EmptyState
               mode="embedded"
               title={`No ${title.toLowerCase()} yet`}
-              description={`Add your first item below to get started.`}
+              description="Add an entry below. Inactive items stay in the list but are hidden from staff when they choose a reason or location."
             />
-          )}
-        </div>
+          </div>
+        )}
 
-        <div className="mt-5 rounded-xl border border-dashed border-accent/30 bg-accent/[0.02] p-4">
-          <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-muted">
-            Add new {title.slice(0, -1).toLowerCase()}
+        <div className="mt-6 rounded-[1rem] bg-[var(--surface-container-low)] p-4 md:p-5">
+          <h3 className="text-[15px] font-semibold text-text">Add {addItemNoun}</h3>
+          <p className="mt-0.5 text-xs text-muted">
+            New entries are active by default. You can deactivate them anytime without deleting history.
           </p>
-          <form action={addItem} className="flex gap-2">
+          <form action={addItem} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
             <input type="hidden" name="type" value={type} />
-            <input
-              name="value"
-              className="flex-1 rounded-lg border border-border bg-surface-container-lowest px-3 py-2 text-sm placeholder:text-muted/50 focus:border-accent/40 focus:ring-1 focus:ring-accent/20"
-              placeholder={`Enter ${field === "email" ? "email address" : "name"}…`}
-              required
-            />
-            <Button type="submit">Add</Button>
+            <div className="min-w-0 flex-1">
+              <Label htmlFor={`tax-add-${type}`}>
+                {field === "email" ? "Email address" : `${valueHeader}`}
+              </Label>
+              <input
+                id={`tax-add-${type}`}
+                name="value"
+                className="mt-0 w-full rounded-lg border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm placeholder:text-muted/50 focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/15"
+                placeholder={field === "email" ? "name@school.org" : `e.g. Annual leave`}
+                required
+                autoComplete={field === "email" ? "email" : "off"}
+              />
+            </div>
+            <Button type="submit" className="w-full shrink-0 sm:w-auto">
+              Add
+            </Button>
           </form>
         </div>
       </Card>
@@ -304,7 +369,10 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
 
   return (
     <div className="space-y-6">
-      <Link href="/admin" className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline">
+      <Link
+        href="/admin"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline"
+      >
         <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3">
           <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -313,66 +381,107 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
 
       <PageHeader
         title="Taxonomies"
-        subtitle="Manage configurable values used across leave and on-call workflows."
+        subtitle="Configure leave reasons, on-call options, and who can approve leave. Changes apply to new requests; existing records keep their labels."
+        actions={
+          <Link
+            href="/admin/leave-approvals"
+            className="inline-flex items-center gap-2 rounded-[0.75rem] border border-border bg-[var(--surface-container-lowest)] px-4 py-2.5 text-sm font-semibold text-text shadow-ambient calm-transition hover:bg-[var(--surface-container-low)]"
+          >
+            <svg className="h-4 w-4 text-muted" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M4 6h12M4 10h12M4 14h8" strokeLinecap="round" />
+            </svg>
+            Approval rules
+          </Link>
+        }
       />
 
-      <Card tone="subtle" className="flex items-start gap-3 border-accent/20 bg-accent/[0.03]">
+      <div className="flex gap-3 rounded-[1rem] bg-[var(--accent-surface)]/40 p-4 text-sm text-muted">
         <svg viewBox="0 0 20 20" fill="none" className="mt-0.5 h-4 w-4 shrink-0 text-accent">
           <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" />
           <path d="M10 9v4M10 7h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
-        <p className="text-sm text-muted">
-          For group-based approval workflows, use{" "}
+        <p>
+          For <span className="font-medium text-text">group-based</span> leave approval, use{" "}
           <a className="font-medium text-accent hover:underline" href="/admin/leave-approvals">
             Leave approval rules
           </a>
-          . This page manages reasons, locations, recipients, and individual LOA authorisers.
+          . Here you manage dropdown values, notification emails, and per-person LOA authorisers.
         </p>
-      </Card>
-
-      <div className="flex flex-wrap gap-2">
-        {TABS.map((t) => tabLink(t))}
       </div>
 
-      {tab === "loa-reasons" && editableTaxonomy("LOA Reasons", "loa", loaReasons as any[], "label")}
-      {tab === "on-call-reasons" && editableTaxonomy("On Call Reasons", "reason", onCallReasons as any[], "label")}
-      {tab === "on-call-locations" && editableTaxonomy("On Call Locations", "location", locations as any[], "label")}
-      {tab === "on-call-recipients" && editableTaxonomy("On Call Recipients", "recipient", recipients as any[], "email")}
+      <TaxonomyTabSelect tabs={TABS} current={tab} labels={TAB_LABELS} />
+
+      <div className="hidden md:block">
+        <div className="rounded-[1rem] bg-[var(--surface-container-low)] p-1.5">
+          <p className="px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted/80">
+            Leave of absence
+          </p>
+          <nav className="flex flex-wrap gap-1" aria-label="Leave taxonomy sections">
+            {LEAVE_TABS.map((t) => tabNavLink(t))}
+          </nav>
+        </div>
+        <div className="mt-3 rounded-[1rem] bg-[var(--surface-container-low)] p-1.5">
+          <p className="px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted/80">
+            On call
+          </p>
+          <nav className="flex flex-wrap gap-1" aria-label="On-call taxonomy sections">
+            {ON_CALL_TABS.map((t) => tabNavLink(t))}
+          </nav>
+        </div>
+      </div>
+
+      {tab === "loa-reasons" &&
+        editableTaxonomy("LOA Reasons", "loa", loaReasons as any[], "label", {
+          addItemNoun: "reason",
+          valueHeader: "Reason",
+        })}
+      {tab === "on-call-reasons" &&
+        editableTaxonomy("On Call Reasons", "reason", onCallReasons as any[], "label", {
+          addItemNoun: "reason",
+          valueHeader: "Reason",
+        })}
+      {tab === "on-call-locations" &&
+        editableTaxonomy("On Call Locations", "location", locations as any[], "label", {
+          addItemNoun: "location",
+          valueHeader: "Location",
+        })}
+      {tab === "on-call-recipients" &&
+        editableTaxonomy("On Call Recipients", "recipient", recipients as any[], "email", {
+          addItemNoun: "recipient",
+          valueHeader: "Email",
+        })}
 
       {tab === "loa-authorisers" && (
-        <div className="space-y-5">
-          {/* ── Global authorisers (can approve everyone) ── */}
+        <div className="space-y-6">
           <Card>
             <SectionHeader
               title="Global authorisers"
-              subtitle="These users can authorise leave for everyone in the school."
+              subtitle="Can approve or deny leave for any staff member. Use this for senior leaders or HR."
             />
             <div className="mt-4 space-y-2">
               {(loaAuthorisers as any[]).map((row) => (
                 <div
                   key={row.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-container-lowest px-4 py-3 text-sm"
+                  className="flex flex-col gap-3 rounded-[1rem] bg-[var(--surface-container-low)] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
-                      {(row.user?.fullName || "?").charAt(0).toUpperCase()}
-                    </div>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar name={row.user?.fullName ?? "?"} size="md" />
                     <div className="min-w-0">
-                      <p className="font-medium text-text">{row.user?.fullName}</p>
-                      <p className="text-xs text-muted">{row.user?.email}</p>
+                      <p className="font-semibold text-text">{row.user?.fullName}</p>
+                      <p className="truncate text-xs text-muted">{row.user?.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-status-approved-bg px-2.5 py-1 text-xs font-medium text-status-approved-text">
                       <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3">
                         <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
                         <path d="M5 8.5l2 2 4-4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      Everyone
+                      All staff
                     </span>
                     <form action={removeAuthoriser}>
                       <input type="hidden" name="id" value={row.id} />
-                      <Button variant="ghost" type="submit" className="px-2 py-1 text-xs text-muted hover:text-error">
+                      <Button variant="ghost" type="submit" className="py-2 text-xs text-muted hover:text-error">
                         Remove
                       </Button>
                     </form>
@@ -383,76 +492,74 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                 <EmptyState
                   mode="embedded"
                   title="No global authorisers"
-                  description="Add a user below to allow them to approve leave for all staff."
+                  description="Add at least one person if you want school-wide approvers outside of group rules."
                 />
               )}
             </div>
 
-            <div className="mt-5 rounded-xl border border-dashed border-accent/30 bg-accent/[0.02] p-4">
-              <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-muted">
-                Add global authoriser
-              </p>
-              <form action={addItem} className="flex gap-2">
+            <div className="mt-6 rounded-[1rem] bg-[var(--surface-container-low)] p-4 md:p-5">
+              <h3 className="text-[15px] font-semibold text-text">Add global authoriser</h3>
+              <p className="mt-0.5 text-xs text-muted">Staff already listed as scoped-only approvers are excluded until you remove that role.</p>
+              <form action={addItem} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                 <input type="hidden" name="type" value="loa_authoriser" />
-                <select
-                  name="value"
-                  className="flex-1 rounded-lg border border-border bg-surface-container-lowest px-3 py-2 text-sm focus:border-accent/40 focus:ring-1 focus:ring-accent/20"
-                  required
-                >
-                  <option value="">Select a staff member…</option>
-                  {(staff as any[])
-                    .filter((s) => !globalAuthoriserIds.has(s.id) && !scopedApproverIds.has(s.id))
-                    .map((s) => (
-                      <option value={s.id} key={s.id}>
-                        {s.fullName} ({s.email})
-                      </option>
-                    ))}
-                </select>
-                <Button type="submit">Add</Button>
+                <div className="min-w-0 flex-1">
+                  <Label htmlFor="global-auth-staff">Staff member</Label>
+                  <select
+                    id="global-auth-staff"
+                    name="value"
+                    className="mt-0 w-full rounded-lg border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/15"
+                    required
+                  >
+                    <option value="">Choose someone…</option>
+                    {(staff as any[])
+                      .filter((s) => !globalAuthoriserIds.has(s.id) && !scopedApproverIds.has(s.id))
+                      .map((s) => (
+                        <option value={s.id} key={s.id}>
+                          {s.fullName} ({s.email})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <Button type="submit" className="w-full shrink-0 sm:w-auto">
+                  Add
+                </Button>
               </form>
             </div>
           </Card>
 
-          {/* ── Scoped authorisers (selected people only) ── */}
           <Card>
             <SectionHeader
               title="Scoped authorisers"
-              subtitle="These users can only authorise leave for specific people you assign them."
+              subtitle="Each person here only sees leave requests from the colleagues you attach. Good for line managers."
             />
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-4">
               {Array.from(scopesByApprover.entries()).map(([approverId, { approver, targets }]) => (
-                <div key={approverId} className="rounded-xl border border-border/70 bg-surface-container-lowest">
-                  <div className="flex items-center justify-between gap-3 border-b border-border/40 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-status-pending-light text-xs font-bold text-status-pending-text">
-                        {(approver?.fullName || "?").charAt(0).toUpperCase()}
-                      </div>
+                <div key={approverId} className="overflow-hidden rounded-[1rem] bg-[var(--surface-container-low)]">
+                  <div className="flex flex-col gap-3 border-b border-[var(--divider-subtle)] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar name={approver?.fullName ?? "?"} size="md" />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-text">{approver?.fullName}</p>
-                        <p className="text-xs text-muted">{approver?.email}</p>
+                        <p className="font-semibold text-text">{approver?.fullName}</p>
+                        <p className="truncate text-xs text-muted">{approver?.email}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-status-pending-bg px-2.5 py-1 text-xs font-medium text-status-pending-text">
-                        <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3">
-                          <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.2" />
-                          <circle cx="11" cy="11" r="4" stroke="currentColor" strokeWidth="1.2" />
-                        </svg>
                         {targets.length} {targets.length === 1 ? "person" : "people"}
                       </span>
                       <form action={removeScopedAuthoriser}>
                         <input type="hidden" name="approverId" value={approverId} />
-                        <Button variant="ghost" type="submit" className="px-2 py-1 text-xs text-muted hover:text-error">
+                        <Button variant="ghost" type="submit" className="py-2 text-xs text-muted hover:text-error">
                           Remove all
                         </Button>
                       </form>
                     </div>
                   </div>
 
-                  <div className="px-4 py-3">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.04em] text-muted">
-                      Can authorise leave for:
+                  <div className="px-4 py-4">
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+                      Can authorise leave for
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {targets.map((scope: any) => (
@@ -460,10 +567,10 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                           <input type="hidden" name="id" value={scope.id} />
                           <button
                             type="submit"
-                            className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface-container-low px-3 py-1.5 text-xs font-medium text-text calm-transition hover:border-error/30 hover:bg-error/5"
+                            className="group inline-flex max-w-full items-center gap-1.5 rounded-full bg-[var(--surface-container-lowest)] px-3 py-1.5 text-xs font-medium text-text shadow-ambient calm-transition hover:bg-error/5 hover:text-error"
                           >
-                            {scope.targetUser?.fullName}
-                            <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3 text-muted/50 group-hover:text-error">
+                            <span className="truncate">{scope.targetUser?.fullName}</span>
+                            <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3 shrink-0 text-muted/50 group-hover:text-error">
                               <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                             </svg>
                           </button>
@@ -471,21 +578,29 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                       ))}
                     </div>
 
-                    <form action={addScopedAuthoriser} className="mt-3 flex gap-2">
+                    <form action={addScopedAuthoriser} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
                       <input type="hidden" name="approverId" value={approverId} />
-                      <select
-                        name="targetUserId"
-                        className="flex-1 rounded-lg border border-border bg-bg px-3 py-2 text-sm focus:border-accent/40 focus:ring-1 focus:ring-accent/20"
-                        required
-                      >
-                        <option value="">Add person…</option>
-                        {(staff as any[])
-                          .filter((s) => !targets.some((t: any) => t.targetUserId === s.id) && s.id !== approverId)
-                          .map((s) => (
-                            <option value={s.id} key={s.id}>{s.fullName}</option>
-                          ))}
-                      </select>
-                      <Button type="submit" variant="secondary">Add</Button>
+                      <div className="min-w-0 flex-1">
+                        <Label htmlFor={`scoped-add-${approverId}`}>Add covered person</Label>
+                        <select
+                          id={`scoped-add-${approverId}`}
+                          name="targetUserId"
+                          className="mt-0 w-full rounded-lg border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/15"
+                          required
+                        >
+                          <option value="">Select staff…</option>
+                          {(staff as any[])
+                            .filter((s) => !targets.some((t: any) => t.targetUserId === s.id) && s.id !== approverId)
+                            .map((s) => (
+                              <option value={s.id} key={s.id}>
+                                {s.fullName}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                      <Button type="submit" variant="secondary" className="w-full shrink-0 sm:w-auto">
+                        Add
+                      </Button>
                     </form>
                   </div>
                 </div>
@@ -495,42 +610,54 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                 <EmptyState
                   mode="embedded"
                   title="No scoped authorisers"
-                  description="Add an authoriser below and assign the specific people they can approve leave for."
+                  description="Use the form below to pick an approver and one team member they can cover. Repeat to widen coverage."
                 />
               )}
             </div>
 
-            <div className="mt-5 rounded-xl border border-dashed border-accent/30 bg-accent/[0.02] p-4">
-              <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.06em] text-muted">
-                Add scoped authoriser
+            <div className="mt-6 rounded-[1rem] bg-[var(--surface-container-low)] p-4 md:p-5">
+              <h3 className="text-[15px] font-semibold text-text">New scoped authoriser</h3>
+              <p className="mt-0.5 text-xs text-muted">
+                Pick who approves, then who they cover. After saving, open their card to attach more people.
               </p>
-              <p className="mb-3 text-xs text-muted">
-                Select a staff member as the authoriser, then choose one person they can approve leave for. You can add more people after.
-              </p>
-              <form action={addScopedAuthoriser} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-                <select
-                  name="approverId"
-                  className="rounded-lg border border-border bg-surface-container-lowest px-3 py-2 text-sm focus:border-accent/40 focus:ring-1 focus:ring-accent/20"
-                  required
-                >
-                  <option value="">Authoriser…</option>
-                  {(staff as any[])
-                    .filter((s) => !globalAuthoriserIds.has(s.id))
-                    .map((s) => (
-                      <option value={s.id} key={s.id}>{s.fullName}</option>
+              <form action={addScopedAuthoriser} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+                <div className="min-w-0">
+                  <Label htmlFor="scoped-new-approver">Authoriser</Label>
+                  <select
+                    id="scoped-new-approver"
+                    name="approverId"
+                    className="mt-0 w-full rounded-lg border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/15"
+                    required
+                  >
+                    <option value="">Choose…</option>
+                    {(staff as any[])
+                      .filter((s) => !globalAuthoriserIds.has(s.id))
+                      .map((s) => (
+                        <option value={s.id} key={s.id}>
+                          {s.fullName}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className="min-w-0">
+                  <Label htmlFor="scoped-new-target">Covered person</Label>
+                  <select
+                    id="scoped-new-target"
+                    name="targetUserId"
+                    className="mt-0 w-full rounded-lg border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/15"
+                    required
+                  >
+                    <option value="">Choose…</option>
+                    {(staff as any[]).map((s) => (
+                      <option value={s.id} key={s.id}>
+                        {s.fullName}
+                      </option>
                     ))}
-                </select>
-                <select
-                  name="targetUserId"
-                  className="rounded-lg border border-border bg-surface-container-lowest px-3 py-2 text-sm focus:border-accent/40 focus:ring-1 focus:ring-accent/20"
-                  required
-                >
-                  <option value="">Covered person…</option>
-                  {(staff as any[]).map((s) => (
-                    <option value={s.id} key={s.id}>{s.fullName}</option>
-                  ))}
-                </select>
-                <Button type="submit">Add</Button>
+                  </select>
+                </div>
+                <Button type="submit" className="w-full lg:w-auto">
+                  Add pair
+                </Button>
               </form>
             </div>
           </Card>
