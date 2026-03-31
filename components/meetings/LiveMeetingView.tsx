@@ -306,7 +306,7 @@ export function LiveMeetingView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "CANCELLED", endDateTime: now }),
       });
-      window.location.href = "/";
+      window.location.href = "/meetings";
     } catch {
       // ignore
     }

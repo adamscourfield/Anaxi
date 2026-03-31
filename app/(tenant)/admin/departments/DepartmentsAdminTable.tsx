@@ -81,10 +81,10 @@ export function DepartmentsAdminTable({
           return (
             <div
               key={dept.id}
-              className="rounded-xl border border-border bg-surface-container-lowest shadow-sm overflow-hidden"
+              className="overflow-hidden rounded-2xl border border-border/50 bg-surface-container-lowest/80 shadow-sm ring-1 ring-black/[0.03] backdrop-blur-sm transition-shadow hover:shadow-md"
             >
               {/* Department header row */}
-              <div className="flex items-center gap-4 px-5 py-4">
+              <div className="flex items-center gap-4 bg-gradient-to-r from-transparent via-surface-container-high/20 to-transparent px-5 py-4">
                 {/* Expand toggle */}
                 <button
                   type="button"
@@ -107,7 +107,7 @@ export function DepartmentsAdminTable({
 
                 {/* Dept info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[15px] font-semibold text-text leading-tight">{dept.name}</p>
+                  <p className="text-[15px] font-bold tracking-[-0.01em] text-text leading-tight">{dept.name}</p>
                   {dept.faculty && (
                     <p className="mt-0.5 text-xs text-muted">Faculty: {dept.faculty}</p>
                   )}
@@ -180,7 +180,7 @@ export function DepartmentsAdminTable({
 
               {/* Expanded staff panel */}
               {isExpanded && (
-                <div className="border-t border-border/60 bg-bg/30 px-5 py-4 space-y-2">
+                <div className="space-y-2 border-t border-border/40 bg-surface-container-high/25 px-5 py-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.07em] text-muted mb-3">
                     Staff in {dept.name}
                   </p>
@@ -302,7 +302,7 @@ export function DepartmentsAdminTable({
           style={{ background: "rgba(0,0,0,0.35)" }}
           onClick={(e) => e.target === e.currentTarget && setEditingDept(null)}
         >
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-surface-container-lowest p-6 shadow-2xl">
             <h2 className="text-lg font-bold text-text mb-4">Rename Department</h2>
             <form action={renameDepartmentAction} onSubmit={() => setEditingDept(null)}>
               <input type="hidden" name="id" value={editingDept.id} />

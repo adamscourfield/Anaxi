@@ -336,7 +336,7 @@ function LeadershipHome({
 
       {/* ═══ Hero Section 2: Leave Governance ═══ */}
       {hasLeaveFeature && (
-        <section className="rounded-xl bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] p-6 shadow-inner ring-1 ring-[var(--outline-variant)]/10 sm:p-8">
+        <section className="rounded-xl bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] p-6 shadow-inner sm:p-8">
           <div
             className={`flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${pendingLeaveDetails.length > 0 ? "mb-8" : "mb-4"}`}
           >
@@ -382,7 +382,7 @@ function LeadershipHome({
                             {leave.reasonLabel?.toUpperCase() ?? "EMERGENCY"}
                           </span>
                         ) : isCpd ? (
-                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700 ring-1 ring-inset ring-blue-100">
+                          <span className="inline-flex items-center rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant ring-1 ring-inset ring-border/40">
                             {leave.reasonLabel?.toUpperCase() ?? "CPD TRAINING"}
                           </span>
                         ) : (
