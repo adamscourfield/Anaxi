@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { REASON_CATEGORIES, LOCATION_SUGGESTIONS } from "@/modules/oncall/types";
 
@@ -97,13 +98,24 @@ export function OnCallRequestForm({
   return (
     <div className="space-y-6 max-w-2xl">
       {/* ── Page header ───────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">
-          New on call request
-        </h1>
-        <p className="mt-1 text-[13px] text-muted">
-          Initiate an immediate response protocol for behavior or medical incidents within the institutional perimeter.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">
+            New on call request
+          </h1>
+          <p className="mt-1 text-[13px] text-muted">
+            Initiate an immediate response protocol for behavior or medical incidents within the institutional perimeter.
+          </p>
+        </div>
+        <Link
+          href="/home#immediate-support-needed"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border-2 border-[var(--error)] bg-[color-mix(in_srgb,var(--error)_8%,transparent)] px-4 py-2.5 text-sm font-bold text-[var(--error)] calm-transition hover:bg-[color-mix(in_srgb,var(--error)_14%,transparent)]"
+        >
+          <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path d="M12 9v4M12 17h.01M10.3 3.6h3.4l8.3 14.4H2l8.3-14.4z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Emergency
+        </Link>
       </div>
 
       {/* ── Request Details card ───────────────────────────────────── */}
@@ -130,7 +142,7 @@ export function OnCallRequestForm({
               Student
             </label>
             <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
+              <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
                   <circle cx="9" cy="7" r="4" />
@@ -149,7 +161,7 @@ export function OnCallRequestForm({
                 }}
                 onFocus={() => setShowDropdown(true)}
                 placeholder="Search by name or UPN..."
-                className="field pl-9"
+                className="field pl-11"
                 autoComplete="off"
               />
               {selectedStudent && (
@@ -269,7 +281,7 @@ export function OnCallRequestForm({
               Location
             </label>
             <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
+              <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
                   <circle cx="12" cy="10" r="3" />
@@ -281,7 +293,7 @@ export function OnCallRequestForm({
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Hallway, Room 12..."
                 list="location-suggestions"
-                className="field pl-9"
+                className="field pl-11"
                 required
               />
               <datalist id="location-suggestions">

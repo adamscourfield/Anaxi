@@ -207,12 +207,17 @@ function LeadershipHome({
   const openOnCalls = onCallDetails.filter((r) => r.status === "OPEN" || r.status === "ACKNOWLEDGED");
   const resolvedOnCalls = onCallDetails.filter((r) => r.status === "RESOLVED");
 
+  const topOnCallRows = onCallDetails.slice(0, 3);
+  const firstImmediateSupportIdx = topOnCallRows.findIndex(
+    (oc) => oc.status === "OPEN" || oc.status === "ACKNOWLEDGED"
+  );
+
   return (
     <div className="space-y-6">
       {/* ═══ Hero Section 1: On-Call Status + Attendance + Observations ═══ */}
       <section className="grid gap-4 lg:grid-cols-[1fr_340px]">
         {/* On-Call Live Status (main box) */}
-        <Card className="space-y-4">
+        <Card id="on-call-status-card" className="scroll-mt-20 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-on-primary text-lg">🔔</span>
@@ -223,16 +228,25 @@ function LeadershipHome({
             )}
           </div>
           {onCallDetails.length === 0 ? (
-            <div className="rounded-xl bg-[var(--surface-container-low)] p-4">
+            <div
+              id="immediate-support-needed"
+              className="scroll-mt-20 rounded-xl bg-[var(--surface-container-low)] p-4"
+            >
               <MetaText>No recent on-call requests.</MetaText>
             </div>
           ) : (
-            <div className="space-y-2">
-              {onCallDetails.slice(0, 3).map((oc) => (
+            <div
+              className={`space-y-2 ${firstImmediateSupportIdx === -1 ? "scroll-mt-20" : ""}`}
+              id={firstImmediateSupportIdx === -1 ? "immediate-support-needed" : undefined}
+            >
+              {topOnCallRows.map((oc, i) => (
                 <Link
                   key={oc.id}
+                  id={i === firstImmediateSupportIdx ? "immediate-support-needed" : undefined}
                   href={`/on-call/${oc.id}`}
                   className={`flex items-center justify-between rounded-xl p-4 calm-transition hover:bg-[var(--surface-container)] ${
+                    i === firstImmediateSupportIdx ? "scroll-mt-20" : ""
+                  } ${
                     oc.status === "OPEN" || oc.status === "ACKNOWLEDGED"
                       ? "bg-[var(--surface-container-low)]"
                       : "bg-white"
