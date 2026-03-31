@@ -38,13 +38,11 @@ function CloseIcon() {
   );
 }
 
-function SearchIcon() {
+function SearchIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 text-muted" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.45 4.39l4.26 4.26a.75.75 0 11-1.06 1.06l-4.26-4.26A7 7 0 012 9z"
-        fill="currentColor"
-      />
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m17 17 4 4" strokeLinecap="round" />
     </svg>
   );
 }
@@ -128,30 +126,28 @@ function TeacherSearch({
 
   return (
     <div ref={ref} className="relative">
-      <div className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2.5">
-        <SearchIcon />
-        <input
-          type="text"
-          className="w-full border-none bg-transparent text-sm text-text outline-none placeholder:text-muted/60"
-          placeholder={placeholder}
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-        />
-      </div>
+      <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted" />
+      <input
+        type="text"
+        className="field w-full !rounded-xl !border-black/[0.06] !bg-[#fafbfc] !py-2.5 pl-10 pr-3 text-[0.8125rem] shadow-none"
+        placeholder={placeholder}
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+      />
       {open && query.trim() !== "" && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[180px] overflow-y-auto rounded-xl border border-border/80 bg-surface-container-lowest shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[180px] overflow-y-auto rounded-xl border border-black/[0.08] bg-white py-1 shadow-lg">
           {filtered.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-muted">No teachers found</p>
+            <p className="px-4 py-3 text-[0.8125rem] text-muted">No teachers found</p>
           ) : (
             filtered.map((t) => (
               <button
                 key={t.id}
                 type="button"
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-text calm-transition hover:bg-bg"
+                className="flex w-full items-center px-4 py-2.5 text-left text-[0.8125rem] text-text calm-transition hover:bg-[#fafbfc]"
                 onClick={() => {
                   onAdd(t.id);
                   setQuery("");
@@ -217,157 +213,157 @@ export function EditUserModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.35)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
       onClick={(e) => e.target === e.currentTarget && onClose()}
+      role="presentation"
     >
-      <div className="flex max-h-[90vh] w-full max-w-[480px] flex-col overflow-hidden rounded-2xl bg-white shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
-        {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-4">
-          <h2 className="text-[1.125rem] font-bold tracking-tight text-text">
-            Edit User: {user.fullName}
-          </h2>
+      <div
+        className="flex max-h-[90vh] w-full max-w-[440px] flex-col overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200"
+        role="dialog"
+        aria-labelledby="edit-user-title"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-[#eceef0] px-6 py-5">
+          <div className="min-w-0">
+            <h2 id="edit-user-title" className="text-[1.0625rem] font-semibold tracking-tight text-text">
+              {user.fullName}
+            </h2>
+            <p className="mt-1 truncate text-[0.8125rem] text-muted">{user.email}</p>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="calm-transition rounded-md p-1.5 text-muted hover:bg-bg hover:text-text"
+            className="calm-transition shrink-0 rounded-xl p-2 text-muted hover:bg-[#fafbfc] hover:text-text"
+            aria-label="Close"
           >
             <CloseIcon />
           </button>
         </div>
 
-        {/* ── Scrollable body ────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto px-6 pb-4">
-          {/* Institutional Role */}
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-            Institutional Role
-          </p>
-          <div className="relative mt-2">
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="field w-full appearance-none pr-10"
-            >
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-              <ChevronDownIcon />
-            </span>
-          </div>
-
-          {/* ── Scoped Approvals ──────────────────────────────────── */}
-          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-            Scoped Approvals
-          </p>
-          <div className="mt-3 space-y-0 divide-y divide-border/40">
-            {/* On-Call Requests */}
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-text">On-Call Requests</span>
-              <Toggle checked={onCallRequests} onChange={setOnCallRequests} />
-            </div>
-            {/* Leave of Absence */}
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-text">Leave of Absence</span>
-              <Toggle checked={leaveOfAbsence} onChange={setLeaveOfAbsence} />
-            </div>
-            {/* Budgetary Approval */}
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-text">Budgetary Approval</span>
-              <Toggle checked={budgetaryApproval} onChange={setBudgetaryApproval} />
-            </div>
-            {/* Teacher Observations */}
-            <div className="flex items-center justify-between py-3">
-              <span className="text-sm text-text">Teacher Observations</span>
-              <Toggle checked={teacherObservations} onChange={setTeacherObservations} />
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="space-y-1.5">
+            <label htmlFor="edit-user-role" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+              Institutional role
+            </label>
+            <div className="relative">
+              <select
+                id="edit-user-role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="field w-full appearance-none !rounded-xl !border-black/[0.06] !bg-[#fafbfc] pr-10 text-[0.8125rem]"
+              >
+                {ROLE_OPTIONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                <ChevronDownIcon />
+              </span>
             </div>
           </div>
 
-          {/* ── Teacher Observation Scoping ────────────────────────── */}
-          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-            Teacher Observation Scoping
-          </p>
-          <div className="mt-3 flex items-center justify-between py-2">
-            <span className="text-sm text-text">All Teachers</span>
-            <Toggle checked={obsAllTeachers} onChange={setObsAllTeachers} />
+          <div className="mt-8">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Scoped approvals</h3>
+            <ul className="mt-3 divide-y divide-[#eceef0] border-y border-[#eceef0]">
+              <li className="flex items-center justify-between py-3.5">
+                <span className="text-[0.8125rem] text-text">On-call requests</span>
+                <Toggle checked={onCallRequests} onChange={setOnCallRequests} />
+              </li>
+              <li className="flex items-center justify-between py-3.5">
+                <span className="text-[0.8125rem] text-text">Leave of absence</span>
+                <Toggle checked={leaveOfAbsence} onChange={setLeaveOfAbsence} />
+              </li>
+              <li className="flex items-center justify-between py-3.5">
+                <span className="text-[0.8125rem] text-text">Budgetary approval</span>
+                <Toggle checked={budgetaryApproval} onChange={setBudgetaryApproval} />
+              </li>
+              <li className="flex items-center justify-between py-3.5">
+                <span className="text-[0.8125rem] text-text">Teacher observations</span>
+                <Toggle checked={teacherObservations} onChange={setTeacherObservations} />
+              </li>
+            </ul>
           </div>
-          {!obsAllTeachers && (
-            <div className="mt-2">
+
+          <div className="mt-8 space-y-3">
+            <h3 className="text-[0.8125rem] font-semibold text-text">Teacher observation scoping</h3>
+            <div className="flex items-center justify-between">
+              <span className="text-[0.8125rem] text-muted">All teachers</span>
+              <Toggle checked={obsAllTeachers} onChange={setObsAllTeachers} />
+            </div>
+            {!obsAllTeachers && (
               <TeacherSearch
                 allTeachers={allTeachers}
                 selectedIds={obsTeacherIds}
                 onAdd={(id) => setObsTeacherIds((prev) => new Set(prev).add(id))}
-                placeholder="Search and assign specific teachers..."
+                placeholder="Add teachers by name…"
               />
-            </div>
-          )}
-
-          {/* ── Leave of Absence Approval Scoping ─────────────────── */}
-          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-            Leave of Absence Approval Scoping
-          </p>
-          <div className="mt-3 flex items-center justify-between py-2">
-            <span className="text-sm text-text">All Teachers</span>
-            <Toggle
-              checked={loaAllTeachers}
-              onChange={(v) => {
-                setLoaAllTeachers(v);
-                if (v) setLoaTeacherIds(new Set());
-              }}
-            />
+            )}
           </div>
-          {!loaAllTeachers && (
-            <div className="mt-2">
-              <TeacherSearch
-                allTeachers={allTeachers}
-                selectedIds={loaTeacherIds}
-                onAdd={(id) => setLoaTeacherIds((prev) => new Set(prev).add(id))}
-                placeholder="Search and assign specific teachers..."
+
+          <div className="mt-8 space-y-3">
+            <h3 className="text-[0.8125rem] font-semibold text-text">Leave approval scoping</h3>
+            <div className="flex items-center justify-between">
+              <span className="text-[0.8125rem] text-muted">All teachers</span>
+              <Toggle
+                checked={loaAllTeachers}
+                onChange={(v) => {
+                  setLoaAllTeachers(v);
+                  if (v) setLoaTeacherIds(new Set());
+                }}
               />
-              {/* Show assigned teachers as removable chips */}
-              {loaTeacherIds.size > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {Array.from(loaTeacherIds).map((tid) => {
-                    const teacher = teacherById.get(tid);
-                    if (!teacher) return null;
-                    return (
-                      <span
-                        key={tid}
-                        className="inline-flex items-center gap-1 rounded-md bg-[var(--surface-container-low)] px-2 py-0.5 text-[12px] text-text"
-                      >
-                        {teacher.fullName}
-                        <button
-                          type="button"
-                          className="ml-0.5 text-muted hover:text-text"
-                          onClick={() =>
-                            setLoaTeacherIds((prev) => {
-                              const next = new Set(prev);
-                              next.delete(tid);
-                              return next;
-                            })
-                          }
-                        >
-                          ×
-                        </button>
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
             </div>
-          )}
+            {!loaAllTeachers && (
+              <>
+                <TeacherSearch
+                  allTeachers={allTeachers}
+                  selectedIds={loaTeacherIds}
+                  onAdd={(id) => setLoaTeacherIds((prev) => new Set(prev).add(id))}
+                  placeholder="Add teachers by name…"
+                />
+                {loaTeacherIds.size > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(loaTeacherIds).map((tid) => {
+                      const teacher = teacherById.get(tid);
+                      if (!teacher) return null;
+                      return (
+                        <span
+                          key={tid}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-[#fafbfc] px-2.5 py-1 text-[11px] font-medium text-text"
+                        >
+                          {teacher.fullName}
+                          <button
+                            type="button"
+                            className="text-muted hover:text-text"
+                            aria-label={`Remove ${teacher.fullName}`}
+                            onClick={() =>
+                              setLoaTeacherIds((prev) => {
+                                const next = new Set(prev);
+                                next.delete(tid);
+                                return next;
+                              })
+                            }
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
-        {/* ── Footer ─────────────────────────────────────────────── */}
-        <div className="flex items-center justify-end gap-3 border-t border-border/40 px-6 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-[#eceef0] px-6 py-4">
           <button
             type="button"
             onClick={onClose}
             disabled={pending}
-            className="px-5 py-2.5 text-sm font-medium text-text calm-transition hover:text-muted"
+            className="rounded-xl px-4 py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-[#fafbfc] hover:text-text disabled:opacity-50"
           >
             Cancel
           </button>
@@ -375,9 +371,9 @@ export function EditUserModal({
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="inline-flex items-center justify-center rounded-[0.75rem] bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-6 py-2.5 text-sm font-semibold text-[var(--on-primary)] shadow-sm calm-transition hover:opacity-90 hover:shadow-md active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-xl bg-[#131b2e] px-5 py-2.5 text-[0.8125rem] font-semibold text-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] calm-transition hover:bg-[#1a2540] disabled:opacity-50"
           >
-            {pending ? "Saving…" : "Save Changes"}
+            {pending ? "Saving…" : "Save changes"}
           </button>
         </div>
       </div>
