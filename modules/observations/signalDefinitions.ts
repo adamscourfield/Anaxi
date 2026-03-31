@@ -120,7 +120,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Cold Call & Directed Questioning",
     descriptionDefault:
       "Students are routinely and unpredictably asked to respond. Questioning checks understanding across the class, not just a few voices.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -188,7 +188,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Language & Explanation Clarity",
     descriptionDefault:
       "Subject vocabulary is used accurately and explanations are clear, structured, and free from ambiguity.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -205,7 +205,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Responsive Teaching",
     descriptionDefault:
       "Instruction adjusts in response to student understanding. The teacher slows down, re-explains, or extends as needed.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -239,7 +239,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Stretch & Challenge",
     descriptionDefault:
       "Students are pushed to deepen thinking, extend answers, and apply knowledge beyond surface-level responses.",
-    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {

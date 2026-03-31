@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { loadDraft, persistDraft } from "./observationDraft";
 import { ObservationStageLayout } from "./ObservationStageLayout";
 
-type Signal = { key: string; order: number; displayNameDefault: string };
+type Signal = { key: string; order: number; displayNameDefault: string; phaseRelevance: string[] };
 type LabelMap = Record<string, { displayName: string; description?: string }>;
 
 const SCALE_DISPLAY: Record<string, { label: string; color: string; dot: string; text: string }> = {
@@ -37,8 +37,12 @@ export function ReviewList({
   action: (formData: FormData) => void;
 }) {
   const router = useRouter();
-  const orderedSignals = useMemo(() => [...signals].sort((a, b) => a.order - b.order), [signals]);
-  const [draft, setDraft] = useState(() => loadDraft(draftKey, orderedSignals.map((s) => s.key)));
+  const allSignals = useMemo(() => [...signals].sort((a, b) => a.order - b.order), [signals]);
+  const [draft, setDraft] = useState(() => loadDraft(draftKey, allSignals.map((s) => s.key)));
+  const orderedSignals = useMemo(
+    () => allSignals.filter((s) => s.phaseRelevance.includes(draft.context.phase)),
+    [allSignals, draft.context.phase]
+  );
 
   const completed = orderedSignals.filter((s) => {
     const st = draft.signalState[s.key];
