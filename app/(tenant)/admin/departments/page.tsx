@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
 import { DepartmentsAdminTable } from "./DepartmentsAdminTable";
 
 export default async function AdminDepartmentsPage() {
@@ -122,37 +121,47 @@ export default async function AdminDepartmentsPage() {
   }));
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Academic Departments"
-        subtitle="Manage institutional hierarchy, departmental leadership, and resource allocation for the current academic year."
-        actions={
-          <div className="flex items-center gap-3">
+    <div className="space-y-8">
+      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-surface-container-low via-surface-container-lowest to-surface-container-high/40 p-6 shadow-sm sm:p-8">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/5 blur-3xl" aria-hidden />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-xl space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+              Administration
+            </p>
+            <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">
+              Academic Departments
+            </h1>
+            <p className="text-[0.9375rem] leading-relaxed text-muted">
+              Structure your school: departments, heads of department, and staff assignments for the current year.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap lg:justify-end">
             <Link href="/api/admin/departments/export">
               <Button type="button" variant="secondary" className="gap-2">
                 <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M10 3v14M6 13l4 4 4-4" />
                 </svg>
-                Export Ledger
+                Export ledger
               </Button>
             </Link>
-            <form action={createDepartment} className="flex items-center gap-2">
+            <form action={createDepartment} className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <input
                 name="name"
-                placeholder="Department name…"
-                className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30 w-48"
+                placeholder="New department name"
+                className="w-full min-w-[12rem] rounded-xl border border-border/60 bg-surface-container-lowest/90 px-4 py-2.5 text-sm text-text shadow-inner placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-52"
                 required
               />
-              <Button type="submit" className="gap-2">
+              <Button type="submit" className="gap-2 shrink-0">
                 <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <path d="M10 4v12M4 10h12" />
                 </svg>
-                New Department
+                Add department
               </Button>
             </form>
           </div>
-        }
-      />
+        </div>
+      </div>
 
       {deptList.length === 0 ? (
         <EmptyState title="No departments yet" description="Add your first department using the form above." />

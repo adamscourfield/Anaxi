@@ -15,6 +15,7 @@ import {
   type TeacherPivotRow,
   type TeacherRiskRow,
 } from "@/modules/analysis/teacherRisk";
+import { TopDriverLinks } from "./TopDriverLinks";
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 
@@ -628,29 +629,12 @@ export default async function ExplorerTeachersPage({
                             </span>
                           </td>
                           <td className="px-4 py-4">
-                            <div className="flex flex-wrap gap-1">
-                              {row.topDrivers.length === 0 && (
-                                <span className="text-muted">—</span>
-                              )}
-                              {row.topDrivers.map((d) => {
-                                const label = truncateLabel(SIGNAL_LABEL_MAP[d.signalKey] ?? d.signalKey);
-                                const isDrift = d.delta < 0;
-                                return (
-                                  <Link
-                                    key={d.signalKey}
-                                    href={`/analysis/cpd/${d.signalKey}?window=${windowDays}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium calm-transition hover:opacity-70 ${
-                                      isDrift
-                                        ? "bg-scale-limited-light text-scale-limited-text"
-                                        : "bg-scale-strong-light text-scale-strong-text"
-                                    }`}
-                                  >
-                                    {isDrift ? "↓" : "↑"} {label}
-                                  </Link>
-                                );
-                              })}
-                            </div>
+                            <TopDriverLinks
+                              drivers={row.topDrivers}
+                              labelByKey={SIGNAL_LABEL_MAP}
+                              windowDays={windowDays}
+                              truncateLabel={truncateLabel}
+                            />
                           </td>
                           <td className="whitespace-nowrap px-4 py-4 text-right text-muted">
                             {row.lastObservationAt
