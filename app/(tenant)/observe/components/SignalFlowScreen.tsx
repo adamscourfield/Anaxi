@@ -45,12 +45,10 @@ export function SignalFlowScreen({
     (draft.context.classCode || draft.context.yearGroup)
   );
 
-  const orderedSignals = useMemo(() => {
-    const phaseRelevant = orderedByOrder.filter((s) => s.phaseRelevance.includes(draft.context.phase));
-    const included = new Set(phaseRelevant.map((s) => s.key));
-    const universal = orderedByOrder.filter((s) => s.isUniversal && !included.has(s.key));
-    return [...phaseRelevant, ...universal];
-  }, [draft.context.phase, orderedByOrder]);
+  const orderedSignals = useMemo(
+    () => orderedByOrder.filter((s) => s.phaseRelevance.includes(draft.context.phase)),
+    [draft.context.phase, orderedByOrder]
+  );
 
   const total = orderedSignals.length;
   const currentIndex = Math.max(0, Math.min(Number(params.get("index") || "0"), Math.max(total - 1, 0)));

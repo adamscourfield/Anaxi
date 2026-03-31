@@ -28,7 +28,8 @@ export async function createObservation(formData: FormData) {
   if (!teacher) throw new Error("INVALID_TEACHER");
 
   const allowedScaleKeys = new Set(GLOBAL_SCALE.map((s) => s.key));
-  const signalData = SIGNAL_DEFINITIONS.map((signal) => {
+  const phaseSignals = SIGNAL_DEFINITIONS.filter((s) => s.phaseRelevance.includes(phase as any));
+  const signalData = phaseSignals.map((signal) => {
     const notObserved = String(formData.get(`signal_${signal.key}_not`) || "") === "1";
     const valueKey = String(formData.get(`signal_${signal.key}_value`) || "").trim() || null;
     if (!notObserved && (!valueKey || !allowedScaleKeys.has(valueKey as any))) {
@@ -79,7 +80,8 @@ export async function submitObservationDraft(formData: FormData) {
   if (!teacher) throw new Error("INVALID_TEACHER");
 
   const allowedScaleKeys = new Set(GLOBAL_SCALE.map((s) => s.key));
-  const signalData = SIGNAL_DEFINITIONS.map((signal) => {
+  const phaseSignals = SIGNAL_DEFINITIONS.filter((s) => s.phaseRelevance.includes(phase as any));
+  const signalData = phaseSignals.map((signal) => {
     const notObserved = String(formData.get(`signal_${signal.key}_not`) || "") === "1";
     const valueKey = String(formData.get(`signal_${signal.key}_value`) || "").trim() || null;
     if (!notObserved && (!valueKey || !allowedScaleKeys.has(valueKey as any))) {
