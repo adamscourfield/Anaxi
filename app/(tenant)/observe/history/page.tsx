@@ -4,6 +4,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
 import { formatYearGroup } from "@/modules/observations/yearGroup";
+import { pedagogicalSignalTooltip } from "@/modules/observations/signalTooltip";
 import { Avatar } from "@/components/ui/avatar";
 import { HistoryFilters } from "./HistoryFilters";
 
@@ -272,8 +273,8 @@ export default async function ObservationHistoryPage({
                             {signalValues.map((s: any, i: number) => (
                               <span
                                 key={i}
-                                className={`inline-block h-2.5 w-2.5 rounded-full ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
-                                title={`${s.signalKey}: ${s.valueKey}`}
+                                className={`inline-block h-2.5 w-2.5 cursor-help rounded-full ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
+                                title={pedagogicalSignalTooltip(s.signalKey, s.valueKey)}
                               />
                             ))}
                           </div>
@@ -329,7 +330,8 @@ export default async function ObservationHistoryPage({
                         {signalValues.map((s: any, i: number) => (
                           <span
                             key={i}
-                            className={`inline-block h-2.5 w-2.5 rounded-full ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
+                            className={`inline-block h-2.5 w-2.5 cursor-help rounded-full ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
+                            title={pedagogicalSignalTooltip(s.signalKey, s.valueKey)}
                           />
                         ))}
                       </div>
