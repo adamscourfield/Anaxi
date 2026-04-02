@@ -4,6 +4,7 @@ export interface OnCallRequestInput {
   location: string;
   behaviourReasonCategory?: string;
   notes?: string;
+  isEmergency?: boolean;
 }
 
 export interface AcknowledgeOnCallInput {
@@ -22,6 +23,7 @@ export interface OnCallRequestDetail {
   studentId: string;
   student: { id: string; fullName: string; upn: string; yearGroup?: string | null };
   requestType: "BEHAVIOUR" | "FIRST_AID";
+  isEmergency: boolean;
   location: string;
   behaviourReasonCategory?: string | null;
   notes?: string | null;

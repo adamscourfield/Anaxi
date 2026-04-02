@@ -12,6 +12,7 @@ type RequestType = "BEHAVIOUR" | "FIRST_AID";
 interface InboxRequest {
   id: string;
   requestType: RequestType;
+  isEmergency?: boolean;
   location: string;
   status: Status;
   createdAt: Date | string;
@@ -214,11 +215,18 @@ export function OnCallInbox({
                         {formatYearGroup(r.student.yearGroup)}
                       </td>
                       <td className="px-4 py-4">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] uppercase ${TYPE_BADGE_CLASSES[r.requestType]}`}
-                        >
-                          {REQUEST_TYPE_LABELS[r.requestType]}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] uppercase ${TYPE_BADGE_CLASSES[r.requestType]}`}
+                          >
+                            {REQUEST_TYPE_LABELS[r.requestType]}
+                          </span>
+                          {r.isEmergency && (
+                            <span className="inline-flex items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
+                              Emergency
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-4 font-medium uppercase text-text">
                         {r.location}
@@ -335,7 +343,12 @@ export function OnCallInbox({
                         {r.student.fullName}
                       </td>
                       <td className="px-4 py-4 text-muted uppercase tracking-wide">
-                        {REQUEST_TYPE_LABELS[r.requestType]}
+                        <span className="inline-flex flex-wrap items-center gap-1.5">
+                          {REQUEST_TYPE_LABELS[r.requestType]}
+                          {r.isEmergency && (
+                            <span className="text-[var(--pill-error-text)]">· Emergency</span>
+                          )}
+                        </span>
                       </td>
                       <td className="px-4 py-4 text-text">
                         {r.responder?.fullName ?? "—"}

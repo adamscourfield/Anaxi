@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { studentId, requestType, location, behaviourReasonCategory, notes } = body;
+    const { studentId, requestType, location, behaviourReasonCategory, notes, isEmergency } = body;
 
     if (!studentId || !requestType || !location) {
       return NextResponse.json({ error: "studentId, requestType and location are required" }, { status: 400 });
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
       location,
       behaviourReasonCategory,
       notes,
+      isEmergency: Boolean(isEmergency),
     });
 
     await sendOnCallNotification(user.tenantId, request, "created");
