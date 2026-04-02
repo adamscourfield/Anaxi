@@ -68,9 +68,6 @@ function formatTeacherRole(role: string): string {
   return map[role] ?? role;
 }
 
-function truncateLabel(label: string, max = 14): string {
-  return label.length > max ? label.slice(0, max - 2) + "…" : label;
-}
 
 /** Format drift score with sign and trend arrow */
 function formatDrift(value: number): { text: string; arrow: string; color: string } {
@@ -633,7 +630,6 @@ export default async function ExplorerTeachersPage({
                               drivers={row.topDrivers}
                               labelByKey={SIGNAL_LABEL_MAP}
                               windowDays={windowDays}
-                              truncateLabel={truncateLabel}
                             />
                           </td>
                           <td className="whitespace-nowrap px-4 py-4 text-right text-muted">

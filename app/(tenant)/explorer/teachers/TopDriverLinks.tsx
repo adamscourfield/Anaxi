@@ -8,10 +8,13 @@ type Props = {
   drivers: TopDriverItem[];
   labelByKey: Record<string, string>;
   windowDays: number;
-  truncateLabel: (label: string, max?: number) => string;
 };
 
-export function TopDriverLinks({ drivers, labelByKey, windowDays, truncateLabel }: Props) {
+function truncateLabel(label: string, max = 14): string {
+  return label.length > max ? label.slice(0, max - 2) + "…" : label;
+}
+
+export function TopDriverLinks({ drivers, labelByKey, windowDays }: Props) {
   if (drivers.length === 0) {
     return <span className="text-muted">—</span>;
   }
