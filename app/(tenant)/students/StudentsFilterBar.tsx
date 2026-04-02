@@ -16,18 +16,6 @@ interface Props {
   totalFiltered: number;
 }
 
-function FilterIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"
-      />
-    </svg>
-  );
-}
-
 export function StudentsFilterBar({
   yearGroups,
   currentQ,
@@ -46,10 +34,9 @@ export function StudentsFilterBar({
   const [send, setSend] = useState(currentSend);
   const [pp, setPp] = useState(currentPp);
   const [band, setBand] = useState(currentBand);
-  const [showFilters, setShowFilters] = useState(
-    !!(currentYearGroup || currentSend || currentPp || currentBand),
-  );
   const [, startTransition] = useTransition();
+
+  const triggerWhite = "!bg-surface-container-lowest rounded-[10px]";
 
   useEffect(() => {
     setQ(currentQ);
@@ -59,7 +46,7 @@ export function StudentsFilterBar({
     setBand(currentBand);
   }, [currentQ, currentYearGroup, currentSend, currentPp, currentBand]);
 
-  const hasPanelFilters = !!(yearGroup || send || pp || band);
+  const hasAnyFilter = !!(q || yearGroup || send || pp || band);
 
   function pushWithParams(params: URLSearchParams) {
     params.delete("page");
@@ -97,94 +84,92 @@ export function StudentsFilterBar({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="filter-bar items-center">
-        <div className="relative min-w-[200px] flex-1">
-          <svg
-            className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m17 17 4 4" strokeLinecap="round" />
-          </svg>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && apply()}
-            placeholder="Search students..."
-            className="field w-full !rounded-xl !border-border/40 !bg-surface-container-high/80 !py-2.5 !pl-[2.875rem] pr-4 text-[0.9375rem] shadow-none"
-          />
-        </div>
+    <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-sm md:p-6">
+      <div className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4">
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[200px] lg:max-w-[min(100%,360px)]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Search</span>
+          <div className="relative w-full">
+            <svg
+              className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m17 17 4 4" strokeLinecap="round" />
+            </svg>
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && apply()}
+              placeholder="Search by name or UPN…"
+              className={`field w-full !py-2.5 !pl-[2.875rem] pr-3 !text-[0.8125rem] ${triggerWhite}`}
+            />
+          </div>
+        </label>
 
-        <button
-          type="button"
-          onClick={() => setShowFilters((v) => !v)}
-          className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-[0.8125rem] font-medium calm-transition ${
-            showFilters || hasPanelFilters
-              ? "border-border/50 bg-surface-container-low text-text"
-              : "border-transparent bg-transparent text-muted hover:bg-surface-container-low/80 hover:text-text"
-          }`}
-        >
-          <FilterIcon className="h-4 w-4" />
-          Filter
-        </button>
-
-        <p className="w-full text-center text-[0.8125rem] text-muted sm:ml-auto sm:w-auto sm:text-right">
-          Showing{" "}
-          <span className="font-medium text-text">
-            {totalFiltered === 0 ? "0" : `${pageStart}–${pageEnd}`}
-          </span>{" "}
-          of{" "}
-          <span className="font-medium text-text">{totalFiltered.toLocaleString()}</span>{" "}
-          students
-        </p>
-      </div>
-
-      {showFilters && (
-        <div
-          key={`${currentYearGroup}-${currentSend}-${currentPp}-${currentBand}`}
-          className="flex flex-wrap items-end gap-3 rounded-xl border border-border/30 bg-surface-container-lowest/60 p-4"
-        >
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Year group</span>
           <FormSelect
             name="yearGroup"
             defaultValue={currentYearGroup}
             placeholder="All years"
-            className="min-w-[140px]"
-            options={yearGroups.map((yg) => ({ value: yg, label: yg }))}
+            triggerClassName={triggerWhite}
+            className="min-w-0"
+            options={[
+              { value: "", label: "All years" },
+              ...yearGroups.map((yg) => ({ value: yg, label: yg })),
+            ]}
             onChange={setYearGroup}
           />
+        </label>
+
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[130px]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">SEN</span>
           <FormSelect
             name="send"
             defaultValue={currentSend}
-            placeholder="SEN"
-            className="min-w-[120px]"
+            placeholder="All"
+            triggerClassName={triggerWhite}
+            className="min-w-0"
             options={[
+              { value: "", label: "All" },
               { value: "true", label: "SEN Yes" },
               { value: "false", label: "SEN No" },
             ]}
             onChange={setSend}
           />
+        </label>
+
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[130px]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Pupil premium</span>
           <FormSelect
             name="pp"
             defaultValue={currentPp}
-            placeholder="PP"
-            className="min-w-[120px]"
+            placeholder="All"
+            triggerClassName={triggerWhite}
+            className="min-w-0"
             options={[
+              { value: "", label: "All" },
               { value: "true", label: "PP Yes" },
               { value: "false", label: "PP No" },
             ]}
             onChange={setPp}
           />
+        </label>
+
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Risk band</span>
           <FormSelect
             name="band"
             defaultValue={currentBand}
-            placeholder="Band"
-            className="min-w-[130px]"
+            placeholder="All bands"
+            triggerClassName={triggerWhite}
+            className="min-w-0"
             options={[
+              { value: "", label: "All bands" },
               { value: "STABLE", label: "Stable" },
               { value: "WATCH", label: "Watch" },
               { value: "PRIORITY", label: "Priority" },
@@ -192,24 +177,35 @@ export function StudentsFilterBar({
             ]}
             onChange={setBand}
           />
+        </label>
+
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
           <button
             type="button"
             onClick={apply}
-            className="calm-transition inline-flex items-center rounded-lg bg-accent px-4 py-2 text-[0.8125rem] font-semibold text-on-primary hover:bg-accentHover"
+            className="field flex w-full items-center justify-center border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
           >
-            Apply
+            Apply Filters
           </button>
-          {(q || yearGroup || send || pp || band) && (
+          {hasAnyFilter && (
             <button
               type="button"
               onClick={clear}
-              className="calm-transition rounded-lg px-3 py-2 text-[0.8125rem] font-medium text-muted hover:text-text"
+              className="field flex w-full items-center justify-center border border-border/40 bg-surface-container-lowest py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[100px] lg:w-auto"
             >
-              Clear all
+              Clear
             </button>
           )}
         </div>
-      )}
+      </div>
+
+      <p className="mt-4 border-t border-border/20 pt-4 text-center text-[0.8125rem] text-muted sm:text-right">
+        Showing{" "}
+        <span className="font-semibold text-text">
+          {totalFiltered === 0 ? "0" : `${pageStart}–${pageEnd}`}
+        </span>{" "}
+        of <span className="font-semibold text-text">{totalFiltered.toLocaleString()}</span> students
+      </p>
     </div>
   );
 }
