@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const validTypes: QualificationType[] = ["GCSE", "A_LEVEL", "VOCATIONAL", "OTHER"];
+  const validTypes: QualificationType[] = ["GCSE", "A_LEVEL", "PERCENTAGE", "OTHER"];
   const resolvedType: QualificationType = validTypes.includes(qualificationType)
     ? qualificationType
     : "OTHER";

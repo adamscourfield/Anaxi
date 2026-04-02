@@ -57,8 +57,8 @@ export default async function AssessmentsPage() {
     orderBy: [{ isActive: "desc" }, { startDate: "desc" }],
   });
 
-  const activeCycles = cycles.filter((c) => c.status === "active" && c.isActive);
-  const archivedCycles = cycles.filter((c) => c.status === "archived" || !c.isActive);
+  const activeCycles = cycles.filter((c) => c.isActive);
+  const archivedCycles = cycles.filter((c) => !c.isActive);
 
   return (
     <div className="max-w-5xl space-y-8">
@@ -154,7 +154,7 @@ function CycleCard({ cycle }: {
             <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${QUAL_COLOURS[cycle.qualificationType]}`}>
               {QUAL_LABELS[cycle.qualificationType]}
             </span>
-            {cycle.isActive && cycle.status === "active" && (
+            {cycle.isActive && (
               <span className="rounded-full bg-[var(--success)]/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--success)]">
                 Active
               </span>
