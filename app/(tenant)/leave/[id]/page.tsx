@@ -92,12 +92,19 @@ export default async function LeaveDetailPage({ params, searchParams }: { params
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.PENDING;
 
   const fromCalendar = searchParams?.from === "calendar";
+  const calendarMonth = String(searchParams?.month || "");
+  const calendarBackHref =
+    fromCalendar && /^\d{4}-\d{2}$/.test(calendarMonth)
+      ? `/leave/calendar?month=${calendarMonth}`
+      : fromCalendar
+        ? "/leave/calendar"
+        : "/leave";
 
   return (
     <div className="mx-auto max-w-xl space-y-5">
       {/* Back */}
       <Link
-        href={fromCalendar ? "/leave/calendar" : "/leave"}
+        href={calendarBackHref}
         className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text"
       >
         <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
