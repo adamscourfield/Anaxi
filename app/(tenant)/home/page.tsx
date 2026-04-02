@@ -340,7 +340,7 @@ function LeadershipHome({
 
       {/* ═══ Hero Section 2: Leave Governance ═══ */}
       {hasLeaveFeature && (
-        <section className="rounded-xl bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] p-6 shadow-inner sm:p-8">
+        <section className="rounded-xl border-0 bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] p-6 outline-none ring-0 sm:p-8">
           <div
             className={`flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${pendingLeaveDetails.length > 0 ? "mb-8" : "mb-4"}`}
           >
