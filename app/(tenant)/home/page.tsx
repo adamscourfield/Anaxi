@@ -215,10 +215,13 @@ function LeadershipHome({
   return (
     <div className="space-y-6">
       {/* ═══ Hero Section 1: On-Call Status + Attendance + Observations ═══ */}
-      <section className="grid gap-4 lg:grid-cols-[1fr_340px]">
+      <section className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
         {/* On-Call Live Status (main box) */}
-        <Card id="on-call-status-card" className="scroll-mt-20 space-y-4">
-          <div className="flex items-center justify-between">
+        <Card
+          id="on-call-status-card"
+          className="scroll-mt-20 flex min-h-0 min-w-0 flex-1 flex-col gap-4"
+        >
+          <div className="flex shrink-0 items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-on-primary text-lg">🔔</span>
               <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Anaxi Core: On-Call Status</h2>
@@ -230,13 +233,13 @@ function LeadershipHome({
           {onCallDetails.length === 0 ? (
             <div
               id="immediate-support-needed"
-              className="scroll-mt-20 rounded-xl bg-[var(--surface-container-low)] p-4"
+              className="scroll-mt-20 flex min-h-0 flex-1 flex-col rounded-xl bg-[var(--surface-container-low)] p-4"
             >
               <MetaText>No recent on-call requests.</MetaText>
             </div>
           ) : (
             <div
-              className={`space-y-2 ${firstImmediateSupportIdx === -1 ? "scroll-mt-20" : ""}`}
+              className={`flex min-h-0 flex-1 flex-col space-y-2 ${firstImmediateSupportIdx === -1 ? "scroll-mt-20" : ""}`}
               id={firstImmediateSupportIdx === -1 ? "immediate-support-needed" : undefined}
             >
               {topOnCallRows.map((oc, i) => (
@@ -284,9 +287,9 @@ function LeadershipHome({
         </Card>
 
         {/* Right column: Attendance + Observations */}
-        <div className="grid gap-4 grid-rows-2">
+        <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[340px]">
           {/* Attendance box */}
-          <Card className="flex flex-col justify-between">
+          <Card className="flex min-h-0 flex-1 flex-col justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Attendance Mastery</p>
             <div>
               <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
@@ -311,8 +314,8 @@ function LeadershipHome({
           </Card>
 
           {/* Observations this week box */}
-          <Link href="/explorer/observations" className="block">
-          <Card className="flex flex-col justify-between calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-md cursor-pointer">
+          <Link href="/explorer/observations" className="flex min-h-0 flex-1 flex-col">
+          <Card className="flex min-h-0 flex-1 flex-col justify-between calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-md cursor-pointer">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations This Week</p>
             <div>
               <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
