@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useRef } from "react";
+import Link from "next/link";
+import { FormSelect } from "@/components/ui/form-select";
 
 type Props = {
   yearGroups: string[];
@@ -9,9 +9,7 @@ type Props = {
   defaultYearGroup: string;
   defaultBand: string;
   defaultWindow: string;
-  totalFiltered: number;
-  pageStart: number;
-  pageEnd: number;
+  hasFilters: boolean;
 };
 
 const BANDS = [
@@ -21,7 +19,11 @@ const BANDS = [
   { value: "STABLE", label: "Stable" },
 ];
 
-const WINDOWS = ["7", "21", "28"];
+const WINDOWS = [
+  { value: "7", label: "7 days" },
+  { value: "21", label: "21 days" },
+  { value: "28", label: "28 days" },
+];
 
 export function StudentsToolbar({
   yearGroups,
@@ -29,147 +31,108 @@ export function StudentsToolbar({
   defaultYearGroup,
   defaultBand,
   defaultWindow,
-  totalFiltered,
-  pageStart,
-  pageEnd,
+  hasFilters,
 }: Props) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [showFilters, setShowFilters] = useState(
-    !!(defaultYearGroup || defaultBand),
-  );
-  const [search, setSearch] = useState(defaultSearch);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function navigate(overrides: Record<string, string | null>) {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(overrides)) {
-      if (value === null || value === "") {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    }
-    params.delete("page");
-    const qs = params.toString();
-    router.push(`/explorer/students${qs ? `?${qs}` : ""}`);
-  }
-
-  function handleSearchChange(value: string) {
-    setSearch(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      navigate({ studentSearch: value || null });
-    }, 400);
-  }
+  const triggerWhite = "!bg-surface-container-lowest rounded-[10px]";
 
   return (
-    <div className="space-y-3">
-      {/* Main filter bar */}
-      <div className="filter-bar">
-        {/* Search input */}
-        <div className="relative">
-          <svg
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+    <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-sm md:p-6">
+      <form
+        method="get"
+        action="/explorer/students"
+        className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4"
+      >
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[180px]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+            Search
+          </span>
+          <div className="relative">
+            <svg
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m17 17 4 4" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              name="studentSearch"
+              defaultValue={defaultSearch}
+              placeholder="Search students…"
+              className={`field w-full py-2.5 pl-10 pr-4 ${triggerWhite}`}
+            />
+          </div>
+        </label>
+
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+            Analysis window
+          </span>
+          <select
+            name="windowDays"
+            defaultValue={defaultWindow}
+            className={`field ${triggerWhite}`}
           >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m17 17 4 4" strokeLinecap="round" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search students..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="field min-w-[240px] !rounded-lg !py-1.5 pl-10 pr-4"
+            {WINDOWS.map((w) => (
+              <option key={w.value} value={w.value}>
+                {w.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+            Year group
+          </span>
+          <FormSelect
+            name="yearGroup"
+            defaultValue={defaultYearGroup}
+            placeholder="All year groups"
+            triggerClassName={triggerWhite}
+            options={[
+              { value: "", label: "All year groups" },
+              ...yearGroups.map((yg) => ({ value: yg, label: yg })),
+            ]}
           />
-        </div>
+        </label>
 
-        {/* Window period toggle */}
-        <div className="filter-period-toggle">
-          {WINDOWS.map((w) => (
-            <button
-              key={w}
-              type="button"
-              onClick={() => navigate({ windowDays: w })}
-              className={`filter-period-btn ${w === defaultWindow ? "filter-period-btn-active" : ""}`}
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+            Risk band
+          </span>
+          <FormSelect
+            name="band"
+            defaultValue={defaultBand}
+            placeholder="All risk bands"
+            triggerClassName={triggerWhite}
+            options={[
+              { value: "", label: "All risk bands" },
+              ...BANDS.map((b) => ({ value: b.value, label: b.label })),
+            ]}
+          />
+        </label>
+
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
+          <button
+            type="submit"
+            className="field flex w-full items-center justify-center border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+          >
+            Apply Filters
+          </button>
+          {hasFilters && (
+            <Link
+              href="/explorer/students"
+              className="field flex w-full items-center justify-center border border-border/40 bg-surface-container-lowest py-2.5 text-center text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[100px] lg:w-auto"
             >
-              {w}D
-            </button>
-          ))}
-        </div>
-
-        {/* Year group */}
-        <select
-          defaultValue={defaultYearGroup}
-          onChange={(e) => navigate({ yearGroup: e.target.value || null })}
-          className="field min-w-[130px] !rounded-lg !py-1.5 !text-[0.8125rem]"
-        >
-          <option value="">All Year Groups</option>
-          {yearGroups.map((yg) => (
-            <option key={yg} value={yg}>
-              {yg}
-            </option>
-          ))}
-        </select>
-
-        {/* Risk band */}
-        <select
-          defaultValue={defaultBand}
-          onChange={(e) => navigate({ band: e.target.value || null })}
-          className="field min-w-[130px] !rounded-lg !py-1.5 !text-[0.8125rem]"
-        >
-          <option value="">All Risk Bands</option>
-          {BANDS.map((b) => (
-            <option key={b.value} value={b.value}>
-              {b.label}
-            </option>
-          ))}
-        </select>
-
-        {/* More Filters toggle */}
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-4 py-1.5 text-[0.8125rem] font-medium calm-transition ${
-            showFilters
-              ? "border-accent/20 bg-accent/5 text-accent"
-              : "border-border/40 bg-surface-container-lowest text-muted hover:bg-surface-container-low hover:text-text"
-          }`}
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
-          </svg>
-          More Filters
-        </button>
-
-        <p className="ml-auto text-[0.8125rem] text-muted">
-          Showing{" "}
-          <span className="font-semibold text-text">{pageStart}–{pageEnd}</span>
-          {" "}of{" "}
-          <span className="font-semibold text-text">{totalFiltered.toLocaleString()}</span>
-          {" "}students
-        </p>
-      </div>
-
-      {/* Expanded filter panel (additional) */}
-      {showFilters && (
-        <div className="filter-bar">
-          {(defaultYearGroup || defaultBand || defaultSearch) && (
-            <button
-              onClick={() => {
-                setSearch("");
-                navigate({ yearGroup: null, band: null, studentSearch: null });
-              }}
-              className="rounded-lg border border-border/40 bg-surface-container-lowest px-3 py-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text"
-            >
-              Clear all filters
-            </button>
+              Clear
+            </Link>
           )}
         </div>
-      )}
+      </form>
     </div>
   );
 }
