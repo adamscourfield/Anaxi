@@ -3,6 +3,8 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
+import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { formatYearGroup } from "@/modules/observations/yearGroup";
 import { pedagogicalSignalTooltip } from "@/modules/observations/signalTooltip";
 import { Avatar } from "@/components/ui/avatar";
@@ -33,6 +35,13 @@ const PHASE_BADGE: Record<string, string> = {
 /* ── Pagination constants ─────────────────────────────────────────────── */
 const PAGE_SIZE = 10;
 
+const VALID_PHASE_FILTERS = new Set([
+  "INSTRUCTION",
+  "GUIDED_PRACTICE",
+  "INDEPENDENT_PRACTICE",
+  "UNKNOWN",
+]);
+
 function formatLongDate(date: Date | string): string {
   const d = new Date(date);
   return `${String(d.getDate()).padStart(2, "0")} ${d.toLocaleDateString("en-GB", { month: "short" })} ${d.getFullYear()}`;
@@ -52,16 +61,22 @@ export default async function ObservationHistoryPage({
   const observerId = String(searchParams?.observerId || "");
   const from = String(searchParams?.from || "");
   const to = String(searchParams?.to || "");
+  const phaseRaw = String(searchParams?.phase || "").trim();
+  const phaseFilter = VALID_PHASE_FILTERS.has(phaseRaw) ? phaseRaw : "";
+  const signalKeyRaw = String(searchParams?.signalKey || "").trim();
+  const validSignalKeys = new Set(SIGNAL_DEFINITIONS.map((s) => s.key));
+  const signalKeyFilter = validSignalKeys.has(signalKeyRaw) ? signalKeyRaw : "";
   const page = Math.max(1, Number(searchParams?.page || "1"));
   const windowDays = Number(searchParams?.window || "");
   const useWindow = Number.isFinite(windowDays) && windowDays > 0 && !from && !to;
   const windowStart = useWindow ? new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000) : null;
 
-  const [teachers, observers, hodMemberships, coachAssignments] = await Promise.all([
+  const [teachers, observers, hodMemberships, coachAssignments, tenantSignalLabels] = await Promise.all([
     (prisma as any).user.findMany({ where: { tenantId: user.tenantId, isActive: true }, orderBy: { fullName: "asc" } }),
     (prisma as any).user.findMany({ where: { tenantId: user.tenantId, isActive: true, role: { in: ["LEADER", "SLT", "ADMIN"] } }, orderBy: { fullName: "asc" } }),
     (prisma as any).departmentMembership.findMany({ where: { userId: user.id, isHeadOfDepartment: true } }),
     (prisma as any).coachAssignment.findMany({ where: { coachUserId: user.id } }),
+    getTenantSignalLabels(user.tenantId),
   ]);
 
   const hodDepartmentIds = (hodMemberships as any[]).map((m: any) => m.departmentId);
@@ -82,6 +97,14 @@ export default async function ObservationHistoryPage({
     ...(subject ? { subject } : {}),
     ...(yearGroup ? { yearGroup } : {}),
     ...(observerId ? { observerId } : {}),
+    ...(phaseFilter ? { phase: phaseFilter } : {}),
+    ...(signalKeyFilter
+      ? {
+          signals: {
+            some: { signalKey: signalKeyFilter },
+          },
+        }
+      : {}),
     ...((from || to || useWindow)
       ? {
           observedAt: {
@@ -131,7 +154,28 @@ export default async function ObservationHistoryPage({
 
   const obsList = observations as any[];
   const totalPages = Math.max(1, Math.ceil((totalCount as number) / PAGE_SIZE));
-  const hasFilters = teacherId || subject || yearGroup || observerId || from || to;
+  const hasFilters =
+    !!teacherId ||
+    !!subject ||
+    !!yearGroup ||
+    !!observerId ||
+    !!from ||
+    !!to ||
+    !!phaseFilter ||
+    !!signalKeyFilter ||
+    useWindow;
+
+  const phaseFilterOptions = Array.from(VALID_PHASE_FILTERS).map((value) => ({
+    value,
+    label: formatPhaseLabel(value),
+  }));
+
+  const signalFilterOptions = [...SIGNAL_DEFINITIONS]
+    .sort((a, b) => a.order - b.order)
+    .map((s) => ({
+      key: s.key,
+      label: tenantSignalLabels[s.key]?.displayName ?? s.displayNameDefault,
+    }));
 
   /* Build URL for a specific page, preserving current filters */
   function pageUrl(p: number): string {
@@ -142,6 +186,9 @@ export default async function ObservationHistoryPage({
     if (yearGroup) params.set("yearGroup", yearGroup);
     if (from) params.set("from", from);
     if (to) params.set("to", to);
+    if (phaseFilter) params.set("phase", phaseFilter);
+    if (signalKeyFilter) params.set("signalKey", signalKeyFilter);
+    if (useWindow) params.set("window", String(windowDays));
     if (p > 1) params.set("page", String(p));
     const qs = params.toString();
     return `/observe/history${qs ? `?${qs}` : ""}`;
@@ -190,9 +237,12 @@ export default async function ObservationHistoryPage({
         teachers={visibleTeachers.map((t: any) => ({ id: t.id, fullName: t.fullName }))}
         observers={(observers as any[]).map((o: any) => ({ id: o.id, fullName: o.fullName }))}
         subjects={(distinctSubjects as { subject: string }[]).map((r) => r.subject)}
-        defaults={{ teacherId, observerId, subject, from, to }}
+        phaseOptions={phaseFilterOptions}
+        signalOptions={signalFilterOptions}
+        defaults={{ teacherId, observerId, subject, from, to, phase: phaseFilter, signalKey: signalKeyFilter }}
+        preservedWindowDays={useWindow ? windowDays : null}
         showTeacherFilters={user.role !== "TEACHER"}
-        hasFilters={!!hasFilters}
+        hasFilters={hasFilters}
       />
 
       {/* ── Results ─────────────────────────────────────────────────────── */}
