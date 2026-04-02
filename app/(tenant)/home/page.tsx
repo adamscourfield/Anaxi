@@ -138,12 +138,16 @@ function PageTitle({
 }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1 className="text-[28px] font-bold tracking-[-0.03em] text-text">
+      <h1 className="text-[22px] font-bold tracking-[-0.03em] text-text sm:text-[28px]">
         Institutional Pulse
       </h1>
-      <div className="flex items-center gap-3">
-        <WindowSelector windowDays={windowDays} />
-        <QuickActionButton items={quickActionItems} />
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch] pb-0.5 sm:pb-0">
+          <WindowSelector windowDays={windowDays} />
+        </div>
+        <div className="shrink-0">
+          <QuickActionButton items={quickActionItems} />
+        </div>
       </div>
     </div>
   );
@@ -244,11 +248,10 @@ function LeadershipHome({
               id={firstImmediateSupportIdx === -1 ? "immediate-support-needed" : undefined}
             >
               {topOnCallRows.map((oc, i) => (
-                <Link
+                <div
                   key={oc.id}
                   id={i === firstImmediateSupportIdx ? "immediate-support-needed" : undefined}
-                  href={`/on-call/${oc.id}`}
-                  className={`flex items-center justify-between rounded-xl p-4 calm-transition hover:bg-[var(--surface-container)] ${
+                  className={`flex min-w-0 items-center justify-between gap-2 rounded-xl p-3 calm-transition sm:gap-3 sm:p-4 ${
                     i === firstImmediateSupportIdx ? "scroll-mt-20" : ""
                   } ${
                     oc.status === "OPEN" || oc.status === "ACKNOWLEDGED"
@@ -256,32 +259,44 @@ function LeadershipHome({
                       : "bg-white"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <Link
+                    href={`/on-call/${oc.id}`}
+                    className="flex min-w-0 flex-1 items-center gap-2 calm-transition hover:opacity-90 sm:gap-3"
+                  >
                     <Avatar name={oc.requesterName} size="md" />
-                    <div>
-                      <p className="text-sm font-medium text-text">{oc.requesterName}</p>
-                      <p className="text-xs text-muted">{oc.location}</p>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-text">{oc.requesterName}</p>
+                      <p className="truncate text-xs text-muted">{oc.location}</p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-right">
+                  </Link>
+                  <div className="flex shrink-0 flex-col items-end gap-1 text-right sm:flex-row sm:items-center sm:gap-2">
                     {(oc.status === "OPEN" || oc.status === "ACKNOWLEDGED") ? (
                       <>
-                        <span className="text-xs font-medium text-[var(--error)]">Immediate Support Needed</span>
-                        <span className="text-xs text-muted">
-                          {(() => {
-                            const mins = Math.round((Date.now() - new Date(oc.createdAt).getTime()) / 60000);
-                            return mins < 60 ? `Triggered ${mins}m ago` : `Triggered ${Math.round(mins / 60)}h ago`;
-                          })()}
-                        </span>
-                        <Link href={`/on-call`} className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-on-primary">→</Link>
+                        <div className="hidden max-w-[140px] flex-col items-end gap-0.5 sm:flex sm:max-w-none">
+                          <span className="text-xs font-medium text-[var(--error)]">Immediate Support Needed</span>
+                          <span className="text-xs text-muted">
+                            {(() => {
+                              const mins = Math.round((Date.now() - new Date(oc.createdAt).getTime()) / 60000);
+                              return mins < 60 ? `Triggered ${mins}m ago` : `Triggered ${Math.round(mins / 60)}h ago`;
+                            })()}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-medium text-[var(--error)] sm:hidden">Live</span>
+                        <Link
+                          href="/on-call"
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm text-on-primary calm-transition hover:opacity-90 sm:h-8 sm:w-8"
+                          aria-label="Open on-call inbox"
+                        >
+                          →
+                        </Link>
                       </>
                     ) : (
-                      <span className="text-xs text-muted">
+                      <span className="max-w-[9rem] text-[10px] text-muted sm:max-w-none sm:text-xs">
                         RESOLVED · {new Date(oc.resolvedAt ?? oc.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     )}
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}
