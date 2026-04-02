@@ -23,6 +23,7 @@ import {
   PendingLeaveDetail,
   OnCallDetail,
   AttainmentSummary,
+  DualFlaggedStudent,
 } from "@/modules/home/hydration";
 import { QuickActionButton } from "@/components/dashboard/QuickActionButton";
 
@@ -545,28 +546,85 @@ function LeadershipHome({
 
       {/* ═══ Attainment Summary ═══ */}
       {attainmentSummary && (
-        <section>
-          <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Attainment · {attainmentSummary.cycleLabel}</p>
-              <p className="text-sm text-muted">
-                {attainmentSummary.totalAssessments} assessment{attainmentSummary.totalAssessments !== 1 ? "s" : ""} · {attainmentSummary.totalResults.toLocaleString()} results recorded
+        <section className="space-y-3">
+          {/* Section header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Attainment</h2>
+              <p className="text-xs text-muted">
+                {attainmentSummary.cycleLabel}
+                {attainmentSummary.latestPointLabel && ` · ${attainmentSummary.latestPointLabel}`}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              {attainmentSummary.triangulatedCount > 0 && (
-                <Link
-                  href="/assessments/triangulation"
-                  className="inline-flex items-center gap-1 rounded-lg bg-risk-urgent-bg px-3 py-1.5 text-xs font-medium text-risk-urgent-text hover:opacity-80"
-                >
-                  {attainmentSummary.triangulatedCount} dual-flagged →
+            <Link href="/assessments" className="text-sm text-accent hover:underline">
+              All cycles →
+            </Link>
+          </div>
+
+          {/* Stat row */}
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard
+              label="Subjects assessed"
+              value={attainmentSummary.subjectCount}
+              context={`${attainmentSummary.totalResults.toLocaleString()} results recorded`}
+              accent="accent"
+            />
+            <StatCard
+              label="Students assessed"
+              value={attainmentSummary.studentCount}
+              context={attainmentSummary.latestPointLabel ?? "Latest point"}
+              accent="info"
+            />
+            <StatCard
+              label="Dual-flagged"
+              value={attainmentSummary.triangulatedCount}
+              context={
+                attainmentSummary.triangulatedCount > 0
+                  ? `${attainmentSummary.urgentCount} urgent · ${attainmentSummary.priorityCount} priority`
+                  : "No students dual-flagged"
+              }
+              accent={attainmentSummary.triangulatedCount > 0 ? "error" : "success"}
+              href={attainmentSummary.triangulatedCount > 0 ? "/assessments/triangulation" : undefined}
+            />
+          </div>
+
+          {/* Dual-flagged student list */}
+          {attainmentSummary.topDualFlagged.length > 0 && (
+            <Card tone="inset" className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+                  Dual-flagged students — attainment + pastoral risk
+                </p>
+                <Link href="/assessments/triangulation" className="text-xs text-accent hover:underline">
+                  View all →
                 </Link>
-              )}
-              <Link href="/assessments" className="text-sm text-accent hover:underline">
-                View assessments →
-              </Link>
-            </div>
-          </Card>
+              </div>
+              <ul className="space-y-2">
+                {attainmentSummary.topDualFlagged.map((s: DualFlaggedStudent) => (
+                  <li key={s.studentId} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--outline-variant)]/30 px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-text truncate">{s.studentName}</span>
+                        {s.yearGroup && <span className="text-[11px] text-muted">{s.yearGroup}</span>}
+                        {s.ppFlag && <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">PP</span>}
+                        {s.sendFlag && <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">SEND</span>}
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-muted truncate">
+                        Lowest: {s.worstSubject} — {s.worstGrade}
+                        {s.worstNormalizedScore !== null && ` (${Math.round(s.worstNormalizedScore * 100)}%)`}
+                      </p>
+                    </div>
+                    <StatusPill
+                      variant={s.behaviouralBand === "URGENT" ? "error" : s.behaviouralBand === "PRIORITY" ? "warning" : "neutral"}
+                      size="sm"
+                    >
+                      {s.behaviouralBand === "URGENT" ? "Urgent" : s.behaviouralBand === "PRIORITY" ? "Priority" : s.behaviouralBand}
+                    </StatusPill>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
         </section>
       )}
     </div>
