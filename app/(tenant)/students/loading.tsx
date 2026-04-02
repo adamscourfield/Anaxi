@@ -40,11 +40,25 @@ export default function StudentsLoading() {
         <div className="h-4 w-40 animate-pulse rounded bg-border/40" />
       </div>
 
-      <div className="rounded-2xl bg-surface-container-high/50 p-4 sm:p-5">
-        <div className="filter-bar items-center">
-          <div className="h-11 min-w-[200px] flex-1 animate-pulse rounded-xl bg-border/40" />
-          <div className="h-11 w-24 animate-pulse rounded-xl bg-border/35" />
-          <div className="hidden h-4 w-48 animate-pulse rounded bg-border/35 sm:ml-auto sm:block" />
+      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-sm md:p-6">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="min-w-[160px] flex-1 space-y-2">
+            <div className="h-3 w-14 animate-pulse rounded bg-border/35" />
+            <div className="h-10 w-full animate-pulse rounded-[10px] bg-border/40" />
+          </div>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="min-w-[120px] flex-1 space-y-2">
+              <div className="h-3 w-16 animate-pulse rounded bg-border/35" />
+              <div className="h-10 w-full animate-pulse rounded-[10px] bg-border/40" />
+            </div>
+          ))}
+          <div className="flex w-full gap-2 sm:w-auto lg:ml-auto">
+            <div className="h-10 min-w-[140px] flex-1 animate-pulse rounded-[10px] bg-border/45 sm:flex-none" />
+            <div className="h-10 w-24 animate-pulse rounded-[10px] bg-border/35" />
+          </div>
+        </div>
+        <div className="mt-4 border-t border-border/20 pt-4">
+          <div className="ml-auto h-4 w-56 animate-pulse rounded bg-border/30 sm:ml-auto" />
         </div>
       </div>
 

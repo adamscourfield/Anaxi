@@ -198,19 +198,17 @@ export default async function StudentsPage({ searchParams }: { searchParams: Rec
         </div>
       </div>
 
-      <div className="rounded-2xl bg-surface-container-high/50 p-4 sm:p-5">
-        <StudentsFilterBar
-          yearGroups={yearGroups}
-          currentQ={q}
-          currentYearGroup={yearGroup}
-          currentSend={send}
-          currentPp={pp}
-          currentBand={band}
-          pageStart={pageStart}
-          pageEnd={pageEnd}
-          totalFiltered={totalFiltered}
-        />
-      </div>
+      <StudentsFilterBar
+        yearGroups={yearGroups}
+        currentQ={q}
+        currentYearGroup={yearGroup}
+        currentSend={send}
+        currentPp={pp}
+        currentBand={band}
+        pageStart={pageStart}
+        pageEnd={pageEnd}
+        totalFiltered={totalFiltered}
+      />
 
       {bandFiltered.length === 0 ? (
         <EmptyState
