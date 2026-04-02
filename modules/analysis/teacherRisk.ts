@@ -201,11 +201,27 @@ export async function computeTeacherRiskIndex(
     prevByTeacher.get(obs.observedTeacherId)!.push(obs);
   }
 
+  const teacherIds = Array.from(
+    new Set([
+      ...currentByTeacher.keys(),
+      ...prevByTeacher.keys(),
+    ]),
+  );
+
+  const teachers = await (prisma as any).user.findMany({
+    where: { tenantId, id: { in: teacherIds } },
+    select: { id: true, fullName: true, role: true },
+  });
+  const teacherById = new Map<string, { id: string; fullName: string; role: string | null }>(
+    teachers.map((teacher: { id: string; fullName: string; role: string | null }) => [teacher.id, teacher]),
+  );
+
   const rows: TeacherRiskRow[] = [];
 
-  for (const [teacherId, teacherCurrentObs] of currentByTeacher.entries()) {
-    const teacher = teacherCurrentObs[0]?.observedTeacher;
+  for (const teacherId of teacherIds) {
+    const teacher = teacherById.get(teacherId);
     if (!teacher) continue;
+    const teacherCurrentObs = currentByTeacher.get(teacherId) ?? [];
 
     const teacherCoverage = teacherCurrentObs.length;
     const lastObservationAt = teacherCurrentObs.reduce((latest: Date | null, obs: any) => {
