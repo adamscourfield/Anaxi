@@ -7,12 +7,12 @@ import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 
-type QualificationType = "GCSE" | "A_LEVEL" | "VOCATIONAL" | "OTHER";
+type QualificationType = "GCSE" | "A_LEVEL" | "PERCENTAGE" | "OTHER";
 
 const QUAL_OPTIONS: Array<{ value: QualificationType; label: string; description: string }> = [
   { value: "GCSE", label: "GCSE", description: "Grades 1–9, numeric scale" },
   { value: "A_LEVEL", label: "A Level", description: "Grades A*–U, letter scale" },
-  { value: "VOCATIONAL", label: "Vocational / BTEC", description: "Pass / Merit / Distinction" },
+  { value: "PERCENTAGE", label: "Percentage Scores", description: "0–100% scores" },
   { value: "OTHER", label: "Other", description: "Custom grading scheme" },
 ];
 
@@ -40,10 +40,10 @@ const POINT_PRESETS: Record<QualificationType, Array<{ label: string; pointType:
     { label: "Teacher Predictions", pointType: "TEACHER_PREDICTION" },
     { label: "Final A-Level Results", pointType: "EXTERNAL_FINAL" },
   ],
-  VOCATIONAL: [
+  PERCENTAGE: [
     { label: "Baseline", pointType: "BASELINE" },
-    { label: "Unit Assessment 1", pointType: "INTERNAL_ASSESSMENT" },
-    { label: "Unit Assessment 2", pointType: "INTERNAL_ASSESSMENT" },
+    { label: "Assessment 1", pointType: "INTERNAL_ASSESSMENT" },
+    { label: "Assessment 2", pointType: "INTERNAL_ASSESSMENT" },
     { label: "Final Results", pointType: "EXTERNAL_FINAL" },
   ],
   OTHER: [

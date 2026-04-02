@@ -814,6 +814,7 @@ model AssessmentResult {
   studentId       String
   rawValue        String
   normalizedScore Float?
+  rank            Int?
   normalisedGrade String?
   candidateNumber String?
   status          AssessmentResultStatus    @default(PRESENT)
@@ -974,7 +975,7 @@ enum AssessmentResultStatus {
 enum QualificationType {
   GCSE
   A_LEVEL
-  VOCATIONAL
+  PERCENTAGE
   OTHER
 }
 

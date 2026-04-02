@@ -71,6 +71,7 @@ export default function UploadSubjectResultsPage() {
         // Auto-set grade format from qualification type
         if (point?.cycle?.qualificationType === "A_LEVEL") setGradeFormat("A_LEVEL");
         else if (point?.cycle?.qualificationType === "GCSE") setGradeFormat("GCSE");
+        else if (point?.cycle?.qualificationType === "PERCENTAGE") setGradeFormat("PERCENTAGE");
       })
       .catch(() => {});
   }, [pointId]);

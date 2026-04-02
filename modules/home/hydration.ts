@@ -24,11 +24,29 @@ async function safe<T>(task: Promise<T>, fallback: T): Promise<T> {
   }
 }
 
+export type DualFlaggedStudent = {
+  studentId: string;
+  studentName: string;
+  yearGroup: string | null;
+  ppFlag: boolean;
+  sendFlag: boolean;
+  behaviouralBand: string;
+  worstSubject: string;
+  worstGrade: string;
+  worstNormalizedScore: number | null;
+};
+
 export type AttainmentSummary = {
   cycleLabel: string;
-  totalAssessments: number;
+  cycleId: string;
+  latestPointLabel: string | null;
+  subjectCount: number;
+  studentCount: number;
   totalResults: number;
   triangulatedCount: number;
+  urgentCount: number;
+  priorityCount: number;
+  topDualFlagged: DualFlaggedStudent[];
 };
 
 export type PendingLeaveDetail = {
@@ -137,6 +155,7 @@ export async function hydrateLeadershipHomeData({
             where: { tenantId: user.tenantId, isActive: true },
             include: {
               points: {
+                orderBy: { ordinal: "desc" },
                 include: {
                   assessments: {
                     include: { _count: { select: { results: true } } },
@@ -147,20 +166,65 @@ export async function hydrateLeadershipHomeData({
           })
           .then(async (cycle: any) => {
             if (!cycle) return null;
-            const allAssessments = (cycle.points as any[]).flatMap((p: any) => p.assessments as any[]);
-            const totalAssessments = allAssessments.length;
+            const points = cycle.points as any[];
+            const allAssessments = points.flatMap((p: any) => p.assessments as any[]);
             const totalResults = allAssessments.reduce(
               (sum: number, a: any) => sum + (a._count?.results ?? 0),
               0
             );
-            // Count students flagged with low attainment AND high SRI
+
+            // Distinct subject count across the whole cycle
+            const subjectNames = new Set<string>(allAssessments.map((a: any) => a.subject as string));
+            const subjectCount = subjectNames.size;
+
+            // Student count: distinct students in the most recent point that has data
+            const latestPointWithData = points.find((p: any) => (p.assessments as any[]).length > 0);
+            const latestPointLabel = (latestPointWithData?.label ?? null) as string | null;
+
+            const latestAssessmentIds = latestPointWithData
+              ? (latestPointWithData.assessments as any[]).map((a: any) => a.id as string)
+              : [];
+            const studentCount = latestAssessmentIds.length > 0
+              ? await prisma.assessmentResult.groupBy({
+                  by: ["studentId"],
+                  where: {
+                    tenantId: user.tenantId,
+                    status: "PRESENT",
+                    assessmentId: { in: latestAssessmentIds },
+                  },
+                }).then((rows: any[]) => rows.length)
+              : 0;
+
+            // Triangulation: students flagged with both high SRI and low attainment
             const { computeTriangulatedRisks } = await import("@/modules/assessments/analysis");
             const tri = await computeTriangulatedRisks(user.tenantId, user.id, windowDays);
+
+            const topDualFlagged: DualFlaggedStudent[] = tri.students.slice(0, 5).map((s) => {
+              const worst = s.attainmentResults[0]; // already sorted ascending by score
+              return {
+                studentId: s.studentId,
+                studentName: s.studentName,
+                yearGroup: s.yearGroup,
+                ppFlag: s.ppFlag,
+                sendFlag: s.sendFlag,
+                behaviouralBand: s.behaviouralBand,
+                worstSubject: worst?.subject ?? "",
+                worstGrade: worst?.rawValue ?? "",
+                worstNormalizedScore: worst?.normalizedScore ?? null,
+              };
+            });
+
             return {
               cycleLabel: cycle.label as string,
-              totalAssessments,
+              cycleId: cycle.id as string,
+              latestPointLabel,
+              subjectCount,
+              studentCount,
               totalResults,
               triangulatedCount: tri.meta.total,
+              urgentCount: tri.meta.urgent,
+              priorityCount: tri.meta.priority,
+              topDualFlagged,
             };
           }),
         null as AttainmentSummary | null
