@@ -145,7 +145,7 @@ function SectionTable({
         {mode === "completed" && rows.length > 0 && (
           <div className="border-t border-[#eceef0] py-4 text-center">
             <Link
-              href="/leave?view=list#completed-requests"
+              href="/leave/history"
               className="text-[0.875rem] font-medium text-muted underline-offset-4 calm-transition hover:text-text hover:underline"
             >
               View full ledger history
