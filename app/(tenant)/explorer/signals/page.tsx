@@ -238,15 +238,15 @@ export default async function SignalsPage({
             <button
               type="submit"
               form="signals-explorer-filters"
-              className="field flex w-full items-center justify-center border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+              className="field !flex w-full flex-nowrap items-center justify-center whitespace-nowrap border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
             >
               Apply Filters
             </button>
             <button
               type="button"
-              className="field flex w-full items-center justify-center gap-1.5 border border-border/40 bg-surface-container-lowest py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[140px] lg:w-auto"
+              className="field !flex w-full flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap border border-border/40 bg-surface-container-lowest py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
             >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
               </svg>
               More Filters
@@ -260,9 +260,9 @@ export default async function SignalsPage({
                 )}
                 <button
                   type="submit"
-                  className="field flex w-full items-center justify-center gap-1.5 border border-primary bg-surface-container-lowest py-2.5 text-[0.8125rem] font-bold text-text calm-transition hover:bg-surface-container-low sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+                  className="field !flex w-full flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap border border-primary bg-surface-container-lowest py-2.5 text-[0.8125rem] font-bold text-text calm-transition hover:bg-surface-container-low sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
                 >
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                   </svg>
                   Export Data
