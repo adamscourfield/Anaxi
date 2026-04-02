@@ -14,6 +14,7 @@ import { displayGrade } from "@/modules/assessments/gradeNormalizer";
 import { canViewStudentAnalysis } from "@/modules/authz";
 import { computeStudentRiskProfile, RiskBand, Confidence } from "@/modules/analysis/studentRisk";
 import { toggleWatchlist } from "@/app/(tenant)/analysis/students/actions";
+import { archiveStudentAction, unarchiveStudentAction } from "../actions";
 
 const WINDOW_OPTIONS = [7, 21, 28] as const;
 
@@ -248,6 +249,21 @@ export default async function StudentDetailPage({
               {student.upn ? `UPN ${student.upn}` : "No UPN on record"}
             </MetaText>
           </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {student.status === "ACTIVE" ? (
+            <form action={archiveStudentAction}>
+              <input type="hidden" name="studentId" value={student.id} />
+              <input type="hidden" name="returnTo" value={`/students/${student.id}`} />
+              <Button type="submit" variant="secondary">Archive student</Button>
+            </form>
+          ) : (
+            <form action={unarchiveStudentAction}>
+              <input type="hidden" name="studentId" value={student.id} />
+              <input type="hidden" name="returnTo" value={`/students/${student.id}`} />
+              <Button type="submit" variant="secondary">Restore student</Button>
+            </form>
+          )}
         </div>
       </div>
 

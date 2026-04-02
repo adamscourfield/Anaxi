@@ -406,7 +406,15 @@ export function SnapshotUploader() {
               >
                 official template
               </a>{" "}
-              reduces mapping errors. The system will auto-match Student IDs based on the institutional database.
+              reduces mapping errors. You can also{" "}
+              <a
+                href="/api/import/csv/template?prefill=1"
+                download
+                className="font-medium text-text underline decoration-[var(--outline-variant)] underline-offset-2 hover:decoration-text"
+              >
+                download a pre-populated template
+              </a>{" "}
+              with active student names and UPNs.
             </p>
           </div>
 

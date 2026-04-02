@@ -258,6 +258,12 @@ export default function UploadSubjectResultsPage() {
               accept=".csv"
               className="block text-sm text-[var(--on-surface)] file:mr-3 file:rounded-lg file:border file:border-[var(--outline-variant)] file:bg-[var(--surface)] file:px-3 file:py-1.5 file:text-sm"
             />
+            <a
+              href={`/api/assessments/template${yearGroup.trim() ? `?yearGroup=${encodeURIComponent(yearGroup.trim())}` : ""}`}
+              className="inline-block text-xs font-medium text-[var(--accent)] underline underline-offset-2"
+            >
+              Download pre-populated attainment template
+            </a>
           </div>
 
           {error && <p className="text-sm text-[var(--error)]">{error}</p>}
