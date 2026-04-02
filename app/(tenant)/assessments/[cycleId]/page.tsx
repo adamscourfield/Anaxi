@@ -48,6 +48,18 @@ const QUAL_LABELS: Record<QualificationType, string> = {
   OTHER: "Other",
 };
 
+function formatAssessedDate(value: Date | string | null | undefined): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  return parsed.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default async function CycleDetailPage({
@@ -189,6 +201,7 @@ export default async function CycleDetailPage({
             const entries = point.assessments.reduce((s, a) => s + a.entryCount, 0);
             const matched = point.assessments.reduce((s, a) => s + a.matchedStudentCount, 0);
             const hasData = entries > 0;
+            const assessedDateLabel = formatAssessedDate(point.assessedAt);
 
             return (
               <div
@@ -232,11 +245,9 @@ export default async function CycleDetailPage({
                     <h3 className="mt-1.5 text-base font-semibold text-[var(--on-surface)]">
                       {point.label}
                     </h3>
-                    {point.assessedAt && (
+                    {assessedDateLabel && (
                       <p className="text-xs text-[var(--on-surface-muted)]">
-                        {new Date(point.assessedAt).toLocaleDateString("en-GB", {
-                          day: "numeric", month: "long", year: "numeric",
-                        })}
+                        {assessedDateLabel}
                       </p>
                     )}
 
