@@ -6,13 +6,14 @@ import { prisma } from "@/lib/prisma";
 import { UserRole } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { H1, H2, MetaText, BodyText } from "@/components/ui/typography";
+import { StudentPrioritiesFilters } from "./StudentPrioritiesFilters";
 import { computeTeacherRiskIndex, RiskStatus } from "@/modules/analysis/teacherRisk";
 import { canViewTeacherAnalysis, canViewStudentAnalysis } from "@/modules/authz";
 import {
   computeCpdPriorities,
   getTopImprovingSignals,
 } from "@/modules/analysis/cpdPriorities";
-import { computeStudentRiskIndex, RiskBand, Confidence, BAND_ORDER } from "@/modules/analysis/studentRisk";
+import { computeStudentRiskIndex, RiskBand, Confidence } from "@/modules/analysis/studentRisk";
 
 const TABS = ["teachers", "cpd", "students"] as const;
 type Tab = (typeof TABS)[number];
@@ -513,6 +514,14 @@ async function StudentsTab({
 
   const yearGroups = Array.from(new Set(allRows.map((r) => r.yearGroup).filter(Boolean))).sort() as string[];
 
+  const hasStudentFilters =
+    !!filterYearGroup ||
+    !!filterSend ||
+    !!filterPp ||
+    !!filterBand ||
+    !!filterConfidence ||
+    filterWatchlist;
+
   const computedAtStr = computedAt.toLocaleString("en-GB", {
     day: "numeric",
     month: "short",
@@ -527,100 +536,19 @@ async function StudentsTab({
         Window: last {windowDays} days · Updated {computedAtStr} · Based on latest snapshots
       </MetaText>
 
-      <form method="GET" action="/analytics" className="flex flex-wrap items-end gap-3">
-        <input type="hidden" name="tab" value="students" />
-        <input type="hidden" name="window" value={windowDays} />
-
-        <div className="flex flex-col gap-1">
-          <MetaText>Year group</MetaText>
-          <select
-            name="yearGroup"
-            defaultValue={filterYearGroup}
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
-          >
-            <option value="">All years</option>
-            {yearGroups.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <MetaText>SEND</MetaText>
-          <select
-            name="send"
-            defaultValue={filterSend}
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
-          >
-            <option value="">Any</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <MetaText>PP</MetaText>
-          <select
-            name="pp"
-            defaultValue={filterPp}
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
-          >
-            <option value="">Any</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <MetaText>Band</MetaText>
-          <select
-            name="band"
-            defaultValue={filterBand}
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
-          >
-            <option value="">All bands</option>
-            {(Object.keys(BAND_ORDER) as RiskBand[]).map((b) => (
-              <option key={b} value={b}>
-                {BAND_LABELS[b]}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <MetaText>Confidence</MetaText>
-          <select
-            name="confidence"
-            defaultValue={filterConfidence}
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
-          >
-            <option value="">Any</option>
-            <option value="HIGH">High</option>
-            <option value="LOW">Low</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <MetaText>Watchlist</MetaText>
-          <select
-            name="watchlist"
-            defaultValue={filterWatchlist ? "1" : ""}
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
-          >
-            <option value="">All students</option>
-            <option value="1">Watchlist only</option>
-          </select>
-        </div>
-
-        <button
-          type="submit"
-          className="calm-transition rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text transition duration-200 ease-calm hover:border-accentHover"
-        >
-          Apply
-        </button>
-      </form>
+      <StudentPrioritiesFilters
+        yearGroups={yearGroups}
+        windowDays={windowDays}
+        defaults={{
+          yearGroup: filterYearGroup,
+          send: filterSend,
+          pp: filterPp,
+          band: filterBand,
+          confidence: filterConfidence,
+          watchlist: filterWatchlist,
+        }}
+        hasFilters={hasStudentFilters}
+      />
 
       <details className="rounded-lg border border-border bg-surface p-4">
         <summary className="cursor-pointer text-sm font-medium text-text">Metric definitions</summary>
