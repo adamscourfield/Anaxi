@@ -27,7 +27,6 @@ export interface SnapshotRow {
   detentions: number;
   internalExclusions: number;
   suspensions: number;
-  onCalls: number;
   positivePoints: number;
   send: boolean;
   pp: boolean;
@@ -187,7 +186,6 @@ export function parseSnapshotCsv(
       ["detentions", "Detentions"],
       ["internalExclusions", "InternalExclusions"],
       ["suspensions", "Suspensions"],
-      ["onCalls", "OnCalls"],
       ["positivePoints", "PositivePoints"],
     ] as [string, AnaxiField][]) {
       const raw = col(record, anaxiKey);
@@ -244,7 +242,6 @@ export function parseSnapshotCsv(
         detentions: numericParsed.detentions ?? 0,
         internalExclusions: numericParsed.internalExclusions ?? 0,
         suspensions: numericParsed.suspensions ?? 0,
-        onCalls: numericParsed.onCalls ?? 0,
         positivePoints: numericParsed.positivePoints ?? 0,
         send: parseBoolean(col(record, "SEND")),
         pp: parseBoolean(col(record, "PP")),
