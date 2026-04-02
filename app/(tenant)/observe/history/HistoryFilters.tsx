@@ -7,13 +7,19 @@ interface HistoryFiltersProps {
   teachers: { id: string; fullName: string }[];
   observers: { id: string; fullName: string }[];
   subjects: string[];
+  phaseOptions: { value: string; label: string }[];
+  signalOptions: { key: string; label: string }[];
   defaults: {
     teacherId: string;
     observerId: string;
     subject: string;
     from: string;
     to: string;
+    phase: string;
+    signalKey: string;
   };
+  /** When set, a hidden `window` field is submitted so date-window deep links stay applied. */
+  preservedWindowDays: number | null;
   showTeacherFilters: boolean;
   hasFilters: boolean;
 }
@@ -22,7 +28,10 @@ export function HistoryFilters({
   teachers,
   observers,
   subjects,
+  phaseOptions,
+  signalOptions,
   defaults,
+  preservedWindowDays,
   showTeacherFilters,
   hasFilters,
 }: HistoryFiltersProps) {
@@ -35,6 +44,9 @@ export function HistoryFilters({
         action="/observe/history"
         className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4"
       >
+        {preservedWindowDays != null && preservedWindowDays > 0 ? (
+          <input type="hidden" name="window" value={String(preservedWindowDays)} />
+        ) : null}
         {showTeacherFilters && (
           <>
             <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
@@ -77,6 +89,34 @@ export function HistoryFilters({
             options={[
               { value: "", label: "All Curricula" },
               ...subjects.map((s) => ({ value: s, label: s })),
+            ]}
+          />
+        </label>
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[160px]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Phase</span>
+          <FormSelect
+            name="phase"
+            defaultValue={defaults.phase}
+            placeholder="All phases"
+            searchable
+            triggerClassName={triggerWhite}
+            options={[
+              { value: "", label: "All phases" },
+              ...phaseOptions.map((p) => ({ value: p.value, label: p.label })),
+            ]}
+          />
+        </label>
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[200px]">
+          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Pedagogical signal</span>
+          <FormSelect
+            name="signalKey"
+            defaultValue={defaults.signalKey}
+            placeholder="Any signal"
+            searchable
+            triggerClassName={triggerWhite}
+            options={[
+              { value: "", label: "Any signal" },
+              ...signalOptions.map((s) => ({ value: s.key, label: s.label })),
             ]}
           />
         </label>
