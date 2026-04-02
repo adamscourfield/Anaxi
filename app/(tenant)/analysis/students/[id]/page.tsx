@@ -387,10 +387,10 @@ export default async function StudentProfilePage({
               <MetaText>Active cycle: {activeCycle.label}</MetaText>
             </div>
             <Link
-              href={`/assessments/progress`}
+              href={`/assessments/${activeCycle.id}`}
               className="text-sm text-accent hover:underline"
             >
-              View cohort progress →
+              View attainment cycle →
             </Link>
           </div>
           <table className="w-full text-sm">
