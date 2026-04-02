@@ -61,7 +61,7 @@ export function ReviewList({
   const sessionLabel = [yearLabel, draft.context.subject].filter(Boolean).join(" — ");
 
   return (
-    <ObservationStageLayout currentStep={3} maxWidthClassName="max-w-6xl">
+    <ObservationStageLayout currentStep={3} maxWidthClassName="md:max-w-6xl">
       <form action={action}>
         {/* Hidden context fields */}
         <input type="hidden" name="observedTeacherId" value={draft.context.teacherId} />

@@ -86,8 +86,8 @@ export function ObservationContextForm({
   return (
     <ObservationStageLayout currentStep={1}>
       {/* Main Card */}
-      <div className="rounded-2xl glass-card">
-        <div className="px-8 py-7">
+      <div className="min-w-0 rounded-2xl glass-card">
+        <div className="px-4 py-6 sm:px-8 sm:py-7">
           {/* Stage Header */}
           <div className="mb-8">
             <div className="flex items-center gap-2.5">
@@ -99,7 +99,7 @@ export function ObservationContextForm({
                 Stage 1: Session Details
               </h2>
             </div>
-            <p className="mt-1.5 ml-[30px] text-[0.875rem] text-muted">
+            <p className="mt-1.5 ml-0 text-pretty text-[0.875rem] text-muted sm:ml-[30px]">
               Define the context and primary actor for this observation period.
             </p>
           </div>
@@ -213,7 +213,7 @@ export function ObservationContextForm({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-border/20 px-8 py-5">
+        <div className="flex flex-col gap-3 border-t border-border/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5">
           <button
             type="button"
             onClick={() => router.push("/home")}
