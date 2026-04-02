@@ -346,10 +346,10 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
             {activeCycle && attainmentBySubject.length > 0 ? (
               <div className="mt-4">
                 <Link
-                  href="/assessments/progress"
+                  href={`/assessments/${activeCycle.id}`}
                   className="text-sm font-medium text-accent calm-transition hover:underline"
                 >
-                  View cohort progress →
+                  View attainment cycle →
                 </Link>
               </div>
             ) : null}
