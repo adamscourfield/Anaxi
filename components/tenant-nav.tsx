@@ -103,21 +103,28 @@ export function TenantNav({
   enabledFeatures,
   onCallCount = 0,
   leaveCount = 0,
+  variant = "sidebar",
+  onNavigate,
 }: {
   role: UserRole;
   enabledFeatures: FeatureKey[];
   onCallCount?: number;
   leaveCount?: number;
+  variant?: "sidebar" | "drawer";
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
+  const isDrawer = variant === "drawer";
+
   useEffect(() => {
+    if (isDrawer) return;
     const content = document.getElementById("tenant-content");
     if (content) {
       content.style.marginLeft = collapsed ? "var(--sidebar-collapsed-width)" : "var(--sidebar-width)";
     }
-  }, [collapsed]);
+  }, [collapsed, isDrawer]);
 
   const has = (feature: FeatureKey) => enabledFeatures.includes(feature);
   const canImport = hasPermission(role, "import:write");
@@ -175,14 +182,23 @@ export function TenantNav({
 
   const sidebarWidth = collapsed ? "w-[var(--sidebar-collapsed-width)]" : "w-[var(--sidebar-width)]";
 
+  const shellClass = isDrawer
+    ? "fixed left-0 top-0 z-50 flex h-screen w-[min(100vw,280px)] max-w-[min(100vw,280px)] flex-col border-r border-border/40 shadow-lg calm-transition glass-surface"
+    : `hidden md:flex fixed left-0 top-0 z-30 h-screen flex-col calm-transition glass-surface ${sidebarWidth}`;
+
   return (
     <aside
-      className={`fixed left-0 top-0 z-30 flex h-screen flex-col calm-transition glass-surface ${sidebarWidth}`}
-      aria-label="Sidebar menu"
+      id={isDrawer ? "tenant-nav-drawer" : undefined}
+      className={shellClass}
+      aria-label={isDrawer ? "Main menu" : "Sidebar menu"}
     >
       {/* Logo area */}
       <div className={`flex items-center ${collapsed ? "justify-center px-2" : "px-5"} h-14 shrink-0`}>
-        <Link href="/home" className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} group`}>
+        <Link
+          href="/home"
+          onClick={() => isDrawer && onNavigate?.()}
+          className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} group`}
+        >
           <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.75rem] bg-[var(--surface-container-high)]">
             <Image src="/anaxi-logo.png" alt="Anaxi" width={22} height={22} priority className="h-[22px] w-[22px] object-contain" />
           </span>
@@ -221,6 +237,7 @@ export function TenantNav({
                       <Link
                         href={item.href}
                         title={collapsed ? item.label : undefined}
+                        onClick={() => isDrawer && onNavigate?.()}
                         className={`group flex items-center ${collapsed ? "justify-center px-2" : "justify-between pl-5 pr-3"} rounded-[0.75rem] py-2 calm-transition ${
                           active
                             ? "bg-[var(--surface-container)] text-[var(--on-surface)] font-semibold"
@@ -259,7 +276,7 @@ export function TenantNav({
               {!collapsed && <span className="text-[13px]">Log out</span>}
             </button>
           </form>
-          {!collapsed && (
+          {!collapsed && !isDrawer && (
             <button
               onClick={() => setCollapsed(true)}
               className="ml-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.75rem] text-[var(--outline)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
@@ -272,7 +289,7 @@ export function TenantNav({
         </div>
       </div>
 
-      {collapsed && (
+      {collapsed && !isDrawer && (
         <button
           onClick={() => setCollapsed(false)}
           className="absolute -right-3.5 top-20 z-40 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] shadow-ambient backdrop-blur-sm calm-transition hover:text-[var(--on-surface)]"

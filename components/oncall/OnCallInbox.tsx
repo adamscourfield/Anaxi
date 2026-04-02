@@ -177,45 +177,37 @@ export function OnCallInbox({
             description="All clear — no pending on-call requests right now."
           />
         ) : (
-          <div className="table-shell overflow-x-auto">
-            <table className="w-full min-w-[700px] text-sm">
-              <thead>
-                <tr className="table-head-row">
-                  <th className="px-5 py-3 text-left font-semibold">Student Name</th>
-                  <th className="px-4 py-3 text-left font-semibold">Year</th>
-                  <th className="px-4 py-3 text-left font-semibold">Incident Type</th>
-                  <th className="px-4 py-3 text-left font-semibold">Location</th>
-                  <th className="px-4 py-3 text-left font-semibold">Raised By</th>
-                  {(canAcknowledge || canResolve) && (
-                    <th className="px-4 py-3 text-right font-semibold">Actions</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {openRequests.map((r) => {
-                  const showAck = canAcknowledge && r.status === "OPEN";
-                  const showResolve = canResolve && (r.status === "OPEN" || r.status === "ACKNOWLEDGED");
-                  return (
-                    <tr
-                      key={r.id}
-                      className="table-row cursor-pointer calm-transition"
-                      onClick={() => router.push(`/on-call/${r.id}`)}
-                    >
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-high)] text-xs font-semibold text-muted">
-                            {getInitials(r.student.fullName)}
-                          </span>
-                          <span className="font-semibold text-text">
-                            {r.student.fullName}
+          <>
+            <div className="space-y-3 md:hidden">
+              {openRequests.map((r) => {
+                const showAck = canAcknowledge && r.status === "OPEN";
+                const showResolve = canResolve && (r.status === "OPEN" || r.status === "ACKNOWLEDGED");
+                return (
+                  <div
+                    key={r.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => router.push(`/on-call/${r.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        router.push(`/on-call/${r.id}`);
+                      }
+                    }}
+                    className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-sm calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-high)] text-xs font-semibold text-muted">
+                        {getInitials(r.student.fullName)}
+                      </span>
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-text">{r.student.fullName}</span>
+                          <span className="text-[11px] font-medium uppercase text-muted">
+                            {formatYearGroup(r.student.yearGroup)}
                           </span>
                         </div>
-                      </td>
-                      <td className="px-4 py-4 font-medium uppercase text-text">
-                        {formatYearGroup(r.student.yearGroup)}
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap items-center gap-1.5">
+                        <div className="flex flex-wrap gap-1.5">
                           <span
                             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] uppercase ${TYPE_BADGE_CLASSES[r.requestType]}`}
                           >
@@ -227,23 +219,24 @@ export function OnCallInbox({
                             </span>
                           )}
                         </div>
-                      </td>
-                      <td className="px-4 py-4 font-medium uppercase text-text">
-                        {r.location}
-                      </td>
-                      <td className="px-4 py-4 text-text">
-                        {r.requester.fullName}
-                      </td>
-                      {(canAcknowledge || canResolve) && (
-                        <td className="px-4 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex justify-end gap-1.5">
+                        <p className="text-sm font-medium uppercase text-text">{r.location}</p>
+                        <p className="text-xs text-muted">
+                          Raised by <span className="font-medium text-text">{r.requester.fullName}</span>
+                          {" · "}
+                          {formatTime(r.createdAt)}
+                        </p>
+                        {(showAck || showResolve) && (
+                          <div className="flex flex-wrap gap-2 pt-1">
                             {showAck && (
                               <Button
                                 type="button"
                                 variant="secondary"
-                                className="px-3 py-1 text-xs"
+                                className="min-h-10 flex-1 px-3 text-xs sm:flex-none"
                                 disabled={actionPending === `${r.id}-acknowledge`}
-                                onClick={() => handleAction(r.id, "acknowledge")}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleAction(r.id, "acknowledge");
+                                }}
                               >
                                 Acknowledge
                               </Button>
@@ -251,22 +244,115 @@ export function OnCallInbox({
                             {showResolve && (
                               <Button
                                 type="button"
-                                className="px-3 py-1 text-xs"
+                                className="min-h-10 flex-1 px-3 text-xs sm:flex-none"
                                 disabled={actionPending === `${r.id}-resolve`}
-                                onClick={() => handleAction(r.id, "resolve")}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleAction(r.id, "resolve");
+                                }}
                               >
                                 Resolve
                               </Button>
                             )}
                           </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="table-shell hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[700px] text-sm">
+                <thead>
+                  <tr className="table-head-row">
+                    <th className="px-5 py-3 text-left font-semibold">Student Name</th>
+                    <th className="px-4 py-3 text-left font-semibold">Year</th>
+                    <th className="px-4 py-3 text-left font-semibold">Incident Type</th>
+                    <th className="px-4 py-3 text-left font-semibold">Location</th>
+                    <th className="px-4 py-3 text-left font-semibold">Raised By</th>
+                    {(canAcknowledge || canResolve) && (
+                      <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {openRequests.map((r) => {
+                    const showAck = canAcknowledge && r.status === "OPEN";
+                    const showResolve = canResolve && (r.status === "OPEN" || r.status === "ACKNOWLEDGED");
+                    return (
+                      <tr
+                        key={r.id}
+                        className="table-row cursor-pointer calm-transition"
+                        onClick={() => router.push(`/on-call/${r.id}`)}
+                      >
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-high)] text-xs font-semibold text-muted">
+                              {getInitials(r.student.fullName)}
+                            </span>
+                            <span className="font-semibold text-text">
+                              {r.student.fullName}
+                            </span>
+                          </div>
                         </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <td className="px-4 py-4 font-medium uppercase text-text">
+                          {formatYearGroup(r.student.yearGroup)}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] uppercase ${TYPE_BADGE_CLASSES[r.requestType]}`}
+                            >
+                              {REQUEST_TYPE_LABELS[r.requestType]}
+                            </span>
+                            {r.isEmergency && (
+                              <span className="inline-flex items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
+                                Emergency
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 font-medium uppercase text-text">
+                          {r.location}
+                        </td>
+                        <td className="px-4 py-4 text-text">
+                          {r.requester.fullName}
+                        </td>
+                        {(canAcknowledge || canResolve) && (
+                          <td className="px-4 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-end gap-1.5">
+                              {showAck && (
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  className="px-3 py-1 text-xs"
+                                  disabled={actionPending === `${r.id}-acknowledge`}
+                                  onClick={() => handleAction(r.id, "acknowledge")}
+                                >
+                                  Acknowledge
+                                </Button>
+                              )}
+                              {showResolve && (
+                                <Button
+                                  type="button"
+                                  className="px-3 py-1 text-xs"
+                                  disabled={actionPending === `${r.id}-resolve`}
+                                  onClick={() => handleAction(r.id, "resolve")}
+                                >
+                                  Resolve
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
 
@@ -316,59 +402,100 @@ export function OnCallInbox({
             mode="embedded"
           />
         ) : (
-          <div className="table-shell overflow-x-auto">
-            <table className="w-full min-w-[650px] text-sm">
-              <thead>
-                <tr className="table-head-row">
-                  <th className="px-5 py-3 text-left font-semibold">Student Name</th>
-                  <th className="px-4 py-3 text-left font-semibold">Type</th>
-                  <th className="px-4 py-3 text-left font-semibold">Responder</th>
-                  <th className="px-4 py-3 text-left font-semibold">Resolved At</th>
-                  <th className="px-4 py-3 text-left font-semibold">Duration</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resolvedRequests.map((r) => {
-                  const duration =
-                    r.resolvedAt && r.createdAt
-                      ? new Date(r.resolvedAt).getTime() - new Date(r.createdAt).getTime()
-                      : 0;
-                  return (
-                    <tr
-                      key={r.id}
-                      className="table-row cursor-pointer calm-transition"
-                      onClick={() => router.push(`/on-call/${r.id}`)}
-                    >
-                      <td className="px-5 py-4 font-bold uppercase text-text">
-                        {r.student.fullName}
-                      </td>
-                      <td className="px-4 py-4 text-muted uppercase tracking-wide">
-                        <span className="inline-flex flex-wrap items-center gap-1.5">
-                          {REQUEST_TYPE_LABELS[r.requestType]}
-                          {r.isEmergency && (
-                            <span className="text-[var(--pill-error-text)]">· Emergency</span>
-                          )}
+          <>
+            <div className="space-y-3 md:hidden">
+              {resolvedRequests.map((r) => {
+                const duration =
+                  r.resolvedAt && r.createdAt
+                    ? new Date(r.resolvedAt).getTime() - new Date(r.createdAt).getTime()
+                    : 0;
+                return (
+                  <div
+                    key={r.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => router.push(`/on-call/${r.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        router.push(`/on-call/${r.id}`);
+                      }
+                    }}
+                    className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-sm calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
+                  >
+                    <p className="font-bold uppercase text-text">{r.student.fullName}</p>
+                    <p className="mt-1 text-xs uppercase tracking-wide text-muted">
+                      {REQUEST_TYPE_LABELS[r.requestType]}
+                      {r.isEmergency && <span className="text-[var(--pill-error-text)]"> · Emergency</span>}
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+                      <span className="font-medium text-text">{r.responder?.fullName ?? "—"}</span>
+                      <span aria-hidden>·</span>
+                      <span className="font-mono text-text">{r.resolvedAt ? formatTime(r.resolvedAt) : "—"}</span>
+                      {duration > 0 && (
+                        <span className="inline-flex items-center rounded-full bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
+                          {formatDuration(duration)}
                         </span>
-                      </td>
-                      <td className="px-4 py-4 text-text">
-                        {r.responder?.fullName ?? "—"}
-                      </td>
-                      <td className="px-4 py-4 font-mono text-text">
-                        {r.resolvedAt ? formatTime(r.resolvedAt) : "—"}
-                      </td>
-                      <td className="px-4 py-4">
-                        {duration > 0 && (
-                          <span className="inline-flex items-center rounded-full bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
-                            {formatDuration(duration)}
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="table-shell hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[650px] text-sm">
+                <thead>
+                  <tr className="table-head-row">
+                    <th className="px-5 py-3 text-left font-semibold">Student Name</th>
+                    <th className="px-4 py-3 text-left font-semibold">Type</th>
+                    <th className="px-4 py-3 text-left font-semibold">Responder</th>
+                    <th className="px-4 py-3 text-left font-semibold">Resolved At</th>
+                    <th className="px-4 py-3 text-left font-semibold">Duration</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resolvedRequests.map((r) => {
+                    const duration =
+                      r.resolvedAt && r.createdAt
+                        ? new Date(r.resolvedAt).getTime() - new Date(r.createdAt).getTime()
+                        : 0;
+                    return (
+                      <tr
+                        key={r.id}
+                        className="table-row cursor-pointer calm-transition"
+                        onClick={() => router.push(`/on-call/${r.id}`)}
+                      >
+                        <td className="px-5 py-4 font-bold uppercase text-text">
+                          {r.student.fullName}
+                        </td>
+                        <td className="px-4 py-4 text-muted uppercase tracking-wide">
+                          <span className="inline-flex flex-wrap items-center gap-1.5">
+                            {REQUEST_TYPE_LABELS[r.requestType]}
+                            {r.isEmergency && (
+                              <span className="text-[var(--pill-error-text)]">· Emergency</span>
+                            )}
                           </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="px-4 py-4 text-text">
+                          {r.responder?.fullName ?? "—"}
+                        </td>
+                        <td className="px-4 py-4 font-mono text-text">
+                          {r.resolvedAt ? formatTime(r.resolvedAt) : "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          {duration > 0 && (
+                            <span className="inline-flex items-center rounded-full bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
+                              {formatDuration(duration)}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
 
