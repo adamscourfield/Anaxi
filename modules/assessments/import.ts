@@ -149,6 +149,9 @@ export async function importAssessmentResults(
     }
   }
 
+  // Compute and store competition ranks for all PRESENT results in this assessment
+  await computeAndStoreRanks(tenantId, assessmentId);
+
   // Update import job
   await prisma.importJob.update({
     where: { id: importJob.id },
@@ -253,6 +256,45 @@ export async function createAssessmentPoint(input: CreatePointInput) {
   });
 }
 
+// ─── Rank computation ─────────────────────────────────────────────────────────
+
+/**
+ * Computes competition ranks (1-2-2-4 style) for all PRESENT results in an
+ * assessment, ordered by normalizedScore descending, and persists them.
+ * Results with a null normalizedScore receive a null rank.
+ */
+async function computeAndStoreRanks(tenantId: string, assessmentId: string) {
+  const results = await prisma.assessmentResult.findMany({
+    where: { tenantId, assessmentId, status: "PRESENT" },
+    select: { id: true, normalizedScore: true },
+    orderBy: { normalizedScore: "desc" },
+  });
+
+  // Separate scored from unscored
+  const scored = results.filter((r) => r.normalizedScore !== null);
+  const unscored = results.filter((r) => r.normalizedScore === null);
+
+  // Assign competition ranks to scored results
+  const updates: Array<{ id: string; rank: number | null }> = [];
+  let rank = 1;
+  for (let i = 0; i < scored.length; i++) {
+    if (i > 0 && scored[i].normalizedScore !== scored[i - 1].normalizedScore) {
+      rank = i + 1;
+    }
+    updates.push({ id: scored[i].id, rank });
+  }
+  for (const r of unscored) {
+    updates.push({ id: r.id, rank: null });
+  }
+
+  // Batch update — Prisma doesn't support bulk updates so use a transaction
+  await prisma.$transaction(
+    updates.map(({ id, rank }) =>
+      prisma.assessmentResult.update({ where: { id }, data: { rank } })
+    )
+  );
+}
+
 // ─── Direct input (single result) ────────────────────────────────────────────
 
 export type UpsertSingleResultInput = {
@@ -270,9 +312,15 @@ export async function upsertSingleResult(input: UpsertSingleResultInput) {
   const status = nonGradeStatus ?? "PRESENT";
   const normalizedScore = nonGradeStatus ? null : normalizeGrade(rawValue, gradeFormat, maxScore);
 
-  return prisma.assessmentResult.upsert({
+  await prisma.assessmentResult.upsert({
     where: { tenantId_assessmentId_studentId: { tenantId, assessmentId, studentId } },
     update: { rawValue, normalizedScore, status, updatedAt: new Date() },
     create: { tenantId, assessmentId, studentId, rawValue, normalizedScore, status },
+  });
+
+  await computeAndStoreRanks(tenantId, assessmentId);
+
+  return prisma.assessmentResult.findUniqueOrThrow({
+    where: { tenantId_assessmentId_studentId: { tenantId, assessmentId, studentId } },
   });
 }

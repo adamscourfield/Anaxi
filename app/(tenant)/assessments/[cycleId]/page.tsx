@@ -44,7 +44,7 @@ const STATUS_COLOURS: Record<ResultStatus, string> = {
 const QUAL_LABELS: Record<QualificationType, string> = {
   GCSE: "GCSE",
   A_LEVEL: "A Level",
-  VOCATIONAL: "Vocational",
+  PERCENTAGE: "Percentage",
   OTHER: "Other",
 };
 
