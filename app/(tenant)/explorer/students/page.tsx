@@ -330,17 +330,22 @@ export default async function StudentsPage({
         </div>
       </div>
 
-      {/* ── Toolbar (search, filter, count) ─────────────────────── */}
-      <div className="mb-1">
+      {/* ── Filters (aligned with Observation History) ─────────── */}
+      <div className="mb-6">
         <StudentsToolbar
           yearGroups={yearGroups}
           defaultSearch={studentSearch}
           defaultYearGroup={yearGroupFilter}
           defaultBand={bandFilter}
           defaultWindow={String(windowDays)}
-          totalFiltered={totalFiltered}
-          pageStart={totalFiltered > 0 ? pageStart + 1 : 0}
-          pageEnd={pageEnd}
+          hasFilters={
+            !!(
+              studentSearch ||
+              yearGroupFilter ||
+              bandFilter ||
+              windowDays !== 21
+            )
+          }
         />
       </div>
 
@@ -469,70 +474,83 @@ export default async function StudentsPage({
             </table>
           </div>
 
-          {/* ── Pagination ────────────────────────────────────────── */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 border-t border-border/20 px-5 py-4">
-              {/* Prev */}
-              {safePage > 1 ? (
-                <Link
-                  href={pageUrl(safePage - 1)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-bg hover:text-text"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </Link>
-              ) : (
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg text-muted/30">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-              )}
-
-              {/* Page numbers */}
-              {paginationRange().map((item, idx) =>
-                item === "ellipsis" ? (
-                  <span
-                    key={`ellipsis-${idx}`}
-                    className="flex h-8 w-8 items-center justify-center text-sm text-muted"
-                  >
-                    …
-                  </span>
-                ) : (
+          {/* ── Results count + pagination (Observation History) ── */}
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 px-5 py-3.5">
+            <p className="text-[0.8125rem] text-muted">
+              Showing{" "}
+              <span className="font-semibold text-text">
+                {totalFiltered > 0 ? pageStart + 1 : 0}-{pageEnd}
+              </span>{" "}
+              of{" "}
+              <span className="font-semibold text-text">
+                {totalFiltered.toLocaleString()}
+              </span>{" "}
+              students found
+            </p>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                {safePage > 1 ? (
                   <Link
-                    key={item}
-                    href={pageUrl(item)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium calm-transition ${
-                      item === safePage
-                        ? "bg-primary text-on-primary"
-                        : "text-muted hover:bg-bg hover:text-text"
-                    }`}
+                    href={pageUrl(safePage - 1)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text"
+                    aria-label="Previous page"
                   >
-                    {item}
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </Link>
-                ),
-              )}
-
-              {/* Next */}
-              {safePage < totalPages ? (
-                <Link
-                  href={pageUrl(safePage + 1)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-bg hover:text-text"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </Link>
-              ) : (
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg text-muted/30">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-              )}
-            </div>
-          )}
+                ) : (
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-border">
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                )}
+                {paginationRange().map((item, idx) =>
+                  item === "ellipsis" ? (
+                    <span
+                      key={`ellipsis-${idx}`}
+                      className="inline-flex h-8 w-8 items-center justify-center text-[0.8125rem] text-muted"
+                    >
+                      …
+                    </span>
+                  ) : item === safePage ? (
+                    <span
+                      key={item}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-[0.8125rem] font-semibold text-on-primary"
+                    >
+                      {item}
+                    </span>
+                  ) : (
+                    <Link
+                      key={item}
+                      href={pageUrl(item)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[0.8125rem] text-muted calm-transition hover:bg-surface-container-low hover:text-text"
+                    >
+                      {item}
+                    </Link>
+                  ),
+                )}
+                {safePage < totalPages ? (
+                  <Link
+                    href={pageUrl(safePage + 1)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text"
+                    aria-label="Next page"
+                  >
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </Link>
+                ) : (
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-border">
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
