@@ -5,11 +5,36 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { H1, MetaText, BodyText } from "@/components/ui/typography";
+import { H1, H2, MetaText, BodyText } from "@/components/ui/typography";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatusPill } from "@/components/ui/status-pill";
 import { displayGrade } from "@/modules/assessments/gradeNormalizer";
+import { canViewStudentAnalysis } from "@/modules/authz";
+import { computeStudentRiskProfile, RiskBand, Confidence } from "@/modules/analysis/studentRisk";
+import { toggleWatchlist } from "@/app/(tenant)/analysis/students/actions";
+
+const WINDOW_OPTIONS = [7, 21, 28] as const;
+
+const BAND_LABELS: Record<RiskBand, string> = {
+  URGENT: "Urgent",
+  PRIORITY: "Priority",
+  WATCH: "Watch",
+  STABLE: "Stable",
+};
+
+const BAND_PILL: Record<RiskBand, string> = {
+  URGENT: "bg-risk-urgent-bg text-risk-urgent-text",
+  PRIORITY: "bg-scale-some-light text-scale-some-text",
+  WATCH: "bg-risk-watch-bg text-risk-watch-text",
+  STABLE: "bg-risk-stable-bg text-risk-stable-text",
+};
+
+const CONFIDENCE_PILL: Record<Confidence, string> = {
+  HIGH: "bg-divider text-muted",
+  LOW: "bg-risk-priority-bg text-risk-priority-text",
+};
 
 function getInitials(name: string): string {
   const parts = name.split(" ").filter(Boolean);
@@ -44,9 +69,30 @@ type AttainmentRow = {
   }>;
 };
 
-export default async function StudentDetailPage({ params }: { params: { id: string } }) {
+function DeltaCell({ value }: { value: number | null }) {
+  if (value === null) return <span className="text-muted">—</span>;
+  const color = value > 0 ? "text-red-600" : value < 0 ? "text-scale-strong-text" : "text-muted";
+  return (
+    <span className={`tabular-nums font-medium ${color}`}>
+      {value > 0 ? `+${value}` : String(value)}
+    </span>
+  );
+}
+
+export default async function StudentDetailPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS");
+
+  const rawWindow = Number(searchParams?.window ?? "21");
+  const windowDays = WINDOW_OPTIONS.includes(rawWindow as (typeof WINDOW_OPTIONS)[number])
+    ? (rawWindow as (typeof WINDOW_OPTIONS)[number])
+    : 21;
 
   const assessmentsFeature = await prisma.tenantFeature.findUnique({
     where: { tenantId_key: { tenantId: user.tenantId, key: "ASSESSMENTS" } },
@@ -67,6 +113,22 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
     },
   });
   if (!student) notFound();
+
+  const analysisFeature = await prisma.tenantFeature.findUnique({
+    where: { tenantId_key: { tenantId: user.tenantId, key: "ANALYSIS" } },
+    select: { enabled: true },
+  });
+  const canViewAnalysis = canViewStudentAnalysis({
+    userId: user.id,
+    role: user.role,
+    hodDepartmentIds: [],
+    coacheeUserIds: [],
+  });
+  const showAnalysis = analysisFeature?.enabled && canViewAnalysis;
+
+  const analysisProfile = showAnalysis
+    ? await computeStudentRiskProfile(user.tenantId, params.id, windowDays, user.id)
+    : null;
 
   const snapshots = student.snapshots as Array<{
     id: string;
@@ -134,6 +196,16 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
 
   const statusLabel =
     student.status === "ACTIVE" ? "Active" : student.status === "ARCHIVED" ? "Archived" : student.status;
+
+  const computedAtStr = analysisProfile
+    ? analysisProfile.computedAt.toLocaleString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
 
   return (
     <div className="space-y-8">
@@ -213,6 +285,106 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
           <BodyText className="text-muted">No behaviour snapshot imported yet for this student.</BodyText>
         </Card>
       )}
+
+      {analysisProfile ? (
+        <Card>
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
+            <div>
+              <H2>Pastoral risk (analysis)</H2>
+              <MetaText>
+                Window: {windowDays} days · Risk score: {analysisProfile.riskScore}
+                {computedAtStr ? ` · Updated ${computedAtStr}` : ""}
+              </MetaText>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${BAND_PILL[analysisProfile.band]}`}>
+                {BAND_LABELS[analysisProfile.band]}
+              </span>
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[analysisProfile.confidence]}`}
+              >
+                Confidence: {analysisProfile.confidence === "HIGH" ? "High" : "Low"}
+              </span>
+            </div>
+          </div>
+
+          <div className="mb-4 flex items-center gap-2">
+            <MetaText className="mr-1">Window:</MetaText>
+            <div className="segmented-toggle">
+              {WINDOW_OPTIONS.map((w) => (
+                <Link
+                  key={w}
+                  href={`/students/${params.id}?window=${w}`}
+                  className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}
+                >
+                  {w} days
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-divider">
+                <tr>
+                  <td className="py-2 text-muted">Attendance</td>
+                  <td className="py-2 text-right">
+                    {analysisProfile.attendanceDelta !== null ? (
+                      <span
+                        className={`tabular-nums font-medium ${
+                          analysisProfile.attendanceDelta < 0 ? "text-red-600" : "text-scale-strong-text"
+                        }`}
+                      >
+                        {analysisProfile.attendanceDelta > 0 ? "+" : ""}
+                        {analysisProfile.attendanceDelta.toFixed(1)} pp
+                      </span>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
+                </tr>
+                <tr><td className="py-2 text-muted">On calls</td><td className="py-2 text-right"><DeltaCell value={analysisProfile.onCallsDelta} /></td></tr>
+                <tr><td className="py-2 text-muted">Detentions</td><td className="py-2 text-right"><DeltaCell value={analysisProfile.detentionsDelta} /></td></tr>
+                <tr><td className="py-2 text-muted">Lateness</td><td className="py-2 text-right"><DeltaCell value={analysisProfile.latenessDelta} /></td></tr>
+                <tr><td className="py-2 text-muted">Internal exclusions</td><td className="py-2 text-right"><DeltaCell value={analysisProfile.internalExclusionsDelta} /></td></tr>
+                <tr><td className="py-2 text-muted">Suspensions</td><td className="py-2 text-right"><DeltaCell value={analysisProfile.suspensionsDelta} /></td></tr>
+              </tbody>
+            </table>
+
+            {analysisProfile.currentSnapshot ? (
+              <table className="w-full text-sm">
+                <tbody className="divide-y divide-divider">
+                  <tr><td className="py-2 text-muted">Snapshot date</td><td className="py-2 text-right tabular-nums font-medium text-text">{fmtDate(analysisProfile.currentSnapshot.snapshotDate)}</td></tr>
+                  <tr><td className="py-2 text-muted">Attendance</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.attendancePct.toFixed(1)}%</td></tr>
+                  <tr><td className="py-2 text-muted">On calls</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.onCallsCount}</td></tr>
+                  <tr><td className="py-2 text-muted">Detentions</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.detentionsCount}</td></tr>
+                  <tr><td className="py-2 text-muted">Lateness</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.latenessCount}</td></tr>
+                  <tr><td className="py-2 text-muted">Internal exclusions</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.internalExclusionsCount}</td></tr>
+                  <tr><td className="py-2 text-muted">Suspensions</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.suspensionsCount}</td></tr>
+                </tbody>
+              </table>
+            ) : (
+              <BodyText className="text-muted">No snapshot data in the selected window.</BodyText>
+            )}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <form
+              action={async () => {
+                "use server";
+                await toggleWatchlist(analysisProfile.studentId);
+              }}
+            >
+              <Button variant={analysisProfile.onWatchlist ? "primary" : "secondary"} type="submit">
+                {analysisProfile.onWatchlist ? "★ On watchlist" : "Add to watchlist"}
+              </Button>
+            </form>
+            <Link href={`/analytics?tab=students&window=${windowDays}`} className="text-sm text-accent hover:underline">
+              Open student support priorities →
+            </Link>
+          </div>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* Teachers */}
