@@ -67,7 +67,9 @@ export function SearchableSelect({
           disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
         }`}
       >
-        <span className={selectedOption ? "text-text" : "text-muted opacity-60"}>
+        <span
+          className={`min-w-0 truncate text-left ${selectedOption ? "text-text" : "text-muted opacity-60"}`}
+        >
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <svg viewBox="0 0 16 16" fill="none" className={`h-3.5 w-3.5 shrink-0 text-muted calm-transition ${open ? "rotate-180" : ""}`}>

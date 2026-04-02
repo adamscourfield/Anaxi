@@ -137,8 +137,8 @@ function PageTitle({
   quickActionItems: { label: string; href: string; icon: string }[];
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1 className="text-[22px] font-bold tracking-[-0.03em] text-text sm:text-[28px]">
+    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <h1 className="min-w-0 text-pretty text-[22px] font-bold tracking-[-0.03em] text-text sm:text-[28px]">
         Institutional Pulse
       </h1>
       <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
@@ -218,18 +218,20 @@ function LeadershipHome({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       {/* ═══ Hero Section 1: On-Call Status + Attendance + Observations ═══ */}
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
+      <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
         {/* On-Call Live Status (main box) */}
         <Card
           id="on-call-status-card"
           className="scroll-mt-20 flex min-h-0 min-w-0 flex-1 flex-col gap-4"
         >
-          <div className="flex shrink-0 items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-on-primary text-lg">🔔</span>
-              <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Anaxi Core: On-Call Status</h2>
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-on-primary text-lg">🔔</span>
+              <h2 className="min-w-0 text-pretty text-[1rem] font-bold tracking-[-0.01em] text-text">
+                Anaxi Core: On-Call Status
+              </h2>
             </div>
             {openOnCalls.length > 0 && (
               <StatusPill variant="error" size="sm">LIVE RESPONSE</StatusPill>
@@ -355,13 +357,13 @@ function LeadershipHome({
 
       {/* ═══ Hero Section 2: Leave Governance ═══ */}
       {hasLeaveFeature && (
-        <section className="rounded-xl border-0 bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] p-6 outline-none ring-0 sm:p-8">
+        <section className="rounded-xl border-0 bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] p-4 outline-none ring-0 sm:p-6 md:p-8">
           <div
-            className={`flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${pendingLeaveDetails.length > 0 ? "mb-8" : "mb-4"}`}
+            className={`flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${pendingLeaveDetails.length > 0 ? "mb-8" : "mb-4"}`}
           >
-            <div>
+            <div className="min-w-0">
               <h2 className="text-2xl font-bold tracking-[-0.02em] text-text">Leave Governance</h2>
-              <p className="mt-1 text-sm text-muted">
+              <p className="mt-1 text-pretty text-sm text-muted">
                 Pending administrative approvals for {leaveGovernanceQuarterLabel()}
               </p>
             </div>
@@ -679,7 +681,7 @@ function HodHome({
   const deptCpdDrift = allDeptDriftingCpd.length;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <StatCard
           label={`${deptName} observations`}
@@ -873,7 +875,7 @@ function TeacherHome({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <StatCard
           label="Your observations"
@@ -1157,7 +1159,7 @@ export default async function HomePage({
   const content = await pageContent();
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <PageTitle windowDays={windowDays} quickActionItems={quickActionItems} />
       {content}
     </div>

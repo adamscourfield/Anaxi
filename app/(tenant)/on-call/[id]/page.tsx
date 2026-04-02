@@ -26,7 +26,7 @@ export default async function OnCallDetailPage({ params }: { params: { id: strin
     hasOnCallPermission(user.role, "oncall:cancel") && request.requesterUserId === user.id;
 
   return (
-    <div className="space-y-5">
+    <div className="w-full min-w-0 space-y-5">
       <PageHeader
         title="On Call Request"
         subtitle={`${request.student.fullName} · ${REQUEST_TYPE_LABELS[request.requestType as keyof typeof REQUEST_TYPE_LABELS] ?? request.requestType}`}

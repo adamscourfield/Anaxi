@@ -97,14 +97,14 @@ export function OnCallRequestForm({
   const maxBucket = Math.max(...hourlyBuckets, 1);
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="w-full min-w-0 space-y-6 md:max-w-2xl">
       {/* ── Page header ───────────────────────────────────────────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">
+        <div className="min-w-0">
+          <h1 className="text-pretty text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">
             New on call request
           </h1>
-          <p className="mt-1 text-[13px] text-muted">
+          <p className="mt-1 text-pretty text-[13px] text-muted">
             Initiate an immediate response protocol for behavior or medical incidents within the institutional perimeter.
           </p>
         </div>
@@ -129,7 +129,7 @@ export function OnCallRequestForm({
       {/* ── Request Details card ───────────────────────────────────── */}
       <div className="rounded-2xl border border-border/50 bg-surface-container-lowest shadow-sm">
         {/* Card header */}
-        <div className="flex items-start gap-3 border-b border-border/20 px-6 py-4">
+        <div className="flex items-start gap-3 border-b border-border/20 px-4 py-4 sm:px-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-text">
             <svg className="h-5 w-5 text-bg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2L2 7l10 5 10-5-10-5z" strokeLinecap="round" strokeLinejoin="round" />
@@ -137,13 +137,13 @@ export function OnCallRequestForm({
               <path d="M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="font-bold text-text">Request Details</p>
-            <p className="text-[12px] text-muted">Fill in the incident parameters for deployment.</p>
+            <p className="text-pretty text-[12px] text-muted">Fill in the incident parameters for deployment.</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5 px-4 py-5 sm:px-6">
           {/* Student */}
           <div>
             <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">
@@ -189,7 +189,7 @@ export function OnCallRequestForm({
                   className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-border/70 bg-surface shadow-md"
                 >
                   {filtered.map((s) => (
-                    <li key={s.id} role="option">
+                    <li key={s.id} role="option" aria-selected={selectedStudent?.id === s.id}>
                       <button
                         type="button"
                         className="calm-transition w-full cursor-pointer px-3 py-2.5 text-left text-sm text-text hover:bg-divider/50"
@@ -216,7 +216,7 @@ export function OnCallRequestForm({
             <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted">
               Request Type
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {(["BEHAVIOUR", "FIRST_AID"] as const).map((t) => {
                 const isActive = requestType === t;
                 const icon = t === "BEHAVIOUR" ? (
@@ -331,19 +331,19 @@ export function OnCallRequestForm({
           )}
 
           {/* Warning + Submit */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--cat-orange-bg,#fff3cd)]/60 bg-[var(--cat-orange-bg,#fff8e1)] px-4 py-3">
-            <div className="flex items-start gap-2">
+          <div className="flex flex-col gap-3 rounded-xl border border-[var(--cat-orange-bg,#fff3cd)]/60 bg-[var(--cat-orange-bg,#fff8e1)] px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-2">
               <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#e65100]" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
               </svg>
-              <p className="text-[12px] text-[#bf360c]">
+              <p className="min-w-0 text-pretty text-[12px] text-[#bf360c]">
                 This request will alert all available on-call staff members immediately.
               </p>
             </div>
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-text px-5 py-2.5 text-sm font-semibold text-bg calm-transition hover:opacity-90 disabled:opacity-60"
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-text px-5 py-2.5 text-sm font-semibold text-bg calm-transition hover:opacity-90 disabled:opacity-60 sm:w-auto"
             >
               {submitting ? "Submitting..." : "Submit on call request"}
               {!submitting && (

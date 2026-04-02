@@ -71,7 +71,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="w-full min-w-0 space-y-6 md:max-w-2xl">
       <div className="flex flex-wrap items-center gap-3">
         <OnCallStatusBadge status={request.status} />
         <StatusPill variant="neutral" size="sm">{REQUEST_TYPE_LABELS[request.requestType]}</StatusPill>

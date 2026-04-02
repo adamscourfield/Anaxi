@@ -9,7 +9,8 @@ const STEPS = [
 export function ObservationStageLayout({
   currentStep,
   children,
-  maxWidthClassName = "max-w-4xl",
+  /** Applied from `md` breakpoint so small screens use full main width */
+  maxWidthClassName = "md:max-w-4xl",
 }: {
   currentStep: 1 | 2 | 3;
   children: React.ReactNode;
@@ -17,7 +18,7 @@ export function ObservationStageLayout({
   maxWidthClassName?: string;
 }) {
   return (
-    <div className={`mx-auto pb-12 ${maxWidthClassName}`}>
+    <div className={`mx-auto w-full min-w-0 max-w-full pb-12 ${maxWidthClassName}`}>
       {/* Breadcrumb */}
       <div className="mb-1">
         <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
@@ -28,14 +29,14 @@ export function ObservationStageLayout({
       </div>
 
       {/* Title row */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <h1 className="text-[1.75rem] font-bold tracking-tight text-text">New Observation</h1>
-          <p className="mt-1 text-[0.9375rem] text-muted">
+          <p className="mt-1 text-pretty text-[0.9375rem] text-muted">
             Institutional record for quality assurance and staff development.
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2 rounded-full border border-border/40 bg-surface-container-lowest/80 px-3.5 py-1.5">
+        <div className="flex w-fit shrink-0 items-center gap-2 self-start rounded-full border border-border/40 bg-surface-container-lowest/80 px-3.5 py-1.5 sm:self-auto">
           <span className="h-2 w-2 rounded-full bg-scale-some-bar" />
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-text">
             Draft Session
@@ -44,15 +45,15 @@ export function ObservationStageLayout({
       </div>
 
       {/* Step Indicator */}
-      <div className="mt-6 flex items-center gap-0">
+      <div className="mt-6 flex min-w-0 flex-wrap items-center gap-y-3">
         {STEPS.map((step, idx) => {
           const isActive = step.number === currentStep;
           const isCompleted = step.number < currentStep;
           const isLast = idx === STEPS.length - 1;
 
           return (
-            <div key={step.number} className="flex items-center">
-              <div className="flex items-center gap-2.5">
+            <div key={step.number} className="flex min-w-0 items-center">
+              <div className="flex min-w-0 items-center gap-2">
                 <span
                   className={`flex h-7 w-7 items-center justify-center rounded-full text-[0.75rem] font-bold ${
                     isActive
@@ -71,7 +72,7 @@ export function ObservationStageLayout({
                   )}
                 </span>
                 <span
-                  className={`text-[0.8125rem] font-medium ${
+                  className={`whitespace-nowrap text-[0.8125rem] font-medium ${
                     isActive ? "text-text" : isCompleted ? "text-text" : "text-muted/60"
                   }`}
                 >
@@ -80,7 +81,7 @@ export function ObservationStageLayout({
               </div>
               {!isLast && (
                 <div
-                  className={`mx-4 h-[2px] w-16 rounded-full ${
+                  className={`mx-2 h-[2px] w-8 shrink-0 rounded-full sm:mx-4 sm:w-16 ${
                     isCompleted ? "bg-primary" : "bg-border/40"
                   }`}
                 />
