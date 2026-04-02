@@ -122,7 +122,7 @@ export function OnCallInbox({
   const healthLabel = resolutionRate >= 90 ? "STABLE" : resolutionRate >= 70 ? "WARNING" : "CRITICAL";
 
   return (
-    <div className="space-y-8">
+    <div className="w-full min-w-0 space-y-8">
       {/* ── Open Requests Section ─────────────────────────────── */}
       <section>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -145,7 +145,7 @@ export function OnCallInbox({
 
         {/* Alert banner */}
         {openCount >= 3 && (
-          <div className="mb-4 flex items-center gap-4 rounded-2xl border border-[var(--pill-error-ring)] bg-[var(--pill-error-bg)] px-5 py-3.5">
+          <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-[var(--pill-error-ring)] bg-[var(--pill-error-bg)] px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-5">
             <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--pill-error-ring)]">
               <svg className="h-4 w-4 text-[var(--pill-error-text)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
@@ -153,17 +153,17 @@ export function OnCallInbox({
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
             </span>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[var(--pill-error-text)]">
+            <div className="min-w-0 flex-1">
+              <p className="text-pretty text-sm font-semibold text-[var(--pill-error-text)]">
                 {openCount} high priority incidents requiring immediate response
               </p>
-              <p className="text-xs text-muted">
+              <p className="text-pretty text-xs text-muted">
                 Response time average is currently above target.
               </p>
             </div>
             <button
               type="button"
-              className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--pill-error-text)] hover:underline calm-transition"
+              className="shrink-0 self-start text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--pill-error-text)] hover:underline calm-transition sm:self-auto"
             >
               View priority log
             </button>
@@ -500,8 +500,8 @@ export function OnCallInbox({
       </section>
 
       {/* ── Stats Cards ───────────────────────────────────────── */}
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-5 shadow-sm">
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-sm sm:p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
             Total Logs Today
           </p>
@@ -510,7 +510,7 @@ export function OnCallInbox({
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-5 shadow-sm">
+        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-sm sm:p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
             Avg Response
           </p>
@@ -520,7 +520,7 @@ export function OnCallInbox({
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-5 shadow-sm">
+        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-sm sm:p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
             Resolution Rate
           </p>
@@ -529,7 +529,7 @@ export function OnCallInbox({
           </p>
         </div>
 
-        <div className="rounded-2xl bg-[var(--primary-container)] p-5">
+        <div className="rounded-2xl bg-[var(--primary-container)] p-4 sm:p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-primary-container)]">
             Operational Health
           </p>

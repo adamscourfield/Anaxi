@@ -134,8 +134,8 @@ export function TenantLayoutClient({
             </span>
           </Link>
         </header>
-        <main className="flex-1 px-4 py-6 sm:px-6 md:px-8 md:py-8 lg:px-10">
-          <div className="mx-auto max-w-[1400px]">{children}</div>
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 md:px-8 md:py-8 lg:px-10">
+          <div className="mx-auto min-w-0 max-w-[1400px]">{children}</div>
         </main>
       </div>
     </>

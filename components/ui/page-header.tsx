@@ -22,7 +22,9 @@ export function PageHeader({
           ) : null}
           <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">{title}</h1>
           {subtitle ? (
-            <p className="max-w-2xl text-[13px] leading-relaxed text-muted">{subtitle}</p>
+            <p className="max-w-full text-pretty text-[13px] leading-relaxed text-muted md:max-w-2xl">
+              {subtitle}
+            </p>
           ) : null}
           {meta ? <div className="flex flex-wrap items-center gap-2 pt-1">{meta}</div> : null}
         </div>
