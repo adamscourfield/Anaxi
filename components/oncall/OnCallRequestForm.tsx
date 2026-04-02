@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { REASON_CATEGORIES, LOCATION_SUGGESTIONS } from "@/modules/oncall/types";
 
@@ -37,6 +36,7 @@ export function OnCallRequestForm({
   const [reason, setReason] = useState("");
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
+  const [isEmergency, setIsEmergency] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -72,6 +72,7 @@ export function OnCallRequestForm({
           location,
           behaviourReasonCategory: requestType === "BEHAVIOUR" ? reason : undefined,
           notes: notes || undefined,
+          isEmergency,
         }),
       });
       if (!res.ok) {
@@ -107,15 +108,22 @@ export function OnCallRequestForm({
             Initiate an immediate response protocol for behavior or medical incidents within the institutional perimeter.
           </p>
         </div>
-        <Link
-          href="/home#immediate-support-needed"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border-2 border-[var(--error)] bg-[color-mix(in_srgb,var(--error)_8%,transparent)] px-4 py-2.5 text-sm font-bold text-[var(--error)] calm-transition hover:bg-[color-mix(in_srgb,var(--error)_14%,transparent)]"
+        <button
+          type="button"
+          role="switch"
+          aria-checked={isEmergency}
+          onClick={() => setIsEmergency((v) => !v)}
+          className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-bold calm-transition ${
+            isEmergency
+              ? "border-[var(--error)] bg-[color-mix(in_srgb,var(--error)_14%,transparent)] text-[var(--error)]"
+              : "border-border/60 bg-surface-container-lowest text-muted hover:border-border hover:text-text"
+          }`}
         >
           <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path d="M12 9v4M12 17h.01M10.3 3.6h3.4l8.3 14.4H2l8.3-14.4z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           Emergency
-        </Link>
+        </button>
       </div>
 
       {/* ── Request Details card ───────────────────────────────────── */}

@@ -31,6 +31,7 @@ const mockRequest = (overrides: Record<string, unknown> = {}) => ({
   requesterUserId: "user_1",
   studentId: "student_1",
   requestType: "BEHAVIOUR",
+  isEmergency: false,
   location: "Hallway",
   behaviourReasonCategory: "Disruption",
   notes: null,
@@ -96,6 +97,25 @@ describe("createOnCallRequest", () => {
     });
     expect(result.status).toBe("OPEN");
     expect((prisma as any).onCallRequest.create).toHaveBeenCalledOnce();
+    expect((prisma as any).onCallRequest.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ isEmergency: false }),
+      })
+    );
+  });
+
+  it("persists isEmergency when true", async () => {
+    await createOnCallRequest("tenant_1", "user_1", {
+      studentId: "student_1",
+      requestType: "FIRST_AID",
+      location: "Hallway",
+      isEmergency: true,
+    });
+    expect((prisma as any).onCallRequest.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ isEmergency: true }),
+      })
+    );
   });
 
   it("throws when behaviourReasonCategory missing for BEHAVIOUR type", async () => {

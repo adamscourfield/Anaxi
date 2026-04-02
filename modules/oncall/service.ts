@@ -30,6 +30,7 @@ export async function createOnCallRequest(
       requesterUserId,
       studentId: input.studentId,
       requestType: input.requestType,
+      isEmergency: Boolean(input.isEmergency),
       location: input.location,
       behaviourReasonCategory: input.behaviourReasonCategory ?? null,
       notes: input.notes ?? null,

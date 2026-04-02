@@ -14,6 +14,7 @@ interface OnCallDetailRequest {
   id: string;
   status: "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED";
   requestType: "BEHAVIOUR" | "FIRST_AID";
+  isEmergency?: boolean;
   student: { fullName: string; upn: string; yearGroup?: string | null };
   location: string;
   behaviourReasonCategory?: string | null;
@@ -71,9 +72,12 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <OnCallStatusBadge status={request.status} />
         <StatusPill variant="neutral" size="sm">{REQUEST_TYPE_LABELS[request.requestType]}</StatusPill>
+        {request.isEmergency && (
+          <StatusPill variant="error" size="sm">Emergency</StatusPill>
+        )}
       </div>
 
       <Card className="space-y-4">

@@ -353,6 +353,7 @@ model OnCallRequest {
   requesterUserId         String
   studentId               String
   requestType             OnCallRequestType
+  isEmergency             Boolean           @default(false)
   location                String
   behaviourReasonCategory String?
   notes                   String?
