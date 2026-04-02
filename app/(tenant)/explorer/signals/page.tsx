@@ -5,7 +5,6 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { canViewExplorer, canExportExplorer } from "@/modules/authz";
-import { AutoSubmitSelect } from "@/app/(tenant)/explorer/departments/AutoSubmitSelect";
 import {
   computeCpdPriorities,
   getTopImprovingSignals,
@@ -189,74 +188,88 @@ export default async function SignalsPage({
         </p>
       </div>
 
-      {/* ── Controls bar ───────────────────────────────────────── */}
-      <div className="filter-bar">
-        {/* Window toggle */}
-        <div className="filter-period-toggle">
-          {VALID_WINDOWS.map((w) => (
-            <Link
-              key={w}
-              href={buildUrl({ windowDays: String(w) })}
-              className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
-            >
-              {w}D
-            </Link>
-          ))}
-        </div>
+      {/* ── Filters (aligned with Observation History) ─────────── */}
+      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-sm md:p-6">
+        <div className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4">
+          <div className="flex min-w-0 flex-col gap-1.5 lg:min-w-[220px] lg:flex-none">
+            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+              Time window
+            </span>
+            <div className="filter-period-toggle w-fit max-w-full">
+              {VALID_WINDOWS.map((w) => (
+                <Link
+                  key={w}
+                  href={buildUrl({ windowDays: String(w) })}
+                  className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
+                >
+                  {w}D
+                </Link>
+              ))}
+            </div>
+          </div>
 
-        {/* Department filter */}
-        <form className="contents">
-          <input type="hidden" name="windowDays" value={String(windowDays)} />
-          <AutoSubmitSelect
-            name="departmentId"
-            defaultValue={rawDeptId ?? ""}
-            className="field min-w-[170px] !rounded-lg !py-1.5 !text-[0.8125rem]"
+          <form
+            id="signals-explorer-filters"
+            method="get"
+            action="/explorer/signals"
+            className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[200px] lg:max-w-[min(100%,320px)]"
           >
-            <option value="">All Departments</option>
-            {selectableDepts.map((d: any) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </AutoSubmitSelect>
-          <noscript>
-            <button type="submit" className="rounded-lg bg-accent px-3 py-1.5 text-[0.8125rem] font-medium text-on-primary">
-              Apply
-            </button>
-          </noscript>
-        </form>
-
-        <div className="ml-auto flex items-center gap-2">
-          {/* More Filters button */}
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border/40 bg-surface-container-lowest px-4 py-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:border-border hover:bg-surface-container-low hover:text-text"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
-            </svg>
-            More Filters
-          </button>
-
-          {/* Export Data button */}
-          {showExport && (
-            <form action="/api/explorer/export" method="POST" className="inline">
-              <input type="hidden" name="view" value="CPD_SIGNAL_PRIORITIES" />
-              <input type="hidden" name="windowDays" value={String(windowDays)} />
-              {departmentId && (
-                <input type="hidden" name="departmentId" value={departmentId} />
-              )}
-              <button
-                type="submit"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:bg-[var(--accent-hover)]"
+            <input type="hidden" name="windowDays" value={String(windowDays)} />
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                Department
+              </span>
+              <select
+                name="departmentId"
+                defaultValue={rawDeptId ?? ""}
+                className="field !bg-surface-container-lowest rounded-[10px] !py-2.5 !text-[0.8125rem]"
               >
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                Export Data
-              </button>
-            </form>
-          )}
+                <option value="">All Departments</option>
+                {selectableDepts.map((d: any) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </form>
+
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
+            <button
+              type="submit"
+              form="signals-explorer-filters"
+              className="field flex w-full items-center justify-center border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+            >
+              Apply Filters
+            </button>
+            <button
+              type="button"
+              className="field flex w-full items-center justify-center gap-1.5 border border-border/40 bg-surface-container-lowest py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[140px] lg:w-auto"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+              </svg>
+              More Filters
+            </button>
+            {showExport && (
+              <form action="/api/explorer/export" method="POST" className="contents">
+                <input type="hidden" name="view" value="CPD_SIGNAL_PRIORITIES" />
+                <input type="hidden" name="windowDays" value={String(windowDays)} />
+                {departmentId && (
+                  <input type="hidden" name="departmentId" value={departmentId} />
+                )}
+                <button
+                  type="submit"
+                  className="field flex w-full items-center justify-center gap-1.5 border border-primary bg-surface-container-lowest py-2.5 text-[0.8125rem] font-bold text-text calm-transition hover:bg-surface-container-low sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+                >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  Export Data
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       </div>
 
