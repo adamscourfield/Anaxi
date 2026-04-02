@@ -78,7 +78,7 @@ export default async function StudentsImportPage() {
             <form action={promoteYearGroupsAction} className="space-y-2 rounded-xl border border-border/40 bg-bg/40 p-4">
               <h3 className="text-sm font-semibold text-text">Batch promote year groups</h3>
               <p className="text-xs text-muted">
-                Moves active students up one year (e.g. Year 7 → Year 8, Y10 → Y11). Year 13 remains unchanged.
+                Moves active students up one year (e.g. Year 7 → Year 8, Y10 → Y11) and archives students in the current highest year group.
               </p>
               <Button type="submit" className="w-full">Promote all active cohorts</Button>
             </form>

@@ -23,6 +23,14 @@ function incrementYearGroupLabel(raw: string): string | null {
   return trimmed.replace(match[1], next);
 }
 
+function extractYearGroupNumber(raw: string | null | undefined): number | null {
+  if (!raw) return null;
+  const match = raw.trim().match(/(\d{1,2})/);
+  if (!match) return null;
+  const value = Number(match[1]);
+  return Number.isFinite(value) ? value : null;
+}
+
 async function assertStudentWriteAccess() {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS");
@@ -93,8 +101,23 @@ export async function promoteYearGroupsAction() {
     select: { id: true, yearGroup: true },
   });
 
-  const updates = (activeStudents as Array<{ id: string; yearGroup: string | null }>)
+  const students = activeStudents as Array<{ id: string; yearGroup: string | null }>;
+  const highestYearGroup = students
+    .map((student) => extractYearGroupNumber(student.yearGroup))
+    .filter((value): value is number => value !== null)
+    .reduce<number | null>((max, value) => (max === null || value > max ? value : max), null);
+
+  const updates = students
     .map((student) => {
+      const yearGroupNumber = extractYearGroupNumber(student.yearGroup);
+
+      if (highestYearGroup !== null && yearGroupNumber === highestYearGroup) {
+        return (prisma as any).student.update({
+          where: { id: student.id },
+          data: { status: "ARCHIVED" },
+        });
+      }
+
       if (!student.yearGroup) return null;
       const nextYearGroup = incrementYearGroupLabel(student.yearGroup);
       if (!nextYearGroup) return null;
