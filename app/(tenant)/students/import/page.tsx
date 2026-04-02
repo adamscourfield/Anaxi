@@ -2,6 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
+import { getSessionUserOrThrow } from "@/lib/auth";
+import { requireFeature } from "@/lib/guards";
+import { hasPermission } from "@/lib/rbac";
+import { prisma } from "@/lib/prisma";
+import { batchArchiveYearGroupAction, promoteYearGroupsAction } from "../actions";
 
 const COLUMN_GUIDE = [
   { field: "UPN", required: true, description: "Unique Pupil Number (8-character code)", example: "A123456789" },
@@ -24,13 +29,64 @@ const DEFAULT_MAPPING = JSON.stringify(
   null, 2
 );
 
-export default function StudentsImportPage() {
+export default async function StudentsImportPage() {
+  const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "STUDENTS");
+  const canWriteStudents = hasPermission(user.role, "students:write");
+
+  const activeYearGroupsRaw = await (prisma as any).student.findMany({
+    where: { tenantId: user.tenantId, status: "ACTIVE", yearGroup: { not: null } },
+    select: { yearGroup: true },
+    distinct: ["yearGroup"],
+    orderBy: { yearGroup: "asc" },
+  });
+  const activeYearGroups = (activeYearGroupsRaw as Array<{ yearGroup: string | null }>)
+    .map((r) => r.yearGroup)
+    .filter((v): v is string => Boolean(v));
+
   return (
     <div className="max-w-3xl space-y-6">
       <PageHeader
         title="Import Student Snapshots"
         subtitle="Upload a CSV file of behaviour data for a given date. Each row is one student."
       />
+
+      <Card className="space-y-4">
+        <SectionHeader title="Cohort management" subtitle="Archive leavers or roll year groups forward without deleting historical records." />
+        {canWriteStudents ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <form action={batchArchiveYearGroupAction} className="space-y-2 rounded-xl border border-border/40 bg-bg/40 p-4">
+              <h3 className="text-sm font-semibold text-text">Batch archive by year group</h3>
+              <p className="text-xs text-muted">
+                Archived students are hidden from on-call pickers and active cohort views, but retain all past snapshots and assessment links.
+              </p>
+              <input
+                name="yearGroup"
+                className="field w-full"
+                list="active-year-groups"
+                placeholder="e.g. Year 11"
+                required
+              />
+              <datalist id="active-year-groups">
+                {activeYearGroups.map((yg) => (
+                  <option key={yg} value={yg} />
+                ))}
+              </datalist>
+              <Button type="submit" variant="secondary" className="w-full">Archive cohort</Button>
+            </form>
+
+            <form action={promoteYearGroupsAction} className="space-y-2 rounded-xl border border-border/40 bg-bg/40 p-4">
+              <h3 className="text-sm font-semibold text-text">Batch promote year groups</h3>
+              <p className="text-xs text-muted">
+                Moves active students up one year (e.g. Year 7 → Year 8, Y10 → Y11). Year 13 remains unchanged.
+              </p>
+              <Button type="submit" className="w-full">Promote all active cohorts</Button>
+            </form>
+          </div>
+        ) : (
+          <p className="text-sm text-muted">You do not have permission to run cohort management actions.</p>
+        )}
+      </Card>
 
       <Card className="space-y-4">
         <SectionHeader title="CSV column guide" subtitle="Your CSV file must have a header row. Column names must match exactly (case-sensitive)." />
@@ -65,6 +121,14 @@ export default function StudentsImportPage() {
         <p className="text-xs text-muted">
           If your CSV uses different column names, edit the mapping below to map each field to your actual column header.
         </p>
+        <div className="flex flex-wrap gap-2">
+          <a href="/api/import/csv/template" className="text-xs font-medium text-accent underline underline-offset-2">
+            Download blank behaviour template
+          </a>
+          <a href="/api/import/csv/template?prefill=1" className="text-xs font-medium text-accent underline underline-offset-2">
+            Download pre-populated behaviour template
+          </a>
+        </div>
       </Card>
 
       <Card className="space-y-4">
