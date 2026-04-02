@@ -197,18 +197,6 @@ export default async function StudentsPage({
     (r) => r.attendancePct !== null && r.attendancePct < 80,
   ).length;
 
-  // Year group with the highest priority rate
-  const yearGroupStats: Record<string, { total: number; priority: number }> = {};
-  for (const r of allRows) {
-    const yg = r.yearGroup ?? "Unknown";
-    if (!yearGroupStats[yg]) yearGroupStats[yg] = { total: 0, priority: 0 };
-    yearGroupStats[yg].total++;
-    if (r.band === "PRIORITY" || r.band === "URGENT") yearGroupStats[yg].priority++;
-  }
-  const topPriorityYearGroup = Object.entries(yearGroupStats)
-    .filter(([, s]) => s.priority > 0)
-    .sort((a, b) => b[1].priority / b[1].total - a[1].priority / a[1].total)[0];
-
   // ── url builder ─────────────────────────────────────────────────
   function pageUrl(p: number): string {
     const merged: Record<string, string> = {
@@ -254,23 +242,23 @@ export default async function StudentsPage({
       </div>
 
       {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="mb-8 flex items-start justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted/60">
-            Institutional Registry
-          </p>
-          <h1 className="mt-1 text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">
-            Students Management
+      <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-text sm:text-[1.875rem]">
+            Students
           </h1>
+          <p className="mt-1 max-w-xl text-[0.875rem] leading-snug text-muted">
+            Risk bands, attendance, and flags for your cohort.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
           {showExport && (
             <form action="/api/explorer/export" method="POST" className="inline">
               <input type="hidden" name="view" value="STUDENT_RISK" />
               <input type="hidden" name="windowDays" value={String(windowDays)} />
               <button
                 type="submit"
-                className="rounded-lg border border-border/40 bg-surface-container-lowest px-4 py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text"
+                className="rounded-lg border border-border/50 bg-surface-container-lowest px-4 py-2.5 text-[0.8125rem] font-medium text-text calm-transition hover:border-border hover:bg-bg"
               >
                 Export CSV
               </button>
@@ -278,7 +266,7 @@ export default async function StudentsPage({
           )}
           <Link
             href="/students/import"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:bg-primary-container"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:bg-primary-container"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
@@ -289,66 +277,56 @@ export default async function StudentsPage({
         </div>
       </div>
 
-      {/* ── Cohort overview + Insight panel ─────────────────────── */}
-      <div className="mb-8 grid gap-5 lg:grid-cols-[1fr_auto]">
-        {/* Stats card */}
-        <div className="rounded-2xl glass-card p-6">
-          <div className="flex flex-wrap items-end gap-8">
-            {/* Cohort count */}
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-                Cohort Overview
-              </p>
-              <p className="mt-1 font-serif text-[3.5rem] font-bold leading-none tracking-tight text-text">
-                {allRows.length.toLocaleString()}
-              </p>
-              <p className="mt-2 flex items-center gap-1 text-[0.8125rem] text-scale-strong-text">
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M7 17l5-5 5 5M7 7l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                +{((allRows.length / Math.max(1, allRows.length - 10)) * 100 - 100).toFixed(1)}% vs last term
-              </p>
-            </div>
-
-            {/* Attendance stat */}
-            <div className="rounded-xl glass-card px-5 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-                Attendance
-              </p>
-              <p className="mt-1 text-2xl font-bold tabular-nums text-text">
-                {avgAttendance.toFixed(1)}%
-              </p>
-            </div>
-
-            {/* Priority stat */}
-            <div className="rounded-xl glass-card px-5 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-                Priority
-              </p>
-              <p className="mt-1 text-2xl font-bold tabular-nums text-text">
-                {priorityCount}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Insight of the Week card */}
-        <div className="flex max-w-sm flex-col justify-between rounded-2xl bg-primary-container p-6 text-on-primary">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-scale-some-bar">
-              Insight of the Week
+      {/* ── Cohort overview ───────────────────────────────────────── */}
+      <div className="mb-8 rounded-2xl glass-card p-6 sm:p-8">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-border/25">
+          <div className="lg:pr-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              Cohort
             </p>
-            <p className="mt-3 text-[1.05rem] font-medium leading-relaxed text-on-primary-container">
-              &ldquo;{yearGroups.length > 0 ? yearGroups[yearGroups.length - 1] : "Year 11"} shows a{" "}
-              {priorityCount > 0
-                ? `${Math.round((priorityCount / Math.max(1, allRows.length)) * 100)}% priority rate`
-                : "stable performance trend"}
-              {" "}across the current {windowDays}-day window.&rdquo;
+            <p className="mt-2 font-serif text-[2.75rem] font-bold leading-none tracking-tight text-text sm:text-[3.25rem]">
+              {allRows.length.toLocaleString()}
+            </p>
+            <p className="mt-2 text-[0.8125rem] text-muted">
+              {windowDays}-day analysis window
             </p>
           </div>
-          <p className="mt-4 text-[0.8125rem] font-medium text-blue calm-transition hover:text-blue/70">
-            Read detailed report
-          </p>
+
+          <div className="sm:pl-0 lg:px-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              Avg attendance
+            </p>
+            <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-text sm:text-[2.125rem]">
+              {avgAttendance.toFixed(1)}%
+            </p>
+            <p className="mt-2 text-[0.8125rem] text-muted">
+              Cohort mean across visible students
+            </p>
+          </div>
+
+          <div className="sm:pl-0 lg:px-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              Urgent + priority
+            </p>
+            <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-text sm:text-[2.125rem]">
+              {priorityCount}
+            </p>
+            <p className="mt-2 text-[0.8125rem] text-muted">
+              Students in urgent or priority bands
+            </p>
+          </div>
+
+          <div className="sm:pl-0 lg:pl-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              Below 80% attendance
+            </p>
+            <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-text sm:text-[2.125rem]">
+              {lowAttendanceCount}
+            </p>
+            <p className="mt-2 text-[0.8125rem] text-muted">
+              With recorded attendance in window
+            </p>
+          </div>
         </div>
       </div>
 
