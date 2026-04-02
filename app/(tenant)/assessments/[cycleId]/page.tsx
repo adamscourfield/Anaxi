@@ -53,13 +53,15 @@ const QUAL_LABELS: Record<QualificationType, string> = {
 export default async function CycleDetailPage({
   params,
 }: {
-  params: { cycleId: string };
+  params: Promise<{ cycleId: string }>;
 }) {
+  const { cycleId } = await params;
+
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
 
   const cycle = await prisma.assessmentCycle.findFirst({
-    where: { id: params.cycleId, tenantId: user.tenantId },
+    where: { id: cycleId, tenantId: user.tenantId },
     include: {
       points: {
         orderBy: { ordinal: "asc" },

@@ -84,49 +84,6 @@ function zeroPad(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-/* ─── Signal category helpers (for breakdown panel) ───────────────────────── */
-
-type SignalCategory = "Instruction" | "Behaviour" | "Engagement";
-
-const SIGNAL_CATEGORIES: Record<string, SignalCategory> = {
-  PACE_MOMENTUM: "Instruction",
-  COLD_CALL_DENSITY: "Instruction",
-  CFU_CYCLES: "Instruction",
-  MODELLING_EXPLICITNESS: "Instruction",
-  LANGUAGE_PRECISION: "Instruction",
-  LIVE_ADJUSTMENT: "Instruction",
-  RETRIEVAL_PRESENCE: "Instruction",
-  BEHAVIOUR_CLIMATE: "Behaviour",
-  ERROR_CORRECTION_DEPTH: "Behaviour",
-  PARTICIPATION_EQUITY: "Engagement",
-  STRETCH_DEPLOYMENT: "Engagement",
-  INDEPENDENT_ACCOUNTABILITY: "Engagement",
-};
-
-function computeSignalBreakdown(rows: TeacherPivotRow[]): { category: SignalCategory; dots: string[] }[] {
-  const categories: SignalCategory[] = ["Instruction", "Behaviour", "Engagement"];
-  return categories.map((cat) => {
-    const catKeys = Object.entries(SIGNAL_CATEGORIES)
-      .filter(([, c]) => c === cat)
-      .map(([k]) => k);
-
-    // Compute avg mean for signals in this category across all teachers
-    const means: number[] = [];
-    for (const row of rows) {
-      for (const key of catKeys) {
-        const cell = row.signalData[key];
-        if (cell?.currentMean != null) means.push(cell.currentMean);
-      }
-    }
-    const avgMean = means.length > 0 ? means.reduce((a, b) => a + b, 0) / means.length : 0;
-
-    // Generate colored dots based on category average
-    const dotColor = avgMean >= 3 ? "bg-scale-strong-bar" : avgMean >= 2 ? "bg-scale-some-bar" : "bg-scale-limited-bar";
-    const dots = [dotColor, dotColor];
-    return { category: cat, dots };
-  });
-}
-
 /* ─── Pagination helpers ──────────────────────────────────────────────────── */
 
 function buildPageNumbers(current: number, total: number): (number | "ellipsis")[] {
@@ -284,9 +241,6 @@ export default async function ExplorerTeachersPage({
   const pagedRiskRows = mode === "priorities" ? riskRows.slice(startIdx, endIdx) : [];
 
   const pageNumbers = buildPageNumbers(currentPage, totalPages);
-
-  // ─── Signal breakdown (computed from all pivot data) ────────────────────────
-  const signalBreakdown = mode === "pivot" ? computeSignalBreakdown(pivotRows) : [];
 
   // ─── URL builder helpers ────────────────────────────────────────────────────
   function buildUrl(overrides: Record<string, string>) {
@@ -720,65 +674,6 @@ export default async function ExplorerTeachersPage({
         </div>
       )}
 
-      {/* ── Bottom insight panels ───────────────────────────────────────────── */}
-      {mode === "pivot" && pivotRows.length > 0 && (
-        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_2fr]">
-          {/* Signal Breakdown */}
-          <div className="rounded-2xl glass-card p-6">
-            <h3 className="mb-4 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted">
-              Signal Breakdown
-            </h3>
-            <div className="space-y-3">
-              {signalBreakdown.map((item) => (
-                <div key={item.category} className="flex items-center justify-between">
-                  <span
-                    className={`text-sm font-medium ${
-                      item.category === "Behaviour" ? "text-scale-limited-text" : "text-text"
-                    }`}
-                  >
-                    {item.category}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    {item.dots.map((dot, i) => (
-                      <span key={i} className={`inline-block h-2.5 w-2.5 rounded-full ${dot}`} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Observation Intelligence — static placeholder matching design spec */}
-          <div className="relative rounded-2xl glass-card p-6">
-            <div className="absolute left-0 top-4 bottom-4 w-0.5 rounded-full bg-text" />
-            <div className="pl-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted">
-                    Observation Intelligence
-                  </p>
-                  <p className="mt-1 font-display text-lg font-bold italic text-text">
-                    Critical Path Detected
-                  </p>
-                </div>
-                <span className="flex h-8 w-8 items-center justify-center">
-                  <svg className="h-5 w-5 text-text" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zM9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1z" />
-                  </svg>
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed text-muted">
-                A significant drift of <strong className="text-text">-2.4</strong> has been noted in{" "}
-                <strong className="text-text">KS4 Mathematics</strong> engagement signals over the last 21 days.
-                We recommend prioritized walkthroughs for the ECT cohort in this department.
-              </p>
-              <p className="mt-4 text-[0.75rem] font-bold uppercase tracking-[0.08em] text-text">
-                View Priority Cohort
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
