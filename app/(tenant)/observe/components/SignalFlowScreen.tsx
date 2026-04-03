@@ -130,7 +130,7 @@ export function SignalFlowScreen({
   }));
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="w-full min-w-0 max-w-3xl py-8 md:mx-auto">
       {/* Page header */}
       <div className="mb-3 flex items-start justify-between gap-4">
         <div className="flex items-center gap-3 flex-wrap">
@@ -169,7 +169,7 @@ export function SignalFlowScreen({
       </div>
 
       {/* Main card */}
-      <div className="rounded-2xl bg-surface-container-lowest px-8 py-7 shadow-sm border border-border/20">
+      <div className="rounded-2xl border border-border/20 bg-surface-container-lowest px-4 py-6 shadow-sm sm:px-8 sm:py-7">
         <h2 className="mb-2 text-[1.375rem] font-bold tracking-tight text-text">
           How would you assess {title}?
         </h2>
