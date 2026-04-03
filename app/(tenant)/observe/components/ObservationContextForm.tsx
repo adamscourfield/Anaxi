@@ -86,7 +86,7 @@ export function ObservationContextForm({
   return (
     <ObservationStageLayout currentStep={1}>
       {/* Main Card */}
-      <div className="min-w-0 rounded-2xl glass-card">
+      <div className="min-w-0 w-full rounded-2xl glass-card">
         <div className="px-4 py-6 sm:px-8 sm:py-7">
           {/* Stage Header */}
           <div className="mb-8">

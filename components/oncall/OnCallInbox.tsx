@@ -125,19 +125,19 @@ export function OnCallInbox({
     <div className="w-full min-w-0 space-y-8">
       {/* ── Open Requests Section ─────────────────────────────── */}
       <section>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <h2 className="text-[20px] font-bold tracking-[-0.01em] text-text">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-2 sm:gap-y-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+            <h2 className="whitespace-nowrap text-[20px] font-bold tracking-[-0.01em] text-text">
               Open Requests
             </h2>
             {openCount > 0 && (
-              <span className="inline-flex items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.04em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
+              <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.04em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
                 {openCount} PENDING
               </span>
             )}
           </div>
           {lastUpdated && (
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted italic">
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted sm:text-right italic">
               Last updated: {lastUpdated}
             </span>
           )}
@@ -219,7 +219,7 @@ export function OnCallInbox({
                             </span>
                           )}
                         </div>
-                        <p className="text-sm font-medium uppercase text-text">{r.location}</p>
+                        <p className="break-words text-sm font-medium uppercase text-text">{r.location}</p>
                         <p className="text-xs text-muted">
                           Raised by <span className="font-medium text-text">{r.requester.fullName}</span>
                           {" · "}
@@ -358,9 +358,9 @@ export function OnCallInbox({
 
       {/* ── Resolved Requests Section ─────────────────────────── */}
       <section>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <h2 className="text-[20px] font-bold tracking-[-0.01em] text-text">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-2 sm:gap-y-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+            <h2 className="whitespace-nowrap text-[20px] font-bold tracking-[-0.01em] text-text">
               Resolved Requests
             </h2>
             <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted">

@@ -18,7 +18,7 @@ export function ObservationStageLayout({
   maxWidthClassName?: string;
 }) {
   return (
-    <div className={`mx-auto w-full min-w-0 max-w-full pb-12 ${maxWidthClassName}`}>
+    <div className={`w-full min-w-0 max-w-full pb-12 md:mx-auto ${maxWidthClassName}`}>
       {/* Breadcrumb */}
       <div className="mb-1">
         <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
@@ -44,8 +44,8 @@ export function ObservationStageLayout({
         </div>
       </div>
 
-      {/* Step Indicator */}
-      <div className="mt-6 flex min-w-0 flex-wrap items-center gap-y-3">
+      {/* Step indicator: vertical on small screens (avoids cramped / misaligned horizontal strip) */}
+      <div className="mt-6 hidden min-w-0 flex-wrap items-center gap-y-3 sm:flex">
         {STEPS.map((step, idx) => {
           const isActive = step.number === currentStep;
           const isCompleted = step.number < currentStep;
@@ -55,7 +55,7 @@ export function ObservationStageLayout({
             <div key={step.number} className="flex min-w-0 items-center">
               <div className="flex min-w-0 items-center gap-2">
                 <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-full text-[0.75rem] font-bold ${
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[0.75rem] font-bold ${
                     isActive
                       ? "bg-primary text-on-primary"
                       : isCompleted
@@ -90,6 +90,45 @@ export function ObservationStageLayout({
           );
         })}
       </div>
+      <ol className="mt-6 space-y-0 sm:hidden" aria-label="Observation steps">
+        {STEPS.map((step) => {
+          const isActive = step.number === currentStep;
+          const isCompleted = step.number < currentStep;
+          return (
+            <li
+              key={step.number}
+              className={`flex items-center gap-3 border-l-[3px] py-2.5 pl-3 first:pt-0 last:pb-0 ${
+                isActive
+                  ? "border-primary bg-[var(--surface-container-low)]/60"
+                  : "border-transparent"
+              }`}
+            >
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[0.75rem] font-bold ${
+                  isActive || isCompleted
+                    ? "bg-primary text-on-primary"
+                    : "bg-surface-container text-muted"
+                }`}
+              >
+                {isCompleted ? (
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  step.number
+                )}
+              </span>
+              <span
+                className={`min-w-0 text-[0.8125rem] font-medium ${
+                  isActive ? "text-text" : isCompleted ? "text-text" : "text-muted/60"
+                }`}
+              >
+                {step.label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
 
       {/* Content */}
       <div className="mt-8">{children}</div>
