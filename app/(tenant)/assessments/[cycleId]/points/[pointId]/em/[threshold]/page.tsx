@@ -12,6 +12,13 @@ function getInitials(name: string): string {
   return name.substring(0, 2).toUpperCase();
 }
 
+function getInitials(name: string): string {
+  const parts = name.split(" ").filter(Boolean);
+  if (parts.length >= 2)
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+}
+
 function gcseColour(g: string | number | null): string {
   if (g === null) return "bg-slate-100 text-slate-400";
   const n = Number(g);
