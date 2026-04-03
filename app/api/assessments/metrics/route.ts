@@ -138,6 +138,12 @@ export async function GET(req: Request) {
           gap4: gcseThresholdPct(nonSendResults, 4) - gcseThresholdPct(sendResults, 4),
         },
         distribution: dist,
+        students: present.map((r) => ({
+          studentId: r.studentId,
+          name: r.student.fullName,
+          score: r.normalizedScore,
+          rawValue: r.rawValue,
+        })),
       };
     } else {
       const dist = A_LEVEL_ORDER.map((g) => ({
@@ -159,6 +165,12 @@ export async function GET(req: Request) {
         pp: null,
         send: null,
         distribution: dist,
+        students: present.map((r) => ({
+          studentId: r.studentId,
+          name: r.student.fullName,
+          score: null,
+          rawValue: r.rawValue,
+        })),
       };
     }
   });
@@ -203,6 +215,24 @@ export async function GET(req: Request) {
         return Math.round((p.length / eligible.length) * 100);
       }
 
+      function getAtTarget(t: number) {
+        return bothPresent.map(id => {
+          const eg = engMap.get(id)!.normalizedScore;
+          const mg = mathsMap.get(id)!.normalizedScore;
+          const eRaw = engMap.get(id)!.rawValue;
+          const mRaw = mathsMap.get(id)!.rawValue;
+          return {
+            studentId: id,
+            name: engMap.get(id)!.student.fullName,
+            engScore: eg,
+            mathScore: mg,
+            engRaw: eRaw,
+            mathRaw: mRaw,
+            met: (eg !== null && Math.round(eg * 9) >= t && mg !== null && Math.round(mg * 9) >= t)
+          };
+        });
+      }
+
       gcseBasics = {
         em4: bothAt(4),
         em5: bothAt(5),
@@ -216,6 +246,9 @@ export async function GET(req: Request) {
         sendEm4: bothAtGroup(sendIds, 4),
         nonSendEm4: bothAtGroup(nonSendIds, 4),
         sendGap4: bothAtGroup(nonSendIds, 4) - bothAtGroup(sendIds, 4),
+        students4: getAtTarget(4),
+        students5: getAtTarget(5),
+        students7: getAtTarget(7),
       };
     }
   }

@@ -17,6 +17,9 @@ import type { GradeFormat, PointType, ResultStatus } from "@prisma/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type StudentResult = { studentId: string; name: string; score: number | null; rawValue: string };
+type EMStudentResult = { studentId: string; name: string; engScore: number | null; mathScore: number | null; engRaw: string; mathRaw: string; met: boolean };
+
 type SubjectMeasure = {
   subject: string;
   assessmentId: string;
@@ -30,6 +33,7 @@ type SubjectMeasure = {
   } | null;
   send: { count: number; t4: number; nonSendT4: number; gap4: number } | null;
   distribution: Array<{ grade: string; count: number }>;
+  students: StudentResult[];
 };
 
 type GcseBasics = {
@@ -37,7 +41,15 @@ type GcseBasics = {
   ppEm4: number; ppEm5: number; nonPpEm4: number; nonPpEm5: number;
   gap4: number; gap5: number;
   sendEm4: number; nonSendEm4: number; sendGap4: number;
+  students4: EMStudentResult[];
+  students5: EMStudentResult[];
+  students7: EMStudentResult[];
 };
+
+type ModalView = 
+  | { type: 'SUBJECT', subject: string, students: StudentResult[] }
+  | { type: 'EM', label: string, students: EMStudentResult[], target: number }
+  | null;
 
 type ALevelSummary = {
   total: number; aStarPct: number; aPct: number; bPct: number; cPlusPct: number;
@@ -165,6 +177,7 @@ export default function ResultPointPage() {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modalView, setModalView] = useState<ModalView>(null);
 
   useEffect(() => {
     async function load() {
@@ -275,12 +288,17 @@ export default function ResultPointPage() {
               <SectionHeader title="English & Maths — Headline Measures" subtitle="Both subjects must meet threshold" />
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { label: "E&M 4+", val: metrics.gcseBasics.em4, cls: "bg-amber-500" },
-                  { label: "E&M 5+", val: metrics.gcseBasics.em5, cls: "bg-violet-500" },
-                  { label: "E&M 7+", val: metrics.gcseBasics.em7, cls: "bg-green-500" },
-                ].map(({ label, val, cls }) => (
-                  <div key={label} className="rounded-xl bg-[var(--surface-container-low)] p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
+                  { label: "E&M 4+", val: metrics.gcseBasics.em4, cls: "bg-amber-500", st: metrics.gcseBasics.students4, target: 4 },
+                  { label: "E&M 5+", val: metrics.gcseBasics.em5, cls: "bg-violet-500", st: metrics.gcseBasics.students5, target: 5 },
+                  { label: "E&M 7+", val: metrics.gcseBasics.em7, cls: "bg-green-500", st: metrics.gcseBasics.students7, target: 7 },
+                ].map(({ label, val, cls, st, target }) => (
+                  <div key={label} 
+                       className="rounded-xl bg-[var(--surface-container-low)] p-4 cursor-pointer hover:ring-2 ring-[var(--accent)] transition-all"
+                       onClick={() => setModalView({ type: 'EM', label, students: st, target })}>
+                    <p className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
+                      {label}
+                      <span className="text-[var(--accent)] underline lowercase hover:no-underline">view students</span>
+                    </p>
                     <p className="mt-0.5 text-3xl font-bold tabular-nums text-[var(--on-surface)]">{val}%</p>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-container)]">
                       <div className={`h-full rounded-full ${cls}`} style={{ width: `${val}%` }} />
@@ -364,8 +382,12 @@ export default function ResultPointPage() {
                 </thead>
                 <tbody className="divide-y divide-[var(--outline-variant)]/20">
                   {metrics.subjects.sort((a, b) => a.subject.localeCompare(b.subject)).map((sm) => (
-                    <tr key={sm.subject}>
-                      <td className="py-3 pr-4 font-medium text-[var(--on-surface)]">{sm.subject}</td>
+                    <tr key={sm.subject} className="group">
+                      <td className="py-3 pr-4 font-medium text-[var(--on-surface)]">
+                        <button onClick={() => setModalView({ type: 'SUBJECT', subject: sm.subject, students: sm.students })} className="text-[var(--accent)] hover:underline text-left">
+                          {sm.subject}
+                        </button>
+                      </td>
                       <td className="py-3 pr-3 text-right tabular-nums text-[var(--on-surface-muted)]">{sm.presentCount}</td>
                       {isGcse && (
                         <>
@@ -433,7 +455,120 @@ export default function ResultPointPage() {
               </div>
             </Card>
           )}
+          {/* SEND gap table (GCSE) */}
+          {isGcse && metrics.subjects.some((sm) => sm.send) && (
+            <Card className="space-y-4">
+              <SectionHeader title="SEND Gap by Subject" subtitle="4+ threshold — percentage-point gap between Non-SEND and SEND" />
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--outline-variant)]/30 text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
+                      <th className="pb-2 pr-4 text-left">Subject</th>
+                      <th className="pb-2 pr-3 text-right">Non-SEND 4+</th>
+                      <th className="pb-2 pr-3 text-right">SEND 4+</th>
+                      <th className="pb-2 text-right">Gap</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--outline-variant)]/20">
+                    {metrics.subjects
+                      .filter((sm) => sm.send)
+                      .sort((a, b) => (b.send?.gap4 ?? 0) - (a.send?.gap4 ?? 0))
+                      .map((sm) => (
+                        <tr key={sm.subject}>
+                          <td className="py-2.5 pr-4 font-medium">{sm.subject}</td>
+                          <td className="py-2.5 pr-3 text-right tabular-nums text-[var(--accent)]">{sm.send!.nonSendT4}%</td>
+                          <td className="py-2.5 pr-3 text-right tabular-nums text-violet-500">{sm.send!.t4}%</td>
+                          <td className={`py-2.5 text-right font-bold tabular-nums ${gapCls(sm.send!.gap4)}`}>
+                            {sm.send!.gap4 > 0 ? "+" : ""}{sm.send!.gap4}pp
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
         </>
+      )}
+
+      {/* Modal overlay */}
+      {modalView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-[var(--surface)] text-[var(--on-surface)] rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-[var(--outline-variant)]/50">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
+              <h2 className="text-lg font-bold">
+                {modalView.type === 'SUBJECT' ? `Students for ${modalView.subject}` : `E&M Baseline: ${modalView.label} Students`}
+              </h2>
+              <button 
+                onClick={() => setModalView(null)} 
+                className="text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
+                aria-label="Close modal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            
+            <div className="p-0 overflow-y-auto flex-1">
+              {modalView.type === 'SUBJECT' && (
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20 shadow-sm z-10">
+                    <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
+                      <th className="p-3 pl-4">Student</th>
+                      <th className="p-3">Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--outline-variant)]/10">
+                    {modalView.students.sort((a, b) => {
+                       if (a.score !== b.score) return (b.score ?? -1) - (a.score ?? -1);
+                       return a.name.localeCompare(b.name);
+                    }).map(st => (
+                      <tr key={st.studentId} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
+                        <td className="p-3 pl-4 font-medium">{st.name}</td>
+                        <td className="p-3 font-semibold text-[var(--accent)]">{st.rawValue}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {modalView.type === 'EM' && (
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20 shadow-sm z-10">
+                    <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
+                      <th className="p-3 pl-4">Student</th>
+                      <th className="p-3 text-center">Status</th>
+                      <th className="p-3 text-center">English Grade</th>
+                      <th className="p-3 text-center">Maths Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--outline-variant)]/10">
+                    {modalView.students.sort((a, b) => {
+                       if (a.met !== b.met) return a.met ? -1 : 1;
+                       return a.name.localeCompare(b.name);
+                    }).map(st => (
+                      <tr key={st.studentId} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
+                        <td className="p-3 pl-4 font-medium">{st.name}</td>
+                        <td className="p-3 text-center">
+                          {st.met ? (
+                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Met</span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Not Met</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-center font-semibold text-[var(--accent)]">{st.engRaw}</td>
+                        <td className="p-3 text-center font-semibold text-[var(--accent)]">{st.mathRaw}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {modalView.students.length === 0 && (
+                 <div className="p-8 text-center text-[var(--on-surface-muted)]">
+                   No student data available.
+                 </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
