@@ -3,6 +3,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { StatCard } from "@/components/ui/stat-card";
 import type { PointType, ResultStatus, QualificationType } from "@prisma/client";
 
 // ─── Type badges ─────────────────────────────────────────────────────────────
@@ -106,39 +107,37 @@ export default async function CycleDetailPage({
         <span className="text-[var(--on-surface)]">{cycle.label}</span>
       </div>
 
-      {/* Summary stats custom to exact design */}
-      <div className="grid grid-cols-4 gap-6">
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Result Points</p>
-          <p className="mt-3 text-[40px] font-bold leading-none tracking-[-0.03em] text-slate-900">{cycle.points.length}</p>
-          <div className="mt-6 flex h-1 w-full overflow-hidden rounded-full bg-slate-100">
-            <div className="w-1/3 bg-slate-900"></div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Subjects</p>
-            <p className="mt-3 text-[40px] font-bold leading-none tracking-[-0.03em] text-slate-900">{totalSubjects}</p>
-          </div>
-          <p className="mt-6 text-xs font-semibold text-slate-500">Across all departments</p>
-        </div>
-
-        <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Entries Recorded</p>
-            <p className="mt-3 text-[40px] font-bold leading-none tracking-[-0.03em] text-slate-900">{totalEntries.toLocaleString()}</p>
-          </div>
-          <p className="mt-6 text-xs font-bold text-emerald-500">↗ +12% from Y10</p>
-        </div>
-
-        <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Data Integrity</p>
-            <p className="mt-3 text-[40px] font-bold leading-none tracking-[-0.03em] text-slate-900">99.7%</p>
-          </div>
-          <p className="mt-6 text-xs font-semibold text-slate-500">Verified by Registry</p>
-        </div>
+      {/* Summary stats — StatCard sizing matches Attainment Cycles list & dashboards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Result points"
+          value={cycle.points.length}
+          accentPlacement="none"
+          tone="default"
+        />
+        <StatCard
+          label="Total subjects"
+          value={totalSubjects}
+          accentPlacement="none"
+          tone="default"
+          context="Across all departments"
+        />
+        <StatCard
+          label="Entries recorded"
+          value={totalEntries.toLocaleString()}
+          accentPlacement="none"
+          tone="default"
+          context={
+            <span className="font-semibold text-emerald-600">↗ +12% from Y10</span>
+          }
+        />
+        <StatCard
+          label="Data integrity"
+          value="99.7%"
+          accentPlacement="none"
+          tone="default"
+          context="Verified by Registry"
+        />
       </div>
 
       {/* Result point timeline exact match */}
@@ -227,19 +226,28 @@ export default async function CycleDetailPage({
 
                   {/* Stats Rects */}
                   {hasData && (
-                    <div className="mt-8 flex gap-4">
-                      <div className="rounded-2xl bg-[#f8f9fb] p-5 flex-1 min-w-0 max-w-[200px]">
-                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-600">Subjects</p>
-                        <p className="mt-2 text-[28px] font-bold leading-none tracking-[-0.03em] text-slate-900">{point.assessments.length}</p>
-                      </div>
-                      <div className="rounded-2xl bg-[#f8f9fb] p-5 flex-1 min-w-0 max-w-[200px]">
-                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-600">Entries</p>
-                        <p className="mt-2 text-[28px] font-bold leading-none tracking-[-0.03em] text-slate-900">{entries.toLocaleString()}</p>
-                      </div>
-                      <div className="rounded-2xl bg-[#f8f9fb] p-5 flex-1 min-w-0 max-w-[200px]">
-                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-600">Students</p>
-                        <p className="mt-2 text-[28px] font-bold leading-none tracking-[-0.03em] text-slate-900">{matched.toLocaleString()}</p>
-                      </div>
+                    <div className="mt-6 grid max-w-xl grid-cols-3 gap-3 sm:max-w-2xl">
+                      <StatCard
+                        label="Subjects"
+                        value={point.assessments.length}
+                        accentPlacement="none"
+                        tone="softGrey"
+                        valueClassName="mt-1.5 text-xl font-bold tabular-nums leading-none tracking-tight text-text"
+                      />
+                      <StatCard
+                        label="Entries"
+                        value={entries.toLocaleString()}
+                        accentPlacement="none"
+                        tone="softGrey"
+                        valueClassName="mt-1.5 text-xl font-bold tabular-nums leading-none tracking-tight text-text"
+                      />
+                      <StatCard
+                        label="Students"
+                        value={matched.toLocaleString()}
+                        accentPlacement="none"
+                        tone="softGrey"
+                        valueClassName="mt-1.5 text-xl font-bold tabular-nums leading-none tracking-tight text-text"
+                      />
                     </div>
                   )}
 
