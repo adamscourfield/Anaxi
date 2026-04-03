@@ -49,6 +49,7 @@ type GcseBasics = {
 type ModalView = 
   | { type: 'SUBJECT', subject: string, students: StudentResult[] }
   | { type: 'EM', label: string, students: EMStudentResult[], target: number }
+  | { type: 'GRADE', subject: string, grade: string, students: StudentResult[] }
   | null;
 
 type ALevelSummary = {
@@ -79,9 +80,9 @@ function gcseColour(g: string | number): string {
   const n = Number(g);
   if (n >= 8) return "bg-emerald-600 text-white";
   if (n >= 7) return "bg-green-500 text-white";
-  if (n >= 6) return "bg-blue-500 text-white";
+  if (n >= 6) return "bg-blue-500 text-slate-900";
   if (n >= 5) return "bg-violet-500 text-white";
-  if (n >= 4) return "bg-amber-500 text-white";
+  if (n >= 4) return "bg-amber-500 text-slate-900";
   if (n >= 3) return "bg-orange-500 text-white";
   return "bg-red-600 text-white";
 }
@@ -115,7 +116,7 @@ function PctBar({ pct, cls }: { pct: number; cls: string }) {
   );
 }
 
-function DistBar({ distribution, format }: { distribution: Array<{ grade: string; count: number }>; format: GradeFormat }) {
+function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{ grade: string; count: number }>; format: GradeFormat; onGradeClick?: (grade: string) => void }) {
   const total = distribution.reduce((s, d) => s + d.count, 0);
   if (total === 0) return <span className="text-xs text-[var(--on-surface-muted)]">No data</span>;
   return (
@@ -126,8 +127,9 @@ function DistBar({ distribution, format }: { distribution: Array<{ grade: string
           const pct = (d.count / total) * 100;
           const cls = format === "GCSE" ? gcseColour(d.grade) : aLevelColour(d.grade);
           return (
-            <div key={d.grade} className={`flex items-center justify-center text-[9px] font-bold ${cls}`}
-              style={{ width: `${pct}%` }} title={`${d.grade}: ${d.count} (${Math.round(pct)}%)`}>
+            <div key={d.grade} className={`flex items-center justify-center text-[9px] font-bold ${cls} ${onGradeClick ? 'cursor-pointer hover:opacity-80' : ''}`}
+                 style={{ width: `${pct}%` }} title={`${d.grade}: ${d.count} (${Math.round(pct)}%)`}
+                 onClick={() => onGradeClick && onGradeClick(d.grade)}>
               {pct > 7 && d.grade}
             </div>
           );
@@ -138,10 +140,11 @@ function DistBar({ distribution, format }: { distribution: Array<{ grade: string
           const pct = Math.round((d.count / total) * 100);
           const cls = format === "GCSE" ? gcseColour(d.grade) : aLevelColour(d.grade);
           return (
-            <span key={d.grade} className="flex items-center gap-1 text-[9px] text-[var(--on-surface-muted)]">
+            <button type="button" key={d.grade} className={`flex items-center gap-1 text-[9px] text-[var(--on-surface-muted)] ${onGradeClick ? 'hover:text-[var(--on-surface)] cursor-pointer' : ''}`}
+                    onClick={() => onGradeClick && onGradeClick(d.grade)}>
               <span className={`inline-block h-2 w-2 rounded-sm ${cls}`} />
               {d.grade}: {d.count} ({pct}%)
-            </span>
+            </button>
           );
         })}
       </div>
@@ -405,7 +408,11 @@ export default function ResultPointPage() {
                         </>
                       )}
                       <td className="py-3 min-w-[160px]">
-                        <DistBar distribution={sm.distribution} format={sm.gradeFormat} />
+                        <DistBar 
+                          distribution={sm.distribution} 
+                          format={sm.gradeFormat} 
+                          onGradeClick={(grade) => setModalView({ type: 'GRADE', subject: sm.subject, grade, students: sm.students.filter(s => s.rawValue === grade) })}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -497,7 +504,7 @@ export default function ResultPointPage() {
           <div className="bg-[var(--surface)] text-[var(--on-surface)] rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-[var(--outline-variant)]/50">
             <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
               <h2 className="text-lg font-bold">
-                {modalView.type === 'SUBJECT' ? `Students for ${modalView.subject}` : `E&M Baseline: ${modalView.label} Students`}
+                {modalView.type === 'SUBJECT' ? `Students for ${modalView.subject}` : modalView.type === 'GRADE' ? `Students scoring ${modalView.grade} in ${modalView.subject}` : `E&M Baseline: ${modalView.label} Students`}
               </h2>
               <button 
                 onClick={() => setModalView(null)} 
@@ -558,6 +565,32 @@ export default function ResultPointPage() {
                         <td className="p-3 text-center font-semibold text-[var(--accent)]">{st.mathRaw}</td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              )}
+
+              {modalView.type === 'GRADE' && (
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20 shadow-sm z-10">
+                    <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
+                      <th className="p-3 pl-4">Student</th>
+                      <th className="p-3 text-center">Grade in {modalView.subject}</th>
+                      <th className="p-3 text-center">Avg Grade (All Subjects)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--outline-variant)]/10">
+                    {modalView.students.sort((a, b) => a.name.localeCompare(b.name)).map(st => {
+                      const allScores = metrics?.subjects.flatMap(sm => sm.students.filter(s => s.studentId === st.studentId && s.score !== null).map(s => s.score!)) || [];
+                      const avg = allScores.length > 0 ? (allScores.reduce((a,b) => a+b, 0) / allScores.length) : null;
+                      const avgDisplay = avg !== null ? (metrics?.dominantFormat === 'GCSE' ? (avg * 9).toFixed(1) : (avg * 100).toFixed(0) + '%') : 'N/A';
+                      return (
+                        <tr key={st.studentId} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
+                          <td className="p-3 pl-4 font-medium">{st.name}</td>
+                          <td className="p-3 text-center font-semibold text-[var(--accent)]">{st.rawValue}</td>
+                          <td className="p-3 text-center text-[var(--on-surface-muted)]">{avgDisplay}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}
