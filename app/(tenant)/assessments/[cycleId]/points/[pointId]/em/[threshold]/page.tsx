@@ -3,6 +3,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { EMTargetGroupToolbar } from "./EMTargetGroupToolbar";
 
 function getInitials(name: string): string {
   const parts = name.split(" ").filter(Boolean);
@@ -208,21 +209,21 @@ export default async function EMThresholdPage({
     };
   });
 
-  // Apply filters via query params
+  // Apply filters via query params (GET form, same pattern as Explorer · Students)
   const rawParams = await searchParams;
-  const paramsObj = new URLSearchParams();
-  if (rawParams.send) paramsObj.set("send", String(rawParams.send));
-  if (rawParams.pp) paramsObj.set("pp", String(rawParams.pp));
-  if (rawParams.met) paramsObj.set("met", String(rawParams.met));
+  const filterSend = Array.isArray(rawParams.send) ? rawParams.send[0] : rawParams.send;
+  const filterPp = Array.isArray(rawParams.pp) ? rawParams.pp[0] : rawParams.pp;
+  const filterMet = Array.isArray(rawParams.met) ? rawParams.met[0] : rawParams.met;
+  const rawSearch = Array.isArray(rawParams.studentSearch)
+    ? rawParams.studentSearch[0]
+    : rawParams.studentSearch;
+  const studentSearch = (rawSearch ?? "").trim();
+  const studentSearchLower = studentSearch.toLowerCase();
 
-  const filterSend = paramsObj.get("send");
-  const filterPp = paramsObj.get("pp");
-  const filterMet = paramsObj.get("met");
-  
-  if (filterSend === "true") studentsData = studentsData.filter(s => s.sendFlag);
-  if (filterSend === "false") studentsData = studentsData.filter(s => !s.sendFlag);
-  if (filterPp === "true") studentsData = studentsData.filter(s => s.ppFlag);
-  if (filterPp === "false") studentsData = studentsData.filter(s => !s.ppFlag);
+  if (filterSend === "true") studentsData = studentsData.filter((s) => s.sendFlag);
+  if (filterSend === "false") studentsData = studentsData.filter((s) => !s.sendFlag);
+  if (filterPp === "true") studentsData = studentsData.filter((s) => s.ppFlag);
+  if (filterPp === "false") studentsData = studentsData.filter((s) => !s.ppFlag);
   // Default: students who have not met E&M both at this threshold (focus list).
   if (filterMet === "true") studentsData = studentsData.filter((s) => s.met);
   else if (filterMet === "all") {
@@ -230,6 +231,26 @@ export default async function EMThresholdPage({
   } else {
     studentsData = studentsData.filter((s) => !s.met);
   }
+  if (studentSearchLower) {
+    studentsData = studentsData.filter((s) =>
+      s.name.toLowerCase().includes(studentSearchLower),
+    );
+  }
+
+  const basePath = `/assessments/${cycleId}/points/${pointId}/em/${threshold}`;
+  const defaultMet =
+    filterMet === "true" ? "true" : filterMet === "all" ? "all" : "";
+  const defaultPp =
+    filterPp === "true" ? "true" : filterPp === "false" ? "false" : "";
+  const defaultSend =
+    filterSend === "true" ? "true" : filterSend === "false" ? "false" : "";
+  const hasToolbarFilters = Boolean(
+    studentSearch ||
+      filterPp ||
+      filterSend ||
+      filterMet === "true" ||
+      filterMet === "all",
+  );
 
   // Sort by average grade descending, then name
   studentsData.sort((a, b) => {
@@ -244,13 +265,6 @@ export default async function EMThresholdPage({
     if (diff > 0.1) return <span className="text-emerald-500 font-bold">↗ +{diff}</span>;
     if (diff < -0.1) return <span className="text-red-500 font-bold">↘ {diff}</span>;
     return <span className="text-slate-400 font-bold">→ {diff}</span>;
-  }
-
-  function getFilterUrl(key: string, val: string | null) {
-    const u = new URLSearchParams(paramsObj);
-    if (val === null) u.delete(key);
-    else u.set(key, val);
-    return `?${u.toString()}`;
   }
 
   return (
@@ -315,56 +329,16 @@ export default async function EMThresholdPage({
         </div>
       </div>
 
-      {/* Toolbar / Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-         <span className="text-sm font-semibold text-text">Filter:</span>
-         <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted">Threshold</span>
-            <Link
-              href={getFilterUrl("met", null)}
-              className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${
-                filterMet !== "true" && filterMet !== "all"
-                  ? "bg-slate-900 text-white"
-                  : "bg-surface-container-low text-muted hover:text-text"
-              }`}
-            >
-              Not met
-            </Link>
-            <Link
-              href={getFilterUrl("met", "true")}
-              className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${
-                filterMet === "true"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-              }`}
-            >
-              Met
-            </Link>
-            <Link
-              href={getFilterUrl("met", "all")}
-              className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${
-                filterMet === "all"
-                  ? "bg-slate-900 text-white"
-                  : "bg-surface-container-low text-muted hover:text-text"
-              }`}
-            >
-              All
-            </Link>
-         </div>
-         <div className="hidden h-6 w-px bg-border/30 sm:block" aria-hidden />
-         <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted">PP</span>
-            <Link href={getFilterUrl('pp', null)} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${!filterPp ? 'bg-slate-900 text-white' : 'bg-surface-container-low text-muted hover:text-text'}`}>All</Link>
-            <Link href={getFilterUrl('pp', 'true')} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${filterPp === 'true' ? 'bg-violet-600 text-white' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'}`}>PP</Link>
-            <Link href={getFilterUrl('pp', 'false')} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${filterPp === 'false' ? 'bg-slate-900 text-white' : 'bg-surface-container-low text-muted hover:text-text'}`}>Non-PP</Link>
-         </div>
-         <div className="hidden h-6 w-px bg-border/30 sm:block" aria-hidden />
-         <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted">SEND</span>
-            <Link href={getFilterUrl('send', null)} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${!filterSend ? 'bg-slate-900 text-white' : 'bg-surface-container-low text-muted hover:text-text'}`}>All</Link>
-            <Link href={getFilterUrl('send', 'true')} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${filterSend === 'true' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}>SEND</Link>
-            <Link href={getFilterUrl('send', 'false')} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${filterSend === 'false' ? 'bg-slate-900 text-white' : 'bg-surface-container-low text-muted hover:text-text'}`}>Non-SEND</Link>
-         </div>
+      {/* Filters (aligned with Explorer · Students toolbar) */}
+      <div className="mb-6">
+        <EMTargetGroupToolbar
+          basePath={basePath}
+          defaultSearch={studentSearch}
+          defaultMet={defaultMet}
+          defaultPp={defaultPp}
+          defaultSend={defaultSend}
+          hasFilters={hasToolbarFilters}
+        />
       </div>
 
       {/* Student list (aligned with Explorer · Students table) */}
