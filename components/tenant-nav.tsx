@@ -121,9 +121,20 @@ export function TenantNav({
   useEffect(() => {
     if (isDrawer) return;
     const content = document.getElementById("tenant-content");
-    if (content) {
-      content.style.marginLeft = collapsed ? "var(--sidebar-collapsed-width)" : "var(--sidebar-width)";
-    }
+    if (!content) return;
+
+    const updateMargin = () => {
+      const isMobile = window.innerWidth < 768;
+      content.style.marginLeft = isMobile
+        ? ""
+        : collapsed
+        ? "var(--sidebar-collapsed-width)"
+        : "var(--sidebar-width)";
+    };
+
+    updateMargin();
+    window.addEventListener("resize", updateMargin);
+    return () => window.removeEventListener("resize", updateMargin);
   }, [collapsed, isDrawer]);
 
   const has = (feature: FeatureKey) => enabledFeatures.includes(feature);
