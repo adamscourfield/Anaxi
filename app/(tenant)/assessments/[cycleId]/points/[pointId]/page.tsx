@@ -200,11 +200,11 @@ export default function ResultPointPage() {
   const isALevel = metrics?.dominantFormat === "A_LEVEL";
 
   if (loading) {
-    return <div className="max-w-5xl py-16 text-center text-sm text-[var(--on-surface-muted)]">Loading…</div>;
+    return <div className="w-full py-16 text-center text-sm text-[var(--on-surface-muted)]">Loading…</div>;
   }
 
   return (
-    <div className="max-w-5xl space-y-7">
+    <div className="w-full space-y-7">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
         <Link href="/assessments" className="hover:underline">Cycles</Link>

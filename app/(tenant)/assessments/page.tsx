@@ -61,7 +61,7 @@ export default async function AssessmentsPage() {
   const archivedCycles = cycles.filter((c) => !c.isActive);
 
   return (
-    <div className="max-w-5xl space-y-8">
+    <div className="w-full space-y-8">
       {/* Header */}
       <div className="flex items-start justify-between">
         <PageHeader

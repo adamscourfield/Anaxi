@@ -108,7 +108,7 @@ export default async function CycleDetailPage({
   const comparisonPoints = cycle.points.filter((p) => p.comparisonEligible && p.assessments.length > 0);
 
   return (
-    <div className="max-w-5xl space-y-8">
+    <div className="w-full space-y-8">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
         <Link href="/assessments" className="hover:underline">Attainment Cycles</Link>
