@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
 import { SectionHeader } from "@/components/ui/section-header";
 import Link from "next/link";
 import type { GradeFormat, PointType, ResultStatus } from "@prisma/client";
@@ -222,20 +223,22 @@ export default function ResultPointPage() {
         <div>
           {point && (
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${POINT_TYPE_COLOURS[point.pointType]}`}>
+              <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
                 {POINT_TYPE_LABELS[point.pointType]}
               </span>
-              <span className="rounded-full bg-[var(--surface-container)] px-2 py-0.5 text-[10px] font-semibold text-[var(--on-surface-muted)]">
+              <span className="rounded-full bg-[var(--surface-container)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">
                 {STATUS_LABELS[point.resultStatus]}
               </span>
               {point.isFinalPoint && (
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                  Final
+                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                  FINAL
                 </span>
               )}
             </div>
           )}
-          <PageHeader title={point?.label ?? "Result point"} />
+          <h1 className="text-[28px] font-bold tracking-[-0.03em] text-[var(--on-surface)] sm:text-[36px]">
+            {point?.label ?? "Result point"}
+          </h1>
         </div>
         <div className="flex gap-2 shrink-0">
           {point?.resultStatus !== "LOCKED" && (
@@ -273,38 +276,28 @@ export default function ResultPointPage() {
         <>
           {/* Summary stats */}
           <div className="grid grid-cols-3 gap-4">
-            {[
-              { label: "Students assessed", value: metrics.totalStudents },
-              { label: "Grade entries", value: metrics.totalEntries.toLocaleString() },
-              { label: "Subjects", value: metrics.subjects.length },
-            ].map(({ label, value }) => (
-              <div key={label} className="rounded-xl bg-[var(--surface)] p-4 shadow-sm ring-1 ring-[var(--outline-variant)]/30">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
-                <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--on-surface)]">{value}</p>
-              </div>
-            ))}
+            <StatCard label="Students assessed" value={metrics.totalStudents} tone="softGrey" />
+            <StatCard label="Grade entries" value={metrics.totalEntries.toLocaleString()} tone="softGrey" />
+            <StatCard label="Subjects" value={metrics.subjects.length} tone="softGrey" />
           </div>
 
           {/* GCSE Basics */}
           {isGcse && metrics.gcseBasics && (
-            <Card className="space-y-5">
+            <section className="space-y-4">
               <SectionHeader title="English & Maths — Headline Measures" subtitle="Both subjects must meet threshold" />
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { label: "E&M 4+", val: metrics.gcseBasics.em4, cls: "bg-amber-500", st: metrics.gcseBasics.students4, target: 4 },
-                  { label: "E&M 5+", val: metrics.gcseBasics.em5, cls: "bg-violet-500", st: metrics.gcseBasics.students5, target: 5 },
-                  { label: "E&M 7+", val: metrics.gcseBasics.em7, cls: "bg-green-500", st: metrics.gcseBasics.students7, target: 7 },
+                  { label: "E&M 4+", val: metrics.gcseBasics.em4, cls: "bg-amber-400", st: metrics.gcseBasics.students4, target: 4 },
+                  { label: "E&M 5+", val: metrics.gcseBasics.em5, cls: "bg-violet-400", st: metrics.gcseBasics.students5, target: 5 },
+                  { label: "E&M 7+", val: metrics.gcseBasics.em7, cls: "bg-green-400", st: metrics.gcseBasics.students7, target: 7 },
                 ].map(({ label, val, cls, st, target }) => (
                   <div key={label} 
-                       className="rounded-xl bg-[var(--surface-container-low)] p-4 cursor-pointer hover:ring-2 ring-[var(--accent)] transition-all"
+                       className="relative overflow-hidden rounded-2xl glass-card p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5"
                        onClick={() => setModalView({ type: 'EM', label, students: st, target })}>
-                    <p className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-                      {label}
-                      <span className="text-[var(--accent)] underline lowercase hover:no-underline">view students</span>
-                    </p>
-                    <p className="mt-0.5 text-3xl font-bold tabular-nums text-[var(--on-surface)]">{val}%</p>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-container)]">
-                      <div className={`h-full rounded-full ${cls}`} style={{ width: `${val}%` }} />
+                    <div className={`absolute top-0 left-0 w-2 h-full ${cls}`} />
+                    <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--on-surface-muted)] ml-2">{label}</p>
+                    <div className="mt-2 flex items-baseline gap-2 ml-2">
+                       <span className="text-[32px] font-bold tracking-[-0.02em] text-[var(--on-surface)]">{val}%</span>
                     </div>
                   </div>
                 ))}
@@ -330,7 +323,7 @@ export default function ResultPointPage() {
                   </div>
                 ))}
               </div>
-            </Card>
+            </section>
           )}
 
           {/* A-Level overall */}

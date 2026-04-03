@@ -3,6 +3,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
 import Link from "next/link";
 import type { QualificationType, PointType } from "@prisma/client";
 
@@ -63,11 +64,15 @@ export default async function AssessmentsPage() {
   return (
     <div className="w-full space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <PageHeader
-          title="Attainment Cycles"
-          subtitle="Track cohort-level outcomes across the academic year — from baselines through to final results."
-        />
+      <div className="flex items-start justify-between min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-[22px] font-bold tracking-[-0.03em] text-[var(--on-surface)] sm:text-[28px]">
+            Attainment Cycles
+          </h1>
+          <p className="mt-1 text-sm text-[var(--on-surface-muted)]">
+            Track cohort-level outcomes across the academic year — from baselines through to final results.
+          </p>
+        </div>
         <Link
           href="/assessments/new"
           className="shrink-0 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
@@ -94,8 +99,8 @@ export default async function AssessmentsPage() {
       {/* Active cycles */}
       {activeCycles.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-            Active
+          <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-[var(--on-surface)]">
+            Active Cycles
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {activeCycles.map((cycle) => (
@@ -108,8 +113,8 @@ export default async function AssessmentsPage() {
       {/* Archived cycles */}
       {archivedCycles.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-            Archived
+          <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-[var(--on-surface)]">
+            Archived Cycles
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {archivedCycles.map((cycle) => (
@@ -146,61 +151,40 @@ function CycleCard({ cycle }: {
   return (
     <Link
       href={`/assessments/${cycle.id}`}
-      className="group block rounded-2xl bg-[var(--surface)] p-5 shadow-sm ring-1 ring-[var(--outline-variant)]/30 transition-all hover:ring-[var(--accent)]/40 hover:shadow-md"
+      className="group block relative overflow-hidden rounded-2xl glass-card p-5 calm-transition hover:border-[var(--accent)]/40 hover:shadow-md"
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 relative z-10">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${QUAL_COLOURS[cycle.qualificationType]}`}>
+            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${QUAL_COLOURS[cycle.qualificationType]}`}>
               {QUAL_LABELS[cycle.qualificationType]}
             </span>
             {cycle.isActive && (
-              <span className="rounded-full bg-[var(--success)]/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--success)]">
+              <span className="rounded-full bg-[var(--success)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--success)]">
                 Active
               </span>
             )}
           </div>
-          <h3 className="mt-2 text-base font-semibold text-[var(--on-surface)] group-hover:text-[var(--accent)]">
+          <h3 className="mt-3 text-lg font-bold tracking-[-0.01em] text-[var(--on-surface)] group-hover:text-[var(--accent)] calm-transition">
             {cycle.label}
           </h3>
           {cycle.cohortLabel && (
-            <p className="text-xs text-[var(--on-surface-muted)]">{cycle.cohortLabel}</p>
+            <p className="mt-0.5 text-xs text-[var(--on-surface-muted)]">{cycle.cohortLabel}</p>
           )}
         </div>
-        <span className="shrink-0 text-sm text-[var(--on-surface-muted)] group-hover:text-[var(--accent)]">
+        <span className="shrink-0 text-lg text-[var(--on-surface-muted)] group-hover:translate-x-0.5 group-hover:text-[var(--accent)] calm-transition">
           →
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-3">
-        <div className="rounded-xl bg-[var(--surface-container-low)] px-3 py-2">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">
-            Result points
-          </p>
-          <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--on-surface)]">
-            {cycle.points.length}
-          </p>
-        </div>
-        <div className="rounded-xl bg-[var(--surface-container-low)] px-3 py-2">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">
-            Subjects
-          </p>
-          <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--on-surface)]">
-            {subjectCount}
-          </p>
-        </div>
-        <div className="rounded-xl bg-[var(--surface-container-low)] px-3 py-2">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">
-            Entries
-          </p>
-          <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--on-surface)]">
-            {entries.toLocaleString()}
-          </p>
-        </div>
+      <div className="mt-6 grid grid-cols-3 gap-3 relative z-10">
+        <StatCard label="Points" value={cycle.points.length} tone="softGrey" />
+        <StatCard label="Subjects" value={subjectCount} tone="softGrey" />
+        <StatCard label="Entries" value={entries.toLocaleString()} tone="softGrey" />
       </div>
 
       {!hasData && (
-        <p className="mt-3 text-xs text-[var(--on-surface-muted)]">
+        <p className="mt-4 text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--on-surface-muted)]">
           No results uploaded yet
         </p>
       )}

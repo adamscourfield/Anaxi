@@ -3,6 +3,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/ui/page-header";
 import Link from "next/link";
 import type { PointType, ResultStatus, QualificationType } from "@prisma/client";
@@ -119,22 +120,24 @@ export default async function CycleDetailPage({
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="rounded-full bg-[var(--surface-container)] px-2.5 py-0.5 text-xs font-semibold text-[var(--on-surface-muted)]">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className="rounded-full bg-[var(--surface-container)] px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">
               {QUAL_LABELS[cycle.qualificationType]}
             </span>
             {cycle.academicYear && (
-              <span className="text-xs text-[var(--on-surface-muted)]">{cycle.academicYear}</span>
+              <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{cycle.academicYear}</span>
             )}
             {cycle.isActive && (
-              <span className="rounded-full bg-[var(--success)]/15 px-2 py-0.5 text-[10px] font-semibold text-[var(--success)]">
+              <span className="rounded-full bg-[var(--success)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--success)]">
                 Active
               </span>
             )}
           </div>
-          <PageHeader title={cycle.label} />
+          <h1 className="text-[28px] font-bold tracking-[-0.03em] text-[var(--on-surface)] sm:text-[36px]">
+            {cycle.label}
+          </h1>
           {cycle.cohortLabel && (
-            <p className="mt-0.5 text-sm text-[var(--on-surface-muted)]">{cycle.cohortLabel}</p>
+            <p className="mt-1 text-sm text-[var(--on-surface-muted)]">{cycle.cohortLabel}</p>
           )}
         </div>
         <div className="flex gap-2 shrink-0">
@@ -157,19 +160,10 @@ export default async function CycleDetailPage({
 
       {/* Summary stats */}
       <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: "Result points", value: cycle.points.length },
-          { label: "Subjects", value: totalSubjects },
-          { label: "Entries recorded", value: totalEntries.toLocaleString() },
-          { label: "Status", value: cycle.isActive ? "Active" : "Archived" },
-        ].map(({ label, value }) => (
-          <div key={label} className="rounded-xl bg-[var(--surface)] p-4 shadow-sm ring-1 ring-[var(--outline-variant)]/30">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-              {label}
-            </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--on-surface)]">{value}</p>
-          </div>
-        ))}
+        <StatCard label="Result points" value={cycle.points.length} tone="softGrey" />
+        <StatCard label="Subjects" value={totalSubjects} tone="softGrey" />
+        <StatCard label="Entries recorded" value={totalEntries.toLocaleString()} tone="softGrey" />
+        <StatCard label="Status" value={cycle.isActive ? "Active" : "Archived"} tone="softGrey" />
       </div>
 
       {/* Result point timeline */}
@@ -206,10 +200,10 @@ export default async function CycleDetailPage({
             return (
               <div
                 key={point.id}
-                className={`relative rounded-2xl border p-5 shadow-sm transition-all ${
+                className={`relative rounded-2xl p-5 shadow-sm calm-transition hover:shadow-md border ${
                   point.isFinalPoint
                     ? "border-emerald-200 bg-emerald-50/50"
-                    : "border-[var(--outline-variant)]/30 bg-[var(--surface)]"
+                    : "glass-card border-[color-mix(in_srgb,var(--outline-variant)_20%,transparent)]"
                 }`}
               >
                 {/* Timeline connector */}
@@ -242,29 +236,29 @@ export default async function CycleDetailPage({
                       )}
                     </div>
 
-                    <h3 className="mt-1.5 text-base font-semibold text-[var(--on-surface)]">
+                    <h3 className="mt-2 text-lg font-bold tracking-[-0.01em] text-[var(--on-surface)]">
                       {point.label}
                     </h3>
                     {assessedDateLabel && (
-                      <p className="text-xs text-[var(--on-surface-muted)]">
+                      <p className="text-sm text-[var(--on-surface-muted)] mt-0.5">
                         {assessedDateLabel}
                       </p>
                     )}
 
                     {/* Subjects + stats */}
                     {hasData ? (
-                      <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                        <div className="rounded-lg bg-[var(--surface-container-low)] px-3 py-2">
-                          <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--on-surface-muted)]">Subjects</p>
-                          <p className="text-base font-bold text-[var(--on-surface)]">{point.assessments.length}</p>
+                      <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
+                        <div className="rounded-xl bg-[var(--surface-container-highest)] px-3 py-2 border border-[var(--outline-variant)]/20 shadow-sm">
+                          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--on-surface-muted)]">Subjects</p>
+                          <p className="text-lg font-bold tracking-[-0.01em] text-[var(--on-surface)]">{point.assessments.length}</p>
                         </div>
-                        <div className="rounded-lg bg-[var(--surface-container-low)] px-3 py-2">
-                          <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--on-surface-muted)]">Entries</p>
-                          <p className="text-base font-bold text-[var(--on-surface)]">{entries.toLocaleString()}</p>
+                        <div className="rounded-xl bg-[var(--surface-container-highest)] px-3 py-2 border border-[var(--outline-variant)]/20 shadow-sm">
+                          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--on-surface-muted)]">Entries</p>
+                          <p className="text-lg font-bold tracking-[-0.01em] text-[var(--on-surface)]">{entries.toLocaleString()}</p>
                         </div>
-                        <div className="rounded-lg bg-[var(--surface-container-low)] px-3 py-2">
-                          <p className="text-[9px] font-semibold uppercase tracking-wide text-[var(--on-surface-muted)]">Students</p>
-                          <p className="text-base font-bold text-[var(--on-surface)]">{matched}</p>
+                        <div className="rounded-xl bg-[var(--surface-container-highest)] px-3 py-2 border border-[var(--outline-variant)]/20 shadow-sm">
+                          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--on-surface-muted)]">Students</p>
+                          <p className="text-lg font-bold tracking-[-0.01em] text-[var(--on-surface)]">{matched}</p>
                         </div>
                       </div>
                     ) : (
