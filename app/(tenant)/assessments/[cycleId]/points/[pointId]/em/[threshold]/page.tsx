@@ -304,18 +304,6 @@ export default async function EMThresholdPage({
       {/* Toolbar / Filters */}
       <div className="flex gap-4 items-center flex-wrap">
          <span className="text-sm font-semibold text-slate-700">Filter:</span>
-         <select 
-            className="rounded-lg border border-[var(--outline-variant)]/40 bg-white px-3 py-1.5 text-sm outline-none"
-            defaultValue={filterPp ?? "all"}
-            onChange={(e) => {
-               // In a real Server Component we'd use a client wrapper to push state, 
-               // but we can use JS to navigate for this simple demonstration
-            }}
-         >
-            <option value="all">All PP Status</option>
-            <option value="true">Pupil Premium</option>
-            <option value="false">Non-PP</option>
-         </select>
          <div className="flex gap-2">
             <Link href={getFilterUrl('pp', null)} className={`rounded-xl px-3 py-1 text-xs font-bold ${!filterPp ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>All</Link>
             <Link href={getFilterUrl('pp', 'true')} className={`rounded-xl px-3 py-1 text-xs font-bold ${filterPp === 'true' ? 'bg-violet-600 text-white' : 'bg-violet-50 text-violet-600'}`}>PP</Link>
