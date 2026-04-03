@@ -316,8 +316,7 @@ export default function ResultPointPage() {
               
               <div className="grid grid-cols-3 gap-4">
                 {/* 4+ Dark Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-[#0f172a] p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5"
-                     onClick={() => setModalView({ type: 'EM', label: "E&M 4+", students: metrics.gcseBasics!.students4, target: 4 })}>
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/4`} className="relative overflow-hidden rounded-2xl bg-[#0f172a] p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 block">
                   <div className="flex justify-between items-start">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 4+</p>
                     <div className="h-7 w-7 text-slate-700/60 absolute top-4 right-4">
@@ -332,11 +331,10 @@ export default function ResultPointPage() {
                   <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
                     <div className="bg-emerald-500 rounded-r-full" style={{ width: `${metrics.gcseBasics.em4}%` }}></div>
                   </div>
-                </div>
+                </Link>
 
                 {/* 5+ White Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5"
-                     onClick={() => setModalView({ type: 'EM', label: "E&M 5+", students: metrics.gcseBasics!.students5, target: 5 })}>
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/5`} className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 block">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 5+</p>
                   <div className="mt-3">
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.gcseBasics.em5}%</span>
@@ -344,11 +342,10 @@ export default function ResultPointPage() {
                   <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                     <div className="bg-[#0f172a] h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em5}%` }}></div>
                   </div>
-                </div>
+                </Link>
 
                 {/* 7+ White Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5"
-                     onClick={() => setModalView({ type: 'EM', label: "E&M 7+", students: metrics.gcseBasics!.students7, target: 7 })}>
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/7`} className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 block">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 7+</p>
                   <div className="mt-3">
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.gcseBasics.em7}%</span>
@@ -356,7 +353,7 @@ export default function ResultPointPage() {
                   <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                     <div className="bg-slate-300 h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em7}%` }}></div>
                   </div>
-                </div>
+                </Link>
               </div>
 
               {/* PP gap full cards */}
