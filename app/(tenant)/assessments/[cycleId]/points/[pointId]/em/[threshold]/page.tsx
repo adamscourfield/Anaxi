@@ -4,6 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
+function getInitials(name: string): string {
+  const parts = name.split(" ").filter(Boolean);
+  if (parts.length >= 2)
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+}
+
 function gcseColour(g: string | number | null): string {
   if (g === null) return "bg-slate-100 text-slate-400";
   const n = Number(g);
@@ -216,8 +223,13 @@ export default async function EMThresholdPage({
   if (filterSend === "false") studentsData = studentsData.filter(s => !s.sendFlag);
   if (filterPp === "true") studentsData = studentsData.filter(s => s.ppFlag);
   if (filterPp === "false") studentsData = studentsData.filter(s => !s.ppFlag);
-  if (filterMet === "true") studentsData = studentsData.filter(s => s.met);
-  if (filterMet === "false") studentsData = studentsData.filter(s => !s.met);
+  // Default: students who have not met E&M both at this threshold (focus list).
+  if (filterMet === "true") studentsData = studentsData.filter((s) => s.met);
+  else if (filterMet === "all") {
+    /* show everyone */
+  } else {
+    studentsData = studentsData.filter((s) => !s.met);
+  }
 
   // Sort by average grade descending, then name
   studentsData.sort((a, b) => {
@@ -258,26 +270,28 @@ export default async function EMThresholdPage({
         <h1 className="text-[28px] font-bold tracking-[-0.03em] text-slate-900 sm:text-[36px]">
           English & Maths {targetThreshold}+ Target Group
         </h1>
-        <p className="mt-1 text-sm text-[var(--on-surface-muted)]">Detailed student breakdown and average grade tracking.</p>
+        <p className="mt-1 text-sm text-muted">
+          Students who have not yet achieved grade {targetThreshold} or above in both English and Maths. Use the filter below to include those who have met the threshold or everyone.
+        </p>
       </div>
 
       {/* Top 4 Metrics Cards */}
       <div className="grid grid-cols-4 gap-6">
-        <div className="rounded-2xl bg-white p-5 shadow-sm border border-[var(--outline-variant)]/10">
+        <div className="rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">English {targetThreshold}+</p>
           <div className="mt-3">
              <span className="text-3xl font-bold leading-none tracking-tight text-slate-900">{engPct}%</span>
           </div>
           <p className="mt-2 text-xs font-semibold text-slate-500">{engMeets} students met</p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow-sm border border-[var(--outline-variant)]/10">
+        <div className="rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Maths {targetThreshold}+</p>
           <div className="mt-3">
              <span className="text-3xl font-bold leading-none tracking-tight text-slate-900">{mathsPct}%</span>
           </div>
           <p className="mt-2 text-xs font-semibold text-slate-500">{mathsMeets} students met</p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow-sm border border-[var(--outline-variant)]/10">
+        <div className="rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PP vs Non-PP Gap</p>
           <div className="mt-3">
              <span className="text-3xl font-bold leading-none tracking-tight text-slate-900">
@@ -288,7 +302,7 @@ export default async function EMThresholdPage({
              {nonPpPct}% Non-PP vs {ppPct}% PP (Both E&M)
           </p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow-sm border border-[var(--outline-variant)]/10">
+        <div className="rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">SEND vs Non-SEND Gap</p>
           <div className="mt-3">
              <span className="text-3xl font-bold leading-none tracking-tight text-slate-900">
@@ -302,81 +316,129 @@ export default async function EMThresholdPage({
       </div>
 
       {/* Toolbar / Filters */}
-      <div className="flex gap-4 items-center flex-wrap">
-         <span className="text-sm font-semibold text-slate-700">Filter:</span>
-         <div className="flex gap-2">
-            <Link href={getFilterUrl('pp', null)} className={`rounded-xl px-3 py-1 text-xs font-bold ${!filterPp ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>All</Link>
-            <Link href={getFilterUrl('pp', 'true')} className={`rounded-xl px-3 py-1 text-xs font-bold ${filterPp === 'true' ? 'bg-violet-600 text-white' : 'bg-violet-50 text-violet-600'}`}>PP</Link>
-            <Link href={getFilterUrl('pp', 'false')} className={`rounded-xl px-3 py-1 text-xs font-bold ${filterPp === 'false' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>Non-PP</Link>
+      <div className="flex flex-wrap items-center gap-4">
+         <span className="text-sm font-semibold text-text">Filter:</span>
+         <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted">Threshold</span>
+            <Link
+              href={getFilterUrl("met", null)}
+              className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${
+                filterMet !== "true" && filterMet !== "all"
+                  ? "bg-slate-900 text-white"
+                  : "bg-surface-container-low text-muted hover:text-text"
+              }`}
+            >
+              Not met
+            </Link>
+            <Link
+              href={getFilterUrl("met", "true")}
+              className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${
+                filterMet === "true"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+              }`}
+            >
+              Met
+            </Link>
+            <Link
+              href={getFilterUrl("met", "all")}
+              className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${
+                filterMet === "all"
+                  ? "bg-slate-900 text-white"
+                  : "bg-surface-container-low text-muted hover:text-text"
+              }`}
+            >
+              All
+            </Link>
          </div>
-         <div className="w-px h-6 bg-[var(--outline-variant)]/30 mx-2"></div>
-         <div className="flex gap-2">
-            <Link href={getFilterUrl('send', null)} className={`rounded-xl px-3 py-1 text-xs font-bold ${!filterSend ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>All</Link>
-            <Link href={getFilterUrl('send', 'true')} className={`rounded-xl px-3 py-1 text-xs font-bold ${filterSend === 'true' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-600'}`}>SEND</Link>
-            <Link href={getFilterUrl('send', 'false')} className={`rounded-xl px-3 py-1 text-xs font-bold ${filterSend === 'false' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>Non-SEND</Link>
+         <div className="hidden h-6 w-px bg-border/30 sm:block" aria-hidden />
+         <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted">PP</span>
+            <Link href={getFilterUrl('pp', null)} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${!filterPp ? 'bg-slate-900 text-white' : 'bg-surface-container-low text-muted hover:text-text'}`}>All</Link>
+            <Link href={getFilterUrl('pp', 'true')} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${filterPp === 'true' ? 'bg-violet-600 text-white' : 'bg-violet-50 text-violet-600 hover:bg-violet-100'}`}>PP</Link>
+            <Link href={getFilterUrl('pp', 'false')} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${filterPp === 'false' ? 'bg-slate-900 text-white' : 'bg-surface-container-low text-muted hover:text-text'}`}>Non-PP</Link>
+         </div>
+         <div className="hidden h-6 w-px bg-border/30 sm:block" aria-hidden />
+         <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted">SEND</span>
+            <Link href={getFilterUrl('send', null)} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${!filterSend ? 'bg-slate-900 text-white' : 'bg-surface-container-low text-muted hover:text-text'}`}>All</Link>
+            <Link href={getFilterUrl('send', 'true')} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${filterSend === 'true' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'}`}>SEND</Link>
+            <Link href={getFilterUrl('send', 'false')} className={`rounded-xl px-3 py-1 text-xs font-bold calm-transition ${filterSend === 'false' ? 'bg-slate-900 text-white' : 'bg-surface-container-low text-muted hover:text-text'}`}>Non-SEND</Link>
          </div>
       </div>
 
-      {/* Explorer Match Table */}
-      <div className="mt-4 table-shell rounded-2xl border border-[var(--outline-variant)]/20 shadow-sm bg-white overflow-hidden">
+      {/* Student list (aligned with Explorer · Students table) */}
+      <div className="mt-4 table-shell">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-[var(--outline-variant)]/20 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <tr className="table-head-row text-left">
                 <th className="px-5 py-3">Name</th>
                 <th className="px-4 py-3">Flags</th>
                 <th className="px-4 py-3 text-center">English</th>
                 <th className="px-4 py-3 text-center">Maths</th>
-                <th className="px-4 py-3 text-center">Met Both?</th>
-                <th className="px-4 py-3 text-center">Overall Avg</th>
-                <th className="px-4 py-3 text-center">vs Prev Point</th>
+                <th className="px-4 py-3 text-center">Met both</th>
+                <th className="px-4 py-3 text-center">Overall avg</th>
+                <th className="px-4 py-3 text-center">vs prev point</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--outline-variant)]/10">
+            <tbody>
               {studentsData.length === 0 ? (
-                <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-500">No students match your criteria.</td></tr>
+                <tr className="table-row">
+                  <td colSpan={7} className="px-5 py-8 text-center text-muted">No students match your criteria.</td>
+                </tr>
               ) : (
                 studentsData.map((row) => (
-                  <tr key={row.id} className="group hover:bg-slate-50 transition-colors">
+                  <tr key={row.id} className="group table-row calm-transition">
                     {/* Name */}
-                    <td className="px-5 py-3.5">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900">{row.name}</span>
-                        <span className="text-[11px] text-slate-400">Year {row.year ?? "—"}</span>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-xs font-semibold text-on-surface-variant">
+                          {getInitials(row.name)}
+                        </div>
+                        <div className="flex min-w-0 flex-col">
+                          <span className="font-medium text-text">{row.name}</span>
+                          <span className="text-[11px] text-muted">Year {row.year ?? "—"}</span>
+                        </div>
                       </div>
                     </td>
 
                     {/* Flags */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex gap-1.5 flex-wrap">
+                    <td className="px-4 py-4">
+                      <div className="flex flex-wrap gap-1.5">
                         {row.sendFlag && (
-                          <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">SEND</span>
+                          <span className="rounded bg-primary-container px-2 py-0.5 text-[10px] font-semibold uppercase text-on-primary">
+                            SEN
+                          </span>
                         )}
                         {row.ppFlag && (
-                          <span className="rounded bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-700">PP</span>
+                          <span className="rounded bg-primary-container px-2 py-0.5 text-[10px] font-semibold uppercase text-on-primary">
+                            PP
+                          </span>
                         )}
                         {!row.sendFlag && !row.ppFlag && (
-                          <span className="text-xs text-slate-400">—</span>
+                          <span className="text-xs text-muted">—</span>
                         )}
                       </div>
                     </td>
 
                     {/* English Grade */}
-                    <td className="px-4 py-3.5 text-center">
+                    <td className="px-4 py-4 text-center">
                       <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${gcseColour(row.eRaw)}`}>
                         {row.eRaw}
                       </span>
                     </td>
 
                     {/* Maths Grade */}
-                    <td className="px-4 py-3.5 text-center">
+                    <td className="px-4 py-4 text-center">
                       <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${gcseColour(row.mRaw)}`}>
                         {row.mRaw}
                       </span>
                     </td>
 
                     {/* Met Threshold */}
-                    <td className="px-4 py-3.5 text-center flex items-center justify-center h-14">
+                    <td className="px-4 py-4 text-center align-middle">
+                      <div className="inline-flex items-center justify-center">
                       {row.met ? (
                          <div className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
@@ -386,15 +448,16 @@ export default async function EMThresholdPage({
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                          </div>
                       )}
+                      </div>
                     </td>
 
                     {/* Overall Average */}
-                    <td className="px-4 py-3.5 text-center">
-                      <span className="font-bold text-slate-800">{row.cAvg ?? "—"}</span>
+                    <td className="px-4 py-4 text-center">
+                      <span className="font-semibold tabular-nums text-text">{row.cAvg ?? "—"}</span>
                     </td>
 
                     {/* Direction of Travel */}
-                    <td className="px-4 py-3.5 text-center">
+                    <td className="px-4 py-4 text-center">
                       {getTrendIcon(row.avgDiff)}
                     </td>
                   </tr>
@@ -402,6 +465,17 @@ export default async function EMThresholdPage({
               )}
             </tbody>
           </table>
+        </div>
+        <div className="border-t border-border/20 px-5 py-3.5">
+          <p className="text-[0.8125rem] text-muted">
+            Showing{" "}
+            <span className="font-semibold text-text">{studentsData.length}</span>
+            {filterMet === "all"
+              ? " students"
+              : filterMet === "true"
+                ? " students who met both"
+                : " students not yet meeting both"}
+          </p>
         </div>
       </div>
     </div>
