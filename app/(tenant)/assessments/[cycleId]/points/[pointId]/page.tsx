@@ -335,7 +335,7 @@ export default function ResultPointPage() {
                 </div>
 
                 {/* 5+ White Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 border border-[var(--outline-variant)]/10"
+                <div className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5"
                      onClick={() => setModalView({ type: 'EM', label: "E&M 5+", students: metrics.gcseBasics!.students5, target: 5 })}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 5+</p>
                   <div className="mt-3">
@@ -347,7 +347,7 @@ export default function ResultPointPage() {
                 </div>
 
                 {/* 7+ White Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 border border-[var(--outline-variant)]/10"
+                <div className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5"
                      onClick={() => setModalView({ type: 'EM', label: "E&M 7+", students: metrics.gcseBasics!.students7, target: 7 })}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 7+</p>
                   <div className="mt-3">
@@ -365,7 +365,7 @@ export default function ResultPointPage() {
                   { label: "PP Gap — 4+ threshold", pp: metrics.gcseBasics.ppEm4, nonPp: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4, gapTheme: "red" },
                   { label: "PP Gap — 5+ threshold", pp: metrics.gcseBasics.ppEm5, nonPp: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5, gapTheme: "orange" },
                 ].map(({ label, pp, nonPp, gap, gapTheme }) => (
-                  <div key={label} className="rounded-2xl bg-white p-5 shadow-sm border border-[var(--outline-variant)]/10">
+                  <div key={label} className="rounded-2xl bg-white p-5 shadow-sm">
                     <div className="flex items-start justify-between">
                        <div>
                          <h3 className="text-base font-bold tracking-tight text-slate-900">{label}</h3>
