@@ -253,7 +253,7 @@ function LeadershipHome({
                 <div
                   key={oc.id}
                   id={i === firstImmediateSupportIdx ? "immediate-support-needed" : undefined}
-                  className={`flex min-w-0 items-center justify-between gap-2 rounded-xl p-3 calm-transition sm:gap-3 sm:p-4 ${
+                  className={`flex min-w-0 flex-col gap-2 rounded-xl p-3 calm-transition sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-4 ${
                     i === firstImmediateSupportIdx ? "scroll-mt-20" : ""
                   } ${
                     oc.status === "OPEN" || oc.status === "ACKNOWLEDGED"
@@ -263,15 +263,15 @@ function LeadershipHome({
                 >
                   <Link
                     href={`/on-call/${oc.id}`}
-                    className="flex min-w-0 flex-1 items-center gap-2 calm-transition hover:opacity-90 sm:gap-3"
+                    className="flex min-w-0 flex-1 items-center gap-2 calm-transition hover:opacity-90 sm:min-w-0 sm:gap-3"
                   >
                     <Avatar name={oc.requesterName} size="md" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-text">{oc.requesterName}</p>
                       <p className="truncate text-xs text-muted">{oc.location}</p>
                     </div>
                   </Link>
-                  <div className="flex shrink-0 flex-col items-end gap-1 text-right sm:flex-row sm:items-center sm:gap-2">
+                  <div className="flex min-w-0 shrink-0 flex-row flex-wrap items-center justify-end gap-x-2 gap-y-1 text-right sm:flex-nowrap">
                     {(oc.status === "OPEN" || oc.status === "ACKNOWLEDGED") ? (
                       <>
                         <div className="hidden max-w-[140px] flex-col items-end gap-0.5 sm:flex sm:max-w-none">
@@ -293,7 +293,7 @@ function LeadershipHome({
                         </Link>
                       </>
                     ) : (
-                      <span className="max-w-[9rem] text-[10px] text-muted sm:max-w-none sm:text-xs">
+                      <span className="min-w-0 max-w-full truncate text-[10px] text-muted sm:max-w-none sm:overflow-visible sm:whitespace-normal sm:text-xs">
                         RESOLVED · {new Date(oc.resolvedAt ?? oc.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     )}
