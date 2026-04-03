@@ -108,7 +108,7 @@ export default async function CycleDetailPage({
 
       {/* Summary stats custom to exact design */}
       <div className="grid grid-cols-4 gap-6">
-        <div className="rounded-2xl border border-[var(--outline-variant)]/20 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl bg-white p-6 shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Result Points</p>
           <p className="mt-3 text-[40px] font-bold leading-none tracking-[-0.03em] text-slate-900">{cycle.points.length}</p>
           <div className="mt-6 flex h-1 w-full overflow-hidden rounded-full bg-slate-100">
@@ -116,7 +116,7 @@ export default async function CycleDetailPage({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[var(--outline-variant)]/20 bg-white p-6 shadow-sm flex flex-col justify-between">
+        <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Subjects</p>
             <p className="mt-3 text-[40px] font-bold leading-none tracking-[-0.03em] text-slate-900">{totalSubjects}</p>
@@ -124,7 +124,7 @@ export default async function CycleDetailPage({
           <p className="mt-6 text-xs font-semibold text-slate-500">Across all departments</p>
         </div>
 
-        <div className="rounded-2xl border border-[var(--outline-variant)]/20 bg-white p-6 shadow-sm flex flex-col justify-between">
+        <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Entries Recorded</p>
             <p className="mt-3 text-[40px] font-bold leading-none tracking-[-0.03em] text-slate-900">{totalEntries.toLocaleString()}</p>
@@ -132,7 +132,7 @@ export default async function CycleDetailPage({
           <p className="mt-6 text-xs font-bold text-emerald-500">↗ +12% from Y10</p>
         </div>
 
-        <div className="rounded-2xl border border-[var(--outline-variant)]/20 bg-white p-6 shadow-sm flex flex-col justify-between">
+        <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Data Integrity</p>
             <p className="mt-3 text-[40px] font-bold leading-none tracking-[-0.03em] text-slate-900">99.7%</p>
@@ -154,7 +154,7 @@ export default async function CycleDetailPage({
         </div>
 
         {cycle.points.length === 0 && (
-          <div className="rounded-2xl border border-[var(--outline-variant)]/20 bg-white py-12 text-center shadow-sm">
+          <div className="rounded-2xl bg-white py-12 text-center shadow-sm">
             <p className="text-slate-500">No result points yet.</p>
             <Link
               href={`/assessments/${cycle.id}/points/new`}
@@ -175,7 +175,7 @@ export default async function CycleDetailPage({
             return (
               <div
                 key={point.id}
-                className="flex rounded-3xl border border-[var(--outline-variant)]/10 bg-white p-8 shadow-sm transition-all hover:shadow-md"
+                className="flex rounded-3xl bg-white p-8 shadow-sm transition-all hover:shadow-md"
               >
                 {/* Ordinal on the left */}
                 <div className="w-12 shrink-0 pt-8">
