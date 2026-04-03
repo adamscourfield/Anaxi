@@ -276,35 +276,35 @@ export default function ResultPointPage() {
         <>
           {/* Summary stats */}
           {/* Summary stats custom */}
-          <div className="grid grid-cols-3 gap-6">
-            <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between min-h-[120px]">
+          <div className="grid grid-cols-3 gap-5">
+            <div className="rounded-2xl bg-white p-5 shadow-sm flex flex-col justify-between">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Students Assessed</p>
-              <div className="flex items-baseline gap-2 mt-auto">
-                <span className="text-[44px] font-bold leading-none tracking-tight text-slate-900">{metrics.totalStudents}</span>
-                <span className="text-xs font-semibold text-slate-400">Enrolled Total</span>
+              <div className="flex items-baseline gap-2 mt-3">
+                <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.totalStudents}</span>
+                <span className="text-[11px] font-semibold text-slate-400">Enrolled Total</span>
               </div>
             </div>
-            <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between min-h-[120px]">
+            <div className="rounded-2xl bg-white p-5 shadow-sm flex flex-col justify-between">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Grade Entries</p>
-              <div className="flex items-baseline gap-2 mt-auto">
-                <span className="text-[44px] font-bold leading-none tracking-tight text-slate-900">{metrics.totalEntries.toLocaleString()}</span>
-                <span className="text-xs font-bold text-emerald-500">↗ 98% Completion</span>
+              <div className="flex items-baseline gap-2 mt-3">
+                <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.totalEntries.toLocaleString()}</span>
+                <span className="text-[11px] font-bold text-emerald-500">↗ 98% Completion</span>
               </div>
             </div>
-            <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col justify-between min-h-[120px]">
+            <div className="rounded-2xl bg-white p-5 shadow-sm flex flex-col justify-between">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Subjects</p>
-              <div className="flex items-baseline gap-2 mt-auto">
-                <span className="text-[44px] font-bold leading-none tracking-tight text-slate-900">{metrics.subjects.length}</span>
-                <span className="text-xs font-semibold text-slate-400">Reporting Depts</span>
+              <div className="flex items-baseline gap-2 mt-3">
+                <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.subjects.length}</span>
+                <span className="text-[11px] font-semibold text-slate-400">Reporting Depts</span>
               </div>
             </div>
           </div>
 
           {/* GCSE Basics */}
           {isGcse && metrics.gcseBasics && (
-            <section className="space-y-6 pt-2">
+            <section className="space-y-4 pt-1">
               <div className="flex items-center justify-between">
-                <h2 className="text-[28px] font-bold tracking-tight text-slate-900">
+                <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
                   English & Maths — Headline Measures
                 </h2>
                 <button className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-slate-100 text-slate-400 transition-colors">
@@ -314,89 +314,89 @@ export default function ResultPointPage() {
                 </button>
               </div>
               
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-3 gap-4">
                 {/* 4+ Dark Card */}
-                <div className="relative overflow-hidden rounded-[20px] bg-[#0f172a] p-8 cursor-pointer shadow-md calm-transition hover:shadow-lg hover:-translate-y-0.5"
+                <div className="relative overflow-hidden rounded-2xl bg-[#0f172a] p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5"
                      onClick={() => setModalView({ type: 'EM', label: "E&M 4+", students: metrics.gcseBasics!.students4, target: 4 })}>
                   <div className="flex justify-between items-start">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 4+</p>
-                    <div className="h-10 w-10 text-slate-700/50 absolute top-4 right-4">
+                    <div className="h-7 w-7 text-slate-700/60 absolute top-4 right-4">
                       <svg viewBox="0 0 24 24" fill="currentColor">
                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                       </svg>
                     </div>
                   </div>
-                  <div className="mt-6">
-                    <span className="text-[56px] font-bold leading-none tracking-tight text-white">{metrics.gcseBasics.em4}%</span>
+                  <div className="mt-3">
+                    <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-white">{metrics.gcseBasics.em4}%</span>
                   </div>
-                  <div className="mt-8 flex h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                    <div className="bg-emerald-500" style={{ width: `${metrics.gcseBasics.em4}%` }}></div>
+                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                    <div className="bg-emerald-500 rounded-r-full" style={{ width: `${metrics.gcseBasics.em4}%` }}></div>
                   </div>
                 </div>
 
                 {/* 5+ White Card */}
-                <div className="relative overflow-hidden rounded-[20px] bg-white p-8 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5"
+                <div className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 border border-[var(--outline-variant)]/10"
                      onClick={() => setModalView({ type: 'EM', label: "E&M 5+", students: metrics.gcseBasics!.students5, target: 5 })}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 5+</p>
-                  <div className="mt-6">
-                    <span className="text-[56px] font-bold leading-none tracking-tight text-slate-900">{metrics.gcseBasics.em5}%</span>
+                  <div className="mt-3">
+                    <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.gcseBasics.em5}%</span>
                   </div>
-                  <div className="mt-8 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div className="bg-[#0f172a] h-full" style={{ width: `${metrics.gcseBasics.em5}%` }}></div>
+                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div className="bg-[#0f172a] h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em5}%` }}></div>
                   </div>
                 </div>
 
                 {/* 7+ White Card */}
-                <div className="relative overflow-hidden rounded-[20px] bg-white p-8 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5"
+                <div className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 border border-[var(--outline-variant)]/10"
                      onClick={() => setModalView({ type: 'EM', label: "E&M 7+", students: metrics.gcseBasics!.students7, target: 7 })}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 7+</p>
-                  <div className="mt-6">
-                    <span className="text-[56px] font-bold leading-none tracking-tight text-slate-900">{metrics.gcseBasics.em7}%</span>
+                  <div className="mt-3">
+                    <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.gcseBasics.em7}%</span>
                   </div>
-                  <div className="mt-8 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div className="bg-slate-300 h-full" style={{ width: `${metrics.gcseBasics.em7}%` }}></div>
+                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div className="bg-slate-300 h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em7}%` }}></div>
                   </div>
                 </div>
               </div>
 
               {/* PP gap full cards */}
-              <div className="grid grid-cols-2 gap-6 pt-4">
+              <div className="grid grid-cols-2 gap-4 pt-2">
                 {[
                   { label: "PP Gap — 4+ threshold", pp: metrics.gcseBasics.ppEm4, nonPp: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4, gapTheme: "red" },
                   { label: "PP Gap — 5+ threshold", pp: metrics.gcseBasics.ppEm5, nonPp: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5, gapTheme: "orange" },
                 ].map(({ label, pp, nonPp, gap, gapTheme }) => (
-                  <div key={label} className="rounded-[24px] bg-white p-8 shadow-sm">
+                  <div key={label} className="rounded-2xl bg-white p-5 shadow-sm border border-[var(--outline-variant)]/10">
                     <div className="flex items-start justify-between">
                        <div>
-                         <h3 className="text-[20px] font-bold tracking-tight text-slate-900">{label}</h3>
-                         <p className="text-[13px] font-medium text-slate-400 mt-1.5">Pupil Premium vs Non-Pupil Premium</p>
+                         <h3 className="text-base font-bold tracking-tight text-slate-900">{label}</h3>
+                         <p className="text-xs font-medium text-slate-400 mt-0.5">Pupil Premium vs Non-Pupil Premium</p>
                        </div>
-                       <div className={`rounded-xl px-3 py-1.5 text-xs font-bold ${
+                       <div className={`rounded-lg px-2.5 py-1 text-[11px] font-bold ${
                           gapTheme === 'red' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
                        }`}>
                          {gap > 0 ? "+" : ""}{gap}pp Gap
                        </div>
                     </div>
 
-                    <div className="mt-12 space-y-8">
+                    <div className="mt-6 space-y-4">
                       {/* NON-PP */}
                       <div>
-                        <div className="flex justify-between items-baseline mb-3">
-                           <span className="text-[11px] font-bold uppercase tracking-widest text-[#0f172a]">NON-PP</span>
-                           <span className="text-[28px] font-bold leading-none tracking-tight text-slate-900">{nonPp}%</span>
+                        <div className="flex justify-between items-baseline mb-2">
+                           <span className="text-[10px] font-bold uppercase tracking-widest text-[#0f172a]">NON-PP</span>
+                           <span className="text-xl font-bold leading-none tracking-tight text-slate-900">{nonPp}%</span>
                         </div>
-                        <div className="flex h-3.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
                           <div className="bg-[#0f172a] h-full rounded-r-full" style={{ width: `${nonPp}%` }}></div>
                         </div>
                       </div>
 
                       {/* PP */}
                       <div>
-                        <div className="flex justify-between items-baseline mb-3">
-                           <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">PP STUDENTS</span>
-                           <span className="text-[28px] font-bold leading-none tracking-tight text-slate-600">{pp}%</span>
+                        <div className="flex justify-between items-baseline mb-2">
+                           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PP STUDENTS</span>
+                           <span className="text-xl font-bold leading-none tracking-tight text-slate-600">{pp}%</span>
                         </div>
-                        <div className="flex h-3.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
                           <div className="bg-slate-300 h-full rounded-r-full" style={{ width: `${pp}%` }}></div>
                         </div>
                       </div>
