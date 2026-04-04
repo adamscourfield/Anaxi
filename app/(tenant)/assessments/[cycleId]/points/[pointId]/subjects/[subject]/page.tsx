@@ -2,7 +2,10 @@
  * Subject Detail Page
  *
  * Drill-down for a single subject within a result point.
- * Shows grade distribution, PP gap, SEND gap, and student-level data.
+ * Shows grade distribution, PP gap, SEND gap, and student-level data with:
+ *  - Average grade across all subjects + diff vs this subject
+ *  - Filter/search by name, PP, SEND
+ *  - Student links carry ?from= for contextual back navigation
  */
 
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -12,9 +15,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
+import { SubjectStudentsFilterBar } from "./SubjectStudentsFilterBar";
 import type { GradeFormat } from "@prisma/client";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const A_LEVEL_SCORE: Record<string, number> = {
+  "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1,
+};
+const A_LEVEL_ORDER = ["A*", "A", "B", "C", "D", "E", "U"] as const;
 
 function getInitials(name: string): string {
   const parts = name.split(" ").filter(Boolean);
@@ -61,6 +70,21 @@ function gcseThresholdPct(
   return Math.round((above.length / present.length) * 100);
 }
 
+function DiffCell({ diff }: { diff: number | null }) {
+  if (diff === null) return <span className="text-muted tabular-nums">—</span>;
+  const abs = Math.abs(diff);
+  if (abs < 0.1) return <span className="text-muted tabular-nums">±0.0</span>;
+  const sign = diff > 0 ? "+" : "−";
+  const colour = diff > 0
+    ? "text-emerald-600"
+    : "text-red-600";
+  return (
+    <span className={`font-semibold tabular-nums ${colour}`}>
+      {sign}{abs.toFixed(1)}
+    </span>
+  );
+}
+
 function GapBadge({ gap }: { gap: number }) {
   const cls = gap <= 5
     ? "bg-emerald-50 text-emerald-700"
@@ -78,8 +102,10 @@ function GapBadge({ gap }: { gap: number }) {
 
 export default async function SubjectDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ cycleId: string; pointId: string; subject: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { cycleId, pointId, subject: encodedSubject } = await params;
   const subjectName = decodeURIComponent(encodedSubject);
@@ -93,12 +119,9 @@ export default async function SubjectDetailPage({
   });
   if (!currentPoint) notFound();
 
+  // Fetch this subject's assessment
   const assessment = await prisma.assessment.findFirst({
-    where: {
-      pointId,
-      tenantId: user.tenantId,
-      subject: subjectName,
-    },
+    where: { pointId, tenantId: user.tenantId, subject: subjectName },
     include: {
       results: {
         where: { tenantId: user.tenantId },
@@ -110,11 +133,43 @@ export default async function SubjectDetailPage({
       },
     },
   });
-
   if (!assessment) notFound();
 
   const isGcse = assessment.gradeFormat === "GCSE";
-  const A_LEVEL_ORDER = ["A*", "A", "B", "C", "D", "E", "U"] as const;
+
+  // Fetch all assessments in this point to compute per-student averages
+  const allAssessments = await prisma.assessment.findMany({
+    where: {
+      pointId,
+      tenantId: user.tenantId,
+      gradeFormat: assessment.gradeFormat,
+    },
+    include: {
+      results: {
+        where: { tenantId: user.tenantId, status: "PRESENT" },
+        select: { studentId: true, normalizedScore: true, rawValue: true },
+      },
+    },
+  });
+
+  // Build per-student average (on the grade's native scale)
+  const sumMap = new Map<string, number>();
+  const countMap = new Map<string, number>();
+  for (const a of allAssessments) {
+    for (const r of a.results) {
+      const score = isGcse
+        ? (r.normalizedScore !== null ? r.normalizedScore * 9 : null)
+        : (A_LEVEL_SCORE[r.rawValue.trim().toUpperCase()] ?? null);
+      if (score !== null) {
+        sumMap.set(r.studentId, (sumMap.get(r.studentId) ?? 0) + score);
+        countMap.set(r.studentId, (countMap.get(r.studentId) ?? 0) + 1);
+      }
+    }
+  }
+  const studentAvgMap = new Map<string, number>();
+  for (const [sid, sum] of sumMap.entries()) {
+    studentAvgMap.set(sid, sum / countMap.get(sid)!);
+  }
 
   const present = assessment.results.filter(r => r.status === "PRESENT");
 
@@ -131,7 +186,7 @@ export default async function SubjectDetailPage({
 
   const distTotal = distribution.reduce((s, d) => s + d.count, 0);
 
-  // PP gap (GCSE only)
+  // PP / SEND gap data (GCSE only)
   const ppResults = assessment.results.filter(r => r.student.ppFlag);
   const nonPpResults = assessment.results.filter(r => !r.student.ppFlag);
   const sendResults = assessment.results.filter(r => r.student.sendFlag);
@@ -159,17 +214,26 @@ export default async function SubjectDetailPage({
     gap5: gcseThresholdPct(nonSendResults, 5) - gcseThresholdPct(sendResults, 5),
   } : null;
 
-  // Student list sorted by grade descending then name
-  const students = present
-    .map(r => ({
-      id: r.student.id,
-      name: r.student.fullName,
-      year: r.student.yearGroup,
-      ppFlag: r.student.ppFlag,
-      sendFlag: r.student.sendFlag,
-      rawValue: r.rawValue,
-      normalizedScore: r.normalizedScore,
-    }))
+  // Build student rows with avg + diff
+  const allStudents = present
+    .map(r => {
+      const thisGrade = isGcse
+        ? (r.normalizedScore !== null ? r.normalizedScore * 9 : null)
+        : (A_LEVEL_SCORE[r.rawValue.trim().toUpperCase()] ?? null);
+      const avg = studentAvgMap.get(r.student.id) ?? null;
+      const diff = thisGrade !== null && avg !== null ? thisGrade - avg : null;
+      return {
+        id: r.student.id,
+        name: r.student.fullName,
+        year: r.student.yearGroup,
+        ppFlag: r.student.ppFlag,
+        sendFlag: r.student.sendFlag,
+        rawValue: r.rawValue,
+        normalizedScore: r.normalizedScore,
+        avg,
+        diff,
+      };
+    })
     .sort((a, b) => {
       if (isGcse) {
         const aScore = a.normalizedScore ?? -1;
@@ -182,6 +246,25 @@ export default async function SubjectDetailPage({
       }
       return a.name.localeCompare(b.name);
     });
+
+  // Apply filters from query params
+  const rawParams = await searchParams;
+  const filterQ = (Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q ?? "").trim().toLowerCase();
+  const filterPp = Array.isArray(rawParams.pp) ? rawParams.pp[0] : (rawParams.pp ?? "");
+  const filterSend = Array.isArray(rawParams.send) ? rawParams.send[0] : (rawParams.send ?? "");
+
+  let students = allStudents;
+  if (filterQ) students = students.filter(s => s.name.toLowerCase().includes(filterQ));
+  if (filterPp === "true") students = students.filter(s => s.ppFlag);
+  if (filterPp === "false") students = students.filter(s => !s.ppFlag);
+  if (filterSend === "true") students = students.filter(s => s.sendFlag);
+  if (filterSend === "false") students = students.filter(s => !s.sendFlag);
+
+  const hasFilters = !!(filterQ || filterPp || filterSend);
+  const basePath = `/assessments/${cycleId}/points/${pointId}/subjects/${encodedSubject}`;
+
+  // ?from= param for student back navigation
+  const fromParam = `?from=${encodeURIComponent(basePath)}`;
 
   return (
     <div className="w-full space-y-8 pb-16">
@@ -406,7 +489,18 @@ export default async function SubjectDetailPage({
 
       {/* Student List */}
       <div className="space-y-3">
-        <SectionHeader title="Students" subtitle={`${present.length} assessed`} />
+        <SectionHeader title="Students" subtitle={`${allStudents.length} assessed`} />
+
+        <SubjectStudentsFilterBar
+          basePath={basePath}
+          defaultSearch={filterQ}
+          defaultPp={filterPp}
+          defaultSend={filterSend}
+          hasFilters={hasFilters}
+          totalShown={students.length}
+          totalAll={allStudents.length}
+        />
+
         <div className="table-shell">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -416,12 +510,16 @@ export default async function SubjectDetailPage({
                   <th className="px-4 py-3">Year</th>
                   <th className="px-4 py-3">Flags</th>
                   <th className="px-4 py-3 text-center">Grade</th>
+                  <th className="px-4 py-3 text-center">Overall avg</th>
+                  <th className="px-4 py-3 text-center">vs avg</th>
                 </tr>
               </thead>
               <tbody>
                 {students.length === 0 ? (
                   <tr className="table-row">
-                    <td colSpan={4} className="px-5 py-8 text-center text-muted">No student data available.</td>
+                    <td colSpan={6} className="px-5 py-8 text-center text-muted">
+                      No students match your filters.
+                    </td>
                   </tr>
                 ) : (
                   students.map(student => (
@@ -433,7 +531,7 @@ export default async function SubjectDetailPage({
                             {getInitials(student.name)}
                           </div>
                           <Link
-                            href={`/students/${student.id}`}
+                            href={`/students/${student.id}${fromParam}`}
                             className="font-medium text-text calm-transition hover:text-accent"
                           >
                             {student.name}
@@ -471,6 +569,22 @@ export default async function SubjectDetailPage({
                           {student.rawValue}
                         </span>
                       </td>
+
+                      {/* Overall average */}
+                      <td className="px-4 py-4 text-center">
+                        {student.avg !== null ? (
+                          <span className="font-semibold tabular-nums text-text">
+                            {student.avg.toFixed(1)}
+                          </span>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+
+                      {/* Diff vs avg */}
+                      <td className="px-4 py-4 text-center">
+                        <DiffCell diff={student.diff} />
+                      </td>
                     </tr>
                   ))
                 )}
@@ -479,7 +593,8 @@ export default async function SubjectDetailPage({
           </div>
           <div className="border-t border-border/20 px-5 py-3.5">
             <p className="text-[0.8125rem] text-muted">
-              <span className="font-semibold text-text">{students.length}</span> students assessed in {subjectName}
+              Showing <span className="font-semibold text-text">{students.length}</span> of{" "}
+              <span className="font-semibold text-text">{allStudents.length}</span> students in {subjectName}
             </p>
           </div>
         </div>
