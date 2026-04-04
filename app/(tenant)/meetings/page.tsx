@@ -79,7 +79,6 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
           value={stats.openActions}
           tone="softGrey"
           accent="accent"
-          accentPlacement="top"
           context={
             stats.newActionsSinceMonday > 0 ? (
               <span className="flex items-center gap-1 text-[var(--coral)] font-medium">
@@ -96,12 +95,10 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
           value={`${stats.completionRate}%`}
           tone="softBlueGrey"
           accent="success"
-          accentPlacement="top"
           context="Institutional target: 95%"
         />
         {/* Next Up — custom card */}
         <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-[#F1F3F5] shadow-none">
-          <div className="h-1 bg-accent" />
           <div className="px-5 py-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Next Up</p>
             {stats.nextMeeting ? (

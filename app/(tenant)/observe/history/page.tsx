@@ -169,11 +169,6 @@ export default async function ObservationHistoryPage({
     !!signalKeyFilter ||
     useWindow;
 
-  const phaseFilterOptions = Array.from(VALID_PHASE_FILTERS).map((value) => ({
-    value,
-    label: formatPhaseLabel(value),
-  }));
-
   const signalFilterOptions = [...SIGNAL_DEFINITIONS]
     .sort((a, b) => a.order - b.order)
     .map((s) => ({
@@ -241,9 +236,8 @@ export default async function ObservationHistoryPage({
         teachers={visibleTeachers.map((t: any) => ({ id: t.id, fullName: t.fullName }))}
         observers={(observers as any[]).map((o: any) => ({ id: o.id, fullName: o.fullName }))}
         subjects={(distinctSubjects as { subject: string }[]).map((r) => r.subject)}
-        phaseOptions={phaseFilterOptions}
         signalOptions={signalFilterOptions}
-        defaults={{ teacherId, observerId, subject, from, to, phase: phaseFilter, signalKey: signalKeyFilter }}
+        defaults={{ teacherId, observerId, subject, from, to, signalKey: signalKeyFilter }}
         preservedWindowDays={useWindow ? windowDays : null}
         showTeacherFilters={user.role !== "TEACHER"}
         hasFilters={hasFilters}
