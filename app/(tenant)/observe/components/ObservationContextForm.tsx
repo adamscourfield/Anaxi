@@ -55,6 +55,28 @@ const PHASE_OPTIONS: { key: Phase; label: string; icon: React.ReactNode }[] = [
       </svg>
     ),
   },
+  {
+    key: "THRESHOLD",
+    label: "Threshold",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="12" cy="8" r="1.25" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
+    key: "BOOKS",
+    label: "Book Look",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 6.5C2 5.12 3.12 4 4.5 4H12v16H4.5A2.5 2.5 0 0 1 2 17.5v-11z" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M12 4h7.5A2.5 2.5 0 0 1 22 6.5v11A2.5 2.5 0 0 1 19.5 20H12V4z" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M12 4v16" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
 ];
 
 export function ObservationContextForm({
