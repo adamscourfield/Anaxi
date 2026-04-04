@@ -211,7 +211,7 @@ export function ObservationContextForm({
             <p className="mt-1 text-[0.8125rem] text-muted">
               Select the specific pedagogical phase currently being observed.
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {PHASE_OPTIONS.map((phase) => {
                 const selected = context.phase === phase.key;
                 return (
