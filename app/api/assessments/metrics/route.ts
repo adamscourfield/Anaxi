@@ -134,8 +134,11 @@ export async function GET(req: Request) {
         send: {
           count: sendResults.filter((r) => r.status === "PRESENT").length,
           t4: gcseThresholdPct(sendResults, 4),
+          t5: gcseThresholdPct(sendResults, 5),
           nonSendT4: gcseThresholdPct(nonSendResults, 4),
+          nonSendT5: gcseThresholdPct(nonSendResults, 5),
           gap4: gcseThresholdPct(nonSendResults, 4) - gcseThresholdPct(sendResults, 4),
+          gap5: gcseThresholdPct(nonSendResults, 5) - gcseThresholdPct(sendResults, 5),
         },
         distribution: dist,
         students: present.map((r) => ({

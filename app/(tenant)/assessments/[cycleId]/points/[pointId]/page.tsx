@@ -32,7 +32,7 @@ type SubjectMeasure = {
     count: number; t4: number; t5: number;
     nonPpT4: number; nonPpT5: number; gap4: number; gap5: number;
   } | null;
-  send: { count: number; t4: number; nonSendT4: number; gap4: number } | null;
+  send: { count: number; t4: number; t5: number; nonSendT4: number; nonSendT5: number; gap4: number; gap5: number } | null;
   distribution: Array<{ grade: string; count: number }>;
   students: StudentResult[];
 };
@@ -47,8 +47,7 @@ type GcseBasics = {
   students7: EMStudentResult[];
 };
 
-type ModalView = 
-  | { type: 'SUBJECT', subject: string, students: StudentResult[] }
+type ModalView =
   | { type: 'EM', label: string, students: EMStudentResult[], target: number }
   | { type: 'GRADE', subject: string, grade: string, students: StudentResult[] }
   | null;
@@ -106,14 +105,16 @@ function gapCls(gap: number) {
   return "text-[var(--error)]";
 }
 
-function PctBar({ pct, cls }: { pct: number; cls: string }) {
+function GapBadge({ gap }: { gap: number }) {
+  const cls = gap <= 5
+    ? "bg-emerald-50 text-emerald-700"
+    : gap <= 15
+      ? "bg-amber-50 text-amber-700"
+      : "bg-red-50 text-red-700";
   return (
-    <div className="flex items-center gap-2">
-      <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--surface-container)]">
-        <div className={`absolute inset-y-0 left-0 rounded-full ${cls}`} style={{ width: `${Math.min(100, pct)}%` }} />
-      </div>
-      <span className="w-9 text-right text-sm font-bold tabular-nums">{pct}%</span>
-    </div>
+    <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-bold tabular-nums ${cls}`}>
+      {gap > 0 ? "+" : ""}{gap}pp
+    </span>
   );
 }
 
@@ -207,56 +208,60 @@ export default function ResultPointPage() {
     return <div className="w-full py-16 text-center text-sm text-[var(--on-surface-muted)]">Loading…</div>;
   }
 
+  // Build meta badges for PageHeader
+  const metaBadges = point ? (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
+        {POINT_TYPE_LABELS[point.pointType]}
+      </span>
+      <span className="rounded-full bg-[var(--surface-container)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">
+        {STATUS_LABELS[point.resultStatus]}
+      </span>
+      {point.isFinalPoint && (
+        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+          Final
+        </span>
+      )}
+    </div>
+  ) : null;
+
+  const headerActions = point ? (
+    <>
+      {point.resultStatus !== "LOCKED" && (
+        <Link
+          href={`/assessments/${cycleId}/points/${pointId}/upload`}
+          className="rounded-lg border border-[var(--outline-variant)] px-3 py-1.5 text-sm text-[var(--on-surface)] calm-transition hover:bg-[var(--surface-container-low)]"
+        >
+          Upload results
+        </Link>
+      )}
+      <Link
+        href={`/assessments/${cycleId}/compare?from=${pointId}`}
+        className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white calm-transition hover:opacity-90"
+      >
+        Compare →
+      </Link>
+    </>
+  ) : null;
+
   return (
     <div className="w-full space-y-7">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
-        <Link href="/assessments" className="hover:underline">Cycles</Link>
+        <Link href="/assessments" className="calm-transition hover:text-[var(--on-surface)]">Cycles</Link>
         <span>›</span>
-        <Link href={`/assessments/${cycleId}`} className="hover:underline">{point?.cycle.label ?? "Cycle"}</Link>
+        <Link href={`/assessments/${cycleId}`} className="calm-transition hover:text-[var(--on-surface)]">{point?.cycle.label ?? "Cycle"}</Link>
         <span>›</span>
         <span className="text-[var(--on-surface)]">{point?.label ?? "Result point"}</span>
       </div>
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          {point && (
-            <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
-                {POINT_TYPE_LABELS[point.pointType]}
-              </span>
-              <span className="rounded-full bg-[var(--surface-container)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">
-                {STATUS_LABELS[point.resultStatus]}
-              </span>
-              {point.isFinalPoint && (
-                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
-                  FINAL
-                </span>
-              )}
-            </div>
-          )}
-          <h1 className="text-[28px] font-bold tracking-[-0.03em] text-[var(--on-surface)] sm:text-[36px]">
-            {point?.label ?? "Result point"}
-          </h1>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          {point?.resultStatus !== "LOCKED" && (
-            <Link
-              href={`/assessments/${cycleId}/points/${pointId}/upload`}
-              className="rounded-lg border border-[var(--outline-variant)] px-3 py-1.5 text-sm text-[var(--on-surface)] hover:bg-[var(--surface-container-low)]"
-            >
-              Upload results
-            </Link>
-          )}
-          <Link
-            href={`/assessments/${cycleId}/compare?from=${pointId}`}
-            className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
-          >
-            Compare →
-          </Link>
-        </div>
-      </div>
+      {/* Page Header */}
+      <PageHeader
+        eyebrow={point?.cycle.label}
+        title={point?.label ?? "Result Point"}
+        meta={metaBadges}
+        actions={headerActions}
+      />
 
       {error && <p className="text-sm text-[var(--error)]">{error}</p>}
 
@@ -275,45 +280,17 @@ export default function ResultPointPage() {
       {metrics && metrics.totalEntries > 0 && (
         <>
           {/* Summary stats */}
-          {/* Summary stats custom */}
           <div className="grid grid-cols-3 gap-5">
-            <div className="rounded-2xl bg-white p-5 shadow-sm flex flex-col justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Students Assessed</p>
-              <div className="flex items-baseline gap-2 mt-3">
-                <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.totalStudents}</span>
-                <span className="text-[11px] font-semibold text-slate-400">Enrolled Total</span>
-              </div>
-            </div>
-            <div className="rounded-2xl bg-white p-5 shadow-sm flex flex-col justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Grade Entries</p>
-              <div className="flex items-baseline gap-2 mt-3">
-                <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.totalEntries.toLocaleString()}</span>
-                <span className="text-[11px] font-bold text-emerald-500">↗ 98% Completion</span>
-              </div>
-            </div>
-            <div className="rounded-2xl bg-white p-5 shadow-sm flex flex-col justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Subjects</p>
-              <div className="flex items-baseline gap-2 mt-3">
-                <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.subjects.length}</span>
-                <span className="text-[11px] font-semibold text-slate-400">Reporting Depts</span>
-              </div>
-            </div>
+            <StatCard label="Students Assessed" value={metrics.totalStudents} context="Enrolled total" />
+            <StatCard label="Grade Entries" value={metrics.totalEntries.toLocaleString()} context="98% completion" accent="success" />
+            <StatCard label="Subjects" value={metrics.subjects.length} context="Reporting depts" />
           </div>
 
           {/* GCSE Basics */}
           {isGcse && metrics.gcseBasics && (
             <section className="space-y-4 pt-1">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[20px] font-bold tracking-tight text-slate-900">
-                  English & Maths — Headline Measures
-                </h2>
-                <button className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-slate-100 text-slate-400 transition-colors">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
-                  </svg>
-                </button>
-              </div>
-              
+              <SectionHeader title="English & Maths — Headline Measures" />
+
               <div className="grid grid-cols-3 gap-4">
                 {/* 4+ Dark Card */}
                 <Link href={`/assessments/${cycleId}/points/${pointId}/em/4`} className="relative overflow-hidden rounded-2xl bg-[#0f172a] p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 block">
@@ -359,24 +336,19 @@ export default function ResultPointPage() {
               {/* PP gap full cards */}
               <div className="grid grid-cols-2 gap-4 pt-2">
                 {[
-                  { label: "PP Gap — 4+ threshold", pp: metrics.gcseBasics.ppEm4, nonPp: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4, gapTheme: "red" },
-                  { label: "PP Gap — 5+ threshold", pp: metrics.gcseBasics.ppEm5, nonPp: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5, gapTheme: "orange" },
-                ].map(({ label, pp, nonPp, gap, gapTheme }) => (
+                  { label: "PP Gap — 4+ threshold", pp: metrics.gcseBasics.ppEm4, nonPp: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4 },
+                  { label: "PP Gap — 5+ threshold", pp: metrics.gcseBasics.ppEm5, nonPp: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5 },
+                ].map(({ label, pp, nonPp, gap }) => (
                   <div key={label} className="rounded-2xl bg-white p-5 shadow-sm">
                     <div className="flex items-start justify-between">
                        <div>
                          <h3 className="text-base font-bold tracking-tight text-slate-900">{label}</h3>
                          <p className="text-xs font-medium text-slate-400 mt-0.5">Pupil Premium vs Non-Pupil Premium</p>
                        </div>
-                       <div className={`rounded-lg px-2.5 py-1 text-[11px] font-bold ${
-                          gapTheme === 'red' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
-                       }`}>
-                         {gap > 0 ? "+" : ""}{gap}pp Gap
-                       </div>
+                       <GapBadge gap={gap} />
                     </div>
 
                     <div className="mt-6 space-y-4">
-                      {/* NON-PP */}
                       <div>
                         <div className="flex justify-between items-baseline mb-2">
                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#0f172a]">NON-PP</span>
@@ -386,8 +358,6 @@ export default function ResultPointPage() {
                           <div className="bg-[#0f172a] h-full rounded-r-full" style={{ width: `${nonPp}%` }}></div>
                         </div>
                       </div>
-
-                      {/* PP */}
                       <div>
                         <div className="flex justify-between items-baseline mb-2">
                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PP STUDENTS</span>
@@ -428,186 +398,211 @@ export default function ResultPointPage() {
           )}
 
           {/* Subject breakdown table */}
-          <Card className="space-y-4">
+          <div className="space-y-3">
             <SectionHeader title="Subject Breakdown" subtitle={`${metrics.subjects.length} subjects`} />
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--outline-variant)]/30 text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-                    <th className="pb-2 pr-4">Subject</th>
-                    <th className="pb-2 pr-3 text-right">N</th>
-                    {isGcse && (
-                      <>
-                        <th className="pb-2 pr-3 text-right text-amber-600">4+</th>
-                        <th className="pb-2 pr-3 text-right text-violet-600">5+</th>
-                        <th className="pb-2 pr-3 text-right text-green-600">7+</th>
-                      </>
-                    )}
-                    {isALevel && (
-                      <>
-                        <th className="pb-2 pr-3 text-right text-emerald-600">A*</th>
-                        <th className="pb-2 pr-3 text-right text-green-600">A+</th>
-                        <th className="pb-2 pr-3 text-right text-blue-600">B+</th>
-                        <th className="pb-2 pr-3 text-right text-violet-600">C+</th>
-                      </>
-                    )}
-                    <th className="pb-2">Distribution</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--outline-variant)]/20">
-                  {metrics.subjects.sort((a, b) => a.subject.localeCompare(b.subject)).map((sm) => (
-                    <tr key={sm.subject} className="group">
-                      <td className="py-3 pr-4 font-medium text-[var(--on-surface)]">
-                        <button onClick={() => setModalView({ type: 'SUBJECT', subject: sm.subject, students: sm.students })} className="text-[var(--accent)] hover:underline text-left">
-                          {sm.subject}
-                        </button>
-                      </td>
-                      <td className="py-3 pr-3 text-right tabular-nums text-[var(--on-surface-muted)]">{sm.presentCount}</td>
+            <div className="table-shell">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="table-head-row text-left">
+                      <th className="px-5 py-3">Subject</th>
+                      <th className="px-4 py-3 text-right">N</th>
                       {isGcse && (
                         <>
-                          <td className="py-3 pr-3 text-right font-semibold tabular-nums text-amber-600">{sm.thresholds["4+"]}%</td>
-                          <td className="py-3 pr-3 text-right font-semibold tabular-nums text-violet-600">{sm.thresholds["5+"]}%</td>
-                          <td className="py-3 pr-3 text-right font-semibold tabular-nums text-green-600">{sm.thresholds["7+"]}%</td>
+                          <th className="px-4 py-3 text-right text-amber-600">4+</th>
+                          <th className="px-4 py-3 text-right text-violet-600">5+</th>
+                          <th className="px-4 py-3 text-right text-green-600">7+</th>
                         </>
                       )}
                       {isALevel && (
                         <>
-                          <td className="py-3 pr-3 text-right font-semibold tabular-nums text-emerald-600">{sm.thresholds["A*"]}%</td>
-                          <td className="py-3 pr-3 text-right font-semibold tabular-nums text-green-600">{sm.thresholds["A+"]}%</td>
-                          <td className="py-3 pr-3 text-right font-semibold tabular-nums text-blue-600">{sm.thresholds["B+"]}%</td>
-                          <td className="py-3 pr-3 text-right font-semibold tabular-nums text-violet-600">{sm.thresholds["C+"]}%</td>
+                          <th className="px-4 py-3 text-right text-emerald-600">A*</th>
+                          <th className="px-4 py-3 text-right text-green-600">A+</th>
+                          <th className="px-4 py-3 text-right text-blue-600">B+</th>
+                          <th className="px-4 py-3 text-right text-violet-600">C+</th>
                         </>
                       )}
-                      <td className="py-3 min-w-[160px]">
-                        <DistBar 
-                          distribution={sm.distribution} 
-                          format={sm.gradeFormat} 
-                          onGradeClick={(grade) => setModalView({ type: 'GRADE', subject: sm.subject, grade, students: sm.students.filter(s => s.rawValue === grade) })}
-                        />
-                      </td>
+                      <th className="px-4 py-3">Distribution</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {metrics.subjects.sort((a, b) => a.subject.localeCompare(b.subject)).map((sm) => (
+                      <tr key={sm.subject} className="group table-row calm-transition">
+                        <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
+                          <Link
+                            href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`}
+                            className="text-[var(--accent)] calm-transition hover:underline"
+                          >
+                            {sm.subject}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface-muted)]">{sm.presentCount}</td>
+                        {isGcse && (
+                          <>
+                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-amber-600">{sm.thresholds["4+"]}%</td>
+                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-violet-600">{sm.thresholds["5+"]}%</td>
+                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-green-600">{sm.thresholds["7+"]}%</td>
+                          </>
+                        )}
+                        {isALevel && (
+                          <>
+                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-emerald-600">{sm.thresholds["A*"]}%</td>
+                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-green-600">{sm.thresholds["A+"]}%</td>
+                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-blue-600">{sm.thresholds["B+"]}%</td>
+                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-violet-600">{sm.thresholds["C+"]}%</td>
+                          </>
+                        )}
+                        <td className="px-4 py-4 min-w-[160px]">
+                          <DistBar
+                            distribution={sm.distribution}
+                            format={sm.gradeFormat}
+                            onGradeClick={(grade) => setModalView({ type: 'GRADE', subject: sm.subject, grade, students: sm.students.filter(s => s.rawValue === grade) })}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="border-t border-border/20 px-5 py-3.5">
+                <p className="text-[0.8125rem] text-muted">{metrics.subjects.length} subjects</p>
+              </div>
             </div>
-          </Card>
+          </div>
 
           {/* PP gap table (GCSE) */}
           {isGcse && metrics.subjects.some((sm) => sm.pp) && (
-            <Card className="space-y-4">
-              <SectionHeader title="Pupil Premium Gap by Subject" subtitle="4+ threshold — percentage-point gap between Non-PP and PP" />
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[var(--outline-variant)]/30 text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-                      <th className="pb-2 pr-4 text-left">Subject</th>
-                      <th className="pb-2 pr-3 text-right">Non-PP 4+</th>
-                      <th className="pb-2 pr-3 text-right">PP 4+</th>
-                      <th className="pb-2 pr-3 text-right">Gap</th>
-                      <th className="pb-2 pr-3 text-right">Non-PP 5+</th>
-                      <th className="pb-2 pr-3 text-right">PP 5+</th>
-                      <th className="pb-2 text-right">Gap</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--outline-variant)]/20">
-                    {metrics.subjects
-                      .filter((sm) => sm.pp)
-                      .sort((a, b) => (b.pp?.gap4 ?? 0) - (a.pp?.gap4 ?? 0))
-                      .map((sm) => (
-                        <tr key={sm.subject}>
-                          <td className="py-2.5 pr-4 font-medium">{sm.subject}</td>
-                          <td className="py-2.5 pr-3 text-right tabular-nums text-[var(--accent)]">{sm.pp!.nonPpT4}%</td>
-                          <td className="py-2.5 pr-3 text-right tabular-nums text-violet-500">{sm.pp!.t4}%</td>
-                          <td className={`py-2.5 pr-3 text-right font-bold tabular-nums ${gapCls(sm.pp!.gap4)}`}>
-                            {sm.pp!.gap4 > 0 ? "+" : ""}{sm.pp!.gap4}pp
-                          </td>
-                          <td className="py-2.5 pr-3 text-right tabular-nums text-[var(--accent)]">{sm.pp!.nonPpT5}%</td>
-                          <td className="py-2.5 pr-3 text-right tabular-nums text-violet-500">{sm.pp!.t5}%</td>
-                          <td className={`py-2.5 text-right font-bold tabular-nums ${gapCls(sm.pp!.gap5)}`}>
-                            {sm.pp!.gap5 > 0 ? "+" : ""}{sm.pp!.gap5}pp
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+            <div className="space-y-3">
+              <SectionHeader title="Pupil Premium Gap by Subject" subtitle="Percentage-point gap between Non-PP and PP students" />
+              <div className="table-shell">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="table-head-row text-left">
+                        <th className="px-5 py-3">Subject</th>
+                        <th className="px-4 py-3 text-right">Non-PP 4+</th>
+                        <th className="px-4 py-3 text-right">PP 4+</th>
+                        <th className="px-4 py-3 text-right">Gap</th>
+                        <th className="px-4 py-3 text-right">Non-PP 5+</th>
+                        <th className="px-4 py-3 text-right">PP 5+</th>
+                        <th className="px-4 py-3 text-right">Gap</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metrics.subjects
+                        .filter((sm) => sm.pp)
+                        .sort((a, b) => (b.pp?.gap4 ?? 0) - (a.pp?.gap4 ?? 0))
+                        .map((sm) => (
+                          <tr key={sm.subject} className="group table-row calm-transition">
+                            <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
+                              <Link
+                                href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`}
+                                className="text-[var(--accent)] calm-transition hover:underline"
+                              >
+                                {sm.subject}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.pp!.nonPpT4}%</td>
+                            <td className="px-4 py-4 text-right tabular-nums text-violet-500">{sm.pp!.t4}%</td>
+                            <td className="px-4 py-4 text-right">
+                              <GapBadge gap={sm.pp!.gap4} />
+                            </td>
+                            <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.pp!.nonPpT5}%</td>
+                            <td className="px-4 py-4 text-right tabular-nums text-violet-500">{sm.pp!.t5}%</td>
+                            <td className="px-4 py-4 text-right">
+                              <GapBadge gap={sm.pp!.gap5} />
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="border-t border-border/20 px-5 py-3.5">
+                  <p className="text-[0.8125rem] text-muted">
+                    {metrics.subjects.filter(sm => sm.pp).length} subjects with PP data
+                  </p>
+                </div>
               </div>
-            </Card>
+            </div>
           )}
+
           {/* SEND gap table (GCSE) */}
           {isGcse && metrics.subjects.some((sm) => sm.send) && (
-            <Card className="space-y-4">
-              <SectionHeader title="SEND Gap by Subject" subtitle="4+ threshold — percentage-point gap between Non-SEND and SEND" />
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[var(--outline-variant)]/30 text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-                      <th className="pb-2 pr-4 text-left">Subject</th>
-                      <th className="pb-2 pr-3 text-right">Non-SEND 4+</th>
-                      <th className="pb-2 pr-3 text-right">SEND 4+</th>
-                      <th className="pb-2 text-right">Gap</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--outline-variant)]/20">
-                    {metrics.subjects
-                      .filter((sm) => sm.send)
-                      .sort((a, b) => (b.send?.gap4 ?? 0) - (a.send?.gap4 ?? 0))
-                      .map((sm) => (
-                        <tr key={sm.subject}>
-                          <td className="py-2.5 pr-4 font-medium">{sm.subject}</td>
-                          <td className="py-2.5 pr-3 text-right tabular-nums text-[var(--accent)]">{sm.send!.nonSendT4}%</td>
-                          <td className="py-2.5 pr-3 text-right tabular-nums text-violet-500">{sm.send!.t4}%</td>
-                          <td className={`py-2.5 text-right font-bold tabular-nums ${gapCls(sm.send!.gap4)}`}>
-                            {sm.send!.gap4 > 0 ? "+" : ""}{sm.send!.gap4}pp
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+            <div className="space-y-3">
+              <SectionHeader title="SEND Gap by Subject" subtitle="Percentage-point gap between Non-SEND and SEND students" />
+              <div className="table-shell">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="table-head-row text-left">
+                        <th className="px-5 py-3">Subject</th>
+                        <th className="px-4 py-3 text-right">Non-SEND 4+</th>
+                        <th className="px-4 py-3 text-right">SEND 4+</th>
+                        <th className="px-4 py-3 text-right">Gap</th>
+                        <th className="px-4 py-3 text-right">Non-SEND 5+</th>
+                        <th className="px-4 py-3 text-right">SEND 5+</th>
+                        <th className="px-4 py-3 text-right">Gap</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metrics.subjects
+                        .filter((sm) => sm.send)
+                        .sort((a, b) => (b.send?.gap4 ?? 0) - (a.send?.gap4 ?? 0))
+                        .map((sm) => (
+                          <tr key={sm.subject} className="group table-row calm-transition">
+                            <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
+                              <Link
+                                href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`}
+                                className="text-[var(--accent)] calm-transition hover:underline"
+                              >
+                                {sm.subject}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.send!.nonSendT4}%</td>
+                            <td className="px-4 py-4 text-right tabular-nums text-violet-500">{sm.send!.t4}%</td>
+                            <td className="px-4 py-4 text-right">
+                              <GapBadge gap={sm.send!.gap4} />
+                            </td>
+                            <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.send!.nonSendT5}%</td>
+                            <td className="px-4 py-4 text-right tabular-nums text-violet-500">{sm.send!.t5}%</td>
+                            <td className="px-4 py-4 text-right">
+                              <GapBadge gap={sm.send!.gap5} />
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="border-t border-border/20 px-5 py-3.5">
+                  <p className="text-[0.8125rem] text-muted">
+                    {metrics.subjects.filter(sm => sm.send).length} subjects with SEND data
+                  </p>
+                </div>
               </div>
-            </Card>
+            </div>
           )}
         </>
       )}
 
-      {/* Modal overlay */}
+      {/* Modal overlay — grade-level and E&M drill-downs */}
       {modalView && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-[var(--surface)] text-[var(--on-surface)] rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-[var(--outline-variant)]/50">
             <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
               <h2 className="text-lg font-bold">
-                {modalView.type === 'SUBJECT' ? `Students for ${modalView.subject}` : modalView.type === 'GRADE' ? `Students scoring ${modalView.grade} in ${modalView.subject}` : `E&M Baseline: ${modalView.label} Students`}
+                {modalView.type === 'GRADE'
+                  ? `Students scoring ${modalView.grade} in ${modalView.subject}`
+                  : `E&M Baseline: ${modalView.label} Students`}
               </h2>
-              <button 
-                onClick={() => setModalView(null)} 
+              <button
+                onClick={() => setModalView(null)}
                 className="text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
                 aria-label="Close modal">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
-            
-            <div className="p-0 overflow-y-auto flex-1">
-              {modalView.type === 'SUBJECT' && (
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20 shadow-sm z-10">
-                    <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-                      <th className="p-3 pl-4">Student</th>
-                      <th className="p-3">Grade</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--outline-variant)]/10">
-                    {modalView.students.sort((a, b) => {
-                       if (a.score !== b.score) return (b.score ?? -1) - (a.score ?? -1);
-                       return a.name.localeCompare(b.name);
-                    }).map(st => (
-                      <tr key={st.studentId} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
-                        <td className="p-3 pl-4 font-medium">{st.name}</td>
-                        <td className="p-3 font-semibold text-[var(--accent)]">{st.rawValue}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
 
+            <div className="p-0 overflow-y-auto flex-1">
               {modalView.type === 'EM' && (
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20 shadow-sm z-10">
@@ -624,7 +619,11 @@ export default function ResultPointPage() {
                        return a.name.localeCompare(b.name);
                     }).map(st => (
                       <tr key={st.studentId} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
-                        <td className="p-3 pl-4 font-medium">{st.name}</td>
+                        <td className="p-3 pl-4 font-medium">
+                          <Link href={`/students/${st.studentId}`} className="calm-transition hover:text-[var(--accent)]">
+                            {st.name}
+                          </Link>
+                        </td>
                         <td className="p-3 text-center">
                           {st.met ? (
                             <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Met</span>
@@ -656,7 +655,11 @@ export default function ResultPointPage() {
                       const avgDisplay = avg !== null ? (metrics?.dominantFormat === 'GCSE' ? (avg * 9).toFixed(1) : (avg * 100).toFixed(0) + '%') : 'N/A';
                       return (
                         <tr key={st.studentId} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
-                          <td className="p-3 pl-4 font-medium">{st.name}</td>
+                          <td className="p-3 pl-4 font-medium">
+                            <Link href={`/students/${st.studentId}`} className="calm-transition hover:text-[var(--accent)]">
+                              {st.name}
+                            </Link>
+                          </td>
                           <td className="p-3 text-center font-semibold text-[var(--accent)]">{st.rawValue}</td>
                           <td className="p-3 text-center text-[var(--on-surface-muted)]">{avgDisplay}</td>
                         </tr>

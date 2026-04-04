@@ -3,14 +3,8 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 import { EMTargetGroupToolbar } from "./EMTargetGroupToolbar";
-
-function getInitials(name: string): string {
-  const parts = name.split(" ").filter(Boolean);
-  if (parts.length >= 2)
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return name.substring(0, 2).toUpperCase();
-}
 
 function getInitials(name: string): string {
   const parts = name.split(" ").filter(Boolean);
@@ -109,7 +103,7 @@ export default async function EMThresholdPage({
     const eScore = engMap.get(id)!.normalizedScore;
     const mScore = mathsMap.get(id)!.normalizedScore;
     const student = engMap.get(id)!.student;
-    
+
     const eHas = eScore !== null && Math.round(eScore * 9) >= targetThreshold;
     const mHas = mScore !== null && Math.round(mScore * 9) >= targetThreshold;
     const bothHas = eHas && mHas;
@@ -125,10 +119,10 @@ export default async function EMThresholdPage({
 
   const engPct = bothPresentIds.length > 0 ? Math.round((engMeets / bothPresentIds.length) * 100) : 0;
   const mathsPct = bothPresentIds.length > 0 ? Math.round((mathsMeets / bothPresentIds.length) * 100) : 0;
-  
+
   const ppPct = ppTotal > 0 ? Math.round((ppMeets / ppTotal) * 100) : 0;
   const nonPpPct = nonPpTotal > 0 ? Math.round((nonPpMeets / nonPpTotal) * 100) : 0;
-  
+
   const sendPct = sendTotal > 0 ? Math.round((sendMeets / sendTotal) * 100) : 0;
   const nonSendPct = nonSendTotal > 0 ? Math.round((nonSendMeets / nonSendTotal) * 100) : 0;
 
@@ -190,8 +184,7 @@ export default async function EMThresholdPage({
     const mRaw = mathsMap.get(id)!.rawValue;
     const eScore = engMap.get(id)!.normalizedScore;
     const mScore = mathsMap.get(id)!.normalizedScore;
-    
-    // Check if met both
+
     const met = eScore !== null && Math.round(eScore * 9) >= targetThreshold && mScore !== null && Math.round(mScore * 9) >= targetThreshold;
 
     const cAvg = cCounts.get(id) ? +(cSums.get(id)! / cCounts.get(id)!).toFixed(2) : null;
@@ -216,7 +209,7 @@ export default async function EMThresholdPage({
     };
   });
 
-  // Apply filters via query params (GET form, same pattern as Explorer · Students)
+  // Apply filters via query params
   const rawParams = await searchParams;
   const filterSend = Array.isArray(rawParams.send) ? rawParams.send[0] : rawParams.send;
   const filterPp = Array.isArray(rawParams.pp) ? rawParams.pp[0] : rawParams.pp;
@@ -231,7 +224,6 @@ export default async function EMThresholdPage({
   if (filterSend === "false") studentsData = studentsData.filter((s) => !s.sendFlag);
   if (filterPp === "true") studentsData = studentsData.filter((s) => s.ppFlag);
   if (filterPp === "false") studentsData = studentsData.filter((s) => !s.ppFlag);
-  // Default: students who have not met E&M both at this threshold (focus list).
   if (filterMet === "true") studentsData = studentsData.filter((s) => s.met);
   else if (filterMet === "all") {
     /* show everyone */
@@ -276,25 +268,23 @@ export default async function EMThresholdPage({
 
   return (
     <div className="w-full space-y-8 pb-16">
-      {/* Top Breadcrumb & Header */}
+      {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
-        <Link href="/assessments" className="hover:underline">Attainment Cycles</Link>
+        <Link href="/assessments" className="calm-transition hover:text-[var(--on-surface)]">Attainment Cycles</Link>
         <span>›</span>
-        <Link href={`/assessments/${cycleId}`} className="hover:underline">{currentPoint.cycle.label}</Link>
+        <Link href={`/assessments/${cycleId}`} className="calm-transition hover:text-[var(--on-surface)]">{currentPoint.cycle.label}</Link>
         <span>›</span>
-        <Link href={`/assessments/${cycleId}/points/${pointId}`} className="hover:underline">{currentPoint.label}</Link>
+        <Link href={`/assessments/${cycleId}/points/${pointId}`} className="calm-transition hover:text-[var(--on-surface)]">{currentPoint.label}</Link>
         <span>›</span>
         <span className="text-[var(--on-surface)]">E&M {targetThreshold}+</span>
       </div>
 
-      <div>
-        <h1 className="text-[28px] font-bold tracking-[-0.03em] text-slate-900 sm:text-[36px]">
-          English & Maths {targetThreshold}+ Target Group
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          Students who have not yet achieved grade {targetThreshold} or above in both English and Maths. Use the filter below to include those who have met the threshold or everyone.
-        </p>
-      </div>
+      {/* Page Header */}
+      <PageHeader
+        eyebrow={`${currentPoint.cycle.label} · ${currentPoint.label}`}
+        title={`English & Maths ${targetThreshold}+ Target Group`}
+        subtitle={`Students who have not yet achieved grade ${targetThreshold} or above in both English and Maths. Use the filter below to include those who have met the threshold or everyone.`}
+      />
 
       {/* Top 4 Metrics Cards */}
       <div className="grid grid-cols-4 gap-6">
@@ -336,7 +326,7 @@ export default async function EMThresholdPage({
         </div>
       </div>
 
-      {/* Filters (aligned with Explorer · Students toolbar) */}
+      {/* Filters */}
       <div className="mb-6">
         <EMTargetGroupToolbar
           basePath={basePath}
@@ -348,7 +338,7 @@ export default async function EMThresholdPage({
         />
       </div>
 
-      {/* Student list (aligned with Explorer · Students table) */}
+      {/* Student list */}
       <div className="mt-4 table-shell">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -378,7 +368,12 @@ export default async function EMThresholdPage({
                           {getInitials(row.name)}
                         </div>
                         <div className="flex min-w-0 flex-col">
-                          <span className="font-medium text-text">{row.name}</span>
+                          <Link
+                            href={`/students/${row.id}`}
+                            className="font-medium text-text calm-transition hover:text-accent"
+                          >
+                            {row.name}
+                          </Link>
                           <span className="text-[11px] text-muted">Year {row.year ?? "—"}</span>
                         </div>
                       </div>
