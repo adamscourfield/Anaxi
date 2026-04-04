@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
@@ -242,40 +243,36 @@ export default async function StudentsPage({
       </div>
 
       {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-text sm:text-[1.875rem]">
-            Students
-          </h1>
-          <p className="mt-1 max-w-xl text-[0.875rem] leading-snug text-muted">
-            Risk bands, attendance, and flags for your cohort.
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-          {showExport && (
-            <form action="/api/explorer/export" method="POST" className="inline">
-              <input type="hidden" name="view" value="STUDENT_RISK" />
-              <input type="hidden" name="windowDays" value={String(windowDays)} />
-              <button
-                type="submit"
-                className="rounded-lg border border-border/50 bg-surface-container-lowest px-4 py-2.5 text-[0.8125rem] font-medium text-text calm-transition hover:border-border hover:bg-bg"
-              >
-                Export CSV
-              </button>
-            </form>
-          )}
-          <Link
-            href="/students/import"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:bg-primary-container"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M14 2v6h6M12 18v-6M9 15h6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Import CSV
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Students"
+        subtitle="Risk bands, attendance, and flags for your cohort."
+        actions={
+          <>
+            {showExport && (
+              <form action="/api/explorer/export" method="POST" className="inline">
+                <input type="hidden" name="view" value="STUDENT_RISK" />
+                <input type="hidden" name="windowDays" value={String(windowDays)} />
+                <button
+                  type="submit"
+                  className="rounded-lg border border-border/50 bg-surface-container-lowest px-4 py-2.5 text-[0.8125rem] font-medium text-text calm-transition hover:border-border hover:bg-bg"
+                >
+                  Export CSV
+                </button>
+              </form>
+            )}
+            <Link
+              href="/students/import"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:bg-primary-container"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M14 2v6h6M12 18v-6M9 15h6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Import CSV
+            </Link>
+          </>
+        }
+      />
 
       {/* ── Cohort overview ───────────────────────────────────────── */}
       <div className="mb-8 rounded-2xl glass-card p-6 sm:p-8">
@@ -284,7 +281,7 @@ export default async function StudentsPage({
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
               Cohort
             </p>
-            <p className="mt-2 font-serif text-[2.75rem] font-bold leading-none tracking-tight text-text sm:text-[3.25rem]">
+            <p className="mt-2 text-[2.75rem] font-bold leading-none tracking-tight text-text sm:text-[3.25rem]">
               {allRows.length.toLocaleString()}
             </p>
             <p className="mt-2 text-[0.8125rem] text-muted">

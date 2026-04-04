@@ -3,6 +3,8 @@ import { ReactNode } from "react";
 import { requireAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { StatusPill } from "@/components/ui/status-pill";
+import { PageHeader } from "@/components/ui/page-header";
+import { H2 } from "@/components/ui/typography";
 
 type AdminRow = {
   href: string;
@@ -129,7 +131,7 @@ function Section({ title, tag, rows }: { title: string; tag: string; rows: Admin
   return (
     <section className="space-y-3">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-[1.0625rem] font-semibold tracking-[-0.01em] text-text">{title}</h2>
+        <H2>{title}</H2>
         <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted/60">{tag}</span>
       </div>
       <div className="overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient">
@@ -165,15 +167,10 @@ export default async function AdminIndexPage() {
   return (
     <div className="space-y-10">
       {/* ── Header ──────────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-[1.75rem] font-bold leading-tight tracking-[-0.03em] text-text">
-          Institutional Dashboard
-        </h1>
-        <p className="mt-2 max-w-2xl text-[0.9375rem] leading-relaxed text-muted">
-          Manage foundational administrative architecture, staff hierarchies, and
-          semantic datasets from a single unified ledger.
-        </p>
-      </div>
+      <PageHeader
+        title="Institutional Dashboard"
+        subtitle="Manage foundational administrative architecture, staff hierarchies, and semantic datasets from a single unified ledger."
+      />
 
       {/* ── People & Access ─────────────────────────────────────────── */}
       <Section

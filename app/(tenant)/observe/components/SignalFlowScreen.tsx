@@ -169,7 +169,7 @@ export function SignalFlowScreen({
       </div>
 
       {/* Main card */}
-      <div className="rounded-2xl border border-border/20 bg-surface-container-lowest px-4 py-6 shadow-sm sm:px-8 sm:py-7">
+      <div className="rounded-2xl border border-border/20 bg-surface-container-lowest px-4 py-6 shadow-ambient sm:px-8 sm:py-7">
         <h2 className="mb-2 text-[1.375rem] font-bold tracking-tight text-text">
           How would you assess {title}?
         </h2>

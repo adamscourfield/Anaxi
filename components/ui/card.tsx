@@ -8,7 +8,7 @@ const toneClasses: Record<CardTone, string> = {
   default:     "bg-[var(--surface-container-lowest)] shadow-ambient",
   subtle:      "bg-[var(--surface-container-low)]",
   inset:       "bg-[var(--surface-container)]",
-  interactive: "bg-[var(--surface-container-lowest)] shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-md cursor-pointer",
+  interactive: "bg-[var(--surface-container-lowest)] shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer",
 };
 
 export function Card({

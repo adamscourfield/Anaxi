@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { StatCard } from "@/components/ui/stat-card";
+import { H2 } from "@/components/ui/typography";
 import type { PointType, ResultStatus, QualificationType } from "@prisma/client";
 
 // ─── Type badges ─────────────────────────────────────────────────────────────
@@ -18,12 +19,12 @@ const POINT_TYPE_LABELS: Record<PointType, string> = {
 };
 
 const POINT_TYPE_COLOURS: Record<PointType, string> = {
-  BASELINE: "bg-slate-100 text-slate-600",
+  BASELINE: "bg-surface-container-low text-muted",
   INTERNAL_ASSESSMENT: "bg-blue-50 text-blue-600",
-  INTERNAL_MOCK: "bg-slate-100 text-slate-600",
+  INTERNAL_MOCK: "bg-surface-container-low text-muted",
   TEACHER_PREDICTION: "bg-violet-50 text-violet-600",
   EXTERNAL_FINAL: "bg-emerald-50 text-emerald-600",
-  OTHER: "bg-slate-100 text-slate-600",
+  OTHER: "bg-surface-container-low text-muted",
 };
 
 const STATUS_LABELS: Record<ResultStatus, string> = {
@@ -34,10 +35,10 @@ const STATUS_LABELS: Record<ResultStatus, string> = {
 };
 
 const STATUS_COLOURS: Record<ResultStatus, string> = {
-  DRAFT: "bg-slate-100 text-slate-600",
+  DRAFT: "bg-surface-container-low text-muted",
   VALIDATED: "bg-blue-50 text-blue-600",
   PUBLISHED: "bg-emerald-50 text-emerald-600",
-  LOCKED: "bg-slate-900 text-white",
+  LOCKED: "bg-primary text-white",
 };
 
 function formatAssessedDate(value: Date | string | null | undefined): string | null {
@@ -99,7 +100,7 @@ export default async function CycleDetailPage({
   ).size;
 
   return (
-    <div className="w-full space-y-10 pb-16">
+    <div className="w-full space-y-6 pb-16">
       {/* Top Breadcrumb & Header info (Kept for context, but subtly integrated) */}
       <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
         <Link href="/assessments" className="hover:underline">Attainment Cycles</Link>
@@ -143,21 +144,21 @@ export default async function CycleDetailPage({
       {/* Result point timeline exact match */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-[28px] font-bold tracking-tight text-slate-900">Result Points</h2>
+          <H2>Result Points</H2>
           <Link
             href={`/assessments/${cycle.id}/points/new`}
-            className="text-[15px] font-bold text-slate-900 hover:underline"
+            className="text-[15px] font-bold text-text hover:underline"
           >
             + Add point
           </Link>
         </div>
 
         {cycle.points.length === 0 && (
-          <div className="rounded-2xl bg-white py-12 text-center shadow-sm">
-            <p className="text-slate-500">No result points yet.</p>
+          <div className="rounded-2xl bg-white py-12 text-center shadow-ambient">
+            <p className="text-muted">No result points yet.</p>
             <Link
               href={`/assessments/${cycle.id}/points/new`}
-              className="mt-2 inline-block text-sm font-semibold text-slate-900 hover:underline"
+              className="mt-2 inline-block text-sm font-semibold text-text hover:underline"
             >
               Add the first result point
             </Link>
@@ -174,11 +175,11 @@ export default async function CycleDetailPage({
             return (
               <div
                 key={point.id}
-                className="flex rounded-3xl bg-white p-8 shadow-sm transition-all hover:shadow-md"
+                className="flex rounded-3xl bg-white p-8 shadow-ambient transition-all hover:shadow-lg"
               >
                 {/* Ordinal on the left */}
                 <div className="w-12 shrink-0 pt-8">
-                  <span className="text-[40px] font-bold tracking-tighter text-slate-200">
+                  <span className="text-[40px] font-bold tracking-tighter text-surface-container-high">
                     {point.ordinal || (idx + 1)}
                   </span>
                 </div>
@@ -194,11 +195,11 @@ export default async function CycleDetailPage({
                           {STATUS_LABELS[point.resultStatus]}
                         </span>
                       </div>
-                      <h3 className="text-[32px] font-bold leading-none tracking-[-0.03em] text-slate-900">
+                      <h3 className="text-[32px] font-bold leading-none tracking-[-0.03em] text-text">
                         {point.label}
                       </h3>
                       {assessedDateLabel && (
-                        <p className="text-[15px] font-semibold text-slate-500 mt-2">
+                        <p className="text-[15px] font-semibold text-muted mt-2">
                           {assessedDateLabel}
                         </p>
                       )}
@@ -216,7 +217,7 @@ export default async function CycleDetailPage({
                       {hasData && (
                         <Link
                           href={`/assessments/${cycle.id}/points/${point.id}`}
-                          className="rounded-[10px] border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+                          className="rounded-[10px] border border-border bg-white px-4 py-2.5 text-xs font-bold text-text shadow-sm hover:bg-surface-container-low transition-colors"
                         >
                           View analysis
                         </Link>
@@ -257,13 +258,13 @@ export default async function CycleDetailPage({
                       {point.assessments.slice(0, 8).map((a) => (
                         <span
                           key={a.id}
-                          className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm"
+                          className="rounded-full border border-border bg-white px-4 py-1.5 text-[11px] font-bold text-muted shadow-sm"
                         >
                           {a.subject}
                         </span>
                       ))}
                       {point.assessments.length > 8 && (
-                        <span className="rounded-full border border-slate-100 bg-white px-4 py-1.5 text-[11px] font-bold text-slate-400 shadow-sm">
+                        <span className="rounded-full border border-border/50 bg-white px-4 py-1.5 text-[11px] font-bold text-muted shadow-sm">
                           +{point.assessments.length - 8} MORE
                         </span>
                       )}

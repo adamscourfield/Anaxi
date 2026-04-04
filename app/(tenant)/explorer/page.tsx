@@ -249,7 +249,7 @@ export default async function ExplorerPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Teachers */}
         <Link href="/explorer/teachers" className="block">
-          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-md">
+          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg">
             <div className="flex items-start justify-between">
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]">
                 <IconTeachers />
@@ -278,7 +278,7 @@ export default async function ExplorerPage() {
 
         {/* Departments */}
         <Link href="/explorer/departments" className="block">
-          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-md">
+          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg">
             <div className="flex items-start justify-between">
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]">
                 <IconDepartments />
@@ -299,7 +299,7 @@ export default async function ExplorerPage() {
 
         {/* Signals */}
         <Link href="/explorer/signals" className="block">
-          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-md">
+          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg">
             <div className="flex items-start justify-between">
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]">
                 <IconSignals />
@@ -327,7 +327,7 @@ export default async function ExplorerPage() {
 
         {/* Observations */}
         <Link href="/observe/history" className="block">
-          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-md">
+          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg">
             <div className="flex items-start justify-between">
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]">
                 <IconObservations />
@@ -377,11 +377,11 @@ export default async function ExplorerPage() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2 items-stretch">
             {/* Students Card */}
             <Link href="/explorer/students" className="block">
-              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-md hover:bg-[var(--surface-container-low)]">
+              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
                 <WatermarkGradCap />
                 <p className="text-lg font-semibold text-[var(--on-surface)]">Students</p>
                 <div className="mt-3 flex items-baseline gap-3">
-                  <span className="font-serif text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
+                  <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
                     {totalStudents}
                   </span>
                   <div>
@@ -410,11 +410,11 @@ export default async function ExplorerPage() {
 
             {/* Cohorts Card */}
             <Link href="/explorer/cohorts" className="block">
-              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-md hover:bg-[var(--surface-container-low)]">
+              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
                 <WatermarkDiamond />
                 <p className="text-lg font-semibold text-[var(--on-surface)]">Cohorts</p>
                 <div className="mt-3 flex items-baseline gap-3">
-                  <span className="font-serif text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
+                  <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
                     {yearGroupCount}
                   </span>
                   <div>

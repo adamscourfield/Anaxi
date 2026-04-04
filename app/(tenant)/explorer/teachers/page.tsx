@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ClickableRow } from "@/components/ui/clickable-row";
+import { PageHeader } from "@/components/ui/page-header";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -291,36 +292,37 @@ export default async function ExplorerTeachersPage({
       </div>
 
       {/* ── Page header ────────────────────────────────────────────────────── */}
-      <div className="mb-8 flex items-start justify-between">
-        <h1 className="font-sans text-[2.25rem] font-bold leading-tight tracking-[-0.02em] text-text">
-          Teachers
-        </h1>
-        {canExport && (
-          <form action="/api/explorer/export" method="POST">
-            <input
-              type="hidden"
-              name="view"
-              value={mode === "pivot" ? "INSTRUCTION_TEACHERS_PIVOT" : "TEACHER_PRIORITIES"}
-            />
-            <input type="hidden" name="windowDays" value={String(windowDays)} />
-            {departmentId && <input type="hidden" name="departmentId" value={departmentId} />}
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:bg-primary-container"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
-                <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Export CSV
-            </button>
-          </form>
-        )}
-      </div>
+      <PageHeader
+        title="Teachers"
+        actions={
+          canExport ? (
+            <form action="/api/explorer/export" method="POST">
+              <input
+                type="hidden"
+                name="view"
+                value={mode === "pivot" ? "INSTRUCTION_TEACHERS_PIVOT" : "TEACHER_PRIORITIES"}
+              />
+              <input type="hidden" name="windowDays" value={String(windowDays)} />
+              {departmentId && <input type="hidden" name="departmentId" value={departmentId} />}
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:bg-primary-container"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                  <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
+                  <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Export CSV
+              </button>
+            </form>
+          ) : undefined
+        }
+      />
 
       {/* ── Controls bar ────────────────────────────────────────────────────── */}
-      <div className="mb-6 filter-bar">
+      <div className="mb-6 w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+      <div className="filter-bar">
         {/* Window selector */}
         <div className="filter-period-toggle">
           {VALID_WINDOWS.map((w) => (
@@ -384,6 +386,7 @@ export default async function ExplorerTeachersPage({
             </Link>
           )}
         </form>
+      </div>
       </div>
 
       {/* ── Performance view (pivot) ────────────────────────────────────────── */}

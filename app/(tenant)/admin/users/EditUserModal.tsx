@@ -371,7 +371,7 @@ export function EditUserModal({
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="inline-flex items-center justify-center rounded-xl bg-[#131b2e] px-5 py-2.5 text-[0.8125rem] font-semibold text-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] calm-transition hover:bg-[#1a2540] disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-[0.8125rem] font-semibold text-on-primary shadow-ambient calm-transition hover:bg-primary-container disabled:opacity-50"
           >
             {pending ? "Saving…" : "Save changes"}
           </button>

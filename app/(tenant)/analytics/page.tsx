@@ -448,7 +448,7 @@ async function CpdTab({
                 <Link
                   key={row.signalKey}
                   href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
-                  className="block rounded-lg border border-border bg-surface p-4 shadow-sm hover:border-accentHover calm-transition transition duration-200 ease-calm"
+                  className="block rounded-lg border border-border bg-surface p-4 shadow-ambient hover:border-accentHover calm-transition transition duration-200 ease-calm"
                 >
                   <p className="text-sm font-medium text-text">{row.label}</p>
                   <div className="mt-2 space-y-0.5">

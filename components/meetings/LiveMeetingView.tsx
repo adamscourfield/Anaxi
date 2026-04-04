@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { MetaText } from "@/components/ui/typography";
+import { H1, MetaText } from "@/components/ui/typography";
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
@@ -445,9 +445,7 @@ export function LiveMeetingView({
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="text-[30px] font-bold leading-tight tracking-[-0.025em] text-text">
-              {title}
-            </h1>
+            <H1>{title}</H1>
             <div className="flex flex-wrap items-center gap-4">
               <span className="flex items-center gap-1.5 font-mono text-sm text-muted">
                 <svg className="h-3.5 w-3.5 text-text" viewBox="0 0 16 16" fill="currentColor">
@@ -484,7 +482,7 @@ export function LiveMeetingView({
       {/* ── Two-Column Layout ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         {/* ── Left: Live Minutes ───────────────────────────────────── */}
-        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-6 shadow-sm">
+        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-6 shadow-ambient">
           {/* Minutes Header */}
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -532,7 +530,7 @@ export function LiveMeetingView({
         <div className="space-y-5">
           {/* ── New Action Item Card ────────────────────────────────── */}
           {canAddActions && !isEnded && (
-            <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-sm">
+            <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-ambient">
               <div className="mb-4 flex items-center gap-2">
                 <svg className="h-5 w-5 text-scale-strong-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
@@ -603,7 +601,7 @@ export function LiveMeetingView({
           )}
 
           {/* ── Action Items ─────────────────────────────────────── */}
-          <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-sm">
+          <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-ambient">
             <h3 className="mb-4 text-base font-bold text-text">
               Action Items
               {totalActions > 0 && (

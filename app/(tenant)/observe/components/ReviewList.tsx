@@ -94,7 +94,7 @@ export function ReviewList({
         <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[1fr_380px]">
 
           {/* ── Left: Signal Summary ── */}
-          <div className="flex flex-col rounded-2xl bg-surface-container-low p-5 shadow-sm">
+          <div className="flex flex-col rounded-2xl bg-surface-container-low p-5 shadow-ambient">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-[1rem] font-bold text-text">Signal Summary</h3>
               <button
@@ -123,7 +123,7 @@ export function ReviewList({
                     key={signal.key}
                     type="button"
                     onClick={() => router.push(`/observe/new/signals?index=${index}`)}
-                    className="group flex items-center justify-between gap-3 rounded-xl border border-border/15 bg-surface-container-lowest px-4 py-3.5 text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] calm-transition hover:border-border/30 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+                    className="group flex items-center justify-between gap-3 rounded-xl border border-border/15 bg-surface-container-lowest px-4 py-3.5 text-left shadow-ambient calm-transition hover:border-border/30 hover:shadow-lg"
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-container">
@@ -165,9 +165,9 @@ export function ReviewList({
 
           {/* ── Right: Concluding Notes + Context + Actions ── */}
           <div className="flex flex-col gap-4">
-            <div className="flex flex-1 flex-col rounded-2xl bg-surface-container-low p-5 shadow-sm">
+            <div className="flex flex-1 flex-col rounded-2xl bg-surface-container-low p-5 shadow-ambient">
               <h3 className="text-[1rem] font-bold text-text">Concluding Notes</h3>
-              <div className="mt-4 flex flex-1 flex-col rounded-xl border border-border/15 bg-surface-container-lowest p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+              <div className="mt-4 flex flex-1 flex-col rounded-xl border border-border/15 bg-surface-container-lowest p-4 shadow-ambient">
                 <textarea
                   name="contextNote"
                   className="field min-h-[140px] flex-1 resize-y border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
@@ -187,7 +187,7 @@ export function ReviewList({
                 </div>
               </div>
 
-              <div className="mt-4 rounded-xl border border-border/15 bg-surface-container-lowest p-4 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+              <div className="mt-4 rounded-xl border border-border/15 bg-surface-container-lowest p-4 shadow-ambient">
                 <p className="mb-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">Session Context</p>
                 <div className="space-y-2.5">
                   {sessionLabel && (

@@ -127,7 +127,7 @@ export function OnCallRequestForm({
       </div>
 
       {/* ── Request Details card ───────────────────────────────────── */}
-      <div className="rounded-2xl border border-border/50 bg-surface-container-lowest shadow-sm">
+      <div className="rounded-2xl border border-border/50 bg-surface-container-lowest shadow-ambient">
         {/* Card header */}
         <div className="flex items-start gap-3 border-b border-border/20 px-4 py-4 sm:px-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-text">
@@ -359,7 +359,7 @@ export function OnCallRequestForm({
       {/* ── Bottom stats row ───────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* On Call Density */}
-        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-sm">
+        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-ambient">
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted">On Call Density</p>
           <div className="mt-3 flex items-end gap-1 h-10">
             {hourlyBuckets.map((count, i) => {
@@ -389,7 +389,7 @@ export function OnCallRequestForm({
         </div>
 
         {/* Today's Volume */}
-        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-sm">
+        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-ambient">
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Today&apos;s Volume</p>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-[2.5rem] font-bold leading-none tracking-tight text-text">

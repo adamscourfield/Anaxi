@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { REQUEST_TYPE_LABELS } from "@/modules/oncall/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { H2 } from "@/components/ui/typography";
 
 type Status = "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED";
 type RequestType = "BEHAVIOUR" | "FIRST_AID";
@@ -122,14 +123,12 @@ export function OnCallInbox({
   const healthLabel = resolutionRate >= 90 ? "STABLE" : resolutionRate >= 70 ? "WARNING" : "CRITICAL";
 
   return (
-    <div className="w-full min-w-0 space-y-8">
+    <div className="w-full min-w-0 space-y-6">
       {/* ── Open Requests Section ─────────────────────────────── */}
       <section>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-2 sm:gap-y-1">
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-            <h2 className="whitespace-nowrap text-[20px] font-bold tracking-[-0.01em] text-text">
-              Open Requests
-            </h2>
+            <H2 className="whitespace-nowrap">Open Requests</H2>
             {openCount > 0 && (
               <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.04em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
                 {openCount} PENDING
@@ -194,7 +193,7 @@ export function OnCallInbox({
                         router.push(`/on-call/${r.id}`);
                       }
                     }}
-                    className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-sm calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
+                    className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-ambient calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
                   >
                     <div className="flex items-start gap-3">
                       <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-high)] text-xs font-semibold text-muted">
@@ -360,9 +359,7 @@ export function OnCallInbox({
       <section>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-2 sm:gap-y-1">
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-            <h2 className="whitespace-nowrap text-[20px] font-bold tracking-[-0.01em] text-text">
-              Resolved Requests
-            </h2>
+            <H2 className="whitespace-nowrap">Resolved Requests</H2>
             <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
               History (Today)
             </span>
@@ -421,7 +418,7 @@ export function OnCallInbox({
                         router.push(`/on-call/${r.id}`);
                       }
                     }}
-                    className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-sm calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
+                    className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-ambient calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
                   >
                     <p className="font-bold uppercase text-text">{r.student.fullName}</p>
                     <p className="mt-1 text-xs uppercase tracking-wide text-muted">
@@ -501,7 +498,7 @@ export function OnCallInbox({
 
       {/* ── Stats Cards ───────────────────────────────────────── */}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-sm sm:p-5">
+        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-ambient sm:p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
             Total Logs Today
           </p>
@@ -510,7 +507,7 @@ export function OnCallInbox({
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-sm sm:p-5">
+        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-ambient sm:p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
             Avg Response
           </p>
@@ -520,7 +517,7 @@ export function OnCallInbox({
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-sm sm:p-5">
+        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-ambient sm:p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
             Resolution Rate
           </p>

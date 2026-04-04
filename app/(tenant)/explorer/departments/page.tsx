@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
+import { H3 } from "@/components/ui/typography";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
@@ -225,24 +227,17 @@ export default async function DepartmentsPage({
       </div>
 
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="mb-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 space-y-1.5">
-            <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">
-              Departments Explorer
-            </h1>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted/60">
-              {totalSignals} signals monitored
-            </p>
-            <div className="mt-2 max-w-2xl border-l-2 border-border pl-4">
-              <p className="text-[13px] leading-relaxed text-muted">
-                Cross-institutional pedagogical signal monitoring and faculty
-                observation data ledger.
-              </p>
-            </div>
-          </div>
-
-          {showExport && (
+      <PageHeader
+        title="Departments Explorer"
+        eyebrow={<>{totalSignals} signals monitored</>}
+        subtitle={
+          <span className="mt-2 block max-w-2xl border-l-2 border-border pl-4">
+            Cross-institutional pedagogical signal monitoring and faculty
+            observation data ledger.
+          </span>
+        }
+        actions={
+          showExport ? (
             <form action="/api/explorer/export" method="POST" className="shrink-0">
               <input type="hidden" name="view" value="INSTRUCTION_DEPARTMENTS_PIVOT" />
               <input type="hidden" name="windowDays" value={String(windowDays)} />
@@ -261,12 +256,13 @@ export default async function DepartmentsPage({
                 Export CSV
               </button>
             </form>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       {/* ── Filter bar ─────────────────────────────────────────── */}
-      <div className="mb-6 filter-bar">
+      <div className="mb-6 w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+      <div className="filter-bar">
         {/* Window toggle buttons */}
         <div className="filter-period-toggle">
           {WINDOW_OPTIONS.map((w) => (
@@ -322,6 +318,7 @@ export default async function DepartmentsPage({
           </span>
         </div>
       </div>
+      </div>
 
       {/* ── Table ──────────────────────────────────────────────── */}
       {sortedRows.length === 0 ? (
@@ -342,11 +339,11 @@ export default async function DepartmentsPage({
       )}
 
       {/* ── Bottom summary cards ───────────────────────────────── */}
-      <div className="mt-8 grid gap-5 md:grid-cols-3">
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
         {/* Signal Integrity */}
         <div className="flex flex-col justify-between rounded-2xl glass-card p-6">
           <div>
-            <h3 className="text-lg font-bold text-text">Signal Integrity</h3>
+            <H3>Signal Integrity</H3>
             <div className="mt-3 flex items-baseline gap-3">
               <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-muted">
                 Active Observations
@@ -376,7 +373,7 @@ export default async function DepartmentsPage({
         {/* Drift Analysis */}
         <div className="flex flex-col justify-between rounded-2xl glass-card p-6">
           <div>
-            <h3 className="text-lg font-bold text-text">Drift Analysis</h3>
+            <H3>Drift Analysis</H3>
             <div className="mt-4 flex items-start gap-4">
               <div className="flex flex-col items-center">
                 <span className="text-3xl font-bold text-scale-limited-bar">
@@ -406,7 +403,7 @@ export default async function DepartmentsPage({
         {/* Faculty Action Required */}
         <div className="flex flex-col justify-between rounded-2xl bg-primary-container p-6 text-on-primary">
           <div>
-            <h3 className="text-lg font-bold">Faculty Action Required</h3>
+            <H3>Faculty Action Required</H3>
             <p className="mt-3 text-[0.875rem] leading-relaxed text-on-primary-container">
               {driftingCount > 0
                 ? `${driftingCount} department${driftingCount !== 1 ? "s" : ""} currently show${driftingCount === 1 ? "s" : ""} critical drift in observation signals based on recent observations. Immediate intervention recommended.`

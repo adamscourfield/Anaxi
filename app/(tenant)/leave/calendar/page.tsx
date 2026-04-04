@@ -114,7 +114,7 @@ export default async function LeaveCalendarPage({
             </Link>
             <Link
               href={`/leave/calendar?month=${monthQuery}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-3.5 py-2 text-[0.8125rem] font-medium text-text shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] calm-transition"
+              className="inline-flex items-center gap-2 rounded-xl bg-surface-container-lowest px-3.5 py-2 text-[0.8125rem] font-medium text-text shadow-sm calm-transition"
             >
               <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none">
                 <rect
@@ -139,7 +139,7 @@ export default async function LeaveCalendarPage({
 
           <Link
             href="/leave/request"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#131b2e] px-4 py-2.5 text-[0.875rem] font-semibold text-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] calm-transition hover:bg-[#1a2540]"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-[0.875rem] font-semibold text-white shadow-sm calm-transition hover:bg-primary-container"
           >
             <svg
               className="h-3.5 w-3.5"

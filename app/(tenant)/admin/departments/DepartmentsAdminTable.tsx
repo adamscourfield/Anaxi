@@ -337,7 +337,7 @@ export function DepartmentsAdminTable({
           style={{ background: "rgba(0,0,0,0.35)" }}
           onClick={(e) => e.target === e.currentTarget && setEditingDept(null)}
         >
-          <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-surface-container-lowest p-6 shadow-2xl">
+          <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-surface-container-lowest p-6 shadow-xl">
             <h2 className="text-lg font-bold text-text mb-4">Rename Department</h2>
             <form action={renameDepartmentAction} onSubmit={() => setEditingDept(null)}>
               <input type="hidden" name="id" value={editingDept.id} />
