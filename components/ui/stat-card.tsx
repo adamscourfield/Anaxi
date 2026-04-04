@@ -27,8 +27,8 @@ export function StatCard({
   context,
   accent = "accent",
   href,
-  tone = "default",
-  accentPlacement = "top",
+  tone = "softGrey",
+  accentPlacement = "none",
   labelClassName,
   valueClassName,
 }: {

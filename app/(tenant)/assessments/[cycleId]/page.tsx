@@ -113,20 +113,20 @@ export default async function CycleDetailPage({
           label="Result points"
           value={cycle.points.length}
           accentPlacement="none"
-          tone="default"
+          tone="softGrey"
         />
         <StatCard
           label="Total subjects"
           value={totalSubjects}
           accentPlacement="none"
-          tone="default"
+          tone="softGrey"
           context="Across all departments"
         />
         <StatCard
           label="Entries recorded"
           value={totalEntries.toLocaleString()}
           accentPlacement="none"
-          tone="default"
+          tone="softGrey"
           context={
             <span className="font-semibold text-emerald-600">↗ +12% from Y10</span>
           }
@@ -135,7 +135,7 @@ export default async function CycleDetailPage({
           label="Data integrity"
           value="99.7%"
           accentPlacement="none"
-          tone="default"
+          tone="softGrey"
           context="Verified by Registry"
         />
       </div>

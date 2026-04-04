@@ -64,6 +64,7 @@ Depth is achieved through **Tonal Layering**, not structural scaffolding.
 ### Cards & Lists
 - **The "No Divider" Rule:** Forbid the use of horizontal lines between list items. Instead, use vertical white space from the **Spacing Scale** (e.g., `spacing-4` or `spacing-6`) or a subtle hover state shift to `surface-container-high`.
 - **Rounding:** Large containers use `xl` (1.5rem/24px) to feel substantial; internal components use `md` (0.75rem/12px).
+- **Stat Cards — Default Style:** Use the `softGrey` tone (`bg-[#F1F3F5]`, no border, no shadow) with `accentPlacement="none"` (no coloured bar). This is the canonical stat card: a flat, soft-grey tile with a small all-caps label and a large bold value. Accent bars (`top` / `left`) and coloured tones (`softBlueGrey`, `softWarm`) are reserved for deliberate intent (e.g. a left-edge accent to indicate urgency, or a warm tint for a leave-status metric). Never use `tone="default"` (white + border) for new stat cards — it violates the No-Line Rule.
 
 ### Intelligence Chips
 - **Selection:** Use `tertiary-container` (#3d060b) with `on-tertiary-container` (#c06c6c) for selected states to provide that "Coral" highlight in a sophisticated, readable way.

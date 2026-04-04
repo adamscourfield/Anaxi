@@ -7,7 +7,6 @@ interface HistoryFiltersProps {
   teachers: { id: string; fullName: string }[];
   observers: { id: string; fullName: string }[];
   subjects: string[];
-  phaseOptions: { value: string; label: string }[];
   signalOptions: { key: string; label: string }[];
   defaults: {
     teacherId: string;
@@ -15,7 +14,6 @@ interface HistoryFiltersProps {
     subject: string;
     from: string;
     to: string;
-    phase: string;
     signalKey: string;
   };
   /** When set, a hidden `window` field is submitted so date-window deep links stay applied. */
@@ -28,7 +26,6 @@ export function HistoryFilters({
   teachers,
   observers,
   subjects,
-  phaseOptions,
   signalOptions,
   defaults,
   preservedWindowDays,
@@ -89,20 +86,6 @@ export function HistoryFilters({
             options={[
               { value: "", label: "All Curricula" },
               ...subjects.map((s) => ({ value: s, label: s })),
-            ]}
-          />
-        </label>
-        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[160px]">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Phase</span>
-          <FormSelect
-            name="phase"
-            defaultValue={defaults.phase}
-            placeholder="All phases"
-            searchable
-            triggerClassName={triggerWhite}
-            options={[
-              { value: "", label: "All phases" },
-              ...phaseOptions.map((p) => ({ value: p.value, label: p.label })),
             ]}
           />
         </label>
