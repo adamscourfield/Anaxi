@@ -787,6 +787,58 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   }
   console.log(`  ✓  ${totalObservations} observations created`);
 
+  // ── Book Look observations ─────────────────────────────────────────────────
+  console.log("  📚  Creating book look observations…");
+  const bookTeacherIndices = [0, 5, 10, 15];
+  const bookScoresets: Partial<Record<string, ScaleKey>>[] = [
+    { PRESENTATION_STANDARD: "LIMITED",    WORK_COMPLETION: "SOME",       SUSTAINED_EFFORT: "LIMITED",    TASK_APPROPRIATENESS: "SOME",       VOLUME_OF_WORK: "LIMITED"    },
+    { PRESENTATION_STANDARD: "CONSISTENT", WORK_COMPLETION: "CONSISTENT", SUSTAINED_EFFORT: "SOME",       TASK_APPROPRIATENESS: "CONSISTENT", VOLUME_OF_WORK: "SOME"       },
+    { PRESENTATION_STANDARD: "STRONG",     WORK_COMPLETION: "STRONG",     SUSTAINED_EFFORT: "CONSISTENT", TASK_APPROPRIATENESS: "STRONG",     VOLUME_OF_WORK: "CONSISTENT" },
+    { PRESENTATION_STANDARD: "SOME",       WORK_COMPLETION: "LIMITED",    SUSTAINED_EFFORT: "SOME",       TASK_APPROPRIATENESS: "LIMITED",    VOLUME_OF_WORK: "SOME"       },
+    { PRESENTATION_STANDARD: "CONSISTENT", WORK_COMPLETION: "STRONG",     SUSTAINED_EFFORT: "STRONG",     TASK_APPROPRIATENESS: "CONSISTENT", VOLUME_OF_WORK: "STRONG"     },
+  ];
+  const bookSignalKeys = [
+    "PRESENTATION_STANDARD",
+    "WORK_COMPLETION",
+    "SUSTAINED_EFFORT",
+    "TASK_APPROPRIATENESS",
+    "VOLUME_OF_WORK",
+  ] as const;
+
+  let totalBookObservations = 0;
+  for (let bi = 0; bi < bookTeacherIndices.length; bi++) {
+    const teacher = teacherUsers[bookTeacherIndices[bi]];
+    const observerId = observerFor(bookTeacherIndices[bi]);
+    const subject = SUBJECTS_BY_DEPT[teacher.dept] ?? "Other";
+    const yearGroup = pick(YEAR_GROUPS) as string;
+    const obsCount = bi % 2 === 0 ? 2 : 1;
+    for (let oi = 0; oi < obsCount; oi++) {
+      const scores = bookScoresets[(bi * 2 + oi) % bookScoresets.length];
+      await prisma.observation.create({
+        data: {
+          tenantId: tenant.id,
+          observedTeacherId: teacher.id,
+          observerId,
+          observedAt: daysAgo(randInt(3, 18)),
+          yearGroup,
+          subject,
+          phase: "BOOKS",
+          signals: {
+            createMany: {
+              data: bookSignalKeys.map((k) => ({
+                signalKey: k,
+                valueKey: scores[k] ?? "CONSISTENT",
+                notObserved: false,
+              })),
+            },
+          },
+        },
+      });
+      totalBookObservations++;
+    }
+  }
+  console.log(`  ✓  ${totalBookObservations} book look observations created`);
+
   // ── Step 8: LOA Requests ───────────────────────────────────────────────────
   console.log("  📝  Creating LOA requests…");
   const loaStatuses = ["PENDING", "PENDING", "APPROVED", "APPROVED", "APPROVED", "DENIED", "PENDING"];

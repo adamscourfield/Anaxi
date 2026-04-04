@@ -190,7 +190,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
               </SectionHeader>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {(SIGNAL_DEFINITIONS as any[]).map((signal) => {
+                {(SIGNAL_DEFINITIONS as any[]).filter((s) => s.phaseRelevance.includes(observation.phase)).map((signal) => {
                   const override = (labelMap as any)[signal.key];
                   const displayName = override?.displayName || signal.displayNameDefault;
                   const value = signalMap.get(signal.key);

@@ -30,6 +30,8 @@ const PHASE_BADGE: Record<string, string> = {
   GUIDED_PRACTICE:       "border-[var(--phase-guided-text)]/30 text-[var(--phase-guided-text)]",
   INDEPENDENT_PRACTICE:  "border-[var(--phase-independent-text)]/30 text-[var(--phase-independent-text)]",
   UNKNOWN:               "border-border text-muted",
+  THRESHOLD:             "border-[var(--phase-instruction-text)]/30 text-[var(--phase-instruction-text)]",
+  BOOKS:                 "border-border text-muted",
 };
 
 /* ── Pagination constants ─────────────────────────────────────────────── */
@@ -40,6 +42,8 @@ const VALID_PHASE_FILTERS = new Set([
   "GUIDED_PRACTICE",
   "INDEPENDENT_PRACTICE",
   "UNKNOWN",
+  "THRESHOLD",
+  "BOOKS",
 ]);
 
 function formatLongDate(date: Date | string): string {

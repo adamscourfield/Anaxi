@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { GLOBAL_SCALE } from "@/modules/observations/signalDefinitions";
 import { clearDraft, loadDraft, persistDraft, ScaleKey } from "./observationDraft";
 import { SignalHelpSheet } from "./SignalHelpSheet";
 import { SignalTileGroup } from "./SignalTileGroup";
@@ -14,6 +13,7 @@ type Signal = {
   descriptionDefault: string;
   lookFors?: string[];
   scaleGuidance: Record<string, string>;
+  scale: { key: string; label: string; description: string }[];
   phaseRelevance: string[];
   isUniversal: boolean;
 };
@@ -118,12 +118,12 @@ export function SignalFlowScreen({
   const title = override?.displayName || currentSignal.displayNameDefault;
   const description = override?.description || currentSignal.descriptionDefault;
 
-  const scaleRows = GLOBAL_SCALE.map((scale) => ({
+  const scaleRows = currentSignal.scale.map((scale) => ({
     label: scale.label,
     guidance: currentSignal.scaleGuidance[scale.key],
   }));
 
-  const scaleOptions = GLOBAL_SCALE.map((scale) => ({
+  const scaleOptions = currentSignal.scale.map((scale) => ({
     key: scale.key,
     label: scale.label,
     guidance: currentSignal.scaleGuidance[scale.key] || scale.description,

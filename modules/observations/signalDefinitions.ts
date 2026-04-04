@@ -3,6 +3,8 @@ export const LESSON_PHASE = {
   GUIDED_PRACTICE: "GUIDED_PRACTICE",
   INDEPENDENT_PRACTICE: "INDEPENDENT_PRACTICE",
   UNKNOWN: "UNKNOWN",
+  THRESHOLD: "THRESHOLD",
+  BOOKS: "BOOKS",
 } as const;
 
 export type LessonPhase = (typeof LESSON_PHASE)[keyof typeof LESSON_PHASE];
@@ -20,6 +22,11 @@ export const SIGNAL_KEYS = {
   RETRIEVAL_PRESENCE: "RETRIEVAL_PRESENCE",
   STRETCH_DEPLOYMENT: "STRETCH_DEPLOYMENT",
   INDEPENDENT_ACCOUNTABILITY: "INDEPENDENT_ACCOUNTABILITY",
+  PRESENTATION_STANDARD: "PRESENTATION_STANDARD",
+  WORK_COMPLETION: "WORK_COMPLETION",
+  SUSTAINED_EFFORT: "SUSTAINED_EFFORT",
+  TASK_APPROPRIATENESS: "TASK_APPROPRIATENESS",
+  VOLUME_OF_WORK: "VOLUME_OF_WORK",
 } as const;
 
 export type SignalKey = (typeof SIGNAL_KEYS)[keyof typeof SIGNAL_KEYS];
@@ -53,6 +60,13 @@ export const GLOBAL_SCALE: SignalDefinition["scale"] = [
   { key: "STRONG", label: "Strong & embedded", description: "High-quality, purposeful and well embedded." },
 ];
 
+export const BOOKS_SCALE: SignalDefinition["scale"] = [
+  { key: "LIMITED", label: "Limited", description: "Standard is poor across the majority of books reviewed." },
+  { key: "SOME", label: "Some", description: "Inconsistent across books." },
+  { key: "CONSISTENT", label: "Consistent", description: "Broadly consistent across the books reviewed." },
+  { key: "STRONG", label: "Strong", description: "Standards are uniform and a source of visible pride." },
+];
+
 export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
   {
     key: SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
@@ -60,7 +74,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Behaviour & Focus",
     descriptionDefault:
       "Students are attentive, routines are secure, and learning time is protected. Transitions are calm and expectations are consistently reinforced.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -82,7 +96,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Participation & Thinking Ratio",
     descriptionDefault:
       "A wide range of students are required to think and respond. Participation is not dominated by volunteers. Cold call is used deliberately.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -103,7 +117,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Pace & Lesson Momentum",
     descriptionDefault:
       "The lesson moves forward with purpose. Transitions are efficient and students remain cognitively engaged.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -120,7 +134,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Cold Call & Directed Questioning",
     descriptionDefault:
       "Students are routinely and unpredictably asked to respond. Questioning checks understanding across the class, not just a few voices.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -137,7 +151,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Checking for Understanding",
     descriptionDefault:
       "The teacher regularly checks for understanding before moving on and adapts instruction if misconceptions appear.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -154,7 +168,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Error Correction & Feedback",
     descriptionDefault:
       "Misconceptions are addressed clearly and precisely. Students are required to correct and secure understanding.",
-    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -171,7 +185,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Explicit Modelling",
     descriptionDefault:
       "New knowledge or processes are clearly demonstrated. The thinking process is made visible before students practise independently.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -188,7 +202,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Language & Explanation Clarity",
     descriptionDefault:
       "Subject vocabulary is used accurately and explanations are clear, structured, and free from ambiguity.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -205,7 +219,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Responsive Teaching",
     descriptionDefault:
       "Instruction adjusts in response to student understanding. The teacher slows down, re-explains, or extends as needed.",
-    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -222,7 +236,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Retrieval & Recall",
     descriptionDefault:
       "Students are required to recall previously taught material. Retrieval strengthens long-term memory and connects prior learning.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -239,7 +253,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Stretch & Challenge",
     descriptionDefault:
       "Students are pushed to deepen thinking, extend answers, and apply knowledge beyond surface-level responses.",
-    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -256,7 +270,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Independent Practice & Accountability",
     descriptionDefault:
       "Students practise independently with clear expectations. Work is monitored and misconceptions are identified promptly.",
-    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
+    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -266,5 +280,106 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
       STRONG: "High accountability: teacher circulation is purposeful, feedback is timely, and almost all students produce high-quality practice.",
     },
     lookFors: ["Clear expectations for quality and quantity of work", "Teacher actively circulates and checks work", "Students held accountable for completion and accuracy"],
+  },
+  {
+    key: SIGNAL_KEYS.PRESENTATION_STANDARD,
+    order: 13,
+    displayNameDefault: "Presentation Standard",
+    descriptionDefault: "Work is neat, organised, and reflects pride in output.",
+    phaseRelevance: [LESSON_PHASE.BOOKS],
+    isUniversal: false,
+    scale: BOOKS_SCALE,
+    scaleGuidance: {
+      LIMITED: "Presentation is poor across most books; work is frequently illegible, untitled, or defaced.",
+      SOME: "Presentation is inconsistent; some books show care but others fall below a basic standard.",
+      CONSISTENT: "Work is consistently tidy and organised; pages are dated, titled, and legible across the set.",
+      STRONG: "Presentation is a source of visible pride; standards are uniform across books with no deterioration over time.",
+    },
+    lookFors: [
+      "Handwriting is legible",
+      "Pages are dated and titled",
+      "No graffiti or defacement",
+      "Work is not scrawled or rushed",
+    ],
+  },
+  {
+    key: SIGNAL_KEYS.WORK_COMPLETION,
+    order: 14,
+    displayNameDefault: "Work Completion",
+    descriptionDefault: "Tasks are finished to the expected level with no unexplained gaps.",
+    phaseRelevance: [LESSON_PHASE.BOOKS],
+    isUniversal: false,
+    scale: BOOKS_SCALE,
+    scaleGuidance: {
+      LIMITED: "Significant gaps and incomplete tasks are the norm; little evidence that completion is expected or enforced.",
+      SOME: "Some tasks are finished but gaps are frequent and unexplained; completion is not yet consistent.",
+      CONSISTENT: "The majority of tasks are complete; gaps are minor and always explainable.",
+      STRONG: "Every task is completed to the expected standard; gaps are rare and consistently explained.",
+    },
+    lookFors: [
+      "No half-finished tasks",
+      "No blank pages where work was expected",
+      "Incomplete work has a visible reason",
+    ],
+  },
+  {
+    key: SIGNAL_KEYS.SUSTAINED_EFFORT,
+    order: 15,
+    displayNameDefault: "Sustained Effort",
+    descriptionDefault: "Work quality is consistent across the book, not just in isolated entries.",
+    phaseRelevance: [LESSON_PHASE.BOOKS],
+    isUniversal: false,
+    scale: BOOKS_SCALE,
+    scaleGuidance: {
+      LIMITED: "Effort varies significantly across the book; clear evidence of coasting or declining standards over time.",
+      SOME: "Strong patches exist but effort is not sustained across the full book; quality deteriorates over time.",
+      CONSISTENT: "Work quality is broadly consistent across the book; no significant deterioration in effort or output.",
+      STRONG: "Standards are sustained or improve over time; no evidence of effort being rationed across the year.",
+    },
+    lookFors: [
+      "Quality does not visibly decline over weeks",
+      "Effort in early pages matches effort in recent pages",
+      "No evidence of coasting",
+    ],
+  },
+  {
+    key: SIGNAL_KEYS.TASK_APPROPRIATENESS,
+    order: 16,
+    displayNameDefault: "Task Appropriateness",
+    descriptionDefault: "Written tasks reflect the curriculum intent for that year group and subject.",
+    phaseRelevance: [LESSON_PHASE.BOOKS],
+    isUniversal: false,
+    scale: BOOKS_SCALE,
+    scaleGuidance: {
+      LIMITED: "Tasks are frequently trivial or generic; work is disconnected from the subject's disciplinary demands.",
+      SOME: "Some tasks are appropriate but others are low-demand or repetitive; curriculum intent is not consistently evident.",
+      CONSISTENT: "Tasks are clearly subject-relevant and age-appropriate; curriculum planning is coherent and evident.",
+      STRONG: "Tasks are ambitious and disciplinarily authentic; clearly connected to a coherent and well-sequenced curriculum.",
+    },
+    lookFors: [
+      "Tasks are not trivial or generic",
+      "Work reflects the subject's disciplinary demands",
+      "Tasks require thinking, not just copying",
+    ],
+  },
+  {
+    key: SIGNAL_KEYS.VOLUME_OF_WORK,
+    order: 17,
+    displayNameDefault: "Volume of Work",
+    descriptionDefault: "Quantity of written work is appropriate given time elapsed and subject demands.",
+    phaseRelevance: [LESSON_PHASE.BOOKS],
+    isUniversal: false,
+    scale: BOOKS_SCALE,
+    scaleGuidance: {
+      LIMITED: "The book is sparse; volume of written work is significantly below what would be expected given the time elapsed.",
+      SOME: "Volume is uneven; some periods show adequate output but others show unexplained absence of work.",
+      CONSISTENT: "Volume of work is broadly appropriate for the time elapsed and subject demands.",
+      STRONG: "The book is full and rich; high expectations for written output are consistently maintained.",
+    },
+    lookFors: [
+      "The book is not sparse",
+      "No unexplained absence of work across lessons",
+      "Volume reflects the time the student has been in the class",
+    ],
   },
 ];

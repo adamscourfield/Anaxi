@@ -5,6 +5,8 @@ const PHASE_LABELS: Record<string, string> = {
   GUIDED_PRACTICE: "Guided Practice",
   INDEPENDENT_PRACTICE: "Independent Practice",
   UNKNOWN: "Not Recorded",
+  THRESHOLD: "Threshold",
+  BOOKS: "Book Look",
 };
 
 const PHASE_VARIANTS: Record<string, PillVariant> = {
@@ -12,6 +14,8 @@ const PHASE_VARIANTS: Record<string, PillVariant> = {
   GUIDED_PRACTICE: "success",
   INDEPENDENT_PRACTICE: "accent",
   UNKNOWN: "neutral",
+  THRESHOLD: "warning",
+  BOOKS: "neutral",
 };
 
 export function formatPhaseLabel(phase: string): string {

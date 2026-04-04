@@ -1,6 +1,6 @@
 "use client";
 
-export type Phase = "INSTRUCTION" | "GUIDED_PRACTICE" | "INDEPENDENT_PRACTICE" | "UNKNOWN";
+export type Phase = "INSTRUCTION" | "GUIDED_PRACTICE" | "INDEPENDENT_PRACTICE" | "UNKNOWN" | "THRESHOLD" | "BOOKS";
 export type ScaleKey = "LIMITED" | "SOME" | "CONSISTENT" | "STRONG";
 
 export type ObservationContextState = {
