@@ -186,3 +186,16 @@ export function detectNonGradeStatus(
   if (WITHDRAWN_KEYWORDS.has(upper)) return "WITHDRAWN";
   return null;
 }
+
+/**
+ * True when the row represents an actual entered grade (not absent/withdrawn
+ * placeholder text and successfully normalised for the assessment format).
+ */
+export function hasRecordedGrade(
+  rawValue: string,
+  format: GradeFormat,
+  maxScore?: number | null
+): boolean {
+  if (detectNonGradeStatus(rawValue)) return false;
+  return normalizeGrade(rawValue, format, maxScore) !== null;
+}

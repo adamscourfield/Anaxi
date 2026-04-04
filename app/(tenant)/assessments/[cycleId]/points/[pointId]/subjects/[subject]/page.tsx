@@ -17,6 +17,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
 import { SubjectStudentsFilterBar } from "./SubjectStudentsFilterBar";
 import type { GradeFormat } from "@prisma/client";
+import { hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -157,6 +158,7 @@ export default async function SubjectDetailPage({
   const countMap = new Map<string, number>();
   for (const a of allAssessments) {
     for (const r of a.results) {
+      if (!hasRecordedGrade(r.rawValue, a.gradeFormat, a.maxScore)) continue;
       const score = isGcse
         ? (r.normalizedScore !== null ? r.normalizedScore * 9 : null)
         : (A_LEVEL_SCORE[r.rawValue.trim().toUpperCase()] ?? null);
@@ -171,30 +173,34 @@ export default async function SubjectDetailPage({
     studentAvgMap.set(sid, sum / countMap.get(sid)!);
   }
 
-  const present = assessment.results.filter(r => r.status === "PRESENT");
+  const graded = assessment.results.filter(
+    (r) =>
+      r.status === "PRESENT" &&
+      hasRecordedGrade(r.rawValue, assessment.gradeFormat, assessment.maxScore),
+  );
 
   // Grade distribution
   const distribution = isGcse
     ? [9, 8, 7, 6, 5, 4, 3, 2, 1].map(g => ({
         grade: String(g),
-        count: present.filter(r => r.normalizedScore !== null && Math.round(r.normalizedScore * 9) === g).length,
+        count: graded.filter(r => r.normalizedScore !== null && Math.round(r.normalizedScore * 9) === g).length,
       }))
     : A_LEVEL_ORDER.map(g => ({
         grade: g,
-        count: present.filter(r => r.rawValue.trim().toUpperCase() === g).length,
+        count: graded.filter(r => r.rawValue.trim().toUpperCase() === g).length,
       }));
 
   const distTotal = distribution.reduce((s, d) => s + d.count, 0);
 
-  // PP / SEND gap data (GCSE only)
-  const ppResults = assessment.results.filter(r => r.student.ppFlag);
-  const nonPpResults = assessment.results.filter(r => !r.student.ppFlag);
-  const sendResults = assessment.results.filter(r => r.student.sendFlag);
-  const nonSendResults = assessment.results.filter(r => !r.student.sendFlag);
+  // PP / SEND gap data (GCSE only) — only students with a recorded grade in this subject
+  const ppResults = graded.filter(r => r.student.ppFlag);
+  const nonPpResults = graded.filter(r => !r.student.ppFlag);
+  const sendResults = graded.filter(r => r.student.sendFlag);
+  const nonSendResults = graded.filter(r => !r.student.sendFlag);
 
   const ppData = isGcse ? {
-    ppCount: ppResults.filter(r => r.status === "PRESENT").length,
-    nonPpCount: nonPpResults.filter(r => r.status === "PRESENT").length,
+    ppCount: ppResults.length,
+    nonPpCount: nonPpResults.length,
     ppT4: gcseThresholdPct(ppResults, 4),
     ppT5: gcseThresholdPct(ppResults, 5),
     nonPpT4: gcseThresholdPct(nonPpResults, 4),
@@ -204,8 +210,8 @@ export default async function SubjectDetailPage({
   } : null;
 
   const sendData = isGcse ? {
-    sendCount: sendResults.filter(r => r.status === "PRESENT").length,
-    nonSendCount: nonSendResults.filter(r => r.status === "PRESENT").length,
+    sendCount: sendResults.length,
+    nonSendCount: nonSendResults.length,
     sendT4: gcseThresholdPct(sendResults, 4),
     sendT5: gcseThresholdPct(sendResults, 5),
     nonSendT4: gcseThresholdPct(nonSendResults, 4),
@@ -215,7 +221,7 @@ export default async function SubjectDetailPage({
   } : null;
 
   // Build student rows with avg + diff
-  const allStudents = present
+  const allStudents = graded
     .map(r => {
       const thisGrade = isGcse
         ? (r.normalizedScore !== null ? r.normalizedScore * 9 : null)
@@ -283,12 +289,12 @@ export default async function SubjectDetailPage({
       <PageHeader
         eyebrow={`${currentPoint.cycle.label} · ${currentPoint.label}`}
         title={subjectName}
-        subtitle={`${present.length} students assessed · ${assessment.gradeFormat === "GCSE" ? "GCSE" : "A-Level"}`}
+        subtitle={`${graded.length} students assessed · ${assessment.gradeFormat === "GCSE" ? "GCSE" : "A-Level"}`}
       />
 
       {/* Grade Distribution */}
       <div className="space-y-3">
-        <SectionHeader title="Grade Distribution" subtitle={`${present.length} students`} />
+        <SectionHeader title="Grade Distribution" subtitle={`${graded.length} students`} />
         <div className="rounded-2xl bg-white p-6 shadow-ambient space-y-4">
           {distTotal > 0 ? (
             <>
@@ -335,7 +341,7 @@ export default async function SubjectDetailPage({
                     { label: "5+", threshold: 5, cls: "text-violet-600" },
                     { label: "7+", threshold: 7, cls: "text-green-600" },
                   ].map(({ label, threshold, cls }) => {
-                    const count = present.filter(r => r.normalizedScore !== null && Math.round(r.normalizedScore * 9) >= threshold).length;
+                    const count = graded.filter(r => r.normalizedScore !== null && Math.round(r.normalizedScore * 9) >= threshold).length;
                     const pct = distTotal > 0 ? Math.round((count / distTotal) * 100) : 0;
                     return (
                       <div key={label} className="flex items-baseline gap-1.5">
