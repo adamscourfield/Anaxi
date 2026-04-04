@@ -81,15 +81,15 @@ export function DepartmentsAdminTable({
           return (
             <div
               key={dept.id}
-              className="overflow-hidden rounded-2xl border border-border/50 bg-surface-container-lowest/80 shadow-ambient ring-1 ring-black/[0.03] backdrop-blur-sm transition-shadow hover:shadow-lg"
+              className="overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient calm-transition hover:shadow-md"
             >
               {/* Department header row */}
-              <div className="flex items-center gap-4 bg-gradient-to-r from-transparent via-surface-container-high/20 to-transparent px-5 py-4">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-3 px-5 py-4">
                 {/* Expand toggle */}
                 <button
                   type="button"
                   onClick={() => toggleExpand(dept.id)}
-                  className="shrink-0 rounded-md p-1 text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
+                  className="shrink-0 rounded-lg p-1.5 text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
                   title={isExpanded ? "Collapse" : "Expand staff"}
                 >
                   <svg
@@ -106,36 +106,70 @@ export function DepartmentsAdminTable({
                 </button>
 
                 {/* Dept info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[15px] font-bold tracking-[-0.01em] text-text leading-tight">{dept.name}</p>
+                <div className="min-w-0 flex-1 basis-[min(100%,12rem)]">
+                  <p className="text-[0.875rem] font-semibold tracking-[-0.01em] text-text leading-snug">{dept.name}</p>
                   {dept.faculty && (
-                    <p className="mt-0.5 text-xs text-muted">Faculty: {dept.faculty}</p>
+                    <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">{dept.faculty}</p>
                   )}
                 </div>
 
-                {/* HOD chip */}
-                <div className="hidden sm:flex items-center gap-2 shrink-0">
-                  {hod ? (
-                    <div className="flex items-center gap-2">
-                      <Avatar name={hod.user?.fullName ?? "?"} size="sm" />
-                      <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted leading-none mb-0.5">HOD</p>
-                        <p className="text-sm font-medium text-text leading-tight">{hod.user?.fullName}</p>
-                      </div>
+                {/* HOD + staff + actions — single trailing cluster */}
+                <div className="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:ml-auto sm:w-auto sm:flex-nowrap sm:gap-3">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+                    {/* HOD — one compact row */}
+                    <div className="hidden min-w-0 sm:block">
+                      {hod ? (
+                        <div className="flex max-w-[min(100%,16rem)] items-center gap-2 rounded-xl bg-[var(--surface-container-low)] px-2.5 py-1.5">
+                          <Avatar name={hod.user?.fullName ?? "?"} size="sm" />
+                          <div className="min-w-0 leading-tight">
+                            <p className="truncate text-sm font-medium text-text">{hod.user?.fullName}</p>
+                            <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted/80">Head of department</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="rounded-xl bg-[var(--surface-container-low)] px-2.5 py-1.5 text-xs italic text-muted">
+                          No HOD set
+                        </span>
+                      )}
                     </div>
-                  ) : (
-                    <span className="text-xs text-muted italic">No HOD set</span>
-                  )}
-                </div>
 
-                {/* Staff count */}
-                <div className="hidden md:flex flex-col items-center shrink-0 w-16">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted leading-none mb-0.5">Staff</p>
-                  <p className="text-sm font-semibold text-text">{dept.memberships.length}</p>
-                </div>
+                    {/* Staff — inline number + label */}
+                    <div
+                      className="hidden items-baseline gap-1.5 rounded-xl bg-[var(--surface-container-low)] px-2.5 py-1.5 tabular-nums sm:inline-flex"
+                      title="Staff in department"
+                    >
+                      <span className="text-sm font-semibold text-text">{dept.memberships.length}</span>
+                      <span className="text-[11px] font-medium text-muted">staff</span>
+                    </div>
+                  </div>
+
+                  {/* Mobile: HOD + staff inline */}
+                  <div className="flex w-full flex-col gap-2 sm:hidden">
+                    {hod ? (
+                      <div className="flex items-center gap-2 rounded-xl bg-[var(--surface-container-low)] px-2.5 py-1.5">
+                        <Avatar name={hod.user?.fullName ?? "?"} size="sm" />
+                        <div className="min-w-0 flex-1 leading-tight">
+                          <p className="truncate text-sm font-medium text-text">{hod.user?.fullName}</p>
+                          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted/80">Head of department</p>
+                        </div>
+                        <span className="shrink-0 text-sm font-semibold tabular-nums text-text">
+                          {dept.memberships.length}
+                          <span className="ml-1 text-[11px] font-medium text-muted">staff</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2 rounded-xl bg-[var(--surface-container-low)] px-2.5 py-1.5">
+                        <span className="text-xs italic text-muted">No HOD set</span>
+                        <span className="text-sm font-semibold tabular-nums text-text">
+                          {dept.memberships.length}
+                          <span className="ml-1 text-[11px] font-medium text-muted">staff</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex shrink-0 items-center gap-0.5 border-l border-[var(--surface-container-low)] pl-2 sm:pl-3">
                   <button
                     type="button"
                     onClick={() => openAddMember(dept)}
@@ -176,11 +210,12 @@ export function DepartmentsAdminTable({
                     </button>
                   </form>
                 </div>
+                </div>
               </div>
 
               {/* Expanded staff panel */}
               {isExpanded && (
-                <div className="space-y-2 border-t border-border/40 bg-surface-container-high/25 px-5 py-4">
+                <div className="space-y-2 border-t border-[var(--surface-container-low)] bg-[var(--surface-container-low)]/40 px-5 py-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.07em] text-muted mb-3">
                     Staff in {dept.name}
                   </p>
@@ -192,7 +227,7 @@ export function DepartmentsAdminTable({
                   {dept.memberships.map((m) => (
                     <div
                       key={m.userId}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 bg-surface-container-lowest border border-border/50"
+                      className="flex items-center gap-3 rounded-xl bg-[var(--surface-container-lowest)] px-3 py-2.5 shadow-ambient"
                     >
                       <Avatar name={m.user?.fullName ?? "?"} size="sm" />
                       <span className="flex-1 text-sm font-medium text-text min-w-0 truncate">
