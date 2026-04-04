@@ -49,31 +49,43 @@ export default async function MyActionsPage() {
         }
       />
 
-      {/* Stat strip */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Stat strip — KPI row aligned with Explorer / Signals */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Open"
           value={openCount}
-          tone="softGrey"
-          accent="accent"
-          accentPlacement="left"
-          valueClassName={`mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] ${openCount > 0 ? "text-text" : "text-muted"}`}
+          tone="glass"
+          contextVariant="inline"
+          valueClassName={`text-[2rem] font-bold leading-none tracking-tight ${openCount > 0 ? "text-text" : "text-muted"}`}
+          context={
+            overdueCount > 0 ? (
+              <span className="font-semibold text-error">{overdueCount} overdue</span>
+            ) : (
+              <span className="font-medium text-muted">On track</span>
+            )
+          }
         />
         <StatCard
           label="Blocked"
           value={blockedCount}
-          tone="softBlueGrey"
-          accent="warning"
-          accentPlacement="left"
-          valueClassName={`mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] ${blockedCount > 0 ? "text-text" : "text-muted"}`}
+          tone="glass"
+          contextVariant="inline"
+          valueClassName={`text-[2rem] font-bold leading-none tracking-tight ${blockedCount > 0 ? "text-text" : "text-muted"}`}
+          context={
+            blockedCount > 0 ? (
+              <span className="font-semibold text-warning">Needs unblock</span>
+            ) : (
+              <span className="font-medium text-muted">None waiting</span>
+            )
+          }
         />
         <StatCard
           label="Done"
           value={doneCount}
-          tone="softGrey"
-          accent="success"
-          accentPlacement="left"
-          valueClassName={`mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] ${doneCount > 0 ? "text-text" : "text-muted"}`}
+          tone="glass"
+          contextVariant="inline"
+          valueClassName={`text-[2rem] font-bold leading-none tracking-tight ${doneCount > 0 ? "text-text" : "text-muted"}`}
+          context={<span className="font-medium text-muted">Completed</span>}
         />
       </div>
 

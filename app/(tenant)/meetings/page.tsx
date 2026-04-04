@@ -75,49 +75,47 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
         }
       />
 
-      {/* ── Stats Cards ─────────────────────────────────────────────────── */}
+      {/* ── Stats Cards (KPI row — matches Explorer / Signals) ─────────── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Open Actions"
           value={stats.openActions}
-          tone="softGrey"
-          accent="accent"
+          tone="glass"
+          contextVariant="inline"
           context={
             stats.newActionsSinceMonday > 0 ? (
-              <span className="flex items-center gap-1 text-[var(--coral)] font-medium">
-                <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3">
-                  <path d="M2 8l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                +{stats.newActionsSinceMonday} since Monday
+              <span className="font-semibold text-success">
+                +{stats.newActionsSinceMonday} since Mon
               </span>
-            ) : undefined
+            ) : (
+              <span className="font-medium text-muted">No new this week</span>
+            )
           }
         />
         <StatCard
           label="Completion Rate"
           value={`${stats.completionRate}%`}
-          tone="softBlueGrey"
-          accent="success"
-          context="Institutional target: 95%"
+          tone="glass"
+          contextVariant="inline"
+          context={<span className="font-medium text-muted">Target 95%</span>}
         />
-        {/* Next Up — custom card */}
-        <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-[#F1F3F5] shadow-none">
-          <div className="px-5 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Next Up</p>
-            {stats.nextMeeting ? (
-              <>
-                <p className="mt-1.5 text-lg font-bold leading-snug tracking-[-0.01em] text-text">
+        <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-surface-container-lowest p-5 shadow-ambient">
+          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Next Up</p>
+          {stats.nextMeeting ? (
+            <>
+              <div className="mt-2 flex flex-wrap items-baseline gap-2">
+                <span className="min-w-0 flex-1 text-[1.125rem] font-bold leading-snug tracking-[-0.01em] text-text">
                   {stats.nextMeeting.title}
-                </p>
-                <p className="mt-1 text-[12px] text-muted">
-                  {formatTimeUntil(new Date(stats.nextMeeting.startDateTime))}
-                  {stats.nextMeeting.location ? ` · ${stats.nextMeeting.location}` : ""}
-                </p>
-              </>
-            ) : (
-              <p className="mt-1.5 text-sm text-muted">No upcoming meetings</p>
-            )}
-          </div>
+                </span>
+              </div>
+              <p className="mt-1.5 text-[0.8125rem] font-medium text-muted">
+                {formatTimeUntil(new Date(stats.nextMeeting.startDateTime))}
+                {stats.nextMeeting.location ? ` · ${stats.nextMeeting.location}` : ""}
+              </p>
+            </>
+          ) : (
+            <p className="mt-2 text-[0.8125rem] font-medium text-muted">No upcoming meetings</p>
+          )}
         </div>
       </div>
 

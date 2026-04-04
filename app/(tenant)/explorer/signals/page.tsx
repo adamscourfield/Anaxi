@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ClickableRow } from "@/components/ui/clickable-row";
 import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { H2 } from "@/components/ui/typography";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -272,47 +273,46 @@ export default async function SignalsPage({
 
       {/* ── Summary stat cards ─────────────────────────────────── */}
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {/* Total Signals */}
-        <div className="rounded-2xl glass-card p-5">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Total Signals</p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-[2rem] font-bold leading-none tracking-tight text-text">{totalSignals}</span>
-            {avgImprovingRate > 0 && (
-              <span className="text-[0.8125rem] font-semibold text-[var(--success)]">
-                +{(avgImprovingRate * 100).toFixed(0)}%
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Critical Drift */}
-        <div className="rounded-2xl glass-card p-5">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Critical Drift</p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-[2rem] font-bold leading-none tracking-tight text-text">{totalDrifting}</span>
-            {totalDrifting > 0 && (
-              <span className="text-[0.8125rem] font-semibold text-[var(--error)]">High Priority</span>
-            )}
-          </div>
-        </div>
-
-        {/* Avg. Drift Rate */}
-        <div className="rounded-2xl glass-card p-5">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Avg. Drift Rate</p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-[2rem] font-bold leading-none tracking-tight text-text">{pct(avgDriftRate)}</span>
-            <span className="text-[0.8125rem] text-muted">System Mean</span>
-          </div>
-        </div>
-
-        {/* Improvement Index */}
-        <div className="rounded-2xl glass-card p-5">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Improvement Index</p>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-[2rem] font-bold leading-none tracking-tight text-text">{improvementIndex.toFixed(1)}</span>
-            <span className={`text-[0.8125rem] font-semibold ${improvementMeta.color}`}>{improvementMeta.label}</span>
-          </div>
-        </div>
+        <StatCard
+          label="Total Signals"
+          value={totalSignals}
+          tone="glass"
+          contextVariant="inline"
+          context={
+            avgImprovingRate > 0 ? (
+              <span className="font-semibold text-success">+{(avgImprovingRate * 100).toFixed(0)}%</span>
+            ) : (
+              <span className="font-medium text-muted">Stable</span>
+            )
+          }
+        />
+        <StatCard
+          label="Critical Drift"
+          value={totalDrifting}
+          tone="glass"
+          contextVariant="inline"
+          context={
+            totalDrifting > 0 ? (
+              <span className="font-semibold text-error">High Priority</span>
+            ) : (
+              <span className="font-medium text-muted">Low risk</span>
+            )
+          }
+        />
+        <StatCard
+          label="Avg. Drift Rate"
+          value={pct(avgDriftRate)}
+          tone="glass"
+          contextVariant="inline"
+          context={<span className="font-medium text-muted">System Mean</span>}
+        />
+        <StatCard
+          label="Improvement Index"
+          value={improvementIndex.toFixed(1)}
+          tone="glass"
+          contextVariant="inline"
+          context={<span className={`font-semibold ${improvementMeta.color}`}>{improvementMeta.label}</span>}
+        />
       </div>
 
       {/* ── Priority signals table ─────────────────────────────── */}

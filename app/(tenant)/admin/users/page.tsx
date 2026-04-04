@@ -6,6 +6,7 @@ import { requireAdminUser } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { UserDirectoryTable } from "./UserDirectoryTable";
 
 // ─── Inline icons ─────────────────────────────────────────────────────────────
@@ -221,70 +222,51 @@ export default async function AdminUsersPage() {
         }
       />
 
-      {/* ── Summary stats ──────────────────────────────────────────── */}
+      {/* ── Summary stats (KPI row — matches Explorer / Signals) ───── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {/* Total Staff */}
-        <div className="overflow-hidden rounded-2xl border border-border/60 bg-surface-container-lowest">
-          <div className="flex h-full">
-            <div className="w-1 shrink-0 bg-[var(--primary)]" />
-            <div className="px-5 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Total Staff</p>
-              <p className="mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] text-text">
-                {allUsers.length.toLocaleString()}
-              </p>
-              <p className="mt-2 text-[12px] text-muted">
-                {activeCount} active, {inactiveCount} inactive
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Active Now */}
-        <div className="overflow-hidden rounded-2xl border border-border/60 bg-surface-container-lowest">
-          <div className="flex h-full">
-            <div className="w-1 shrink-0 bg-[var(--primary)]" />
-            <div className="px-5 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Active Now</p>
-              <p className="mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] text-text">
-                {activeCount.toLocaleString()}
-              </p>
-              <p className="mt-2 text-[12px] text-muted">Institutional presence: {activePercent}%</p>
-            </div>
-          </div>
-        </div>
-
-        {/* On Leave / Inactive */}
-        <div className="overflow-hidden rounded-2xl border border-border/60 bg-surface-container-lowest">
-          <div className="flex h-full">
-            <div className="w-1 shrink-0 bg-[var(--error)]" />
-            <div className="px-5 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">On Leave</p>
-              <p className="mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] text-text">
-                {inactiveCount.toLocaleString()}
-              </p>
-              {inactiveCount > 0 && (
-                <p className="mt-2 flex items-center gap-1 text-[12px] font-medium text-[var(--error)]">
-                  <span className="inline-block h-2 w-2 rounded-full bg-[var(--error)]" />
-                  Action required for {Math.min(inactiveCount, 2)}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Administrators */}
-        <div className="overflow-hidden rounded-2xl border border-border/60 bg-surface-container-lowest">
-          <div className="flex h-full">
-            <div className="w-1 shrink-0 bg-[var(--primary)]" />
-            <div className="px-5 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Administrators</p>
-              <p className="mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] text-text">
-                {adminCount.toLocaleString()}
-              </p>
-              <p className="mt-2 text-[12px] text-muted">Core system access</p>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          label="Total Staff"
+          value={allUsers.length.toLocaleString()}
+          tone="glass"
+          contextVariant="inline"
+          context={
+            <span className="font-medium text-muted">
+              {activeCount} active · {inactiveCount} inactive
+            </span>
+          }
+        />
+        <StatCard
+          label="Active Now"
+          value={activeCount.toLocaleString()}
+          tone="glass"
+          contextVariant="inline"
+          context={
+            <span className="font-medium text-muted">Institutional presence: {activePercent}%</span>
+          }
+        />
+        <StatCard
+          label="On Leave"
+          value={inactiveCount.toLocaleString()}
+          tone="glass"
+          contextVariant="inline"
+          context={
+            inactiveCount > 0 ? (
+              <span className="inline-flex items-center gap-1 font-semibold text-error">
+                <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-error" aria-hidden />
+                Action required for {Math.min(inactiveCount, 2)}
+              </span>
+            ) : (
+              <span className="font-medium text-muted">All active</span>
+            )
+          }
+        />
+        <StatCard
+          label="Administrators"
+          value={adminCount.toLocaleString()}
+          tone="glass"
+          contextVariant="inline"
+          context={<span className="font-medium text-muted">Core system access</span>}
+        />
       </div>
 
       {/* ── User directory table ───────────────────────────────────── */}
