@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { H1, H2, MetaText, BodyText } from "@/components/ui/typography";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatusPill } from "@/components/ui/status-pill";
-import { displayGrade } from "@/modules/assessments/gradeNormalizer";
+import { displayGrade, hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
 import { canViewStudentAnalysis } from "@/modules/authz";
 import { computeStudentRiskProfile, RiskBand, Confidence } from "@/modules/analysis/studentRisk";
 import { toggleWatchlist } from "@/app/(tenant)/analysis/students/actions";
@@ -56,6 +56,18 @@ function attendanceBarColor(pct: number | null): string {
   if (pct >= 90) return "bg-scale-strong-bar";
   if (pct >= 80) return "bg-scale-some-bar";
   return "bg-scale-limited-bar";
+}
+
+/** Loose match for assessment.yearGroup (e.g. "Y13", "13", "Year 13") vs student.yearGroup */
+function yearGroupMatches(assessmentYearGroup: string, studentYearGroup: string | null | undefined): boolean {
+  if (!studentYearGroup?.trim()) return false;
+  const norm = (s: string) =>
+    s
+      .trim()
+      .toUpperCase()
+      .replace(/^YEAR\s+/, "")
+      .replace(/^Y/, "");
+  return norm(assessmentYearGroup) === norm(studentYearGroup);
 }
 
 type AttainmentRow = {
@@ -156,16 +168,64 @@ export default async function StudentDetailPage({
   let attainmentBySubject: AttainmentRow[] = [];
 
   if (assessmentsFeature?.enabled) {
-    activeCycle = await prisma.assessmentCycle.findFirst({
+    const activeCycles = await prisma.assessmentCycle.findMany({
       where: { tenantId: user.tenantId, isActive: true },
       select: { id: true, label: true },
+      orderBy: { label: "asc" },
     });
+
+    if (activeCycles.length > 0) {
+      const cycleIds = activeCycles.map((c) => c.id);
+      const cyclePickRows = await prisma.assessmentResult.findMany({
+        where: {
+          tenantId: user.tenantId,
+          studentId: params.id,
+          status: "PRESENT",
+          assessment: { point: { cycleId: { in: cycleIds } } },
+        },
+        select: {
+          rawValue: true,
+          assessment: {
+            select: {
+              gradeFormat: true,
+              maxScore: true,
+              yearGroup: true,
+              point: { select: { cycleId: true } },
+            },
+          },
+        },
+      });
+
+      const countByCycle = new Map<string, number>();
+      const yearGroupMatchCycle = new Set<string>();
+      for (const r of cyclePickRows) {
+        if (!hasRecordedGrade(r.rawValue, r.assessment.gradeFormat, r.assessment.maxScore)) continue;
+        const cid = r.assessment.point.cycleId;
+        countByCycle.set(cid, (countByCycle.get(cid) ?? 0) + 1);
+        if (yearGroupMatches(r.assessment.yearGroup, student.yearGroup)) {
+          yearGroupMatchCycle.add(cid);
+        }
+      }
+
+      const bestCount = Math.max(0, ...activeCycles.map((c) => countByCycle.get(c.id) ?? 0));
+      let chosenCycleId: string;
+      if (bestCount > 0) {
+        const tied = activeCycles.filter((c) => (countByCycle.get(c.id) ?? 0) === bestCount);
+        const withYg = tied.filter((c) => yearGroupMatchCycle.has(c.id));
+        chosenCycleId = (withYg[0] ?? tied[0]).id;
+      } else {
+        chosenCycleId = activeCycles[0].id;
+      }
+
+      activeCycle = activeCycles.find((c) => c.id === chosenCycleId) ?? activeCycles[0];
+    }
 
     if (activeCycle) {
       const results = await prisma.assessmentResult.findMany({
         where: {
           tenantId: user.tenantId,
           studentId: params.id,
+          status: "PRESENT",
           assessment: { point: { cycleId: activeCycle.id } },
         },
         include: {
@@ -176,8 +236,12 @@ export default async function StudentDetailPage({
         orderBy: { assessment: { point: { ordinal: "asc" } } },
       });
 
+      const gradedResults = results.filter((r) =>
+        hasRecordedGrade(r.rawValue, r.assessment.gradeFormat, r.assessment.maxScore),
+      );
+
       const subjectMap = new Map<string, AttainmentRow["points"]>();
-      for (const r of results) {
+      for (const r of gradedResults) {
         const subject = r.assessment.subject;
         if (!subjectMap.has(subject)) subjectMap.set(subject, []);
         subjectMap.get(subject)!.push({

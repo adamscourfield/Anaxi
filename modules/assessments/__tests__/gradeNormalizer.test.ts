@@ -5,6 +5,7 @@ import {
   validateGrade,
   detectNonGradeStatus,
   displayGrade,
+  hasRecordedGrade,
 } from "../gradeNormalizer";
 
 // ─── GCSE ─────────────────────────────────────────────────────────────────────
@@ -201,6 +202,26 @@ describe("detectNonGradeStatus", () => {
     expect(detectNonGradeStatus("7")).toBeNull();
     expect(detectNonGradeStatus("A*")).toBeNull();
     expect(detectNonGradeStatus("73")).toBeNull();
+  });
+});
+
+// ─── hasRecordedGrade ─────────────────────────────────────────────────────────
+
+describe("hasRecordedGrade", () => {
+  it("is false for absent-style placeholders", () => {
+    expect(hasRecordedGrade("-", "GCSE")).toBe(false);
+    expect(hasRecordedGrade("N/A", "A_LEVEL")).toBe(false);
+  });
+
+  it("is false when normalisation fails", () => {
+    expect(hasRecordedGrade("", "GCSE")).toBe(false);
+    expect(hasRecordedGrade("Z", "A_LEVEL")).toBe(false);
+  });
+
+  it("is true for valid grades", () => {
+    expect(hasRecordedGrade("7", "GCSE")).toBe(true);
+    expect(hasRecordedGrade("B", "A_LEVEL")).toBe(true);
+    expect(hasRecordedGrade("U", "A_LEVEL")).toBe(true);
   });
 });
 
