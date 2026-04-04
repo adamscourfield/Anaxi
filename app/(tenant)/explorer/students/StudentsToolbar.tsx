@@ -36,7 +36,7 @@ export function StudentsToolbar({
   const triggerWhite = "!bg-surface-container-lowest rounded-[10px]";
 
   return (
-    <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-sm md:p-6">
+    <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
       <form
         method="get"
         action="/explorer/students"

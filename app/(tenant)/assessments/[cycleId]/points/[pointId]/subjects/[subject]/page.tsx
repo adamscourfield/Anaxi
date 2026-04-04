@@ -33,13 +33,13 @@ function getInitials(name: string): string {
 }
 
 function gcseColour(g: string | number | null): string {
-  if (g === null) return "bg-slate-100 text-slate-400";
+  if (g === null) return "bg-surface-container-low text-muted";
   const n = Number(g);
   if (n >= 8) return "bg-emerald-600 text-white";
   if (n >= 7) return "bg-green-500 text-white";
-  if (n >= 6) return "bg-blue-500 text-slate-900";
+  if (n >= 6) return "bg-blue-500 text-text";
   if (n >= 5) return "bg-violet-500 text-white";
-  if (n >= 4) return "bg-amber-500 text-slate-900";
+  if (n >= 4) return "bg-amber-500 text-text";
   if (n >= 3) return "bg-orange-500 text-white";
   return "bg-red-600 text-white";
 }
@@ -289,7 +289,7 @@ export default async function SubjectDetailPage({
       {/* Grade Distribution */}
       <div className="space-y-3">
         <SectionHeader title="Grade Distribution" subtitle={`${present.length} students`} />
-        <div className="rounded-2xl bg-white p-6 shadow-sm space-y-4">
+        <div className="rounded-2xl bg-white p-6 shadow-ambient space-y-4">
           {distTotal > 0 ? (
             <>
               {/* Stacked bar */}
@@ -360,7 +360,7 @@ export default async function SubjectDetailPage({
           {/* PP Gap */}
           <div className="space-y-3">
             <SectionHeader title="Pupil Premium Gap" subtitle={`${ppData.ppCount} PP · ${ppData.nonPpCount} Non-PP`} />
-            <div className="rounded-2xl bg-white p-5 shadow-sm space-y-5">
+            <div className="rounded-2xl bg-white p-5 shadow-ambient space-y-5">
               {/* 4+ threshold */}
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -424,7 +424,7 @@ export default async function SubjectDetailPage({
           {/* SEND Gap */}
           <div className="space-y-3">
             <SectionHeader title="SEND Gap" subtitle={`${sendData.sendCount} SEND · ${sendData.nonSendCount} Non-SEND`} />
-            <div className="rounded-2xl bg-white p-5 shadow-sm space-y-5">
+            <div className="rounded-2xl bg-white p-5 shadow-ambient space-y-5">
               {/* 4+ threshold */}
               <div>
                 <div className="flex items-center justify-between mb-3">

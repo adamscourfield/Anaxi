@@ -38,7 +38,7 @@ export function ActionCard({ action, currentUserId, onComplete }: ActionCardProp
 
   return (
     <div
-      className={`group flex items-start gap-3.5 rounded-xl border bg-surface-container-lowest px-4 py-3.5 shadow-sm calm-transition hover:shadow-md ${
+      className={`group flex items-start gap-3.5 rounded-xl border bg-surface-container-lowest px-4 py-3.5 shadow-ambient calm-transition hover:shadow-lg ${
         overdue
           ? "border-error/40 bg-error/[0.03]"
           : isBlocked

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ClickableRow } from "@/components/ui/clickable-row";
+import { PageHeader } from "@/components/ui/page-header";
+import { H2 } from "@/components/ui/typography";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -178,18 +180,13 @@ export default async function SignalsPage({
       </div>
 
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="mb-8">
-        <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">
-          Signals Explorer
-        </h1>
-        <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-muted">
-          Monitor and analyze instructional delivery across departments. Tracking drift rates
-          and instructional consistency metrics.
-        </p>
-      </div>
+      <PageHeader
+        title="Signals Explorer"
+        subtitle="Monitor and analyze instructional delivery across departments. Tracking drift rates and instructional consistency metrics."
+      />
 
       {/* ── Filters (aligned with Observation History) ─────────── */}
-      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-sm md:p-6">
+      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
         <div className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4">
           <div className="flex min-w-0 flex-col gap-1.5 lg:min-w-[220px] lg:flex-none">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
@@ -412,7 +409,7 @@ export default async function SignalsPage({
         {/* Overall Drift Trend */}
         <div className="rounded-2xl glass-card p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-text">Overall Drift Trend</h2>
+            <H2>Overall Drift Trend</H2>
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Last 7 Days</span>
           </div>
 
@@ -462,7 +459,7 @@ export default async function SignalsPage({
 
         {/* Top Improving Signals */}
         <div className="rounded-2xl glass-card p-6">
-          <h2 className="text-lg font-semibold text-text">Top Improving Signals</h2>
+          <H2>Top Improving Signals</H2>
           <div className="mt-4 space-y-3">
             {improving.length > 0 ? (
               improving.map((row) => (

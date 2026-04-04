@@ -68,21 +68,21 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/leave"
-            className="inline-flex items-center rounded-xl border border-black/[0.08] bg-[#F1F3F5] px-3.5 py-2 text-[0.8125rem] font-medium text-text calm-transition hover:border-black/[0.12] hover:bg-[#e8eaed]"
+            className="inline-flex items-center rounded-xl border border-border/60 bg-surface-container-low px-3.5 py-2 text-[0.8125rem] font-medium text-text calm-transition hover:border-border hover:bg-surface-container-high"
           >
             Back to dashboard
           </Link>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 rounded-2xl border border-black/[0.06] bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap gap-4 rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
         <label className="flex min-w-[16rem] flex-1 flex-col gap-1.5">
           <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Search</span>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by staff name, reason, or date"
-            className="h-10 rounded-xl border border-black/[0.08] px-3 text-sm text-text outline-none calm-transition focus:border-black/[0.15]"
+            className="h-10 rounded-xl border border-border/60 px-3 text-sm text-text outline-none calm-transition focus:border-border"
           />
         </label>
 
@@ -91,7 +91,7 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as "ALL" | HistoryRow["status"])}
-            className="h-10 rounded-xl border border-black/[0.08] bg-white px-3 text-sm text-text outline-none calm-transition focus:border-black/[0.15]"
+            className="h-10 rounded-xl border border-border/60 bg-surface-container-lowest px-3 text-sm text-text outline-none calm-transition focus:border-border"
           >
             <option value="ALL">All statuses</option>
             <option value="PENDING">Pending</option>
@@ -101,11 +101,11 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
         </label>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-border/50 bg-surface-container-lowest shadow-ambient">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="bg-[#F1F3F5]">
+              <tr className="bg-surface-container-low">
                 {isManager && (
                   <th className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Staff member</th>
                 )}
@@ -123,7 +123,7 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
                 </tr>
               ) : (
                 filteredRows.map((row) => (
-                  <tr key={row.id} className="border-t border-[#eceef0] calm-transition hover:bg-[#fafbfc]">
+                  <tr key={row.id} className="border-t border-border/30 calm-transition hover:bg-surface-container-low">
                     {isManager && (
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">

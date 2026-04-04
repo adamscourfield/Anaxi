@@ -333,7 +333,7 @@ function LeadershipHome({
 
           {/* Observations this week box */}
           <Link href="/explorer/observations" className="flex min-h-0 flex-1 flex-col">
-          <Card className="flex min-h-0 flex-1 flex-col justify-between calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-md cursor-pointer">
+          <Card className="flex min-h-0 flex-1 flex-col justify-between calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations This Week</p>
             <div>
               <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
@@ -390,7 +390,7 @@ function LeadershipHome({
                 return (
                   <article
                     key={leave.id}
-                    className={`flex flex-col rounded-xl bg-surface-container-lowest p-5 shadow-sm transition-shadow hover:shadow-md ${
+                    className={`flex flex-col rounded-xl bg-surface-container-lowest p-5 shadow-ambient transition-shadow hover:shadow-lg ${
                       isEmergency
                         ? "border border-[var(--outline-variant)]/15 border-l-4 border-l-[#6b1619]"
                         : "border border-[var(--outline-variant)]/15"
@@ -464,7 +464,7 @@ function LeadershipHome({
       {/* ═══ Hero Section 3: Signal Analysis ═══ */}
       <section className="grid gap-4 lg:grid-cols-12">
         {/* CPD Priorities (dark box) */}
-        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-lg lg:col-span-5">
+        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient lg:col-span-5">
           <div className="flex items-center gap-2">
             <span className="text-lg">✦</span>
             <h2 className="text-[1rem] font-bold tracking-[-0.01em]">CPD Priorities</h2>

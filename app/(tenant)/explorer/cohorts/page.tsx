@@ -176,11 +176,11 @@ export default async function CohortsPage({
       />
 
       {/* ── Controls bar ────────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-2xl glass-card">
+      <div className="overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient">
         <div className="border-b border-border/30 px-5 py-3">
           <p className="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-muted">Filters</p>
         </div>
-        <div className="flex flex-wrap items-end gap-3 p-4">
+        <div className="flex flex-wrap items-end gap-4 p-5 md:p-6">
           <form className="flex flex-wrap items-end gap-3">
             {/* Window selector */}
             <label className="flex flex-col gap-1">
@@ -244,7 +244,7 @@ export default async function CohortsPage({
 
       {/* ── Summary row ─────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-surface p-4">
+        <div className="rounded-2xl bg-surface p-4 shadow-ambient">
           <p className="text-sm font-medium text-muted">
             Total students
           </p>
@@ -252,7 +252,7 @@ export default async function CohortsPage({
             {totalStudents}
           </p>
         </div>
-        <div className="rounded-2xl border border-border bg-surface p-4">
+        <div className="rounded-2xl bg-surface p-4 shadow-ambient">
           <p className="text-sm font-medium text-muted">
             Avg attendance
           </p>
@@ -260,7 +260,7 @@ export default async function CohortsPage({
             {avgAttendance !== null ? `${avgAttendance.toFixed(1)}%` : "—"}
           </p>
         </div>
-        <div className="rounded-2xl border border-border bg-surface p-4">
+        <div className="rounded-2xl bg-surface p-4 shadow-ambient">
           <p className="text-sm font-medium text-muted">
             Cohorts
           </p>

@@ -81,7 +81,7 @@ export function DepartmentsAdminTable({
           return (
             <div
               key={dept.id}
-              className="overflow-hidden rounded-2xl border border-border/50 bg-surface-container-lowest/80 shadow-sm ring-1 ring-black/[0.03] backdrop-blur-sm transition-shadow hover:shadow-md"
+              className="overflow-hidden rounded-2xl border border-border/50 bg-surface-container-lowest/80 shadow-ambient ring-1 ring-black/[0.03] backdrop-blur-sm transition-shadow hover:shadow-lg"
             >
               {/* Department header row */}
               <div className="flex items-center gap-4 bg-gradient-to-r from-transparent via-surface-container-high/20 to-transparent px-5 py-4">
@@ -302,7 +302,7 @@ export function DepartmentsAdminTable({
           style={{ background: "rgba(0,0,0,0.35)" }}
           onClick={(e) => e.target === e.currentTarget && setEditingDept(null)}
         >
-          <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-surface-container-lowest p-6 shadow-2xl">
+          <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-surface-container-lowest p-6 shadow-xl">
             <h2 className="text-lg font-bold text-text mb-4">Rename Department</h2>
             <form action={renameDepartmentAction} onSubmit={() => setEditingDept(null)}>
               <input type="hidden" name="id" value={editingDept.id} />

@@ -84,7 +84,7 @@ export function StudentsFilterBar({
   }
 
   return (
-    <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-sm md:p-6">
+    <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
       <div className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4">
         <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[200px] lg:max-w-[min(100%,360px)]">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Search</span>

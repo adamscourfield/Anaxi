@@ -14,13 +14,13 @@ function getInitials(name: string): string {
 }
 
 function gcseColour(g: string | number | null): string {
-  if (g === null) return "bg-slate-100 text-slate-400";
+  if (g === null) return "bg-surface-container-low text-muted";
   const n = Number(g);
   if (n >= 8) return "bg-emerald-600 text-white";
   if (n >= 7) return "bg-green-500 text-white";
-  if (n >= 6) return "bg-blue-500 text-slate-900";
+  if (n >= 6) return "bg-blue-500 text-text";
   if (n >= 5) return "bg-violet-500 text-white";
-  if (n >= 4) return "bg-amber-500 text-slate-900";
+  if (n >= 4) return "bg-amber-500 text-text";
   if (n >= 3) return "bg-orange-500 text-white";
   return "bg-red-600 text-white";
 }
@@ -71,7 +71,7 @@ export default async function EMThresholdPage({
   if (!engA || !mathsA) {
     return (
       <div className="w-full text-center py-12">
-        <p className="text-slate-500">English or Maths assessments not found in this result point.</p>
+        <p className="text-muted">English or Maths assessments not found in this result point.</p>
         <Link href={`/assessments/${cycleId}/points/${pointId}`} className="text-accent mt-4 inline-block hover:underline">
           Back to analysis
         </Link>
@@ -263,7 +263,7 @@ export default async function EMThresholdPage({
     if (diff === null) return <span className="text-muted">—</span>;
     if (diff > 0.1) return <span className="text-emerald-500 font-bold">↗ +{diff}</span>;
     if (diff < -0.1) return <span className="text-red-500 font-bold">↘ {diff}</span>;
-    return <span className="text-slate-400 font-bold">→ {diff}</span>;
+    return <span className="text-muted font-bold">→ {diff}</span>;
   }
 
   return (
@@ -288,39 +288,39 @@ export default async function EMThresholdPage({
 
       {/* Top 4 Metrics Cards */}
       <div className="grid grid-cols-4 gap-6">
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">English {targetThreshold}+</p>
+        <div className="rounded-2xl bg-white p-5 shadow-ambient">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">English {targetThreshold}+</p>
           <div className="mt-3">
-             <span className="text-3xl font-bold leading-none tracking-tight text-slate-900">{engPct}%</span>
+             <span className="text-3xl font-bold leading-none tracking-tight text-text">{engPct}%</span>
           </div>
-          <p className="mt-2 text-xs font-semibold text-slate-500">{engMeets} students met</p>
+          <p className="mt-2 text-xs font-semibold text-muted">{engMeets} students met</p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Maths {targetThreshold}+</p>
+        <div className="rounded-2xl bg-white p-5 shadow-ambient">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">Maths {targetThreshold}+</p>
           <div className="mt-3">
-             <span className="text-3xl font-bold leading-none tracking-tight text-slate-900">{mathsPct}%</span>
+             <span className="text-3xl font-bold leading-none tracking-tight text-text">{mathsPct}%</span>
           </div>
-          <p className="mt-2 text-xs font-semibold text-slate-500">{mathsMeets} students met</p>
+          <p className="mt-2 text-xs font-semibold text-muted">{mathsMeets} students met</p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PP vs Non-PP Gap</p>
+        <div className="rounded-2xl bg-white p-5 shadow-ambient">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">PP vs Non-PP Gap</p>
           <div className="mt-3">
-             <span className="text-3xl font-bold leading-none tracking-tight text-slate-900">
+             <span className="text-3xl font-bold leading-none tracking-tight text-text">
                {Math.abs(nonPpPct - ppPct)}pp
              </span>
           </div>
-          <p className="mt-2 text-xs font-semibold text-slate-500">
+          <p className="mt-2 text-xs font-semibold text-muted">
              {nonPpPct}% Non-PP vs {ppPct}% PP (Both E&M)
           </p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">SEND vs Non-SEND Gap</p>
+        <div className="rounded-2xl bg-white p-5 shadow-ambient">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">SEND vs Non-SEND Gap</p>
           <div className="mt-3">
-             <span className="text-3xl font-bold leading-none tracking-tight text-slate-900">
+             <span className="text-3xl font-bold leading-none tracking-tight text-text">
                {Math.abs(nonSendPct - sendPct)}pp
              </span>
           </div>
-          <p className="mt-2 text-xs font-semibold text-slate-500">
+          <p className="mt-2 text-xs font-semibold text-muted">
              {nonSendPct}% Non-SEND vs {sendPct}% SEND
           </p>
         </div>
@@ -420,7 +420,7 @@ export default async function EMThresholdPage({
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                          </div>
                       ) : (
-                         <div className="h-6 w-6 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                         <div className="h-6 w-6 rounded-full bg-surface-container-low text-muted flex items-center justify-center">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                          </div>
                       )}

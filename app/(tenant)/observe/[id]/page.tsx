@@ -239,7 +239,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                   Concluding Reflections
                 </SectionHeader>
 
-                <div className="overflow-hidden rounded-2xl border border-border/30 bg-surface-container-lowest shadow-sm">
+                <div className="overflow-hidden rounded-2xl border border-border/30 bg-surface-container-lowest shadow-ambient">
                   <div className="border-l-4 border-tertiary-container px-6 py-6 sm:px-8 sm:py-7">
                     <blockquote className="text-[0.9375rem] font-medium leading-relaxed text-text italic">
                       &ldquo;{observation.contextNote}&rdquo;
@@ -268,7 +268,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
 
           {/* Sidebar */}
           <aside className="min-w-0 space-y-6">
-            <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-sm ring-1 ring-border/25">
+            <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-ambient ring-1 ring-border/25">
               <div
                 className="relative px-5 pb-8 pt-6 text-on-primary"
                 style={{
@@ -282,7 +282,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                   <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-xl bg-on-primary/15 text-lg font-bold text-on-primary ring-2 ring-on-primary/25">
                     {initials(teacherName)}
                   </div>
-                  <h3 className="mt-4 font-serif text-[1.125rem] font-semibold leading-snug text-on-primary">
+                  <h3 className="mt-4 text-[1.125rem] font-semibold leading-snug text-on-primary">
                     {teacherName}
                   </h3>
                   <p className="mt-1 text-[0.8125rem] text-on-primary/85">{subtitleLine}</p>
@@ -331,7 +331,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
 
             <div>
               <p className="mb-2 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted">Session Context</p>
-              <div className="space-y-0 overflow-hidden rounded-2xl border border-border/25 bg-surface-container-lowest shadow-sm">
+              <div className="space-y-0 overflow-hidden rounded-2xl border border-border/25 bg-surface-container-lowest shadow-ambient">
                 {[
                   {
                     label: "Class",

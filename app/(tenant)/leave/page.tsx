@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { canManageLoa } from "@/lib/loa";
@@ -185,85 +186,86 @@ export default async function LeavePage({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[1.5rem] font-semibold tracking-tight text-text">Leave of Absence</h1>
-        <div className="flex flex-wrap items-center gap-3">
-          {/* List / Calendar segmented control */}
-          <div
-            className="inline-flex items-center gap-0.5 rounded-[14px] bg-[#F1F3F5] p-1"
-            role="group"
-            aria-label="Leave view"
-          >
+      <PageHeader
+        title="Leave of Absence"
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            {/* List / Calendar segmented control */}
+            <div
+              className="inline-flex items-center gap-0.5 rounded-[14px] bg-[#F1F3F5] p-1"
+              role="group"
+              aria-label="Leave view"
+            >
+              <Link
+                href="/leave?view=list"
+                className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium calm-transition ${
+                  !isCalendar
+                    ? "bg-surface-container-lowest text-text shadow-sm"
+                    : "text-muted hover:text-text"
+                }`}
+              >
+                <svg
+                  className="h-3.5 w-3.5 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                List view
+              </Link>
+              <Link
+                href="/leave?view=calendar"
+                className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium calm-transition ${
+                  isCalendar
+                    ? "bg-surface-container-lowest text-text shadow-sm"
+                    : "text-muted hover:text-text"
+                }`}
+              >
+                <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none">
+                  <rect
+                    x="3.5"
+                    y="4.5"
+                    width="13"
+                    height="12"
+                    rx="2"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M6.5 2.8v3.4M13.5 2.8v3.4M3.5 8.2h13"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                Calendar
+              </Link>
+            </div>
+
             <Link
-              href="/leave?view=list"
-              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium calm-transition ${
-                !isCalendar
-                  ? "bg-white text-text shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]"
-                  : "text-muted hover:text-text"
-              }`}
+              href="/leave/request"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-[0.875rem] font-semibold text-white shadow-sm calm-transition hover:bg-primary-container"
             >
               <svg
-                className="h-3.5 w-3.5 shrink-0"
+                className="h-3.5 w-3.5"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="2.5"
               >
-                <path
-                  d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
-                  strokeLinecap="round"
-                />
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              List view
-            </Link>
-            <Link
-              href="/leave?view=calendar"
-              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium calm-transition ${
-                isCalendar
-                  ? "bg-white text-text shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)]"
-                  : "text-muted hover:text-text"
-              }`}
-            >
-              <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none">
-                <rect
-                  x="3.5"
-                  y="4.5"
-                  width="13"
-                  height="12"
-                  rx="2"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <path
-                  d="M6.5 2.8v3.4M13.5 2.8v3.4M3.5 8.2h13"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              Calendar
+              Request Leave
             </Link>
           </div>
-
-          <Link
-            href="/leave/request"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#131b2e] px-4 py-2.5 text-[0.875rem] font-semibold text-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] calm-transition hover:bg-[#1a2540]"
-          >
-            <svg
-              className="h-3.5 w-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Request Leave
-          </Link>
-        </div>
-      </div>
+        }
+      />
 
       {/* Stat cards — light grey panels per leave dashboard design */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -323,10 +325,10 @@ export default async function LeavePage({
           requestHrefForId={(id) => `/leave/${id}`}
         />
       ) : !hasAnyListRows ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#d1d5db] bg-white py-16">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f4f6]">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface-container-lowest py-16">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface-container-low">
             <svg
-              className="h-6 w-6 text-[#374151]"
+              className="h-6 w-6 text-muted"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -342,7 +344,7 @@ export default async function LeavePage({
           </p>
           <Link
             href="/leave/request"
-            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#131b2e] px-4 py-2.5 text-[0.875rem] font-semibold text-white calm-transition hover:bg-[#1a2540]"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[0.875rem] font-semibold text-white calm-transition hover:bg-primary-container"
           >
             Submit first request
           </Link>

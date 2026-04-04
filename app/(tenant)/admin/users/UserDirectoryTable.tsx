@@ -188,7 +188,7 @@ export function UserDirectoryTable({
   return (
     <div className="space-y-0">
       {/* ── Filters (aligned with Observation History) ───────────── */}
-      <div className="mb-6 w-full rounded-2xl bg-surface-container-low p-5 shadow-sm md:p-6">
+      <div className="mb-6 w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
         <form
           key={filterFormKey}
           onSubmit={applyFilters}

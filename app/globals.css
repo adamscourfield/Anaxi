@@ -370,7 +370,7 @@ textarea:focus-visible {
 .panel {
   border-radius: var(--radius-lg);
   background: var(--surface-container-lowest);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-ambient);
 }
 
 /* ── Field ─────────────────────────────────────────────────────── */
@@ -487,7 +487,7 @@ textarea:focus-visible {
   overflow: hidden;
   border-radius: var(--radius-lg);
   background: var(--surface-container-lowest);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-ambient);
 }
 
 .table-header-strip {

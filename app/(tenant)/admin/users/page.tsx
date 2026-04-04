@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { UserDirectoryTable } from "./UserDirectoryTable";
 
 // ─── Inline icons ─────────────────────────────────────────────────────────────
@@ -199,17 +200,11 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-8">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted/60">
-              Internal&ensp;›&ensp;User Directory
-            </p>
-            <h1 className="text-[2rem] font-bold leading-tight tracking-[-0.02em] text-text">
-              User Directory
-            </h1>
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-3">
+      <PageHeader
+        eyebrow={<>Internal&ensp;›&ensp;User Directory</>}
+        title="User Directory"
+        actions={
+          <>
             <Link href="/admin/users/import">
               <Button variant="secondary" type="button" className="gap-2">
                 <UploadIcon />
@@ -222,9 +217,9 @@ export default async function AdminUsersPage() {
                 Add Staff
               </Button>
             </Link>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* ── Summary stats ──────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

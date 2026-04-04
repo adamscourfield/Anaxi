@@ -40,7 +40,7 @@ export default function StudentsLoading() {
         <div className="h-4 w-40 animate-pulse rounded bg-border/40" />
       </div>
 
-      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-sm md:p-6">
+      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
         <div className="flex flex-wrap items-end gap-4">
           <div className="min-w-[160px] flex-1 space-y-2">
             <div className="h-3 w-14 animate-pulse rounded bg-border/35" />

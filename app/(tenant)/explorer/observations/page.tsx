@@ -152,6 +152,7 @@ export default async function ExplorerObservationsPage({
       />
 
       {/* ── Window selector + Filters ──────────────────────────────────────── */}
+      <div className="mb-6 w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
       <form className="filter-bar">
         {/* Window selector */}
         <div className="filter-period-toggle">
@@ -230,6 +231,7 @@ export default async function ExplorerObservationsPage({
           )}
         </div>
       </form>
+      </div>
 
       {/* ── Result count ───────────────────────────────────────────────────── */}
       <p className="mt-4 text-[0.8125rem] text-muted">
