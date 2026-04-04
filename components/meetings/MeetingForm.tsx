@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { PageHeader } from "@/components/ui/page-header";
 import { MEETING_TYPE_LABELS } from "@/modules/meetings/types";
 
 const MEETING_TYPES = Object.keys(MEETING_TYPE_LABELS) as Array<keyof typeof MEETING_TYPE_LABELS>;
@@ -212,33 +213,33 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
   return (
     <form onSubmit={handleSubmit}>
       {/* ── Page Header ─────────────────────────────────────────── */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">New Meeting</h1>
-          <p className="mt-1 text-[13px] text-muted">Schedule an institutional coordination or review session.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            onClick={() => setIsDraft(true)}
-            disabled={submitting}
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-container-lowest px-4 py-2.5 text-sm font-semibold text-text calm-transition hover:bg-surface-container-low disabled:opacity-60"
-          >
-            Save as Draft
-          </button>
-          <button
-            type="submit"
-            onClick={() => setIsDraft(false)}
-            disabled={submitting}
-            className="inline-flex items-center gap-2 rounded-xl bg-text px-5 py-2.5 text-sm font-semibold text-bg calm-transition hover:opacity-90 disabled:opacity-60"
-          >
-            {submitting ? "Creating..." : "Create Meeting"}
+      <PageHeader
+        title="New Meeting"
+        subtitle="Schedule an institutional coordination or review session."
+        actions={
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              onClick={() => setIsDraft(true)}
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-container-lowest px-4 py-2.5 text-sm font-semibold text-text calm-transition hover:bg-surface-container-low disabled:opacity-60"
+            >
+              Save as Draft
+            </button>
+            <button
+              type="submit"
+              onClick={() => setIsDraft(false)}
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-xl bg-text px-5 py-2.5 text-sm font-semibold text-bg calm-transition hover:opacity-90 disabled:opacity-60"
+            >
+              {submitting ? "Creating..." : "Create Meeting"}
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {error && (
         <div className="mb-4 rounded-xl border border-error/20 bg-[var(--pill-error-bg)] px-4 py-3">
@@ -247,9 +248,9 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
       )}
 
       {/* ── Two-column layout ───────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_340px]">
         {/* Left: Form fields */}
-        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-6 shadow-sm space-y-5">
+        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-6 shadow-ambient space-y-5">
           {/* Meeting Title */}
           <div>
             <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">
@@ -350,7 +351,7 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
         {/* Right: Attendees + Venue Status */}
         <div className="space-y-4">
           {/* Attendees panel */}
-          <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-sm">
+          <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-ambient">
             <h3 className="mb-3 text-sm font-bold text-text">Attendees</h3>
 
             {/* Search */}
@@ -454,7 +455,7 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
 
           {/* Venue Status */}
           {location && (
-            <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-sm">
+            <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-ambient">
               <h3 className="mb-3 text-sm font-bold text-text">Venue Status</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-2">

@@ -130,7 +130,8 @@ export default async function AdminCoachingPage({
       ) : (
         <div className="space-y-3">
           {/* Filter bar */}
-          <form className="flex flex-wrap items-center gap-3">
+          <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+          <form className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 flex-1 min-w-[200px] max-w-xs">
               <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0 text-muted" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="8.5" cy="8.5" r="4.5" />
@@ -170,6 +171,7 @@ export default async function AdminCoachingPage({
               </a>
             )}
           </form>
+          </div>
 
           {/* Table */}
           <div className="table-shell">

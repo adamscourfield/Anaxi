@@ -94,7 +94,7 @@ export default async function LeavePendingPage() {
       />
 
       {pending.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl glass-card py-16 shadow-sm">
+        <div className="flex flex-col items-center justify-center rounded-2xl glass-card py-16 shadow-ambient">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-scale-strong-bg">
             <svg className="h-6 w-6 text-scale-strong-bar" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="20 6 9 17 4 12" />
@@ -104,7 +104,7 @@ export default async function LeavePendingPage() {
           <p className="mt-1 text-sm text-muted">No pending leave requests right now.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl glass-card shadow-sm">
+        <div className="overflow-hidden rounded-2xl glass-card shadow-ambient">
           {(pending as any[]).map((request, idx) => {
             const startDate = new Date(request.startDate);
             const endDate = new Date(request.endDate);
@@ -139,7 +139,7 @@ export default async function LeavePendingPage() {
                     <span>{fmt(startDate)}</span>
                     <span className="text-border">→</span>
                     <span>{fmt(endDate)}</span>
-                    <span className="rounded-full bg-surface-container-low px-1.5 py-0.5 text-[11px] font-medium text-slate-600">
+                    <span className="rounded-full bg-surface-container-low px-1.5 py-0.5 text-[11px] font-medium text-muted">
                       {days} day{days === 1 ? "" : "s"}
                     </span>
                   </div>

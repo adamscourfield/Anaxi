@@ -2,6 +2,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { canManageLoa } from "@/lib/loa";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/ui/page-header";
 import { LeaveHistoryTable } from "./LeaveHistoryTable";
 
 function fmtShortRange(start: Date, end: Date) {
@@ -86,13 +87,11 @@ export default async function LeaveHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Leave of Absence</p>
-          <h1 className="mt-1 text-[1.5rem] font-semibold tracking-tight text-text">Ledger History</h1>
-          <p className="mt-1 text-sm text-muted">Browse every leave request and filter by status or keyword.</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Leave of Absence"
+        title="Ledger History"
+        subtitle="Browse every leave request and filter by status or keyword."
+      />
 
       <LeaveHistoryTable rows={rows} isManager={manager} />
     </div>

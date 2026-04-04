@@ -45,7 +45,7 @@ export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
         return (
           <div
             key={m.id}
-            className="flex items-center gap-4 rounded-2xl glass-card px-5 py-4 shadow-sm"
+            className="flex items-center gap-4 rounded-2xl glass-card px-5 py-4 shadow-ambient"
           >
             {/* Date badge */}
             <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl border border-border/30 bg-surface">

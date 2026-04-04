@@ -161,7 +161,7 @@ export default function ComparisonPage() {
     .slice(0, 10);
 
   return (
-    <div className="w-full space-y-7">
+    <div className="w-full space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
         <Link href="/assessments" className="hover:underline">Cycles</Link>
@@ -234,7 +234,7 @@ export default function ComparisonPage() {
               { label: "Declined", value: data.summary.totalDeclined.toString(), colour: "text-[var(--error)]" },
               { label: "Unchanged", value: data.summary.totalUnchanged.toString(), colour: "text-[var(--on-surface-muted)]" },
             ].map(({ label, value, colour }) => (
-              <div key={label} className="rounded-xl bg-[var(--surface)] p-4 shadow-sm ring-1 ring-[var(--outline-variant)]/30">
+              <div key={label} className="rounded-xl bg-[var(--surface)] p-4 shadow-ambient ring-1 ring-[var(--outline-variant)]/30">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
                 <p className={`mt-1 text-2xl font-bold tabular-nums ${colour}`}>{value}</p>
               </div>

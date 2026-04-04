@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/ui/page-header";
 import { createLoaRequest } from "../actions";
 import { FormSelect } from "@/components/ui/form-select";
 
@@ -52,20 +53,17 @@ export default async function LeaveRequestPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-[2rem] font-bold tracking-tight text-text">Request Leave</h1>
-        <p className="mt-1 text-[0.9375rem] text-muted">
-          Submit a formal absence request for administrative review. Please ensure all medical documentation is attached for relevant claims.
-        </p>
-      </div>
+      <PageHeader
+        title="Request Leave"
+        subtitle="Submit a formal absence request for administrative review. Please ensure all medical documentation is attached for relevant claims."
+      />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* ── Left column: Form ──────────────────────────────────────── */}
         <div className="lg:col-span-2">
-          <form action={createLoaRequest} className="space-y-8">
+          <form action={createLoaRequest} className="space-y-6">
             {/* Date row */}
-            <div className="rounded-2xl glass-card px-6 py-6">
+            <div className="rounded-2xl glass-card p-5">
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
                   <label htmlFor="loa-start" className="flex items-center gap-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
@@ -103,7 +101,7 @@ export default async function LeaveRequestPage() {
             </div>
 
             {/* Reason for leave */}
-            <div className="rounded-2xl glass-card px-6 py-6">
+            <div className="rounded-2xl glass-card p-5">
               <div className="space-y-3">
                 <label htmlFor="loa-reason" className="flex items-center gap-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -129,7 +127,7 @@ export default async function LeaveRequestPage() {
             </div>
 
             {/* Cover requirements */}
-            <div className="rounded-2xl glass-card px-6 py-6">
+            <div className="rounded-2xl glass-card p-5">
               <div className="space-y-2">
                 <label htmlFor="loa-cover" className="flex items-center gap-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -150,7 +148,7 @@ export default async function LeaveRequestPage() {
             </div>
 
             {/* Medical evidence */}
-            <div className="rounded-2xl glass-card px-6 py-6">
+            <div className="rounded-2xl glass-card p-5">
               <div className="space-y-2">
                 <label className="flex items-center gap-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

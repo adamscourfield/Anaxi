@@ -2,6 +2,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
+import { H2 } from "@/components/ui/typography";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import Link from "next/link";
@@ -63,23 +64,18 @@ export default async function AssessmentsPage() {
 
   return (
     <div className="w-full space-y-8">
-      {/* Header */}
-      <div className="flex items-start justify-between min-w-0">
-        <div className="min-w-0">
-          <h1 className="text-[22px] font-bold tracking-[-0.03em] text-[var(--on-surface)] sm:text-[28px]">
-            Attainment Cycles
-          </h1>
-          <p className="mt-1 text-sm text-[var(--on-surface-muted)]">
-            Track cohort-level outcomes across the academic year — from baselines through to final results.
-          </p>
-        </div>
-        <Link
-          href="/assessments/new"
-          className="shrink-0 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-        >
-          New cycle
-        </Link>
-      </div>
+      <PageHeader
+        title="Attainment Cycles"
+        subtitle="Track cohort-level outcomes across the academic year — from baselines through to final results."
+        actions={
+          <Link
+            href="/assessments/new"
+            className="shrink-0 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          >
+            New cycle
+          </Link>
+        }
+      />
 
       {cycles.length === 0 && (
         <Card className="py-16 text-center">
@@ -99,9 +95,7 @@ export default async function AssessmentsPage() {
       {/* Active cycles */}
       {activeCycles.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-[var(--on-surface)]">
-            Active Cycles
-          </h2>
+          <H2>Active Cycles</H2>
           <div className="grid gap-4 sm:grid-cols-2">
             {activeCycles.map((cycle) => (
               <CycleCard key={cycle.id} cycle={cycle} />
@@ -113,9 +107,7 @@ export default async function AssessmentsPage() {
       {/* Archived cycles */}
       {archivedCycles.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-[var(--on-surface)]">
-            Archived Cycles
-          </h2>
+          <H2>Archived Cycles</H2>
           <div className="grid gap-4 sm:grid-cols-2">
             {archivedCycles.map((cycle) => (
               <CycleCard key={cycle.id} cycle={cycle} />
@@ -151,7 +143,7 @@ function CycleCard({ cycle }: {
   return (
     <Link
       href={`/assessments/${cycle.id}`}
-      className="group block relative overflow-hidden rounded-2xl glass-card p-5 calm-transition hover:border-[var(--accent)]/40 hover:shadow-md"
+      className="group block relative overflow-hidden rounded-2xl glass-card p-5 calm-transition hover:border-[var(--accent)]/40 hover:shadow-lg"
     >
       <div className="flex items-start justify-between gap-3 relative z-10">
         <div className="min-w-0">

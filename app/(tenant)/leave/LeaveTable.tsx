@@ -36,7 +36,7 @@ function SectionTable({
         <h2 className="text-[1.0625rem] font-semibold tracking-tight text-text">{title}</h2>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-xl border border-black/[0.06] bg-[#F1F3F5] px-3.5 py-2 text-[0.8125rem] font-medium text-muted calm-transition hover:border-black/[0.1] hover:text-text"
+          className="inline-flex items-center gap-2 rounded-xl border border-border/50 bg-surface-container-low px-3.5 py-2 text-[0.8125rem] font-medium text-muted calm-transition hover:border-black/[0.1] hover:text-text"
         >
           <svg
             className="h-3.5 w-3.5 text-muted"
@@ -51,11 +51,11 @@ function SectionTable({
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-border/50 bg-surface-container-lowest shadow-ambient">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="bg-[#F1F3F5]">
+              <tr className="bg-surface-container-low">
                 {isManager && (
                   <th className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
                     Staff member
@@ -86,7 +86,7 @@ function SectionTable({
                 rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-t border-[#eceef0] calm-transition hover:bg-[#fafbfc]"
+                    className="border-t border-border/30 calm-transition hover:bg-surface-container-low"
                   >
                     {isManager && (
                       <td className="px-5 py-4">
@@ -115,7 +115,7 @@ function SectionTable({
                       {mode === "pending" ? (
                         <Link
                           href={`/leave/${row.id}`}
-                          className="inline-flex rounded-xl border border-black/[0.08] bg-[#F1F3F5] px-4 py-2 text-[0.8125rem] font-semibold text-text calm-transition hover:border-black/[0.12] hover:bg-[#e8eaed]"
+                          className="inline-flex rounded-xl border border-border/60 bg-surface-container-low px-4 py-2 text-[0.8125rem] font-semibold text-text calm-transition hover:border-border hover:bg-surface-container-high"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {actionLabel}
@@ -143,7 +143,7 @@ function SectionTable({
           </table>
         </div>
         {mode === "completed" && rows.length > 0 && (
-          <div className="border-t border-[#eceef0] py-4 text-center">
+          <div className="border-t border-border/30 py-4 text-center">
             <Link
               href="/leave/history"
               className="text-[0.875rem] font-medium text-muted underline-offset-4 calm-transition hover:text-text hover:underline"

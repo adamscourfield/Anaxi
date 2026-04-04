@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { DepartmentsAdminTable } from "./DepartmentsAdminTable";
 
 export default async function AdminDepartmentsPage() {
@@ -122,21 +123,12 @@ export default async function AdminDepartmentsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-surface-container-low via-surface-container-lowest to-surface-container-high/40 p-6 shadow-sm sm:p-8">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/5 blur-3xl" aria-hidden />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-xl space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-              Administration
-            </p>
-            <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">
-              Academic Departments
-            </h1>
-            <p className="text-[0.9375rem] leading-relaxed text-muted">
-              Structure your school: departments, heads of department, and staff assignments for the current year.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap lg:justify-end">
+      <PageHeader
+        eyebrow="Administration"
+        title="Academic Departments"
+        subtitle="Structure your school: departments, heads of department, and staff assignments for the current year."
+        actions={
+          <>
             <Link href="/api/admin/departments/export">
               <Button type="button" variant="secondary" className="gap-2">
                 <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -159,9 +151,9 @@ export default async function AdminDepartmentsPage() {
                 Add department
               </Button>
             </form>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {deptList.length === 0 ? (
         <EmptyState title="No departments yet" description="Add your first department using the form above." />

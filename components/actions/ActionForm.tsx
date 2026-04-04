@@ -58,7 +58,7 @@ export function ActionForm({ meetingId, attendees, onCreated, onCancel }: Action
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border/70 bg-surface/95 p-4 shadow-sm">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border/70 bg-surface/95 p-4 shadow-ambient">
       {error && (
         <div className="rounded-xl border border-error/20 bg-[var(--pill-error-bg)] px-3 py-2.5">
           <MetaText className="text-[var(--pill-error-text)]">{error}</MetaText>

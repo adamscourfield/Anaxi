@@ -87,12 +87,12 @@ export function LeaveCalendarGrid({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-sm">
-        <div className="grid grid-cols-7 border-b border-[#e5e7eb] bg-[#F1F3F5]">
+      <div className="overflow-hidden rounded-2xl border border-border/50 bg-surface-container-lowest shadow-ambient">
+        <div className="grid grid-cols-7 border-b border-border/50 bg-surface-container-low">
           {WEEKDAYS.map((wd) => (
             <div
               key={wd}
-              className="border-r border-[#e5e7eb] py-2.5 text-center text-[10px] font-bold uppercase tracking-[0.09em] text-muted last:border-r-0"
+              className="border-r border-border/50 py-2.5 text-center text-[10px] font-bold uppercase tracking-[0.09em] text-muted last:border-r-0"
             >
               {wd}
             </div>
@@ -103,7 +103,7 @@ export function LeaveCalendarGrid({
           {Array.from({ length: firstDayOfWeek }).map((_, i) => (
             <div
               key={`pad-${i}`}
-              className="min-h-[112px] border-b border-r border-[#eceef0] bg-[#fafbfc] last:border-r-0"
+              className="min-h-[112px] border-b border-r border-border/30 bg-surface-container-low last:border-r-0"
             />
           ))}
 
@@ -141,7 +141,7 @@ export function LeaveCalendarGrid({
                   ? "bg-[#ecfdf5] border-[#bbf7d0]"
                   : st === "DENIED"
                     ? "bg-[#fff1f2] border-[#fecdd3]"
-                    : "bg-[#f3f4f6] border-[#e5e7eb]";
+                    : "bg-[#f3f4f6] border-border/50";
               const titleC =
                 st === "APPROVED"
                   ? "text-[#14532d]"
@@ -173,8 +173,8 @@ export function LeaveCalendarGrid({
             return (
               <div
                 key={key}
-                className={`group relative min-h-[112px] border-b border-r border-[#eceef0] p-1.5 last:border-r-0 ${
-                  isWeekend ? "bg-[#f9fafb]" : "bg-white"
+                className={`group relative min-h-[112px] border-b border-r border-border/30 p-1.5 last:border-r-0 ${
+                  isWeekend ? "bg-surface-container-low" : "bg-surface-container-lowest"
                 } ${isToday ? "ring-1 ring-inset ring-[#131b2e]/15" : ""}`}
               >
                 <div className="mb-1 flex items-start justify-between gap-1">
@@ -241,7 +241,7 @@ export function LeaveCalendarGrid({
           {Array.from({ length: (7 - ((firstDayOfWeek + daysInMonth) % 7)) % 7 }).map((_, i) => (
             <div
               key={`trail-${i}`}
-              className="min-h-[112px] border-b border-r border-[#eceef0] bg-[#fafbfc] last:border-r-0"
+              className="min-h-[112px] border-b border-r border-border/30 bg-surface-container-low last:border-r-0"
             />
           ))}
         </div>

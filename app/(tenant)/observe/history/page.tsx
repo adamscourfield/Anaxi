@@ -8,6 +8,7 @@ import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels
 import { formatYearGroup } from "@/modules/observations/yearGroup";
 import { pedagogicalSignalTooltip } from "@/modules/observations/signalTooltip";
 import { Avatar } from "@/components/ui/avatar";
+import { PageHeader } from "@/components/ui/page-header";
 import { HistoryFilters } from "./HistoryFilters";
 
 /* ── Signal dot colours by scale level ────────────────────────────────── */
@@ -211,25 +212,23 @@ export default async function ObservationHistoryPage({
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">Observation History</h1>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
-            Secure academic ledger of pedagogical data across all departments.
-          </p>
-        </div>
-        {user.role !== "TEACHER" && (
-          <Link
-            href="/observe/new"
-            className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[0.875rem] font-semibold text-on-primary shadow-sm calm-transition hover:bg-accentHover"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" clipRule="evenodd" />
-            </svg>
-            New Observation
-          </Link>
-        )}
-      </div>
+      <PageHeader
+        title="Observation History"
+        subtitle="Secure academic ledger of pedagogical data across all departments."
+        actions={
+          user.role !== "TEACHER" ? (
+            <Link
+              href="/observe/new"
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[0.875rem] font-semibold text-on-primary shadow-sm calm-transition hover:bg-accentHover"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" clipRule="evenodd" />
+              </svg>
+              New Observation
+            </Link>
+          ) : undefined
+        }
+      />
 
       {/* ── Filters ─────────────────────────────────────────────────────── */}
       <HistoryFilters

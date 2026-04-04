@@ -58,8 +58,8 @@ export default async function OnCallFeedPage({ searchParams }: { searchParams: R
         </Card>
       ) : null}
 
-      <Card>
-        <form className="flex flex-wrap items-center gap-2" method="get">
+      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+        <form className="flex flex-wrap items-center gap-4" method="get">
           <select
             name="status"
             defaultValue={status}
@@ -84,7 +84,7 @@ export default async function OnCallFeedPage({ searchParams }: { searchParams: R
             <Button type="button" variant="secondary">Reset</Button>
           </Link>
         </form>
-      </Card>
+      </div>
 
       {requests.length === 0 ? (
         <EmptyState

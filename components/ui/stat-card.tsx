@@ -15,7 +15,7 @@ const accentBarColors: Record<AccentColor, string> = {
 type PanelTone = "default" | "softGrey" | "softBlueGrey" | "softWarm";
 
 const panelToneClass: Record<PanelTone, string> = {
-  default: "border border-border/80 bg-surface-container-lowest shadow-sm",
+  default: "border border-border/80 bg-surface-container-lowest shadow-ambient",
   softGrey: "border border-black/[0.06] bg-[#F1F3F5] shadow-none",
   softBlueGrey: "border border-black/[0.05] bg-[#E9EEF4] shadow-none",
   softWarm: "border border-[#e8d9dc]/80 bg-[#F3EDEE] shadow-none",
@@ -75,7 +75,7 @@ export function StatCard({
 
   if (href) {
     return (
-      <Link href={href} className="block calm-transition hover:shadow-md rounded-2xl">
+      <Link href={href} className="block calm-transition hover:shadow-lg rounded-2xl">
         {inner}
       </Link>
     );

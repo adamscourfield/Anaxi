@@ -80,9 +80,9 @@ function gcseColour(g: string | number): string {
   const n = Number(g);
   if (n >= 8) return "bg-emerald-600 text-white";
   if (n >= 7) return "bg-green-500 text-white";
-  if (n >= 6) return "bg-blue-500 text-slate-900";
+  if (n >= 6) return "bg-blue-500 text-text";
   if (n >= 5) return "bg-violet-500 text-white";
-  if (n >= 4) return "bg-amber-500 text-slate-900";
+  if (n >= 4) return "bg-amber-500 text-text";
   if (n >= 3) return "bg-orange-500 text-white";
   return "bg-red-600 text-white";
 }
@@ -293,10 +293,10 @@ export default function ResultPointPage() {
 
               <div className="grid grid-cols-3 gap-4">
                 {/* 4+ Dark Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/4`} className="relative overflow-hidden rounded-2xl bg-[#0f172a] p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 block">
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/4`} className="relative overflow-hidden rounded-2xl bg-[#0f172a] p-5 cursor-pointer shadow-ambient calm-transition hover:shadow-lg hover:-translate-y-0.5 block">
                   <div className="flex justify-between items-start">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 4+</p>
-                    <div className="h-7 w-7 text-slate-700/60 absolute top-4 right-4">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 4+</p>
+                    <div className="h-7 w-7 text-muted/60 absolute top-4 right-4">
                       <svg viewBox="0 0 24 24" fill="currentColor">
                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                       </svg>
@@ -305,30 +305,30 @@ export default function ResultPointPage() {
                   <div className="mt-3">
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-white">{metrics.gcseBasics.em4}%</span>
                   </div>
-                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-primary-container">
                     <div className="bg-emerald-500 rounded-r-full" style={{ width: `${metrics.gcseBasics.em4}%` }}></div>
                   </div>
                 </Link>
 
                 {/* 5+ White Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/5`} className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 block">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 5+</p>
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/5`} className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-ambient calm-transition hover:shadow-lg hover:-translate-y-0.5 block">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 5+</p>
                   <div className="mt-3">
-                    <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.gcseBasics.em5}%</span>
+                    <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em5}%</span>
                   </div>
-                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-surface-container-low">
                     <div className="bg-[#0f172a] h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em5}%` }}></div>
                   </div>
                 </Link>
 
                 {/* 7+ White Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/7`} className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-sm calm-transition hover:shadow-md hover:-translate-y-0.5 block">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">E&M 7+</p>
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/7`} className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-ambient calm-transition hover:shadow-lg hover:-translate-y-0.5 block">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 7+</p>
                   <div className="mt-3">
-                    <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-slate-900">{metrics.gcseBasics.em7}%</span>
+                    <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em7}%</span>
                   </div>
-                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div className="bg-slate-300 h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em7}%` }}></div>
+                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-surface-container-low">
+                    <div className="bg-surface-container-high h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em7}%` }}></div>
                   </div>
                 </Link>
               </div>
@@ -339,11 +339,11 @@ export default function ResultPointPage() {
                   { label: "PP Gap — 4+ threshold", pp: metrics.gcseBasics.ppEm4, nonPp: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4 },
                   { label: "PP Gap — 5+ threshold", pp: metrics.gcseBasics.ppEm5, nonPp: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5 },
                 ].map(({ label, pp, nonPp, gap }) => (
-                  <div key={label} className="rounded-2xl bg-white p-5 shadow-sm">
+                  <div key={label} className="rounded-2xl bg-white p-5 shadow-ambient">
                     <div className="flex items-start justify-between">
                        <div>
-                         <h3 className="text-base font-bold tracking-tight text-slate-900">{label}</h3>
-                         <p className="text-xs font-medium text-slate-400 mt-0.5">Pupil Premium vs Non-Pupil Premium</p>
+                         <h3 className="text-base font-bold tracking-tight text-text">{label}</h3>
+                         <p className="text-xs font-medium text-muted mt-0.5">Pupil Premium vs Non-Pupil Premium</p>
                        </div>
                        <GapBadge gap={gap} />
                     </div>
@@ -352,19 +352,19 @@ export default function ResultPointPage() {
                       <div>
                         <div className="flex justify-between items-baseline mb-2">
                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#0f172a]">NON-PP</span>
-                           <span className="text-xl font-bold leading-none tracking-tight text-slate-900">{nonPp}%</span>
+                           <span className="text-xl font-bold leading-none tracking-tight text-text">{nonPp}%</span>
                         </div>
-                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
                           <div className="bg-[#0f172a] h-full rounded-r-full" style={{ width: `${nonPp}%` }}></div>
                         </div>
                       </div>
                       <div>
                         <div className="flex justify-between items-baseline mb-2">
-                           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PP STUDENTS</span>
-                           <span className="text-xl font-bold leading-none tracking-tight text-slate-600">{pp}%</span>
+                           <span className="text-[10px] font-bold uppercase tracking-widest text-muted">PP STUDENTS</span>
+                           <span className="text-xl font-bold leading-none tracking-tight text-muted">{pp}%</span>
                         </div>
-                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                          <div className="bg-slate-300 h-full rounded-r-full" style={{ width: `${pp}%` }}></div>
+                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
+                          <div className="bg-surface-container-high h-full rounded-r-full" style={{ width: `${pp}%` }}></div>
                         </div>
                       </div>
                     </div>

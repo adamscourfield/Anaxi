@@ -5,6 +5,7 @@ import { hasOnCallPermission } from "@/lib/rbac";
 import { getRequestsByStatus } from "@/modules/oncall/service";
 import { OnCallInbox } from "@/components/oncall/OnCallInbox";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function OnCallHomePage() {
   const user = await getSessionUserOrThrow();
@@ -63,19 +64,19 @@ export default async function OnCallHomePage() {
   return (
     <div className="w-full min-w-0 space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="min-w-0 text-pretty text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">
-          On Call
-        </h1>
-        <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-          <Button variant="secondary" className="w-full sm:w-auto">
-            Download report
-          </Button>
-          <Link href="/on-call/new" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto">New request</Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="On Call"
+        actions={
+          <>
+            <Button variant="secondary" className="w-full sm:w-auto">
+              Download report
+            </Button>
+            <Link href="/on-call/new" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto">New request</Button>
+            </Link>
+          </>
+        }
+      />
 
       <hr className="border-border/60" />
 

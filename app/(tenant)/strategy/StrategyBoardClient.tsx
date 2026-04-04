@@ -433,7 +433,7 @@ function StrategyTile({
 
   return (
     <div
-      className={`flex flex-col rounded-2xl border border-border/30 bg-surface-container-lowest p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+      className={`flex flex-col rounded-2xl border border-border/30 bg-surface-container-lowest p-5 shadow-ambient transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
         area.completed ? "opacity-50" : ""
       }`}
     >
