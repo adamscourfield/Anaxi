@@ -95,6 +95,11 @@ export default async function StudentDetailPage({
     ? (rawWindow as (typeof WINDOW_OPTIONS)[number])
     : 21;
 
+  // Contextual back link — callers can pass ?from=/some/path for context-aware navigation
+  const rawFrom = Array.isArray(searchParams?.from) ? searchParams!.from[0] : (searchParams?.from ?? "");
+  const backHref = rawFrom && rawFrom.startsWith("/") ? rawFrom : "/students";
+  const backLabel = rawFrom && rawFrom.startsWith("/assessments") ? "Back to assessment" : "Back to students";
+
   const assessmentsFeature = await prisma.tenantFeature.findUnique({
     where: { tenantId_key: { tenantId: user.tenantId, key: "ASSESSMENTS" } },
     select: { enabled: true },
@@ -210,8 +215,8 @@ export default async function StudentDetailPage({
 
   return (
     <div className="space-y-8">
-      <Link href="/students" className="inline-flex items-center gap-1 text-sm text-muted calm-transition hover:text-accent">
-        <span aria-hidden>←</span> Back to students
+      <Link href={backHref} className="inline-flex items-center gap-1 text-sm text-muted calm-transition hover:text-accent">
+        <span aria-hidden>←</span> {backLabel}
       </Link>
 
       {/* Profile header */}
