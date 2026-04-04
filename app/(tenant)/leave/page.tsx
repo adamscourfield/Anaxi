@@ -267,34 +267,47 @@ export default async function LeavePage({
         }
       />
 
-      {/* Stat cards — light grey panels per leave dashboard design */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      {/* Stat cards — KPI row aligned with Explorer / Signals */}
+      <div className="grid grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label="Total pending"
           value={String(totalPending).padStart(2, "0")}
-          tone="softGrey"
-          accent="accent"
-          accentPlacement="left"
+          tone="glass"
+          contextVariant="inline"
+          context={
+            totalPending > 0 ? (
+              <span className="font-semibold text-error">Needs review</span>
+            ) : (
+              <span className="font-medium text-muted">Queue clear</span>
+            )
+          }
         />
         <StatCard
           label="Approved (month)"
           value={String(approvedThisMonth).padStart(2, "0")}
-          tone="softBlueGrey"
-          accentPlacement="none"
+          tone="glass"
+          contextVariant="inline"
+          context={<span className="font-medium text-muted">This month</span>}
         />
         <StatCard
           label="Denied (month)"
           value={String(deniedThisMonth).padStart(2, "0")}
-          tone="softBlueGrey"
-          accentPlacement="none"
+          tone="glass"
+          contextVariant="inline"
+          context={<span className="font-medium text-muted">This month</span>}
         />
         <StatCard
           label="Average response"
           value={avgResponseStr}
-          tone="softWarm"
-          accentPlacement="none"
-          labelClassName="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8B3A3A]"
-          valueClassName="mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] text-[#8B3A3A]"
+          tone="glass"
+          contextVariant="inline"
+          context={
+            <span
+              className={`font-medium ${avgDays !== null && avgDays > 5 ? "font-semibold text-warning" : "text-muted"}`}
+            >
+              {avgDays !== null && avgDays > 5 ? "Above target" : "Median turnaround"}
+            </span>
+          }
         />
       </div>
 

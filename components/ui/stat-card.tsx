@@ -12,13 +12,15 @@ const accentBarColors: Record<AccentColor, string> = {
 };
 
 /** Panel tone for dashboard-style stat tiles (defaults preserve the original white card). */
-type PanelTone = "default" | "softGrey" | "softBlueGrey" | "softWarm";
+type PanelTone = "default" | "softGrey" | "softBlueGrey" | "softWarm" | "glass";
 
 const panelToneClass: Record<PanelTone, string> = {
   default: "border border-border/80 bg-surface-container-lowest shadow-ambient",
   softGrey: "border border-black/[0.06] bg-[#F1F3F5] shadow-none",
   softBlueGrey: "border border-black/[0.05] bg-[#E9EEF4] shadow-none",
   softWarm: "border border-[#e8d9dc]/80 bg-[#F3EDEE] shadow-none",
+  /** Solid floating KPI tile — matches Explorer / Signals summary cards */
+  glass: "border border-black/[0.06] bg-surface-container-lowest shadow-ambient",
 };
 
 export function StatCard({
@@ -31,6 +33,7 @@ export function StatCard({
   accentPlacement = "none",
   labelClassName,
   valueClassName,
+  contextVariant = "below",
 }: {
   label: string;
   value: string | number;
@@ -43,19 +46,38 @@ export function StatCard({
   accentPlacement?: "top" | "left" | "none";
   labelClassName?: string;
   valueClassName?: string;
+  /** `inline`: secondary text baseline-aligned to the right of the value (Signals / Explorer KPI row) */
+  contextVariant?: "below" | "inline";
 }) {
   const labelClasses =
-    labelClassName ?? "text-[11px] font-semibold uppercase tracking-[0.08em] text-muted";
-  const valueClasses =
-    valueClassName ?? "mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] text-text";
+    labelClassName ?? "text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
+  const valueClassesDefault =
+    contextVariant === "inline"
+      ? "text-[2rem] font-bold leading-none tracking-tight text-text"
+      : "mt-1.5 text-[28px] font-bold leading-none tracking-[-0.02em] text-text";
+  const valueClasses = valueClassName ?? valueClassesDefault;
 
-  const body = (
-    <div className="min-w-0 flex-1 px-5 py-4">
-      <p className={labelClasses}>{label}</p>
-      <p className={valueClasses}>{value}</p>
-      {context && <p className="mt-2 text-[12px] text-muted">{context}</p>}
-    </div>
-  );
+  const body =
+    contextVariant === "inline" ? (
+      <div className="min-w-0 flex-1 p-5">
+        <p className={labelClasses}>{label}</p>
+        <div className="mt-2 flex flex-wrap items-baseline gap-2">
+          <span className={valueClasses}>{value}</span>
+          {context != null &&
+            (typeof context === "string" || typeof context === "number" ? (
+              <span className="text-[0.8125rem] font-medium text-muted">{context}</span>
+            ) : (
+              <span className="min-w-0 text-[0.8125rem] leading-none">{context}</span>
+            ))}
+        </div>
+      </div>
+    ) : (
+      <div className="min-w-0 flex-1 px-5 py-4">
+        <p className={labelClasses}>{label}</p>
+        <p className={valueClasses}>{value}</p>
+        {context && <p className="mt-2 text-[12px] text-muted">{context}</p>}
+      </div>
+    );
 
   const inner = (
     <div className={`overflow-hidden rounded-2xl ${panelToneClass[tone]}`}>
