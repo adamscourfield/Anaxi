@@ -57,9 +57,19 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.user = user;
+      }
+      if (trigger === "update" && session?.targetTenantId) {
+        const currentEmail = (token.user as any)?.email;
+        const targetUser = await prisma.user.findFirst({
+          where: { email: currentEmail, tenantId: session.targetTenantId, isActive: true },
+          select: { id: true, tenantId: true, email: true, fullName: true, role: true, isActive: true }
+        });
+        if (targetUser) {
+          token.user = { ...targetUser, name: targetUser.fullName };
+        }
       }
       return token;
     },

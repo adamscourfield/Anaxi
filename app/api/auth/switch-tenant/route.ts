@@ -7,13 +7,13 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   const currentUser = (session as any)?.user;
   if (!currentUser?.email) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const formData = await req.formData();
-  const targetTenantId = formData.get("tenantId") as string;
+  const body = await req.json();
+  const targetTenantId = body.tenantId as string;
   if (!targetTenantId) {
-    return NextResponse.redirect(new URL("/home", req.url));
+    return NextResponse.json({ error: "Missing tenantId" }, { status: 400 });
   }
 
   const targetUser = await prisma.user.findFirst({
@@ -21,15 +21,8 @@ export async function POST(req: Request) {
   });
 
   if (!targetUser) {
-    return NextResponse.redirect(new URL("/home", req.url));
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
   }
 
-  const loginUrl = new URL("/login", req.url);
-  loginUrl.searchParams.set("switchTo", targetTenantId);
-  loginUrl.searchParams.set("email", currentUser.email);
-
-  const signoutUrl = new URL("/api/auth/signout", req.url);
-  signoutUrl.searchParams.set("callbackUrl", loginUrl.toString());
-
-  return NextResponse.redirect(signoutUrl);
+  return NextResponse.json({ success: true });
 }
