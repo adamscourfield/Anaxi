@@ -69,6 +69,7 @@ type PctSubjectStat = {
   median: number;
   q1: number;
   q3: number;
+  distribution: BandCount[];
   ppMean: number | null;
   nonPpMean: number | null;
   ppGap: number | null;
@@ -182,6 +183,66 @@ function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function pctBandBg(from: number, to: number): string {
+  if (from >= 70) return "bg-emerald-500";
+  if (to <= 40) return "bg-red-400";
+  return "bg-blue-400";
+}
+
+/** Compact 10% band distribution for percentage/raw rows (matches subject detail page). */
+function PctDistCompact({ distribution }: { distribution: BandCount[] }) {
+  const total = distribution.reduce((s, d) => s + d.count, 0);
+  if (total === 0) return <span className="text-xs text-[var(--on-surface-muted)]">No data</span>;
+
+  const thresholds = [80, 70, 60, 50].map((t) => {
+    const count = distribution.filter((b) => b.from >= t).reduce((s, b) => s + b.count, 0);
+    return { label: `${t}%+`, count, pct: Math.round((count / total) * 100) };
+  });
+
+  return (
+    <div className="min-w-[220px] max-w-md space-y-1">
+      <div className="flex h-5 gap-0.5 overflow-hidden rounded">
+        {distribution.map((d) => {
+          if (d.count === 0) return null;
+          const pct = (d.count / total) * 100;
+          return (
+            <div
+              key={d.band}
+              className={`flex items-center justify-center text-[8px] font-bold text-white ${pctBandBg(d.from, d.to)}`}
+              style={{ width: `${pct}%` }}
+              title={`${d.band}: ${d.count} (${Math.round(pct)}%)`}
+            >
+              {pct > 7 && `${d.from}%`}
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+        {distribution
+          .filter((d) => d.count > 0)
+          .map((d) => {
+            const pct = Math.round((d.count / total) * 100);
+            return (
+              <span key={d.band} className="flex items-center gap-1 text-[9px] text-[var(--on-surface-muted)]">
+                <span className={`inline-block h-2 w-2 shrink-0 rounded-sm ${pctBandBg(d.from, d.to)}`} />
+                {d.band}: {d.count} ({pct}%)
+              </span>
+            );
+          })}
+      </div>
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 border-t border-[var(--outline-variant)]/15 pt-1">
+        {thresholds.map(({ label, count, pct }) => (
+          <span key={label} className="text-[9px] text-[var(--on-surface-muted)]">
+            <span className="font-bold uppercase tracking-wide">{label}</span>{" "}
+            <span className="font-semibold tabular-nums text-[var(--on-surface)]">{pct}%</span>
+            <span className="tabular-nums"> ({count})</span>
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -507,12 +568,31 @@ export default function ResultPointPage() {
                             <td className="px-4 py-4 text-right font-semibold tabular-nums text-violet-600">{sm.thresholds["C+"]}%</td>
                           </>
                         )}
-                        <td className="px-4 py-4 min-w-[160px]">
-                          <DistBar
-                            distribution={sm.distribution}
-                            format={sm.gradeFormat}
-                            onGradeClick={(grade) => setModalView({ type: 'GRADE', subject: sm.subject, grade, students: sm.students.filter(s => s.rawValue === grade) })}
-                          />
+                        <td className="px-4 py-4 min-w-[160px] align-top">
+                          {isPercentage ? (
+                            pctSummary ? (
+                              <PctDistCompact
+                                distribution={
+                                  pctSummary.subjects.find((s) => s.subject === sm.subject)?.distribution ?? []
+                                }
+                              />
+                            ) : (
+                              <span className="text-xs text-[var(--on-surface-muted)]">—</span>
+                            )
+                          ) : (
+                            <DistBar
+                              distribution={sm.distribution}
+                              format={sm.gradeFormat}
+                              onGradeClick={(grade) =>
+                                setModalView({
+                                  type: "GRADE",
+                                  subject: sm.subject,
+                                  grade,
+                                  students: sm.students.filter((s) => s.rawValue === grade),
+                                })
+                              }
+                            />
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -610,7 +690,7 @@ export default function ResultPointPage() {
                       const heightPct = pctYearHistogram.maxBand > 0 ? (b.count / pctYearHistogram.maxBand) * 100 : 0;
                       const inTop = b.from >= 70;
                       const inBottom = b.to <= 40;
-                      const bg = inTop ? "bg-emerald-500" : inBottom ? "bg-red-400" : "bg-blue-400";
+                      const bg = inTop ? "bg-emerald-500" : inBottom ? "bg-red-400" : "bg-indigo-100";
                       return (
                         <div
                           key={b.band}
