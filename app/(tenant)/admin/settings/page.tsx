@@ -161,22 +161,22 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
       {tab === "modules" ? (
         <div className="space-y-4">
           <SectionHeader title="Modules" subtitle="Control which features are available across your school." />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature: any) => {
               const friendlyName = FEATURE_FRIENDLY_NAMES[feature.key] ?? feature.key;
               return (
-                <form key={feature.key} action={toggleFeature}>
+                <form key={feature.key} action={toggleFeature} className="flex h-full min-h-0">
                   <input type="hidden" name="key" value={feature.key} />
                   <input type="hidden" name="enabled" value={String(feature.enabled)} />
                   <button
                     type="submit"
-                    className={`group w-full rounded-xl border p-4 text-left calm-transition ${
+                    className={`group flex h-full min-h-0 w-full flex-col rounded-xl border p-4 text-left calm-transition ${
                       feature.enabled
                         ? "border-accent/30 bg-accent/[0.04] hover:border-accent/50"
                         : "border-border bg-surface hover:border-border hover:bg-bg/40"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-h-0 flex-1 items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <p className={`text-sm font-semibold ${feature.enabled ? "text-text" : "text-muted"}`}>
                           {friendlyName}

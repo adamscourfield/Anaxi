@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { FeatureKey, UserRole } from "@/lib/types";
 import { hasAnyPermission, hasPermission } from "@/lib/rbac";
@@ -114,6 +114,7 @@ export function TenantNav({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
 
   const isDrawer = variant === "drawer";
@@ -277,16 +278,23 @@ export function TenantNav({
       {/* Bottom: sign out + collapse */}
       <div className="px-3 py-3">
         <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
-          <form action="/api/auth/signout" method="post" className={collapsed ? "" : "flex-1"}>
+          <div className={collapsed ? "" : "flex-1"}>
             <button
-              type="submit"
+              type="button"
               title={collapsed ? "Log out" : undefined}
+              onClick={() => {
+                const q = new URLSearchParams({
+                  callbackUrl: "/login",
+                  returnTo: pathname || "/home",
+                });
+                router.push(`/login/sign-out?${q.toString()}`);
+              }}
               className={`group flex items-center ${collapsed ? "justify-center px-2" : "gap-2.5 pl-5 pr-3"} w-full rounded-[0.75rem] py-2 text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]`}
             >
               <NavIcon name="logout" active={false} />
               {!collapsed && <span className="text-[13px]">Log out</span>}
             </button>
-          </form>
+          </div>
           {!collapsed && !isDrawer && (
             <button
               onClick={() => setCollapsed(true)}

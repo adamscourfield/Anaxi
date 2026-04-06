@@ -7,7 +7,7 @@ import { SessionUser } from "@/lib/types";
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || "dev-insecure-nextauth-secret",
   session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
+  pages: { signIn: "/login", signOut: "/login/sign-out" },
   providers: [
     CredentialsProvider({
       name: "credentials",
