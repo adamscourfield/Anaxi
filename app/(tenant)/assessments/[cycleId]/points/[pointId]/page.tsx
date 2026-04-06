@@ -206,8 +206,8 @@ function PctDistCompact({ distribution }: { distribution: BandCount[] }) {
   });
 
   return (
-    <div className="min-w-[220px] max-w-md space-y-1">
-      <div className="flex h-5 gap-0.5 overflow-hidden rounded">
+    <div className="w-full min-w-[220px] space-y-1">
+      <div className="flex h-5 w-full min-w-0 gap-0.5 overflow-hidden rounded">
         {distribution.map((d) => {
           if (d.count === 0) return null;
           const pct = (d.count / total) * 100;
