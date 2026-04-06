@@ -85,6 +85,8 @@ export type SubjectStat = {
   ppGap: number | null;
   sendMean: number | null;
   nonSendMean: number | null;
+  /** nonSendMean − sendMean. Positive = SEND underperforming relative to peers. */
+  sendGap: number | null;
   /** Breakdown by subject teacher. Empty when teacher assignments are not set up. */
   teachingGroups: TeachingGroupStat[];
   /** Top 10 students by score in this subject */
@@ -251,6 +253,8 @@ export async function computePercentageSummary(
         ppMean !== null && nonPpMean !== null ? round1(nonPpMean - ppMean) : null,
       sendMean: sendMean !== null ? round1(sendMean) : null,
       nonSendMean: nonSendMean !== null ? round1(nonSendMean) : null,
+      sendGap:
+        sendMean !== null && nonSendMean !== null ? round1(nonSendMean - sendMean) : null,
       teachingGroups: teachingGroups.filter((g) => g.group !== "Unassigned" || teachingGroups.length === 1),
       topStudents,
       bottomStudents,

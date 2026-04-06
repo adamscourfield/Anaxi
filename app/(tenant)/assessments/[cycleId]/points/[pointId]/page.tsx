@@ -74,6 +74,7 @@ type PctSubjectStat = {
   ppGap: number | null;
   sendMean: number | null;
   nonSendMean: number | null;
+  sendGap: number | null;
   teachingGroups: TeachingGroupStat[];
   topStudents: PctStudentResult[];
   bottomStudents: PctStudentResult[];
@@ -625,6 +626,7 @@ export default function ResultPointPage() {
                           <th className="px-4 py-3 text-right text-violet-600">PP mean</th>
                           <th className="px-4 py-3 text-right">PP gap</th>
                           <th className="px-4 py-3 text-right text-blue-600">SEND mean</th>
+                          <th className="px-4 py-3 text-right">SEND gap</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -655,10 +657,13 @@ export default function ResultPointPage() {
                                 <td className="px-4 py-4 text-right tabular-nums text-blue-500">
                                   {sm.sendMean !== null ? `${sm.sendMean}%` : "—"}
                                 </td>
+                                <td className={`px-4 py-4 text-right font-semibold tabular-nums ${gapCls(sm.sendGap)}`}>
+                                  {sm.sendGap !== null ? `${sm.sendGap > 0 ? "+" : ""}${sm.sendGap}pp` : "—"}
+                                </td>
                               </tr>
                               {isExpanded && (
                                 <tr key={`${sm.subject}-detail`}>
-                                  <td colSpan={7} className="bg-[var(--surface-container-low)] px-5 py-4">
+                                  <td colSpan={8} className="bg-[var(--surface-container-low)] px-5 py-4">
                                     <div className="grid grid-cols-2 gap-6">
                                       {/* Teaching group breakdown */}
                                       {sm.teachingGroups.length > 0 && (
