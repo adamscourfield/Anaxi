@@ -115,9 +115,9 @@ function gcseColour(g: string | number): string {
   const n = Number(g);
   if (n >= 8) return "bg-emerald-600 text-white";
   if (n >= 7) return "bg-green-500 text-white";
-  if (n >= 6) return "bg-blue-500 text-text";
+  if (n >= 6) return "bg-blue-500 text-white";
   if (n >= 5) return "bg-violet-500 text-white";
-  if (n >= 4) return "bg-amber-500 text-text";
+  if (n >= 4) return "bg-amber-500 text-white";
   if (n >= 3) return "bg-orange-500 text-white";
   return "bg-red-600 text-white";
 }
@@ -189,10 +189,11 @@ function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{
   );
 }
 
-function pctBandBg(from: number, to: number): string {
-  if (from >= 70) return "bg-emerald-500";
-  if (to <= 40) return "bg-red-400";
-  return "bg-blue-400";
+/** Stacked bar + legend swatch for each 10% band (same as subject detail page). */
+function pctBandDistributionStyle(from: number, to: number): { bar: string; swatch: string } {
+  if (from >= 70) return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
+  if (to <= 40) return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
+  return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
 }
 
 /** Compact 10% band distribution for percentage/raw rows (matches subject detail page). */
@@ -211,10 +212,11 @@ function PctDistCompact({ distribution }: { distribution: BandCount[] }) {
         {distribution.map((d) => {
           if (d.count === 0) return null;
           const pct = (d.count / total) * 100;
+          const { bar } = pctBandDistributionStyle(d.from, d.to);
           return (
             <div
               key={d.band}
-              className={`flex items-center justify-center text-[8px] font-bold text-white ${pctBandBg(d.from, d.to)}`}
+              className={`flex items-center justify-center text-[8px] font-bold ${bar}`}
               style={{ width: `${pct}%` }}
               title={`${d.band}: ${d.count} (${Math.round(pct)}%)`}
             >
@@ -228,9 +230,10 @@ function PctDistCompact({ distribution }: { distribution: BandCount[] }) {
           .filter((d) => d.count > 0)
           .map((d) => {
             const pct = Math.round((d.count / total) * 100);
+            const { swatch } = pctBandDistributionStyle(d.from, d.to);
             return (
               <span key={d.band} className="flex items-center gap-1 text-[9px] text-[var(--on-surface-muted)]">
-                <span className={`inline-block h-2 w-2 shrink-0 rounded-sm ${pctBandBg(d.from, d.to)}`} />
+                <span className={`inline-block h-2 w-2 shrink-0 rounded-sm ${swatch}`} />
                 {d.band}: {d.count} ({pct}%)
               </span>
             );
@@ -746,7 +749,7 @@ export default function ResultPointPage() {
                       </span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm bg-blue-400" />
+                      <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm bg-indigo-100" />
                       <span>
                         40–70%:{" "}
                         <span className="font-semibold tabular-nums text-[var(--on-surface)]">{pctYearHistogram.band4070}</span>
