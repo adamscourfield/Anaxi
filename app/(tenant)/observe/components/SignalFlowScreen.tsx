@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { clearDraft, loadDraft, persistDraft, ScaleKey } from "./observationDraft";
+import { getSignalsForObservationPhase } from "@/modules/observations/signalDefinitions";
+import { loadDraft, persistDraft, ScaleKey } from "./observationDraft";
 import { SignalHelpSheet } from "./SignalHelpSheet";
 import { SignalTileGroup } from "./SignalTileGroup";
 
@@ -46,8 +47,8 @@ export function SignalFlowScreen({
   );
 
   const orderedSignals = useMemo(
-    () => orderedByOrder.filter((s) => s.phaseRelevance.includes(draft.context.phase)),
-    [draft.context.phase, orderedByOrder]
+    () => getSignalsForObservationPhase(draft.context.phase) as Signal[],
+    [draft.context.phase]
   );
 
   const total = orderedSignals.length;

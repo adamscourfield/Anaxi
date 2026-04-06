@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { H2, H3, MetaText, Label } from "@/components/ui/typography";
+import { getSignalsForObservationPhase } from "@/modules/observations/signalDefinitions";
+import type { Phase } from "./observationDraft";
 import { SignalCard } from "./SignalCard";
 
 type Teacher = { id: string; fullName: string; email: string };
-type Phase = "INSTRUCTION" | "GUIDED_PRACTICE" | "INDEPENDENT_PRACTICE" | "UNKNOWN";
 type Signal = {
   key: string;
   order: number;
@@ -16,7 +16,7 @@ type Signal = {
   lookFors?: string[];
   scale: { key: string; label: string; description: string }[];
   scaleGuidance: Record<string, string>;
-  phaseRelevance: Phase[];
+  phaseRelevance: string[];
   isUniversal: boolean;
 };
 
@@ -33,7 +33,14 @@ type ObservationContext = {
   contextNote: string;
 };
 
-const PHASE_OPTIONS: Phase[] = ["INSTRUCTION", "GUIDED_PRACTICE", "INDEPENDENT_PRACTICE", "UNKNOWN"];
+const PHASE_OPTIONS: Phase[] = [
+  "INSTRUCTION",
+  "GUIDED_PRACTICE",
+  "INDEPENDENT_PRACTICE",
+  "UNKNOWN",
+  "THRESHOLD",
+  "BOOKS",
+];
 
 export function ObservationWizard({
   teachers,
@@ -71,17 +78,16 @@ export function ObservationWizard({
 
   const allDone = completed === orderedSignals.length;
 
-  const { phaseFocus, universal, other } = useMemo(() => {
-    const focus = orderedSignals.filter((signal) => signal.phaseRelevance.includes(context.phase));
-    const usedKeys = new Set(focus.map((signal) => signal.key));
-
-    const universalSignals = orderedSignals.filter((signal) => signal.isUniversal && !usedKeys.has(signal.key));
-    for (const signal of universalSignals) usedKeys.add(signal.key);
-
-    const otherSignals = orderedSignals.filter((signal) => !usedKeys.has(signal.key));
-
-    return { phaseFocus: focus, universal: universalSignals, other: otherSignals };
-  }, [context.phase, orderedSignals]);
+  const phaseFocus = useMemo(
+    () => getSignalsForObservationPhase(context.phase) as Signal[],
+    [context.phase]
+  );
+  const phaseFocusKeys = useMemo(() => new Set(phaseFocus.map((s) => s.key)), [phaseFocus]);
+  const otherSignals = useMemo(
+    () => orderedSignals.filter((signal) => !phaseFocusKeys.has(signal.key)),
+    [orderedSignals, phaseFocusKeys]
+  );
+  const flowOrder = useMemo(() => [...phaseFocus, ...otherSignals], [phaseFocus, otherSignals]);
 
   const setTransientToast = (message: string) => {
     setToast(message);
@@ -89,8 +95,8 @@ export function ObservationWizard({
   };
 
   const nextFocus = (currentKey: string) => {
-    const idx = orderedSignals.findIndex((signal) => signal.key === currentKey);
-    const next = orderedSignals[idx + 1];
+    const idx = flowOrder.findIndex((signal) => signal.key === currentKey);
+    const next = flowOrder[idx + 1];
     if (!next) return;
     const element = document.getElementById(`signal-${next.key}`);
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -307,14 +313,9 @@ export function ObservationWizard({
             {renderSignalList(phaseFocus)}
           </section>
 
-          <section className="space-y-3">
-            <H3>Universal signals</H3>
-            {universal.length ? renderSignalList(universal) : <MetaText>No additional universal signals.</MetaText>}
-          </section>
-
           <details className="space-y-3">
             <summary className="cursor-pointer text-sm font-semibold text-text calm-transition hover:text-accent">Other signals</summary>
-            <div className="pt-2">{other.length ? renderSignalList(other) : <MetaText>No remaining signals.</MetaText>}</div>
+            <div className="pt-2">{otherSignals.length ? renderSignalList(otherSignals) : <MetaText>No remaining signals.</MetaText>}</div>
           </details>
 
           <div className="sticky bottom-0 rounded-2xl border border-border/70 bg-surface/95 p-4 shadow-md backdrop-blur-sm">
