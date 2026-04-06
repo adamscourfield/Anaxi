@@ -594,6 +594,12 @@ textarea:focus-visible {
     display: none !important;
   }
 
+  /* Sidebar is hidden in print but #tenant-content keeps desktop margin-left (set inline
+     from TenantNav). Reset so observation PDFs and other tenant pages use full width. */
+  #tenant-content {
+    margin-left: 0 !important;
+  }
+
   /* Reset backgrounds for print clarity */
   body {
     background: white !important;
