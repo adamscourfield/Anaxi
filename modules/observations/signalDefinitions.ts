@@ -38,6 +38,7 @@ export type SignalDefinition = {
   order: number;
   displayNameDefault: string;
   descriptionDefault: string;
+  /** Phases where this signal is pedagogically relevant (e.g. analytics, filters). */
   phaseRelevance: LessonPhase[];
   isUniversal: boolean;
 
@@ -67,6 +68,53 @@ export const BOOKS_SCALE: SignalDefinition["scale"] = [
   { key: "STRONG", label: "Strong", description: "Standards are uniform and a source of visible pride." },
 ];
 
+/**
+ * Ordered signal keys for new observations by lesson phase.
+ * - UNKNOWN ("Not sure"): all classroom + book signals, default definition order.
+ * - BOOKS ("Book look"): book signals only.
+ */
+export const OBSERVATION_PHASE_PRIMARY_ORDER: Partial<Record<LessonPhase, SignalKey[]>> = {
+  [LESSON_PHASE.THRESHOLD]: [
+    SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
+    SIGNAL_KEYS.PACE_MOMENTUM,
+    SIGNAL_KEYS.RETRIEVAL_PRESENCE,
+  ],
+  [LESSON_PHASE.INSTRUCTION]: [
+    SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
+    SIGNAL_KEYS.LANGUAGE_PRECISION,
+    SIGNAL_KEYS.RETRIEVAL_PRESENCE,
+    SIGNAL_KEYS.PARTICIPATION_EQUITY,
+    SIGNAL_KEYS.PACE_MOMENTUM,
+    SIGNAL_KEYS.COLD_CALL_DENSITY,
+    SIGNAL_KEYS.ERROR_CORRECTION_DEPTH,
+    SIGNAL_KEYS.STRETCH_DEPLOYMENT,
+  ],
+  [LESSON_PHASE.GUIDED_PRACTICE]: [
+    SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
+    SIGNAL_KEYS.PARTICIPATION_EQUITY,
+    SIGNAL_KEYS.PACE_MOMENTUM,
+    SIGNAL_KEYS.COLD_CALL_DENSITY,
+    SIGNAL_KEYS.CFU_CYCLES,
+    SIGNAL_KEYS.ERROR_CORRECTION_DEPTH,
+    SIGNAL_KEYS.MODELLING_EXPLICITNESS,
+    SIGNAL_KEYS.LANGUAGE_PRECISION,
+  ],
+  [LESSON_PHASE.INDEPENDENT_PRACTICE]: [
+    SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
+    SIGNAL_KEYS.INDEPENDENT_ACCOUNTABILITY,
+    SIGNAL_KEYS.STRETCH_DEPLOYMENT,
+    SIGNAL_KEYS.LIVE_ADJUSTMENT,
+    SIGNAL_KEYS.ERROR_CORRECTION_DEPTH,
+  ],
+  [LESSON_PHASE.BOOKS]: [
+    SIGNAL_KEYS.PRESENTATION_STANDARD,
+    SIGNAL_KEYS.WORK_COMPLETION,
+    SIGNAL_KEYS.SUSTAINED_EFFORT,
+    SIGNAL_KEYS.TASK_APPROPRIATENESS,
+    SIGNAL_KEYS.VOLUME_OF_WORK,
+  ],
+};
+
 export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
   {
     key: SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
@@ -74,7 +122,13 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Behaviour & Focus",
     descriptionDefault:
       "Students are attentive, routines are secure, and learning time is protected. Transitions are calm and expectations are consistently reinforced.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [
+      LESSON_PHASE.THRESHOLD,
+      LESSON_PHASE.INSTRUCTION,
+      LESSON_PHASE.GUIDED_PRACTICE,
+      LESSON_PHASE.INDEPENDENT_PRACTICE,
+      LESSON_PHASE.UNKNOWN,
+    ],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -96,7 +150,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Participation & Thinking Ratio",
     descriptionDefault:
       "A wide range of students are required to think and respond. Participation is not dominated by volunteers. Cold call is used deliberately.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -117,7 +171,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Pace & Lesson Momentum",
     descriptionDefault:
       "The lesson moves forward with purpose. Transitions are efficient and students remain cognitively engaged.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.THRESHOLD, LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -134,7 +188,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Cold Call & Directed Questioning",
     descriptionDefault:
       "Students are routinely and unpredictably asked to respond. Questioning checks understanding across the class, not just a few voices.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -151,7 +205,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Checking for Understanding",
     descriptionDefault:
       "The teacher regularly checks for understanding before moving on and adapts instruction if misconceptions appear.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -168,7 +222,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Error Correction & Feedback",
     descriptionDefault:
       "Misconceptions are addressed clearly and precisely. Students are required to correct and secure understanding.",
-    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -185,7 +239,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Explicit Modelling",
     descriptionDefault:
       "New knowledge or processes are clearly demonstrated. The thinking process is made visible before students practise independently.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -202,7 +256,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Language & Explanation Clarity",
     descriptionDefault:
       "Subject vocabulary is used accurately and explanations are clear, structured, and free from ambiguity.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -219,7 +273,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Responsive Teaching",
     descriptionDefault:
       "Instruction adjusts in response to student understanding. The teacher slows down, re-explains, or extends as needed.",
-    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -236,7 +290,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Retrieval & Recall",
     descriptionDefault:
       "Students are required to recall previously taught material. Retrieval strengthens long-term memory and connects prior learning.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.THRESHOLD, LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -253,7 +307,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Stretch & Challenge",
     descriptionDefault:
       "Students are pushed to deepen thinking, extend answers, and apply knowledge beyond surface-level responses.",
-    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -270,7 +324,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     displayNameDefault: "Independent Practice & Accountability",
     descriptionDefault:
       "Students practise independently with clear expectations. Work is monitored and misconceptions are identified promptly.",
-    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN, LESSON_PHASE.THRESHOLD],
+    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
@@ -286,7 +340,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     order: 13,
     displayNameDefault: "Presentation Standard",
     descriptionDefault: "Work is neat, organised, and reflects pride in output.",
-    phaseRelevance: [LESSON_PHASE.BOOKS],
+    phaseRelevance: [LESSON_PHASE.BOOKS, LESSON_PHASE.UNKNOWN],
     isUniversal: false,
     scale: BOOKS_SCALE,
     scaleGuidance: {
@@ -307,7 +361,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     order: 14,
     displayNameDefault: "Work Completion",
     descriptionDefault: "Tasks are finished to the expected level with no unexplained gaps.",
-    phaseRelevance: [LESSON_PHASE.BOOKS],
+    phaseRelevance: [LESSON_PHASE.BOOKS, LESSON_PHASE.UNKNOWN],
     isUniversal: false,
     scale: BOOKS_SCALE,
     scaleGuidance: {
@@ -327,7 +381,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     order: 15,
     displayNameDefault: "Sustained Effort",
     descriptionDefault: "Work quality is consistent across the book, not just in isolated entries.",
-    phaseRelevance: [LESSON_PHASE.BOOKS],
+    phaseRelevance: [LESSON_PHASE.BOOKS, LESSON_PHASE.UNKNOWN],
     isUniversal: false,
     scale: BOOKS_SCALE,
     scaleGuidance: {
@@ -347,7 +401,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     order: 16,
     displayNameDefault: "Task Appropriateness",
     descriptionDefault: "Written tasks reflect the curriculum intent for that year group and subject.",
-    phaseRelevance: [LESSON_PHASE.BOOKS],
+    phaseRelevance: [LESSON_PHASE.BOOKS, LESSON_PHASE.UNKNOWN],
     isUniversal: false,
     scale: BOOKS_SCALE,
     scaleGuidance: {
@@ -367,7 +421,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     order: 17,
     displayNameDefault: "Volume of Work",
     descriptionDefault: "Quantity of written work is appropriate given time elapsed and subject demands.",
-    phaseRelevance: [LESSON_PHASE.BOOKS],
+    phaseRelevance: [LESSON_PHASE.BOOKS, LESSON_PHASE.UNKNOWN],
     isUniversal: false,
     scale: BOOKS_SCALE,
     scaleGuidance: {
@@ -383,3 +437,23 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     ],
   },
 ];
+
+const DEFINITION_BY_KEY: Map<SignalKey, SignalDefinition> = new Map(
+  SIGNAL_DEFINITIONS.map((def) => [def.key, def])
+);
+
+/**
+ * Signals shown during capture for a lesson phase: phase-specific list in curriculum order,
+ * or every definition when phase is UNKNOWN ("Not sure"), or book signals only for BOOKS.
+ */
+export function getSignalsForObservationPhase(phase: string): SignalDefinition[] {
+  const ordered = [...SIGNAL_DEFINITIONS].sort((a, b) => a.order - b.order);
+  if (phase === LESSON_PHASE.UNKNOWN) {
+    return ordered;
+  }
+  const keys = OBSERVATION_PHASE_PRIMARY_ORDER[phase as LessonPhase];
+  if (!keys?.length) {
+    return ordered;
+  }
+  return keys.map((k) => DEFINITION_BY_KEY.get(k)!).filter(Boolean);
+}
