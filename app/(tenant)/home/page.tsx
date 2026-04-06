@@ -792,20 +792,30 @@ function HodHome({
 
   return (
     <div className="w-full min-w-0 space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard
-          label={`${deptName} observations`}
-          value={deptObsCount}
-          context={`${deptTeacherRows.length} teacher${deptTeacherRows.length !== 1 ? "s" : ""} · ${windowDays}d window`}
-          accent="accent"
-        />
-        <StatCard
-          label={`${deptName} CPD signals`}
-          value={deptCpdDrift}
-          context={deptCpdDrift > 0 ? `${deptCpdDrift} signal${deptCpdDrift !== 1 ? "s" : ""} weakening` : "All signals stable"}
-          accent={deptCpdDrift > 0 ? "warning" : "success"}
-        />
-      </div>
+      {/* ═══ Hero: Department KPI row ═══ */}
+      <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
+        <Card className="flex min-h-0 min-w-0 flex-1 flex-col justify-between">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{deptName} Observations</p>
+          <div>
+            <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">{deptObsCount}</p>
+            <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--surface-container)]">
+              <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(deptObsCount * 5, 100)}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-muted">{deptTeacherRows.length} teacher{deptTeacherRows.length !== 1 ? "s" : ""} · {windowDays}d window</p>
+          </div>
+        </Card>
+        <Card className={`flex min-h-0 min-w-0 flex-1 flex-col justify-between ${deptCpdDrift > 0 ? "!bg-[var(--surface-container)]" : ""}`}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{deptName} CPD Signals</p>
+          <div>
+            <p className={`mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] ${deptCpdDrift > 0 ? "text-[var(--warning)]" : "text-text"}`}>
+              {deptCpdDrift}
+            </p>
+            <p className="mt-2 text-xs text-muted">
+              {deptCpdDrift > 0 ? `${deptCpdDrift} signal${deptCpdDrift !== 1 ? "s" : ""} weakening` : "All signals stable ✓"}
+            </p>
+          </div>
+        </Card>
+      </section>
 
       {allDepts.length > 1 && (
         <div className="segmented-toggle">
@@ -821,32 +831,48 @@ function HodHome({
         </div>
       )}
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[0.875rem] font-semibold tracking-[-0.01em] text-text">Dept CPD priorities</h2>
-            <Link href={`/analytics?tab=cpd&window=${windowDays}&department=${deptId}`} className="text-[0.75rem] font-medium text-accent calm-transition hover:text-accentHover">View all →</Link>
+      {/* ═══ Department Analysis Grid ═══ */}
+      <section className="grid gap-4 lg:grid-cols-12">
+        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient lg:col-span-5">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">✦</span>
+            <h2 className="text-[1rem] font-bold tracking-[-0.01em]">Dept CPD Priorities</h2>
           </div>
           {topDeptCpd.length === 0 ? (
-            <MetaText>No weakening signals detected in this window.</MetaText>
+            <p className="text-sm text-on-primary/60">No weakening signals detected in this window.</p>
           ) : (
-            <ul className="space-y-1">
-              {topDeptCpd.map((row) => (
-                <li key={row.signalKey}>
-                  <Link href={`/analysis/cpd/${row.signalKey}?window=${windowDays}&department=${deptId}`} className="block rounded-lg p-3 hover:bg-bg/60 calm-transition">
-                    <p className="text-sm font-medium text-text">{row.label}</p>
-                    <MetaText>{Math.round(row.driftRate * 100)}% drifting · {row.teachersCovered} covered</MetaText>
+            <>
+              <div className="space-y-3">
+                {topDeptCpd.map((row) => (
+                  <Link key={row.signalKey} href={`/analysis/cpd/${row.signalKey}?window=${windowDays}&department=${deptId}`} className="block rounded-xl p-2 -mx-2 calm-transition hover:bg-white/10">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{row.label}</span>
+                      <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
+                      <div className="h-full rounded-full bg-surface-container-lowest/80" style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }} />
+                    </div>
+                    <p className="mt-1 text-[11px] text-on-primary/60">{row.teachersCovered} covered</p>
                   </Link>
-                </li>
-              ))}
-            </ul>
+                ))}
+              </div>
+              <Link href={`/analytics?tab=cpd&window=${windowDays}&department=${deptId}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
+                Explore CPD Data ↗
+              </Link>
+            </>
           )}
         </Card>
 
-        <Card className="space-y-3">
+        <Card className="space-y-4 lg:col-span-7">
           <div className="flex items-center justify-between">
-            <h2 className="text-[0.875rem] font-semibold tracking-[-0.01em] text-text">Dept teacher priorities</h2>
-            <Link href={`/analytics?tab=teachers&window=${windowDays}&department=${deptId}`} className="text-[0.75rem] font-medium text-accent calm-transition hover:text-accentHover">View all →</Link>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">⚡</span>
+              <div>
+                <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Dept Teacher Priorities</h2>
+                <p className="text-xs text-muted">{topDeptTeachers.length} teacher{topDeptTeachers.length !== 1 ? "s" : ""} in view</p>
+              </div>
+            </div>
+            <Link href={`/analytics?tab=teachers&window=${windowDays}&department=${deptId}`} className="text-sm text-accent hover:underline">View all →</Link>
           </div>
           {topDeptTeachers.length === 0 ? (
             <MetaText>No observation data for your department in this window.</MetaText>
@@ -854,15 +880,15 @@ function HodHome({
             <ul className="space-y-1">
               {topDeptTeachers.map((row) => (
                 <li key={row.teacherMembershipId}>
-                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="flex items-center justify-between gap-3 rounded-lg p-3 hover:bg-bg/60 calm-transition">
-                    <div className="flex items-center gap-3 min-w-0">
+                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="flex items-center justify-between gap-3 rounded-xl p-3 hover:bg-[var(--surface-container-low)] calm-transition">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <Avatar name={row.teacherName} />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
-                        <MetaText>{row.teacherCoverage} obs</MetaText>
+                        <p className="text-[11px] text-muted">{row.teacherCoverage} obs</p>
                       </div>
                     </div>
-                    <StatusPill variant={RISK_STATUS_PILL[row.status]}>{RISK_STATUS_LABELS[row.status]}</StatusPill>
+                    <StatusPill variant={RISK_STATUS_PILL[row.status]} size="sm">{RISK_STATUS_LABELS[row.status]}</StatusPill>
                   </Link>
                 </li>
               ))}
@@ -871,65 +897,131 @@ function HodHome({
         </Card>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-[0.875rem] font-semibold tracking-[-0.01em] text-text">Your recent observations</h2>
-        <Card className="space-y-3">
-          {!selfProfile || selfProfile.teacherCoverage === 0 ? (
-            <div className="space-y-2">
-              <BodyText className="text-muted">No observations captured yet.</BodyText>
-              <Link href="/observe/new" className="text-[12px] text-accent hover:underline">Start an observation →</Link>
+      {/* ═══ Your Observations ═══ */}
+      <Card className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">📊</span>
+            <div>
+              <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Your Recent Observations</h2>
+              {selfProfile && selfProfile.teacherCoverage > 0 && (
+                <p className="text-xs text-muted">
+                  {selfProfile.teacherCoverage} observation{selfProfile.teacherCoverage !== 1 ? "s" : ""} in last {windowDays} days
+                  {selfProfile.lastObservationAt && (
+                    <> · Last: {new Date(selfProfile.lastObservationAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</>
+                  )}
+                </p>
+              )}
             </div>
-          ) : (
-            <div className="space-y-3">
-              <MetaText>
-                {selfProfile.teacherCoverage} observation{selfProfile.teacherCoverage !== 1 ? "s" : ""} in last {windowDays} days
-                {selfProfile.lastObservationAt && (
-                  <> · Last: {new Date(selfProfile.lastObservationAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</>
-                )}
-              </MetaText>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <MetaText className="font-medium text-text">Strengths</MetaText>
-                  <div className="flex flex-wrap gap-1">
-                    {selfProfile.signals
-                      .filter((s) => s.currentMean !== null)
-                      .sort((a, b) => (b.currentMean ?? 0) - (a.currentMean ?? 0))
-                      .slice(0, 3)
-                      .map((sig) => (
-                        <span key={sig.signalKey} className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-text">{sig.label}</span>
-                      ))}
-                  </div>
+          </div>
+          {selfProfile && selfProfile.teacherCoverage > 0 && (
+            <StatusPill variant="accent" size="sm">{selfProfile.teacherCoverage} obs</StatusPill>
+          )}
+        </div>
+        {!selfProfile || selfProfile.teacherCoverage === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl bg-[var(--surface-container-low)] p-6 text-center">
+            <span className="mb-2 text-2xl">📝</span>
+            <BodyText className="text-muted">No observations captured yet.</BodyText>
+            <Link href="/observe/new" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-[12px] font-semibold text-on-primary calm-transition hover:opacity-90">
+              Start an observation →
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-xl bg-[var(--surface-container-low)] p-4 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-[10px]">✓</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Strengths</span>
                 </div>
-                {selfProfile.teacherCoverage >= 3 && (
-                  <div className="space-y-1.5">
-                    <MetaText className="font-medium text-text">Areas to watch</MetaText>
-                    <div className="flex flex-wrap gap-1">
-                      {selfProfile.signals
-                        .filter((s) => s.delta !== null && s.delta < 0)
-                        .sort((a, b) => (a.delta ?? 0) - (b.delta ?? 0))
-                        .slice(0, 2)
-                        .map((sig) => (
-                          <span key={sig.signalKey} className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-[var(--warning)]">{sig.label}</span>
-                        ))}
+                <div className="space-y-2.5">
+                  {selfProfile.signals
+                    .filter((s) => s.currentMean !== null)
+                    .sort((a, b) => (b.currentMean ?? 0) - (a.currentMean ?? 0))
+                    .slice(0, 3)
+                    .map((sig) => (
+                      <div key={sig.signalKey} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[12px] font-medium text-text">{sig.label}</span>
+                          <span className="text-[11px] font-bold text-emerald-600">
+                            {sig.currentMean !== null ? `${Math.round(sig.currentMean * 100)}%` : "—"}
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-100">
+                          <div
+                            className="h-full rounded-full bg-emerald-500 calm-transition"
+                            style={{ width: `${Math.min(Math.round((sig.currentMean ?? 0) * 100), 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+              {selfProfile.teacherCoverage >= 3 && (() => {
+                const hodWatchSignals = selfProfile.signals
+                  .filter((s) => s.delta !== null && s.delta < 0)
+                  .sort((a, b) => (a.delta ?? 0) - (b.delta ?? 0))
+                  .slice(0, 2);
+                return hodWatchSignals.length > 0 ? (
+                  <div className="rounded-xl bg-[var(--surface-container-low)] p-4 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-[10px]">⚠</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Areas to watch</span>
+                    </div>
+                    <div className="space-y-2.5">
+                      {hodWatchSignals.map((sig) => (
+                        <div key={sig.signalKey} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[12px] font-medium text-text">{sig.label}</span>
+                            <span className="text-[11px] font-bold text-[var(--warning)]">
+                              {sig.delta !== null ? `${sig.delta > 0 ? "+" : ""}${Math.round(sig.delta * 100)}%` : "—"}
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-amber-100">
+                            <div
+                              className="h-full rounded-full bg-amber-500 calm-transition"
+                              style={{ width: `${Math.min(Math.abs(Math.round((sig.delta ?? 0) * 100)), 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="text-[12px] text-accent hover:underline">View your signal profile →</Link>
-                <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="text-[12px] text-accent hover:underline">View observations →</Link>
-              </div>
+                ) : null;
+              })()}
             </div>
-          )}
-        </Card>
-      </section>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                View your signal profile →
+              </Link>
+              <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                View observations →
+              </Link>
+            </div>
+          </>
+        )}
+      </Card>
 
+      {/* ═══ Whole-school focus (dark card) ═══ */}
       {wholeSchoolTop1 && (
-        <Card className="space-y-2">
-          <h2 className="text-[0.875rem] font-semibold tracking-[-0.01em] text-text">Whole-school focus</h2>
-          <p className="text-sm text-text">{wholeSchoolTop1.label}</p>
-          <MetaText>{Math.round(wholeSchoolTop1.driftRate * 100)}% of covered teachers · {wholeSchoolTop1.teachersCovered} covered</MetaText>
-          <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="text-[12px] text-accent hover:underline">See CPD priorities →</Link>
+        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">✦</span>
+            <h2 className="text-[1rem] font-bold tracking-[-0.01em]">Whole-school focus</h2>
+          </div>
+          <p className="text-sm font-medium">{wholeSchoolTop1.label}</p>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-on-primary/70">{wholeSchoolTop1.teachersCovered} teachers covered</span>
+              <span className="text-sm font-bold">{Math.round(wholeSchoolTop1.driftRate * 100)}%</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+              <div className="h-full rounded-full bg-surface-container-lowest/80" style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }} />
+            </div>
+          </div>
+          <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
+            See CPD priorities ↗
+          </Link>
         </Card>
       )}
     </div>
@@ -986,33 +1078,34 @@ function TeacherHome({
 
   return (
     <div className="w-full min-w-0 space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard
-          label="Your observations"
-          value={obsCount}
-          context={obsCount > 0 ? `${windowDays}d window` : "No observations yet"}
-          accent="accent"
-          href={`/observe/history?teacherId=${userId}&window=${windowDays}`}
-        />
-        <StatCard
-          label="Open actions"
-          value={hasMeetingsFeature ? actionCount : "—"}
-          context={hasMeetingsFeature ? (actionCount > 0 ? `${actionCount} action${actionCount !== 1 ? "s" : ""} assigned` : "All caught up") : "Meetings not enabled"}
-          accent={hasMeetingsFeature && actionCount > 0 ? "warning" : "success"}
-          href={hasMeetingsFeature ? "/my-actions" : undefined}
-        />
-      </div>
+      {/* ═══ Hero Section: Observations + KPI Tiles ═══ */}
+      <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
+        <Card className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-lg">📊</span>
+              <div>
+                <h2 className="min-w-0 text-pretty text-[1rem] font-bold tracking-[-0.01em] text-text">
+                  Your Recent Observations
+                </h2>
+                <p className="text-xs text-muted">{windowDays}-day window</p>
+              </div>
+            </div>
+            {obsCount > 0 && (
+              <StatusPill variant="accent" size="sm">{obsCount} observation{obsCount !== 1 ? "s" : ""}</StatusPill>
+            )}
+          </div>
 
-      <section className="space-y-3">
-        <h2 className="text-[0.875rem] font-semibold tracking-[-0.01em] text-text">Your recent observations</h2>
-        <Card className="space-y-3">
           {!selfProfile || selfProfile.teacherCoverage === 0 ? (
-            <div className="space-y-2">
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-xl bg-[var(--surface-container-low)] p-6 text-center">
+              <span className="mb-2 text-2xl">📝</span>
               <BodyText className="text-muted">No observations captured yet in this window.</BodyText>
-              <Link href="/observe/new" className="text-[12px] text-accent hover:underline">Start an observation →</Link>
+              <Link href="/observe/new" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-[12px] font-semibold text-on-primary calm-transition hover:opacity-90">
+                Start an observation →
+              </Link>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="flex min-h-0 flex-1 flex-col gap-4">
               <MetaText>
                 {selfProfile.teacherCoverage} observation{selfProfile.teacherCoverage !== 1 ? "s" : ""} in last {windowDays} days
                 {selfProfile.lastObservationAt && (
@@ -1021,116 +1114,243 @@ function TeacherHome({
               </MetaText>
               <div className="grid gap-4 sm:grid-cols-2">
                 {strengthSignals.length > 0 && (
-                  <div className="space-y-1.5">
-                    <MetaText className="font-medium text-text">Strengths</MetaText>
-                    <div className="flex flex-wrap gap-1">
+                  <div className="rounded-xl bg-[var(--surface-container-low)] p-4 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-[10px]">✓</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Strengths</span>
+                    </div>
+                    <div className="space-y-2.5">
                       {strengthSignals.map((sig) => (
-                        <span key={sig.signalKey} className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-text">{sig.label}</span>
+                        <div key={sig.signalKey} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[12px] font-medium text-text">{sig.label}</span>
+                            <span className="text-[11px] font-bold text-emerald-600">
+                              {sig.currentMean !== null ? `${Math.round(sig.currentMean * 100)}%` : "—"}
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-100">
+                            <div
+                              className="h-full rounded-full bg-emerald-500 calm-transition"
+                              style={{ width: `${Math.min(Math.round((sig.currentMean ?? 0) * 100), 100)}%` }}
+                            />
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
                 )}
                 {watchSignals.length > 0 && (
-                  <div className="space-y-1.5">
-                    <MetaText className="font-medium text-text">Areas to watch</MetaText>
-                    <div className="flex flex-wrap gap-1">
+                  <div className="rounded-xl bg-[var(--surface-container-low)] p-4 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-[10px]">⚠</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Areas to watch</span>
+                    </div>
+                    <div className="space-y-2.5">
                       {watchSignals.map((sig) => (
-                        <span key={sig.signalKey} className="rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] text-[var(--warning)]">{sig.label}</span>
+                        <div key={sig.signalKey} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[12px] font-medium text-text">{sig.label}</span>
+                            <span className="text-[11px] font-bold text-[var(--warning)]">
+                              {sig.delta !== null ? `${sig.delta > 0 ? "+" : ""}${Math.round(sig.delta * 100)}%` : "—"}
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-amber-100">
+                            <div
+                              className="h-full rounded-full bg-amber-500 calm-transition"
+                              style={{ width: `${Math.min(Math.abs(Math.round((sig.delta ?? 0) * 100)), 100)}%` }}
+                            />
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
                 )}
               </div>
-              <div className="flex flex-wrap gap-3">
-                <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="text-[12px] text-accent hover:underline">View your signal profile →</Link>
-                <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="text-[12px] text-accent hover:underline">View observations →</Link>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                  View your signal profile →
+                </Link>
+                <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                  View observations →
+                </Link>
               </div>
             </div>
           )}
         </Card>
+
+        <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[300px]">
+          <Card className="flex min-h-0 flex-1 flex-col justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations</p>
+            <div>
+              <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">{obsCount}</p>
+              <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--surface-container)]">
+                <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(obsCount * 10, 100)}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-muted">
+                {obsCount > 0 ? `in the last ${windowDays} days` : "No observations yet"}
+              </p>
+            </div>
+          </Card>
+
+          {hasMeetingsFeature && (
+            <Link href="/my-actions" className="flex min-h-0 flex-1 flex-col">
+              <Card className="flex min-h-0 flex-1 flex-col justify-between calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Open Actions</p>
+                <div>
+                  <p className={`mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] ${actionCount > 0 ? "text-[var(--warning)]" : "text-text"}`}>
+                    {actionCount}
+                  </p>
+                  <p className="mt-2 text-xs text-muted">
+                    {actionCount > 0 ? `${actionCount} action${actionCount !== 1 ? "s" : ""} assigned` : "All caught up ✓"}
+                  </p>
+                </div>
+              </Card>
+            </Link>
+          )}
+        </div>
       </section>
 
+      {/* ═══ Actions List ═══ */}
       {hasMeetingsFeature && openActions.length > 0 && (
-        <section className="space-y-3">
+        <Card className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-[0.875rem] font-semibold tracking-[-0.01em] text-text">Your actions</h2>
-            <Link href="/my-actions" className="text-[0.75rem] font-medium text-accent calm-transition hover:text-accentHover">View all →</Link>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">⚡</span>
+              <div>
+                <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Your Actions</h2>
+                <p className="text-xs text-muted">{openActions.length} open action{openActions.length !== 1 ? "s" : ""}</p>
+              </div>
+            </div>
+            <Link href="/my-actions" className="text-sm text-accent hover:underline">View all →</Link>
           </div>
-          <Card>
-            <ul className="space-y-1">
-              {openActions.slice(0, 5).map((action) => (
-                <li key={action.id}>
-                  <Link href="/my-actions" className="flex items-center justify-between gap-2 rounded-lg p-3 hover:bg-bg/60 calm-transition">
-                    <span className="text-sm text-text">{action.description}</span>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {action.dueDate && (
-                        <MetaText>Due {new Date(action.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</MetaText>
-                      )}
-                      <StatusPill variant="neutral">{action.status ?? "Open"}</StatusPill>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </section>
+          <ul className="space-y-1">
+            {openActions.slice(0, 5).map((action) => (
+              <li key={action.id}>
+                <Link href="/my-actions" className="flex items-center justify-between gap-3 rounded-xl p-3 hover:bg-[var(--surface-container-low)] calm-transition">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-low)] text-muted">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+                    </span>
+                    <span className="text-sm font-medium text-text truncate">{action.description}</span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {action.dueDate && (
+                      <MetaText>Due {new Date(action.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</MetaText>
+                    )}
+                    <StatusPill variant="neutral" size="sm">{action.status ?? "Open"}</StatusPill>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
       )}
 
+      {/* ═══ Leave & On-Call ═══ */}
       {(hasLeaveFeature || hasOnCallFeature) && (
         <section className="grid gap-4 sm:grid-cols-2">
           {hasLeaveFeature && (
-            <Card className="space-y-3">
-              <h2 className="text-[0.875rem] font-semibold tracking-[-0.01em] text-text">Leave of absence</h2>
-              {loaRequest ? (
-                <div className="flex items-center justify-between">
-                  <BodyText className="text-sm">
-                    {new Date(loaRequest.startDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                    {" – "}
-                    {new Date(loaRequest.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                  </BodyText>
-                  <StatusPill variant={loaStatusPill[loaRequest.status] ?? "neutral"}>
+            <Card className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-container)] text-muted">
+                    <LeaveCalendarIcon />
+                  </span>
+                  <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Leave of absence</h2>
+                </div>
+                {loaRequest && (
+                  <StatusPill variant={loaStatusPill[loaRequest.status] ?? "neutral"} size="sm">
                     {loaStatusLabel[loaRequest.status] ?? loaRequest.status}
                   </StatusPill>
+                )}
+              </div>
+              {loaRequest ? (
+                <div className="rounded-xl bg-[var(--surface-container-low)] p-4">
+                  <div className="flex items-center gap-2 text-sm font-medium text-text">
+                    <LeaveCalendarIcon className="shrink-0 text-muted" />
+                    <span>
+                      {new Date(loaRequest.startDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      {" – "}
+                      {new Date(loaRequest.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
                 </div>
               ) : (
-                <MetaText>No recent requests.</MetaText>
+                <div className="rounded-xl bg-[var(--surface-container-low)] p-4">
+                  <MetaText>No recent requests.</MetaText>
+                </div>
               )}
-              <div className="flex flex-wrap gap-3">
-                <Link href="/leave/request" className="text-[12px] text-accent hover:underline">Request leave →</Link>
-                <Link href="/leave" className="text-[12px] text-accent hover:underline">View status →</Link>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/leave/request" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                  Request leave →
+                </Link>
+                <Link href="/leave" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                  View status →
+                </Link>
               </div>
             </Card>
           )}
           {hasOnCallFeature && (
-            <Card className="space-y-3">
-              <h2 className="text-[0.875rem] font-semibold tracking-[-0.01em] text-text">On call</h2>
+            <Card className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-lg">🔔</span>
+                  <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">On call</h2>
+                </div>
+                {onCallRequests.filter((r) => r.status === "OPEN").length > 0 && (
+                  <StatusPill variant="error" size="sm">OPEN</StatusPill>
+                )}
+              </div>
               {onCallRequests.length === 0 ? (
-                <MetaText>No recent on-call requests.</MetaText>
+                <div className="rounded-xl bg-[var(--surface-container-low)] p-4">
+                  <MetaText>No recent on-call requests.</MetaText>
+                </div>
               ) : (
-                <ul className="space-y-1">
+                <ul className="space-y-1.5">
                   {onCallRequests.slice(0, 3).map((req) => (
-                    <li key={req.id} className="flex items-center justify-between rounded-lg p-2">
-                      <MetaText>{new Date(req.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</MetaText>
-                      <StatusPill variant={req.status === "OPEN" ? "neutral" : req.status === "APPROVED" ? "success" : "error"}>{req.status}</StatusPill>
+                    <li key={req.id} className="flex items-center justify-between rounded-xl bg-[var(--surface-container-low)] p-3 calm-transition hover:bg-[var(--surface-container)]">
+                      <div className="flex items-center gap-2.5">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface-container)] text-[10px]">🔔</span>
+                        <span className="text-sm font-medium text-text">{new Date(req.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+                      </div>
+                      <StatusPill variant={req.status === "OPEN" ? "error" : req.status === "APPROVED" ? "success" : "neutral"} size="sm">{req.status}</StatusPill>
                     </li>
                   ))}
                 </ul>
               )}
-              <div className="flex flex-wrap gap-3">
-                <Link href="/on-call/new" className="text-[12px] text-accent hover:underline">Log on-call →</Link>
-                <Link href="/on-call" className="text-[12px] text-accent hover:underline">View requests →</Link>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/on-call/new" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                  Log on-call →
+                </Link>
+                <Link href="/on-call" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                  View requests →
+                </Link>
               </div>
             </Card>
           )}
         </section>
       )}
 
+      {/* ═══ Whole-school focus (dark card) ═══ */}
       {wholeSchoolTop1 && (
-        <Card className="space-y-2">
-          <h2 className="text-[0.875rem] font-semibold tracking-[-0.01em] text-text">Whole-school focus</h2>
-          <p className="text-sm text-text">{wholeSchoolTop1.label}</p>
-          <MetaText>School-wide signal movement this window.</MetaText>
-          <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="text-[12px] text-accent hover:underline">See CPD priorities →</Link>
+        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">✦</span>
+            <h2 className="text-[1rem] font-bold tracking-[-0.01em]">Whole-school focus</h2>
+          </div>
+          <p className="text-sm font-medium">{wholeSchoolTop1.label}</p>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-on-primary/70">School-wide signal movement</span>
+              <span className="text-sm font-bold">{Math.round(wholeSchoolTop1.driftRate * 100)}%</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+              <div className="h-full rounded-full bg-surface-container-lowest/80" style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }} />
+            </div>
+          </div>
+          <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
+            See CPD priorities ↗
+          </Link>
         </Card>
       )}
     </div>
