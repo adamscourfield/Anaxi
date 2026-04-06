@@ -566,15 +566,18 @@ function LeadershipHome({
 
       {/* ═══ Attainment Summary ═══ */}
       {attainmentSummary && (
-        <section className="space-y-3">
+        <Card className="space-y-4">
           {/* Section header */}
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Attainment</h2>
-              <p className="text-xs text-muted">
-                {attainmentSummary.cycleLabel}
-                {attainmentSummary.latestPointLabel && ` · ${attainmentSummary.latestPointLabel}`}
-              </p>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">📊</span>
+              <div>
+                <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Attainment</h2>
+                <p className="text-xs text-muted">
+                  {attainmentSummary.cycleLabel}
+                  {attainmentSummary.latestPointLabel && ` · ${attainmentSummary.latestPointLabel}`}
+                </p>
+              </div>
             </div>
             <Link href="/assessments" className="text-sm text-accent hover:underline">
               All cycles →
@@ -619,9 +622,9 @@ function LeadershipHome({
                   View all →
                 </Link>
               </div>
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 {attainmentSummary.topDualFlagged.map((s: DualFlaggedStudent) => (
-                  <li key={s.studentId} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--outline-variant)]/30 px-3 py-2">
+                  <li key={s.studentId} className="flex items-center justify-between gap-3 rounded-xl bg-[var(--surface-container-lowest)] px-3 py-2.5">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium text-text truncate">{s.studentName}</span>
@@ -645,7 +648,7 @@ function LeadershipHome({
               </ul>
             </Card>
           )}
-        </section>
+        </Card>
       )}
     </div>
   );
