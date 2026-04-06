@@ -48,6 +48,31 @@ type MeetingActionSummary = { id: string; description: string; dueDate: string |
 type LoaSummary = { startDate: string; endDate: string; status: string };
 type OnCallSummary = { id: string; createdAt: string; status: string };
 
+/** Observation signals use a 1–4 rubric (LIMITED … STRONG); means are averages on that scale. */
+const OBS_RUBRIC_MIN = 1;
+const OBS_RUBRIC_MAX = 4;
+const OBS_RUBRIC_SPAN = OBS_RUBRIC_MAX - OBS_RUBRIC_MIN;
+
+function formatSignalRubricMean(mean: number): string {
+  const rounded = Math.round(mean * 10) / 10;
+  return `${rounded.toFixed(1)}/4`;
+}
+
+function signalRubricMeanBarWidthPct(mean: number): number {
+  const pct = ((mean - OBS_RUBRIC_MIN) / OBS_RUBRIC_SPAN) * 100;
+  return Math.round(Math.max(0, Math.min(100, pct)));
+}
+
+function formatSignalRubricDelta(delta: number): string {
+  const rounded = Math.round(delta * 10) / 10;
+  const sign = rounded > 0 ? "+" : "";
+  return `${sign}${rounded.toFixed(1)}`;
+}
+
+function signalRubricDeltaBarWidthPct(delta: number): number {
+  const pct = (Math.abs(delta) / OBS_RUBRIC_SPAN) * 100;
+  return Math.round(Math.min(100, pct));
+}
 
 function roleVariant(role: UserRole): "leadership" | "hod" | "teacher" {
   if (role === "ADMIN" || role === "SLT") return "leadership";
@@ -943,14 +968,19 @@ function HodHome({
                       <div key={sig.signalKey} className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                          <span className="text-[11px] font-bold text-emerald-600">
-                            {sig.currentMean !== null ? `${Math.round(sig.currentMean * 100)}%` : "—"}
+                          <span className="text-[11px] font-bold text-emerald-600 tabular-nums">
+                            {sig.currentMean !== null ? formatSignalRubricMean(sig.currentMean) : "—"}
                           </span>
                         </div>
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-100">
                           <div
                             className="h-full rounded-full bg-emerald-500 calm-transition"
-                            style={{ width: `${Math.min(Math.round((sig.currentMean ?? 0) * 100), 100)}%` }}
+                            style={{
+                              width:
+                                sig.currentMean !== null
+                                  ? `${signalRubricMeanBarWidthPct(sig.currentMean)}%`
+                                  : "0%",
+                            }}
                           />
                         </div>
                       </div>
@@ -973,14 +1003,17 @@ function HodHome({
                         <div key={sig.signalKey} className="space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                            <span className="text-[11px] font-bold text-[var(--warning)]">
-                              {sig.delta !== null ? `${sig.delta > 0 ? "+" : ""}${Math.round(sig.delta * 100)}%` : "—"}
+                            <span className="text-[11px] font-bold text-[var(--warning)] tabular-nums">
+                              {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
                             </span>
                           </div>
                           <div className="h-1.5 w-full overflow-hidden rounded-full bg-amber-100">
                             <div
                               className="h-full rounded-full bg-amber-500 calm-transition"
-                              style={{ width: `${Math.min(Math.abs(Math.round((sig.delta ?? 0) * 100)), 100)}%` }}
+                              style={{
+                                width:
+                                  sig.delta !== null ? `${signalRubricDeltaBarWidthPct(sig.delta)}%` : "0%",
+                              }}
                             />
                           </div>
                         </div>
@@ -1124,14 +1157,19 @@ function TeacherHome({
                         <div key={sig.signalKey} className="space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                            <span className="text-[11px] font-bold text-emerald-600">
-                              {sig.currentMean !== null ? `${Math.round(sig.currentMean * 100)}%` : "—"}
+                            <span className="text-[11px] font-bold text-emerald-600 tabular-nums">
+                              {sig.currentMean !== null ? formatSignalRubricMean(sig.currentMean) : "—"}
                             </span>
                           </div>
                           <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-100">
                             <div
                               className="h-full rounded-full bg-emerald-500 calm-transition"
-                              style={{ width: `${Math.min(Math.round((sig.currentMean ?? 0) * 100), 100)}%` }}
+                              style={{
+                                width:
+                                  sig.currentMean !== null
+                                    ? `${signalRubricMeanBarWidthPct(sig.currentMean)}%`
+                                    : "0%",
+                              }}
                             />
                           </div>
                         </div>
@@ -1150,14 +1188,17 @@ function TeacherHome({
                         <div key={sig.signalKey} className="space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                            <span className="text-[11px] font-bold text-[var(--warning)]">
-                              {sig.delta !== null ? `${sig.delta > 0 ? "+" : ""}${Math.round(sig.delta * 100)}%` : "—"}
+                            <span className="text-[11px] font-bold text-[var(--warning)] tabular-nums">
+                              {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
                             </span>
                           </div>
                           <div className="h-1.5 w-full overflow-hidden rounded-full bg-amber-100">
                             <div
                               className="h-full rounded-full bg-amber-500 calm-transition"
-                              style={{ width: `${Math.min(Math.abs(Math.round((sig.delta ?? 0) * 100)), 100)}%` }}
+                              style={{
+                                width:
+                                  sig.delta !== null ? `${signalRubricDeltaBarWidthPct(sig.delta)}%` : "0%",
+                              }}
                             />
                           </div>
                         </div>
