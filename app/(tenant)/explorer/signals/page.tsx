@@ -14,13 +14,31 @@ import {
   computeWeeklyDriftTrend,
 } from "@/modules/analysis/cpdPriorities";
 import type { CpdPriorityRow } from "@/modules/analysis/cpdPriorities";
+import { SIGNAL_DEFINITIONS, type SignalKey } from "@/modules/observations/signalDefinitions";
 
 const VALID_WINDOWS = [7, 21, 28, 90] as const;
 type WindowDays = (typeof VALID_WINDOWS)[number];
 
+const PRIORITY_LEVELS = ["HIGH", "MEDIUM", "LOW"] as const;
+type PriorityLevel = (typeof PRIORITY_LEVELS)[number];
+
+const VALID_SIGNAL_KEYS = new Set<SignalKey>(SIGNAL_DEFINITIONS.map((s) => s.key));
+
 function parseWindow(raw: string | undefined): WindowDays {
   const n = Number(raw);
   return VALID_WINDOWS.includes(n as WindowDays) ? (n as WindowDays) : 21;
+}
+
+function parseSignalKey(raw: string | undefined): SignalKey | undefined {
+  if (!raw || !VALID_SIGNAL_KEYS.has(raw as SignalKey)) return undefined;
+  return raw as SignalKey;
+}
+
+function parsePriorityLevel(raw: string | undefined): PriorityLevel | undefined {
+  if (!raw) return undefined;
+  return PRIORITY_LEVELS.includes(raw as PriorityLevel)
+    ? (raw as PriorityLevel)
+    : undefined;
 }
 
 function pct(value: number): string {
@@ -109,6 +127,15 @@ export default async function SignalsPage({
       ? rawDeptId
       : undefined;
 
+  const rawSignalKey = Array.isArray(params.signalKey)
+    ? params.signalKey[0]
+    : params.signalKey;
+  const rawPriority = Array.isArray(params.priority)
+    ? params.priority[0]
+    : params.priority;
+  const signalKeyFilter = parseSignalKey(rawSignalKey);
+  const priorityFilter = parsePriorityLevel(rawPriority);
+
   const filters = departmentId ? { departmentId } : undefined;
 
   // ── data ────────────────────────────────────────────────────────
@@ -122,8 +149,13 @@ export default async function SignalsPage({
     computeWeeklyDriftTrend(user.tenantId, filters),
   ]);
 
-  const improving = getTopImprovingSignals(rows);
-  const sortedRows = [...rows].sort(
+  const filteredRows = rows.filter((r) => {
+    if (signalKeyFilter && r.signalKey !== signalKeyFilter) return false;
+    if (priorityFilter && getPriorityLevel(r) !== priorityFilter) return false;
+    return true;
+  });
+  const improving = getTopImprovingSignals(filteredRows);
+  const sortedRows = [...filteredRows].sort(
     (a, b) => b.priorityScore - a.priorityScore,
   );
 
@@ -135,22 +167,28 @@ export default async function SignalsPage({
 
   const showExport = canExportExplorer(viewerContext);
 
-  // ── derived stats ───────────────────────────────────────────────
-  const totalSignals = sortedRows.reduce((s, r) => s + r.teachersCovered, 0);
-  const totalDrifting = sortedRows.reduce((s, r) => s + r.teachersDriftingDown, 0);
-  const totalImproving = sortedRows.reduce((s, r) => s + r.teachersImproving, 0);
+  // ── derived stats (respect signal / priority filters) ───────────
+  const totalSignals = filteredRows.reduce((s, r) => s + r.teachersCovered, 0);
+  const totalDrifting = filteredRows.reduce((s, r) => s + r.teachersDriftingDown, 0);
+  const totalImproving = filteredRows.reduce((s, r) => s + r.teachersImproving, 0);
   const avgDriftRate = totalSignals > 0 ? totalDrifting / totalSignals : 0;
   const avgImprovingRate = totalSignals > 0 ? totalImproving / totalSignals : 0;
   const improvementIndex = totalSignals > 0 ? (1 - avgDriftRate) * 100 : 0;
   const improvementMeta = getImprovementLabel(improvementIndex);
-  const maxDriftRate = Math.max(...sortedRows.map((r) => r.driftRate), 0.01);
+  const maxDriftRate = Math.max(
+    ...sortedRows.map((r) => r.driftRate),
+    0.01,
+  );
   const maxBarHeight = Math.max(...driftTrend.days.map((d) => d.observationCount), 1);
+  const moreFiltersActive = Boolean(signalKeyFilter || priorityFilter);
 
   // ── url builder ─────────────────────────────────────────────────
   function buildUrl(overrides: Record<string, string | undefined>) {
     const merged: Record<string, string> = {
       windowDays: String(windowDays),
       ...(departmentId ? { departmentId } : {}),
+      ...(signalKeyFilter ? { signalKey: signalKeyFilter } : {}),
+      ...(priorityFilter ? { priority: priorityFilter } : {}),
       ...Object.fromEntries(
         Object.entries(overrides).filter(
           (e): e is [string, string] => e[1] !== undefined,
@@ -232,7 +270,7 @@ export default async function SignalsPage({
             </label>
           </form>
 
-          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
+          <div className="relative flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
             <button
               type="submit"
               form="signals-explorer-filters"
@@ -240,21 +278,79 @@ export default async function SignalsPage({
             >
               Apply Filters
             </button>
-            <button
-              type="button"
-              className="field !flex w-full flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap border border-border/40 bg-surface-container-lowest py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+            <details
+              className="group w-full sm:w-auto"
+              open={moreFiltersActive}
             >
-              <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
-              </svg>
-              More Filters
-            </button>
+              <summary className="field !flex w-full cursor-pointer list-none flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap border border-border/40 bg-surface-container-lowest py-2.5 text-[0.8125rem] font-medium text-muted calm-transition marker:hidden hover:bg-surface-container-low hover:text-text sm:min-w-[140px] lg:w-auto lg:min-w-[160px] [&::-webkit-details-marker]:hidden group-open:border-border group-open:bg-surface-container-low group-open:text-text">
+                <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                </svg>
+                More Filters
+              </summary>
+              <div className="absolute left-0 right-0 z-20 mt-2 rounded-xl border border-border/40 bg-surface-container-lowest p-4 shadow-ambient sm:left-auto sm:right-auto sm:min-w-[280px] lg:min-w-[300px]">
+                <p className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                  Refine table
+                </p>
+                <div className="flex flex-col gap-3">
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                      Signal
+                    </span>
+                    <select
+                      form="signals-explorer-filters"
+                      name="signalKey"
+                      defaultValue={signalKeyFilter ?? ""}
+                      className="field !bg-surface-container-low rounded-[10px] !py-2.5 !text-[0.8125rem]"
+                    >
+                      <option value="">All signals</option>
+                      {SIGNAL_DEFINITIONS.slice()
+                        .sort((a, b) => a.order - b.order)
+                        .map((s) => (
+                          <option key={s.key} value={s.key}>
+                            {s.displayNameDefault}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                      Priority
+                    </span>
+                    <select
+                      form="signals-explorer-filters"
+                      name="priority"
+                      defaultValue={priorityFilter ?? ""}
+                      className="field !bg-surface-container-low rounded-[10px] !py-2.5 !text-[0.8125rem]"
+                    >
+                      <option value="">All priorities</option>
+                      {PRIORITY_LEVELS.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <p className="mt-3 text-[0.75rem] text-muted">
+                  Choose options, then use{" "}
+                  <span className="font-medium text-text">Apply Filters</span>{" "}
+                  to update the table.
+                </p>
+              </div>
+            </details>
             {showExport && (
               <form action="/api/explorer/export" method="POST" className="contents">
                 <input type="hidden" name="view" value="CPD_SIGNAL_PRIORITIES" />
                 <input type="hidden" name="windowDays" value={String(windowDays)} />
                 {departmentId && (
                   <input type="hidden" name="departmentId" value={departmentId} />
+                )}
+                {signalKeyFilter && (
+                  <input type="hidden" name="signalKey" value={signalKeyFilter} />
+                )}
+                {priorityFilter && (
+                  <input type="hidden" name="priority" value={priorityFilter} />
                 )}
                 <button
                   type="submit"
