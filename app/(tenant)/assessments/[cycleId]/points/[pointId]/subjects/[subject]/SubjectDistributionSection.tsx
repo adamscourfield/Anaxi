@@ -67,6 +67,23 @@ function pctBandDistributionStyle(from: number, to: number): { bar: string; swat
   return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
 }
 
+/** Stacked grade bars: same contrast pattern as percentage bands (dark+white / light+dark). */
+function gradeDistributionBarStyle(
+  grade: string,
+  format: "GCSE" | "A_LEVEL",
+): { bar: string; swatch: string } {
+  if (format === "GCSE") {
+    const n = Number(grade);
+    if (Number.isFinite(n) && n >= 8) return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
+    if (Number.isFinite(n) && n <= 2) return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
+    return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
+  }
+  const g = grade.toUpperCase();
+  if (g === "A*" || g === "A") return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
+  if (g === "U" || g === "E") return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
+  return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
+}
+
 function avgDisplay(row: DistributionModalStudentRow): string {
   if (row.avg === null) return "—";
   if (row.isPercentage) return `${row.avg}%`;
@@ -193,12 +210,12 @@ export function SubjectDistributionSection({
                   {distribution.map((d) => {
                     if (d.count === 0) return null;
                     const pct = (d.count / distTotal) * 100;
-                    const cls = isGcse ? gcseColour(d.grade) : aLevelColour(d.grade);
+                    const { bar } = gradeDistributionBarStyle(d.grade, isGcse ? "GCSE" : "A_LEVEL");
                     return (
                       <button
                         key={d.grade}
                         type="button"
-                        className={`flex items-center justify-center text-[11px] font-bold ${cls} cursor-pointer calm-transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80`}
+                        className={`flex items-center justify-center text-[11px] font-bold ${bar} cursor-pointer calm-transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]`}
                         style={{ width: `${pct}%` }}
                         title={`${d.grade}: ${d.count} (${Math.round(pct)}%) — click for list`}
                         onClick={() => openGrade(d.grade)}
@@ -213,7 +230,7 @@ export function SubjectDistributionSection({
                     .filter((d) => d.count > 0)
                     .map((d) => {
                       const pct = Math.round((d.count / distTotal) * 100);
-                      const cls = isGcse ? gcseColour(d.grade) : aLevelColour(d.grade);
+                      const { swatch } = gradeDistributionBarStyle(d.grade, isGcse ? "GCSE" : "A_LEVEL");
                       return (
                         <button
                           key={d.grade}
@@ -221,7 +238,7 @@ export function SubjectDistributionSection({
                           className="flex items-center gap-1.5 rounded-md calm-transition hover:text-[var(--on-surface)] cursor-pointer text-left"
                           onClick={() => openGrade(d.grade)}
                         >
-                          <span className={`inline-block h-3 w-3 rounded-sm ${cls}`} />
+                          <span className={`inline-block h-3 w-3 rounded-sm ${swatch}`} />
                           <span className="text-xs text-[var(--on-surface-muted)]">
                             Grade {d.grade}: <span className="font-semibold text-[var(--on-surface)]">{d.count}</span> ({pct}%)
                           </span>

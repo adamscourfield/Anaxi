@@ -111,29 +111,6 @@ type MetricsData = {
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
-function gcseColour(g: string | number): string {
-  const n = Number(g);
-  if (n >= 8) return "bg-emerald-600 text-white";
-  if (n >= 7) return "bg-green-500 text-white";
-  if (n >= 6) return "bg-blue-500 text-white";
-  if (n >= 5) return "bg-violet-500 text-white";
-  if (n >= 4) return "bg-amber-500 text-white";
-  if (n >= 3) return "bg-orange-500 text-white";
-  return "bg-red-600 text-white";
-}
-
-function aLevelColour(g: string): string {
-  switch (g.toUpperCase()) {
-    case "A*": return "bg-emerald-600 text-white";
-    case "A":  return "bg-green-500 text-white";
-    case "B":  return "bg-blue-500 text-white";
-    case "C":  return "bg-violet-500 text-white";
-    case "D":  return "bg-amber-500 text-white";
-    case "E":  return "bg-orange-500 text-white";
-    default:   return "bg-red-700 text-white";
-  }
-}
-
 function gapCls(gap: number) {
   if (gap <= 5) return "text-[var(--success)]";
   if (gap <= 15) return "text-[var(--warning)]";
@@ -162,9 +139,9 @@ function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{
         {distribution.map((d) => {
           if (d.count === 0) return null;
           const pct = (d.count / total) * 100;
-          const cls = format === "GCSE" ? gcseColour(d.grade) : aLevelColour(d.grade);
+          const { bar } = gradeDistributionBarStyle(d.grade, format === "GCSE" ? "GCSE" : "A_LEVEL");
           return (
-            <div key={d.grade} className={`flex items-center justify-center text-[9px] font-bold ${cls} ${onGradeClick ? 'cursor-pointer hover:opacity-80' : ''}`}
+            <div key={d.grade} className={`flex items-center justify-center text-[9px] font-bold ${bar} ${onGradeClick ? 'cursor-pointer hover:opacity-80' : ''}`}
                  style={{ width: `${pct}%` }} title={`${d.grade}: ${d.count} (${Math.round(pct)}%)`}
                  onClick={() => onGradeClick && onGradeClick(d.grade)}>
               {pct > 7 && d.grade}
@@ -175,11 +152,11 @@ function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{
       <div className="flex flex-wrap gap-x-2 gap-y-0.5">
         {distribution.filter((d) => d.count > 0).map((d) => {
           const pct = Math.round((d.count / total) * 100);
-          const cls = format === "GCSE" ? gcseColour(d.grade) : aLevelColour(d.grade);
+          const { swatch } = gradeDistributionBarStyle(d.grade, format === "GCSE" ? "GCSE" : "A_LEVEL");
           return (
             <button type="button" key={d.grade} className={`flex items-center gap-1 text-[9px] text-[var(--on-surface-muted)] ${onGradeClick ? 'hover:text-[var(--on-surface)] cursor-pointer' : ''}`}
                     onClick={() => onGradeClick && onGradeClick(d.grade)}>
-              <span className={`inline-block h-2 w-2 rounded-sm ${cls}`} />
+              <span className={`inline-block h-2 w-2 rounded-sm ${swatch}`} />
               {d.grade}: {d.count} ({pct}%)
             </button>
           );
@@ -193,6 +170,22 @@ function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{
 function pctBandDistributionStyle(from: number, to: number): { bar: string; swatch: string } {
   if (from >= 70) return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
   if (to <= 40) return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
+  return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
+}
+
+function gradeDistributionBarStyle(
+  grade: string,
+  format: "GCSE" | "A_LEVEL",
+): { bar: string; swatch: string } {
+  if (format === "GCSE") {
+    const n = Number(grade);
+    if (Number.isFinite(n) && n >= 8) return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
+    if (Number.isFinite(n) && n <= 2) return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
+    return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
+  }
+  const g = grade.toUpperCase();
+  if (g === "A*" || g === "A") return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
+  if (g === "U" || g === "E") return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
   return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
 }
 
