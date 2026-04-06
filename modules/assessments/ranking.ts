@@ -63,7 +63,7 @@ export type ParseAndRankOptions = {
 
 // ─── Score parsing ────────────────────────────────────────────────────────────
 
-const ABSENT_MARKERS = new Set(["absent", "abs", "n/a", "na", "-", ""]);
+const ABSENT_MARKERS = new Set(["absent", "abs", "n/a", "na", "-", "", "not enrolled", "ne"]);
 
 /**
  * Parse a score cell value into a number (0–100) or null.

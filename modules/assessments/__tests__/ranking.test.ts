@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "fs";
+import { join } from "path";
 import {
   parseScore,
   competitionRank,
@@ -226,7 +228,9 @@ describe("parseAndRankAssessmentCsv — edge cases", () => {
     const csv = `Name,Year Group,Teaching Group,SEN,PP,Maths Score,Maths Rank,Overall Average,Overall Rank\n`;
     const { students, subjects } = parseAndRankAssessmentCsv(csv);
     expect(students).toHaveLength(0);
-    expect(subjects).toEqual(["Maths"]);
+    // csv-parse consumes the header row as column definitions, leaving no data
+    // rows to inspect, so subjects cannot be inferred
+    expect(subjects).toEqual([]);
   });
 
   it("strips trailing blank rows from spreadsheet exports", () => {
@@ -307,5 +311,95 @@ describe("parseAndRankAssessmentCsv — computeRanks option", () => {
     withTrue.students.forEach((student, i) => {
       expect(student.overallRank).toBe(withDefault.students[i].overallRank);
     });
+  });
+});
+
+// ─── Year 7 Analysis CSV (real file) ─────────────────────────────────────────
+
+const YEAR7_CSV = readFileSync(
+  join(__dirname, "../../../design/Year 7 Analysis - Year 7.csv"),
+  "utf-8"
+);
+
+describe("parseAndRankAssessmentCsv — Year 7 Analysis (% format, real file)", () => {
+  it("detects all 10 subject columns", () => {
+    const { subjects } = parseAndRankAssessmentCsv(YEAR7_CSV);
+    expect(subjects).toEqual([
+      "English", "Maths", "Science", "Geography", "History",
+      "French", "RE", "Music", "Graphics", "Art",
+    ]);
+  });
+
+  it("parses all 123 student rows", () => {
+    const { students } = parseAndRankAssessmentCsv(YEAR7_CSV);
+    expect(students).toHaveLength(123);
+  });
+
+  it("produces no warnings for 'Not enrolled' cells", () => {
+    const { warnings } = parseAndRankAssessmentCsv(YEAR7_CSV);
+    const notEnrolledWarnings = warnings.filter((w) =>
+      w.message.toLowerCase().includes("not enrolled")
+    );
+    expect(notEnrolledWarnings).toHaveLength(0);
+  });
+
+  it("treats 'Not enrolled' as null score (excluded from ranking)", () => {
+    const { students } = parseAndRankAssessmentCsv(YEAR7_CSV);
+    const rimsha = students.find((s) => s.name === "Rimsha Hussain")!;
+    // Rimsha has "Not enrolled" for Geography, History, RE
+    expect(rimsha.scores["Geography"]).toBeNull();
+    expect(rimsha.scores["History"]).toBeNull();
+    expect(rimsha.scores["RE"]).toBeNull();
+    expect(rimsha.subjectRanks["Geography"]).toBeNull();
+  });
+
+  it("parses percentage scores correctly", () => {
+    const { students } = parseAndRankAssessmentCsv(YEAR7_CSV);
+    const isaac = students.find((s) => s.name === "Isaac Machado")!;
+    expect(isaac.scores["English"]).toBe(25);
+    expect(isaac.scores["Maths"]).toBe(56);
+    expect(isaac.scores["Graphics"]).toBe(80);
+  });
+
+  it("assigns rank 1 to highest Maths scorers (tied at 100%)", () => {
+    const { students } = parseAndRankAssessmentCsv(YEAR7_CSV);
+    // Ethan Ralphs, Radhika Kulkarni, Gabriele Stravinskaite all scored 100% in Maths
+    const topMaths = ["Ethan Ralphs", "Radhika Kulkarni", "Gabriele Stravinskaite"];
+    for (const name of topMaths) {
+      const student = students.find((s) => s.name === name)!;
+      expect(student.scores["Maths"]).toBe(100);
+      expect(student.subjectRanks["Maths"]).toBe(1);
+    }
+  });
+
+  it("gaps ranks correctly after ties (4th Maths scorer gets rank 4)", () => {
+    const { students } = parseAndRankAssessmentCsv(YEAR7_CSV);
+    // Three students tied at rank 1 (100%), so next rank is 4
+    const rank4Students = students.filter((s) => s.subjectRanks["Maths"] === 4);
+    expect(rank4Students.length).toBeGreaterThan(0);
+    for (const s of rank4Students) {
+      expect(s.scores["Maths"]).toBeLessThan(100);
+    }
+  });
+
+  it("computes overall average from present subjects only", () => {
+    const { students } = parseAndRankAssessmentCsv(YEAR7_CSV);
+    // Adam Shah: 82,88,50,70,89,97,60,98,70,8 → mean = 71.2
+    const adam = students.find((s) => s.name === "Adam Shah")!;
+    expect(adam.overallAverage).toBeCloseTo(71.2, 1);
+  });
+
+  it("ignores the pre-existing Overall Average column", () => {
+    // The CSV has an 'Overall Average' column; it must not appear as a subject
+    const { subjects } = parseAndRankAssessmentCsv(YEAR7_CSV);
+    expect(subjects).not.toContain("Overall");
+    expect(subjects).not.toContain("Overall Average");
+  });
+
+  it("excludes meta columns (Attendance, DTAs, etc.) from subjects", () => {
+    const { subjects } = parseAndRankAssessmentCsv(YEAR7_CSV);
+    for (const meta of ["Attendance", "Lateness", "DTAs", "Reroutings", "Navigation"]) {
+      expect(subjects).not.toContain(meta);
+    }
   });
 });
