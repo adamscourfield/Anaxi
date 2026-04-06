@@ -688,7 +688,7 @@ export default function ResultPointPage() {
                     </p>
                   </div>
                   <div
-                    className="flex h-40 gap-1"
+                    className="flex h-44 gap-1"
                     role="img"
                     aria-label={`Histogram of ${pctYearHistogram.total} results across ten percent score bands`}
                   >
@@ -700,9 +700,18 @@ export default function ResultPointPage() {
                       return (
                         <div
                           key={b.band}
-                          className="flex min-h-0 min-w-0 flex-1 flex-col justify-end"
+                          className="relative flex min-h-0 min-w-0 flex-1 flex-col justify-end"
                           title={`${b.band}: ${b.count} results (${b.pct}% of charted results)`}
                         >
+                          {b.count > 0 ? (
+                            <span
+                              className="pointer-events-none absolute left-1/2 z-[1] -translate-x-1/2 text-[9px] font-semibold tabular-nums leading-none text-[var(--on-surface)]"
+                              style={{ bottom: `calc(${heightPct}% + 2px)` }}
+                              aria-hidden
+                            >
+                              {b.pct}%
+                            </span>
+                          ) : null}
                           <div
                             className={`w-full rounded-t ${bg} opacity-90 transition-[height] duration-150`}
                             style={{
