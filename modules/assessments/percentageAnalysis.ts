@@ -78,6 +78,8 @@ export type SubjectStat = {
   median: number;
   q1: number; // 25th percentile
   q3: number; // 75th percentile
+  /** Score counts in 10% bands for this subject (same bucketing as year-wide distribution). */
+  distribution: BandCount[];
   /** PP mean (0–100), null when no PP students present */
   ppMean: number | null;
   nonPpMean: number | null;
@@ -182,6 +184,8 @@ export async function computePercentageSummary(
     })
   );
 
+  const PCT_EDGES = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
   // ── Per-subject stats ────────────────────────────────────────────────────────
   const subjectStats: SubjectStat[] = assessments.map((a) => {
     const present = a.results.filter(
@@ -191,6 +195,19 @@ export async function computePercentageSummary(
     const sorted = [...scores].sort((x, y) => x - y);
 
     const subjectMean = avg(scores) ?? 0;
+
+    const subjectDistribution: BandCount[] = PCT_EDGES.slice(0, -1).map((from, i) => {
+      const to = PCT_EDGES[i + 1];
+      const isLast = i === PCT_EDGES.length - 2;
+      const count = scores.filter((s) => s >= from && (isLast ? s <= to : s < to)).length;
+      return {
+        band: `${from}–${to}%`,
+        from,
+        to,
+        count,
+        pct: scores.length > 0 ? round1((count / scores.length) * 100) : 0,
+      };
+    });
 
     // PP/SEND groups
     const ppScores = present.filter((r) => r.student.ppFlag).map((r) => round1(r.normalizedScore! * 100));
@@ -245,6 +262,7 @@ export async function computePercentageSummary(
       median: round1(median(sorted)),
       q1: round1(percentile(sorted, 25)),
       q3: round1(percentile(sorted, 75)),
+      distribution: subjectDistribution,
       ppMean: ppMean !== null ? round1(ppMean) : null,
       nonPpMean: nonPpMean !== null ? round1(nonPpMean) : null,
       ppGap:
@@ -301,10 +319,9 @@ export async function computePercentageSummary(
       .filter((r) => r.status === "PRESENT" && r.normalizedScore !== null)
       .map((r) => r.normalizedScore! * 100)
   );
-  const EDGES = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-  const distribution: BandCount[] = EDGES.slice(0, -1).map((from, i) => {
-    const to = EDGES[i + 1];
-    const isLast = i === EDGES.length - 2;
+  const distribution: BandCount[] = PCT_EDGES.slice(0, -1).map((from, i) => {
+    const to = PCT_EDGES[i + 1];
+    const isLast = i === PCT_EDGES.length - 2;
     const count = allScores.filter((s) => s >= from && (isLast ? s <= to : s < to)).length;
     return {
       band: `${from}–${to}%`,
