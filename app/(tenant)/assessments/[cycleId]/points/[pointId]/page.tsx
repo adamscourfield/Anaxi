@@ -7,7 +7,7 @@
  * Adapts to GCSE (numeric 1-9) vs A-Level (A*-U) dominant format.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -307,6 +307,18 @@ export default function ResultPointPage() {
   const isGcse = metrics?.dominantFormat === "GCSE";
   const isALevel = metrics?.dominantFormat === "A_LEVEL";
   const isPercentage = metrics?.dominantFormat === "PERCENTAGE" || metrics?.dominantFormat === "RAW";
+
+  const pctYearHistogram = useMemo(() => {
+    if (!pctSummary?.distribution.length) return null;
+    const total = pctSummary.distribution.reduce((s, b) => s + b.count, 0);
+    const maxBand = Math.max(...pctSummary.distribution.map((x) => x.count), 1);
+    const below40 = pctSummary.distribution.filter((b) => b.to <= 40).reduce((s, b) => s + b.count, 0);
+    const band4070 = pctSummary.distribution
+      .filter((b) => b.from >= 40 && b.to <= 70)
+      .reduce((s, b) => s + b.count, 0);
+    const band70p = pctSummary.distribution.filter((b) => b.from >= 70).reduce((s, b) => s + b.count, 0);
+    return { total, maxBand, below40, band4070, band70p };
+  }, [pctSummary]);
 
   if (loading) {
     return <div className="w-full py-16 text-center text-sm text-[var(--on-surface-muted)]">Loading…</div>;
@@ -650,7 +662,7 @@ export default function ResultPointPage() {
           )}
 
           {/* ── Percentage / Raw score analysis ────────────────────────────── */}
-          {isPercentage && pctSummary && (
+          {isPercentage && pctSummary && pctYearHistogram && (
             <>
               {/* Year overview */}
               <section className="space-y-4 pt-1">
@@ -658,34 +670,80 @@ export default function ResultPointPage() {
                   title="Year Group Overview"
                   subtitle={`Mean score: ${pctSummary.yearMean}% across ${pctSummary.subjects.length} subjects`}
                 />
-                {/* Distribution chart */}
                 <Card className="space-y-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--on-surface-muted)]">Score distribution</p>
-                  <div className="flex h-16 items-end gap-0.5">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--on-surface-muted)]">
+                      Score distribution (histogram)
+                    </p>
+                    <p className="text-[0.8125rem] leading-snug text-muted">
+                      Each bar is how many{" "}
+                      <span className="font-medium text-[var(--on-surface)]">student–subject results</span> fall in that 10% score band (one count per
+                      subject sat, not unique students). Colours group bands into below 40%, 40–70%, and 70%+.
+                    </p>
+                  </div>
+                  <div
+                    className="flex h-40 gap-1"
+                    role="img"
+                    aria-label={`Histogram of ${pctYearHistogram.total} results across ten percent score bands`}
+                  >
                     {pctSummary.distribution.map((b) => {
-                      const height = pctSummary.distribution.length > 0
-                        ? (b.count / Math.max(...pctSummary.distribution.map((x) => x.count))) * 100
-                        : 0;
+                      const heightPct = pctYearHistogram.maxBand > 0 ? (b.count / pctYearHistogram.maxBand) * 100 : 0;
                       const inTop = b.from >= 70;
                       const inBottom = b.to <= 40;
                       const bg = inTop ? "bg-emerald-500" : inBottom ? "bg-red-400" : "bg-indigo-100";
                       return (
-                        <div key={b.band} className="flex flex-1 flex-col items-center gap-1" title={`${b.band}: ${b.count} students (${b.pct}%)`}>
-                          <div className={`w-full rounded-t ${bg} opacity-80`} style={{ height: `${height}%`, minHeight: b.count > 0 ? "2px" : "0" }} />
+                        <div
+                          key={b.band}
+                          className="flex min-h-0 min-w-0 flex-1 flex-col justify-end"
+                          title={`${b.band}: ${b.count} results (${b.pct}% of charted results)`}
+                        >
+                          <div
+                            className={`w-full rounded-t ${bg} opacity-90 transition-[height] duration-150`}
+                            style={{
+                              height: `${heightPct}%`,
+                              minHeight: b.count > 0 ? 4 : 0,
+                            }}
+                          />
                         </div>
                       );
                     })}
                   </div>
-                  <div className="flex justify-between text-[9px] text-[var(--on-surface-muted)]">
+                  <div className="flex justify-between gap-0.5 text-[9px] tabular-nums text-[var(--on-surface-muted)]">
                     {pctSummary.distribution.map((b) => (
-                      <span key={b.band} className="flex-1 text-center">{b.from}%</span>
+                      <span key={b.band} className="min-w-0 flex-1 truncate text-center" title={b.band}>
+                        {b.from}%
+                      </span>
                     ))}
-                    <span className="flex-1 text-center">100%</span>
+                    <span className="min-w-0 flex-1 truncate text-center" title="100%">
+                      100%
+                    </span>
                   </div>
-                  <div className="flex gap-3 text-[10px] text-[var(--on-surface-muted)]">
-                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-red-400" />Below 40%: {pctSummary.distribution.filter((b) => b.to <= 40).reduce((s, b) => s + b.count, 0)}</span>
-                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-indigo-100 ring-1 ring-inset ring-indigo-200" />40–70%: {pctSummary.distribution.filter((b) => b.from >= 40 && b.to <= 70).reduce((s, b) => s + b.count, 0)}</span>
-                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-emerald-500" />70%+: {pctSummary.distribution.filter((b) => b.from >= 70).reduce((s, b) => s + b.count, 0)}</span>
+                  <p className="text-[10px] text-[var(--on-surface-muted)]">
+                    Total results in chart:{" "}
+                    <span className="font-semibold tabular-nums text-[var(--on-surface)]">{pctYearHistogram.total}</span>
+                  </p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[10px] text-[var(--on-surface-muted)]">
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm bg-red-400" />
+                      <span>
+                        Below 40%:{" "}
+                        <span className="font-semibold tabular-nums text-[var(--on-surface)]">{pctYearHistogram.below40}</span>
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm bg-blue-400" />
+                      <span>
+                        40–70%:{" "}
+                        <span className="font-semibold tabular-nums text-[var(--on-surface)]">{pctYearHistogram.band4070}</span>
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm bg-emerald-500" />
+                      <span>
+                        70%+:{" "}
+                        <span className="font-semibold tabular-nums text-[var(--on-surface)]">{pctYearHistogram.band70p}</span>
+                      </span>
+                    </span>
                   </div>
                 </Card>
               </section>
