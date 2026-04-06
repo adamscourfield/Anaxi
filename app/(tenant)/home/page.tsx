@@ -208,6 +208,12 @@ function LeadershipHome({
     .filter((r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT")
     .slice(0, 3);
 
+  // Watchlist students (current user's watched students, sorted by risk severity)
+  const bandOrder: Record<string, number> = { URGENT: 0, PRIORITY: 1, WATCH: 2, STABLE: 3 };
+  const watchlistStudents = studentRows
+    .filter((r) => r.onWatchlist)
+    .sort((a, b) => (bandOrder[a.band] ?? 9) - (bandOrder[b.band] ?? 9));
+
   // On-call: separate open vs resolved
   const openOnCalls = onCallDetails.filter((r) => r.status === "OPEN" || r.status === "ACKNOWLEDGED");
   const resolvedOnCalls = onCallDetails.filter((r) => r.status === "RESOLVED");
@@ -354,6 +360,107 @@ function LeadershipHome({
           </Link>
         </div>
       </section>
+
+      {/* ═══ Watchlist ═══ */}
+      {watchlistStudents.length > 0 && (
+        <Card className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">★</span>
+              <div>
+                <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Your Watchlist</h2>
+                <p className="text-xs text-muted">
+                  {watchlistStudents.length} student{watchlistStudents.length !== 1 ? "s" : ""} being monitored
+                </p>
+              </div>
+            </div>
+            <Link href="/analytics?watchlist=1" className="text-sm text-accent hover:underline">
+              View all →
+            </Link>
+          </div>
+
+          {/* Horizontal scroll track */}
+          <div className="-mx-5 px-5">
+            <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {watchlistStudents.map((s) => {
+                const bandCfg = {
+                  URGENT:   { bar: "bg-[var(--error)]",   tint: "bg-red-50/70",     badge: "text-[var(--error)] bg-red-100/80",   label: "Urgent"   },
+                  PRIORITY: { bar: "bg-[var(--warning)]", tint: "bg-amber-50/60",   badge: "text-amber-700 bg-amber-100/80",      label: "Priority" },
+                  WATCH:    { bar: "bg-[var(--accent)]",  tint: "bg-blue-50/50",    badge: "text-[var(--accent)] bg-blue-100/70", label: "Watch"    },
+                  STABLE:   { bar: "bg-[var(--success)]", tint: "bg-emerald-50/50", badge: "text-[var(--success)] bg-emerald-100/70", label: "Stable" },
+                }[s.band] ?? { bar: "bg-[var(--accent)]", tint: "bg-blue-50/50", badge: "text-[var(--accent)] bg-blue-100/70", label: s.band };
+
+                return (
+                  <Link
+                    key={s.studentId}
+                    href={`/analysis/students/${s.studentId}?window=${windowDays}`}
+                    className={`group flex min-w-[176px] max-w-[196px] shrink-0 flex-col overflow-hidden rounded-2xl border border-black/[0.06] ${bandCfg.tint} calm-transition hover:-translate-y-0.5 hover:shadow-lg`}
+                  >
+                    {/* Risk band colour bar */}
+                    <div className={`h-1.5 w-full ${bandCfg.bar}`} />
+
+                    <div className="flex flex-1 flex-col gap-2.5 p-3.5">
+                      {/* Name + band badge */}
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold leading-snug text-text">{s.studentName}</p>
+                        <span className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${bandCfg.badge}`}>
+                          {bandCfg.label}
+                        </span>
+                      </div>
+
+                      {/* Year + flags */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {s.yearGroup && <span className="text-[11px] text-muted">{s.yearGroup}</span>}
+                        {s.ppFlag && (
+                          <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">PP</span>
+                        )}
+                        {s.sendFlag && (
+                          <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">SEND</span>
+                        )}
+                      </div>
+
+                      {/* Attendance stat */}
+                      {s.attendancePct !== null && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-muted">Attendance</span>
+                          <span
+                            className={`text-[11px] font-bold ${
+                              s.attendancePct < 85
+                                ? "text-[var(--error)]"
+                                : s.attendancePct < 90
+                                ? "text-amber-600"
+                                : "text-[var(--success)]"
+                            }`}
+                          >
+                            {s.attendancePct.toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Driver chips */}
+                      {s.drivers.length > 0 ? (
+                        <div className="mt-auto flex flex-wrap gap-1 pt-0.5">
+                          {s.drivers.slice(0, 3).map((d) => (
+                            <span
+                              key={d.metric}
+                              className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-medium text-text/70 ring-1 ring-inset ring-black/[0.06]"
+                            >
+                              {d.label}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-auto pt-0.5 text-[11px] text-muted/60">No active signals</p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* ═══ Hero Section 2: Leave Governance ═══ */}
       {hasLeaveFeature && (
