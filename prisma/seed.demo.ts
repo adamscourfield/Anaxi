@@ -265,6 +265,10 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   await prisma.tenantSettings.deleteMany({
     where: { tenantId: DEMO_TENANT_ID },
   });
+  // StudentSubjectTeacher currently blocks tenant/user deletion under reset
+  await prisma.studentSubjectTeacher.deleteMany({
+    where: { tenantId: DEMO_TENANT_ID },
+  });
   // Everything else cascades from Tenant delete
   await prisma.tenant.deleteMany({ where: { id: DEMO_TENANT_ID } });
   console.log("  ✓  Previous demo data cleared");
