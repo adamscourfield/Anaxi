@@ -147,19 +147,25 @@ export async function listMeetings(
   });
 }
 
-export async function getMeetingStats(tenantId: string) {
+export async function getMeetingStats(tenantId: string, userId?: string) {
+  const actionWhere: Record<string, unknown> = { tenantId };
+  if (userId) actionWhere.ownerUserId = userId;
+
+  const meetingWhere: Record<string, unknown> = { tenantId, startDateTime: { gte: new Date() } };
+  if (userId) meetingWhere.attendees = { some: { userId } };
+
   const [openActions, totalActions, doneActions, nextMeeting] = await Promise.all([
     (prisma as any).meetingAction.count({
-      where: { tenantId, status: "OPEN" },
+      where: { ...actionWhere, status: "OPEN" },
     }),
     (prisma as any).meetingAction.count({
-      where: { tenantId },
+      where: actionWhere,
     }),
     (prisma as any).meetingAction.count({
-      where: { tenantId, status: "DONE" },
+      where: { ...actionWhere, status: "DONE" },
     }),
     (prisma as any).meeting.findFirst({
-      where: { tenantId, startDateTime: { gte: new Date() } },
+      where: meetingWhere,
       orderBy: { startDateTime: "asc" },
       select: { title: true, startDateTime: true, location: true },
     }),
@@ -177,7 +183,7 @@ export async function getMeetingStats(tenantId: string) {
 
   const newActionsSinceMonday = await (prisma as any).meetingAction.count({
     where: {
-      tenantId,
+      ...actionWhere,
       status: "OPEN",
       createdAt: { gte: lastMonday },
     },
