@@ -584,14 +584,19 @@ export default function ResultPointPage() {
                             <DistBar
                               distribution={sm.distribution}
                               format={sm.gradeFormat}
-                              onGradeClick={(grade) =>
+                              onGradeClick={(grade) => {
+                                const gNum = Number(grade);
                                 setModalView({
                                   type: "GRADE",
                                   subject: sm.subject,
                                   grade,
-                                  students: sm.students.filter((s) => s.rawValue === grade),
-                                })
-                              }
+                                  students: sm.students.filter((s) =>
+                                    sm.gradeFormat === "GCSE"
+                                      ? s.score !== null && Math.round(s.score * 9) === gNum
+                                      : s.rawValue.trim().toUpperCase() === grade.trim().toUpperCase(),
+                                  ),
+                                });
+                              }}
                             />
                           )}
                         </td>

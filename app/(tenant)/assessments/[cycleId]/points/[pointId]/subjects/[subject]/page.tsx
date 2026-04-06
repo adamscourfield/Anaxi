@@ -20,6 +20,10 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
 import { SubjectStudentsFilterBar } from "./SubjectStudentsFilterBar";
+import {
+  SubjectDistributionSection,
+  type DistributionModalStudentRow,
+} from "./SubjectDistributionSection";
 import type { GradeFormat } from "@prisma/client";
 import { hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
 import { competitionRank } from "@/modules/assessments/ranking";
@@ -70,13 +74,6 @@ function pctColour(score: number): string {
   if (score >= 40) return "bg-amber-500 text-white";
   if (score >= 30) return "bg-orange-500 text-white";
   return "bg-red-600 text-white";
-}
-
-/** Stacked bar + legend swatch for each 10% band (40–70% uses light fill + dark text for contrast). */
-function pctBandDistributionStyle(from: number, to: number): { bar: string; swatch: string } {
-  if (from >= 70) return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
-  if (to <= 40) return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
-  return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
 }
 
 function gcseThresholdPct(
@@ -364,6 +361,55 @@ export default async function SubjectDetailPage({
       return a.name.localeCompare(b.name);
     });
 
+  const toModalRow = (s: (typeof allStudents)[number]): DistributionModalStudentRow => ({
+    id: s.id,
+    name: s.name,
+    rawValue: s.rawValue,
+    score: s.score,
+    avg: s.avg,
+    isGcse,
+    isPercentage,
+  });
+
+  const gradeBuckets: Record<string, DistributionModalStudentRow[]> | null = !isPercentage
+    ? Object.fromEntries(
+        distribution
+          .filter((d) => d.count > 0)
+          .map((d) => {
+            const list = allStudents
+              .filter((s) =>
+                isGcse
+                  ? s.normalizedScore !== null && Math.round(s.normalizedScore * 9) === Number(d.grade)
+                  : s.rawValue.trim().toUpperCase() === d.grade,
+              )
+              .map(toModalRow);
+            return [d.grade, list];
+          }),
+      )
+    : null;
+
+  const pctBuckets: Record<string, DistributionModalStudentRow[]> | null = isPercentage
+    ? (() => {
+        const edges = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+        const out: Record<string, DistributionModalStudentRow[]> = {};
+        for (let i = 0; i < edges.length - 1; i++) {
+          const from = edges[i];
+          const to = edges[i + 1];
+          const isLast = i === edges.length - 2;
+          const band = `${from}–${to}%`;
+          const list = allStudents
+            .filter((s) => {
+              if (s.normalizedScore === null) return false;
+              const sc = s.normalizedScore * 100;
+              return sc >= from && (isLast ? sc <= to : sc < to);
+            })
+            .map(toModalRow);
+          if (list.length > 0) out[band] = list;
+        }
+        return out;
+      })()
+    : null;
+
   // Apply filters from query params
   const rawParams = await searchParams;
   const filterQ = (Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q ?? "").trim().toLowerCase();
@@ -403,116 +449,19 @@ export default async function SubjectDetailPage({
         subtitle={`${graded.length} students assessed · ${formatLabel}${isPercentage && pctYearMean !== null ? ` · Year mean ${round1(pctYearMean)}%` : ""}`}
       />
 
-      {/* ── PERCENTAGE: Score distribution ──────────────────────────────── */}
-      {isPercentage && pctDistTotal > 0 && (
-        <div className="space-y-3">
-          <SectionHeader title="Score Distribution" subtitle={`${pctDistTotal} students`} />
-          <div className="rounded-2xl bg-white p-6 shadow-ambient space-y-5">
-            {/* Stacked bar */}
-            <div className="flex h-10 gap-0.5 overflow-hidden rounded-lg">
-              {pctDistribution.map(d => {
-                if (d.count === 0) return null;
-                const pct = (d.count / pctDistTotal) * 100;
-                const { bar } = pctBandDistributionStyle(d.from, d.to);
-                return (
-                  <div
-                    key={d.band}
-                    className={`flex items-center justify-center text-[10px] font-bold ${bar}`}
-                    style={{ width: `${pct}%` }}
-                    title={`${d.band}: ${d.count} students (${Math.round(pct)}%)`}
-                  >
-                    {pct > 8 && `${d.from}%`}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Band legend */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-              {pctDistribution.filter(d => d.count > 0).map(d => {
-                const pct = Math.round((d.count / pctDistTotal) * 100);
-                const { swatch } = pctBandDistributionStyle(d.from, d.to);
-                return (
-                  <div key={d.band} className="flex items-center gap-1.5">
-                    <span className={`inline-block h-3 w-3 rounded-sm ${swatch}`} />
-                    <span className="text-xs text-[var(--on-surface-muted)]">
-                      {d.band}: <span className="font-semibold text-[var(--on-surface)]">{d.count}</span> ({pct}%)
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Percentile thresholds */}
-            <div className="flex flex-wrap gap-6 border-t border-[var(--outline-variant)]/20 pt-4">
-              {pctThresholds.map(({ label, count, pct }) => (
-                <div key={label} className="flex items-baseline gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</span>
-                  <span className="text-2xl font-bold tabular-nums text-[var(--on-surface)]">{pct}%</span>
-                  <span className="text-xs text-[var(--on-surface-muted)]">({count})</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── GCSE/A-Level: Grade Distribution ───────────────────────────── */}
-      {!isPercentage && (
-        <div className="space-y-3">
-          <SectionHeader title="Grade Distribution" subtitle={`${graded.length} students`} />
-          <div className="rounded-2xl bg-white p-6 shadow-ambient space-y-4">
-            {distTotal > 0 ? (
-              <>
-                <div className="flex h-8 gap-0.5 overflow-hidden rounded-lg">
-                  {distribution.map(d => {
-                    if (d.count === 0) return null;
-                    const pct = (d.count / distTotal) * 100;
-                    const cls = isGcse ? gcseColour(d.grade) : aLevelColour(d.grade);
-                    return (
-                      <div key={d.grade} className={`flex items-center justify-center text-[11px] font-bold ${cls}`}
-                           style={{ width: `${pct}%` }} title={`${d.grade}: ${d.count} (${Math.round(pct)}%)`}>
-                        {pct > 5 && d.grade}
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-                  {distribution.filter(d => d.count > 0).map(d => {
-                    const pct = Math.round((d.count / distTotal) * 100);
-                    const cls = isGcse ? gcseColour(d.grade) : aLevelColour(d.grade);
-                    return (
-                      <div key={d.grade} className="flex items-center gap-1.5">
-                        <span className={`inline-block h-3 w-3 rounded-sm ${cls}`} />
-                        <span className="text-xs text-[var(--on-surface-muted)]">
-                          Grade {d.grade}: <span className="font-semibold text-[var(--on-surface)]">{d.count}</span> ({pct}%)
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                {isGcse && (
-                  <div className="flex flex-wrap gap-3 pt-1 border-t border-[var(--outline-variant)]/20">
-                    {[{ label: "4+", threshold: 4, cls: "text-amber-600" }, { label: "5+", threshold: 5, cls: "text-violet-600" }, { label: "7+", threshold: 7, cls: "text-green-600" }].map(({ label, threshold, cls }) => {
-                      const count = graded.filter(r => r.normalizedScore !== null && Math.round(r.normalizedScore * 9) >= threshold).length;
-                      const pct = distTotal > 0 ? Math.round((count / distTotal) * 100) : 0;
-                      return (
-                        <div key={label} className="flex items-baseline gap-1.5">
-                          <span className={`text-xs font-bold uppercase tracking-wider ${cls}`}>{label}</span>
-                          <span className={`text-xl font-bold tabular-nums ${cls}`}>{pct}%</span>
-                          <span className="text-xs text-[var(--on-surface-muted)]">({count} students)</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-[var(--on-surface-muted)]">No grade data available.</p>
-            )}
-          </div>
-        </div>
-      )}
+      <SubjectDistributionSection
+        subjectName={subjectName}
+        assessmentGradeFormat={assessment.gradeFormat}
+        isGcse={isGcse}
+        isPercentage={isPercentage}
+        distTotal={distTotal}
+        pctDistTotal={pctDistTotal}
+        distribution={distribution}
+        pctDistribution={pctDistribution}
+        pctThresholds={pctThresholds}
+        gradeBuckets={gradeBuckets}
+        pctBuckets={pctBuckets}
+      />
 
       {/* ── PERCENTAGE: Class Comparison ───────────────────────────────── */}
       {isPercentage && classComparison.length >= 2 && (
