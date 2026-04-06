@@ -144,7 +144,6 @@ export function TenantNav({
   const canAccessAdminUsers = hasPermission(role, "admin:users");
   const canAccessAdminSettings = hasPermission(role, "admin:settings");
   const canSeeAnalysis = hasAnyPermission(role, ["analysis:view", "analysis:export"]);
-  void canSeeAnalysis;
   const canViewStrategy = role === "SUPER_ADMIN" || role === "ADMIN" || role === "SLT";
 
   const navItem = (label: string, href: string, badgeCount?: number): NavItem => ({
@@ -161,7 +160,7 @@ export function TenantNav({
       items: [
         ...(has("OBSERVATIONS") ? [navItem("New observation", "/observe/new")] : []),
         ...(has("OBSERVATIONS") ? [navItem("Observation history", "/observe/history")] : []),
-        ...(has("ANALYSIS") ? [navItem("Explorer", "/explorer")] : []),
+        ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Explorer", "/explorer")] : []),
       ],
     },
     {
