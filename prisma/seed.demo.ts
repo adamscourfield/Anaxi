@@ -1489,6 +1489,75 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   }
   console.log("  ✓  Year 7 percentage assessment data seeded");
 
+  // ── Y7 subject teacher assignments ─────────────────────────────────────────
+  // Divide 180 Y7 students into 4 classes (A–D, 45 each) and assign one
+  // teacher per class per subject. This makes the class comparison in the
+  // percentage analysis page meaningful.
+  console.log("  →  Seeding Y7 subject teacher assignments…");
+
+  // Teacher mapping per subject (4 teachers = 4 classes per subject)
+  const y7TeacherMap: Record<string, string[]> = {
+    English:   ["alice.thornton@demo.school", "ben.carter@demo.school", "chloe.davies@demo.school", "emily.patel@demo.school"],
+    Maths:     ["frank.robinson@demo.school", "grace.kim@demo.school", "harry.brown@demo.school", "isla.hughes@demo.school"],
+    Science:   ["kezia.edwards@demo.school", "liam.nguyen@demo.school", "maya.scott@demo.school", "nathan.powell@demo.school"],
+    Geography: ["piotr.kowalski@demo.school", "quinn.foster@demo.school", "rebecca.adeyemi@demo.school", "samuel.turner@demo.school"],
+    History:   ["quinn.foster@demo.school", "rebecca.adeyemi@demo.school", "samuel.turner@demo.school", "tasha.wright@demo.school"],
+    French:    ["uma.sharma@demo.school", "victor.olawale@demo.school", "wendy.clarke@demo.school", "xavier.patel@demo.school"],
+    RE:        ["tasha.wright@demo.school", "piotr.kowalski@demo.school", "quinn.foster@demo.school", "samuel.turner@demo.school"],
+    Music:     ["yasmin.ali@demo.school", "diana.osei@demo.school", "emily.patel@demo.school", "victor.olawale@demo.school"],
+    Graphics:  ["carlos.rivera@demo.school", "beth.fitzgerald@demo.school", "aaron.marsh@demo.school", "zoe.henderson@demo.school"],
+    Art:       ["beth.fitzgerald@demo.school", "carlos.rivera@demo.school", "zoe.henderson@demo.school", "aaron.marsh@demo.school"],
+  };
+
+  // Fetch teacher users by email
+  const teacherByEmail = new Map<string, string>();
+  const allEmails = [...new Set(Object.values(y7TeacherMap).flat())];
+  const teacherRecords = await prisma.user.findMany({
+    where: { tenantId: tenant.id, email: { in: allEmails } },
+    select: { id: true, email: true },
+  });
+  for (const t of teacherRecords) teacherByEmail.set(t.email, t.id);
+
+  // Upsert Subject records and create StudentSubjectTeacher links
+  const y7StudentIds = studentIdsByYear["Y7"];
+  const CLASS_SIZE = Math.ceil(y7StudentIds.length / 4);
+
+  for (const [subjectName, teacherEmails] of Object.entries(y7TeacherMap)) {
+    const subjectRecord = await prisma.subject.upsert({
+      where: { tenantId_name: { tenantId: tenant.id, name: subjectName } },
+      update: {},
+      create: { tenantId: tenant.id, name: subjectName },
+    });
+
+    for (let classIdx = 0; classIdx < 4; classIdx++) {
+      const teacherId = teacherByEmail.get(teacherEmails[classIdx]);
+      if (!teacherId) continue;
+      const classStudents = y7StudentIds.slice(classIdx * CLASS_SIZE, (classIdx + 1) * CLASS_SIZE);
+      for (const studentId of classStudents) {
+        await prisma.studentSubjectTeacher.upsert({
+          where: {
+            tenantId_studentId_subjectId_teacherId_effectiveFrom: {
+              tenantId: tenant.id,
+              studentId,
+              subjectId: subjectRecord.id,
+              teacherId,
+              effectiveFrom: new Date("2024-09-01"),
+            },
+          },
+          update: {},
+          create: {
+            tenantId: tenant.id,
+            studentId,
+            subjectId: subjectRecord.id,
+            teacherId,
+            effectiveFrom: new Date("2024-09-01"),
+          },
+        });
+      }
+    }
+  }
+  console.log("  ✓  Y7 subject teacher assignments seeded (4 classes × 10 subjects)");
+
   console.log(`
 ✅  Demo seed complete!
 

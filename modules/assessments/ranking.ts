@@ -160,7 +160,7 @@ export function parseAndRankAssessmentCsv(
   );
 
   if (dataRows.length === 0) {
-    return { subjects: [], students: [], warnings };
+    return { subjects: [], students: [], ranksComputed: computeRanks, warnings };
   }
 
   const headers = Object.keys(dataRows[0]);

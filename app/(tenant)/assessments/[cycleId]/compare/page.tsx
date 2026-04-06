@@ -62,6 +62,29 @@ type ComparisonData = {
   subjects: SubjectComparison[];
 };
 
+type RankMovementEntry = {
+  studentId: string;
+  name: string;
+  ppFlag: boolean;
+  sendFlag: boolean;
+  fromRank: number | null;
+  toRank: number | null;
+  rankChange: number | null;
+  fromMean: number | null;
+  toMean: number | null;
+  meanChange: number | null;
+};
+
+type TeachingGroupShift = {
+  subject: string;
+  groups: Array<{ group: string; fromMean: number | null; toMean: number | null; delta: number | null }>;
+};
+
+type RankMovementData = {
+  rankMovements: RankMovementEntry[];
+  teachingGroupShifts: TeachingGroupShift[];
+};
+
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
 const POINT_TYPE_COLOURS: Record<string, string> = {
@@ -111,6 +134,7 @@ export default function ComparisonPage() {
   const [fromId, setFromId] = useState(searchParams.get("from") ?? "");
   const [toId, setToId] = useState(searchParams.get("to") ?? "");
   const [data, setData] = useState<ComparisonData | null>(null);
+  const [rankData, setRankData] = useState<RankMovementData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
@@ -136,11 +160,18 @@ export default function ComparisonPage() {
     if (!fromId || !toId || fromId === toId) return;
     setLoading(true);
     setError(null);
+    setRankData(null);
     try {
       const res = await fetch(`/api/assessments/compare?fromPointId=${fromId}&toPointId=${toId}`);
       if (!res.ok) { const d = await res.json(); setError(d.error || "Failed to load comparison"); return; }
       const d = await res.json();
       setData(d);
+      // Fetch rank movement for PERCENTAGE / RAW formats
+      const fmt = d.subjects?.[0]?.gradeFormat;
+      if (fmt === "PERCENTAGE" || fmt === "RAW") {
+        const rRes = await fetch(`/api/assessments/compare/ranks?fromPointId=${fromId}&toPointId=${toId}`);
+        if (rRes.ok) setRankData(await rRes.json());
+      }
     } catch { setError("Failed to load comparison."); }
     finally { setLoading(false); }
   }, [fromId, toId]);
@@ -360,6 +391,94 @@ export default function ComparisonPage() {
               </table>
             </div>
           </Card>
+
+          {/* Rank movement (PERCENTAGE / RAW) */}
+          {rankData && rankData.rankMovements.length > 0 && (
+            <>
+              <Card className="space-y-4">
+                <SectionHeader
+                  title="Rank Movement"
+                  subtitle="Overall rank based on mean score across all subjects. Positive = moved up."
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    {
+                      title: "Biggest rank rises",
+                      students: rankData.rankMovements.filter((r) => (r.rankChange ?? 0) > 0).slice(0, 10),
+                      positive: true,
+                    },
+                    {
+                      title: "Biggest rank falls",
+                      students: [...rankData.rankMovements]
+                        .filter((r) => (r.rankChange ?? 0) < 0)
+                        .sort((a, b) => (a.rankChange ?? 0) - (b.rankChange ?? 0))
+                        .slice(0, 10),
+                      positive: false,
+                    },
+                  ].map(({ title, students, positive }) => (
+                    <div key={title}>
+                      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{title}</p>
+                      {students.length === 0 ? (
+                        <p className="text-xs text-[var(--on-surface-muted)]">None</p>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {students.map((s) => (
+                            <div key={s.studentId} className="flex items-center gap-2">
+                              <span className="flex-1 truncate text-sm text-[var(--on-surface)]">
+                                {s.name}
+                                {s.ppFlag && <span className="ml-1 rounded-full bg-violet-100 px-1.5 text-[9px] text-violet-700">PP</span>}
+                                {s.sendFlag && <span className="ml-1 rounded-full bg-blue-100 px-1.5 text-[9px] text-blue-700">SEN</span>}
+                              </span>
+                              <span className="shrink-0 text-xs text-[var(--on-surface-muted)] tabular-nums">
+                                #{s.fromRank} → #{s.toRank}
+                              </span>
+                              <span className={`shrink-0 w-14 text-right text-sm font-bold tabular-nums ${positive ? "text-[var(--success)]" : "text-[var(--error)]"}`}>
+                                {s.rankChange !== null ? (positive ? `▲${s.rankChange}` : `▼${Math.abs(s.rankChange)}`) : "—"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Teaching group shift (only shown when teacher data exists) */}
+              {rankData.teachingGroupShifts.length > 0 && (
+                <Card className="space-y-4">
+                  <SectionHeader
+                    title="Class Performance Shift"
+                    subtitle="Mean % change per teaching group between the two points"
+                  />
+                  <div className="space-y-5">
+                    {rankData.teachingGroupShifts.map((shift) => (
+                      <div key={shift.subject}>
+                        <p className="mb-2 text-xs font-semibold text-[var(--on-surface)]">{shift.subject}</p>
+                        <div className="space-y-1.5">
+                          {shift.groups.map((g) => (
+                            <div key={g.group} className="flex items-center gap-3">
+                              <span className="w-32 truncate text-xs text-[var(--on-surface-muted)]">{g.group}</span>
+                              <span className="w-12 text-right text-xs tabular-nums text-[var(--on-surface-muted)]">
+                                {g.fromMean !== null ? `${g.fromMean}%` : "—"}
+                              </span>
+                              <span className="text-[var(--on-surface-muted)]">→</span>
+                              <span className="w-12 text-right text-xs font-semibold tabular-nums text-[var(--on-surface)]">
+                                {g.toMean !== null ? `${g.toMean}%` : "—"}
+                              </span>
+                              <span className={`w-16 text-right text-xs font-bold tabular-nums ${g.delta === null ? "" : g.delta > 0 ? "text-[var(--success)]" : g.delta < 0 ? "text-[var(--error)]" : "text-[var(--on-surface-muted)]"}`}>
+                                {g.delta !== null ? `${g.delta > 0 ? "+" : ""}${g.delta}pp` : "—"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </>
+          )}
 
           {/* Top improvers / decliners */}
           <div className="grid grid-cols-2 gap-4">
