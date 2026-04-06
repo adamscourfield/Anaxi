@@ -301,14 +301,25 @@ export function LiveMeetingView({
     if (!confirm("End this meeting? This will mark it as completed.")) return;
     try {
       const now = new Date().toISOString();
-      await fetch(`/api/meetings/${meetingId}`, {
+      const res = await fetch(`/api/meetings/${meetingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "CANCELLED", endDateTime: now }),
       });
+      if (!res.ok) {
+        let message = "Could not end the meeting.";
+        try {
+          const json = await res.json();
+          if (json?.error && typeof json.error === "string") message = json.error;
+        } catch {
+          /* ignore */
+        }
+        alert(message);
+        return;
+      }
       window.location.href = "/meetings";
     } catch {
-      // ignore
+      alert("Network error while ending the meeting.");
     }
   }
 

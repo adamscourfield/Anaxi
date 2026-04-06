@@ -34,7 +34,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   try {
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "MEETINGS");
-    if (!hasPermission(user.role, "meetings:edit")) {
+
+    const meetingForAuth = await getMeetingDetail(user.tenantId, params.id);
+    const isCreator = meetingForAuth.createdByUserId === user.id;
+    const canPatch = hasPermission(user.role, "meetings:edit") || isCreator;
+    if (!canPatch) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
