@@ -533,12 +533,20 @@ export default async function StudentDetailPage({
                       <th className="sticky left-0 z-10 bg-[var(--surface-container-low)] px-4 py-3 text-left font-semibold tracking-[0.08em]">
                         Subject
                       </th>
-                      {attainmentBySubject[0]?.points.map((p) => (
-                        <th key={p.label} className="px-3 py-3 text-center font-semibold tracking-[0.08em]">
-                          {p.label}
-                        </th>
-                      ))}
-                      <th className="px-3 py-3 text-center font-semibold tracking-[0.08em]">Δ</th>
+                      {attainmentBySubject[0]?.points.map((p, i) => {
+                        const label = p.label?.trim() || `Assessment ${i + 1}`;
+                        return (
+                          <th
+                            key={`${p.ordinal}-${label}`}
+                            className="bg-[var(--surface-container-low)] px-3 py-3 text-center font-semibold tracking-[0.08em]"
+                          >
+                            {label}
+                          </th>
+                        );
+                      })}
+                      <th className="bg-[var(--surface-container-low)] px-3 py-3 text-center font-semibold tracking-[0.08em]">
+                        Overall Δ
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -557,9 +565,17 @@ export default async function StudentDetailPage({
                               ? "text-red-600 font-medium"
                               : "text-muted";
 
+                      const cellHover =
+                        "transition-colors group-hover/assessment-row:bg-[var(--surface-container-low)]";
+
                       return (
-                        <tr key={subject} className="table-row calm-transition">
-                          <td className="sticky left-0 z-[1] bg-[var(--surface-container-lowest)] px-4 py-3 font-medium text-text shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)]">
+                        <tr
+                          key={subject}
+                          className="group/assessment-row table-row calm-transition hover:bg-transparent"
+                        >
+                          <td
+                            className={`sticky left-0 z-[1] bg-[var(--surface-container-lowest)] px-4 py-3 font-medium text-text shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)] ${cellHover}`}
+                          >
                             {subject}
                           </td>
                           {points.map((p, i) => {
@@ -575,10 +591,11 @@ export default async function StudentDetailPage({
                                     : curr - prev < -0.05
                                       ? "text-red-600"
                                       : "text-text";
+                            const label = p.label?.trim() || `Assessment ${i + 1}`;
                             return (
                               <td
-                                key={p.label}
-                                className={`px-3 py-3 text-center tabular-nums font-semibold ${colour}`}
+                                key={`${p.ordinal}-${label}`}
+                                className={`px-3 py-3 text-center tabular-nums font-semibold ${colour} ${cellHover}`}
                               >
                                 {curr !== null ? (
                                   displayGrade(curr, p.gradeFormat, p.maxScore)
@@ -588,7 +605,9 @@ export default async function StudentDetailPage({
                               </td>
                             );
                           })}
-                          <td className={`px-3 py-3 text-center text-xs tabular-nums ${deltaColour}`}>
+                          <td
+                            className={`px-3 py-3 text-center text-xs tabular-nums ${deltaColour} ${cellHover}`}
+                          >
                             {delta === null
                               ? "—"
                               : `${delta > 0 ? "▲" : delta < 0 ? "▼" : "="} ${Math.abs(Math.round(delta * 100))}%`}
