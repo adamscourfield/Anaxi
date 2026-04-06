@@ -44,7 +44,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
       isAttendee: !showAll,
       userId: user.id,
     }),
-    getMeetingStats(user.tenantId),
+    getMeetingStats(user.tenantId, canViewAll ? undefined : user.id),
   ]);
 
   const now = new Date();
