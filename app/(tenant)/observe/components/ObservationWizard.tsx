@@ -34,11 +34,11 @@ type ObservationContext = {
 };
 
 const PHASE_OPTIONS: Phase[] = [
+  "THRESHOLD",
   "INSTRUCTION",
   "GUIDED_PRACTICE",
   "INDEPENDENT_PRACTICE",
   "UNKNOWN",
-  "THRESHOLD",
   "BOOKS",
 ];
 
