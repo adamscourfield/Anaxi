@@ -1357,6 +1357,138 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   }
   console.log("  ✓  A-Level Year 13 assessment data seeded");
 
+  // ── PERCENTAGE: Year 7 Assessment cycle ───────────────────────────────────
+  console.log("  →  Seeding Year 7 percentage assessment data…");
+
+  const y7Subjects = [
+    "English", "Maths", "Science",
+    "Geography", "History", "French",
+    "RE", "Music", "Graphics", "Art",
+  ];
+
+  function pickPercentageScore(baseShift = 0): number {
+    // Generates a percentage score with a rough bell curve centred ~60%
+    const raw = 30 + rng() * 70 + baseShift * 5;
+    return Math.max(0, Math.min(100, Math.round(raw)));
+  }
+
+  const y7Cycle = await prisma.assessmentCycle.upsert({
+    where: { tenantId_label: { tenantId: tenant.id, label: "Year 7 Assessment 2024/25" } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      label: "Year 7 Assessment 2024/25",
+      cohortLabel: "Year 7",
+      qualificationType: "PERCENTAGE",
+      academicYear: "2024/25",
+      startDate: new Date("2024-09-01"),
+      endDate: new Date("2025-07-31"),
+      isActive: true,
+      status: "active",
+    },
+  });
+
+  const y7Point1 = await prisma.assessmentPoint.upsert({
+    where: { tenantId_cycleId_label: { tenantId: tenant.id, cycleId: y7Cycle.id, label: "Assessment 1" } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      cycleId: y7Cycle.id,
+      label: "Assessment 1",
+      shortLabel: "A1",
+      ordinal: 1,
+      pointType: "INTERNAL_ASSESSMENT",
+      resultStatus: "PUBLISHED",
+      isFinalPoint: false,
+      comparisonEligible: true,
+      assessedAt: new Date("2024-11-22"),
+    },
+  });
+
+  const y7Point2 = await prisma.assessmentPoint.upsert({
+    where: { tenantId_cycleId_label: { tenantId: tenant.id, cycleId: y7Cycle.id, label: "Assessment 2" } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      cycleId: y7Cycle.id,
+      label: "Assessment 2",
+      shortLabel: "A2",
+      ordinal: 2,
+      pointType: "INTERNAL_ASSESSMENT",
+      resultStatus: "PUBLISHED",
+      isFinalPoint: true,
+      comparisonEligible: true,
+      assessedAt: new Date("2025-03-14"),
+    },
+  });
+
+  // Fetch Y7 students
+  const y7Students = await prisma.student.findMany({
+    where: { tenantId: tenant.id, yearGroup: "Y7" },
+    select: { id: true, upn: true, fullName: true, ppFlag: true, sendFlag: true },
+  });
+
+  for (const point of [y7Point1, y7Point2]) {
+    // Slight score improvement from A1 → A2
+    const pointShift = point.ordinal === 2 ? 1 : 0;
+
+    for (const subject of y7Subjects) {
+      const isCoreSubject = ["English", "Maths", "Science"].includes(subject);
+      // Optional subjects: ~85% of students enrolled
+      const enrolledStudents = isCoreSubject
+        ? y7Students
+        : y7Students.filter(() => rng() > 0.15);
+
+      const assessment = await prisma.assessment.upsert({
+        where: {
+          id: `demo-y7-${point.id}-${subject.replace(/\s+/g, "_").toLowerCase()}`,
+        },
+        update: {},
+        create: {
+          id: `demo-y7-${point.id}-${subject.replace(/\s+/g, "_").toLowerCase()}`,
+          tenantId: tenant.id,
+          pointId: point.id,
+          subject,
+          yearGroup: "Y7",
+          title: `${subject} — Y7 ${point.label}`,
+          gradeFormat: "PERCENTAGE",
+          uploadStatus: "VALIDATED",
+          entryCount: enrolledStudents.length,
+          matchedStudentCount: enrolledStudents.length,
+          createdByUserId: admin.id,
+        },
+      });
+
+      for (const student of enrolledStudents) {
+        const isAbsent = rng() < 0.05; // 5% absent rate
+        const baseShift = student.ppFlag ? -1 : (student.sendFlag ? -0.5 : 0);
+        const score = isAbsent ? null : pickPercentageScore(baseShift + pointShift);
+        const rawValue = isAbsent ? "Absent" : `${score}%`;
+        const normalizedScore = isAbsent || score === null ? null : score / 100;
+
+        await prisma.assessmentResult.upsert({
+          where: {
+            tenantId_assessmentId_studentId: {
+              tenantId: tenant.id,
+              assessmentId: assessment.id,
+              studentId: student.id,
+            },
+          },
+          update: { rawValue, normalizedScore, status: isAbsent ? "ABSENT" : "PRESENT" },
+          create: {
+            tenantId: tenant.id,
+            assessmentId: assessment.id,
+            studentId: student.id,
+            rawValue,
+            normalizedScore,
+            status: isAbsent ? "ABSENT" : "PRESENT",
+          },
+        });
+      }
+    }
+  }
+  console.log("  ✓  Year 7 percentage assessment data seeded");
+
   console.log(`
 ✅  Demo seed complete!
 
@@ -1375,6 +1507,7 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   • 10 LOA requests (mix Pending/Approved/Denied)
   • 20 OnCall events
   • 10 meetings + 30 actions (mix overdue/due soon)
+  • Year 7 Assessment 2024/25 (% format, 10 subjects, 2 points: A1 Nov / A2 Mar)
 `);
 }
 
