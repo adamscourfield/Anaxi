@@ -91,7 +91,7 @@ function iconFor(href: string) {
   if (href.includes("/leave")) return "moon";
   if (href.includes("/analytics")) return "chart";
   if (href.includes("/strategy")) return "strategy";
-  if (href.includes("/admin/users")) return "shield";
+  if (href.includes("/admin/users")) return "users";
   if (href.includes("/admin/departments")) return "building";
   if (href.includes("/admin/features")) return "toggle";
   if (href.includes("/admin")) return "shield";
