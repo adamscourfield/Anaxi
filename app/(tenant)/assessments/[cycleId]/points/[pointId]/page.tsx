@@ -49,7 +49,7 @@ type GcseBasics = {
 
 type ModalView =
   | { type: 'EM', label: string, students: EMStudentResult[], target: number }
-  | { type: 'GRADE', subject: string, grade: string, students: StudentResult[] }
+  | { type: 'GRADE', subject: string; grade: string; gradeFormat: GradeFormat; students: StudentResult[] }
   | null;
 
 type ALevelSummary = {
@@ -586,6 +586,7 @@ export default function ResultPointPage() {
                                   type: "GRADE",
                                   subject: sm.subject,
                                   grade,
+                                  gradeFormat: sm.gradeFormat,
                                   students: sm.students.filter((s) =>
                                     sm.gradeFormat === "GCSE"
                                       ? s.score !== null && Math.round(s.score * 9) === gNum
@@ -1004,8 +1005,20 @@ export default function ResultPointPage() {
                             <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Not Met</span>
                           )}
                         </td>
-                        <td className="p-3 text-center font-semibold text-[var(--accent)]">{st.engRaw}</td>
-                        <td className="p-3 text-center font-semibold text-[var(--accent)]">{st.mathRaw}</td>
+                        <td className="p-3 text-center">
+                          <span
+                            className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseColour(st.engRaw)}`}
+                          >
+                            {st.engRaw}
+                          </span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <span
+                            className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseColour(st.mathRaw)}`}
+                          >
+                            {st.mathRaw}
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1033,7 +1046,17 @@ export default function ResultPointPage() {
                               {st.name}
                             </Link>
                           </td>
-                          <td className="p-3 text-center font-semibold text-[var(--accent)]">{st.rawValue}</td>
+                          <td className="p-3 text-center">
+                            <span
+                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${
+                                modalView.gradeFormat === "GCSE"
+                                  ? gcseColour(st.rawValue)
+                                  : aLevelColour(st.rawValue)
+                              }`}
+                            >
+                              {st.rawValue}
+                            </span>
+                          </td>
                           <td className="p-3 text-center text-[var(--on-surface-muted)]">{avgDisplay}</td>
                         </tr>
                       );
