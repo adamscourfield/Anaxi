@@ -319,15 +319,6 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                   </li>
                 </ul>
               </div>
-
-              <div className="p-4">
-                <Link
-                  href={`/explorer/teachers?teacherId=${observation.observedTeacherId}`}
-                  className="flex w-full items-center justify-center rounded-xl bg-surface-container-lowest py-3 text-[0.8125rem] font-semibold text-primary-container calm-transition hover:bg-surface-container-low"
-                >
-                  View Full Dossier
-                </Link>
-              </div>
             </div>
 
             <div>
@@ -396,32 +387,6 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted">Internal Links</p>
-              <div className="rounded-2xl bg-surface-container-low px-4 py-2 ring-1 ring-border/20">
-                <nav className="flex flex-col" aria-label="Related pages">
-                  <Link
-                    href={`/observe/history?teacherId=${observation.observedTeacherId}`}
-                    className="border-b border-border/20 py-3.5 text-[0.8125rem] font-medium text-text calm-transition last:border-0 hover:text-primary-container"
-                  >
-                    Previous Observations
-                  </Link>
-                  <Link
-                    href={`/explorer/teachers?teacherId=${observation.observedTeacherId}`}
-                    className="border-b border-border/20 py-3.5 text-[0.8125rem] font-medium text-text calm-transition last:border-0 hover:text-primary-container"
-                  >
-                    Lesson Plan Archive
-                  </Link>
-                  <Link
-                    href="/explorer/observations"
-                    className="py-3.5 text-[0.8125rem] font-medium text-text calm-transition hover:text-primary-container"
-                  >
-                    Department Standards
-                  </Link>
-                </nav>
               </div>
             </div>
           </aside>
