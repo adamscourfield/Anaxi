@@ -588,7 +588,7 @@ export default function ResultPointPage() {
                         : 0;
                       const inTop = b.from >= 70;
                       const inBottom = b.to <= 40;
-                      const bg = inTop ? "bg-emerald-500" : inBottom ? "bg-red-400" : "bg-blue-400";
+                      const bg = inTop ? "bg-emerald-500" : inBottom ? "bg-red-400" : "bg-indigo-100";
                       return (
                         <div key={b.band} className="flex flex-1 flex-col items-center gap-1" title={`${b.band}: ${b.count} students (${b.pct}%)`}>
                           <div className={`w-full rounded-t ${bg} opacity-80`} style={{ height: `${height}%`, minHeight: b.count > 0 ? "2px" : "0" }} />
@@ -604,7 +604,7 @@ export default function ResultPointPage() {
                   </div>
                   <div className="flex gap-3 text-[10px] text-[var(--on-surface-muted)]">
                     <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-red-400" />Below 40%: {pctSummary.distribution.filter((b) => b.to <= 40).reduce((s, b) => s + b.count, 0)}</span>
-                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-blue-400" />40–70%: {pctSummary.distribution.filter((b) => b.from >= 40 && b.to <= 70).reduce((s, b) => s + b.count, 0)}</span>
+                    <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-indigo-100 ring-1 ring-inset ring-indigo-200" />40–70%: {pctSummary.distribution.filter((b) => b.from >= 40 && b.to <= 70).reduce((s, b) => s + b.count, 0)}</span>
                     <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-emerald-500" />70%+: {pctSummary.distribution.filter((b) => b.from >= 70).reduce((s, b) => s + b.count, 0)}</span>
                   </div>
                 </Card>

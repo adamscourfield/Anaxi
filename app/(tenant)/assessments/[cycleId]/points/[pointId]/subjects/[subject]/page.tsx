@@ -72,6 +72,13 @@ function pctColour(score: number): string {
   return "bg-red-600 text-white";
 }
 
+/** Stacked bar + legend swatch for each 10% band (40–70% uses light fill + dark text for contrast). */
+function pctBandDistributionStyle(from: number, to: number): { bar: string; swatch: string } {
+  if (from >= 70) return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
+  if (to <= 40) return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
+  return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
+}
+
 function gcseThresholdPct(
   results: Array<{ normalizedScore: number | null; status: string }>,
   threshold: number
@@ -406,11 +413,11 @@ export default async function SubjectDetailPage({
               {pctDistribution.map(d => {
                 if (d.count === 0) return null;
                 const pct = (d.count / pctDistTotal) * 100;
-                const bg = d.from >= 70 ? "bg-emerald-500" : d.to <= 40 ? "bg-red-400" : "bg-blue-400";
+                const { bar } = pctBandDistributionStyle(d.from, d.to);
                 return (
                   <div
                     key={d.band}
-                    className={`flex items-center justify-center text-[10px] font-bold text-white ${bg}`}
+                    className={`flex items-center justify-center text-[10px] font-bold ${bar}`}
                     style={{ width: `${pct}%` }}
                     title={`${d.band}: ${d.count} students (${Math.round(pct)}%)`}
                   >
@@ -424,10 +431,10 @@ export default async function SubjectDetailPage({
             <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {pctDistribution.filter(d => d.count > 0).map(d => {
                 const pct = Math.round((d.count / pctDistTotal) * 100);
-                const bg = d.from >= 70 ? "bg-emerald-500" : d.to <= 40 ? "bg-red-400" : "bg-blue-400";
+                const { swatch } = pctBandDistributionStyle(d.from, d.to);
                 return (
                   <div key={d.band} className="flex items-center gap-1.5">
-                    <span className={`inline-block h-3 w-3 rounded-sm ${bg}`} />
+                    <span className={`inline-block h-3 w-3 rounded-sm ${swatch}`} />
                     <span className="text-xs text-[var(--on-surface-muted)]">
                       {d.band}: <span className="font-semibold text-[var(--on-surface)]">{d.count}</span> ({pct}%)
                     </span>
