@@ -3,7 +3,7 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature, requireRole } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
-import { GLOBAL_SCALE, SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getSignalsForObservationPhase } from "@/modules/observations/signalDefinitions";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -27,9 +27,9 @@ export async function createObservation(formData: FormData) {
   const teacher = await (prisma as any).user.findFirst({ where: { id: observedTeacherId, tenantId: user.tenantId, isActive: true } });
   if (!teacher) throw new Error("INVALID_TEACHER");
 
-  const allowedScaleKeys = new Set(GLOBAL_SCALE.map((s) => s.key));
-  const phaseSignals = SIGNAL_DEFINITIONS.filter((s) => s.phaseRelevance.includes(phase as any));
+  const phaseSignals = getSignalsForObservationPhase(phase);
   const signalData = phaseSignals.map((signal) => {
+    const allowedScaleKeys = new Set(signal.scale.map((s) => s.key));
     const notObserved = String(formData.get(`signal_${signal.key}_not`) || "") === "1";
     const valueKey = String(formData.get(`signal_${signal.key}_value`) || "").trim() || null;
     if (!notObserved && (!valueKey || !allowedScaleKeys.has(valueKey as any))) {
@@ -79,9 +79,9 @@ export async function submitObservationDraft(formData: FormData) {
   const teacher = await (prisma as any).user.findFirst({ where: { id: observedTeacherId, tenantId: user.tenantId, isActive: true } });
   if (!teacher) throw new Error("INVALID_TEACHER");
 
-  const allowedScaleKeys = new Set(GLOBAL_SCALE.map((s) => s.key));
-  const phaseSignals = SIGNAL_DEFINITIONS.filter((s) => s.phaseRelevance.includes(phase as any));
+  const phaseSignals = getSignalsForObservationPhase(phase);
   const signalData = phaseSignals.map((signal) => {
+    const allowedScaleKeys = new Set(signal.scale.map((s) => s.key));
     const notObserved = String(formData.get(`signal_${signal.key}_not`) || "") === "1";
     const valueKey = String(formData.get(`signal_${signal.key}_value`) || "").trim() || null;
     if (!notObserved && (!valueKey || !allowedScaleKeys.has(valueKey as any))) {

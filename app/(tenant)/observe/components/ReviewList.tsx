@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getSignalsForObservationPhase } from "@/modules/observations/signalDefinitions";
 import { loadDraft, persistDraft } from "./observationDraft";
 import { ObservationStageLayout } from "./ObservationStageLayout";
 
@@ -40,8 +41,8 @@ export function ReviewList({
   const allSignals = useMemo(() => [...signals].sort((a, b) => a.order - b.order), [signals]);
   const [draft, setDraft] = useState(() => loadDraft(draftKey, allSignals.map((s) => s.key)));
   const orderedSignals = useMemo(
-    () => allSignals.filter((s) => s.phaseRelevance.includes(draft.context.phase)),
-    [allSignals, draft.context.phase]
+    () => getSignalsForObservationPhase(draft.context.phase) as Signal[],
+    [draft.context.phase]
   );
 
   const completed = orderedSignals.filter((s) => {

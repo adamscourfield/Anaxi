@@ -5,7 +5,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { canViewObservation } from "@/modules/authz";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getSignalsForObservationPhase } from "@/modules/observations/signalDefinitions";
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { ClearDraftOnSuccess } from "../components/ClearDraftOnSuccess";
 import { PrintExportButtons } from "../components/PrintExportButtons";
@@ -104,6 +104,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
   const labelMap = await getTenantSignalLabels(user.tenantId);
   const signalMap = new Map((observation.signals as any[]).map((s: any) => [s.signalKey, s]));
   const draftKey = `observation-draft:${user.tenantId}:${user.id}`;
+  const observationSignalDefs = getSignalsForObservationPhase(observation.phase);
 
   const teacherDept = (observedDeptMemberships as any[])[0]?.department?.fullName ?? null;
   const teacherName: string = observation.observedTeacher?.fullName ?? "Unknown Teacher";
@@ -190,7 +191,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
               </SectionHeader>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {(SIGNAL_DEFINITIONS as any[]).filter((s) => s.phaseRelevance.includes(observation.phase)).map((signal) => {
+                {observationSignalDefs.map((signal) => {
                   const override = (labelMap as any)[signal.key];
                   const displayName = override?.displayName || signal.displayNameDefault;
                   const value = signalMap.get(signal.key);
