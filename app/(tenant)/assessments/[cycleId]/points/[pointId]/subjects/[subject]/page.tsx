@@ -534,7 +534,7 @@ export default async function SubjectDetailPage({
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonSendMean - pctSendMean)} />
                 </div>
-                {[{ label: "Non-SEND", value: round1(pctNonSendMean), cls: "bg-[var(--on-surface)]" }, { label: "SEND", value: round1(pctSendMean), cls: "bg-blue-400" }].map(({ label, value, cls }) => (
+                {[{ label: "Non-SEND", value: round1(pctNonSendMean), cls: "bg-[var(--on-surface)]" }, { label: "SEND", value: round1(pctSendMean), cls: "bg-blue-600" }].map(({ label, value, cls }) => (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
@@ -590,7 +590,7 @@ export default async function SubjectDetailPage({
                     <GapBadge gap={gap} />
                   </div>
                   <div className="space-y-2">
-                    {[{ name: "Non-SEND", val: nonSend, bar: "bg-[var(--on-surface)]" }, { name: "SEND", val: send, bar: "bg-blue-400" }].map(({ name, val, bar }) => (
+                    {[{ name: "Non-SEND", val: nonSend, bar: "bg-[var(--on-surface)]" }, { name: "SEND", val: send, bar: "bg-blue-600" }].map(({ name, val, bar }) => (
                       <div key={name}>
                         <div className="flex justify-between items-baseline mb-1">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
