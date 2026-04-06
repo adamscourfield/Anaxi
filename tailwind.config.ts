@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import colors from "tailwindcss/colors";
 
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
@@ -87,7 +88,9 @@ const config: Config = {
 
         // ── Brand palette — direct values ──────────────────────────
         coral:  "#fe9f9f",
-        blue:   "#6366f1",
+        // Merge default blue scale so bg-blue-400 / text-blue-700 etc. work;
+        // a plain string here replaced the whole palette and broke those utilities.
+        blue: { ...colors.blue, DEFAULT: "#6366f1" },
         amber:  "#fdc683",
 
         // ── Extended tints ─────────────────────────────────────────
