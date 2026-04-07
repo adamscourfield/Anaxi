@@ -10,13 +10,13 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  delete process.env.SENDGRID_API_KEY;
+  delete process.env.RESEND_API_KEY;
   delete process.env.FROM_EMAIL;
 });
 
 describe("sendEmail", () => {
-  it("returns not_configured when SENDGRID_API_KEY is missing", async () => {
-    delete process.env.SENDGRID_API_KEY;
+  it("returns not_configured when RESEND_API_KEY is missing", async () => {
+    delete process.env.RESEND_API_KEY;
 
     const result = await sendEmail({
       to: "user@example.com",
@@ -28,11 +28,11 @@ describe("sendEmail", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("calls SendGrid API and returns sent on success", async () => {
-    process.env.SENDGRID_API_KEY = "test-key";
+  it("calls Resend API and returns sent on success", async () => {
+    process.env.RESEND_API_KEY = "test-key";
     process.env.FROM_EMAIL = "noreply@test.com";
 
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 202 });
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
 
     const result = await sendEmail({
       to: "user@example.com",
@@ -44,31 +44,31 @@ describe("sendEmail", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
 
     const [url, options] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://api.sendgrid.com/v3/mail/send");
+    expect(url).toBe("https://api.resend.com/emails");
     expect(options.method).toBe("POST");
     expect(options.headers.Authorization).toBe("Bearer test-key");
 
     const body = JSON.parse(options.body);
-    expect(body.personalizations[0].to[0].email).toBe("user@example.com");
-    expect(body.from.email).toBe("noreply@test.com");
+    expect(body.to).toEqual(["user@example.com"]);
+    expect(body.from).toBe("noreply@test.com");
     expect(body.subject).toBe("Test Subject");
-    expect(body.content[0].value).toBe("Test Message");
+    expect(body.text).toBe("Test Message");
   });
 
   it("uses default FROM_EMAIL when not set", async () => {
-    process.env.SENDGRID_API_KEY = "test-key";
+    process.env.RESEND_API_KEY = "test-key";
     delete process.env.FROM_EMAIL;
 
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 202 });
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
 
     await sendEmail({ to: "user@example.com", subject: "Test", message: "Hello" });
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.from.email).toBe("no-reply@anaxi.local");
+    expect(body.from).toBe("hi@anaxi.io");
   });
 
-  it("returns failed when SendGrid returns an error", async () => {
-    process.env.SENDGRID_API_KEY = "test-key";
+  it("returns failed when Resend returns an error", async () => {
+    process.env.RESEND_API_KEY = "test-key";
 
     fetchMock.mockResolvedValueOnce({ ok: false, status: 400 });
 
@@ -82,7 +82,7 @@ describe("sendEmail", () => {
   });
 
   it("returns failed when fetch throws a network error", async () => {
-    process.env.SENDGRID_API_KEY = "test-key";
+    process.env.RESEND_API_KEY = "test-key";
 
     fetchMock.mockRejectedValueOnce(new Error("Network error"));
 
@@ -98,8 +98,8 @@ describe("sendEmail", () => {
 
 describe("sendOnboardingEmail", () => {
   it("sends an email with the correct welcome content", async () => {
-    process.env.SENDGRID_API_KEY = "test-key";
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 202 });
+    process.env.RESEND_API_KEY = "test-key";
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
 
     const result = await sendOnboardingEmail({
       to: "teacher@school.example",
@@ -111,13 +111,13 @@ describe("sendOnboardingEmail", () => {
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.subject).toBe("Welcome to Springfield Academy on Anaxi");
-    expect(body.content[0].value).toContain("Hi Jane Doe");
-    expect(body.content[0].value).toContain("Springfield Academy");
+    expect(body.text).toContain("Hi Jane Doe");
+    expect(body.text).toContain("Springfield Academy");
   });
 
   it("uses default school name when tenantName is not provided", async () => {
-    process.env.SENDGRID_API_KEY = "test-key";
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 202 });
+    process.env.RESEND_API_KEY = "test-key";
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
 
     await sendOnboardingEmail({
       to: "teacher@school.example",
@@ -126,11 +126,11 @@ describe("sendOnboardingEmail", () => {
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.subject).toBe("Welcome to your school on Anaxi");
-    expect(body.content[0].value).toContain("your school");
+    expect(body.text).toContain("your school");
   });
 
   it("returns not_configured when no API key", async () => {
-    delete process.env.SENDGRID_API_KEY;
+    delete process.env.RESEND_API_KEY;
 
     const result = await sendOnboardingEmail({
       to: "teacher@school.example",
