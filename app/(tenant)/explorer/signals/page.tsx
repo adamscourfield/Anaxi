@@ -14,39 +14,37 @@ import {
   computeWeeklyDriftTrend,
 } from "@/modules/analysis/cpdPriorities";
 import type { CpdPriorityRow } from "@/modules/analysis/cpdPriorities";
+import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
 import {
-  CLASSROOM_ONLY_SIGNAL_DEFINITIONS,
+  CLASSROOM_LESSON_PHASES_PRIMARY,
+  CLASSROOM_LESSON_PHASES_SECONDARY,
   LESSON_PHASE,
-  SIGNAL_DEFINITIONS,
   type LessonPhase,
   type SignalKey,
-} from "@/modules/observations/signalDefinitions";
-
+} from "@/modules/observations/signalTypes";
 const VALID_WINDOWS = [7, 21, 28, 90] as const;
 type WindowDays = (typeof VALID_WINDOWS)[number];
 
 const PRIORITY_LEVELS = ["HIGH", "MEDIUM", "LOW"] as const;
 type PriorityLevel = (typeof PRIORITY_LEVELS)[number];
 
-const VALID_SIGNAL_KEYS = new Set<SignalKey>(SIGNAL_DEFINITIONS.map((s) => s.key));
-
-const PHASE_GROUPS_FOR_FILTER: LessonPhase[] = [
-  LESSON_PHASE.THRESHOLD,
-  LESSON_PHASE.INSTRUCTION,
-  LESSON_PHASE.GUIDED_PRACTICE,
-  LESSON_PHASE.INDEPENDENT_PRACTICE,
-];
-
-const UNIVERSAL_CLASSROOM_SIGNALS = CLASSROOM_ONLY_SIGNAL_DEFINITIONS.filter((s) => s.isUniversal);
+function phaseGroupsForSchoolType(schoolType: "PRIMARY" | "SECONDARY"): LessonPhase[] {
+  return schoolType === "PRIMARY"
+    ? [...CLASSROOM_LESSON_PHASES_PRIMARY]
+    : [...CLASSROOM_LESSON_PHASES_SECONDARY];
+}
 
 function parseWindow(raw: string | undefined): WindowDays {
   const n = Number(raw);
   return VALID_WINDOWS.includes(n as WindowDays) ? (n as WindowDays) : 21;
 }
 
-function parseSignalKey(raw: string | undefined): SignalKey | undefined {
-  if (!raw || !VALID_SIGNAL_KEYS.has(raw as SignalKey)) return undefined;
+function parseSignalKey(
+  raw: string | undefined,
+  valid: Set<SignalKey>,
+): SignalKey | undefined {
+  if (!raw || !valid.has(raw as SignalKey)) return undefined;
   return raw as SignalKey;
 }
 
@@ -100,6 +98,13 @@ export default async function SignalsPage({
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
 
+  const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } });
+  const schoolType = (settings?.schoolType ?? "SECONDARY") as "PRIMARY" | "SECONDARY";
+  const tenantSignalDefs = getSignalDefinitionsForSchoolType(schoolType);
+  const validSignalKeys = new Set<SignalKey>(tenantSignalDefs.map((s) => s.key));
+  const phaseGroupsForFilter = phaseGroupsForSchoolType(schoolType);
+  const universalClassroomSignals = tenantSignalDefs.filter((s) => s.isUniversal);
+
   // ── viewer context ──────────────────────────────────────────────
   const [hodMemberships, coachAssignments] = await Promise.all([
     (prisma as any).departmentMembership.findMany({
@@ -149,7 +154,7 @@ export default async function SignalsPage({
   const rawPriority = Array.isArray(params.priority)
     ? params.priority[0]
     : params.priority;
-  const signalKeyFilter = parseSignalKey(rawSignalKey);
+  const signalKeyFilter = parseSignalKey(rawSignalKey, validSignalKeys);
   const priorityFilter = parsePriorityLevel(rawPriority);
 
   const filters = departmentId ? { departmentId } : undefined;
@@ -321,14 +326,14 @@ export default async function SignalsPage({
                     >
                       <option value="">All signals</option>
                       <optgroup label="Universal (classroom)">
-                        {UNIVERSAL_CLASSROOM_SIGNALS.map((s) => (
+                        {universalClassroomSignals.map((s) => (
                           <option key={s.key} value={s.key}>
                             {s.displayNameDefault}
                           </option>
                         ))}
                       </optgroup>
-                      {PHASE_GROUPS_FOR_FILTER.map((phase) => {
-                        const phaseSignals = CLASSROOM_ONLY_SIGNAL_DEFINITIONS.filter(
+                      {phaseGroupsForFilter.map((phase) => {
+                        const phaseSignals = tenantSignalDefs.filter(
                           (s) => !s.isUniversal && s.phases.includes(phase),
                         );
                         if (!phaseSignals.length) return null;
@@ -343,7 +348,7 @@ export default async function SignalsPage({
                         );
                       })}
                       <optgroup label="Book look">
-                        {SIGNAL_DEFINITIONS.filter((s) => s.phases[0] === LESSON_PHASE.BOOKS).map((s) => (
+                        {tenantSignalDefs.filter((s) => s.phases[0] === LESSON_PHASE.BOOKS).map((s) => (
                           <option key={s.key} value={s.key}>
                             {s.displayNameDefault}
                           </option>

@@ -1,6 +1,7 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature, requireRole } from "@/lib/guards";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getTenantSchoolType } from "@/lib/tenantSchoolType";
+import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { submitObservationDraft } from "../../actions";
 import { ReviewList } from "../../components/ReviewList";
@@ -12,6 +13,16 @@ export default async function ObservationReviewPage() {
 
   const draftKey = `observation-draft:${user.tenantId}:${user.id}`;
   const labelMap = await getTenantSignalLabels(user.tenantId);
+  const schoolType = await getTenantSchoolType(user.tenantId);
+  const signalDefs = getSignalDefinitionsForSchoolType(schoolType);
 
-  return <ReviewList draftKey={draftKey} signals={SIGNAL_DEFINITIONS as any[]} labelMap={labelMap as any} action={submitObservationDraft} />;
+  return (
+    <ReviewList
+      draftKey={draftKey}
+      signals={signalDefs as any[]}
+      labelMap={labelMap as any}
+      action={submitObservationDraft}
+      schoolType={schoolType}
+    />
+  );
 }

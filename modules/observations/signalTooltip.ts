@@ -1,7 +1,8 @@
 import { SIGNAL_DEFINITIONS, type ScaleKey, type SignalKey } from "@/modules/observations/signalDefinitions";
+import { PRIMARY_SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitionsPrimary";
 
 const defByKey = new Map<SignalKey, (typeof SIGNAL_DEFINITIONS)[number]>(
-  SIGNAL_DEFINITIONS.map((d) => [d.key, d]),
+  [...SIGNAL_DEFINITIONS, ...PRIMARY_SIGNAL_DEFINITIONS].map((d) => [d.key, d]),
 );
 
 export function pedagogicalSignalTooltip(signalKey: string, valueKey: string | null | undefined): string {

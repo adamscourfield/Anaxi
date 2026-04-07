@@ -3,7 +3,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import { canExportExplorer, canViewBehaviourExplorer } from "@/modules/authz";
 import { computeTeacherPivot } from "@/modules/analysis/teacherRisk";
 import { computeDepartmentPivot } from "@/modules/analysis/departmentPivot";
@@ -60,8 +60,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const signalKeys = SIGNAL_DEFINITIONS.map((s) => s.key);
-    const signalLabels = new Map(SIGNAL_DEFINITIONS.map((s) => [s.key, s.displayNameDefault]));
+    const tenantSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } });
+    const schoolType = (tenantSettings?.schoolType ?? "SECONDARY") as "PRIMARY" | "SECONDARY";
+    const signalDefs = getSignalDefinitionsForSchoolType(schoolType);
+    const signalKeys = signalDefs.map((s) => s.key);
+    const signalLabels = new Map(signalDefs.map((s) => [s.key, s.displayNameDefault]));
 
     const exportedAt = new Date().toISOString();
     const metaLines = [

@@ -16,7 +16,9 @@
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { getSignalDefinitionsForSchoolType } from "../modules/observations/getSignalsBySchoolType";
 import { SIGNAL_DEFINITIONS } from "../modules/observations/signalDefinitions";
+import { PRIMARY_SIGNAL_DEFINITIONS } from "../modules/observations/signalDefinitionsPrimary";
 
 // ─── Safety Gates ─────────────────────────────────────────────────────────────
 
@@ -119,7 +121,7 @@ const LESSON_PHASES = [
   "INDEPENDENT_PRACTICE",
 ] as const;
 
-const ALL_SIGNAL_KEYS = SIGNAL_DEFINITIONS.map((s) => s.key);
+const ALL_SIGNAL_KEYS = getSignalDefinitionsForSchoolType("SECONDARY").map((s) => s.key);
 type ScaleKey = "LIMITED" | "SOME" | "CONSISTENT" | "STRONG";
 
 // ─── Name pools ───────────────────────────────────────────────────────────────
@@ -236,7 +238,7 @@ function improvingCurrentSignals(): ReturnType<typeof makeSignals> {
   return makeSignals({
     RETRIEVAL_CHECK: "STRONG",
     CFU_CYCLES: "CONSISTENT",
-    PARTICIPATION_EQUITY: "STRONG",
+    PARTICIPATION_EQUITY_GP: "STRONG",
   });
 }
 
@@ -247,7 +249,7 @@ function improvingPrevSignals(): ReturnType<typeof makeSignals> {
   return makeSignals({
     RETRIEVAL_CHECK: "SOME",
     CFU_CYCLES: "SOME",
-    PARTICIPATION_EQUITY: "SOME",
+    PARTICIPATION_EQUITY_GP: "SOME",
   });
 }
 
@@ -284,6 +286,7 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
     data: {
       tenantId: tenant.id,
       schoolName: "Demo Academy",
+      schoolType: "SECONDARY",
       timezone: "Europe/London",
       defaultInsightWindowDays: 21,
       minObservationCount: 6,
@@ -310,8 +313,12 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
     });
   }
 
-  // Signal labels
-  for (const signal of SIGNAL_DEFINITIONS) {
+  // Signal labels (secondary + primary keys; dedupe shared book keys)
+  const labelDefs = [...SIGNAL_DEFINITIONS, ...PRIMARY_SIGNAL_DEFINITIONS];
+  const seenLabelKeys = new Set<string>();
+  for (const signal of labelDefs) {
+    if (seenLabelKeys.has(signal.key)) continue;
+    seenLabelKeys.add(signal.key);
     await prisma.tenantSignalLabel.create({
       data: {
         tenantId: tenant.id,

@@ -2,8 +2,9 @@ import Link from "next/link";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
+import { getTenantSchoolType } from "@/lib/tenantSchoolType";
+import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { formatYearGroup } from "@/modules/observations/yearGroup";
 import { pedagogicalSignalTooltip } from "@/modules/observations/signalTooltip";
@@ -32,6 +33,7 @@ const PHASE_BADGE: Record<string, string> = {
   INDEPENDENT_PRACTICE:  "border-[var(--phase-independent-text)]/30 text-[var(--phase-independent-text)]",
   UNKNOWN:               "border-border text-muted",
   THRESHOLD:             "border-[var(--phase-instruction-text)]/30 text-[var(--phase-instruction-text)]",
+  TRANSITION_START:      "border-[var(--phase-instruction-text)]/30 text-[var(--phase-instruction-text)]",
   BOOKS:                 "border-border text-muted",
 };
 
@@ -44,6 +46,7 @@ const VALID_PHASE_FILTERS = new Set([
   "INDEPENDENT_PRACTICE",
   "UNKNOWN",
   "THRESHOLD",
+  "TRANSITION_START",
   "BOOKS",
 ]);
 
@@ -69,7 +72,9 @@ export default async function ObservationHistoryPage({
   const phaseRaw = String(searchParams?.phase || "").trim();
   const phaseFilter = VALID_PHASE_FILTERS.has(phaseRaw) ? phaseRaw : "";
   const signalKeyRaw = String(searchParams?.signalKey || "").trim();
-  const validSignalKeys = new Set(SIGNAL_DEFINITIONS.map((s) => s.key));
+  const schoolType = await getTenantSchoolType(user.tenantId);
+  const tenantSignalDefs = getSignalDefinitionsForSchoolType(schoolType);
+  const validSignalKeys = new Set(tenantSignalDefs.map((s) => s.key));
   const signalKeyFilter = validSignalKeys.has(signalKeyRaw) ? signalKeyRaw : "";
   const page = Math.max(1, Number(searchParams?.page || "1"));
   const windowDays = Number(searchParams?.window || "");
@@ -170,7 +175,7 @@ export default async function ObservationHistoryPage({
     !!signalKeyFilter ||
     useWindow;
 
-  const signalFilterOptions = [...SIGNAL_DEFINITIONS]
+  const signalFilterOptions = [...tenantSignalDefs]
     .sort((a, b) => a.order - b.order)
     .map((s) => ({
       key: s.key,

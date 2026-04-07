@@ -2,7 +2,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { requireAdminUser } from "@/lib/admin";
 import { requireFeature } from "@/lib/guards";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,13 +13,14 @@ export default async function AdminSignalsPage() {
   const user = await requireAdminUser();
   await requireFeature(user.tenantId, "OBSERVATIONS");
   const labels = await getTenantSignalLabels(user.tenantId);
+  const signalCatalog = getAllSignalDefinitionsForTenantLabels();
 
   async function saveAll(formData: FormData) {
     "use server";
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
 
-    for (const signal of SIGNAL_DEFINITIONS) {
+    for (const signal of getAllSignalDefinitionsForTenantLabels()) {
       const displayName = String(formData.get(`display_${signal.key}`) || signal.displayNameDefault);
       const description = String(formData.get(`description_${signal.key}`) || "");
       await upsertTenantSignalLabel(admin.tenantId, signal.key, displayName, description);
@@ -35,7 +36,7 @@ export default async function AdminSignalsPage() {
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
     const key = String(formData.get("signalKey") || "");
-    const signal = SIGNAL_DEFINITIONS.find((row) => row.key === key);
+    const signal = getAllSignalDefinitionsForTenantLabels().find((row) => row.key === key);
     if (!signal) return;
 
     await upsertTenantSignalLabel(admin.tenantId, signal.key, signal.displayNameDefault, null);
@@ -66,7 +67,7 @@ export default async function AdminSignalsPage() {
                 </tr>
               </thead>
               <tbody>
-                {SIGNAL_DEFINITIONS.map((signal) => {
+                {signalCatalog.map((signal) => {
                   const override = labels[signal.key];
                   return (
                     <tr className="border-b border-border/70 align-top last:border-0" key={signal.key}>

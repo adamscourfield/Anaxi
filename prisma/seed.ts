@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { getSignalDefinitionsForSchoolType } from "../modules/observations/getSignalsBySchoolType";
 import { SIGNAL_DEFINITIONS } from "../modules/observations/signalDefinitions";
+import { PRIMARY_SIGNAL_DEFINITIONS } from "../modules/observations/signalDefinitionsPrimary";
 import { seedDemo } from "./seed.demo";
 
 const prisma = new PrismaClient();
@@ -15,6 +17,15 @@ async function main() {
     where: { id: "tenant_demo" },
     update: { name: "Demo School", slug: "demo-school", status: "ACTIVE" },
     create: { id: "tenant_demo", name: "Demo School", slug: "demo-school", status: "ACTIVE" }
+  });
+
+  await (prisma as any).tenantSettings.upsert({
+    where: { tenantId: tenant.id },
+    update: { schoolType: "SECONDARY" },
+    create: {
+      tenantId: tenant.id,
+      schoolType: "SECONDARY",
+    },
   });
 
   const passwordHash = await bcrypt.hash("Password123!", 10);
@@ -87,7 +98,11 @@ async function main() {
     await (prisma as any).onCallRecipient.upsert({ where: { tenantId_email: { tenantId: tenant.id, email } }, update: {}, create: { tenantId: tenant.id, email } });
   }
 
-  for (const signal of SIGNAL_DEFINITIONS) {
+  const labelDefs = [...SIGNAL_DEFINITIONS, ...PRIMARY_SIGNAL_DEFINITIONS];
+  const seenLabelKeys = new Set<string>();
+  for (const signal of labelDefs) {
+    if (seenLabelKeys.has(signal.key)) continue;
+    seenLabelKeys.add(signal.key);
     await (prisma as any).tenantSignalLabel.upsert({
       where: { tenantId_signalKey: { tenantId: tenant.id, signalKey: signal.key } },
       update: { displayName: signal.displayNameDefault, description: signal.descriptionDefault },
@@ -105,7 +120,7 @@ async function main() {
   const daysAgo = (d: number) => new Date(now.getTime() - d * 24 * 60 * 60 * 1000);
 
   // Helper to build signal data for an observation
-  const allSignalKeys = SIGNAL_DEFINITIONS.map((s) => s.key);
+  const allSignalKeys = getSignalDefinitionsForSchoolType("SECONDARY").map((s) => s.key);
   const makeSignals = (overrides: Partial<Record<string, string>> = {}) =>
     allSignalKeys.map((k) => ({ signalKey: k, valueKey: overrides[k] ?? "CONSISTENT", notObserved: false }));
 
@@ -144,7 +159,7 @@ async function main() {
             data: makeSignals({
               BEHAVIOUR_CLIMATE: i < 4 ? "SOME" : "CONSISTENT",
               CFU_CYCLES: i < 4 ? "LIMITED" : "SOME",
-              PARTICIPATION_EQUITY: i < 3 ? "LIMITED" : "SOME",
+              PARTICIPATION_EQUITY_GP: i < 3 ? "LIMITED" : "SOME",
             })
           }
         }

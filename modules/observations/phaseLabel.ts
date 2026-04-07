@@ -6,6 +6,7 @@ const PHASE_LABELS: Record<string, string> = {
   INDEPENDENT_PRACTICE: "Independent Practice",
   UNKNOWN: "Not Recorded",
   THRESHOLD: "Threshold",
+  TRANSITION_START: "Transition / start",
   BOOKS: "Book Look",
 };
 
@@ -15,6 +16,7 @@ const PHASE_VARIANTS: Record<string, PillVariant> = {
   INDEPENDENT_PRACTICE: "accent",
   UNKNOWN: "neutral",
   THRESHOLD: "warning",
+  TRANSITION_START: "warning",
   BOOKS: "neutral",
 };
 

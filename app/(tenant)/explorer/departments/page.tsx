@@ -6,9 +6,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { canViewExplorer, canExportExplorer } from "@/modules/authz";
-import {
-  SIGNAL_DEFINITIONS,
-} from "@/modules/observations/signalDefinitions";
+import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import {
   computeDepartmentPivot,
   type DepartmentPivotRow,
@@ -112,14 +110,18 @@ export default async function DepartmentsPage({
   const filterIds = rawDeptId ? [rawDeptId] : scopeIds;
 
   /* ---- Data ---- */
-  const [{ rows }, departments] = await Promise.all([
+  const [{ rows }, departments, settings] = await Promise.all([
     computeDepartmentPivot(user.tenantId, windowDays, filterIds),
     (prisma as any).department.findMany({
       where: { tenantId: user.tenantId },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }) as Promise<{ id: string; name: string }[]>,
+    (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } }),
   ]);
+
+  const schoolType = settings?.schoolType ?? "SECONDARY";
+  const signalDefs = getSignalDefinitionsForSchoolType(schoolType);
 
   /* HOD-scoped department list for the filter dropdown */
   const selectableDepts = isHod
@@ -137,7 +139,7 @@ export default async function DepartmentsPage({
     (sum, r) => sum + r.observationCount,
     0,
   );
-  const totalSignals = SIGNAL_DEFINITIONS.length;
+  const totalSignals = signalDefs.length;
 
   /* Signal Integrity: % of departments with at least 1 observation */
   const deptsWithObs = sortedRows.filter((r) => r.observationCount > 0).length;
@@ -185,7 +187,7 @@ export default async function DepartmentsPage({
     faculty: row.faculty,
     teacherCount: row.teacherCount,
     observationCount: row.observationCount,
-    signalDots: SIGNAL_DEFINITIONS.map((s) => ({
+    signalDots: signalDefs.map((s) => ({
       key: s.key,
       label: s.displayNameDefault,
       color: meanToColor(row.signalData[s.key]?.currentMean),

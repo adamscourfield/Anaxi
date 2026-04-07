@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { canViewExplorer, canExportExplorer } from "@/modules/authz";
 import { StatusPill, type PillVariant } from "@/components/ui/status-pill";
 import { Avatar } from "@/components/ui/avatar";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import {
   computeTeacherPivot,
   computeTeacherRiskIndex,
@@ -43,14 +43,6 @@ const STATUS_VARIANT: Record<RiskStatus, PillVariant> = {
 
 const VALID_WINDOWS = [7, 21, 28] as const;
 type WindowDays = (typeof VALID_WINDOWS)[number];
-
-const SIGNAL_KEYS = SIGNAL_DEFINITIONS.map((s) => s.key);
-const SIGNAL_LABEL_MAP: Record<string, string> = Object.fromEntries(
-  SIGNAL_DEFINITIONS.map((s) => [s.key, s.displayNameDefault]),
-);
-
-/** Signals shown in the compact heatmap (first 6) */
-const HEATMAP_KEYS = SIGNAL_KEYS.slice(0, 6);
 
 /** Teachers per page */
 const ITEMS_PER_PAGE = 20;
@@ -123,6 +115,15 @@ export default async function ExplorerTeachersPage({
   const viewerContext = { userId: user.id, role: user.role, hodDepartmentIds, coacheeUserIds };
 
   if (!canViewExplorer(viewerContext)) notFound();
+
+  const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } });
+  const schoolType = settings?.schoolType ?? "SECONDARY";
+  const signalDefs = getSignalDefinitionsForSchoolType(schoolType);
+  const signalKeys = signalDefs.map((s) => s.key);
+  const signalLabelMap: Record<string, string> = Object.fromEntries(
+    signalDefs.map((s) => [s.key, s.displayNameDefault]),
+  );
+  const heatmapKeys = signalKeys.slice(0, 6);
 
   // ─── Parse search params ────────────────────────────────────────────────────
   const rawWindow = Number(
@@ -478,11 +479,11 @@ export default async function ExplorerTeachersPage({
                           {/* Signal Heatmap */}
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-1">
-                              {HEATMAP_KEYS.map((key) => {
+                              {heatmapKeys.map((key) => {
                                 const cell = row.signalData[key];
                                 const mean = cell?.currentMean;
                                 const bg = mean != null ? meanToBgColor(mean) : "bg-surface-container-high";
-                                const label = SIGNAL_LABEL_MAP[key] ?? key;
+                                const label = signalLabelMap[key] ?? key;
                                 return (
                                   <div
                                     key={key}
@@ -585,7 +586,7 @@ export default async function ExplorerTeachersPage({
                           <td className="px-4 py-4">
                             <TopDriverLinks
                               drivers={row.topDrivers}
-                              labelByKey={SIGNAL_LABEL_MAP}
+                              labelByKey={signalLabelMap}
                               windowDays={windowDays}
                             />
                           </td>
