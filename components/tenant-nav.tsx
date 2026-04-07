@@ -164,7 +164,7 @@ export function TenantNav({
       ],
     },
     {
-      label: "Culture",
+      label: "Students",
       items: [
         ...(has("ASSESSMENTS") ? [navItem("Assessments", "/assessments")] : []),
       ...(has("STUDENTS") ? [navItem("Students", "/students")] : []),
