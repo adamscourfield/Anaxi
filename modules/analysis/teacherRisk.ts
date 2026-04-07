@@ -6,7 +6,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -25,8 +25,6 @@ const DEFAULT_DRIFT_THRESHOLD = 0.35;
 /** Risk band thresholds (v1) */
 const SIGNIFICANT_DRIFT_THRESHOLD = 2.0;
 const EMERGING_DRIFT_THRESHOLD = 1.0;
-
-const ALL_SIGNAL_KEYS = SIGNAL_DEFINITIONS.map((s) => s.key);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -112,12 +110,13 @@ function buildSignalMeans(signals: { signalKey: string; valueKey: string | null;
 function computeIDS(
   currentMeans: SignalMeans,
   prevMeans: SignalMeans,
-  driftThreshold: number
+  driftThreshold: number,
+  allSignalKeys: string[]
 ): { ids: number; normalizedIDS: number; eligibleSignals: number } {
   let ids = 0;
   let eligibleSignals = 0;
 
-  for (const signalKey of ALL_SIGNAL_KEYS) {
+  for (const signalKey of allSignalKeys) {
     const curr = currentMeans.get(signalKey);
     const prev = prevMeans.get(signalKey);
     const currentMean = curr ? computeMean(curr.scores) : null;
@@ -132,7 +131,7 @@ function computeIDS(
     }
   }
 
-  const normalizedIDS = eligibleSignals > 0 ? ids * (ALL_SIGNAL_KEYS.length / eligibleSignals) : 0;
+  const normalizedIDS = eligibleSignals > 0 ? ids * (allSignalKeys.length / eligibleSignals) : 0;
   return { ids, normalizedIDS, eligibleSignals };
 }
 
@@ -162,6 +161,8 @@ export async function computeTeacherRiskIndex(
   const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId } });
   const minCoverage: number = settings?.minObservationCount ?? DEFAULT_MIN_COVERAGE;
   const driftThreshold: number = settings?.driftDeltaThreshold ?? DEFAULT_DRIFT_THRESHOLD;
+  const schoolType = settings?.schoolType ?? "SECONDARY";
+  const allSignalKeys = getSignalDefinitionsForSchoolType(schoolType).map((s) => s.key);
 
   const { currentStart, currentEnd, prevStart, prevEnd } = windowBounds(windowDays);
 
@@ -237,12 +238,12 @@ export async function computeTeacherRiskIndex(
     const currentMeans = buildSignalMeans(currentSignals);
     const prevMeans = buildSignalMeans(prevSignals);
 
-    const { normalizedIDS } = computeIDS(currentMeans, prevMeans, driftThreshold);
+    const { normalizedIDS } = computeIDS(currentMeans, prevMeans, driftThreshold, allSignalKeys);
     const status = classifyStatus(normalizedIDS, teacherCoverage, minCoverage);
 
     // Compute top drivers (signals with driftContribution > 0)
     const topDrivers: TopDriver[] = [];
-    for (const signalKey of ALL_SIGNAL_KEYS) {
+    for (const signalKey of allSignalKeys) {
       const curr = currentMeans.get(signalKey);
       const prev = prevMeans.get(signalKey);
       const currentMeanVal = curr ? computeMean(curr.scores) : null;
@@ -289,6 +290,9 @@ export async function computeTeacherSignalProfile(
   const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId } });
   const minCoverage: number = settings?.minObservationCount ?? DEFAULT_MIN_COVERAGE;
   const driftThreshold: number = settings?.driftDeltaThreshold ?? DEFAULT_DRIFT_THRESHOLD;
+  const schoolType = settings?.schoolType ?? "SECONDARY";
+  const signalDefs = getSignalDefinitionsForSchoolType(schoolType);
+  const allSignalKeys = signalDefs.map((s) => s.key);
 
   const { currentStart, currentEnd, prevStart } = windowBounds(windowDays);
 
@@ -323,8 +327,8 @@ export async function computeTeacherSignalProfile(
   const currentMeans = buildSignalMeans(currentSignals);
   const prevMeans = buildSignalMeans(prevSignals);
 
-  const signals: SignalProfileEntry[] = ALL_SIGNAL_KEYS.map((signalKey) => {
-    const sigDef = SIGNAL_DEFINITIONS.find((s) => s.key === signalKey)!;
+  const signals: SignalProfileEntry[] = allSignalKeys.map((signalKey) => {
+    const sigDef = signalDefs.find((s) => s.key === signalKey)!;
     const label = labelMap.get(signalKey) ?? sigDef.displayNameDefault;
     const curr = currentMeans.get(signalKey);
     const prev = prevMeans.get(signalKey);
@@ -352,7 +356,7 @@ export async function computeTeacherSignalProfile(
     return a.delta - b.delta;
   });
 
-  const { normalizedIDS } = computeIDS(currentMeans, prevMeans, driftThreshold);
+  const { normalizedIDS } = computeIDS(currentMeans, prevMeans, driftThreshold, allSignalKeys);
   const status = classifyStatus(normalizedIDS, teacherCoverage, minCoverage);
 
   return {
@@ -400,6 +404,8 @@ export async function computeTeacherPivot(
   const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId } });
   const minCoverage: number = settings?.minObservationCount ?? DEFAULT_MIN_COVERAGE;
   const driftThreshold: number = settings?.driftDeltaThreshold ?? DEFAULT_DRIFT_THRESHOLD;
+  const schoolType = settings?.schoolType ?? "SECONDARY";
+  const allSignalKeys = getSignalDefinitionsForSchoolType(schoolType).map((s) => s.key);
 
   const { currentStart, currentEnd, prevStart } = windowBounds(windowDays);
 
@@ -462,11 +468,11 @@ export async function computeTeacherPivot(
     const currentMeans = buildSignalMeans(currentSignals);
     const prevMeans = buildSignalMeans(prevSignals);
 
-    const { normalizedIDS } = computeIDS(currentMeans, prevMeans, driftThreshold);
+    const { normalizedIDS } = computeIDS(currentMeans, prevMeans, driftThreshold, allSignalKeys);
     const status = classifyStatus(normalizedIDS, teacherCoverage, minCoverage);
 
     const signalData: Record<string, TeacherPivotSignalCell> = {};
-    for (const signalKey of ALL_SIGNAL_KEYS) {
+    for (const signalKey of allSignalKeys) {
       const curr = currentMeans.get(signalKey);
       const prev = prevMeans.get(signalKey);
       const currentMean = curr ? computeMean(curr.scores) : null;

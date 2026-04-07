@@ -1,4 +1,5 @@
-// LEGACY - superseded by signalDefinitions.ts - check for remaining imports before deleting
+// LEGACY — superseded by signalDefinitions.ts and signalDefinitionsPrimary.ts
+// Check for remaining imports before deleting. Do not add to this file.
 
 export type ObservationValue = {
   key: "LOW" | "MED" | "HIGH";

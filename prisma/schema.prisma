@@ -44,6 +44,7 @@ model Tenant {
   features             TenantFeature[]
   tenantImportMappings TenantImportMapping[]
   tenantSignalLabels   TenantSignalLabel[]
+  tenantSettings       TenantSettings?
   vocab                TenantVocab[]
   users                User[]
 }
@@ -513,22 +514,24 @@ model LeaveApprovalGroupScope {
 }
 
 model TenantSettings {
-  id                       String    @id @default(cuid())
-  tenantId                 String    @unique
+  id                       String     @id @default(cuid())
+  tenantId                 String     @unique
+  tenant                   Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   schoolName               String?
-  timezone                 String    @default("Europe/London")
-  defaultInsightWindowDays Int       @default(21)
-  positivePointsLabel      String    @default("Positive Points")
-  detentionLabel           String    @default("Detention")
-  internalExclusionLabel   String    @default("Internal Exclusion")
-  suspensionLabel          String    @default("Suspension")
-  onCallLabel              String    @default("On Call")
-  driftDeltaThreshold      Float     @default(0.15)
-  minObservationCount      Int       @default(3)
-  behaviourSpikePercent    Float     @default(50.0)
+  schoolType               SchoolType @default(SECONDARY)
+  timezone                 String     @default("Europe/London")
+  defaultInsightWindowDays Int        @default(21)
+  positivePointsLabel      String     @default("Positive Points")
+  detentionLabel           String     @default("Detention")
+  internalExclusionLabel   String     @default("Internal Exclusion")
+  suspensionLabel          String     @default("Suspension")
+  onCallLabel              String     @default("On Call")
+  driftDeltaThreshold      Float      @default(0.15)
+  minObservationCount      Int        @default(3)
+  behaviourSpikePercent    Float      @default(50.0)
   onboardingCompletedAt    DateTime?
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime  @updatedAt
+  createdAt                DateTime   @default(now())
+  updatedAt                DateTime   @updatedAt
 }
 
 model TimetableEntry {
@@ -1045,6 +1048,11 @@ enum AnalysisRunStatus {
   FAILED
 }
 
+enum SchoolType {
+  PRIMARY
+  SECONDARY
+}
+
 enum SignalKey {
   BEHAVIOUR_CLIMATE
   PACE_MOMENTUM
@@ -1060,12 +1068,46 @@ enum SignalKey {
   RESPONSIVE_ADJUSTMENT
   ERROR_CORRECTION_PRECISION
   MODELLING_ON_DEMAND
-  PARTICIPATION_EQUITY
+  PARTICIPATION_EQUITY_GP
   TASK_CLARITY
-  INDEPENDENT_ACCOUNTABILITY
+  INDEPENDENT_ACCOUNTABILITY_IP
   CIRCULATION_FEEDBACK
-  STRETCH_DEPLOYMENT
+  STRETCH_DEPLOYMENT_IP
   SILENCE_AND_FOCUS
+  PRESENTATION_STANDARD
+  WORK_COMPLETION
+  SUSTAINED_EFFORT
+  TASK_APPROPRIATENESS
+  VOLUME_OF_WORK
+  // deprecated — retain for legacy DB rows; do not use in new observations
+  COLD_CALL_DENSITY
+  LANGUAGE_PRECISION
+  LIVE_ADJUSTMENT
+  RETRIEVAL_PRESENCE
+  STRETCH_DEPLOYMENT
+  INDEPENDENT_ACCOUNTABILITY
+  ERROR_CORRECTION_DEPTH
+  PARTICIPATION_EQUITY
+  PRIMARY_BEHAVIOUR_CLIMATE
+  PRIMARY_PACE_MOMENTUM
+  PRIMARY_ENTRY_ROUTINE
+  PRIMARY_RETRIEVAL_TASK_QUALITY
+  PRIMARY_RETRIEVAL_CHECK
+  PRIMARY_EXPLANATION_CLARITY
+  PRIMARY_MODELLING_EXPLICITNESS
+  PRIMARY_PHONICS_VOCABULARY_PRECISION
+  PRIMARY_DIRECTED_QUESTIONING
+  PRIMARY_STRETCH_IN_ROOM
+  PRIMARY_CFU_CYCLES
+  PRIMARY_RESPONSIVE_ADJUSTMENT
+  PRIMARY_ERROR_CORRECTION_PRECISION
+  PRIMARY_ORACY_GUIDED
+  PRIMARY_PARTICIPATION_EQUITY
+  PRIMARY_TASK_CLARITY
+  PRIMARY_INDEPENDENT_ACCOUNTABILITY
+  PRIMARY_CIRCULATION_FEEDBACK
+  PRIMARY_STRETCH_DEPLOYMENT
+  PRIMARY_ORACY_INDEPENDENT
 }
 
 enum LeaveApprovalGroupAppliesTo {

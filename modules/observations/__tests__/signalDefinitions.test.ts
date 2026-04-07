@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getSignalsForPhase } from "../getSignalsBySchoolType";
 import {
   CLASSROOM_ONLY_SIGNAL_DEFINITIONS,
   getSignalsForObservationPhase,
@@ -47,5 +48,24 @@ describe("getSignalsForObservationPhase", () => {
       SIGNAL_KEYS.RETRIEVAL_TASK_QUALITY,
       SIGNAL_KEYS.RETRIEVAL_CHECK,
     ]);
+  });
+});
+
+describe("getSignalsForPhase (school type routing)", () => {
+  it("INSTRUCTION SECONDARY: 2 universal + 5 phase-specific", () => {
+    expect(getSignalsForPhase("INSTRUCTION", "SECONDARY")).toHaveLength(7);
+  });
+  it("INSTRUCTION PRIMARY: 2 universal + 5 phase-specific", () => {
+    expect(getSignalsForPhase("INSTRUCTION", "PRIMARY")).toHaveLength(7);
+  });
+  it("BOOKS SECONDARY: 5 book signals, no universals", () => {
+    const defs = getSignalsForPhase("BOOKS", "SECONDARY");
+    expect(defs).toHaveLength(5);
+    expect(defs.every((s) => !s.isUniversal)).toBe(true);
+  });
+  it("UNKNOWN SECONDARY: all classroom signals, no book signals", () => {
+    const defs = getSignalsForPhase("UNKNOWN", "SECONDARY");
+    expect(defs.length).toBe(CLASSROOM_ONLY_SIGNAL_DEFINITIONS.length);
+    expect(defs.every((s) => !s.phases.includes(LESSON_PHASE.BOOKS))).toBe(true);
   });
 });

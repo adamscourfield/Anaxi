@@ -6,7 +6,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 
 const SCALE_SCORES: Record<string, number> = {
   LIMITED: 1,
@@ -14,8 +14,6 @@ const SCALE_SCORES: Record<string, number> = {
   CONSISTENT: 3,
   STRONG: 4,
 };
-
-const ALL_SIGNAL_KEYS = SIGNAL_DEFINITIONS.map((s) => s.key);
 
 function windowBounds(windowDays: number): { currentStart: Date; currentEnd: Date; prevStart: Date } {
   const now = new Date();
@@ -73,6 +71,10 @@ export async function computeDepartmentPivot(
 ): Promise<{ rows: DepartmentPivotRow[]; computedAt: Date }> {
   const { currentStart, currentEnd, prevStart } = windowBounds(windowDays);
 
+  const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId } });
+  const schoolType = settings?.schoolType ?? "SECONDARY";
+  const allSignalKeys = getSignalDefinitionsForSchoolType(schoolType).map((s) => s.key);
+
   const deptWhere: any = { tenantId };
   if (filterDepartmentIds?.length) deptWhere.id = { in: filterDepartmentIds };
 
@@ -109,7 +111,7 @@ export async function computeDepartmentPivot(
     const prevMeansMap = buildSignalMeans(prevSignals);
 
     const signalData: Record<string, DepartmentPivotSignalCell> = {};
-    for (const signalKey of ALL_SIGNAL_KEYS) {
+    for (const signalKey of allSignalKeys) {
       const curr = currentMeansMap.get(signalKey);
       const prev = prevMeansMap.get(signalKey);
       const currentMean = curr ? computeMean(curr.scores) : null;

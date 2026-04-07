@@ -1,21 +1,23 @@
-export const LESSON_PHASE = {
-  INSTRUCTION: "INSTRUCTION",
-  GUIDED_PRACTICE: "GUIDED_PRACTICE",
-  INDEPENDENT_PRACTICE: "INDEPENDENT_PRACTICE",
-  UNKNOWN: "UNKNOWN",
-  THRESHOLD: "THRESHOLD",
-  BOOKS: "BOOKS",
-} as const;
+import type { SignalDefinition } from "./signalTypes";
+import {
+  BOOKS_SCALE,
+  CLASSROOM_LESSON_PHASES_SECONDARY,
+  GLOBAL_SCALE,
+  LESSON_PHASE,
+  type LessonPhase,
+} from "./signalTypes";
+import type { SignalKey } from "./signalTypes";
 
-export type LessonPhase = (typeof LESSON_PHASE)[keyof typeof LESSON_PHASE];
-
-/** Phases that use classroom (non-book) signals. */
-export const CLASSROOM_LESSON_PHASES: LessonPhase[] = [
-  LESSON_PHASE.THRESHOLD,
-  LESSON_PHASE.INSTRUCTION,
-  LESSON_PHASE.GUIDED_PRACTICE,
-  LESSON_PHASE.INDEPENDENT_PRACTICE,
-];
+export {
+  BOOKS_SCALE,
+  CLASSROOM_LESSON_PHASES_SECONDARY as CLASSROOM_LESSON_PHASES,
+  GLOBAL_SCALE,
+  LESSON_PHASE,
+  type LessonPhase,
+  type ScaleKey,
+  type SignalDefinition,
+  type SignalKey,
+} from "./signalTypes";
 
 export const SIGNAL_KEYS = {
   BEHAVIOUR_CLIMATE: "BEHAVIOUR_CLIMATE",
@@ -32,56 +34,27 @@ export const SIGNAL_KEYS = {
   RESPONSIVE_ADJUSTMENT: "RESPONSIVE_ADJUSTMENT",
   ERROR_CORRECTION_PRECISION: "ERROR_CORRECTION_PRECISION",
   MODELLING_ON_DEMAND: "MODELLING_ON_DEMAND",
-  PARTICIPATION_EQUITY: "PARTICIPATION_EQUITY",
+  PARTICIPATION_EQUITY_GP: "PARTICIPATION_EQUITY_GP",
   TASK_CLARITY: "TASK_CLARITY",
-  INDEPENDENT_ACCOUNTABILITY: "INDEPENDENT_ACCOUNTABILITY",
+  INDEPENDENT_ACCOUNTABILITY_IP: "INDEPENDENT_ACCOUNTABILITY_IP",
   CIRCULATION_FEEDBACK: "CIRCULATION_FEEDBACK",
-  STRETCH_DEPLOYMENT: "STRETCH_DEPLOYMENT",
+  STRETCH_DEPLOYMENT_IP: "STRETCH_DEPLOYMENT_IP",
   SILENCE_AND_FOCUS: "SILENCE_AND_FOCUS",
   PRESENTATION_STANDARD: "PRESENTATION_STANDARD",
   WORK_COMPLETION: "WORK_COMPLETION",
   SUSTAINED_EFFORT: "SUSTAINED_EFFORT",
   TASK_APPROPRIATENESS: "TASK_APPROPRIATENESS",
   VOLUME_OF_WORK: "VOLUME_OF_WORK",
-} as const;
-
-export type SignalKey = (typeof SIGNAL_KEYS)[keyof typeof SIGNAL_KEYS];
-
-export type ScaleKey = "LIMITED" | "SOME" | "CONSISTENT" | "STRONG";
-
-export type SignalDefinition = {
-  key: SignalKey;
-  order: number;
-  displayNameDefault: string;
-  descriptionDefault: string;
-  /** Lesson phase this signal belongs to. Empty when `isUniversal` (classroom-wide). Book signals use `BOOKS` only. */
-  phases: LessonPhase[];
-  isUniversal: boolean;
-
-  scale: {
-    key: ScaleKey;
-    label: string;
-    description: string;
-  }[];
-
-  scaleGuidance: Record<ScaleKey, string>;
-
-  lookFors?: string[];
-};
-
-export const GLOBAL_SCALE: SignalDefinition["scale"] = [
-  { key: "LIMITED", label: "Limited evidence", description: "Little evidence seen in the time observed." },
-  { key: "SOME", label: "Some evidence", description: "Evident at points but not yet consistent." },
-  { key: "CONSISTENT", label: "Consistent", description: "Routine and secure throughout what was observed." },
-  { key: "STRONG", label: "Strong & embedded", description: "High-quality, purposeful and well embedded." },
-];
-
-export const BOOKS_SCALE: SignalDefinition["scale"] = [
-  { key: "LIMITED", label: "Limited", description: "Standard is poor across the majority of books reviewed." },
-  { key: "SOME", label: "Some", description: "Inconsistent across books." },
-  { key: "CONSISTENT", label: "Consistent", description: "Broadly consistent across the books reviewed." },
-  { key: "STRONG", label: "Strong", description: "Standards are uniform and a source of visible pride." },
-];
+  // DEPRECATED — legacy enum values
+  COLD_CALL_DENSITY: "COLD_CALL_DENSITY",
+  LANGUAGE_PRECISION: "LANGUAGE_PRECISION",
+  LIVE_ADJUSTMENT: "LIVE_ADJUSTMENT",
+  RETRIEVAL_PRESENCE: "RETRIEVAL_PRESENCE",
+  STRETCH_DEPLOYMENT: "STRETCH_DEPLOYMENT",
+  INDEPENDENT_ACCOUNTABILITY: "INDEPENDENT_ACCOUNTABILITY",
+  ERROR_CORRECTION_DEPTH: "ERROR_CORRECTION_DEPTH",
+  PARTICIPATION_EQUITY: "PARTICIPATION_EQUITY",
+} as const satisfies Record<string, SignalKey>;
 
 /**
  * Capture order by lesson phase: universals first (via explicit list), then phase-specific signals.
@@ -111,15 +84,15 @@ export const OBSERVATION_PHASE_PRIMARY_ORDER: Partial<Record<LessonPhase, Signal
     SIGNAL_KEYS.RESPONSIVE_ADJUSTMENT,
     SIGNAL_KEYS.ERROR_CORRECTION_PRECISION,
     SIGNAL_KEYS.MODELLING_ON_DEMAND,
-    SIGNAL_KEYS.PARTICIPATION_EQUITY,
+    SIGNAL_KEYS.PARTICIPATION_EQUITY_GP,
   ],
   [LESSON_PHASE.INDEPENDENT_PRACTICE]: [
     SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
     SIGNAL_KEYS.PACE_MOMENTUM,
     SIGNAL_KEYS.TASK_CLARITY,
-    SIGNAL_KEYS.INDEPENDENT_ACCOUNTABILITY,
+    SIGNAL_KEYS.INDEPENDENT_ACCOUNTABILITY_IP,
     SIGNAL_KEYS.CIRCULATION_FEEDBACK,
-    SIGNAL_KEYS.STRETCH_DEPLOYMENT,
+    SIGNAL_KEYS.STRETCH_DEPLOYMENT_IP,
     SIGNAL_KEYS.SILENCE_AND_FOCUS,
   ],
   [LESSON_PHASE.BOOKS]: [
@@ -307,7 +280,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     key: SIGNAL_KEYS.CFU_CYCLES,
     order: 11,
     displayNameDefault: "CFU cycles",
-    descriptionDefault: "Teacher checks before moving on; checks are genuine not rhetorical.",
+    descriptionDefault: "Teacher checks before moving on; checks are genuine and reach most students.",
     phases: [LESSON_PHASE.GUIDED_PRACTICE],
     isUniversal: false,
     scale: GLOBAL_SCALE,
@@ -368,10 +341,10 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     lookFors: ["Partial re-model at the board or visually", "Steps broken down further", "Checks follow re-model"],
   },
   {
-    key: SIGNAL_KEYS.PARTICIPATION_EQUITY,
+    key: SIGNAL_KEYS.PARTICIPATION_EQUITY_GP,
     order: 15,
-    displayNameDefault: "Participation equity",
-    descriptionDefault: "Thinking load is distributed; no student can remain passive.",
+    displayNameDefault: "Participation equity (guided practice)",
+    descriptionDefault: "Thinking load is distributed across the class; no student can remain passive.",
     phases: [LESSON_PHASE.GUIDED_PRACTICE],
     isUniversal: false,
     scale: GLOBAL_SCALE,
@@ -387,7 +360,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     key: SIGNAL_KEYS.TASK_CLARITY,
     order: 16,
     displayNameDefault: "Task clarity",
-    descriptionDefault: "Students know exactly what they are doing and to what standard.",
+    descriptionDefault: "Students know exactly what they are doing, to what standard, before they begin.",
     phases: [LESSON_PHASE.INDEPENDENT_PRACTICE],
     isUniversal: false,
     scale: GLOBAL_SCALE,
@@ -400,10 +373,10 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     lookFors: ["Written or verbal success criteria", "Exemplar or checklist where helpful", "Students begin without repeated clarification"],
   },
   {
-    key: SIGNAL_KEYS.INDEPENDENT_ACCOUNTABILITY,
+    key: SIGNAL_KEYS.INDEPENDENT_ACCOUNTABILITY_IP,
     order: 17,
     displayNameDefault: "Independent accountability",
-    descriptionDefault: "Teacher circulates purposefully; completion and accuracy are monitored.",
+    descriptionDefault: "Teacher circulates purposefully; completion and accuracy are monitored actively.",
     phases: [LESSON_PHASE.INDEPENDENT_PRACTICE],
     isUniversal: false,
     scale: GLOBAL_SCALE,
@@ -432,7 +405,7 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
     lookFors: ["Concrete action (‘add…’, ‘fix…’, ‘try…’)", "Student edits in response", "Feedback tied to success criteria"],
   },
   {
-    key: SIGNAL_KEYS.STRETCH_DEPLOYMENT,
+    key: SIGNAL_KEYS.STRETCH_DEPLOYMENT_IP,
     order: 19,
     displayNameDefault: "Stretch deployment",
     descriptionDefault: "Extension is available and used; fast finishers are challenged not just given more.",
@@ -564,15 +537,146 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
       "Volume reflects the time the student has been in the class",
     ],
   },
+  // DEPRECATED — definitions retained for historical observation rows / tooltips
+  {
+    key: SIGNAL_KEYS.COLD_CALL_DENSITY,
+    order: 100,
+    displayNameDefault: "Cold call density (deprecated)",
+    descriptionDefault: "Legacy signal — use Directed questioning.",
+    phases: [],
+    isUniversal: true,
+    deprecated: true,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Little evidence of inclusive questioning.",
+      SOME: "Some cold call or directed questioning.",
+      CONSISTENT: "Regular directed questioning.",
+      STRONG: "Strong, inclusive questioning patterns.",
+    },
+  },
+  {
+    key: SIGNAL_KEYS.LANGUAGE_PRECISION,
+    order: 101,
+    displayNameDefault: "Language precision (deprecated)",
+    descriptionDefault: "Legacy signal — use Vocabulary precision.",
+    phases: [LESSON_PHASE.INSTRUCTION],
+    isUniversal: false,
+    deprecated: true,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Imprecise or weak language expectations.",
+      SOME: "Some precision in teacher or student language.",
+      CONSISTENT: "Clear expectation of precise language.",
+      STRONG: "Embedded disciplinary language.",
+    },
+  },
+  {
+    key: SIGNAL_KEYS.LIVE_ADJUSTMENT,
+    order: 102,
+    displayNameDefault: "Live adjustment (deprecated)",
+    descriptionDefault: "Legacy signal — use Responsive adjustment.",
+    phases: [LESSON_PHASE.GUIDED_PRACTICE],
+    isUniversal: false,
+    deprecated: true,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Teaching does not visibly respond to evidence.",
+      SOME: "Occasional adjustment.",
+      CONSISTENT: "Clear response to checks.",
+      STRONG: "Agile, evidence-led adjustment.",
+    },
+  },
+  {
+    key: SIGNAL_KEYS.RETRIEVAL_PRESENCE,
+    order: 103,
+    displayNameDefault: "Retrieval presence (deprecated)",
+    descriptionDefault: "Legacy signal — use Retrieval check / Retrieval task quality.",
+    phases: [LESSON_PHASE.THRESHOLD],
+    isUniversal: false,
+    deprecated: true,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Little or no retrieval focus.",
+      SOME: "Retrieval present but weak.",
+      CONSISTENT: "Retrieval used meaningfully.",
+      STRONG: "Strong retrieval routine.",
+    },
+  },
+  {
+    key: SIGNAL_KEYS.STRETCH_DEPLOYMENT,
+    order: 104,
+    displayNameDefault: "Stretch deployment (deprecated)",
+    descriptionDefault: "Legacy signal — use Stretch deployment (independent practice).",
+    phases: [LESSON_PHASE.INDEPENDENT_PRACTICE],
+    isUniversal: false,
+    deprecated: true,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Little stretch for quick workers.",
+      SOME: "Some extension.",
+      CONSISTENT: "Meaningful stretch available.",
+      STRONG: "Well-deployed challenge.",
+    },
+  },
+  {
+    key: SIGNAL_KEYS.INDEPENDENT_ACCOUNTABILITY,
+    order: 105,
+    displayNameDefault: "Independent accountability (deprecated)",
+    descriptionDefault: "Legacy signal — use Independent accountability (independent practice).",
+    phases: [LESSON_PHASE.INDEPENDENT_PRACTICE],
+    isUniversal: false,
+    deprecated: true,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Little monitoring during independent work.",
+      SOME: "Some circulation or checks.",
+      CONSISTENT: "Purposeful monitoring.",
+      STRONG: "Systematic accountability.",
+    },
+  },
+  {
+    key: SIGNAL_KEYS.ERROR_CORRECTION_DEPTH,
+    order: 106,
+    displayNameDefault: "Error correction depth (deprecated)",
+    descriptionDefault: "Legacy signal — use Error correction precision.",
+    phases: [LESSON_PHASE.GUIDED_PRACTICE],
+    isUniversal: false,
+    deprecated: true,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Errors not addressed in depth.",
+      SOME: "Partial correction.",
+      CONSISTENT: "Meaningful correction.",
+      STRONG: "Precise, securing correction.",
+    },
+  },
+  {
+    key: SIGNAL_KEYS.PARTICIPATION_EQUITY,
+    order: 107,
+    displayNameDefault: "Participation equity (deprecated)",
+    descriptionDefault: "Legacy signal — use Participation equity (guided practice).",
+    phases: [LESSON_PHASE.GUIDED_PRACTICE],
+    isUniversal: false,
+    deprecated: true,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Uneven participation.",
+      SOME: "Broader participation at times.",
+      CONSISTENT: "Load shared across class.",
+      STRONG: "Highly inclusive participation.",
+    },
+  },
 ];
 
 const DEFINITION_BY_KEY: Map<SignalKey, SignalDefinition> = new Map(
   SIGNAL_DEFINITIONS.map((def) => [def.key, def])
 );
 
-/** All classroom (non-book) signals: universals plus every phase-specific classroom signal — same set as UNKNOWN capture. */
+/** All classroom (non-book) signals for capture: universals + phase-specific, excluding deprecated keys. */
 export const CLASSROOM_ONLY_SIGNAL_DEFINITIONS: SignalDefinition[] = SIGNAL_DEFINITIONS.filter(
-  (def) => def.isUniversal || (!isBookSignal(def) && def.phases.some((p) => CLASSROOM_LESSON_PHASES.includes(p)))
+  (def) =>
+    !def.deprecated &&
+    (def.isUniversal || (!isBookSignal(def) && def.phases.some((p) => CLASSROOM_LESSON_PHASES_SECONDARY.includes(p))))
 ).sort((a, b) => a.order - b.order);
 
 /**

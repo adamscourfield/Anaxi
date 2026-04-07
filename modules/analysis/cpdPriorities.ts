@@ -8,6 +8,8 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
+import { PRIMARY_SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitionsPrimary";
 import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -23,8 +25,6 @@ const DEFAULT_MIN_COVERAGE = 6;
 const DEFAULT_DRIFT_THRESHOLD = 0.35;
 const MINIMUM_SCHOOL_COVERAGE_THRESHOLD = 5;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-const ALL_SIGNAL_KEYS = SIGNAL_DEFINITIONS.map((s) => s.key);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,7 +97,9 @@ function buildSignalMeans(
 }
 
 function getSignalLabel(signalKey: string, labelMap: Map<string, string>): string {
-  const def = SIGNAL_DEFINITIONS.find((s) => s.key === signalKey);
+  const def =
+    SIGNAL_DEFINITIONS.find((s) => s.key === signalKey) ??
+    PRIMARY_SIGNAL_DEFINITIONS.find((s) => s.key === signalKey);
   return labelMap.get(signalKey) ?? def?.displayNameDefault ?? signalKey;
 }
 
@@ -117,6 +119,9 @@ export async function computeCpdPriorities(
   const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId } });
   const minCoverage: number = settings?.minObservationCount ?? DEFAULT_MIN_COVERAGE;
   const driftThreshold: number = settings?.driftDeltaThreshold ?? DEFAULT_DRIFT_THRESHOLD;
+  const schoolType = settings?.schoolType ?? "SECONDARY";
+  const signalDefs = getSignalDefinitionsForSchoolType(schoolType);
+  const allSignalKeys = signalDefs.map((s) => s.key);
 
   const { currentStart, currentEnd, prevStart } = windowBounds(windowDays);
 
@@ -166,7 +171,7 @@ export async function computeCpdPriorities(
 
   // For each signal, collect per-teacher deltas from eligible teachers
   const signalDeltas = new Map<string, number[]>();
-  for (const key of ALL_SIGNAL_KEYS) signalDeltas.set(key, []);
+  for (const key of allSignalKeys) signalDeltas.set(key, []);
 
   for (const [teacherId, teacherObs] of currentByTeacher.entries()) {
     const teacherCoverage = teacherObs.length;
@@ -179,7 +184,7 @@ export async function computeCpdPriorities(
     const currentMeans = buildSignalMeans(currentSignals);
     const prevMeans = buildSignalMeans(prevSignals);
 
-    for (const signalKey of ALL_SIGNAL_KEYS) {
+    for (const signalKey of allSignalKeys) {
       const curr = currentMeans.get(signalKey);
       const prev = prevMeans.get(signalKey);
       const currentMean = curr ? computeMean(curr.scores) : null;
@@ -190,7 +195,7 @@ export async function computeCpdPriorities(
   }
 
   // Build result rows
-  const rows: CpdPriorityRow[] = ALL_SIGNAL_KEYS.map((signalKey) => {
+  const rows: CpdPriorityRow[] = allSignalKeys.map((signalKey) => {
     const deltas = signalDeltas.get(signalKey)!;
     const teachersCovered = deltas.length;
 
