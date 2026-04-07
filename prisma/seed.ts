@@ -144,7 +144,7 @@ async function main() {
             data: makeSignals({
               BEHAVIOUR_CLIMATE: i < 4 ? "SOME" : "CONSISTENT",
               CFU_CYCLES: i < 4 ? "LIMITED" : "SOME",
-              COLD_CALL_DENSITY: i < 3 ? "LIMITED" : "SOME",
+              PARTICIPATION_EQUITY: i < 3 ? "LIMITED" : "SOME",
             })
           }
         }
