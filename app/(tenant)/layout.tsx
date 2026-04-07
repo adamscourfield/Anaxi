@@ -13,13 +13,17 @@ const db = prisma as PrismaWithLOA;
 
 export default async function TenantLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUserOrThrow();
-  const [features, tenant, otherMemberships] = await Promise.all([
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
+
+  const [features, tenant, memberships] = await Promise.all([
     prisma.tenantFeature.findMany({ where: { tenantId: user.tenantId, enabled: true } }),
     prisma.tenant.findUnique({ where: { id: user.tenantId }, select: { name: true } }),
-    prisma.user.findMany({
-      where: { email: user.email, isActive: true },
-      select: { tenantId: true, tenant: { select: { name: true } } },
-    }),
+    isSuperAdmin
+      ? prisma.tenant.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } })
+      : prisma.user.findMany({
+          where: { email: user.email, isActive: true },
+          select: { tenantId: true, tenant: { select: { name: true } } },
+        }),
   ]);
 
   const canSeeOnCallBadge = hasPermission(user.role, "oncall:view_all");
@@ -33,13 +37,17 @@ export default async function TenantLayout({ children }: { children: React.React
   ]);
 
   const tenantName = tenant?.name || "School";
-  const tenantOptions = otherMemberships.map((m) => ({
-    tenantId: m.tenantId,
-    tenantName: m.tenant?.name || m.tenantId,
-    isCurrent: m.tenantId === user.tenantId,
-  }));
-
-  const isSuperAdmin = user.role === "SUPER_ADMIN";
+  const tenantOptions = isSuperAdmin
+    ? (memberships as { id: string; name: string }[]).map((t) => ({
+        tenantId: t.id,
+        tenantName: t.name,
+        isCurrent: t.id === user.tenantId,
+      }))
+    : (memberships as { tenantId: string; tenant: { name: string } | null }[]).map((m) => ({
+        tenantId: m.tenantId,
+        tenantName: m.tenant?.name || m.tenantId,
+        isCurrent: m.tenantId === user.tenantId,
+      }));
 
   return (
     <TenantLayoutClient
