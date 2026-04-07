@@ -11,31 +11,31 @@ export interface SendEmailResult {
 }
 
 /**
- * Send an email via the SendGrid API.
+ * Send an email via the Resend API.
  *
- * Returns `{ status: "not_configured" }` when `SENDGRID_API_KEY` is not set,
+ * Returns `{ status: "not_configured" }` when `RESEND_API_KEY` is not set,
  * allowing development and tests to proceed without a real mail provider.
  */
 export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
   const { to, subject, message } = options;
 
-  if (!process.env.SENDGRID_API_KEY) {
+  if (!process.env.RESEND_API_KEY) {
     logger.warn("email.not_configured", { to, subject });
     return { status: "not_configured" };
   }
 
   try {
-    const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email: to }] }],
-        from: { email: process.env.FROM_EMAIL || "no-reply@anaxi.local" },
+        from: process.env.FROM_EMAIL || "hi@anaxi.io",
+        to: [to],
         subject,
-        content: [{ type: "text/plain", value: message }],
+        text: message,
       }),
     });
 
