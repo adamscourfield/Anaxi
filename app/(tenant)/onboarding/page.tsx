@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { revalidatePath } from "next/cache";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
 import { upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
 import { redirect as nextRedirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,7 @@ export default async function OnboardingPage({
   async function saveSignalLabels(formData: FormData) {
     "use server";
     const admin = await requireAdminUser();
-    for (const signal of SIGNAL_DEFINITIONS) {
+    for (const signal of getAllSignalDefinitionsForTenantLabels()) {
       const displayName = String(formData.get(`display_${signal.key}`) || signal.displayNameDefault).trim();
       const description = String(formData.get(`description_${signal.key}`) || "");
       await upsertTenantSignalLabel(admin.tenantId, signal.key, displayName || signal.displayNameDefault, description);
@@ -228,7 +228,7 @@ export default async function OnboardingPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {SIGNAL_DEFINITIONS.map((signal) => (
+                  {getAllSignalDefinitionsForTenantLabels().map((signal) => (
                     <tr className="table-row align-top" key={signal.key}>
                       <td className="p-2 font-mono text-xs">{signal.key}</td>
                       <td className="p-2">

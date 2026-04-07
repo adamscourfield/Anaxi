@@ -2,7 +2,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -34,6 +34,8 @@ export default async function AdminLanguagePage() {
     where: { tenantId_key: { tenantId: user.tenantId, key: "OBSERVATIONS" } }
   });
   const observationsEnabled = observationsFeature?.enabled ?? false;
+
+  const signalCatalog = getAllSignalDefinitionsForTenantLabels();
 
   const [settings, signalLabels, vocab] = await Promise.all([
     (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } }),
@@ -77,7 +79,7 @@ export default async function AdminLanguagePage() {
   async function saveSignalLabels(formData: FormData) {
     "use server";
     const admin = await requireAdminUser();
-    for (const signal of SIGNAL_DEFINITIONS) {
+    for (const signal of getAllSignalDefinitionsForTenantLabels()) {
       const displayName = String(formData.get(`display_${signal.key}`) || signal.displayNameDefault).trim();
       const description = String(formData.get(`description_${signal.key}`) || "");
       await upsertTenantSignalLabel(admin.tenantId, signal.key, displayName || signal.displayNameDefault, description);
@@ -91,7 +93,7 @@ export default async function AdminLanguagePage() {
     "use server";
     const admin = await requireAdminUser();
     const key = String(formData.get("signalKey") || "");
-    const signal = SIGNAL_DEFINITIONS.find((s) => s.key === key);
+    const signal = getAllSignalDefinitionsForTenantLabels().find((s) => s.key === key);
     if (!signal) return;
     await upsertTenantSignalLabel(admin.tenantId, signal.key, signal.displayNameDefault, null);
     revalidatePath("/admin/language");
@@ -191,7 +193,7 @@ export default async function AdminLanguagePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {SIGNAL_DEFINITIONS.map((signal) => {
+                  {signalCatalog.map((signal) => {
                     const override = signalLabels[signal.key];
                     return (
                       <tr className="border-b border-border/60 align-top last:border-0" key={signal.key}>

@@ -1,7 +1,8 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature, requireRole } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { getTenantSchoolType } from "@/lib/tenantSchoolType";
+import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import { ObservationContextForm } from "../components/ObservationContextForm";
 
 export default async function NewObservationPage() {
@@ -22,13 +23,16 @@ export default async function NewObservationPage() {
   });
 
   const draftKey = `observation-draft:${user.tenantId}:${user.id}`;
+  const schoolType = await getTenantSchoolType(user.tenantId);
+  const signalDefs = getSignalDefinitionsForSchoolType(schoolType);
 
   return (
     <ObservationContextForm
       teachers={teachers as any[]}
       departments={departments as any[]}
       draftKey={draftKey}
-      signalKeys={SIGNAL_DEFINITIONS.map((s) => s.key)}
+      signalKeys={signalDefs.map((s) => s.key)}
+      schoolType={schoolType}
     />
   );
 }

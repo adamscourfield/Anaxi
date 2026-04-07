@@ -8,7 +8,7 @@ import { H1, H2, MetaText, BodyText } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { computeCpdPriorities, computeSignalAffectedTeachers } from "@/modules/analysis/cpdPriorities";
 import { canViewCpdDrilldown } from "@/modules/authz";
-import { SIGNAL_DEFINITIONS } from "@/modules/observations/signalDefinitions";
+import { findSignalDefinitionForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 
 const WINDOW_OPTIONS = [7, 21, 28] as const;
 
@@ -28,8 +28,6 @@ export default async function CpdSignalDrilldownPage({
     : 21;
 
   const signalKey = params.signalKey;
-  const sigDef = SIGNAL_DEFINITIONS.find((s) => s.key === signalKey);
-  if (!sigDef) notFound();
 
   const rawDept =
     typeof searchParams?.department === "string" ? searchParams.department : undefined;
@@ -66,6 +64,10 @@ export default async function CpdSignalDrilldownPage({
     computeCpdPriorities(user.tenantId, windowDays, filters),
     (prisma as any).tenantSignalLabel.findFirst({ where: { tenantId: user.tenantId, signalKey } }),
   ]);
+
+  const schoolType = (settings?.schoolType ?? "SECONDARY") as "PRIMARY" | "SECONDARY";
+  const sigDef = findSignalDefinitionForSchoolType(signalKey, schoolType);
+  if (!sigDef) notFound();
 
   const minCoverage: number = settings?.minObservationCount ?? 6;
   const signalDisplayName = signalLabel?.displayName ?? sigDef.displayNameDefault;

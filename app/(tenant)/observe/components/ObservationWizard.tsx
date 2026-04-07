@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { H2, H3, MetaText, Label } from "@/components/ui/typography";
-import { getSignalsForObservationPhase } from "@/modules/observations/signalDefinitions";
+import type { TenantSchoolType } from "@/lib/tenantSchoolType";
+import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolType";
 import type { Phase } from "./observationDraft";
 import { SignalCard } from "./SignalCard";
 
@@ -46,12 +47,14 @@ export function ObservationWizard({
   teachers,
   signals,
   labelMap,
-  action
+  action,
+  schoolType = "SECONDARY",
 }: {
   teachers: Teacher[];
   signals: Signal[];
   labelMap: LabelMap;
   action: (formData: FormData) => void;
+  schoolType?: TenantSchoolType;
 }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [toast, setToast] = useState<string>("");
@@ -79,8 +82,8 @@ export function ObservationWizard({
   const allDone = completed === orderedSignals.length;
 
   const phaseFocus = useMemo(
-    () => getSignalsForObservationPhase(context.phase) as Signal[],
-    [context.phase]
+    () => getSignalsForPhase(context.phase, schoolType) as Signal[],
+    [context.phase, schoolType]
   );
   const phaseFocusKeys = useMemo(() => new Set(phaseFocus.map((s) => s.key)), [phaseFocus]);
   const otherSignals = useMemo(

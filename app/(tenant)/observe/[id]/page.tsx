@@ -5,7 +5,8 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { canViewObservation } from "@/modules/authz";
-import { getSignalsForObservationPhase } from "@/modules/observations/signalDefinitions";
+import { getTenantSchoolType } from "@/lib/tenantSchoolType";
+import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { ClearDraftOnSuccess } from "../components/ClearDraftOnSuccess";
 import { PrintExportButtons } from "../components/PrintExportButtons";
@@ -104,7 +105,8 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
   const labelMap = await getTenantSignalLabels(user.tenantId);
   const signalMap = new Map((observation.signals as any[]).map((s: any) => [s.signalKey, s]));
   const draftKey = `observation-draft:${user.tenantId}:${user.id}`;
-  const observationSignalDefs = getSignalsForObservationPhase(observation.phase);
+  const schoolType = await getTenantSchoolType(user.tenantId);
+  const observationSignalDefs = getSignalsForPhase(observation.phase, schoolType);
 
   const teacherDept = (observedDeptMemberships as any[])[0]?.department?.fullName ?? null;
   const teacherName: string = observation.observedTeacher?.fullName ?? "Unknown Teacher";

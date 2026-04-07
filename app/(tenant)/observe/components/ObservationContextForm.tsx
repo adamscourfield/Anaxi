@@ -1,16 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import type { TenantSchoolType } from "@/lib/tenantSchoolType";
 import { DEFAULT_CONTEXT, loadDraft, persistDraft, Phase } from "./observationDraft";
 import { ObservationStageLayout } from "./ObservationStageLayout";
 
 type Teacher = { id: string; fullName: string; email: string };
 type Department = { id: string; name: string };
 
-const PHASE_OPTIONS: { key: Phase; label: string; icon: React.ReactNode }[] = [
-  {
+const THRESHOLD_PHASE_OPTION: { key: Phase; label: string; icon: React.ReactNode } = {
     key: "THRESHOLD",
     label: "Threshold",
     icon: (
@@ -20,7 +20,21 @@ const PHASE_OPTIONS: { key: Phase; label: string; icon: React.ReactNode }[] = [
         <circle cx="12" cy="8" r="1.25" fill="currentColor" />
       </svg>
     ),
-  },
+};
+
+const TRANSITION_START_PHASE_OPTION: { key: Phase; label: string; icon: React.ReactNode } = {
+  key: "TRANSITION_START",
+  label: "Transition / start",
+  icon: (
+    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="8" r="1.25" fill="currentColor" />
+    </svg>
+  ),
+};
+
+const PHASE_OPTIONS_BASE: { key: Phase; label: string; icon: React.ReactNode }[] = [
   {
     key: "INSTRUCTION",
     label: "Instruction",
@@ -79,20 +93,39 @@ const PHASE_OPTIONS: { key: Phase; label: string; icon: React.ReactNode }[] = [
   },
 ];
 
+function phaseOptionsForSchoolType(schoolType: TenantSchoolType) {
+  const start =
+    schoolType === "PRIMARY" ? TRANSITION_START_PHASE_OPTION : THRESHOLD_PHASE_OPTION;
+  return [start, ...PHASE_OPTIONS_BASE];
+}
+
 export function ObservationContextForm({
   teachers,
   departments,
   draftKey,
   signalKeys,
+  schoolType,
 }: {
   teachers: Teacher[];
   departments: Department[];
   draftKey: string;
   signalKeys: string[];
+  schoolType: TenantSchoolType;
 }) {
   const router = useRouter();
+  const phaseOptions = useMemo(() => phaseOptionsForSchoolType(schoolType), [schoolType]);
   const initial = useMemo(() => loadDraft(draftKey, signalKeys).context, [draftKey, signalKeys]);
   const [context, setContext] = useState(initial || DEFAULT_CONTEXT);
+
+  // Map legacy THRESHOLD ↔ TRANSITION_START when school type implies a different start phase.
+  useEffect(() => {
+    if (schoolType === "PRIMARY" && context.phase === "THRESHOLD") {
+      setContext((c) => ({ ...c, phase: "TRANSITION_START" }));
+    }
+    if (schoolType === "SECONDARY" && context.phase === "TRANSITION_START") {
+      setContext((c) => ({ ...c, phase: "THRESHOLD" }));
+    }
+  }, [schoolType, context.phase]);
 
   const teacherOptions = useMemo(
     () => teachers.map((t) => ({ value: t.id, label: t.fullName, detail: t.email })),
@@ -212,7 +245,7 @@ export function ObservationContextForm({
               Select the specific pedagogical phase currently being observed.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {PHASE_OPTIONS.map((phase) => {
+              {phaseOptions.map((phase) => {
                 const selected = context.phase === phase.key;
                 return (
                   <button
