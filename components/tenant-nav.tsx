@@ -95,6 +95,7 @@ function iconFor(href: string) {
   if (href.includes("/admin/departments")) return "building";
   if (href.includes("/admin/features")) return "toggle";
   if (href.includes("/admin")) return "shield";
+  if (href === "/god") return "shield";
   return "grid";
 }
 
@@ -189,6 +190,7 @@ export function TenantNav({
         ...(canAccessAdminSettings && has("ADMIN") ? [navItem("Feature flags", "/admin/features")] : []),
       ],
     },
+    ...(role === "SUPER_ADMIN" ? [{ label: "Platform", items: [navItem("God Mode", "/god")] }] : []),
   ].filter((section) => section.items.length > 0);
 
   const sidebarWidth = collapsed ? "w-[var(--sidebar-collapsed-width)]" : "w-[var(--sidebar-width)]";
