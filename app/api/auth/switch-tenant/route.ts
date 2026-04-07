@@ -16,12 +16,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing tenantId" }, { status: 400 });
   }
 
-  const targetUser = await prisma.user.findFirst({
+  const isSuperAdmin = currentUser.role === "SUPER_ADMIN";
+
+  let targetUser = await prisma.user.findFirst({
     where: { email: currentUser.email, tenantId: targetTenantId, isActive: true },
   });
 
   if (!targetUser) {
-    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    if (!isSuperAdmin) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+    // Auto-enroll SUPER_ADMIN in any school they switch to.
+    const tenant = await prisma.tenant.findUnique({ where: { id: targetTenantId } });
+    if (!tenant) {
+      return NextResponse.json({ error: "School not found" }, { status: 404 });
+    }
+    targetUser = await prisma.user.upsert({
+      where: { tenantId_email: { tenantId: targetTenantId, email: currentUser.email } },
+      update: { isActive: true, role: "SUPER_ADMIN" },
+      create: {
+        tenantId: targetTenantId,
+        email: currentUser.email,
+        fullName: currentUser.fullName,
+        role: "SUPER_ADMIN",
+        isActive: true,
+      },
+    });
   }
 
   return NextResponse.json({ success: true });

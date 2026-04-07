@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { GodSchoolSwitcher } from "@/components/god-school-switcher";
 
 export default function GodLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -30,6 +31,7 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <GodSchoolSwitcher />
           <Link
             href="/home"
             className="px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:bg-surface-container"
