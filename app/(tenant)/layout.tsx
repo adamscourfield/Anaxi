@@ -4,7 +4,7 @@ import { TenantLayoutClient } from "@/components/tenant-layout-client";
 import { getOpenOnCallCount } from "@/lib/oncall/badge";
 import { canManageLoa } from "@/lib/loa";
 import { hasPermission } from "@/lib/rbac";
-import { FeatureKey } from "@/lib/types";
+import { ALL_FEATURE_KEYS, FeatureKey } from "@/lib/types";
 
 type PrismaWithLOA = typeof prisma & {
   lOARequest: { count: (args: { where: Record<string, unknown> }) => Promise<number> };
@@ -39,10 +39,12 @@ export default async function TenantLayout({ children }: { children: React.React
     isCurrent: m.tenantId === user.tenantId,
   }));
 
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
+
   return (
     <TenantLayoutClient
       role={user.role}
-      enabledFeatures={features.map((f) => f.key as FeatureKey)}
+      enabledFeatures={isSuperAdmin ? ALL_FEATURE_KEYS : features.map((f) => f.key as FeatureKey)}
       onCallCount={onCallCount}
       leaveCount={leaveCount}
       tenantName={tenantName}

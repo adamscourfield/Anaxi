@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
@@ -84,7 +84,9 @@ export default function LoginPage() {
       setStep("credentials");
       return;
     }
-    router.push(res?.url || "/home");
+    const session = await getSession();
+    const role = (session?.user as any)?.role;
+    router.push(role === "SUPER_ADMIN" ? "/god" : res?.url || "/home");
     router.refresh();
   }
 

@@ -64,6 +64,10 @@ const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     "import:write", "students:read", "students:write",
     "meetings:create", "meetings:view_own", "meetings:view_all", "meetings:edit", "meetings:delete",
     "actions:create", "actions:manage", "actions:view_own",
+    "observe:view", "observe:view_all", "observe:create", "observe:configure",
+    "leave:request", "leave:approve", "leave:approve_all",
+    "analysis:view", "analysis:view_behaviour", "analysis:export",
+    "admin:access", "admin:users", "admin:settings",
   ],
   ADMIN: [
     "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:cancel",
