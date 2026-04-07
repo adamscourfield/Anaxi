@@ -237,11 +237,12 @@ function LeadershipHome({
     .filter((r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT")
     .slice(0, 3);
 
-  // Watchlist students (current user's watched students, sorted by risk severity)
+  // Watchlist students (prefer explicitly-provided watchlist rows, otherwise derive from student rows)
   const bandOrder: Record<string, number> = { URGENT: 0, PRIORITY: 1, WATCH: 2, STABLE: 3 };
-  const watchlistStudents = studentRows
+  const derivedWatchlistStudents = studentRows
     .filter((r) => r.onWatchlist)
     .sort((a, b) => (bandOrder[a.band] ?? 9) - (bandOrder[b.band] ?? 9));
+  const effectiveWatchlistStudents = watchlistStudents ?? derivedWatchlistStudents;
 
   // On-call: separate open vs resolved
   const openOnCalls = onCallDetails.filter((r) => r.status === "OPEN" || r.status === "ACKNOWLEDGED");
@@ -391,7 +392,7 @@ function LeadershipHome({
       </section>
 
       {/* ═══ Watchlist ═══ */}
-      {hasStudentAnalysisFeature && watchlistStudents.length > 0 && (
+      {hasStudentAnalysisFeature && effectiveWatchlistStudents.length > 0 && (
         <Card className="space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -400,7 +401,7 @@ function LeadershipHome({
               <div>
                 <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Your Watchlist</h2>
                 <p className="text-xs text-muted">
-                  {watchlistStudents.length} student{watchlistStudents.length !== 1 ? "s" : ""} being monitored
+                  {effectiveWatchlistStudents.length} student{effectiveWatchlistStudents.length !== 1 ? "s" : ""} being monitored
                 </p>
               </div>
             </div>
@@ -412,7 +413,7 @@ function LeadershipHome({
           {/* Horizontal scroll track */}
           <div className="-mx-5 px-5">
             <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {watchlistStudents.map((s) => {
+              {effectiveWatchlistStudents.map((s) => {
                 const bandCfg = {
                   URGENT:   { bar: "bg-[var(--error)]",   tint: "bg-red-50/70",     badge: "text-[var(--error)] bg-red-100/80",   label: "Urgent"   },
                   PRIORITY: { bar: "bg-[var(--warning)]", tint: "bg-amber-50/60",   badge: "text-amber-700 bg-amber-100/80",      label: "Priority" },
