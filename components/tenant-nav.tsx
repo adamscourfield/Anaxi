@@ -223,7 +223,7 @@ export function TenantNav({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 overflow-y-auto px-3 pb-4 pt-6">
         <div className="space-y-6">
           {sections.map((section) => (
             <div key={section.label}>
