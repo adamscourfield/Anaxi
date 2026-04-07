@@ -104,7 +104,7 @@ function getSignalLabel(signalKey: string, labelMap: Map<string, string>): strin
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Compute CPD priorities for a tenant: ranks all 12 signals by how commonly
+ * Compute CPD priorities for a tenant: ranks all defined observation signals by how commonly
  * they are weakening across teachers.
  *
  * Also computes improvement metrics for the "positive momentum" section.

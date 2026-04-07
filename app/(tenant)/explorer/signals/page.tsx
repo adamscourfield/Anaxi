@@ -14,7 +14,14 @@ import {
   computeWeeklyDriftTrend,
 } from "@/modules/analysis/cpdPriorities";
 import type { CpdPriorityRow } from "@/modules/analysis/cpdPriorities";
-import { SIGNAL_DEFINITIONS, type SignalKey } from "@/modules/observations/signalDefinitions";
+import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
+import {
+  CLASSROOM_ONLY_SIGNAL_DEFINITIONS,
+  LESSON_PHASE,
+  SIGNAL_DEFINITIONS,
+  type LessonPhase,
+  type SignalKey,
+} from "@/modules/observations/signalDefinitions";
 
 const VALID_WINDOWS = [7, 21, 28, 90] as const;
 type WindowDays = (typeof VALID_WINDOWS)[number];
@@ -23,6 +30,15 @@ const PRIORITY_LEVELS = ["HIGH", "MEDIUM", "LOW"] as const;
 type PriorityLevel = (typeof PRIORITY_LEVELS)[number];
 
 const VALID_SIGNAL_KEYS = new Set<SignalKey>(SIGNAL_DEFINITIONS.map((s) => s.key));
+
+const PHASE_GROUPS_FOR_FILTER: LessonPhase[] = [
+  LESSON_PHASE.THRESHOLD,
+  LESSON_PHASE.INSTRUCTION,
+  LESSON_PHASE.GUIDED_PRACTICE,
+  LESSON_PHASE.INDEPENDENT_PRACTICE,
+];
+
+const UNIVERSAL_CLASSROOM_SIGNALS = CLASSROOM_ONLY_SIGNAL_DEFINITIONS.filter((s) => s.isUniversal);
 
 function parseWindow(raw: string | undefined): WindowDays {
   const n = Number(raw);
@@ -304,13 +320,35 @@ export default async function SignalsPage({
                       className="field !bg-surface-container-low rounded-[10px] !py-2.5 !text-[0.8125rem]"
                     >
                       <option value="">All signals</option>
-                      {SIGNAL_DEFINITIONS.slice()
-                        .sort((a, b) => a.order - b.order)
-                        .map((s) => (
+                      <optgroup label="Universal (classroom)">
+                        {UNIVERSAL_CLASSROOM_SIGNALS.map((s) => (
                           <option key={s.key} value={s.key}>
                             {s.displayNameDefault}
                           </option>
                         ))}
+                      </optgroup>
+                      {PHASE_GROUPS_FOR_FILTER.map((phase) => {
+                        const phaseSignals = CLASSROOM_ONLY_SIGNAL_DEFINITIONS.filter(
+                          (s) => !s.isUniversal && s.phases.includes(phase),
+                        );
+                        if (!phaseSignals.length) return null;
+                        return (
+                          <optgroup key={phase} label={formatPhaseLabel(phase)}>
+                            {phaseSignals.map((s) => (
+                              <option key={s.key} value={s.key}>
+                                {s.displayNameDefault}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                      })}
+                      <optgroup label="Book look">
+                        {SIGNAL_DEFINITIONS.filter((s) => s.phases[0] === LESSON_PHASE.BOOKS).map((s) => (
+                          <option key={s.key} value={s.key}>
+                            {s.displayNameDefault}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
                   </label>
                   <label className="flex flex-col gap-1.5">

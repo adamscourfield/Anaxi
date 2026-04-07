@@ -1,3 +1,5 @@
+// LEGACY - superseded by signalDefinitions.ts - check for remaining imports before deleting
+
 export type ObservationValue = {
   key: "LOW" | "MED" | "HIGH";
   label: string;

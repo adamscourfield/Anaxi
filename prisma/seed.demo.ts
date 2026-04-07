@@ -217,24 +217,24 @@ function stableSignals(): ReturnType<typeof makeSignals> {
 
 /**
  * Signals for a "drifting" teacher in the current window:
- * RETRIEVAL_PRESENCE, CFU_CYCLES, COLD_CALL_DENSITY drift to LIMITED/SOME
+ * retrieval / CFU / participation signals drift to LIMITED/SOME
  */
 function driftingCurrentSignals(): ReturnType<typeof makeSignals> {
   return makeSignals({
-    RETRIEVAL_PRESENCE: "SOME",
+    RETRIEVAL_CHECK: "SOME",
     CFU_CYCLES: "LIMITED",
-    COLD_CALL_DENSITY: "SOME",
-    LIVE_ADJUSTMENT: "SOME",
+    DIRECTED_QUESTIONING: "SOME",
+    RESPONSIVE_ADJUSTMENT: "SOME",
   });
 }
 
 /**
  * Signals for an "improving" teacher in the current window:
- * RETRIEVAL_PRESENCE, CFU_CYCLES improve from SOME → CONSISTENT/STRONG
+ * key guided-practice signals improve from SOME → CONSISTENT/STRONG
  */
 function improvingCurrentSignals(): ReturnType<typeof makeSignals> {
   return makeSignals({
-    RETRIEVAL_PRESENCE: "STRONG",
+    RETRIEVAL_CHECK: "STRONG",
     CFU_CYCLES: "CONSISTENT",
     PARTICIPATION_EQUITY: "STRONG",
   });
@@ -245,7 +245,7 @@ function improvingCurrentSignals(): ReturnType<typeof makeSignals> {
  */
 function improvingPrevSignals(): ReturnType<typeof makeSignals> {
   return makeSignals({
-    RETRIEVAL_PRESENCE: "SOME",
+    RETRIEVAL_CHECK: "SOME",
     CFU_CYCLES: "SOME",
     PARTICIPATION_EQUITY: "SOME",
   });
@@ -1571,8 +1571,8 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   Teachers: alice.thornton@demo.school … diana.osei@demo.school (Password123!)
 
   Patterns seeded:
-  • 7 drifting teachers (RETRIEVAL, CFU, COLD_CALL drift down)
-  • 2 improving teachers (RETRIEVAL, CFU trending up)
+  • 7 drifting teachers (retrieval check, CFU, directed questioning drift down)
+  • 2 improving teachers (retrieval check, CFU trending up)
   • 1 low-coverage teacher (2 observations)
   • Year 9 cohort attendance drop (−2–4pp for ~60% of cohort)
   • Year 8 OnCall spike (15–30 students)
