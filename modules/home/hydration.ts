@@ -75,12 +75,14 @@ export async function hydrateLeadershipHomeData({
   hasLeaveFeature,
   hasOnCallFeature,
   hasAssessmentsFeature,
+  hasStudentAnalysisFeature,
 }: {
   user: SessionUser;
   windowDays: number;
   hasLeaveFeature: boolean;
   hasOnCallFeature: boolean;
   hasAssessmentsFeature?: boolean;
+  hasStudentAnalysisFeature?: boolean;
 }) {
   const pendingLeavePromise = hasLeaveFeature
     ? safe(
@@ -262,7 +264,9 @@ export async function hydrateLeadershipHomeData({
     safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]),
     safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]),
     safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }),
-    safe(computeStudentRiskIndex(user.tenantId, windowDays, user.id), { rows: [] as StudentRiskRow[], computedAt: new Date() }),
+    hasStudentAnalysisFeature
+      ? safe(computeStudentRiskIndex(user.tenantId, windowDays, user.id), { rows: [] as StudentRiskRow[], computedAt: new Date() })
+      : Promise.resolve({ rows: [] as StudentRiskRow[], computedAt: new Date() }),
     pendingLeavePromise,
     openOnCallPromise,
     pendingLeaveDetailsPromise,
@@ -284,6 +288,7 @@ export async function hydrateLeadershipHomeData({
     weekObsCount: weekObs.count,
     weekObsTeachers: weekObs.recentTeachers,
     attainmentSummary,
+    watchlistStudents: studentResult.rows,
   };
 }
 
