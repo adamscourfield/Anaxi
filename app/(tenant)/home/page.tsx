@@ -75,7 +75,7 @@ function signalRubricDeltaBarWidthPct(delta: number): number {
 }
 
 function roleVariant(role: UserRole): "leadership" | "hod" | "teacher" {
-  if (role === "ADMIN" || role === "SLT") return "leadership";
+  if (role === "SUPER_ADMIN" || role === "ADMIN" || role === "SLT") return "leadership";
   if (role === "HOD") return "hod";
   return "teacher";
 }
