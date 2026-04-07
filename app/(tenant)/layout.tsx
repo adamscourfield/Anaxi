@@ -49,6 +49,8 @@ export default async function TenantLayout({ children }: { children: React.React
         isCurrent: m.tenantId === user.tenantId,
       }));
 
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
+
   return (
     <TenantLayoutClient
       role={user.role}
