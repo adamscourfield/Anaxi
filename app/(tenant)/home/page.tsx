@@ -192,6 +192,8 @@ function LeadershipHome({
   weekObsCount,
   weekObsTeachers,
   attainmentSummary,
+  hasStudentAnalysisFeature,
+  watchlistStudents,
 }: {
   windowDays: number;
   cpdRows: CpdPriorityRow[];
@@ -206,6 +208,8 @@ function LeadershipHome({
   weekObsCount: number;
   weekObsTeachers: { id: string; name: string }[];
   attainmentSummary: AttainmentSummary | null;
+  hasStudentAnalysisFeature?: boolean;
+  watchlistStudents?: StudentRiskRow[];
 }) {
   const allDriftingCpd = cpdRows.filter((r) => r.teachersDriftingDown > 0);
   const topCpd = allDriftingCpd.slice(0, 3);
@@ -387,7 +391,7 @@ function LeadershipHome({
       </section>
 
       {/* ═══ Watchlist ═══ */}
-      {watchlistStudents.length > 0 && (
+      {hasStudentAnalysisFeature && watchlistStudents.length > 0 && (
         <Card className="space-y-4">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -1459,7 +1463,8 @@ export default async function HomePage({
       const hasLeaveFeature = homeAssembly.has("operations.leave-approvals");
       const hasOnCallFeature = enabledFeatures.has("ON_CALL");
       const hasAssessmentsFeature = enabledFeatures.has("ASSESSMENTS");
-      const { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, openOnCallCount, pendingLeaveDetails, onCallDetails, weekObsCount, weekObsTeachers, attainmentSummary } = await hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature });
+      const hasStudentAnalysisFeature = enabledFeatures.has("STUDENT_ANALYSIS");
+      const { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, openOnCallCount, pendingLeaveDetails, onCallDetails, weekObsCount, weekObsTeachers, attainmentSummary, watchlistStudents } = await hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature });
       return (
         <LeadershipHome
           windowDays={windowDays}
@@ -1475,6 +1480,8 @@ export default async function HomePage({
           weekObsCount={weekObsCount}
           weekObsTeachers={weekObsTeachers}
           attainmentSummary={attainmentSummary ?? null}
+          hasStudentAnalysisFeature={hasStudentAnalysisFeature}
+          watchlistStudents={watchlistStudents}
         />
       );
     }
