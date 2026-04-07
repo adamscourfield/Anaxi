@@ -9,19 +9,35 @@ export const LESSON_PHASE = {
 
 export type LessonPhase = (typeof LESSON_PHASE)[keyof typeof LESSON_PHASE];
 
+/** Phases that use classroom (non-book) signals. */
+export const CLASSROOM_LESSON_PHASES: LessonPhase[] = [
+  LESSON_PHASE.THRESHOLD,
+  LESSON_PHASE.INSTRUCTION,
+  LESSON_PHASE.GUIDED_PRACTICE,
+  LESSON_PHASE.INDEPENDENT_PRACTICE,
+];
+
 export const SIGNAL_KEYS = {
   BEHAVIOUR_CLIMATE: "BEHAVIOUR_CLIMATE",
-  PARTICIPATION_EQUITY: "PARTICIPATION_EQUITY",
   PACE_MOMENTUM: "PACE_MOMENTUM",
-  COLD_CALL_DENSITY: "COLD_CALL_DENSITY",
-  CFU_CYCLES: "CFU_CYCLES",
-  ERROR_CORRECTION_DEPTH: "ERROR_CORRECTION_DEPTH",
+  ENTRY_ROUTINE: "ENTRY_ROUTINE",
+  RETRIEVAL_TASK_QUALITY: "RETRIEVAL_TASK_QUALITY",
+  RETRIEVAL_CHECK: "RETRIEVAL_CHECK",
+  EXPLANATION_CLARITY: "EXPLANATION_CLARITY",
   MODELLING_EXPLICITNESS: "MODELLING_EXPLICITNESS",
-  LANGUAGE_PRECISION: "LANGUAGE_PRECISION",
-  LIVE_ADJUSTMENT: "LIVE_ADJUSTMENT",
-  RETRIEVAL_PRESENCE: "RETRIEVAL_PRESENCE",
-  STRETCH_DEPLOYMENT: "STRETCH_DEPLOYMENT",
+  VOCABULARY_PRECISION: "VOCABULARY_PRECISION",
+  DIRECTED_QUESTIONING: "DIRECTED_QUESTIONING",
+  STRETCH_IN_ROOM: "STRETCH_IN_ROOM",
+  CFU_CYCLES: "CFU_CYCLES",
+  RESPONSIVE_ADJUSTMENT: "RESPONSIVE_ADJUSTMENT",
+  ERROR_CORRECTION_PRECISION: "ERROR_CORRECTION_PRECISION",
+  MODELLING_ON_DEMAND: "MODELLING_ON_DEMAND",
+  PARTICIPATION_EQUITY: "PARTICIPATION_EQUITY",
+  TASK_CLARITY: "TASK_CLARITY",
   INDEPENDENT_ACCOUNTABILITY: "INDEPENDENT_ACCOUNTABILITY",
+  CIRCULATION_FEEDBACK: "CIRCULATION_FEEDBACK",
+  STRETCH_DEPLOYMENT: "STRETCH_DEPLOYMENT",
+  SILENCE_AND_FOCUS: "SILENCE_AND_FOCUS",
   PRESENTATION_STANDARD: "PRESENTATION_STANDARD",
   WORK_COMPLETION: "WORK_COMPLETION",
   SUSTAINED_EFFORT: "SUSTAINED_EFFORT",
@@ -38,17 +54,16 @@ export type SignalDefinition = {
   order: number;
   displayNameDefault: string;
   descriptionDefault: string;
-  /** Phases where this signal is pedagogically relevant (e.g. analytics, filters). */
-  phaseRelevance: LessonPhase[];
+  /** Lesson phase this signal belongs to. Empty when `isUniversal` (classroom-wide). Book signals use `BOOKS` only. */
+  phases: LessonPhase[];
   isUniversal: boolean;
 
   scale: {
     key: ScaleKey;
     label: string;
-    description: string; // global description
+    description: string;
   }[];
 
-  // NEW: per-signal calibration descriptions for each scale key
   scaleGuidance: Record<ScaleKey, string>;
 
   lookFors?: string[];
@@ -69,42 +84,43 @@ export const BOOKS_SCALE: SignalDefinition["scale"] = [
 ];
 
 /**
- * Ordered signal keys for new observations by lesson phase.
- * - UNKNOWN ("Not sure"): all classroom + book signals, default definition order.
- * - BOOKS ("Book look"): book signals only.
+ * Capture order by lesson phase: universals first (via explicit list), then phase-specific signals.
+ * BOOKS: book-look signals only (no classroom universals).
  */
 export const OBSERVATION_PHASE_PRIMARY_ORDER: Partial<Record<LessonPhase, SignalKey[]>> = {
   [LESSON_PHASE.THRESHOLD]: [
     SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
     SIGNAL_KEYS.PACE_MOMENTUM,
-    SIGNAL_KEYS.RETRIEVAL_PRESENCE,
+    SIGNAL_KEYS.ENTRY_ROUTINE,
+    SIGNAL_KEYS.RETRIEVAL_TASK_QUALITY,
+    SIGNAL_KEYS.RETRIEVAL_CHECK,
   ],
   [LESSON_PHASE.INSTRUCTION]: [
     SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
-    SIGNAL_KEYS.LANGUAGE_PRECISION,
-    SIGNAL_KEYS.RETRIEVAL_PRESENCE,
-    SIGNAL_KEYS.PARTICIPATION_EQUITY,
     SIGNAL_KEYS.PACE_MOMENTUM,
-    SIGNAL_KEYS.COLD_CALL_DENSITY,
-    SIGNAL_KEYS.ERROR_CORRECTION_DEPTH,
-    SIGNAL_KEYS.STRETCH_DEPLOYMENT,
+    SIGNAL_KEYS.EXPLANATION_CLARITY,
+    SIGNAL_KEYS.MODELLING_EXPLICITNESS,
+    SIGNAL_KEYS.VOCABULARY_PRECISION,
+    SIGNAL_KEYS.DIRECTED_QUESTIONING,
+    SIGNAL_KEYS.STRETCH_IN_ROOM,
   ],
   [LESSON_PHASE.GUIDED_PRACTICE]: [
     SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
-    SIGNAL_KEYS.PARTICIPATION_EQUITY,
     SIGNAL_KEYS.PACE_MOMENTUM,
-    SIGNAL_KEYS.COLD_CALL_DENSITY,
     SIGNAL_KEYS.CFU_CYCLES,
-    SIGNAL_KEYS.ERROR_CORRECTION_DEPTH,
-    SIGNAL_KEYS.MODELLING_EXPLICITNESS,
-    SIGNAL_KEYS.LANGUAGE_PRECISION,
+    SIGNAL_KEYS.RESPONSIVE_ADJUSTMENT,
+    SIGNAL_KEYS.ERROR_CORRECTION_PRECISION,
+    SIGNAL_KEYS.MODELLING_ON_DEMAND,
+    SIGNAL_KEYS.PARTICIPATION_EQUITY,
   ],
   [LESSON_PHASE.INDEPENDENT_PRACTICE]: [
     SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
+    SIGNAL_KEYS.PACE_MOMENTUM,
+    SIGNAL_KEYS.TASK_CLARITY,
     SIGNAL_KEYS.INDEPENDENT_ACCOUNTABILITY,
+    SIGNAL_KEYS.CIRCULATION_FEEDBACK,
     SIGNAL_KEYS.STRETCH_DEPLOYMENT,
-    SIGNAL_KEYS.LIVE_ADJUSTMENT,
-    SIGNAL_KEYS.ERROR_CORRECTION_DEPTH,
+    SIGNAL_KEYS.SILENCE_AND_FOCUS,
   ],
   [LESSON_PHASE.BOOKS]: [
     SIGNAL_KEYS.PRESENTATION_STANDARD,
@@ -115,232 +131,344 @@ export const OBSERVATION_PHASE_PRIMARY_ORDER: Partial<Record<LessonPhase, Signal
   ],
 };
 
+function isBookSignal(def: SignalDefinition): boolean {
+  return def.phases.length === 1 && def.phases[0] === LESSON_PHASE.BOOKS;
+}
+
 export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
   {
     key: SIGNAL_KEYS.BEHAVIOUR_CLIMATE,
     order: 1,
-    displayNameDefault: "Behaviour & Focus",
+    displayNameDefault: "Behaviour & climate",
     descriptionDefault:
-      "Students are attentive, routines are secure, and learning time is protected. Transitions are calm and expectations are consistently reinforced.",
-    phaseRelevance: [
-      LESSON_PHASE.THRESHOLD,
-      LESSON_PHASE.INSTRUCTION,
-      LESSON_PHASE.GUIDED_PRACTICE,
-      LESSON_PHASE.INDEPENDENT_PRACTICE,
-      LESSON_PHASE.UNKNOWN,
-    ],
+      "Learning time is protected; routines are secure and expectations consistently held.",
+    phases: [],
     isUniversal: true,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "Frequent disruption or off-task behaviour reduces learning time; routines not secure.",
-      SOME: "Learning continues but with repeated interruptions; routines partly established but inconsistent.",
-      CONSISTENT: "Routines are secure; behaviour issues are minor and dealt with quickly without derailing learning.",
-      STRONG: "Climate is calm and purposeful; students self-regulate, transitions are crisp, and learning time is maximised.",
+      LIMITED: "Frequent disruption or weak routines; learning time is often lost or negotiated.",
+      SOME: "Climate is workable but uneven; routines or expectations slip under pressure.",
+      CONSISTENT: "Routines are secure; behaviour supports learning and expectations are held fairly.",
+      STRONG: "Purposeful, calm climate; students self-regulate and learning time is strongly protected.",
     },
     lookFors: [
-      "Transitions are quick and orderly",
-      "Corrections are calm, consistent, and immediate",
-      "Low-level disruption does not derail learning time",
-      "Students settle quickly and sustain attention",
-    ],
-  },
-  {
-    key: SIGNAL_KEYS.PARTICIPATION_EQUITY,
-    order: 2,
-    displayNameDefault: "Participation & Thinking Ratio",
-    descriptionDefault:
-      "A wide range of students are required to think and respond. Participation is not dominated by volunteers. Cold call is used deliberately.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
-    isUniversal: true,
-    scale: GLOBAL_SCALE,
-    scaleGuidance: {
-      LIMITED: "Teacher mainly relies on volunteers; many students can remain passive.",
-      SOME: "Some distribution beyond volunteers, but participation still uneven or predictable.",
-      CONSISTENT: "Teacher regularly distributes questions so most students are accountable to think/respond.",
-      STRONG: "Participation is broad and intentional; accountability is high and almost all students are drawn in.",
-    },
-    lookFors: [
-      "Many students required to think (not just volunteers)",
-      "Questions distributed across the room",
-      "No long stretches where only a few students respond",
+      "Entry and starts are calm and efficient",
+      "Expectations are clear and applied consistently",
+      "Low-level issues are handled without derailing the lesson",
     ],
   },
   {
     key: SIGNAL_KEYS.PACE_MOMENTUM,
+    order: 2,
+    displayNameDefault: "Pace & momentum",
+    descriptionDefault: "The lesson moves with purpose; dead time is minimal.",
+    phases: [],
+    isUniversal: true,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Frequent stalls, long waits, or unclear transitions; momentum is often lost.",
+      SOME: "Lesson generally moves but with noticeable slow patches or unclear task starts.",
+      CONSISTENT: "Steady purposeful pace; transitions and task starts are efficient.",
+      STRONG: "Brisk, focused momentum throughout; time is used tightly for learning.",
+    },
+    lookFors: ["Clear time expectations", "Minimal dead time between activities", "Students begin tasks promptly"],
+  },
+  {
+    key: SIGNAL_KEYS.ENTRY_ROUTINE,
     order: 3,
-    displayNameDefault: "Pace & Lesson Momentum",
-    descriptionDefault:
-      "The lesson moves forward with purpose. Transitions are efficient and students remain cognitively engaged.",
-    phaseRelevance: [LESSON_PHASE.THRESHOLD, LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
-    isUniversal: true,
+    displayNameDefault: "Entry routine",
+    descriptionDefault: "Students enter, settle, and begin without prompting or negotiation.",
+    phases: [LESSON_PHASE.THRESHOLD],
+    isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "Significant dead time or slow transitions; momentum frequently stalls.",
-      SOME: "Generally moves forward but with noticeable slow periods or unclear task starts.",
-      CONSISTENT: "Time is used well; transitions are efficient and students start tasks promptly.",
-      STRONG: "Brisk, purposeful pacing; transitions are seamless and cognitive engagement remains high throughout.",
+      LIMITED: "Chaotic or slow entry; heavy teacher prompting needed before work begins.",
+      SOME: "Some students settle quickly; others need repeated direction or negotiation.",
+      CONSISTENT: "Most students enter and begin expected tasks with minimal prompting.",
+      STRONG: "Crisp, automatic entry; all students settle and start without fuss or debate.",
     },
-    lookFors: ["Clear time expectations", "Fast transitions between tasks", "No extended dead time / waiting", "Students move quickly into work"],
+    lookFors: ["Clear expected start task visible on entry", "Students self-start", "No prolonged ‘settling’ conversations"],
   },
   {
-    key: SIGNAL_KEYS.COLD_CALL_DENSITY,
+    key: SIGNAL_KEYS.RETRIEVAL_TASK_QUALITY,
     order: 4,
-    displayNameDefault: "Cold Call & Directed Questioning",
+    displayNameDefault: "Retrieval task quality",
     descriptionDefault:
-      "Students are routinely and unpredictably asked to respond. Questioning checks understanding across the class, not just a few voices.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
+      "The Do Now is well-designed: low-stakes, previously taught material, genuinely demanding recall.",
+    phases: [LESSON_PHASE.THRESHOLD],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "Cold call rarely/never used; questioning reaches only a small portion of the class.",
-      SOME: "Cold call used occasionally, but not enough to create broad accountability.",
-      CONSISTENT: "Cold call is used routinely to check understanding across the room.",
-      STRONG: "High-frequency directed questioning; teacher samples widely and uses responses to steer teaching.",
+      LIMITED: "Do Now missing, off-topic, or not retrieval-focused; demands are trivial or misplaced.",
+      SOME: "Some retrieval intent but task is too easy, too long, or not aligned to prior teaching.",
+      CONSISTENT: "Task targets prior learning appropriately; recall is genuine and proportionate.",
+      STRONG: "Do Now is sharply designed: focused, demanding recall, clearly linked to the curriculum sequence.",
     },
-    lookFors: ["Cold call used routinely", "Teacher checks multiple students per concept", "Students expected to answer in full sentences where appropriate"],
+    lookFors: ["Content was clearly taught before", "Task requires recall not copying", "Low stakes but cognitively demanding"],
   },
   {
-    key: SIGNAL_KEYS.CFU_CYCLES,
+    key: SIGNAL_KEYS.RETRIEVAL_CHECK,
     order: 5,
-    displayNameDefault: "Checking for Understanding",
-    descriptionDefault:
-      "The teacher regularly checks for understanding before moving on and adapts instruction if misconceptions appear.",
-    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
+    displayNameDefault: "Retrieval check",
+    descriptionDefault: "Teacher actively checks responses rather than just setting the task and moving on.",
+    phases: [LESSON_PHASE.THRESHOLD],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "Teacher moves on without verifying understanding; misconceptions go unnoticed.",
-      SOME: "Some checks occur but are infrequent, superficial, or don’t influence next steps.",
-      CONSISTENT: "Regular checks before progression; teacher uses evidence to confirm readiness to move on.",
-      STRONG: "Tight, frequent CFU loops; teaching adjusts immediately and precisely when misunderstanding appears.",
+      LIMITED: "Task is set but responses are not checked; misconceptions or gaps stay hidden.",
+      SOME: "Partial checking or only a few voices heard; teacher moves on without secure evidence.",
+      CONSISTENT: "Teacher gathers evidence from students before moving on; gaps are surfaced.",
+      STRONG: "Systematic checking across the class; teaching adjusts based on what retrieval reveals.",
     },
-    lookFors: ["Checks happen before moving to the next step", "Teacher uses checks to adapt instruction", "Misconceptions are surfaced early"],
+    lookFors: ["Teacher reviews or probes answers", "Sampling is broad, not only volunteers", "Feedback on retrieval before new input"],
   },
   {
-    key: SIGNAL_KEYS.ERROR_CORRECTION_DEPTH,
+    key: SIGNAL_KEYS.EXPLANATION_CLARITY,
     order: 6,
-    displayNameDefault: "Error Correction & Feedback",
-    descriptionDefault:
-      "Misconceptions are addressed clearly and precisely. Students are required to correct and secure understanding.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
-    isUniversal: true,
+    displayNameDefault: "Explanation clarity",
+    descriptionDefault: "Explanations are accurate, structured, and free from ambiguity.",
+    phases: [LESSON_PHASE.INSTRUCTION],
+    isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "Errors are missed or corrected vaguely; students are not required to secure the correction.",
-      SOME: "Errors are addressed but correction is inconsistent or doesn’t ensure students can now do it correctly.",
-      CONSISTENT: "Teacher identifies specific errors and ensures students correct/re-attempt to secure understanding.",
-      STRONG: "Misconceptions are anticipated and handled precisely; correction consistently leads to improved accuracy.",
+      LIMITED: "Explanations are confused, inaccurate, or hard to follow.",
+      SOME: "Main ideas come across but steps or logic are sometimes unclear.",
+      CONSISTENT: "Explanations are accurate, ordered, and easy for students to follow.",
+      STRONG: "Explanations are precise and well-structured; common pitfalls are anticipated and clarified.",
     },
-    lookFors: ["Teacher identifies the specific error (not just 'wrong')", "Correction is modelled or explained clearly", "Student re-attempts or articulates corrected understanding"],
+    lookFors: ["Logical sequence from simple to complex", "Key ideas singled out", "Students can restate the idea in their own words"],
   },
   {
     key: SIGNAL_KEYS.MODELLING_EXPLICITNESS,
     order: 7,
-    displayNameDefault: "Explicit Modelling",
-    descriptionDefault:
-      "New knowledge or processes are clearly demonstrated. The thinking process is made visible before students practise independently.",
-    phaseRelevance: [LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
+    displayNameDefault: "Modelling explicitness",
+    descriptionDefault: "New processes are demonstrated with thinking made visible.",
+    phases: [LESSON_PHASE.INSTRUCTION],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "Little/no modelling; students expected to attempt without a clear example or steps.",
-      SOME: "Some modelling, but steps/thinking are not explicit or success criteria unclear.",
-      CONSISTENT: "Clear modelling provided before practice; steps and expectations are explicit.",
-      STRONG: "Modelling is exemplary: teacher narrates thinking, highlights common pitfalls, and links to success criteria.",
+      LIMITED: "Little or no modelling; students asked to perform without a clear worked example.",
+      SOME: "Some demonstration but thinking steps or decisions stay implicit.",
+      CONSISTENT: "Clear worked example; steps and reasoning are articulated.",
+      STRONG: "Exemplary modelling: metacognition, success criteria, and pitfalls made explicit.",
     },
-    lookFors: ["Teacher demonstrates a worked example / exemplar", "Steps and decisions are explained explicitly", "Students know what success looks like before starting"],
+    lookFors: ["Teacher narrates decisions while modelling", "Success criteria visible", "Students clear on ‘what good looks like’"],
   },
   {
-    key: SIGNAL_KEYS.LANGUAGE_PRECISION,
+    key: SIGNAL_KEYS.VOCABULARY_PRECISION,
     order: 8,
-    displayNameDefault: "Language & Explanation Clarity",
-    descriptionDefault:
-      "Subject vocabulary is used accurately and explanations are clear, structured, and free from ambiguity.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.GUIDED_PRACTICE, LESSON_PHASE.UNKNOWN],
-    isUniversal: true,
+    displayNameDefault: "Vocabulary precision",
+    descriptionDefault: "Subject vocabulary is used accurately and demanded from students.",
+    phases: [LESSON_PHASE.INSTRUCTION],
+    isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "Explanations are unclear or imprecise; key vocabulary is missing or used inaccurately.",
-      SOME: "Generally clear but with occasional ambiguity; vocabulary not consistently reinforced.",
-      CONSISTENT: "Clear, structured explanations; accurate subject vocabulary used and expected from students.",
-      STRONG: "Highly precise explanations; vocabulary is embedded, defined well, and consistently demanded in student responses.",
+      LIMITED: "Key terms avoided, misused, or unclear; students not held to precise language.",
+      SOME: "Correct vocabulary used by teacher but not consistently reinforced in student talk.",
+      CONSISTENT: "Accurate terms taught and used; students expected to use them correctly.",
+      STRONG: "Vocabulary is embedded and corrected; students routinely speak with disciplinary precision.",
     },
-    lookFors: ["Key terms defined and used accurately", "Explanations are step-by-step", "Students required to use correct vocabulary"],
+    lookFors: ["Key terms defined and revisited", "Teacher corrects loose language", "Students use subject terms in answers"],
   },
   {
-    key: SIGNAL_KEYS.LIVE_ADJUSTMENT,
+    key: SIGNAL_KEYS.DIRECTED_QUESTIONING,
     order: 9,
-    displayNameDefault: "Responsive Teaching",
+    displayNameDefault: "Directed questioning",
     descriptionDefault:
-      "Instruction adjusts in response to student understanding. The teacher slows down, re-explains, or extends as needed.",
-    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
-    isUniversal: true,
+      "Questions are distributed unpredictably; most students are required to think and respond.",
+    phases: [LESSON_PHASE.INSTRUCTION],
+    isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "Teaching continues as planned regardless of student understanding; misunderstandings persist.",
-      SOME: "Some adjustment occurs, but it’s delayed or not clearly based on evidence from students.",
-      CONSISTENT: "Teacher adapts in response to checks (re-explains, re-models, or extends appropriately).",
-      STRONG: "Adjustment is rapid and precise; teacher uses live evidence to optimise pace and understanding continuously.",
+      LIMITED: "Only volunteers or a few students answer; most can stay passive.",
+      SOME: "Some directed questioning but patterns are predictable or coverage is narrow.",
+      CONSISTENT: "Broad accountability; questioning reaches most students over the segment.",
+      STRONG: "High-quality directed questioning; unpredictable, inclusive, and thinking-rich.",
     },
-    lookFors: ["Teacher changes approach based on student responses", "Misunderstanding triggers reteach or re-model", "Teacher extends where understanding is secure"],
+    lookFors: ["Cold call or equivalent used fairly", "Wait time and thinking time", "Follow-ups press for fuller responses"],
   },
   {
-    key: SIGNAL_KEYS.RETRIEVAL_PRESENCE,
+    key: SIGNAL_KEYS.STRETCH_IN_ROOM,
     order: 10,
-    displayNameDefault: "Retrieval & Recall",
-    descriptionDefault:
-      "Students are required to recall previously taught material. Retrieval strengthens long-term memory and connects prior learning.",
-    phaseRelevance: [LESSON_PHASE.THRESHOLD, LESSON_PHASE.INSTRUCTION, LESSON_PHASE.UNKNOWN],
-    isUniversal: true,
+    displayNameDefault: "Stretch in the room",
+    descriptionDefault: "Teacher presses for depth, application, and justification beyond surface responses.",
+    phases: [LESSON_PHASE.INSTRUCTION],
+    isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "No retrieval of prior learning is evident; lesson starts without recall or connection to prior knowledge.",
-      SOME: "Retrieval happens briefly or inconsistently; limited checking of what students actually recall.",
-      CONSISTENT: "Retrieval is routine (e.g., Do Now) and teacher checks recall to inform teaching.",
-      STRONG: "Retrieval is purposeful and well checked; prior knowledge is connected explicitly to new learning.",
+      LIMITED: "Interactions stay at recall or single-word answers; little press for reasoning.",
+      SOME: "Occasional stretch for some students; depth is inconsistent.",
+      CONSISTENT: "Regular prompts for why, how, and evidence; most students nudged beyond the surface.",
+      STRONG: "Systematic stretch: application, argument, and quality of explanation routinely demanded.",
     },
-    lookFors: ["Do Now / retrieval task is used", "Prior learning is revisited explicitly", "Teacher checks recall (not just sets questions)"],
+    lookFors: ["Probing ‘why’ and ‘how’", "Students justify with evidence", "Higher-order follow-ups after initial answers"],
   },
   {
-    key: SIGNAL_KEYS.STRETCH_DEPLOYMENT,
+    key: SIGNAL_KEYS.CFU_CYCLES,
     order: 11,
-    displayNameDefault: "Stretch & Challenge",
-    descriptionDefault:
-      "Students are pushed to deepen thinking, extend answers, and apply knowledge beyond surface-level responses.",
-    phaseRelevance: [LESSON_PHASE.INSTRUCTION, LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
-    isUniversal: true,
+    displayNameDefault: "CFU cycles",
+    descriptionDefault: "Teacher checks before moving on; checks are genuine not rhetorical.",
+    phases: [LESSON_PHASE.GUIDED_PRACTICE],
+    isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "Tasks/questions remain surface-level; little pressing for depth or application.",
-      SOME: "Some challenge is present but inconsistent or only for a small subset of students.",
-      CONSISTENT: "Teacher regularly pushes for depth (why/how), application, and higher-quality responses.",
-      STRONG: "Stretch is systematic: most students are pushed, scaffolds are used well, and challenge raises thinking without losing clarity.",
+      LIMITED: "Teacher advances without evidence; ‘Any questions?’ substitutes for checking.",
+      SOME: "Some checks but shallow, rushed, or not acted on.",
+      CONSISTENT: "Frequent meaningful checks before each step; responses inform next moves.",
+      STRONG: "Tight CFU loops; misconceptions caught early and teaching pivots precisely.",
     },
-    lookFors: ["Teacher presses for 'why' / 'how' not just 'what'", "Students required to justify or apply", "Tasks/questions increase in sophistication"],
+    lookFors: ["Checks use student work or oral evidence", "Teacher pauses for responses", "Next step reflects what checks showed"],
+  },
+  {
+    key: SIGNAL_KEYS.RESPONSIVE_ADJUSTMENT,
+    order: 12,
+    displayNameDefault: "Responsive adjustment",
+    descriptionDefault: "Teaching visibly changes based on what checks reveal.",
+    phases: [LESSON_PHASE.GUIDED_PRACTICE],
+    isUniversal: false,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Script is followed regardless of student understanding.",
+      SOME: "Minor tweaks only; misunderstanding persists for several students.",
+      CONSISTENT: "Noticeable reteach, reframe, or pacing change when checks show need.",
+      STRONG: "Agile adjustment: groups, examples, or scaffolds shift immediately from live evidence.",
+    },
+    lookFors: ["Teacher slows or re-explains when needed", "Extra example when many struggle", "Extension when grasp is secure"],
+  },
+  {
+    key: SIGNAL_KEYS.ERROR_CORRECTION_PRECISION,
+    order: 13,
+    displayNameDefault: "Error correction precision",
+    descriptionDefault: "Misconceptions are identified specifically and students are required to correct.",
+    phases: [LESSON_PHASE.GUIDED_PRACTICE],
+    isUniversal: false,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Errors ignored or glossed as ‘wrong’ without precise fix.",
+      SOME: "Corrections happen but are vague or don’t secure understanding.",
+      CONSISTENT: "Specific error named; student rehearses correct idea or process.",
+      STRONG: "Precise, repeatable correction; student demonstrates improved accuracy before moving on.",
+    },
+    lookFors: ["Naming the misconception", "Modelled correction", "Student re-attempts or verbalises the fix"],
+  },
+  {
+    key: SIGNAL_KEYS.MODELLING_ON_DEMAND,
+    order: 14,
+    displayNameDefault: "Modelling on demand",
+    descriptionDefault: "Teacher re-models or narrates steps when understanding breaks down.",
+    phases: [LESSON_PHASE.GUIDED_PRACTICE],
+    isUniversal: false,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Students left stuck; no additional demonstration when many struggle.",
+      SOME: "Occasional help but not structured re-modelling.",
+      CONSISTENT: "Timely re-model or step-through when checks show breakdown.",
+      STRONG: "Responsive mini-models target exact sticking points; thinking made visible again.",
+    },
+    lookFors: ["Partial re-model at the board or visually", "Steps broken down further", "Checks follow re-model"],
+  },
+  {
+    key: SIGNAL_KEYS.PARTICIPATION_EQUITY,
+    order: 15,
+    displayNameDefault: "Participation equity",
+    descriptionDefault: "Thinking load is distributed; no student can remain passive.",
+    phases: [LESSON_PHASE.GUIDED_PRACTICE],
+    isUniversal: false,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "A few students dominate; others opt out or are unchallenged.",
+      SOME: "Broader participation at times but pockets of passivity remain.",
+      CONSISTENT: "Most students engaged in thinking or practice; teacher prevents hiding.",
+      STRONG: "Inclusive guided practice; accountability is high and evenly spread.",
+    },
+    lookFors: ["All-corner questioning or checks", "Written work sampled broadly", "No long stretches of single-voice dialogue"],
+  },
+  {
+    key: SIGNAL_KEYS.TASK_CLARITY,
+    order: 16,
+    displayNameDefault: "Task clarity",
+    descriptionDefault: "Students know exactly what they are doing and to what standard.",
+    phases: [LESSON_PHASE.INDEPENDENT_PRACTICE],
+    isUniversal: false,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Task or success criteria unclear; students unsure what ‘done’ means.",
+      SOME: "Directions exist but many still ask procedural questions.",
+      CONSISTENT: "Clear instructions and quality bar; most start without confusion.",
+      STRONG: "Crystal-clear task, examples, and criteria; self-correction is possible.",
+    },
+    lookFors: ["Written or verbal success criteria", "Exemplar or checklist where helpful", "Students begin without repeated clarification"],
   },
   {
     key: SIGNAL_KEYS.INDEPENDENT_ACCOUNTABILITY,
-    order: 12,
-    displayNameDefault: "Independent Practice & Accountability",
-    descriptionDefault:
-      "Students practise independently with clear expectations. Work is monitored and misconceptions are identified promptly.",
-    phaseRelevance: [LESSON_PHASE.INDEPENDENT_PRACTICE, LESSON_PHASE.UNKNOWN],
+    order: 17,
+    displayNameDefault: "Independent accountability",
+    descriptionDefault: "Teacher circulates purposefully; completion and accuracy are monitored.",
+    phases: [LESSON_PHASE.INDEPENDENT_PRACTICE],
     isUniversal: false,
     scale: GLOBAL_SCALE,
     scaleGuidance: {
-      LIMITED: "Independent work lacks clear expectations; limited monitoring; low completion or low accuracy goes unchecked.",
-      SOME: "Expectations exist but accountability/monitoring is uneven; some students drift or misconceptions persist.",
-      CONSISTENT: "Clear expectations and active monitoring; students are held accountable for completion and accuracy.",
-      STRONG: "High accountability: teacher circulation is purposeful, feedback is timely, and almost all students produce high-quality practice.",
+      LIMITED: "Little circulation; completion and accuracy largely unmonitored.",
+      SOME: "Teacher moves but checks are spotty or unfocused.",
+      CONSISTENT: "Purposeful rounds; teacher tracks who is stuck and who is finished.",
+      STRONG: "Systematic monitoring; every student’s progress is sampled or checked.",
     },
-    lookFors: ["Clear expectations for quality and quantity of work", "Teacher actively circulates and checks work", "Students held accountable for completion and accuracy"],
+    lookFors: ["Deliberate circulation path", "Book or work checked against criteria", "Follow-up on non-completion"],
+  },
+  {
+    key: SIGNAL_KEYS.CIRCULATION_FEEDBACK,
+    order: 18,
+    displayNameDefault: "Circulation feedback",
+    descriptionDefault: "Feedback during circulation is specific and requires student action.",
+    phases: [LESSON_PHASE.INDEPENDENT_PRACTICE],
+    isUniversal: false,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Generic praise or vague comments; no clear next step for the student.",
+      SOME: "Some specific tips but inconsistent or not acted on.",
+      CONSISTENT: "Feedback names the issue and the fix; student adjusts work.",
+      STRONG: "High-leverage feedback loops; students improve the work in the moment.",
+    },
+    lookFors: ["Concrete action (‘add…’, ‘fix…’, ‘try…’)", "Student edits in response", "Feedback tied to success criteria"],
+  },
+  {
+    key: SIGNAL_KEYS.STRETCH_DEPLOYMENT,
+    order: 19,
+    displayNameDefault: "Stretch deployment",
+    descriptionDefault: "Extension is available and used; fast finishers are challenged not just given more.",
+    phases: [LESSON_PHASE.INDEPENDENT_PRACTICE],
+    isUniversal: false,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "No extension; fast finishers idle or get only ‘more of the same’.",
+      SOME: "Extension exists but is thin or rarely used well.",
+      CONSISTENT: "Meaningful stretch tasks; early finishers engage with deeper work.",
+      STRONG: "Well-designed tiered challenge; stretch deepens thinking not just volume.",
+    },
+    lookFors: ["Clear ‘next step’ or challenge task", "Quality of extension work monitored", "Avoids busywork for quick workers"],
+  },
+  {
+    key: SIGNAL_KEYS.SILENCE_AND_FOCUS,
+    order: 20,
+    displayNameDefault: "Silence & focus",
+    descriptionDefault: "Independent work happens in conditions that support sustained thinking.",
+    phases: [LESSON_PHASE.INDEPENDENT_PRACTICE],
+    isUniversal: false,
+    scale: GLOBAL_SCALE,
+    scaleGuidance: {
+      LIMITED: "Noisy or distracted environment; sustained focus is rare.",
+      SOME: "Generally workable noise levels but frequent interruptions or off-task chat.",
+      CONSISTENT: "Calm working atmosphere; most students concentrate for meaningful stretches.",
+      STRONG: "Highly focused independent work; climate actively protects deep thinking.",
+    },
+    lookFors: ["Quiet or appropriate working noise", "Minimal social distraction", "Teacher reinforces focus expectations"],
   },
   {
     key: SIGNAL_KEYS.PRESENTATION_STANDARD,
-    order: 13,
-    displayNameDefault: "Presentation Standard",
+    order: 21,
+    displayNameDefault: "Presentation standard",
     descriptionDefault: "Work is neat, organised, and reflects pride in output.",
-    phaseRelevance: [LESSON_PHASE.BOOKS, LESSON_PHASE.UNKNOWN],
+    phases: [LESSON_PHASE.BOOKS],
     isUniversal: false,
     scale: BOOKS_SCALE,
     scaleGuidance: {
@@ -358,10 +486,10 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
   },
   {
     key: SIGNAL_KEYS.WORK_COMPLETION,
-    order: 14,
-    displayNameDefault: "Work Completion",
+    order: 22,
+    displayNameDefault: "Work completion",
     descriptionDefault: "Tasks are finished to the expected level with no unexplained gaps.",
-    phaseRelevance: [LESSON_PHASE.BOOKS, LESSON_PHASE.UNKNOWN],
+    phases: [LESSON_PHASE.BOOKS],
     isUniversal: false,
     scale: BOOKS_SCALE,
     scaleGuidance: {
@@ -378,10 +506,10 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
   },
   {
     key: SIGNAL_KEYS.SUSTAINED_EFFORT,
-    order: 15,
-    displayNameDefault: "Sustained Effort",
+    order: 23,
+    displayNameDefault: "Sustained effort",
     descriptionDefault: "Work quality is consistent across the book, not just in isolated entries.",
-    phaseRelevance: [LESSON_PHASE.BOOKS, LESSON_PHASE.UNKNOWN],
+    phases: [LESSON_PHASE.BOOKS],
     isUniversal: false,
     scale: BOOKS_SCALE,
     scaleGuidance: {
@@ -398,10 +526,10 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
   },
   {
     key: SIGNAL_KEYS.TASK_APPROPRIATENESS,
-    order: 16,
-    displayNameDefault: "Task Appropriateness",
+    order: 24,
+    displayNameDefault: "Task appropriateness",
     descriptionDefault: "Written tasks reflect the curriculum intent for that year group and subject.",
-    phaseRelevance: [LESSON_PHASE.BOOKS, LESSON_PHASE.UNKNOWN],
+    phases: [LESSON_PHASE.BOOKS],
     isUniversal: false,
     scale: BOOKS_SCALE,
     scaleGuidance: {
@@ -418,10 +546,10 @@ export const SIGNAL_DEFINITIONS: SignalDefinition[] = [
   },
   {
     key: SIGNAL_KEYS.VOLUME_OF_WORK,
-    order: 17,
-    displayNameDefault: "Volume of Work",
+    order: 25,
+    displayNameDefault: "Volume of work",
     descriptionDefault: "Quantity of written work is appropriate given time elapsed and subject demands.",
-    phaseRelevance: [LESSON_PHASE.BOOKS, LESSON_PHASE.UNKNOWN],
+    phases: [LESSON_PHASE.BOOKS],
     isUniversal: false,
     scale: BOOKS_SCALE,
     scaleGuidance: {
@@ -442,18 +570,26 @@ const DEFINITION_BY_KEY: Map<SignalKey, SignalDefinition> = new Map(
   SIGNAL_DEFINITIONS.map((def) => [def.key, def])
 );
 
+/** All classroom (non-book) signals: universals plus every phase-specific classroom signal — same set as UNKNOWN capture. */
+export const CLASSROOM_ONLY_SIGNAL_DEFINITIONS: SignalDefinition[] = SIGNAL_DEFINITIONS.filter(
+  (def) => def.isUniversal || (!isBookSignal(def) && def.phases.some((p) => CLASSROOM_LESSON_PHASES.includes(p)))
+).sort((a, b) => a.order - b.order);
+
 /**
- * Signals shown during capture for a lesson phase: phase-specific list in curriculum order,
- * or every definition when phase is UNKNOWN ("Not sure"), or book signals only for BOOKS.
+ * Signals for capture: universals + phase-specific for the given phase; book look uses book signals only.
+ * UNKNOWN (“Not sure”): all classroom signals (universals + every phase-specific classroom signal), not book signals.
  */
 export function getSignalsForObservationPhase(phase: string): SignalDefinition[] {
   const ordered = [...SIGNAL_DEFINITIONS].sort((a, b) => a.order - b.order);
+
   if (phase === LESSON_PHASE.UNKNOWN) {
-    return ordered;
+    return CLASSROOM_ONLY_SIGNAL_DEFINITIONS;
   }
+
   const keys = OBSERVATION_PHASE_PRIMARY_ORDER[phase as LessonPhase];
   if (!keys?.length) {
     return ordered;
   }
+
   return keys.map((k) => DEFINITION_BY_KEY.get(k)!).filter(Boolean);
 }
