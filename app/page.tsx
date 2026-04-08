@@ -197,14 +197,6 @@ export default function LandingPage() {
             }}
           >
             <div className="mx-auto flex w-full max-w-md flex-col gap-5 lg:mx-0">
-              <Image
-                src="/anaxi-logo.png"
-                alt=""
-                width={64}
-                height={64}
-                className="h-14 w-14 object-contain opacity-95 sm:h-16 sm:w-16 lg:hidden"
-                aria-hidden
-              />
               <p
                 className="text-[11px] font-semibold uppercase tracking-[0.14em]"
                 style={{ color: "var(--on-surface-variant)" }}
