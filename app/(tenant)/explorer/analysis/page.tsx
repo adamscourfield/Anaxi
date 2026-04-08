@@ -84,10 +84,16 @@ export default async function AnalysisPage({
   const ppFilter = params.pp === "1";
   const sendFilter = params.send === "1";
 
-  // ── tenant settings (labels) ────────────────────────────────────
-  const tenantSettings = await (prisma as any).tenantSettings.findUnique({
-    where: { tenantId: user.tenantId },
-  });
+  // ── tenant settings + features ────────────────────────────────────
+  const [tenantSettings, onCallFeature] = await Promise.all([
+    (prisma as any).tenantSettings.findUnique({
+      where: { tenantId: user.tenantId },
+    }),
+    (prisma as any).tenantFeature.findUnique({
+      where: { tenantId_key: { tenantId: user.tenantId, key: "ON_CALL" } },
+    }),
+  ]);
+  const hasOnCallFeature = onCallFeature?.enabled === true;
   const labels = {
     positivePoints: tenantSettings?.positivePointsLabel ?? "Positive Points",
     negativePoints: tenantSettings?.negativePointsLabel ?? "Negative Points",
@@ -98,11 +104,16 @@ export default async function AnalysisPage({
   };
 
   // ── data ────────────────────────────────────────────────────────
-  const result = await computeBehaviourAnalysis(user.tenantId, windowDays, {
-    yearGroup: yearGroupFilter || undefined,
-    ppOnly: ppFilter || undefined,
-    sendOnly: sendFilter || undefined,
-  });
+  const result = await computeBehaviourAnalysis(
+    user.tenantId,
+    windowDays,
+    {
+      yearGroup: yearGroupFilter || undefined,
+      ppOnly: ppFilter || undefined,
+      sendOnly: sendFilter || undefined,
+    },
+    { viewerUserId: user.id, hasOnCallFeature },
+  );
 
   const { summary } = result;
 
@@ -162,8 +173,8 @@ export default async function AnalysisPage({
       </div>
 
       <PageHeader
-        title="Analysis"
-        subtitle="Behaviour and welfare analysis — on-call patterns, attendance, behaviour points, and high-priority students."
+        title="Behaviour analysis"
+        subtitle="School behaviour and attendance — on-call patterns, points, sanctions, and students in urgent or priority pastoral bands."
         meta={
           <span className="text-xs text-muted">
             {windowDays}d window · {summary.totalStudents} student
@@ -253,7 +264,7 @@ export default async function AnalysisPage({
       </div>
 
       {/* ── Summary stats ───────────────────────────────────────── */}
-      <div className={`grid gap-4 ${summary.hasNegativePoints ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"}`}>
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         <div className="rounded-2xl bg-surface p-4 shadow-ambient">
           <p className="text-sm font-medium text-muted">Total Students</p>
           <p className="mt-1 text-2xl font-bold tabular-nums text-text">
@@ -268,12 +279,14 @@ export default async function AnalysisPage({
               : "—"}
           </p>
         </div>
-        <div className="rounded-2xl bg-surface p-4 shadow-ambient">
-          <p className="text-sm font-medium text-muted">{labels.positivePoints}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-scale-strong-text">
-            {summary.totalPositivePoints.toLocaleString()}
-          </p>
-        </div>
+        {summary.hasPositivePoints && (
+          <div className="rounded-2xl bg-surface p-4 shadow-ambient">
+            <p className="text-sm font-medium text-muted">{labels.positivePoints}</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-scale-strong-text">
+              {summary.totalPositivePoints.toLocaleString()}
+            </p>
+          </div>
+        )}
         {summary.hasNegativePoints && (
           <div className="rounded-2xl bg-surface p-4 shadow-ambient">
             <p className="text-sm font-medium text-muted">{labels.negativePoints}</p>
@@ -283,171 +296,180 @@ export default async function AnalysisPage({
           </div>
         )}
         <div className="rounded-2xl bg-surface p-4 shadow-ambient">
-          <p className="text-sm font-medium text-muted">{labels.onCall}s</p>
+          <p className="text-sm font-medium text-muted">{labels.detention}s</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-text">
+            {summary.totalDetentions.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-2xl bg-surface p-4 shadow-ambient">
+          <p className="text-sm font-medium text-muted">{labels.internalExclusion}s</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-text">
+            {summary.totalInternalExclusions.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-2xl bg-surface p-4 shadow-ambient">
+          <p className="text-sm font-medium text-muted">{labels.onCall}s (snapshots)</p>
           <p className="mt-1 text-2xl font-bold tabular-nums text-text">
             {summary.totalOnCalls}
           </p>
         </div>
         <div className="rounded-2xl bg-surface p-4 shadow-ambient">
-          <p className="text-sm font-medium text-muted">High Priority</p>
+          <p className="text-sm font-medium text-muted">High priority</p>
           <p className="mt-1 text-2xl font-bold tabular-nums text-text">
             {summary.highPriorityCount}
           </p>
+          <p className="mt-1 text-[0.6875rem] text-muted">Urgent &amp; priority bands</p>
         </div>
       </div>
 
-      {/* ── On Call Analysis ─────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-2xl glass-card">
+      {/* ── On Call Analysis (live requests; requires ON_CALL feature) ── */}
+      <div className="mt-6 overflow-hidden rounded-2xl glass-card">
         <div className="border-b border-border/30 px-6 py-4">
-          <h2 className="text-base font-semibold text-text">{labels.onCall} Analysis</h2>
+          <h2 className="text-base font-semibold text-text">{labels.onCall} requests</h2>
+          <p className="mt-1 text-[0.8125rem] text-muted">
+            Live requests in this window, by time of day and requesting teacher. Snapshot totals above come from imports.
+          </p>
         </div>
 
-        <div className="grid gap-6 p-6 lg:grid-cols-2">
-          {/* By time of day */}
-          <div>
-            <h3 className="mb-4 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">
-              By Time of Day
-            </h3>
-            <div className="space-y-2">
-              {result.onCallByHour.map((row) => (
-                <div key={row.hour} className="flex items-center gap-3">
-                  <span className="w-12 shrink-0 text-right text-xs tabular-nums text-muted">
-                    {fmtHour(row.hour)}
-                  </span>
-                  <div className="relative h-6 flex-1 overflow-hidden rounded bg-surface-container-high">
-                    {row.count > 0 && (
-                      <div
-                        className="h-full rounded bg-accent/80 calm-transition"
-                        style={{ width: `${barWidthPct(row.count, maxHourCount)}%` }}
-                      />
-                    )}
-                  </div>
-                  <span className="w-8 text-right text-xs font-semibold tabular-nums text-text">
-                    {row.count}
-                  </span>
-                </div>
-              ))}
-            </div>
-            {result.onCallByHour.every((r) => r.count === 0) && (
-              <p className="mt-4 text-sm text-muted">No on-call data in this window.</p>
-            )}
+        {!hasOnCallFeature ? (
+          <div className="p-6">
+            <p className="text-sm text-muted">
+              The on-call workflow is not enabled for this school. Enable the On Call feature to see request timing and
+              teacher breakdowns; imported snapshot data still includes on-call counts.
+            </p>
           </div>
-
-          {/* By teacher */}
-          <div>
-            <h3 className="mb-4 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">
-              By Teacher
-            </h3>
-            {result.onCallByTeacher.length > 0 ? (
-              <div className="overflow-hidden rounded-xl border border-border/20">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border/30 bg-surface-container-lowest/40 text-left text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-                      <th className="px-4 py-2.5">Teacher</th>
-                      <th className="px-4 py-2.5 text-right">{labels.onCall}s</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.onCallByTeacher.map((row) => (
-                      <tr
-                        key={row.teacherId}
-                        className="border-b border-border/20 last:border-0 calm-transition hover:bg-surface-container-lowest/50"
-                      >
-                        <td className="px-4 py-2.5 font-medium text-text">
-                          {row.teacherName}
-                        </td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-muted">
-                          {row.count}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        ) : (
+          <>
+            <div className="grid gap-6 p-6 lg:grid-cols-2">
+              {/* By time of day */}
+              <div>
+                <h3 className="mb-4 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                  By time of day
+                </h3>
+                <div className="space-y-2">
+                  {result.onCallByHour.map((row) => (
+                    <div key={row.hour} className="flex items-center gap-3">
+                      <span className="w-12 shrink-0 text-right text-xs tabular-nums text-muted">
+                        {fmtHour(row.hour)}
+                      </span>
+                      <div className="relative h-6 flex-1 overflow-hidden rounded bg-surface-container-high">
+                        {row.count > 0 && (
+                          <div
+                            className="h-full rounded bg-accent/80 calm-transition"
+                            style={{ width: `${barWidthPct(row.count, maxHourCount)}%` }}
+                          />
+                        )}
+                      </div>
+                      <span className="w-8 text-right text-xs font-semibold tabular-nums text-text">
+                        {row.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {result.onCallByHour.every((r) => r.count === 0) && (
+                  <p className="mt-4 text-sm text-muted">No on-call requests in this window for the filtered cohort.</p>
+                )}
               </div>
-            ) : (
-              <p className="text-sm text-muted">No on-call data in this window.</p>
-            )}
-          </div>
-        </div>
 
-        {/* By reason */}
-        {result.onCallByReason.length > 0 && (
-          <div className="border-t border-border/30 p-6">
-            <h3 className="mb-4 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">
-              By Reason
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {result.onCallByReason.map((row) => (
-                <div
-                  key={row.reason}
-                  className="rounded-xl border border-border/30 bg-surface-container-lowest px-4 py-3"
-                >
-                  <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-                    {row.reason}
-                  </p>
-                  <p className="mt-1 text-lg font-bold tabular-nums text-text">
-                    {row.count}
-                  </p>
-                </div>
-              ))}
+              {/* By teacher */}
+              <div>
+                <h3 className="mb-4 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                  By teacher (requester)
+                </h3>
+                {result.onCallByTeacher.length > 0 ? (
+                  <div className="overflow-hidden rounded-xl border border-border/20">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border/30 bg-surface-container-lowest/40 text-left text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                          <th className="px-4 py-2.5">Teacher</th>
+                          <th className="px-4 py-2.5 text-right">Requests</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {result.onCallByTeacher.map((row) => (
+                          <tr
+                            key={row.teacherId}
+                            className="border-b border-border/20 last:border-0 calm-transition hover:bg-surface-container-lowest/50"
+                          >
+                            <td className="px-4 py-2.5 font-medium text-text">
+                              {row.teacherName}
+                            </td>
+                            <td className="px-4 py-2.5 text-right tabular-nums text-muted">
+                              {row.count}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted">No on-call requests in this window for the filtered cohort.</p>
+                )}
+              </div>
             </div>
-          </div>
+
+            {/* By reason */}
+            {result.onCallByReason.length > 0 && (
+              <div className="border-t border-border/30 p-6">
+                <h3 className="mb-4 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                  By reason
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {result.onCallByReason.map((row) => (
+                    <div
+                      key={row.reason}
+                      className="rounded-xl border border-border/30 bg-surface-container-lowest px-4 py-3"
+                    >
+                      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                        {row.reason}
+                      </p>
+                      <p className="mt-1 text-lg font-bold tabular-nums text-text">
+                        {row.count}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* ── Behaviour Breakdown ──────────────────────────────────── */}
-      <div className="overflow-hidden rounded-2xl glass-card">
+      {/* ── Suspensions (summary row covers detentions & internal exclusions) ── */}
+      <div className="mt-6 overflow-hidden rounded-2xl glass-card">
         <div className="border-b border-border/30 px-6 py-4">
-          <h2 className="text-base font-semibold text-text">Behaviour Breakdown</h2>
+          <h2 className="text-base font-semibold text-text">{labels.suspension}s</h2>
+          <p className="mt-1 text-[0.8125rem] text-muted">From the latest snapshot in this window for the filtered cohort.</p>
         </div>
-        <div className="grid grid-cols-2 gap-4 p-6 sm:grid-cols-3">
-          <div className="rounded-xl border border-border/30 bg-surface-container-lowest px-4 py-3">
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-              {labels.detention}s
-            </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-text">
-              {summary.totalDetentions}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border/30 bg-surface-container-lowest px-4 py-3">
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-              {labels.internalExclusion}s
-            </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-text">
-              {summary.totalInternalExclusions}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border/30 bg-surface-container-lowest px-4 py-3">
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-              {labels.suspension}s
-            </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-text">
-              {summary.totalSuspensions}
-            </p>
-          </div>
+        <div className="p-6">
+          <p className="text-3xl font-bold tabular-nums text-text">{summary.totalSuspensions.toLocaleString()}</p>
         </div>
       </div>
 
-      {/* ── High Priority Students ───────────────────────────────── */}
-      <div className="overflow-hidden rounded-2xl glass-card">
+      {/* ── High priority students (urgent / priority pastoral bands) ── */}
+      <div className="mt-6 overflow-hidden rounded-2xl glass-card">
         <div className="border-b border-border/30 px-6 py-4">
           <h2 className="text-base font-semibold text-text">
-            High Priority Students
+            High priority students
             {summary.highPriorityCount > 0 && (
               <span className="ml-2 text-sm font-normal text-muted">
                 ({summary.highPriorityCount})
               </span>
             )}
           </h2>
+          <p className="mt-1 text-[0.8125rem] text-muted">
+            Students in urgent or priority bands from the pastoral risk model for this window (same logic as Explorer
+            students).
+          </p>
         </div>
 
         {result.highPriorityStudents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <p className="text-[0.875rem] font-semibold text-text">
-              No high-priority students
+              No students in urgent or priority bands
             </p>
             <p className="mt-1 text-[0.8125rem] text-muted">
-              Students on the watchlist will appear here.
+              Widen filters or check back after the next data import.
             </p>
           </div>
         ) : (
@@ -456,12 +478,19 @@ export default async function AnalysisPage({
               <thead>
                 <tr className="border-b border-border/30 bg-surface-container-lowest/40 text-left text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
                   <th className="px-5 py-3">Student</th>
+                  <th className="px-4 py-3">Band</th>
                   <th className="px-4 py-3">Year</th>
                   <th className="px-4 py-3">Flags</th>
                   <th className="px-4 py-3 text-right">Attendance</th>
                   <th className="px-4 py-3 text-right">{labels.detention}s</th>
+                  <th className="px-4 py-3 text-right">{labels.internalExclusion}s</th>
                   <th className="px-4 py-3 text-right">{labels.onCall}s</th>
-                  <th className="px-4 py-3 text-right">{labels.positivePoints}</th>
+                  {summary.hasPositivePoints && (
+                    <th className="px-4 py-3 text-right">{labels.positivePoints}</th>
+                  )}
+                  {summary.hasNegativePoints && (
+                    <th className="px-4 py-3 text-right">{labels.negativePoints}</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -477,6 +506,14 @@ export default async function AnalysisPage({
                       >
                         {student.studentName}
                       </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusPill
+                        variant={student.band === "URGENT" ? "error" : "warning"}
+                        size="sm"
+                      >
+                        {student.band === "URGENT" ? "Urgent" : "Priority"}
+                      </StatusPill>
                     </td>
                     <td className="px-4 py-3 text-muted">
                       {student.yearGroup ?? "—"}
@@ -500,11 +537,21 @@ export default async function AnalysisPage({
                       {student.detentionsCount}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {student.onCallsCount}
+                      {student.internalExclusionsCount}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {student.positivePointsTotal}
+                      {student.onCallsCount}
                     </td>
+                    {summary.hasPositivePoints && (
+                      <td className="px-4 py-3 text-right tabular-nums text-muted">
+                        {student.positivePointsTotal}
+                      </td>
+                    )}
+                    {summary.hasNegativePoints && (
+                      <td className="px-4 py-3 text-right tabular-nums text-muted">
+                        {student.negativePointsTotal}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -515,7 +562,7 @@ export default async function AnalysisPage({
 
       {/* ── Footer ──────────────────────────────────────────────── */}
       <p className="mt-8 text-[0.75rem] text-muted">
-        Explorer · Analysis · {windowDays}d window
+        Explorer · Behaviour analysis · {windowDays}d window
       </p>
     </>
   );

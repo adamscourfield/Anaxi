@@ -567,24 +567,26 @@ export default async function ExplorerPage() {
               </div>
             </Link>
 
-            {/* Behaviour Analysis Card (summary only; not linked yet) */}
-            <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient">
-              <WatermarkChartBars />
-              <p className="text-lg font-semibold text-[var(--on-surface)]">Behaviour Analysis</p>
-              <div className="mt-3 flex items-baseline gap-3">
-                <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
-                  {urgentStudents}
-                </span>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">Urgent Priority</p>
-                  <p className="text-[11px] text-[var(--on-surface-variant)]">Urgent &amp; priority bands</p>
+            {/* Behaviour Analysis Card */}
+            <Link href="/explorer/analysis" className="block">
+              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
+                <WatermarkChartBars />
+                <p className="text-lg font-semibold text-[var(--on-surface)]">Behaviour Analysis</p>
+                <div className="mt-3 flex items-baseline gap-3">
+                  <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
+                    {urgentStudents}
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">Urgent Priority</p>
+                    <p className="text-[11px] text-[var(--on-surface-variant)]">Urgent &amp; priority bands</p>
+                  </div>
+                </div>
+                <div className="mt-8">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Assessment window</p>
+                  <p className="mt-1 text-xs text-[var(--on-surface-variant)]">Pastoral bands over the last {WINDOW_DAYS} days</p>
                 </div>
               </div>
-              <div className="mt-8">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Assessment window</p>
-                <p className="mt-1 text-xs text-[var(--on-surface-variant)]">Pastoral bands over the last {WINDOW_DAYS} days</p>
-              </div>
-            </div>
+            </Link>
           </div>
         </div>
       )}
