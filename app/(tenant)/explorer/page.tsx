@@ -71,14 +71,6 @@ function WatermarkDiamond() {
   );
 }
 
-function WatermarkChart() {
-  return (
-    <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-28 w-28 text-black/[0.06]" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-    </svg>
-  );
-}
-
 /* ─── Time-ago helper ──────────────────────────────────────────────────────── */
 function timeAgo(date: Date): string {
   const now = new Date();
@@ -147,14 +139,6 @@ export default async function ExplorerPage() {
       ? [
           computeStudentRiskIndex(user.tenantId, WINDOW_DAYS, user.id),
           computeCohortPivot(user.tenantId, WINDOW_DAYS),
-          (prisma as any).onCallRequest.count({
-            where: { tenantId: user.tenantId, createdAt: { gte: since } },
-          }) as Promise<number>,
-          (prisma as any).studentWatchlist.findMany({
-            where: { tenantId: user.tenantId },
-            select: { studentId: true },
-            distinct: ["studentId"],
-          }) as Promise<{ studentId: string }[]>,
         ]
       : []),
   ]);
@@ -176,10 +160,8 @@ export default async function ExplorerPage() {
   let totalStudents = 0;
   let yearGroupCount = 0;
   let academicLoadPct = 0;
-  let onCallCount = 0;
-  let highPriorityCount = 0;
 
-  if (canSeeBehaviour && behaviourResults.length >= 2) {
+  if (canSeeBehaviour && behaviourResults.length === 2) {
     const studentResult = behaviourResults[0] as Awaited<ReturnType<typeof computeStudentRiskIndex>>;
     const cohortResult = behaviourResults[1] as Awaited<ReturnType<typeof computeCohortPivot>>;
 
@@ -197,11 +179,6 @@ export default async function ExplorerPage() {
     academicLoadPct = attendanceValues.length > 0
       ? Math.round(attendanceValues.reduce((a, b) => a + b, 0) / attendanceValues.length)
       : 0;
-
-    if (behaviourResults.length >= 4) {
-      onCallCount = behaviourResults[2] as number;
-      highPriorityCount = (behaviourResults[3] as { studentId: string }[]).length;
-    }
   }
 
   // ─── Build intelligence log entries ─────────────────────────────────────────
@@ -397,7 +374,7 @@ export default async function ExplorerPage() {
             Behaviour &amp; Welfare
           </h2>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 items-stretch">
             {/* Students Card */}
             <Link href="/explorer/students" className="block">
               <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
@@ -455,32 +432,6 @@ export default async function ExplorerPage() {
                   <div className="mt-2 flex items-center justify-between">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Academic Load</p>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">{academicLoadPct}% Capacity</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-
-            {/* Analysis Card */}
-            <Link href="/explorer/analysis" className="block">
-              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
-                <WatermarkChart />
-                <p className="text-lg font-semibold text-[var(--on-surface)]">Analysis</p>
-                <div className="mt-3 flex items-baseline gap-3">
-                  <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
-                    {highPriorityCount}
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">High Priority</p>
-                    <p className="text-[11px] text-[var(--on-surface-variant)]">Watchlist Students</p>
-                  </div>
-                </div>
-                <div className="mt-5 flex gap-3">
-                  <div className="rounded-xl border border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-4 py-3 calm-transition hover:bg-[var(--surface-container)]">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-tertiary-container)]">On Calls</p>
-                    <div className="mt-1 flex items-baseline gap-1.5">
-                      <span className="text-xl font-bold text-[var(--on-surface)]">{onCallCount}</span>
-                      <span className="text-xs text-[var(--on-surface-variant)]">{WINDOW_DAYS}d</span>
-                    </div>
                   </div>
                 </div>
               </div>

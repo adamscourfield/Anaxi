@@ -9,7 +9,6 @@ export const ANAXI_FIELDS = [
   "InternalExclusions",
   "Suspensions",
   "PositivePoints",
-  "NegativePoints",
   "SEND",
   "PP",
 ] as const;
@@ -33,7 +32,6 @@ export const FIELD_SYNONYMS: Record<AnaxiField, string[]> = {
   InternalExclusions: ["InternalExclusions", "IE", "Internal Exclusion", "Internal Exclusions"],
   Suspensions: ["Suspensions", "FixedTerm", "Suspended", "Suspension"],
   PositivePoints: ["PositivePoints", "Merits", "Praise", "Rewards", "PositivePointsTotal", "Positives"],
-  NegativePoints: ["NegativePoints", "Demerits", "NegativePointsTotal", "Negatives"],
   SEND: ["SEND", "SEN", "send"],
   PP: ["PP", "PupilPremium", "Pupil Premium", "pp"],
 };

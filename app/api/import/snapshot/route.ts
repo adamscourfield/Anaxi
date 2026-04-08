@@ -108,7 +108,6 @@ export async function POST(req: Request) {
             snapshotDate: row.snapshotDate,
             countScope: row.countScope,
             positivePointsTotal: row.positivePoints,
-            negativePointsTotal: row.negativePoints,
             detentionsCount: row.detentions,
             internalExclusionsCount: row.internalExclusions,
             suspensionsCount: row.suspensions,
@@ -118,7 +117,6 @@ export async function POST(req: Request) {
           update: {
             countScope: row.countScope,
             positivePointsTotal: row.positivePoints,
-            negativePointsTotal: row.negativePoints,
             detentionsCount: row.detentions,
             internalExclusionsCount: row.internalExclusions,
             suspensionsCount: row.suspensions,

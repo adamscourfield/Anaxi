@@ -234,7 +234,6 @@ model StudentSnapshot {
   snapshotDate            DateTime
   countScope              CountScope @default(TERM_TO_DATE)
   positivePointsTotal     Int        @default(0)
-  negativePointsTotal     Int        @default(0)
   detentionsCount         Int        @default(0)
   internalExclusionsCount Int        @default(0)
   suspensionsCount        Int        @default(0)
@@ -527,7 +526,6 @@ model TenantSettings {
   internalExclusionLabel   String     @default("Internal Exclusion")
   suspensionLabel          String     @default("Suspension")
   onCallLabel              String     @default("On Call")
-  negativePointsLabel      String     @default("Negative Points")
   driftDeltaThreshold      Float      @default(0.15)
   minObservationCount      Int        @default(3)
   behaviourSpikePercent    Float      @default(50.0)
