@@ -53,11 +53,36 @@ export type BehaviourAnalysisSummary = {
   highPriorityCount: number;
 };
 
+/** One row per student with at least one suspension on their latest in-window snapshot. */
+export type SuspensionIncidentRow = {
+  studentId: string;
+  studentName: string;
+  yearGroup: string | null;
+  suspensionsCount: number;
+  snapshotDate: Date;
+};
+
+/** Serializable on-call row for client charts / popovers. */
+export type OnCallRequestDetail = {
+  id: string;
+  createdAt: string;
+  studentId: string;
+  studentName: string;
+  studentYearGroup: string | null;
+  requesterName: string;
+  behaviourReasonCategory: string | null;
+  status: string;
+  location: string;
+  notes: string | null;
+};
+
 export type BehaviourAnalysisResult = {
   summary: BehaviourAnalysisSummary;
   onCallByHour: OnCallByHourRow[];
   onCallByTeacher: OnCallByTeacherRow[];
   onCallByReason: OnCallByReasonRow[];
+  onCallRequestDetails: OnCallRequestDetail[];
+  suspensionIncidents: SuspensionIncidentRow[];
   highPriorityStudents: HighPriorityStudentRow[];
   computedAt: Date;
 };
@@ -70,15 +95,19 @@ function windowBounds(windowDays: number): { start: Date; end: Date } {
   return { start, end };
 }
 
-/** Bucket an hour (0-23) for display. Returns all school hours 7-17. */
+/**
+ * Bucket on-call requests by clock hour for the school day (8:00–15:59 → 8am–3pm).
+ * Requests outside that range are omitted from buckets.
+ */
 export function bucketOnCallsByHour(
   requests: { createdAt: Date }[],
 ): OnCallByHourRow[] {
   const counts = new Map<number, number>();
-  for (let h = 7; h <= 17; h++) counts.set(h, 0);
+  for (let h = 8; h <= 15; h++) counts.set(h, 0);
 
   for (const req of requests) {
     const hour = req.createdAt.getHours();
+    if (hour < 8 || hour > 15) continue;
     counts.set(hour, (counts.get(hour) ?? 0) + 1);
   }
 
@@ -177,6 +206,7 @@ export async function computeBehaviourAnalysis(
           },
           include: {
             requester: { select: { id: true, fullName: true } },
+            student: { select: { id: true, fullName: true, yearGroup: true } },
           },
           orderBy: { createdAt: "desc" },
         })
@@ -192,6 +222,7 @@ export async function computeBehaviourAnalysis(
   let hasNegativePoints = false;
   let hasPositivePoints = false;
   const attendanceValues: number[] = [];
+  const suspensionIncidents: SuspensionIncidentRow[] = [];
 
   const snapByStudentId = new Map<string, any>();
   for (const student of students as any[]) {
@@ -211,6 +242,16 @@ export async function computeBehaviourAnalysis(
       totalOnCalls += snap.onCallsCount as number;
       attendanceValues.push(Number(snap.attendancePct));
 
+      if ((snap.suspensionsCount as number) > 0) {
+        suspensionIncidents.push({
+          studentId: student.id,
+          studentName: student.fullName,
+          yearGroup: student.yearGroup ?? null,
+          suspensionsCount: snap.suspensionsCount as number,
+          snapshotDate: snap.snapshotDate as Date,
+        });
+      }
+
       if ((snap.positivePointsTotal as number) > 0) {
         hasPositivePoints = true;
       }
@@ -219,6 +260,8 @@ export async function computeBehaviourAnalysis(
       }
     }
   }
+
+  suspensionIncidents.sort((a, b) => b.suspensionsCount - a.suspensionsCount || b.snapshotDate.getTime() - a.snapshotDate.getTime());
 
   const { rows: riskRows } = await computeStudentRiskIndex(tenantId, windowDays, viewerUserId);
 
@@ -264,6 +307,19 @@ export async function computeBehaviourAnalysis(
   const onCallByTeacher = groupByTeacher(onCallRequests as any[]);
   const onCallByReason = groupByReason(onCallRequests as any[]);
 
+  const onCallRequestDetails: OnCallRequestDetail[] = (onCallRequests as any[]).map((r: any) => ({
+    id: r.id as string,
+    createdAt: (r.createdAt as Date).toISOString(),
+    studentId: r.studentId as string,
+    studentName: (r.student?.fullName as string) ?? "—",
+    studentYearGroup: (r.student?.yearGroup as string | null) ?? null,
+    requesterName: (r.requester?.fullName as string) ?? "—",
+    behaviourReasonCategory: (r.behaviourReasonCategory as string | null) ?? null,
+    status: r.status as string,
+    location: r.location as string,
+    notes: (r.notes as string | null) ?? null,
+  }));
+
   return {
     summary: {
       totalStudents: (students as any[]).length,
@@ -281,6 +337,8 @@ export async function computeBehaviourAnalysis(
     onCallByHour,
     onCallByTeacher,
     onCallByReason,
+    onCallRequestDetails,
+    suspensionIncidents,
     highPriorityStudents,
     computedAt: new Date(),
   };

@@ -8,11 +8,11 @@ import {
 // ─── bucketOnCallsByHour ─────────────────────────────────────────────────────
 
 describe("bucketOnCallsByHour", () => {
-  it("returns all school hours 7-17 with zero counts when empty", () => {
+  it("returns hours 8–15 with zero counts when empty", () => {
     const result = bucketOnCallsByHour([]);
-    expect(result).toHaveLength(11);
-    expect(result[0]).toEqual({ hour: 7, count: 0 });
-    expect(result[10]).toEqual({ hour: 17, count: 0 });
+    expect(result).toHaveLength(8);
+    expect(result[0]).toEqual({ hour: 8, count: 0 });
+    expect(result[7]).toEqual({ hour: 15, count: 0 });
     expect(result.every((r) => r.count === 0)).toBe(true);
   });
 
@@ -29,30 +29,25 @@ describe("bucketOnCallsByHour", () => {
     expect(hour14?.count).toBe(1);
   });
 
-  it("counts requests outside school hours in their own buckets", () => {
+  it("ignores requests outside 8am–3pm window", () => {
     const requests = [
       { createdAt: new Date("2026-03-01T06:00:00") },
       { createdAt: new Date("2026-03-01T20:00:00") },
     ];
     const result = bucketOnCallsByHour(requests);
-    const hour6 = result.find((r) => r.hour === 6);
-    const hour20 = result.find((r) => r.hour === 20);
-    // Outside school hours are still counted
-    expect(hour6?.count).toBe(1);
-    expect(hour20?.count).toBe(1);
-    // School-hour buckets remain zero
-    const schoolHours = result.filter((r) => r.hour >= 7 && r.hour <= 17);
-    expect(schoolHours.every((r) => r.count === 0)).toBe(true);
+    expect(result.every((r) => r.count === 0)).toBe(true);
   });
 
-  it("returns results sorted by hour", () => {
+  it("returns results sorted by hour 8 through 15", () => {
     const requests = [
       { createdAt: new Date("2026-03-01T15:00:00") },
       { createdAt: new Date("2026-03-01T08:00:00") },
     ];
     const result = bucketOnCallsByHour(requests);
     const hours = result.map((r) => r.hour);
-    expect(hours).toEqual([7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
+    expect(hours).toEqual([8, 9, 10, 11, 12, 13, 14, 15]);
+    expect(result.find((r) => r.hour === 8)?.count).toBe(1);
+    expect(result.find((r) => r.hour === 15)?.count).toBe(1);
   });
 });
 
