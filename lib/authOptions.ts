@@ -1,9 +1,8 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 
 /**
- * NextAuth configuration only — no top-level Prisma import so the
+ * NextAuth configuration only — no top-level Prisma or bcrypt import so the
  * `/api/auth/[...nextauth]` bundle stays small and webpack does not trip over
  * a bloated or cyclic module graph (avoids "Cannot read properties of undefined (reading 'call')").
  */
@@ -21,6 +20,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         const { prisma } = await import("@/lib/prisma");
+        const bcrypt = (await import("bcryptjs")).default;
         const email = credentials?.email?.toLowerCase().trim();
         const password = credentials?.password ?? "";
         const tenantId = credentials?.tenantId?.trim() || null;
