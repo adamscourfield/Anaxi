@@ -58,21 +58,21 @@ function Modal({ title, onClose, children }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/25 p-4 backdrop-blur-[2px] sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="oncall-modal-title"
     >
       <button type="button" className="absolute inset-0 cursor-default" aria-label="Close" onClick={onClose} />
-      <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-ambient">
-        <div className="flex items-start justify-between gap-3 border-b border-border/30 px-5 py-4">
-          <h2 id="oncall-modal-title" className="text-base font-semibold text-text">
+      <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-hidden rounded-2xl glass-card shadow-ambient">
+        <div className="flex items-start justify-between gap-3 px-5 py-4">
+          <h2 id="oncall-modal-title" className="pr-2 text-lg font-semibold leading-snug tracking-[-0.01em] text-[var(--on-surface)]">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted calm-transition hover:bg-surface-container-low hover:text-text"
+            className="shrink-0 rounded-xl p-2 text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
             aria-label="Close dialog"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -80,7 +80,9 @@ function Modal({ title, onClose, children }: ModalProps) {
             </svg>
           </button>
         </div>
-        <div className="max-h-[calc(85vh-5rem)] overflow-y-auto p-5">{children}</div>
+        <div className="max-h-[calc(85vh-5.5rem)] overflow-y-auto border-t border-[var(--divider-subtle)] px-5 py-4">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -108,7 +110,7 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
     (hour: number) => {
       const rows = details.filter((d) => new Date(d.createdAt).getHours() === hour);
       setModal({
-        title: `On-call requests · ${hourLabel(hour)}`,
+        title: `${hourLabel(hour)} · ${rows.length} request${rows.length === 1 ? "" : "s"}`,
         rows,
       });
     },
@@ -119,7 +121,7 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
     (reason: string) => {
       const rows = details.filter((d) => (d.behaviourReasonCategory ?? "Uncategorised") === reason);
       setModal({
-        title: `On-call requests · ${reason}`,
+        title: `${reason} · ${rows.length} request${rows.length === 1 ? "" : "s"}`,
         rows,
       });
     },
@@ -129,36 +131,38 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
   const hasAnyHour = onCallByHour.some((r) => r.count > 0);
   const hasAnyReason = onCallByReason.some((r) => r.count > 0);
 
+  const barTrack =
+    "relative h-7 min-w-0 flex-1 overflow-hidden rounded-xl bg-[var(--surface-container-high)] text-left calm-transition";
+  const barFill = "absolute inset-y-0 left-0 rounded-xl bg-[var(--primary)] opacity-90";
+
   return (
     <>
-      <div className="space-y-8 p-6">
+      <div className="space-y-10 p-6 sm:p-8">
         <div>
-          <h3 className="mb-4 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">
-            By time of day (8am–3pm)
+          <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
+            By time of day
           </h3>
+          <p className="mb-5 text-[0.8125rem] text-muted">8am–3pm · tap a bar for request details</p>
           {!hasAnyHour ? (
             <p className="text-sm text-muted">No on-call requests between 8am and 3pm in this window.</p>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
               {onCallByHour.map((row) => (
-                <div key={row.hour} className="flex items-center gap-3">
-                  <span className="w-14 shrink-0 text-right text-xs font-medium tabular-nums text-muted">
+                <div key={row.hour} className="flex items-center gap-3 sm:gap-4">
+                  <span className="w-[3.25rem] shrink-0 text-right text-[11px] font-semibold tabular-nums text-[var(--on-surface-variant)]">
                     {hourLabel(row.hour)}
                   </span>
                   <button
                     type="button"
                     disabled={row.count === 0}
                     onClick={() => row.count > 0 && openHour(row.hour)}
-                    className="relative h-8 min-w-0 flex-1 overflow-hidden rounded-lg bg-surface-container-high text-left calm-transition enabled:cursor-pointer enabled:hover:ring-2 enabled:hover:ring-accent/40 disabled:cursor-default disabled:opacity-60"
+                    className={`${barTrack} enabled:cursor-pointer enabled:hover:opacity-[0.92] enabled:active:scale-[0.995] disabled:cursor-default disabled:opacity-50`}
                     aria-label={`${row.count} on-call requests at ${hourLabel(row.hour)}`}
                   >
                     {row.count > 0 && (
-                      <span
-                        className="absolute inset-y-0 left-0 rounded-lg bg-accent/80 calm-transition"
-                        style={{ width: `${barWidthPct(row.count, maxHour)}%` }}
-                      />
+                      <span className={barFill} style={{ width: `${barWidthPct(row.count, maxHour)}%` }} />
                     )}
-                    <span className="relative z-[1] flex h-full items-center justify-end pr-2 text-xs font-semibold tabular-nums text-text">
+                    <span className="relative z-[1] flex h-full items-center justify-end pr-2.5 text-[11px] font-bold tabular-nums text-[var(--on-surface)]">
                       {row.count}
                     </span>
                   </button>
@@ -169,31 +173,37 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
         </div>
 
         {onCallByReason.length > 0 && (
-          <div className="border-t border-border/30 pt-8">
-            <h3 className="mb-4 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">By reason</h3>
+          <div className="border-t border-[var(--divider-subtle)] pt-10">
+            <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
+              By reason
+            </h3>
+            <p className="mb-5 text-[0.8125rem] text-muted">Tap a bar to see matching requests</p>
             {!hasAnyReason ? (
               <p className="text-sm text-muted">No categorised reasons in this window.</p>
             ) : (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5">
                 {onCallByReason.map((row) => (
-                  <div key={row.reason} className="flex items-center gap-3">
-                    <span className="min-w-0 flex-1 truncate text-left text-xs font-medium text-text" title={row.reason}>
+                  <div key={row.reason} className="flex items-center gap-3 sm:gap-4">
+                    <span
+                      className="min-w-0 flex-1 truncate text-left text-[13px] font-medium text-[var(--on-surface)]"
+                      title={row.reason}
+                    >
                       {row.reason}
                     </span>
                     <button
                       type="button"
                       disabled={row.count === 0}
                       onClick={() => row.count > 0 && openReason(row.reason)}
-                      className="relative h-8 w-[min(100%,280px)] shrink-0 overflow-hidden rounded-lg bg-surface-container-high text-left calm-transition enabled:cursor-pointer enabled:hover:ring-2 enabled:hover:ring-accent/40 disabled:cursor-default disabled:opacity-60"
+                      className={`${barTrack} w-full max-w-[min(100%,320px)] shrink-0 sm:max-w-[360px] enabled:cursor-pointer enabled:hover:opacity-[0.92] enabled:active:scale-[0.995] disabled:cursor-default disabled:opacity-50`}
                       aria-label={`${row.count} on-call requests for ${row.reason}`}
                     >
                       {row.count > 0 && (
                         <span
-                          className="absolute inset-y-0 left-0 rounded-lg bg-accent/70 calm-transition"
+                          className={`${barFill} opacity-80`}
                           style={{ width: `${barWidthPct(row.count, maxReason)}%` }}
                         />
                       )}
-                      <span className="relative z-[1] flex h-full items-center justify-end pr-2 text-xs font-semibold tabular-nums text-text">
+                      <span className="relative z-[1] flex h-full items-center justify-end pr-2.5 text-[11px] font-bold tabular-nums text-[var(--on-surface)]">
                         {row.count}
                       </span>
                     </button>
@@ -210,36 +220,39 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
           {modal.rows.length === 0 ? (
             <p className="text-sm text-muted">No matching requests.</p>
           ) : (
-            <ul className="space-y-4">
+            <ul className="space-y-3">
               {modal.rows.map((r) => (
                 <li
                   key={r.id}
-                  className="rounded-xl border border-border/25 bg-surface-container-low/50 px-4 py-3 text-sm"
+                  className="rounded-xl bg-[var(--surface-container-low)] px-4 py-3.5 text-sm shadow-sm"
                 >
-                  <p className="font-medium text-text">{r.studentName}</p>
+                  <p className="font-semibold text-[var(--on-surface)]">{r.studentName}</p>
                   <p className="mt-0.5 text-xs text-muted">
                     {r.studentYearGroup ? `${r.studentYearGroup} · ` : ""}
                     {formatTime(r.createdAt)}
                   </p>
-                  <p className="mt-2 text-xs text-muted">
-                    <span className="font-semibold text-text/80">Teacher:</span> {r.requesterName}
+                  <p className="mt-2 text-xs leading-relaxed text-muted">
+                    <span className="font-semibold text-[var(--on-surface)]">Teacher</span> {r.requesterName}
                   </p>
-                  <p className="mt-1 text-xs text-muted">
-                    <span className="font-semibold text-text/80">Status:</span> {r.status}
+                  <p className="mt-1 text-xs leading-relaxed text-muted">
+                    <span className="font-semibold text-[var(--on-surface)]">Status</span> {r.status}
                     {r.location ? (
                       <>
                         {" "}
-                        · <span className="font-semibold text-text/80">Location:</span> {r.location}
+                        · <span className="font-semibold text-[var(--on-surface)]">Location</span> {r.location}
                       </>
                     ) : null}
                   </p>
                   {r.behaviourReasonCategory && (
                     <p className="mt-1 text-xs text-muted">
-                      <span className="font-semibold text-text/80">Reason:</span> {r.behaviourReasonCategory}
+                      <span className="font-semibold text-[var(--on-surface)]">Reason</span>{" "}
+                      {r.behaviourReasonCategory}
                     </p>
                   )}
                   {r.notes && (
-                    <p className="mt-2 border-t border-border/20 pt-2 text-xs leading-relaxed text-muted">{r.notes}</p>
+                    <p className="mt-2 border-t border-[var(--divider-subtle)] pt-2 text-xs leading-relaxed text-muted">
+                      {r.notes}
+                    </p>
                   )}
                 </li>
               ))}
