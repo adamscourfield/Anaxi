@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -11,7 +12,10 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 import { StatusPill } from "@/components/ui/status-pill";
-import { computeBehaviourAnalysis } from "@/modules/analysis/behaviourAnalysis";
+import {
+  computeBehaviourAnalysis,
+  type BehaviourAnalysisSummary,
+} from "@/modules/analysis/behaviourAnalysis";
 import { BehaviourAnalysisFilters } from "./BehaviourAnalysisFilters";
 import { OnCallBreakdownCharts } from "./OnCallBreakdownCharts";
 
@@ -54,6 +58,55 @@ function sectionHeader(title: string, subtitle?: string) {
       ) : null}
     </div>
   );
+}
+
+type SecondaryStat = {
+  key: string;
+  label: string;
+  value: ReactNode;
+  valueClass?: string;
+};
+
+function buildSecondaryStats(
+  summary: BehaviourAnalysisSummary,
+  labels: {
+    positivePoints: string;
+    negativePoints: string;
+  },
+  detentionPlural: string,
+  internalExclusionPlural: string,
+  suspensionPlural: string,
+): SecondaryStat[] {
+  const secondaryStats: SecondaryStat[] = [
+    { key: "det", label: detentionPlural, value: summary.totalDetentions.toLocaleString() },
+    {
+      key: "ie",
+      label: internalExclusionPlural,
+      value: summary.totalInternalExclusions.toLocaleString(),
+    },
+    {
+      key: "sus",
+      label: suspensionPlural,
+      value: summary.totalSuspensions.toLocaleString(),
+    },
+  ];
+  if (summary.hasPositivePoints) {
+    secondaryStats.push({
+      key: "pos",
+      label: labels.positivePoints,
+      value: summary.totalPositivePoints.toLocaleString(),
+      valueClass: "text-[var(--scale-strong-text)]",
+    });
+  }
+  if (summary.hasNegativePoints) {
+    secondaryStats.push({
+      key: "neg",
+      label: labels.negativePoints,
+      value: summary.totalNegativePoints.toLocaleString(),
+      valueClass: "text-[var(--scale-limited-text)]",
+    });
+  }
+  return secondaryStats;
 }
 
 /* ─── Page ─────────────────────────────────────────────────────────────────── */
@@ -161,39 +214,10 @@ export default async function AnalysisPage({
     minute: "2-digit",
   });
 
-  type SecondaryStat = { key: string; label: string; value: ReactNode; valueClass?: string };
-  const secondaryStats: SecondaryStat[] = [
-    { key: "det", label: detentionPlural, value: summary.totalDetentions.toLocaleString() },
-    {
-      key: "ie",
-      label: internalExclusionPlural,
-      value: summary.totalInternalExclusions.toLocaleString(),
-    },
-    {
-      key: "sus",
-      label: suspensionPlural,
-      value: summary.totalSuspensions.toLocaleString(),
-    },
-  ];
-  if (summary.hasPositivePoints) {
-    secondaryStats.push({
-      key: "pos",
-      label: labels.positivePoints,
-      value: summary.totalPositivePoints.toLocaleString(),
-      valueClass: "text-[var(--scale-strong-text)]",
-    });
-  }
-  if (summary.hasNegativePoints) {
-    secondaryStats.push({
-      key: "neg",
-      label: labels.negativePoints,
-      value: summary.totalNegativePoints.toLocaleString(),
-      valueClass: "text-[var(--scale-limited-text)]",
-    });
-  }
+  const secondaryStats = buildSecondaryStats(summary, labels, detentionPlural, internalExclusionPlural, suspensionPlural);
 
   return (
-    <>
+    <Fragment>
       <div className="mb-4">
         <Link
           href="/explorer"
@@ -499,6 +523,6 @@ export default async function AnalysisPage({
       </div>
 
       <MetaText className="mt-2">Explorer · Behaviour analysis · {windowDays}d window</MetaText>
-    </>
+    </Fragment>
   );
 }
