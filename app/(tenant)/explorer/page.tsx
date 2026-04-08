@@ -399,9 +399,9 @@ export default async function ExplorerPage() {
       {/* ── Priorities Card ────────────────────────────────────────────────── */}
       <div className="mt-4">
         <Link href="/analytics" className="block">
-          <div className="relative rounded-2xl bg-[var(--primary)] p-5 pr-12 shadow-ambient calm-transition hover:opacity-90 sm:pr-14">
+          <div className="relative rounded-2xl bg-[var(--primary)] p-5 pr-12 text-on-primary shadow-ambient calm-transition hover:opacity-90 sm:pr-14">
             <svg
-              className="pointer-events-none absolute right-4 top-4 h-7 w-7 text-on-primary/50 sm:h-8 sm:w-8"
+              className="pointer-events-none absolute right-4 top-4 h-7 w-7 opacity-60 sm:h-8 sm:w-8"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.5}
@@ -412,46 +412,46 @@ export default async function ExplorerPage() {
             </svg>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
               <div className="min-w-0 shrink-0 lg:max-w-[220px]">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-primary/70">Analysis</p>
-                <p className="mt-1 text-lg font-bold text-on-primary">Priorities</p>
-                <p className="mt-1 text-sm text-on-primary/70">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] opacity-80">Analysis</p>
+                <p className="mt-1 text-lg font-bold">Priorities</p>
+                <p className="mt-1 text-sm opacity-90">
                   Teacher drift, CPD signal focus, and student bands — full detail in Analytics.
                 </p>
               </div>
               <div
                 className={`grid min-w-0 flex-1 gap-4 ${canSeeBehaviour ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
               >
-                <div className="min-w-0 rounded-xl bg-on-primary/10 px-3 py-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-primary/80">Teachers</p>
+                <div className="min-w-0 rounded-xl border border-white/15 bg-white/10 px-3 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] opacity-90">Teachers</p>
                   <ul className="mt-2 space-y-2">
                     {topTeacherPriorities.length === 0 ? (
-                      <li className="text-[13px] leading-snug text-on-primary/75">No drift flags in this window.</li>
+                      <li className="text-[13px] leading-snug opacity-90">No drift flags in this window.</li>
                     ) : (
                       topTeacherPriorities.map((row) => (
                         <li key={row.teacherMembershipId} className="min-w-0">
-                          <p className="truncate text-[13px] font-medium text-on-primary" title={row.teacherName}>
+                          <p className="truncate text-[13px] font-medium" title={row.teacherName}>
                             {row.teacherName}
                           </p>
-                          <p className="text-[11px] text-on-primary/65">{teacherStatusShort[row.status]}</p>
+                          <p className="text-[11px] opacity-80">{teacherStatusShort[row.status]}</p>
                         </li>
                       ))
                     )}
                   </ul>
                 </div>
-                <div className="min-w-0 rounded-xl bg-on-primary/10 px-3 py-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-primary/80">CPD signals</p>
+                <div className="min-w-0 rounded-xl border border-white/15 bg-white/10 px-3 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] opacity-90">CPD signals</p>
                   <ul className="mt-2 space-y-2">
                     {topCpdPriorities.length === 0 ? (
-                      <li className="text-[13px] leading-snug text-on-primary/75">
+                      <li className="text-[13px] leading-snug opacity-90">
                         No widespread signal decline in this window.
                       </li>
                     ) : (
                       topCpdPriorities.map((row) => (
                         <li key={row.signalKey} className="min-w-0">
-                          <p className="truncate text-[13px] font-medium text-on-primary" title={row.label}>
+                          <p className="truncate text-[13px] font-medium" title={row.label}>
                             {row.label}
                           </p>
-                          <p className="text-[11px] tabular-nums text-on-primary/65">
+                          <p className="text-[11px] tabular-nums opacity-80">
                             {Math.round(row.driftRate * 100)}% drifting · {row.teachersCovered} covered
                           </p>
                         </li>
@@ -460,20 +460,20 @@ export default async function ExplorerPage() {
                   </ul>
                 </div>
                 {canSeeBehaviour && (
-                  <div className="min-w-0 rounded-xl bg-on-primary/10 px-3 py-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-primary/80">Students</p>
+                  <div className="min-w-0 rounded-xl border border-white/15 bg-white/10 px-3 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] opacity-90">Students</p>
                     <ul className="mt-2 space-y-2">
                       {topStudentPriorities.length === 0 ? (
-                        <li className="text-[13px] leading-snug text-on-primary/75">
+                        <li className="text-[13px] leading-snug opacity-90">
                           No urgent or priority band in this window.
                         </li>
                       ) : (
                         topStudentPriorities.map((row) => (
                           <li key={row.studentId} className="min-w-0">
-                            <p className="truncate text-[13px] font-medium text-on-primary" title={row.studentName}>
+                            <p className="truncate text-[13px] font-medium" title={row.studentName}>
                               {row.studentName}
                             </p>
-                            <p className="text-[11px] text-on-primary/65">{row.band}</p>
+                            <p className="text-[11px] opacity-80">{row.band}</p>
                           </li>
                         ))
                       )}
