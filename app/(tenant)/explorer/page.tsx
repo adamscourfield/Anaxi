@@ -764,7 +764,7 @@ export default async function ExplorerPage({
                           return (
                             <td
                               key={k}
-                              className={pivotCellClass(cell.delta, density)}
+                              className={pivotCellClass(cell.delta)}
                               title={pivotCellTooltip(label, cell, windowDays, computedAtStr)}
                             >
                               <div className="flex flex-col items-end gap-0.5">
@@ -878,7 +878,7 @@ export default async function ExplorerPage({
                           return (
                             <td
                               key={k}
-                              className={pivotCellClass(cell.delta, density)}
+                              className={pivotCellClass(cell.delta)}
                               title={pivotCellTooltip(label, cell, windowDays, computedAtStr)}
                             >
                               <div className="flex flex-col items-end gap-0.5">
