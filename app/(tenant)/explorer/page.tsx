@@ -8,6 +8,7 @@ import { MetaText } from "@/components/ui/typography";
 import {
   canViewExplorer,
   canViewBehaviourExplorer,
+  canViewTeacherAnalysis,
 } from "@/modules/authz";
 import { computeTeacherRiskIndex } from "@/modules/analysis/teacherRisk";
 import { computeDepartmentPivot } from "@/modules/analysis/departmentPivot";
@@ -115,6 +116,7 @@ export default async function ExplorerPage() {
     cpdRows,
     obsCount,
     recentObservations,
+    deptMemberships,
     ...behaviourResults
   ] = await Promise.all([
     computeTeacherRiskIndex(user.tenantId, WINDOW_DAYS),
@@ -135,6 +137,10 @@ export default async function ExplorerPage() {
         observer: { select: { fullName: true } },
       },
     }) as Promise<{ id: string; observedAt: Date; yearGroup: string; subject: string; observer: { fullName: string } }[]>,
+    (prisma as any).departmentMembership.findMany({
+      where: { tenantId: user.tenantId },
+      select: { userId: true, departmentId: true },
+    }) as Promise<{ userId: string; departmentId: string }[]>,
     ...(canSeeBehaviour
       ? [
           computeStudentRiskIndex(user.tenantId, WINDOW_DAYS, user.id),
@@ -154,6 +160,35 @@ export default async function ExplorerPage() {
 
   const highPrioritySignals = cpdRows.filter((r) => r.priorityScore > 0.1).length;
   const totalSignals = cpdRows.length;
+
+  const teacherDepts = new Map<string, string[]>();
+  for (const m of deptMemberships as { userId: string; departmentId: string }[]) {
+    if (!teacherDepts.has(m.userId)) teacherDepts.set(m.userId, []);
+    teacherDepts.get(m.userId)!.push(m.departmentId);
+  }
+
+  const visibleTeacherRisk = teacherRiskRows.filter((row) =>
+    canViewTeacherAnalysis(viewerContext, {
+      teacherUserId: row.teacherMembershipId,
+      teacherDepartmentIds: teacherDepts.get(row.teacherMembershipId) ?? [],
+    }),
+  );
+
+  const teacherStatusShort: Record<string, string> = {
+    SIGNIFICANT_DRIFT: "Significant drift",
+    EMERGING_DRIFT: "Emerging drift",
+    STABLE: "Stable",
+    LOW_COVERAGE: "Low coverage",
+  };
+
+  const topTeacherPriorities = visibleTeacherRisk
+    .filter((r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT")
+    .sort((a, b) => b.normalizedIDS - a.normalizedIDS)
+    .slice(0, 3);
+
+  const topCpdPriorities = cpdRows
+    .filter((r) => r.teachersCovered > 0 && r.priorityScore > 0)
+    .slice(0, 3);
 
   let urgentStudents = 0;
   let safeStudents = 0;
@@ -179,6 +214,19 @@ export default async function ExplorerPage() {
     academicLoadPct = attendanceValues.length > 0
       ? Math.round(attendanceValues.reduce((a, b) => a + b, 0) / attendanceValues.length)
       : 0;
+  }
+
+  let topStudentPriorities: { studentId: string; studentName: string; band: string }[] = [];
+  if (canSeeBehaviour && behaviourResults.length >= 1) {
+    const studentResult = behaviourResults[0] as Awaited<ReturnType<typeof computeStudentRiskIndex>>;
+    topStudentPriorities = studentResult.rows
+      .filter((r) => r.band === "PRIORITY" || r.band === "URGENT")
+      .slice(0, 3)
+      .map((r) => ({
+        studentId: r.studentId,
+        studentName: r.studentName,
+        band: r.band === "URGENT" ? "Urgent" : "Priority",
+      }));
   }
 
   // ─── Build intelligence log entries ─────────────────────────────────────────
@@ -351,15 +399,89 @@ export default async function ExplorerPage() {
       {/* ── Priorities Card ────────────────────────────────────────────────── */}
       <div className="mt-4">
         <Link href="/analytics" className="block">
-          <div className="relative flex items-center justify-between rounded-2xl bg-[var(--primary)] p-5 shadow-ambient calm-transition hover:opacity-90">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-primary/70">Analysis</p>
-              <p className="mt-1 text-lg font-bold text-on-primary">Priorities</p>
-              <p className="mt-1 text-sm text-on-primary/70">CPD &amp; Student priorities in one view</p>
-            </div>
-            <svg className="h-8 w-8 text-on-primary/60" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+          <div className="relative rounded-2xl bg-[var(--primary)] p-5 pr-12 shadow-ambient calm-transition hover:opacity-90 sm:pr-14">
+            <svg
+              className="pointer-events-none absolute right-4 top-4 h-7 w-7 text-on-primary/50 sm:h-8 sm:w-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              aria-hidden
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
             </svg>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+              <div className="min-w-0 shrink-0 lg:max-w-[220px]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-primary/70">Analysis</p>
+                <p className="mt-1 text-lg font-bold text-on-primary">Priorities</p>
+                <p className="mt-1 text-sm text-on-primary/70">
+                  Teacher drift, CPD signal focus, and student bands — full detail in Analytics.
+                </p>
+              </div>
+              <div
+                className={`grid min-w-0 flex-1 gap-4 ${canSeeBehaviour ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+              >
+                <div className="min-w-0 rounded-xl bg-on-primary/10 px-3 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-primary/80">Teachers</p>
+                  <ul className="mt-2 space-y-2">
+                    {topTeacherPriorities.length === 0 ? (
+                      <li className="text-[13px] leading-snug text-on-primary/75">No drift flags in this window.</li>
+                    ) : (
+                      topTeacherPriorities.map((row) => (
+                        <li key={row.teacherMembershipId} className="min-w-0">
+                          <p className="truncate text-[13px] font-medium text-on-primary" title={row.teacherName}>
+                            {row.teacherName}
+                          </p>
+                          <p className="text-[11px] text-on-primary/65">{teacherStatusShort[row.status]}</p>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+                <div className="min-w-0 rounded-xl bg-on-primary/10 px-3 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-primary/80">CPD signals</p>
+                  <ul className="mt-2 space-y-2">
+                    {topCpdPriorities.length === 0 ? (
+                      <li className="text-[13px] leading-snug text-on-primary/75">
+                        No widespread signal decline in this window.
+                      </li>
+                    ) : (
+                      topCpdPriorities.map((row) => (
+                        <li key={row.signalKey} className="min-w-0">
+                          <p className="truncate text-[13px] font-medium text-on-primary" title={row.label}>
+                            {row.label}
+                          </p>
+                          <p className="text-[11px] tabular-nums text-on-primary/65">
+                            {Math.round(row.driftRate * 100)}% drifting · {row.teachersCovered} covered
+                          </p>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+                {canSeeBehaviour && (
+                  <div className="min-w-0 rounded-xl bg-on-primary/10 px-3 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-primary/80">Students</p>
+                    <ul className="mt-2 space-y-2">
+                      {topStudentPriorities.length === 0 ? (
+                        <li className="text-[13px] leading-snug text-on-primary/75">
+                          No urgent or priority band in this window.
+                        </li>
+                      ) : (
+                        topStudentPriorities.map((row) => (
+                          <li key={row.studentId} className="min-w-0">
+                            <p className="truncate text-[13px] font-medium text-on-primary" title={row.studentName}>
+                              {row.studentName}
+                            </p>
+                            <p className="text-[11px] text-on-primary/65">{row.band}</p>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </Link>
       </div>
