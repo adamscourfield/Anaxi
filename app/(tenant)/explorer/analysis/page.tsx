@@ -9,6 +9,7 @@ import {
   canViewBehaviourExplorer,
 } from "@/modules/authz";
 import { PageHeader } from "@/components/ui/page-header";
+import { MetaText } from "@/components/ui/typography";
 import { StatusPill } from "@/components/ui/status-pill";
 import { computeBehaviourAnalysis } from "@/modules/analysis/behaviourAnalysis";
 import { BehaviourAnalysisFilters } from "./BehaviourAnalysisFilters";
@@ -42,6 +43,19 @@ function fmtSnapshotDate(d: Date): string {
   });
 }
 
+function sectionHeader(title: string, subtitle?: string) {
+  return (
+    <div className="px-6 py-4 sm:px-8 sm:py-5">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
+        {title}
+      </p>
+      {subtitle ? (
+        <p className="mt-1 max-w-2xl text-[0.8125rem] leading-relaxed text-muted">{subtitle}</p>
+      ) : null}
+    </div>
+  );
+}
+
 /* ─── Page ─────────────────────────────────────────────────────────────────── */
 
 export default async function AnalysisPage({
@@ -53,7 +67,6 @@ export default async function AnalysisPage({
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
 
-  // ── viewer context ──────────────────────────────────────────────
   const [hodMemberships, coachAssignments] = await Promise.all([
     (prisma as any).departmentMembership.findMany({
       where: { userId: user.id, isHeadOfDepartment: true },
@@ -82,7 +95,6 @@ export default async function AnalysisPage({
   )
     notFound();
 
-  // ── params ──────────────────────────────────────────────────────
   const windowDays = parseWindow(
     Array.isArray(params.windowDays) ? params.windowDays[0] : params.windowDays,
   );
@@ -91,7 +103,6 @@ export default async function AnalysisPage({
   const ppFilter = params.pp === "1";
   const sendFilter = params.send === "1";
 
-  // ── tenant settings + features ────────────────────────────────────
   const [tenantSettings, onCallFeature] = await Promise.all([
     (prisma as any).tenantSettings.findUnique({
       where: { tenantId: user.tenantId },
@@ -115,7 +126,6 @@ export default async function AnalysisPage({
   const suspensionPlural = pluralLabel(labels.suspension);
   const onCallPlural = pluralLabel(labels.onCall);
 
-  // ── data ────────────────────────────────────────────────────────
   const result = await computeBehaviourAnalysis(
     user.tenantId,
     windowDays,
@@ -130,7 +140,6 @@ export default async function AnalysisPage({
   const { summary } = result;
   const topTeachers = result.onCallByTeacher.slice(0, 10);
 
-  // ── year groups (for filter dropdown) ───────────────────────────
   const allStudents = await (prisma as any).student.findMany({
     where: { tenantId: user.tenantId, status: "ACTIVE" },
     select: { yearGroup: true },
@@ -144,73 +153,47 @@ export default async function AnalysisPage({
   const hasActiveFilters = !!yearGroupFilter || ppFilter || sendFilter;
   const clearHref = `/explorer/analysis?windowDays=${windowDays}`;
 
-  type SummaryTile = {
-    key: string;
-    title: string;
-    value: ReactNode;
-    valueClass?: string;
-    footnote?: string;
-  };
+  const computedAtStr = result.computedAt.toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-  const summaryTiles: SummaryTile[] = [
-    {
-      key: "students",
-      title: "Total students",
-      value: summary.totalStudents,
-    },
-    {
-      key: "attendance",
-      title: "Avg attendance",
-      value:
-        summary.attendanceMean !== null ? `${summary.attendanceMean.toFixed(1)}%` : "—",
-    },
-  ];
-
-  if (summary.hasPositivePoints) {
-    summaryTiles.push({
-      key: "pos",
-      title: labels.positivePoints,
-      value: summary.totalPositivePoints.toLocaleString(),
-      valueClass: "text-scale-strong-text",
-    });
-  }
-  if (summary.hasNegativePoints) {
-    summaryTiles.push({
-      key: "neg",
-      title: labels.negativePoints,
-      value: summary.totalNegativePoints.toLocaleString(),
-      valueClass: "text-scale-limited-text",
-    });
-  }
-
-  summaryTiles.push(
-    {
-      key: "det",
-      title: detentionPlural,
-      value: summary.totalDetentions.toLocaleString(),
-    },
+  type SecondaryStat = { key: string; label: string; value: ReactNode; valueClass?: string };
+  const secondaryStats: SecondaryStat[] = [
+    { key: "det", label: detentionPlural, value: summary.totalDetentions.toLocaleString() },
     {
       key: "ie",
-      title: internalExclusionPlural,
+      label: internalExclusionPlural,
       value: summary.totalInternalExclusions.toLocaleString(),
     },
     {
-      key: "oc",
-      title: `${onCallPlural} (snapshots)`,
-      value: summary.totalOnCalls,
+      key: "sus",
+      label: suspensionPlural,
+      value: summary.totalSuspensions.toLocaleString(),
     },
-    {
-      key: "hp",
-      title: "High priority",
-      value: summary.highPriorityCount,
-      footnote: "Urgent & priority bands",
-    },
-  );
+  ];
+  if (summary.hasPositivePoints) {
+    secondaryStats.push({
+      key: "pos",
+      label: labels.positivePoints,
+      value: summary.totalPositivePoints.toLocaleString(),
+      valueClass: "text-[var(--scale-strong-text)]",
+    });
+  }
+  if (summary.hasNegativePoints) {
+    secondaryStats.push({
+      key: "neg",
+      label: labels.negativePoints,
+      value: summary.totalNegativePoints.toLocaleString(),
+      valueClass: "text-[var(--scale-limited-text)]",
+    });
+  }
 
-  // ── render ──────────────────────────────────────────────────────
   return (
     <>
-      {/* Back link */}
       <div className="mb-4">
         <Link
           href="/explorer"
@@ -225,17 +208,78 @@ export default async function AnalysisPage({
 
       <PageHeader
         title="Behaviour analysis"
-        subtitle="School behaviour and attendance — on-call patterns, points, sanctions, and students in urgent or priority pastoral bands."
+        subtitle="Cohort behaviour, attendance, and on-call patterns for the selected window."
         meta={
-          <span className="text-xs text-muted">
-            {windowDays}d window · {summary.totalStudents} student
-            {summary.totalStudents !== 1 ? "s" : ""} · Updated{" "}
-            {result.computedAt.toLocaleDateString("en-GB")}
-          </span>
+          <MetaText>
+            {windowDays}d window · {summary.totalStudents.toLocaleString()} students · Updated {computedAtStr}
+          </MetaText>
         }
       />
 
-      <div className="mt-6">
+      {/* Cohort overview — matches Explorer / Students glass + metric typography */}
+      <div className="mb-8 rounded-2xl glass-card p-6 sm:p-8">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-border/25">
+          <div className="lg:pr-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Cohort</p>
+            <p className="mt-2 text-[2.75rem] font-bold leading-none tracking-tight text-text sm:text-[3.25rem]">
+              {summary.totalStudents.toLocaleString()}
+            </p>
+            <p className="mt-2 text-[0.8125rem] text-muted">Students in this filter</p>
+          </div>
+
+          <div className="sm:pl-0 lg:px-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Avg attendance</p>
+            <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-text sm:text-[2.125rem]">
+              {summary.attendanceMean !== null ? `${summary.attendanceMean.toFixed(1)}%` : "—"}
+            </p>
+            <p className="mt-2 text-[0.8125rem] text-muted">Mean on latest snapshot in window</p>
+          </div>
+
+          <div className="sm:pl-0 lg:px-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">High priority</p>
+            <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-text sm:text-[2.125rem]">
+              {summary.highPriorityCount}
+            </p>
+            <p className="mt-2 text-[0.8125rem] text-muted">Urgent &amp; priority pastoral bands</p>
+          </div>
+
+          <div className="sm:pl-0 lg:pl-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              {onCallPlural} (imports)
+            </p>
+            <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-text sm:text-[2.125rem]">
+              {summary.totalOnCalls}
+            </p>
+            <p className="mt-2 text-[0.8125rem] text-muted">Snapshot totals · not live requests</p>
+          </div>
+        </div>
+
+        {secondaryStats.length > 0 && (
+          <>
+            <div className="styled-divider my-8" />
+            <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              Sanctions &amp; points
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {secondaryStats.map((s) => (
+                <div
+                  key={s.key}
+                  className="rounded-xl bg-[var(--surface-container-low)] px-4 py-3.5 shadow-sm"
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{s.label}</p>
+                  <p
+                    className={`mt-1.5 text-xl font-bold tabular-nums tracking-tight text-[var(--on-surface)] ${s.valueClass ?? ""}`}
+                  >
+                    {s.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="mb-6">
         <BehaviourAnalysisFilters
           yearGroups={yearGroups}
           defaults={{
@@ -249,256 +293,212 @@ export default async function AnalysisPage({
         />
       </div>
 
-      {/* ── Summary stats (uniform card height) ───────────────────────── */}
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-        {summaryTiles.map((tile) => (
-          <div
-            key={tile.key}
-            className="flex min-h-[7.5rem] flex-col justify-between rounded-2xl bg-surface p-4 shadow-ambient"
-          >
-            <div>
-              <p className="text-sm font-medium text-muted">{tile.title}</p>
-              <p
-                className={`mt-2 text-2xl font-bold tabular-nums text-text ${tile.valueClass ?? ""}`}
-              >
-                {tile.value}
-              </p>
-            </div>
-            {tile.footnote ? (
-              <p className="mt-2 text-[0.6875rem] leading-snug text-muted">{tile.footnote}</p>
-            ) : (
-              <span className="mt-2 block min-h-[1rem]" aria-hidden />
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* ── On Call Analysis (live requests; requires ON_CALL feature) ── */}
-      <div className="mt-6 overflow-hidden rounded-2xl glass-card">
-        <div className="border-b border-border/30 px-6 py-4">
-          <h2 className="text-base font-semibold text-text">{onCallPlural} (live requests)</h2>
-          <p className="mt-1 text-[0.8125rem] text-muted">
-            Requests logged in this window. Chart shows 8am–3pm only. Snapshot totals are in the summary cards above.
-          </p>
-        </div>
+      {/* Live on-call */}
+      <div className="mb-8 overflow-hidden rounded-2xl glass-card">
+        {sectionHeader(
+          `${onCallPlural} · live`,
+          "Requests in this window. Charts use school hours 8am–3pm. Use bars to open details.",
+        )}
 
         {!hasOnCallFeature ? (
-          <div className="p-6">
-            <p className="text-sm text-muted">
-              The on-call workflow is not enabled for this school. Enable the On Call feature to see request timing and
-              teacher breakdowns; imported snapshot data still includes on-call counts.
+          <div className="border-t border-[var(--divider-subtle)] px-6 py-6 sm:px-8">
+            <p className="text-sm leading-relaxed text-muted">
+              On-call workflow is not enabled for this school. Enable the feature to see timing and teacher
+              breakdowns; imported snapshots still include on-call counts in the overview above.
             </p>
           </div>
         ) : (
           <>
-            <OnCallBreakdownCharts
-              onCallByHour={result.onCallByHour}
-              onCallByReason={result.onCallByReason}
-              details={result.onCallRequestDetails}
-            />
+            <div className="border-t border-[var(--divider-subtle)]">
+              <OnCallBreakdownCharts
+                onCallByHour={result.onCallByHour}
+                onCallByReason={result.onCallByReason}
+                details={result.onCallRequestDetails}
+              />
+            </div>
 
-            <div className="border-t border-border/30 px-6 pb-6">
-              <h3 className="mb-3 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">
-                Top teachers (by requests)
-              </h3>
+            <div className="border-t border-[var(--divider-subtle)] px-6 py-6 sm:px-8">
+              <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                Most frequent requesters
+              </p>
               {topTeachers.length > 0 ? (
-                <div className="overflow-hidden rounded-xl border border-border/20">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border/30 bg-surface-container-lowest/40 text-left text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-                        <th className="px-3 py-2">Teacher</th>
-                        <th className="px-3 py-2 text-right">Requests</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {topTeachers.map((row) => (
-                        <tr
-                          key={row.teacherId}
-                          className="border-b border-border/20 last:border-0 calm-transition hover:bg-surface-container-lowest/50"
-                        >
-                          <td className="px-3 py-2 font-medium text-text">{row.teacherName}</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-muted">{row.count}</td>
+                <div className="table-shell">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="table-head-row text-left">
+                          <th className="px-5 py-3">Teacher</th>
+                          <th className="px-4 py-3 text-right">Requests</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {topTeachers.map((row) => (
+                          <tr key={row.teacherId} className="table-row calm-transition">
+                            <td className="px-5 py-4 font-medium text-text">{row.teacherName}</td>
+                            <td className="px-4 py-4 text-right tabular-nums text-muted">{row.count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
-                <p className="text-sm text-muted">No on-call requests in this window for the filtered cohort.</p>
+                <p className="text-sm text-muted">No on-call requests for this cohort in the window.</p>
               )}
             </div>
           </>
         )}
       </div>
 
-      {/* ── Suspensions (snapshot detail) ── */}
-      <div className="mt-6 overflow-hidden rounded-2xl glass-card">
-        <div className="border-b border-border/30 px-6 py-4">
-          <h2 className="text-base font-semibold text-text">{suspensionPlural}</h2>
-          <p className="mt-1 text-[0.8125rem] text-muted">
-            Students with at least one suspension on their latest snapshot in this window ({summary.totalSuspensions}{" "}
-            total incidents recorded).
-          </p>
-        </div>
+      {/* Suspensions */}
+      <div className="mb-8 overflow-hidden rounded-2xl glass-card">
+        {sectionHeader(
+          suspensionPlural,
+          `Students with at least one suspension on their latest snapshot (${summary.totalSuspensions.toLocaleString()} total on those records).`,
+        )}
 
         {result.suspensionIncidents.length === 0 ? (
-          <div className="p-6">
+          <div className="border-t border-[var(--divider-subtle)] px-6 py-8 text-center sm:px-8">
             <p className="text-sm text-muted">No suspensions on the latest snapshot for this cohort.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto p-6 pt-4">
-            <table className="w-full min-w-[520px] text-sm">
-              <thead>
-                <tr className="border-b border-border/30 bg-surface-container-lowest/40 text-left text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-                  <th className="px-4 py-3">Student</th>
-                  <th className="px-4 py-3">Year</th>
-                  <th className="px-4 py-3 text-right">Count</th>
-                  <th className="px-4 py-3">Snapshot date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.suspensionIncidents.map((row) => (
-                  <tr
-                    key={`${row.studentId}-${row.snapshotDate.toISOString()}`}
-                    className="border-b border-border/20 last:border-0 calm-transition hover:bg-surface-container-lowest/50"
-                  >
-                    <td className="px-4 py-3 font-medium text-text">
-                      <Link
-                        href={`/students/${row.studentId}`}
-                        className="calm-transition hover:text-accent hover:underline"
+          <div className="border-t border-[var(--divider-subtle)] p-6 sm:p-8 sm:pt-6">
+            <div className="table-shell">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[480px] text-sm">
+                  <thead>
+                    <tr className="table-head-row text-left">
+                      <th className="px-5 py-3">Student</th>
+                      <th className="px-4 py-3">Year</th>
+                      <th className="px-4 py-3 text-right">Count</th>
+                      <th className="px-4 py-3">Snapshot</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.suspensionIncidents.map((row) => (
+                      <tr
+                        key={`${row.studentId}-${row.snapshotDate.toISOString()}`}
+                        className="table-row calm-transition"
                       >
-                        {row.studentName}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-muted">{row.yearGroup ?? "—"}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">{row.suspensionsCount}</td>
-                    <td className="px-4 py-3 tabular-nums text-muted">{fmtSnapshotDate(row.snapshotDate)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        <td className="px-5 py-4 font-medium text-text">
+                          <Link
+                            href={`/students/${row.studentId}`}
+                            className="calm-transition hover:text-accent hover:underline"
+                          >
+                            {row.studentName}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-4 text-muted">{row.yearGroup ?? "—"}</td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">{row.suspensionsCount}</td>
+                        <td className="px-4 py-4 tabular-nums text-muted">{fmtSnapshotDate(row.snapshotDate)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
-      {/* ── High priority students (urgent / priority pastoral bands) ── */}
-      <div className="mt-6 overflow-hidden rounded-2xl glass-card">
-        <div className="border-b border-border/30 px-6 py-4">
-          <h2 className="text-base font-semibold text-text">
-            High priority students
-            {summary.highPriorityCount > 0 && (
-              <span className="ml-2 text-sm font-normal text-muted">
-                ({summary.highPriorityCount})
-              </span>
-            )}
-          </h2>
-          <p className="mt-1 text-[0.8125rem] text-muted">
-            Students in urgent or priority bands from the pastoral risk model for this window (same logic as Explorer
-            students).
-          </p>
-        </div>
+      {/* High priority */}
+      <div className="mb-8 overflow-hidden rounded-2xl glass-card">
+        {sectionHeader(
+          "High priority students",
+          "Urgent and priority bands from the pastoral risk model (aligned with Explorer → Students).",
+        )}
 
         {result.highPriorityStudents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <p className="text-[0.875rem] font-semibold text-text">
-              No students in urgent or priority bands
-            </p>
-            <p className="mt-1 text-[0.8125rem] text-muted">
+          <div className="flex flex-col items-center justify-center border-t border-[var(--divider-subtle)] py-14">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+              <svg className="h-6 w-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                <circle cx="11" cy="11" r="6.5" />
+                <path d="m16.5 16.5 3 3" strokeLinecap="round" />
+              </svg>
+            </div>
+            <p className="text-[0.875rem] font-semibold text-text">No students in urgent or priority bands</p>
+            <p className="mt-1 max-w-sm text-center text-[0.8125rem] text-muted">
               Widen filters or check back after the next data import.
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/30 bg-surface-container-lowest/40 text-left text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-                  <th className="px-5 py-3">Student</th>
-                  <th className="px-4 py-3">Band</th>
-                  <th className="px-4 py-3">Year</th>
-                  <th className="px-4 py-3">Flags</th>
-                  <th className="px-4 py-3 text-right">Attendance</th>
-                  <th className="px-4 py-3 text-right">{detentionPlural}</th>
-                  <th className="px-4 py-3 text-right">{internalExclusionPlural}</th>
-                  <th className="px-4 py-3 text-right">{onCallPlural}</th>
-                  {summary.hasPositivePoints && (
-                    <th className="px-4 py-3 text-right">{labels.positivePoints}</th>
-                  )}
-                  {summary.hasNegativePoints && (
-                    <th className="px-4 py-3 text-right">{labels.negativePoints}</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {result.highPriorityStudents.map((student) => (
-                  <tr
-                    key={student.studentId}
-                    className="group border-b border-border/20 last:border-0 calm-transition hover:bg-surface-container-lowest/50"
-                  >
-                    <td className="px-5 py-3 font-medium text-text">
-                      <Link
-                        href={`/analysis/students/${student.studentId}?window=${windowDays}`}
-                        className="calm-transition group-hover:text-accent hover:underline"
-                      >
-                        {student.studentName}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusPill
-                        variant={student.band === "URGENT" ? "error" : "warning"}
-                        size="sm"
-                      >
-                        {student.band === "URGENT" ? "Urgent" : "Priority"}
-                      </StatusPill>
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {student.yearGroup ?? "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1.5">
-                        {student.ppFlag && (
-                          <StatusPill variant="info" size="sm">PP</StatusPill>
+          <div className="border-t border-[var(--divider-subtle)] p-6 sm:p-8 sm:pt-6">
+            <div className="table-shell">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="table-head-row text-left">
+                      <th className="px-5 py-3">Student</th>
+                      <th className="px-4 py-3">Band</th>
+                      <th className="px-4 py-3">Year</th>
+                      <th className="px-4 py-3">Flags</th>
+                      <th className="px-4 py-3 text-right">Attendance</th>
+                      <th className="px-4 py-3 text-right">{detentionPlural}</th>
+                      <th className="px-4 py-3 text-right">{internalExclusionPlural}</th>
+                      <th className="px-4 py-3 text-right">{onCallPlural}</th>
+                      {summary.hasPositivePoints && (
+                        <th className="px-4 py-3 text-right">{labels.positivePoints}</th>
+                      )}
+                      {summary.hasNegativePoints && (
+                        <th className="px-4 py-3 text-right">{labels.negativePoints}</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.highPriorityStudents.map((student) => (
+                      <tr key={student.studentId} className="group table-row calm-transition">
+                        <td className="px-5 py-4 font-medium text-text">
+                          <Link
+                            href={`/analysis/students/${student.studentId}?window=${windowDays}`}
+                            className="calm-transition group-hover:text-accent hover:underline"
+                          >
+                            {student.studentName}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-4">
+                          <StatusPill
+                            variant={student.band === "URGENT" ? "error" : "warning"}
+                            size="sm"
+                          >
+                            {student.band === "URGENT" ? "Urgent" : "Priority"}
+                          </StatusPill>
+                        </td>
+                        <td className="px-4 py-4 text-muted">{student.yearGroup ?? "—"}</td>
+                        <td className="px-4 py-4">
+                          <div className="flex gap-1.5">
+                            {student.ppFlag && <StatusPill variant="info" size="sm">PP</StatusPill>}
+                            {student.sendFlag && <StatusPill variant="warning" size="sm">SEND</StatusPill>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">
+                          {student.attendancePct !== null ? `${student.attendancePct.toFixed(1)}%` : "—"}
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">{student.detentionsCount}</td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">
+                          {student.internalExclusionsCount}
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">{student.onCallsCount}</td>
+                        {summary.hasPositivePoints && (
+                          <td className="px-4 py-4 text-right tabular-nums text-muted">
+                            {student.positivePointsTotal}
+                          </td>
                         )}
-                        {student.sendFlag && (
-                          <StatusPill variant="warning" size="sm">SEND</StatusPill>
+                        {summary.hasNegativePoints && (
+                          <td className="px-4 py-4 text-right tabular-nums text-muted">
+                            {student.negativePointsTotal}
+                          </td>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {student.attendancePct !== null
-                        ? `${student.attendancePct.toFixed(1)}%`
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {student.detentionsCount}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {student.internalExclusionsCount}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {student.onCallsCount}
-                    </td>
-                    {summary.hasPositivePoints && (
-                      <td className="px-4 py-3 text-right tabular-nums text-muted">
-                        {student.positivePointsTotal}
-                      </td>
-                    )}
-                    {summary.hasNegativePoints && (
-                      <td className="px-4 py-3 text-right tabular-nums text-muted">
-                        {student.negativePointsTotal}
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* ── Footer ──────────────────────────────────────────────── */}
-      <p className="mt-8 text-[0.75rem] text-muted">
-        Explorer · Behaviour analysis · {windowDays}d window
-      </p>
+      <MetaText className="mt-2">Explorer · Behaviour analysis · {windowDays}d window</MetaText>
     </>
   );
 }

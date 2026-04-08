@@ -23,10 +23,13 @@ export function BehaviourAnalysisFilters({
   hasActiveFilters,
   buildClearHref,
 }: Props) {
-  const triggerWhite = "!bg-surface-container-lowest rounded-[10px]";
+  const triggerField = "!rounded-xl !border !border-border/35 !bg-[var(--surface-container-lowest)] !shadow-none";
 
   return (
-    <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+    <div className="rounded-2xl glass-card p-5 md:p-6">
+      <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
+        Filters
+      </p>
       <form
         method="get"
         action="/explorer/analysis"
@@ -38,7 +41,7 @@ export function BehaviourAnalysisFilters({
             name="windowDays"
             defaultValue={String(defaults.windowDays)}
             placeholder="Window"
-            triggerClassName={triggerWhite}
+            triggerClassName={triggerField}
             options={VALID_WINDOWS.map((w) => ({ value: String(w), label: `${w} days` }))}
           />
         </label>
@@ -49,44 +52,44 @@ export function BehaviourAnalysisFilters({
             name="yearGroup"
             defaultValue={defaults.yearGroup}
             placeholder="All years"
-            triggerClassName={triggerWhite}
+            triggerClassName={triggerField}
             options={[{ value: "", label: "All years" }, ...yearGroups.map((yg) => ({ value: yg, label: yg }))]}
           />
         </label>
 
-        <label className="flex min-w-0 items-center gap-2 rounded-[10px] border border-border/40 bg-surface-container-lowest px-3 py-2.5 lg:flex-none">
+        <label className="flex min-w-0 items-center gap-2.5 rounded-xl border border-border/35 bg-[var(--surface-container-lowest)] px-3.5 py-2.5 lg:flex-none">
           <input
             type="checkbox"
             name="pp"
             value="1"
             defaultChecked={defaults.pp}
-            className="h-4 w-4 rounded border-border accent-accent"
+            className="h-4 w-4 rounded border-border/50 accent-[var(--primary)]"
           />
-          <span className="text-[0.8125rem] font-medium text-text">PP</span>
+          <span className="text-[0.8125rem] font-medium text-[var(--on-surface)]">PP</span>
         </label>
 
-        <label className="flex min-w-0 items-center gap-2 rounded-[10px] border border-border/40 bg-surface-container-lowest px-3 py-2.5 lg:flex-none">
+        <label className="flex min-w-0 items-center gap-2.5 rounded-xl border border-border/35 bg-[var(--surface-container-lowest)] px-3.5 py-2.5 lg:flex-none">
           <input
             type="checkbox"
             name="send"
             value="1"
             defaultChecked={defaults.send}
-            className="h-4 w-4 rounded border-border accent-accent"
+            className="h-4 w-4 rounded border-border/50 accent-[var(--primary)]"
           />
-          <span className="text-[0.8125rem] font-medium text-text">SEND</span>
+          <span className="text-[0.8125rem] font-medium text-[var(--on-surface)]">SEND</span>
         </label>
 
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
           <button
             type="submit"
-            className="field flex w-full items-center justify-center border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-[var(--primary)] px-5 py-2.5 text-[0.8125rem] font-semibold text-on-primary shadow-ambient calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
           >
-            Apply Filters
+            Apply filters
           </button>
           {hasActiveFilters && (
             <Link
               href={buildClearHref}
-              className="field flex w-full items-center justify-center border border-border/40 bg-surface-container-lowest py-2.5 text-center text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[100px] lg:w-auto"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-border/40 bg-[var(--surface-container-lowest)] px-4 py-2.5 text-center text-[0.8125rem] font-medium text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text sm:min-w-[100px] lg:w-auto"
             >
               Clear
             </Link>
