@@ -170,4 +170,38 @@ describe("parseSnapshotCsv", () => {
     const { rows } = parseSnapshotCsv(validCsv, mapping, importDate);
     expect(rows[0].snapshotDate.toISOString()).toBe("2026-01-15T00:00:00.000Z");
   });
+
+  it("parses NegativePoints when column is mapped", () => {
+    const mappingWithNeg = {
+      fieldMap: {
+        ...mapping.fieldMap,
+        NegativePoints: "NegativePoints",
+      },
+      fixedCountScope: "TERM_TO_DATE" as const,
+    };
+    const csv = [
+      "UPN,Name,YearGroup,Attendance,Lates,Detentions,InternalExclusions,Suspensions,OnCalls,PositivePoints,NegativePoints,SEND,PP",
+      "U001,Alice Jones,Y10,96.5,1,2,0,0,1,10,5,Yes,No",
+    ].join("\n");
+    const { rows, errors } = parseSnapshotCsv(csv, mappingWithNeg);
+    expect(errors).toHaveLength(0);
+    expect(rows[0].negativePoints).toBe(5);
+  });
+
+  it("defaults negativePoints to 0 when column not mapped", () => {
+    const { rows } = parseSnapshotCsv(validCsv, mapping);
+    expect(rows[0].negativePoints).toBe(0);
+  });
+});
+
+describe("suggestMapping — NegativePoints", () => {
+  it("suggests NegativePoints from 'Demerits'", () => {
+    const result = suggestMapping(["UPN", "Name", "Demerits"]);
+    expect(result.NegativePoints).toBe("Demerits");
+  });
+
+  it("suggests NegativePoints from 'NegativePoints'", () => {
+    const result = suggestMapping(["UPN", "Name", "NegativePoints"]);
+    expect(result.NegativePoints).toBe("NegativePoints");
+  });
 });
