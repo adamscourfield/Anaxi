@@ -72,6 +72,14 @@ function WatermarkDiamond() {
   );
 }
 
+function WatermarkChartBars() {
+  return (
+    <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-28 w-28 text-black/[0.06]" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M4 19h3v-8H4v8zm5 0h3V5H9v14zm5 0h3v-5h-3v5z" />
+    </svg>
+  );
+}
+
 /* ─── Time-ago helper ──────────────────────────────────────────────────────── */
 function timeAgo(date: Date): string {
   const now = new Date();
@@ -496,7 +504,7 @@ export default async function ExplorerPage() {
             Behaviour &amp; Welfare
           </h2>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 items-stretch">
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3 items-stretch">
             {/* Students Card */}
             <Link href="/explorer/students" className="block">
               <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
@@ -558,6 +566,25 @@ export default async function ExplorerPage() {
                 </div>
               </div>
             </Link>
+
+            {/* Behaviour Analysis Card (summary only; not linked yet) */}
+            <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient">
+              <WatermarkChartBars />
+              <p className="text-lg font-semibold text-[var(--on-surface)]">Behaviour Analysis</p>
+              <div className="mt-3 flex items-baseline gap-3">
+                <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
+                  {urgentStudents}
+                </span>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">Urgent Priority</p>
+                  <p className="text-[11px] text-[var(--on-surface-variant)]">Urgent &amp; priority bands</p>
+                </div>
+              </div>
+              <div className="mt-8">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Assessment window</p>
+                <p className="mt-1 text-xs text-[var(--on-surface-variant)]">Pastoral bands over the last {WINDOW_DAYS} days</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
