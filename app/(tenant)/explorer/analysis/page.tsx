@@ -421,7 +421,7 @@ export default async function AnalysisPage({
                 </table>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 
