@@ -90,25 +90,32 @@ function fmtDelta(val: number | null, decimals = 2): string {
   return `${val > 0 ? "+" : ""}${val.toFixed(decimals)}`;
 }
 
+/** Visual threshold for signal-cell accent treatment */
+const VISUAL_THRESHOLD = 0.15;
+
+function pivotCellClass(delta: number | null): string {
+  const pad = "px-3 py-3";
+  if (delta !== null && delta < -VISUAL_THRESHOLD) {
+    return `${pad} tabular-nums border-l-2 border-amber-300 bg-amber-50/40`;
+  }
+  return `${pad} tabular-nums`;
+}
+
+/* Watermark icons for Pastoral Pulse section */
+function WatermarkGradCap() {
+  return (
+    <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-32 w-32 text-black/[0.06]" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
+    </svg>
+  );
+}
+
 function WatermarkChart() {
   return (
     <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-28 w-28 text-black/[0.06]" fill="currentColor" viewBox="0 0 24 24">
       <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
     </svg>
   );
-}
-
-/* ─── Time-ago helper ──────────────────────────────────────────────────────── */
-function timeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins} mins ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 function pivotCellTooltip(
@@ -176,76 +183,14 @@ export default async function ExplorerPage({
   const [departments, settings] = await Promise.all([
     (prisma as any).department.findMany({
       where: { tenantId: user.tenantId },
-      orderBy: { observedAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        observedAt: true,
-        yearGroup: true,
-        subject: true,
-        observer: { select: { fullName: true } },
-      },
-    }) as Promise<{ id: string; observedAt: Date; yearGroup: string; subject: string; observer: { fullName: string } }[]>,
-    ...(canSeeBehaviour
-      ? [
-          computeStudentRiskIndex(user.tenantId, WINDOW_DAYS, user.id),
-          computeCohortPivot(user.tenantId, WINDOW_DAYS),
-          (prisma as any).onCallRequest.count({
-            where: { tenantId: user.tenantId, createdAt: { gte: since } },
-          }) as Promise<number>,
-          (prisma as any).studentWatchlist.findMany({
-            where: { tenantId: user.tenantId },
-            select: { studentId: true },
-            distinct: ["studentId"],
-          }) as Promise<{ studentId: string }[]>,
-        ]
-      : []),
+      orderBy: { name: "asc" },
+    }),
+    (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } }),
   ]);
 
-  // ─── Derive summary stats ───────────────────────────────────────────────────
-  const driftingTeachers = teacherRiskRows.filter(
-    (r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT",
-  ).length;
-  const totalTeachers = teacherRiskRows.length;
-
-  const totalDepartments = deptResult.rows.length;
-  const totalObsAcrossDepts = deptResult.rows.reduce((s, r) => s + r.observationCount, 0);
-
-  const highPrioritySignals = cpdRows.filter((r) => r.priorityScore > 0.1).length;
-  const totalSignals = cpdRows.length;
-
-  let urgentStudents = 0;
-  let safeStudents = 0;
-  let totalStudents = 0;
-  let yearGroupCount = 0;
-  let academicLoadPct = 0;
-  let onCallCount = 0;
-  let highPriorityCount = 0;
-
-  if (canSeeBehaviour && behaviourResults.length >= 2) {
-    const studentResult = behaviourResults[0] as Awaited<ReturnType<typeof computeStudentRiskIndex>>;
-    const cohortResult = behaviourResults[1] as Awaited<ReturnType<typeof computeCohortPivot>>;
-
-    urgentStudents = studentResult.rows.filter(
-      (r) => r.band === "PRIORITY" || r.band === "URGENT",
-    ).length;
-    totalStudents = studentResult.rows.length;
-    safeStudents = totalStudents - urgentStudents;
-    yearGroupCount = cohortResult.rows.length;
-
-    // Compute academic load as average attendance across cohorts
-    const attendanceValues = cohortResult.rows
-      .map((r) => r.attendanceMean)
-      .filter((v): v is number => v !== null);
-    academicLoadPct = attendanceValues.length > 0
-      ? Math.round(attendanceValues.reduce((a, b) => a + b, 0) / attendanceValues.length)
-      : 0;
-
-    if (behaviourResults.length >= 4) {
-      onCallCount = behaviourResults[2] as number;
-      highPriorityCount = (behaviourResults[3] as { studentId: string }[]).length;
-    }
-  }
+  // Check if behaviour views are blocked for current view
+  const isBehaviourView = view === "BEHAVIOUR_STUDENTS_TABLE" || view === "BEHAVIOUR_COHORTS_PIVOT";
+  if (isBehaviourView && !canSeeBehaviour) notFound();
 
   // ─── Fetch data for the current view ────────────────────────────────────────
 
@@ -366,6 +311,38 @@ export default async function ExplorerPage({
     computedAt = result.computedAt;
     if (filterYearGroup) cohortRows = cohortRows.filter((r) => r.yearGroup === filterYearGroup);
   }
+
+  // ─── Fetch behaviour summary data for Pastoral Pulse section ────────────────
+  let urgentStudents = 0;
+  let totalStudents = 0;
+  let onCallCount = 0;
+  let highPriorityCount = 0;
+
+  if (canSeeBehaviour) {
+    const since = new Date();
+    since.setDate(since.getDate() - windowDays);
+
+    const [studentResult, onCalls, watchlistEntries] = await Promise.all([
+      computeStudentRiskIndex(user.tenantId, windowDays, user.id),
+      (prisma as any).onCallRequest.count({
+        where: { tenantId: user.tenantId, createdAt: { gte: since } },
+      }) as Promise<number>,
+      (prisma as any).studentWatchlist.findMany({
+        where: { tenantId: user.tenantId },
+        select: { studentId: true },
+        distinct: ["studentId"],
+      }) as Promise<{ studentId: string }[]>,
+    ]);
+
+    urgentStudents = studentResult.rows.filter(
+      (r) => r.band === "PRIORITY" || r.band === "URGENT",
+    ).length;
+    totalStudents = studentResult.rows.length;
+    onCallCount = onCalls;
+    highPriorityCount = watchlistEntries.length;
+  }
+
+  const highPrioritySignals = cpdRows.filter((r) => r.priorityScore > 0.1).length;
 
   const computedAtStr = computedAt.toLocaleString("en-GB", {
     day: "numeric",
@@ -582,36 +559,6 @@ export default async function ExplorerPage({
         </Link>
       </div>
 
-      {/* ── Results area ──────────────────────────────────────────────────────── */}
-
-      {/* INSTRUCTION_TEACHERS_PIVOT */}
-      {view === "INSTRUCTION_TEACHERS_PIVOT" && (
-        <Card className="overflow-x-auto p-0">
-          <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-            <div>
-              <SectionHeader title="Teachers" />
-              <MetaText>{teacherPivotRows.length} teacher{teacherPivotRows.length !== 1 ? "s" : ""} in scope</MetaText>
-            </div>
-            {canExport ? (
-              <form action="/api/explorer/export" method="POST">
-                <input type="hidden" name="view" value={view} />
-                <input type="hidden" name="windowDays" value={String(windowDays)} />
-                <input type="hidden" name="departmentId" value={filterDepartmentId} />
-                <input type="hidden" name="yearGroup" value={filterYearGroup} />
-                <input type="hidden" name="teacherMembershipId" value={filterTeacherId} />
-                <input type="hidden" name="subject" value={filterSubject} />
-                <input type="hidden" name="studentSearch" value={studentSearch} />
-                <button type="submit" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white text-muted calm-transition hover:border-accentHover hover:text-text" title="Download CSV" aria-label="Download CSV">
-                  <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10 3v8m0 0 3-3m-3 3-3-3M4 13.5v1A1.5 1.5 0 0 0 5.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </form>
-            ) : null}
-          </div>
-        </Link>
-      </div>
-
       {/* ── Pastoral Pulse: Behaviour & Welfare ────────────────────────────── */}
       {canSeeBehaviour && (
         <div className="mt-12">
@@ -643,6 +590,105 @@ export default async function ExplorerPage({
                     <div className="mt-1 flex items-baseline gap-1.5">
                       <span className="text-xl font-bold text-[var(--on-surface)]">{urgentStudents}</span>
                       <span className="text-xs text-[var(--on-surface-variant)]">students</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            {/* Analysis Card */}
+            <Link href="/explorer/analysis" className="block">
+              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
+                <WatermarkChart />
+                <p className="text-lg font-semibold text-[var(--on-surface)]">Analysis</p>
+                <div className="mt-3 flex items-baseline gap-3">
+                  <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
+                    {highPriorityCount}
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">High Priority</p>
+                    <p className="text-[11px] text-[var(--on-surface-variant)]">Watchlist Students</p>
+                  </div>
+                </div>
+                <div className="mt-5 flex gap-3">
+                  <div className="rounded-xl border border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-4 py-3 calm-transition hover:bg-[var(--surface-container)]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-tertiary-container)]">On Calls</p>
+                    <div className="mt-1 flex items-baseline gap-1.5">
+                      <span className="text-xl font-bold text-[var(--on-surface)]">{onCallCount}</span>
+                      <span className="text-xs text-[var(--on-surface-variant)]">{windowDays}d</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ── Results area ──────────────────────────────────────────────────────── */}
+
+      {/* INSTRUCTION_TEACHERS_PIVOT */}
+      {view === "INSTRUCTION_TEACHERS_PIVOT" && (
+        <Card className="overflow-x-auto p-0">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+            <div>
+              <SectionHeader title="Teachers" />
+              <MetaText>{teacherPivotRows.length} teacher{teacherPivotRows.length !== 1 ? "s" : ""} in scope</MetaText>
+            </div>
+            {canExport ? (
+              <form action="/api/explorer/export" method="POST">
+                <input type="hidden" name="view" value={view} />
+                <input type="hidden" name="windowDays" value={String(windowDays)} />
+                <input type="hidden" name="departmentId" value={filterDepartmentId} />
+                <input type="hidden" name="yearGroup" value={filterYearGroup} />
+                <input type="hidden" name="teacherMembershipId" value={filterTeacherId} />
+                <input type="hidden" name="subject" value={filterSubject} />
+                <input type="hidden" name="studentSearch" value={studentSearch} />
+                <button type="submit" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white text-muted calm-transition hover:border-accentHover hover:text-text" title="Download CSV" aria-label="Download CSV">
+                  <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 3v8m0 0 3-3m-3 3-3-3M4 13.5v1A1.5 1.5 0 0 0 5.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </form>
+            ) : null}
+          </div>
+          {teacherPivotRows.length === 0 ? (
+            <div className="p-6">
+              <EmptyState title="No teachers in scope" description="No teachers with observations in this window." />
+            </div>
+          ) : (
+            <>
+              {/* Mobile card fallback (< md) */}
+              <div className="md:hidden divide-y divide-divider">
+                {teacherPivotRows.map((row) => {
+                  const worstDeltas = signalKeys
+                    .map((k) => ({ key: k, label: signalLabels.get(k) ?? k, delta: row.signalData[k]?.delta ?? null }))
+                    .filter((x) => x.delta !== null)
+                    .sort((a, b) => (a.delta as number) - (b.delta as number))
+                    .slice(0, 3);
+                  return (
+                    <div key={row.teacherMembershipId} className="px-4 py-3 space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="font-medium text-text hover:underline">
+                          {row.teacherName}
+                        </Link>
+                        <StatusPill variant={STATUS_VARIANT[row.status]} size="sm">
+                          {STATUS_LABELS[row.status]}
+                        </StatusPill>
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted">
+                        <span>{row.departmentNames.join(", ") || "—"}</span>
+                        <span>Coverage: {row.teacherCoverage}</span>
+                      </div>
+                      {worstDeltas.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-0.5">
+                          {worstDeltas.map((x) => (
+                            <span key={x.key} className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50/60 px-2 py-0.5 text-xs text-amber-800">
+                              {x.label?.slice(0, 10)}: Δ {(x.delta as number) > 0 ? "+" : ""}{(x.delta as number).toFixed(1)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -854,33 +900,17 @@ export default async function ExplorerPage({
                   </tbody>
                 </table>
               </div>
-            </Link>
+            </>
+          )}
+        </Card>
+      )}
 
-            {/* Analysis Card */}
-            <Link href="/explorer/analysis" className="block">
-              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
-                <WatermarkChart />
-                <p className="text-lg font-semibold text-[var(--on-surface)]">Analysis</p>
-                <div className="mt-3 flex items-baseline gap-3">
-                  <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
-                    {highPriorityCount}
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">High Priority</p>
-                    <p className="text-[11px] text-[var(--on-surface-variant)]">Watchlist Students</p>
-                  </div>
-                </div>
-                <div className="mt-5 flex gap-3">
-                  <div className="rounded-xl border border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-4 py-3 calm-transition hover:bg-[var(--surface-container)]">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-tertiary-container)]">On Calls</p>
-                    <div className="mt-1 flex items-baseline gap-1.5">
-                      <span className="text-xl font-bold text-[var(--on-surface)]">{onCallCount}</span>
-                      <span className="text-xs text-[var(--on-surface-variant)]">{WINDOW_DAYS}d</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
+      {/* INSTRUCTION_LIST */}
+      {view === "INSTRUCTION_LIST" && (
+        <Card className="overflow-hidden p-0">
+          <div className="border-b border-border px-4 py-3">
+            <SectionHeader title="Observation list" />
+            <MetaText>{observationList.length} observation{observationList.length !== 1 ? "s" : ""} shown </MetaText>
           </div>
           {observationList.length === 0 ? (
             <div className="p-6">
