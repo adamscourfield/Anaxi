@@ -28,6 +28,7 @@ export interface SnapshotRow {
   internalExclusions: number;
   suspensions: number;
   positivePoints: number;
+  negativePoints: number;
   send: boolean;
   pp: boolean;
   countScope: CountScope;
@@ -187,6 +188,7 @@ export function parseSnapshotCsv(
       ["internalExclusions", "InternalExclusions"],
       ["suspensions", "Suspensions"],
       ["positivePoints", "PositivePoints"],
+      ["negativePoints", "NegativePoints"],
     ] as [string, AnaxiField][]) {
       const raw = col(record, anaxiKey);
       const parsed = parseIntField(raw);
@@ -243,6 +245,7 @@ export function parseSnapshotCsv(
         internalExclusions: numericParsed.internalExclusions ?? 0,
         suspensions: numericParsed.suspensions ?? 0,
         positivePoints: numericParsed.positivePoints ?? 0,
+        negativePoints: numericParsed.negativePoints ?? 0,
         send: parseBoolean(col(record, "SEND")),
         pp: parseBoolean(col(record, "PP")),
         countScope: countScope!,
