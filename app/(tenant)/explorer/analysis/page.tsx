@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -217,7 +216,7 @@ export default async function AnalysisPage({
   const secondaryStats = buildSecondaryStats(summary, labels, detentionPlural, internalExclusionPlural, suspensionPlural);
 
   return (
-    <Fragment>
+    <>
       <div className="mb-4">
         <Link
           href="/explorer"
@@ -523,6 +522,6 @@ export default async function AnalysisPage({
       </div>
 
       <MetaText className="mt-2">Explorer · Behaviour analysis · {windowDays}d window</MetaText>
-    </Fragment>
+    </>
   );
 }
