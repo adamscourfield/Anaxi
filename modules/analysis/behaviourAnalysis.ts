@@ -1,11 +1,12 @@
 /**
  * Behaviour Analysis — Explorer
  *
- * Aggregates behaviour, attendance, on-call, and watchlist data
+ * Aggregates behaviour, attendance, on-call, and pastoral risk data
  * for the Analysis page. Supports filtering by year group, PP, and SEND.
  */
 
 import { prisma } from "@/lib/prisma";
+import { computeStudentRiskIndex, type RiskBand } from "@/modules/analysis/studentRisk";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,8 +30,10 @@ export type HighPriorityStudentRow = {
   yearGroup: string | null;
   ppFlag: boolean;
   sendFlag: boolean;
+  band: RiskBand;
   attendancePct: number | null;
   detentionsCount: number;
+  internalExclusionsCount: number;
   onCallsCount: number;
   positivePointsTotal: number;
   negativePointsTotal: number;
@@ -41,6 +44,7 @@ export type BehaviourAnalysisSummary = {
   attendanceMean: number | null;
   totalPositivePoints: number;
   totalNegativePoints: number;
+  hasPositivePoints: boolean;
   hasNegativePoints: boolean;
   totalDetentions: number;
   totalInternalExclusions: number;
@@ -124,11 +128,19 @@ export function groupByReason(
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+export type ComputeBehaviourAnalysisOptions = {
+  viewerUserId: string;
+  /** When false, live on-call request breakdowns are omitted (snapshot on-call totals still apply). */
+  hasOnCallFeature?: boolean;
+};
+
 export async function computeBehaviourAnalysis(
   tenantId: string,
   windowDays: number,
   filters: BehaviourAnalysisFilters = {},
+  options: ComputeBehaviourAnalysisOptions,
 ): Promise<BehaviourAnalysisResult> {
+  const { viewerUserId, hasOnCallFeature = true } = options;
   const { start, end } = windowBounds(windowDays);
 
   // Build student filter
@@ -149,27 +161,26 @@ export async function computeBehaviourAnalysis(
         orderBy: { snapshotDate: "desc" },
         take: 1,
       },
-      watchlistEntries: {
-        where: { tenantId },
-        take: 1,
-      },
     },
   });
 
   // Fetch on-call requests in window for matching students
   const studentIds = (students as any[]).map((s: any) => s.id);
 
-  const onCallRequests = await (prisma as any).onCallRequest.findMany({
-    where: {
-      tenantId,
-      createdAt: { gte: start, lte: end },
-      ...(studentIds.length > 0 ? { studentId: { in: studentIds } } : {}),
-    },
-    include: {
-      requester: { select: { id: true, fullName: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const onCallRequests =
+    hasOnCallFeature && studentIds.length > 0
+      ? await (prisma as any).onCallRequest.findMany({
+          where: {
+            tenantId,
+            createdAt: { gte: start, lte: end },
+            studentId: { in: studentIds },
+          },
+          include: {
+            requester: { select: { id: true, fullName: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
 
   // Aggregate snapshot data
   let totalPositivePoints = 0;
@@ -179,16 +190,17 @@ export async function computeBehaviourAnalysis(
   let totalSuspensions = 0;
   let totalOnCalls = 0;
   let hasNegativePoints = false;
+  let hasPositivePoints = false;
   const attendanceValues: number[] = [];
 
-  const watchlistStudentIds = new Set<string>();
-  const highPriorityStudents: HighPriorityStudentRow[] = [];
+  const snapByStudentId = new Map<string, any>();
+  for (const student of students as any[]) {
+    const snap = student.snapshots?.[0];
+    if (snap) snapByStudentId.set(student.id, snap);
+  }
 
   for (const student of students as any[]) {
     const snap = student.snapshots?.[0];
-    const isOnWatchlist = (student.watchlistEntries?.length ?? 0) > 0;
-
-    if (isOnWatchlist) watchlistStudentIds.add(student.id);
 
     if (snap) {
       totalPositivePoints += snap.positivePointsTotal as number;
@@ -199,26 +211,48 @@ export async function computeBehaviourAnalysis(
       totalOnCalls += snap.onCallsCount as number;
       attendanceValues.push(Number(snap.attendancePct));
 
+      if ((snap.positivePointsTotal as number) > 0) {
+        hasPositivePoints = true;
+      }
       if ((snap.negativePointsTotal as number) > 0) {
         hasNegativePoints = true;
       }
     }
-
-    if (isOnWatchlist) {
-      highPriorityStudents.push({
-        studentId: student.id,
-        studentName: student.fullName,
-        yearGroup: student.yearGroup,
-        ppFlag: student.ppFlag,
-        sendFlag: student.sendFlag,
-        attendancePct: snap ? Number(snap.attendancePct) : null,
-        detentionsCount: snap ? (snap.detentionsCount as number) : 0,
-        onCallsCount: snap ? (snap.onCallsCount as number) : 0,
-        positivePointsTotal: snap ? (snap.positivePointsTotal as number) : 0,
-        negativePointsTotal: snap ? (snap.negativePointsTotal as number) : 0,
-      });
-    }
   }
+
+  const { rows: riskRows } = await computeStudentRiskIndex(tenantId, windowDays, viewerUserId);
+
+  const matchesDemographics = (row: {
+    yearGroup: string | null;
+    ppFlag: boolean;
+    sendFlag: boolean;
+  }) => {
+    if (filters.yearGroup && row.yearGroup !== filters.yearGroup) return false;
+    if (filters.ppOnly && !row.ppFlag) return false;
+    if (filters.sendOnly && !row.sendFlag) return false;
+    return true;
+  };
+
+  const highPriorityBands: RiskBand[] = ["URGENT", "PRIORITY"];
+  const highPriorityStudents: HighPriorityStudentRow[] = riskRows
+    .filter((r) => highPriorityBands.includes(r.band) && matchesDemographics(r))
+    .map((r) => {
+      const snap = snapByStudentId.get(r.studentId);
+      return {
+        studentId: r.studentId,
+        studentName: r.studentName,
+        yearGroup: r.yearGroup,
+        ppFlag: r.ppFlag,
+        sendFlag: r.sendFlag,
+        band: r.band,
+        attendancePct: r.attendancePct,
+        detentionsCount: snap ? (snap.detentionsCount as number) : 0,
+        internalExclusionsCount: snap ? (snap.internalExclusionsCount as number) : 0,
+        onCallsCount: snap ? (snap.onCallsCount as number) : 0,
+        positivePointsTotal: snap ? (snap.positivePointsTotal as number) : (r.positivePointsTotal ?? 0),
+        negativePointsTotal: snap ? (snap.negativePointsTotal as number) : 0,
+      };
+    });
 
   const attendanceMean =
     attendanceValues.length > 0
@@ -236,12 +270,13 @@ export async function computeBehaviourAnalysis(
       attendanceMean,
       totalPositivePoints,
       totalNegativePoints,
+      hasPositivePoints,
       hasNegativePoints,
       totalDetentions,
       totalInternalExclusions,
       totalSuspensions,
       totalOnCalls,
-      highPriorityCount: watchlistStudentIds.size,
+      highPriorityCount: highPriorityStudents.length,
     },
     onCallByHour,
     onCallByTeacher,
