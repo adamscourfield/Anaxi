@@ -26,7 +26,7 @@ export function BehaviourAnalysisFilters({
   const triggerField = "!rounded-xl !border !border-border/35 !bg-[var(--surface-container-lowest)] !shadow-none";
 
   return (
-    <div className="rounded-2xl glass-card p-5 md:p-6">
+    <div className="relative z-30 rounded-2xl glass-card p-5 md:p-6">
       <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
         Filters
       </p>

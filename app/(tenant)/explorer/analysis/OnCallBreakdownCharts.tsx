@@ -131,9 +131,11 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
   const hasAnyHour = onCallByHour.some((r) => r.count > 0);
   const hasAnyReason = onCallByReason.some((r) => r.count > 0);
 
+  /** Soft tint (not solid --primary black) so counts stay readable outside the bar. */
   const barTrack =
-    "relative h-7 min-w-0 flex-1 overflow-hidden rounded-xl bg-[var(--surface-container-high)] text-left calm-transition";
-  const barFill = "absolute inset-y-0 left-0 rounded-xl bg-[var(--primary)] opacity-90";
+    "relative h-7 min-w-0 flex-1 overflow-hidden rounded-xl bg-[var(--surface-container-high)] calm-transition";
+  const barFillClass =
+    "pointer-events-none absolute inset-y-0 left-0 rounded-xl border-r border-[rgba(99,102,241,0.28)] bg-[rgba(99,102,241,0.22)]";
 
   return (
     <>
@@ -148,7 +150,7 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
           ) : (
             <div className="flex flex-col gap-2.5">
               {onCallByHour.map((row) => (
-                <div key={row.hour} className="flex items-center gap-3 sm:gap-4">
+                <div key={row.hour} className="flex items-center gap-2 sm:gap-3">
                   <span className="w-[3.25rem] shrink-0 text-right text-[11px] font-semibold tabular-nums text-[var(--on-surface-variant)]">
                     {hourLabel(row.hour)}
                   </span>
@@ -156,16 +158,19 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
                     type="button"
                     disabled={row.count === 0}
                     onClick={() => row.count > 0 && openHour(row.hour)}
-                    className={`${barTrack} enabled:cursor-pointer enabled:hover:opacity-[0.92] enabled:active:scale-[0.995] disabled:cursor-default disabled:opacity-50`}
+                    className={`${barTrack} enabled:cursor-pointer enabled:ring-1 enabled:ring-inset enabled:ring-border/30 enabled:hover:bg-[var(--surface-container)] enabled:active:scale-[0.998] disabled:cursor-default disabled:opacity-55`}
                     aria-label={`${row.count} on-call requests at ${hourLabel(row.hour)}`}
                   >
                     {row.count > 0 && (
-                      <span className={barFill} style={{ width: `${barWidthPct(row.count, maxHour)}%` }} />
+                      <span
+                        className={barFillClass}
+                        style={{ width: `${barWidthPct(row.count, maxHour)}%` }}
+                      />
                     )}
-                    <span className="relative z-[1] flex h-full items-center justify-end pr-2.5 text-[11px] font-bold tabular-nums text-[var(--on-surface)]">
-                      {row.count}
-                    </span>
                   </button>
+                  <span className="w-8 shrink-0 text-right text-[11px] font-bold tabular-nums text-text">
+                    {row.count}
+                  </span>
                 </div>
               ))}
             </div>
@@ -183,9 +188,9 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
             ) : (
               <div className="flex flex-col gap-2.5">
                 {onCallByReason.map((row) => (
-                  <div key={row.reason} className="flex items-center gap-3 sm:gap-4">
+                  <div key={row.reason} className="flex items-center gap-2 sm:gap-3">
                     <span
-                      className="min-w-0 flex-1 truncate text-left text-[13px] font-medium text-[var(--on-surface)]"
+                      className="min-w-0 flex-1 truncate text-left text-[13px] font-medium text-text"
                       title={row.reason}
                     >
                       {row.reason}
@@ -194,19 +199,19 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
                       type="button"
                       disabled={row.count === 0}
                       onClick={() => row.count > 0 && openReason(row.reason)}
-                      className={`${barTrack} w-full max-w-[min(100%,320px)] shrink-0 sm:max-w-[360px] enabled:cursor-pointer enabled:hover:opacity-[0.92] enabled:active:scale-[0.995] disabled:cursor-default disabled:opacity-50`}
+                      className={`${barTrack} w-full max-w-[min(100%,280px)] shrink-0 sm:max-w-[340px] enabled:cursor-pointer enabled:ring-1 enabled:ring-inset enabled:ring-border/30 enabled:hover:bg-[var(--surface-container)] enabled:active:scale-[0.998] disabled:cursor-default disabled:opacity-55`}
                       aria-label={`${row.count} on-call requests for ${row.reason}`}
                     >
                       {row.count > 0 && (
                         <span
-                          className={`${barFill} opacity-80`}
+                          className={barFillClass}
                           style={{ width: `${barWidthPct(row.count, maxReason)}%` }}
                         />
                       )}
-                      <span className="relative z-[1] flex h-full items-center justify-end pr-2.5 text-[11px] font-bold tabular-nums text-[var(--on-surface)]">
-                        {row.count}
-                      </span>
                     </button>
+                    <span className="w-8 shrink-0 text-right text-[11px] font-bold tabular-nums text-text">
+                      {row.count}
+                    </span>
                   </div>
                 ))}
               </div>
