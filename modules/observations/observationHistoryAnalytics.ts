@@ -1,5 +1,4 @@
 import type { UserRole } from "@/lib/types";
-import { observationWeekKey } from "@/modules/observations/observationHistoryAnalysisRange";
 
 export type RoleCountRow = { role: string; label: string; count: number };
 
@@ -12,10 +11,6 @@ export type CoachingPairWeeklyRow = {
   weeksWithObservation: number;
   weekLabels: string[];
   weekHit: boolean[];
-  /** Latest observation id in that week for this pair (for deep link); null if no hit */
-  weekObservationIds: (string | null)[];
-  /** ISO date of that observation (same as weekObservationIds) */
-  weekObservationDates: (string | null)[];
 };
 
 export type TimelineWeekRow = { weekKey: string; label: string; count: number };
@@ -26,6 +21,12 @@ function startOfDay(d: Date): Date {
   return x;
 }
 
+function endOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+}
+
 /** Monday 00:00 local */
 function startOfWeekMonday(d: Date): Date {
   const x = startOfDay(d);
@@ -33,6 +34,14 @@ function startOfWeekMonday(d: Date): Date {
   const diff = day === 0 ? -6 : 1 - day;
   x.setDate(x.getDate() + diff);
   return x;
+}
+
+function weekKey(d: Date): string {
+  const w = startOfWeekMonday(d);
+  const y = w.getFullYear();
+  const m = String(w.getMonth() + 1).padStart(2, "0");
+  const day = String(w.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function formatWeekLabel(weekStart: Date): string {
@@ -62,8 +71,47 @@ const ROLE_LABELS: Record<UserRole, string> = {
   ON_CALL: "On-call",
 };
 
+export function resolveObservationAnalysisRange(params: {
+  from: string;
+  to: string;
+  useWindow: boolean;
+  windowStart: Date | null;
+}): { start: Date; end: Date; label: string } {
+  const { from, to, useWindow, windowStart } = params;
+  let end = to ? endOfDay(new Date(to)) : new Date();
+  let start: Date | null = null;
+
+  if (from) start = startOfDay(new Date(from));
+  if (useWindow && windowStart) {
+    start = new Date(windowStart);
+    end = new Date();
+  } else if (from && !to) {
+    end = new Date();
+  }
+
+  if (!start) {
+    start = new Date(end);
+    start.setDate(start.getDate() - 26 * 7);
+    start = startOfWeekMonday(start);
+  }
+
+  if (start > end) {
+    const t = start;
+    start = end;
+    end = t;
+  }
+
+  const fmt = (d: Date) =>
+    d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  let label = `${fmt(start)} – ${fmt(end)}`;
+  if (!from && !to && !useWindow) {
+    label = `Last ~26 weeks (${label})`;
+  }
+
+  return { start, end, label };
+}
+
 export type ObsAnalyticsRow = {
-  id: string;
   observedTeacherId: string;
   observerId: string;
   observedAt: Date;
@@ -106,13 +154,13 @@ export function computeObservationHistoryAnalytics(input: {
     .sort((a, b) => b.count - a.count);
 
   const weekStarts = enumerateWeeks(range.start, range.end);
-  const weekKeys = weekStarts.map((w) => observationWeekKey(w));
+  const weekKeys = weekStarts.map((w) => weekKey(w));
   const weekLabels = weekStarts.map((w) => formatWeekLabel(w));
 
   const timelineMap = new Map<string, number>();
   for (const k of weekKeys) timelineMap.set(k, 0);
   for (const o of obsInRange) {
-    const k = observationWeekKey(new Date(o.observedAt));
+    const k = weekKey(new Date(o.observedAt));
     if (timelineMap.has(k)) timelineMap.set(k, (timelineMap.get(k) ?? 0) + 1);
   }
   const timelineWeeks: TimelineWeekRow[] = weekStarts.map((w, i) => ({
@@ -127,22 +175,8 @@ export function computeObservationHistoryAnalytics(input: {
       const pairObs = obsInRange.filter(
         (o) => o.observerId === a.coachUserId && o.observedTeacherId === a.coacheeUserId,
       );
-      const hitKeys = new Set(pairObs.map((o) => observationWeekKey(new Date(o.observedAt))));
+      const hitKeys = new Set(pairObs.map((o) => weekKey(new Date(o.observedAt))));
       const weekHit = weekKeys.map((k) => hitKeys.has(k));
-
-      const bestByWeek = new Map<string, { id: string; at: number }>();
-      for (const o of pairObs) {
-        const k = observationWeekKey(new Date(o.observedAt));
-        const t = new Date(o.observedAt).getTime();
-        const prev = bestByWeek.get(k);
-        if (!prev || t > prev.at) bestByWeek.set(k, { id: o.id, at: t });
-      }
-      const weekObservationIds = weekKeys.map((k) => bestByWeek.get(k)?.id ?? null);
-      const weekObservationDates = weekKeys.map((k) => {
-        const v = bestByWeek.get(k);
-        return v ? new Date(v.at).toISOString() : null;
-      });
-
       pairWeekly.push({
         coachId: a.coachUserId,
         coacheeId: a.coacheeUserId,
@@ -152,8 +186,6 @@ export function computeObservationHistoryAnalytics(input: {
         weeksWithObservation: weekHit.filter(Boolean).length,
         weekLabels,
         weekHit,
-        weekObservationIds,
-        weekObservationDates,
       });
     }
   }

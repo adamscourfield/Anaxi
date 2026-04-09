@@ -9,12 +9,10 @@ import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { formatYearGroup } from "@/modules/observations/yearGroup";
 import { pedagogicalSignalTooltip } from "@/modules/observations/signalTooltip";
-import { computeObservationHistoryAnalytics } from "@/modules/observations/observationHistoryAnalytics";
 import {
-  observationFilterDateBounds,
-  parseObservationAnalysisPreset,
-  resolveObservationAnalysisRangeUnified,
-} from "@/modules/observations/observationHistoryAnalysisRange";
+  computeObservationHistoryAnalytics,
+  resolveObservationAnalysisRange,
+} from "@/modules/observations/observationHistoryAnalytics";
 import {
   buildObservationHistoryWhere,
   OBSERVATION_HISTORY_PHASE_FILTERS,
@@ -154,7 +152,7 @@ export default async function ObservationHistoryPage({
       }),
       (prisma as any).observation.findMany({
         where,
-        select: { id: true, observerId: true, observedTeacherId: true, observedAt: true },
+        select: { observerId: true, observedTeacherId: true, observedAt: true },
       }),
       showPairMatrix && (user.role === "ADMIN" || user.role === "SLT" || user.role === "SUPER_ADMIN")
         ? (prisma as any).coachAssignment.findMany({
@@ -181,15 +179,14 @@ export default async function ObservationHistoryPage({
     (observerUsers as { id: string; role: UserRole }[]).map((u) => [u.id, u.role]),
   );
 
-  const analyticsObs = (
-    obsRowsForAnalysis as { id: string; observerId: string; observedTeacherId: string; observedAt: Date }[]
-  ).map((o) => ({
-    id: o.id,
-    observedTeacherId: o.observedTeacherId,
-    observerId: o.observerId,
-    observedAt: o.observedAt,
-    observerRole: roleByObserver.get(o.observerId) ?? ("TEACHER" as UserRole),
-  }));
+  const analyticsObs = (obsRowsForAnalysis as { observerId: string; observedTeacherId: string; observedAt: Date }[]).map(
+    (o) => ({
+      observedTeacherId: o.observedTeacherId,
+      observerId: o.observerId,
+      observedAt: o.observedAt,
+      observerRole: roleByObserver.get(o.observerId) ?? ("TEACHER" as UserRole),
+    }),
+  );
 
   let coachAssignmentsForAnalytics: {
     coachUserId: string;
@@ -214,49 +211,11 @@ export default async function ObservationHistoryPage({
     }));
   }
 
-  const allowedPairCoachIds = new Set(coachAssignmentsForAnalytics.map((a) => a.coachUserId));
-  const allowedPairCoacheeIds = new Set(coachAssignmentsForAnalytics.map((a) => a.coacheeUserId));
-  const coachingCoachId = allowedPairCoachIds.has(coachingCoachIdRaw) ? coachingCoachIdRaw : "";
-  const coachingCoacheeId = allowedPairCoacheeIds.has(coachingCoacheeIdRaw) ? coachingCoacheeIdRaw : "";
-
-  const coachOptionsMap = new Map<string, string>();
-  const coacheeOptionsMap = new Map<string, string>();
-  for (const a of coachAssignmentsForAnalytics) {
-    coachOptionsMap.set(a.coachUserId, a.coachName);
-    coacheeOptionsMap.set(a.coacheeUserId, a.coacheeName);
-  }
-  const coachingCoachFilterOptions = [...coachOptionsMap.entries()]
-    .map(([id, fullName]) => ({ id, fullName }))
-    .sort((x, y) => x.fullName.localeCompare(y.fullName));
-  const coachingCoacheeFilterOptions = [...coacheeOptionsMap.entries()]
-    .map(([id, fullName]) => ({ id, fullName }))
-    .sort((x, y) => x.fullName.localeCompare(y.fullName));
-
-  let coachAssignmentsForPairTable = coachAssignmentsForAnalytics;
-  if (coachingCoachId) {
-    coachAssignmentsForPairTable = coachAssignmentsForPairTable.filter((a) => a.coachUserId === coachingCoachId);
-  }
-  if (coachingCoacheeId) {
-    coachAssignmentsForPairTable = coachAssignmentsForPairTable.filter((a) => a.coacheeUserId === coachingCoacheeId);
-  }
-
-  const analysisRange = resolveObservationAnalysisRangeUnified({
-    analysisPreset,
-    from,
-    to,
-    useWindow,
-    windowStart,
-  });
-  const filterDateBounds = observationFilterDateBounds({ from, to, useWindow, windowStart });
-  const analyticsRange =
-    analysisRange.emptyIntersection && filterDateBounds
-      ? { start: filterDateBounds.start, end: filterDateBounds.end }
-      : { start: analysisRange.start, end: analysisRange.end };
-
+  const analysisRange = resolveObservationAnalysisRange({ from, to, useWindow, windowStart });
   const historyAnalytics = computeObservationHistoryAnalytics({
     observations: analyticsObs,
-    range: analyticsRange,
-    coachAssignments: coachAssignmentsForPairTable,
+    range: analysisRange,
+    coachAssignments: coachAssignmentsForAnalytics,
     showCoachingSection: showPairMatrix,
   });
 
@@ -356,18 +315,10 @@ export default async function ObservationHistoryPage({
 
       <ObservationHistoryAnalysis
         rangeLabel={analysisRange.label}
-        analysisPreset={analysisPreset}
-        emptyIntersection={analysisRange.emptyIntersection}
-        chartFellBackToTableDates={analysisRange.emptyIntersection && !!filterDateBounds}
-        historyFilterQueryString={historyFilterQueryString}
         roleCounts={historyAnalytics.roleCounts}
         pairWeekly={historyAnalytics.pairWeekly}
         timelineWeeks={historyAnalytics.timelineWeeks}
         showCoachingSection={showPairMatrix}
-        coachingCoachFilterOptions={coachingCoachFilterOptions}
-        coachingCoacheeFilterOptions={coachingCoacheeFilterOptions}
-        coachingCoachId={coachingCoachId}
-        coachingCoacheeId={coachingCoacheeId}
       />
 
       {/* ── Filters ─────────────────────────────────────────────────────── */}
