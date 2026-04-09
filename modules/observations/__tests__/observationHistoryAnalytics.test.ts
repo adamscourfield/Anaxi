@@ -148,4 +148,37 @@ describe("computeObservationHistoryAnalytics", () => {
     expect(idx).toBeGreaterThanOrEqual(0);
     expect(pairWeekly[0].weekObservationIds[idx]).toBe("o2");
   });
+
+  it("counts observer roles only within the analysis range (matches time window)", () => {
+    const range = {
+      start: new Date("2026-01-01T00:00:00Z"),
+      end: new Date("2026-01-10T23:59:59Z"),
+    };
+    const { roleCounts, timelineWeeks } = computeObservationHistoryAnalytics({
+      observations: [
+        {
+          id: "in",
+          observerId: "a",
+          observedTeacherId: "t1",
+          observedAt: new Date("2026-01-05T10:00:00Z"),
+          observerRole: "ADMIN",
+        },
+        {
+          id: "out",
+          observerId: "b",
+          observedTeacherId: "t2",
+          observedAt: new Date("2025-06-01T10:00:00Z"),
+          observerRole: "LEADER",
+        },
+      ],
+      range,
+      coachAssignments: [],
+      showCoachingSection: false,
+    });
+
+    expect(roleCounts.find((r) => r.role === "ADMIN")?.count).toBe(1);
+    expect(roleCounts.find((r) => r.role === "LEADER")).toBeUndefined();
+    const sumTimeline = timelineWeeks.reduce((s, w) => s + w.count, 0);
+    expect(sumTimeline).toBe(1);
+  });
 });
