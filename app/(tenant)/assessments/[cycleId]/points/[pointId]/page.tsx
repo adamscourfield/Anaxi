@@ -117,6 +117,37 @@ function gapCls(gap: number) {
   return "text-[var(--error)]";
 }
 
+function gcseColour(g: string | number | null): string {
+  if (g === null) return "bg-surface-container-low text-muted";
+  const n = Number(g);
+  if (n >= 8) return "bg-emerald-600 text-white";
+  if (n >= 7) return "bg-green-500 text-white";
+  if (n >= 6) return "bg-blue-500 text-white";
+  if (n >= 5) return "bg-violet-500 text-white";
+  if (n >= 4) return "bg-amber-500 text-white";
+  if (n >= 3) return "bg-orange-500 text-white";
+  return "bg-red-600 text-white";
+}
+
+function aLevelColour(g: string): string {
+  switch (g.toUpperCase()) {
+    case "A*":
+      return "bg-emerald-600 text-white";
+    case "A":
+      return "bg-green-500 text-white";
+    case "B":
+      return "bg-blue-500 text-white";
+    case "C":
+      return "bg-violet-500 text-white";
+    case "D":
+      return "bg-amber-500 text-white";
+    case "E":
+      return "bg-orange-500 text-white";
+    default:
+      return "bg-red-700 text-white";
+  }
+}
+
 function GapBadge({ gap }: { gap: number }) {
   const cls = gap <= 5
     ? "bg-emerald-50 text-emerald-700"
