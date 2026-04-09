@@ -44,7 +44,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
       return { status: "sent" };
     }
 
-    logger.error("email.failed", { to, subject, httpStatus: res.status });
+    const errorBody = await res.text().catch(() => "(unreadable)");
+    logger.error("email.failed", { to, subject, httpStatus: res.status, errorBody });
     return { status: "failed" };
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
