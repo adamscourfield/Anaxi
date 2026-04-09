@@ -44,7 +44,7 @@ export default function LandingPage() {
       {/* Right panel — full-height image */}
       <div className="relative h-full w-1/2">
         <Image
-          src="/hero-image.png"
+          src="/hero-network.png"
           alt=""
           fill
           priority
