@@ -84,7 +84,7 @@ export async function decideLoaRequest(formData: FormData) {
     }
   });
 
-  void sendLeaveDecisionEmail({
+  await sendLeaveDecisionEmail({
     to: request.requester.email,
     requesterName: request.requester.fullName,
     status,
