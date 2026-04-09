@@ -299,7 +299,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                         <path d="M6 12v5c3 3 9 3 12 0v-5" />
                       </svg>
                     </span>
-                    <span className="pt-1 leading-snug">Professional educator</span>
+                    <span className="pt-1 leading-snug">{roleLabel}</span>
                   </li>
                   <li className="flex gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-on-primary/10">
