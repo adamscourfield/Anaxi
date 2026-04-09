@@ -584,6 +584,7 @@ model Meeting {
   status          MeetingStatus     @default(PENDING)
   startDateTime   DateTime
   endDateTime     DateTime
+  startedAt       DateTime?
   location        String?
   notes           String?
   createdByUserId String

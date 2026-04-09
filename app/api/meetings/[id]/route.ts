@@ -43,7 +43,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     const body = await req.json();
-    const { title, type, startDateTime, endDateTime, location, notes, status } = body;
+    const { title, type, startDateTime, endDateTime, location, notes, status, startedAt } = body;
 
     const input: Record<string, unknown> = {};
     if (title !== undefined) input.title = title;
@@ -53,6 +53,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (location !== undefined) input.location = location;
     if (notes !== undefined) input.notes = notes;
     if (status !== undefined) input.status = status;
+    if (startedAt !== undefined) {
+      if (startedAt === null) {
+        return NextResponse.json({ error: "startedAt cannot be cleared" }, { status: 400 });
+      }
+      input.startedAt = new Date(startedAt);
+    }
 
     const meeting = await updateMeeting(user.tenantId, params.id, user.id, input as any);
     return NextResponse.json(meeting);
