@@ -92,7 +92,7 @@ export function computeObservationHistoryAnalytics(input: {
   const obsInRange = observations.filter((o) => inRange(new Date(o.observedAt)));
 
   const byRole = new Map<string, number>();
-  for (const o of observations) {
+  for (const o of obsInRange) {
     const role = o.observerRole;
     byRole.set(role, (byRole.get(role) ?? 0) + 1);
   }

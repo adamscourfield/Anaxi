@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 import type { ObservationAnalysisPreset } from "@/modules/observations/observationHistoryAnalysisRange";
 import { OBSERVATION_ANALYSIS_PRESETS } from "@/modules/observations/observationHistoryAnalysisRange";
 import { FormSelect } from "@/components/ui/form-select";
@@ -30,7 +30,7 @@ const PRESET_META: Record<
   week: { label: "Last week", short: "Week" },
   month: { label: "Last month", short: "Month" },
   academic_year: { label: "Academic year", short: "Academic year" },
-  26w: { label: "~26 weeks", short: "26 wks" },
+  "26w": { label: "~26 weeks", short: "26 wks" },
 };
 
 type TooltipState = { x: number; y: number; text: string } | null;
@@ -112,8 +112,9 @@ function CoachingPairFilterForm({
   base.delete("coachingCoachee");
   const triggerWhite = "!bg-surface-container-lowest rounded-[10px]";
 
+  /** Defer submit so FormSelect's hidden input reflects the new value (state updates are async). */
   const submitForm = useCallback(() => {
-    formRef.current?.requestSubmit();
+    window.setTimeout(() => formRef.current?.requestSubmit(), 0);
   }, []);
 
   return (
@@ -173,6 +174,7 @@ export function ObservationHistoryAnalysis({
   coachingCoacheeId,
 }: Props) {
   const [tip, setTip] = useState<TooltipState>(null);
+  const chartSvgId = useId().replace(/[^a-zA-Z0-9_-]/g, "_");
 
   const showTip = useCallback((e: React.MouseEvent, text: string) => {
     setTip({ x: e.clientX, y: e.clientY, text });
@@ -327,28 +329,73 @@ export function ObservationHistoryAnalysis({
           {!hasTimeline ? (
             <p className="mt-4 text-sm text-muted">No weeks in range.</p>
           ) : (
-            <div className="mt-4 w-full overflow-x-auto">
+            <div className="mt-4 w-full overflow-x-auto rounded-2xl border border-border/25 bg-gradient-to-b from-[var(--surface-container-high)]/40 to-transparent p-4">
               <svg
                 viewBox={`0 0 ${linePoints.w} ${linePoints.h}`}
-                className="h-44 w-full min-w-[280px] text-accent"
+                className="h-48 w-full min-w-[280px] text-accent"
                 preserveAspectRatio="xMidYMid meet"
                 role="img"
                 aria-label="Observations per week line chart"
               >
                 <defs>
-                  <linearGradient id="obsHistoryFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="rgb(99 102 241)" stopOpacity="0.2" />
-                    <stop offset="100%" stopColor="rgb(99 102 241)" stopOpacity="0.02" />
+                  <linearGradient id={`${chartSvgId}-fill`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgb(99 102 241)" stopOpacity="0.28" />
+                    <stop offset="55%" stopColor="rgb(99 102 241)" stopOpacity="0.08" />
+                    <stop offset="100%" stopColor="rgb(99 102 241)" stopOpacity="0" />
                   </linearGradient>
+                  <linearGradient id={`${chartSvgId}-stroke`} x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="rgb(129 140 248)" />
+                    <stop offset="50%" stopColor="rgb(99 102 241)" />
+                    <stop offset="100%" stopColor="rgb(79 70 229)" />
+                  </linearGradient>
+                  <filter id={`${chartSvgId}-glow`} x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.2" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
                 </defs>
-                <path d={linePoints.fillD} fill="url(#obsHistoryFill)" className="calm-transition" />
+                {/* Chart plot background */}
+                <rect
+                  x="8"
+                  y="12"
+                  width="624"
+                  height="120"
+                  rx="10"
+                  fill="var(--surface-container-lowest)"
+                  opacity="0.65"
+                />
+                {/* Horizontal grid */}
+                {[0, 0.25, 0.5, 0.75, 1].map((t) => {
+                  const y = 12 + 120 * t;
+                  return (
+                    <line
+                      key={t}
+                      x1="8"
+                      x2="632"
+                      y1={y}
+                      y2={y}
+                      stroke="var(--border)"
+                      strokeOpacity={t === 1 ? 0.35 : 0.12}
+                      strokeWidth="1"
+                      strokeDasharray={t === 1 ? undefined : "4 6"}
+                    />
+                  );
+                })}
+                <path
+                  d={linePoints.fillD}
+                  fill={`url(#${chartSvgId}-fill)`}
+                  className="calm-transition"
+                />
                 <path
                   d={linePoints.d}
                   fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  stroke={`url(#${chartSvgId}-stroke)`}
+                  strokeWidth="2.5"
                   strokeLinejoin="round"
                   strokeLinecap="round"
+                  filter={`url(#${chartSvgId}-glow)`}
                   className="calm-transition"
                 />
                 {linePoints.points.map((p) => (
@@ -398,12 +445,15 @@ export function ObservationHistoryAnalysis({
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r="4"
-                      fill="currentColor"
-                      stroke="var(--surface-container-lowest)"
+                      r="5"
+                      fill="var(--surface-container-lowest)"
+                      stroke={`url(#${chartSvgId}-stroke)`}
                       strokeWidth="2"
                       className="pointer-events-none"
                     />
+                    {p.count > 0 ? (
+                      <circle cx={p.x} cy={p.y} r="2.25" fill="rgb(99 102 241)" className="pointer-events-none" />
+                    ) : null}
                   </g>
                 ))}
               </svg>
