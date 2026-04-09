@@ -20,6 +20,8 @@ interface HistoryFiltersProps {
   preservedWindowDays: number | null;
   /** Preserves chart preset across "Apply filters" (default 26w is omitted). */
   preservedAnalysisPreset?: string;
+  preservedCoachingCoachId?: string;
+  preservedCoachingCoacheeId?: string;
   showTeacherFilters: boolean;
   hasFilters: boolean;
 }
@@ -32,6 +34,8 @@ export function HistoryFilters({
   defaults,
   preservedWindowDays,
   preservedAnalysisPreset,
+  preservedCoachingCoachId,
+  preservedCoachingCoacheeId,
   showTeacherFilters,
   hasFilters,
 }: HistoryFiltersProps) {
@@ -49,6 +53,12 @@ export function HistoryFilters({
         ) : null}
         {preservedAnalysisPreset && preservedAnalysisPreset !== "26w" ? (
           <input type="hidden" name="analysis" value={preservedAnalysisPreset} />
+        ) : null}
+        {preservedCoachingCoachId ? (
+          <input type="hidden" name="coachingCoach" value={preservedCoachingCoachId} />
+        ) : null}
+        {preservedCoachingCoacheeId ? (
+          <input type="hidden" name="coachingCoachee" value={preservedCoachingCoacheeId} />
         ) : null}
         {showTeacherFilters && (
           <>

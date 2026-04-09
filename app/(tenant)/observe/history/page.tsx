@@ -84,6 +84,8 @@ export default async function ObservationHistoryPage({
   const windowStart = useWindow ? new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000) : null;
   const analysisPresetRaw = String(searchParams?.analysis || "").trim();
   const analysisPreset = parseObservationAnalysisPreset(analysisPresetRaw) ?? "26w";
+  const coachingCoachIdRaw = String(searchParams?.coachingCoach || "").trim();
+  const coachingCoacheeIdRaw = String(searchParams?.coachingCoachee || "").trim();
 
   const [teachers, observers, hodMemberships, coachAssignments, tenantSignalLabels] = await Promise.all([
     (prisma as any).user.findMany({ where: { tenantId: user.tenantId, isActive: true }, orderBy: { fullName: "asc" } }),
@@ -212,6 +214,32 @@ export default async function ObservationHistoryPage({
     }));
   }
 
+  const allowedPairCoachIds = new Set(coachAssignmentsForAnalytics.map((a) => a.coachUserId));
+  const allowedPairCoacheeIds = new Set(coachAssignmentsForAnalytics.map((a) => a.coacheeUserId));
+  const coachingCoachId = allowedPairCoachIds.has(coachingCoachIdRaw) ? coachingCoachIdRaw : "";
+  const coachingCoacheeId = allowedPairCoacheeIds.has(coachingCoacheeIdRaw) ? coachingCoacheeIdRaw : "";
+
+  const coachOptionsMap = new Map<string, string>();
+  const coacheeOptionsMap = new Map<string, string>();
+  for (const a of coachAssignmentsForAnalytics) {
+    coachOptionsMap.set(a.coachUserId, a.coachName);
+    coacheeOptionsMap.set(a.coacheeUserId, a.coacheeName);
+  }
+  const coachingCoachFilterOptions = [...coachOptionsMap.entries()]
+    .map(([id, fullName]) => ({ id, fullName }))
+    .sort((x, y) => x.fullName.localeCompare(y.fullName));
+  const coachingCoacheeFilterOptions = [...coacheeOptionsMap.entries()]
+    .map(([id, fullName]) => ({ id, fullName }))
+    .sort((x, y) => x.fullName.localeCompare(y.fullName));
+
+  let coachAssignmentsForPairTable = coachAssignmentsForAnalytics;
+  if (coachingCoachId) {
+    coachAssignmentsForPairTable = coachAssignmentsForPairTable.filter((a) => a.coachUserId === coachingCoachId);
+  }
+  if (coachingCoacheeId) {
+    coachAssignmentsForPairTable = coachAssignmentsForPairTable.filter((a) => a.coacheeUserId === coachingCoacheeId);
+  }
+
   const analysisRange = resolveObservationAnalysisRangeUnified({
     analysisPreset,
     from,
@@ -228,7 +256,7 @@ export default async function ObservationHistoryPage({
   const historyAnalytics = computeObservationHistoryAnalytics({
     observations: analyticsObs,
     range: analyticsRange,
-    coachAssignments: coachAssignmentsForAnalytics,
+    coachAssignments: coachAssignmentsForPairTable,
     showCoachingSection: showPairMatrix,
   });
 
@@ -244,7 +272,9 @@ export default async function ObservationHistoryPage({
     !!phaseFilter ||
     !!signalKeyFilter ||
     useWindow ||
-    analysisPreset !== "26w";
+    analysisPreset !== "26w" ||
+    !!coachingCoachId ||
+    !!coachingCoacheeId;
 
   const signalFilterOptions = [...tenantSignalDefs]
     .sort((a, b) => a.order - b.order)
@@ -266,7 +296,8 @@ export default async function ObservationHistoryPage({
     if (signalKeyFilter) params.set("signalKey", signalKeyFilter);
     if (useWindow) params.set("window", String(windowDays));
     if (analysisPreset !== "26w") params.set("analysis", analysisPreset);
-    if (yearGroup) params.set("yearGroup", yearGroup);
+    if (coachingCoachId) params.set("coachingCoach", coachingCoachId);
+    if (coachingCoacheeId) params.set("coachingCoachee", coachingCoacheeId);
     if (p > 1) params.set("page", String(p));
     const qs = params.toString();
     return `/observe/history${qs ? `?${qs}` : ""}`;
@@ -297,6 +328,9 @@ export default async function ObservationHistoryPage({
   if (phaseFilter) historyFilterQuery.set("phase", phaseFilter);
   if (signalKeyFilter) historyFilterQuery.set("signalKey", signalKeyFilter);
   if (useWindow) historyFilterQuery.set("window", String(windowDays));
+  if (analysisPreset !== "26w") historyFilterQuery.set("analysis", analysisPreset);
+  if (coachingCoachId) historyFilterQuery.set("coachingCoach", coachingCoachId);
+  if (coachingCoacheeId) historyFilterQuery.set("coachingCoachee", coachingCoacheeId);
   const historyFilterQueryString = historyFilterQuery.toString();
 
   return (
@@ -330,6 +364,10 @@ export default async function ObservationHistoryPage({
         pairWeekly={historyAnalytics.pairWeekly}
         timelineWeeks={historyAnalytics.timelineWeeks}
         showCoachingSection={showPairMatrix}
+        coachingCoachFilterOptions={coachingCoachFilterOptions}
+        coachingCoacheeFilterOptions={coachingCoacheeFilterOptions}
+        coachingCoachId={coachingCoachId}
+        coachingCoacheeId={coachingCoacheeId}
       />
 
       {/* ── Filters ─────────────────────────────────────────────────────── */}
@@ -341,6 +379,8 @@ export default async function ObservationHistoryPage({
         defaults={{ teacherId, observerId, subject, from, to, signalKey: signalKeyFilter }}
         preservedWindowDays={useWindow ? windowDays : null}
         preservedAnalysisPreset={analysisPreset}
+        preservedCoachingCoachId={coachingCoachId}
+        preservedCoachingCoacheeId={coachingCoacheeId}
         showTeacherFilters={user.role !== "TEACHER"}
         hasFilters={hasFilters}
       />

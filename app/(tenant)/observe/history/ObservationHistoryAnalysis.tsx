@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { ObservationAnalysisPreset } from "@/modules/observations/observationHistoryAnalysisRange";
 import { OBSERVATION_ANALYSIS_PRESETS } from "@/modules/observations/observationHistoryAnalysisRange";
+import { FormSelect } from "@/components/ui/form-select";
 
 export type RoleCountSerialized = { role: string; label: string; count: number };
 
@@ -63,6 +64,10 @@ type Props = {
   pairWeekly: PairWeeklySerialized[];
   timelineWeeks: TimelineWeekSerialized[];
   showCoachingSection: boolean;
+  coachingCoachFilterOptions: { id: string; fullName: string }[];
+  coachingCoacheeFilterOptions: { id: string; fullName: string }[];
+  coachingCoachId: string;
+  coachingCoacheeId: string;
 };
 
 function barWidthPct(count: number, max: number): number {
@@ -88,6 +93,70 @@ function analysisHref(preset: ObservationAnalysisPreset, baseQuery: string): str
   return `/observe/history${qs ? `?${qs}` : ""}`;
 }
 
+function CoachingPairFilterForm({
+  historyFilterQueryString,
+  coachOptions,
+  coacheeOptions,
+  coachId,
+  coacheeId,
+}: {
+  historyFilterQueryString: string;
+  coachOptions: { id: string; fullName: string }[];
+  coacheeOptions: { id: string; fullName: string }[];
+  coachId: string;
+  coacheeId: string;
+}) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const base = new URLSearchParams(historyFilterQueryString);
+  base.delete("coachingCoach");
+  base.delete("coachingCoachee");
+  const triggerWhite = "!bg-surface-container-lowest rounded-[10px]";
+
+  const submitForm = useCallback(() => {
+    formRef.current?.requestSubmit();
+  }, []);
+
+  return (
+    <form
+      ref={formRef}
+      method="get"
+      action="/observe/history"
+      className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
+    >
+      {[...base.entries()].map(([k, v]) => (
+        <input key={`${k}=${v}`} type="hidden" name={k} value={v} />
+      ))}
+      <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:max-w-[220px]">
+        <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Coach</span>
+        <FormSelect
+          name="coachingCoach"
+          defaultValue={coachId}
+          placeholder="All coaches"
+          searchable
+          triggerClassName={triggerWhite}
+          onChange={submitForm}
+          options={[{ value: "", label: "All coaches" }, ...coachOptions.map((u) => ({ value: u.id, label: u.fullName }))]}
+        />
+      </label>
+      <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:max-w-[220px]">
+        <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Coachee</span>
+        <FormSelect
+          name="coachingCoachee"
+          defaultValue={coacheeId}
+          placeholder="All coachees"
+          searchable
+          triggerClassName={triggerWhite}
+          onChange={submitForm}
+          options={[
+            { value: "", label: "All coachees" },
+            ...coacheeOptions.map((u) => ({ value: u.id, label: u.fullName })),
+          ]}
+        />
+      </label>
+    </form>
+  );
+}
+
 export function ObservationHistoryAnalysis({
   rangeLabel,
   analysisPreset,
@@ -98,6 +167,10 @@ export function ObservationHistoryAnalysis({
   pairWeekly,
   timelineWeeks,
   showCoachingSection,
+  coachingCoachFilterOptions,
+  coachingCoacheeFilterOptions,
+  coachingCoachId,
+  coachingCoacheeId,
 }: Props) {
   const [tip, setTip] = useState<TooltipState>(null);
 
@@ -364,8 +437,21 @@ export function ObservationHistoryAnalysis({
               Green weeks had at least one observation with this coach observing this coachee. Hover for the observation
               date; click to open details.
             </p>
+            {coachingCoachFilterOptions.length > 0 || coachingCoacheeFilterOptions.length > 0 ? (
+              <CoachingPairFilterForm
+                historyFilterQueryString={historyFilterQueryString}
+                coachOptions={coachingCoachFilterOptions}
+                coacheeOptions={coachingCoacheeFilterOptions}
+                coachId={coachingCoachId}
+                coacheeId={coachingCoacheeId}
+              />
+            ) : null}
             {pairWeekly.length === 0 ? (
-              <p className="mt-4 text-sm text-muted">No coaching assignments in this school.</p>
+              <p className="mt-4 text-sm text-muted">
+                {coachingCoachId || coachingCoacheeId
+                  ? "No coaching pairs match these people."
+                  : "No coaching assignments in this school."}
+              </p>
             ) : (
               <div className="table-shell mt-4">
                 <div className="hidden overflow-x-auto md:block">
@@ -373,7 +459,14 @@ export function ObservationHistoryAnalysis({
                     <thead>
                       <tr className="table-head-row text-left">
                         <th className="px-5 py-3.5">Pair</th>
-                        <th className="px-4 py-3.5 whitespace-nowrap">In window</th>
+                        <th className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="inline-flex flex-col gap-0.5">
+                            <span>Coaching obs.</span>
+                            <span className="text-[0.625rem] font-normal normal-case tracking-normal text-muted">
+                              in this period
+                            </span>
+                          </span>
+                        </th>
                         <th className="px-4 py-3.5 whitespace-nowrap">Weeks with obs.</th>
                         <th className="min-w-[240px] px-4 py-3.5">Weeks (oldest → newest)</th>
                       </tr>
@@ -386,7 +479,11 @@ export function ObservationHistoryAnalysis({
                             <span className="text-muted"> → </span>
                             <span className="font-semibold text-text">{p.coacheeName}</span>
                           </td>
-                          <td className="px-4 py-4 tabular-nums text-muted">{p.observationCount}</td>
+                          <td className="px-4 py-4 tabular-nums text-muted">
+                            <span title="Observations where this coach was the observer and this teacher was observed, within the chart period above (and your other filters).">
+                              {p.observationCount}
+                            </span>
+                          </td>
                           <td className="px-4 py-4 tabular-nums text-muted">
                             {p.weeksWithObservation} / {p.weekHit.length}
                           </td>
@@ -437,7 +534,8 @@ export function ObservationHistoryAnalysis({
                         {p.coachName} <span className="font-normal text-muted">→</span> {p.coacheeName}
                       </p>
                       <p className="mt-1 text-[0.8125rem] text-muted">
-                        {p.observationCount} in window · {p.weeksWithObservation}/{p.weekHit.length} weeks with obs.
+                        {p.observationCount} coaching observation{p.observationCount === 1 ? "" : "s"} this period ·{" "}
+                        {p.weeksWithObservation}/{p.weekHit.length} weeks with obs.
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1">
                         {p.weekHit.map((hit, i) => {
