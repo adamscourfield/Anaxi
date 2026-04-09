@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { sendMeetingInviteEmail } from "@/lib/email";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { createMeeting, listMeetings } from "@/modules/meetings/service";
@@ -34,6 +35,18 @@ export async function POST(req: Request) {
       notes,
       attendeeIds,
     });
+
+    void Promise.allSettled(
+      meeting.attendees.map((attendee: { user: { email: string; fullName: string } }) =>
+        sendMeetingInviteEmail({
+          to: attendee.user.email,
+          attendeeName: attendee.user.fullName,
+          title: meeting.title,
+          startDateTime: new Date(meeting.startDateTime),
+          meetingId: meeting.id,
+        })
+      )
+    );
 
     return NextResponse.json(meeting, { status: 201 });
   } catch (err: unknown) {

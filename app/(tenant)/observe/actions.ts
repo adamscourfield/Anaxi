@@ -1,6 +1,7 @@
 "use server";
 
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { sendObservationEmail } from "@/lib/email";
 import { requireFeature, requireRole } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { getTenantSchoolType } from "@/lib/tenantSchoolType";
@@ -59,6 +60,12 @@ export async function createObservation(formData: FormData) {
     }
   });
 
+  void sendObservationEmail({
+    to: teacher.email,
+    teacherName: teacher.fullName,
+    observerName: user.fullName,
+    observationId: observation.id,
+  });
   revalidatePath("/observe/history");
   redirect(`/observe/${observation.id}`);
 }
@@ -112,6 +119,12 @@ export async function submitObservationDraft(formData: FormData) {
     }
   });
 
+  void sendObservationEmail({
+    to: teacher.email,
+    teacherName: teacher.fullName,
+    observerName: user.fullName,
+    observationId: observation.id,
+  });
   revalidatePath("/observe/history");
   redirect(`/observe/${observation.id}`);
 }
