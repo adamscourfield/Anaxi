@@ -3,44 +3,57 @@ import Link from "next/link";
 
 export default function LandingPage() {
   return (
-    <div
-      className="flex min-h-dvh flex-col items-center justify-center font-sans px-6"
-      style={{ background: "var(--surface-container-lowest)" }}
-    >
-      {/* Logo */}
-      <Image
-        src="/anaxi-logo.png"
-        alt="Anaxi"
-        width={56}
-        height={56}
-        priority
-        className="h-14 w-14 object-contain"
-      />
+    <div className="relative flex h-dvh w-full overflow-hidden bg-white">
+      {/* Logo — top-left */}
+      <div className="absolute left-8 top-8 z-10 flex items-center gap-3">
+        <Image
+          src="/anaxi-logo.png"
+          alt="Anaxi"
+          width={36}
+          height={36}
+          priority
+          className="h-9 w-9 object-contain"
+        />
+        <span className="text-sm font-semibold tracking-widest text-[#131b2e] uppercase">
+          Anaxi
+        </span>
+      </div>
 
-      {/* Wordmark */}
-      <p
-        className="mt-5 text-xs font-semibold uppercase tracking-[0.22em]"
-        style={{ color: "var(--on-surface-variant)" }}
-      >
-        Anaxi
-      </p>
+      {/* Left panel */}
+      <div className="flex w-1/2 flex-col justify-center px-16 pb-10 pt-32">
+        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#76777d]">
+          Institutional Grade Software
+        </p>
 
-      {/* Tagline */}
-      <p
-        className="mt-3 text-sm"
-        style={{ color: "var(--on-surface-variant)", opacity: 0.6 }}
-      >
-        Institutional intelligence for schools.
-      </p>
+        <h1 className="text-[4.5rem] font-light leading-[1.05] tracking-[-0.03em] text-[#131b2e]">
+          Anaxi
+        </h1>
 
-      {/* Sign in */}
-      <Link
-        href="/login"
-        className="mt-10 inline-flex items-center justify-center px-8 py-2.5 rounded-lg text-sm font-medium text-white calm-transition hover:opacity-90 active:scale-[0.98]"
-        style={{ background: "var(--primary-container)" }}
-      >
-        Sign in
-      </Link>
+        <p className="mt-6 max-w-sm text-base font-normal leading-relaxed text-[#45464d]">
+          The operational and pedagogical platform built for schools that demand precision.
+        </p>
+
+        <Link
+          href="/login"
+          className="mt-10 inline-flex w-fit items-center justify-center rounded-lg bg-[#131b2e] px-7 py-3 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-80 active:scale-[0.98]"
+        >
+          Sign in
+        </Link>
+      </div>
+
+      {/* Right panel — full-height image */}
+      <div className="relative h-full w-1/2">
+        <Image
+          src="/hero-image.png"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+          sizes="50vw"
+        />
+        {/* Subtle left-edge fade into white */}
+        <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white to-transparent" />
+      </div>
     </div>
   );
 }
