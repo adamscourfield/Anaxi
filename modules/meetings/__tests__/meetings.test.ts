@@ -140,6 +140,19 @@ describe("createMeeting", () => {
       expect.arrayContaining([expect.objectContaining({ userId: "user_1" })])
     );
   });
+
+  it("persists startedAt when provided", async () => {
+    await createMeeting("tenant_1", "user_1", {
+      title: "Test",
+      type: "OTHER",
+      startDateTime: now,
+      endDateTime: later,
+      attendeeIds: [],
+      startedAt: now,
+    });
+    const createCall = (prisma as any).meeting.create.mock.calls[0][0];
+    expect(createCall.data.startedAt).toEqual(now);
+  });
 });
 
 describe("getMeetingDetail", () => {
@@ -190,6 +203,28 @@ describe("updateMeeting", () => {
     await expect(
       updateMeeting("tenant_1", "nonexistent", "user_1", {})
     ).rejects.toThrow("meeting not found");
+  });
+
+  it("sets startedAt when meeting has not started", async () => {
+    await updateMeeting("tenant_1", "meeting_1", "user_1", { startedAt: now });
+    const updateCall = (prisma as any).meeting.update.mock.calls[0][0];
+    expect(updateCall.data.startedAt).toEqual(now);
+  });
+
+  it("throws when setting startedAt on already-started meeting", async () => {
+    (prisma as any).meeting.findFirst.mockResolvedValue(
+      mockMeeting({ startedAt: new Date("2026-01-15T09:00:00Z") }),
+    );
+    await expect(
+      updateMeeting("tenant_1", "meeting_1", "user_1", { startedAt: now }),
+    ).rejects.toThrow("meeting already started");
+  });
+
+  it("throws when setting startedAt on cancelled meeting", async () => {
+    (prisma as any).meeting.findFirst.mockResolvedValue(mockMeeting({ status: "CANCELLED" }));
+    await expect(
+      updateMeeting("tenant_1", "meeting_1", "user_1", { startedAt: now }),
+    ).rejects.toThrow("cannot start a cancelled meeting");
   });
 });
 

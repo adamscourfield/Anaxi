@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { H1, MetaText } from "@/components/ui/typography";
 
@@ -27,10 +28,12 @@ interface LiveMeetingViewProps {
   type: string;
   status: string;
   startDateTime: string;
+  startedAt: string | null;
   attendees: Attendee[];
   initialNotes: string;
   actions: Action[];
   canEdit: boolean;
+  canStartMeeting: boolean;
   canAddActions: boolean;
   currentUserId: string;
   avgActionsForType?: number;
@@ -71,17 +74,24 @@ function formatDueDate(dueDate: Date | string): string {
 
 /* ── Timer Hook ──────────────────────────────────────────────────────── */
 
-function useElapsedTimer(startDateTime: string) {
+function useElapsedTimer(startDateTime: string | null) {
   const [elapsed, setElapsed] = useState(() => {
+    if (!startDateTime) return 0;
     const diff = Date.now() - new Date(startDateTime).getTime();
     return Math.max(0, Math.floor(diff / 1000));
   });
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    if (!startDateTime) {
+      setElapsed(0);
+      return;
+    }
+    const tick = () => {
       const diff = Date.now() - new Date(startDateTime).getTime();
       setElapsed(Math.max(0, Math.floor(diff / 1000)));
-    }, 1000);
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [startDateTime]);
 
@@ -250,17 +260,22 @@ export function LiveMeetingView({
   type,
   status,
   startDateTime,
+  startedAt: initialStartedAt,
   attendees,
   initialNotes,
   actions: initialActions,
   canEdit,
+  canStartMeeting,
   canAddActions,
   currentUserId,
   avgActionsForType = 0,
 }: LiveMeetingViewProps) {
-  const { formatted: timer, seconds: elapsedSeconds } = useElapsedTimer(startDateTime);
+  const router = useRouter();
+  const timerAnchor = initialStartedAt;
+  const { formatted: timer, seconds: elapsedSeconds } = useElapsedTimer(timerAnchor);
   const [notes, setNotes] = useState(initialNotes);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [startingMeeting, setStartingMeeting] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -295,6 +310,35 @@ export function LiveMeetingView({
     },
     [meetingId],
   );
+
+  /* ── Start meeting (timer) ─────────────────────────────────────── */
+  async function handleStartMeeting() {
+    setStartingMeeting(true);
+    try {
+      const now = new Date().toISOString();
+      const res = await fetch(`/api/meetings/${meetingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startedAt: now, status: "CONFIRMED" }),
+      });
+      if (!res.ok) {
+        let message = "Could not start the meeting.";
+        try {
+          const json = await res.json();
+          if (json?.error && typeof json.error === "string") message = json.error;
+        } catch {
+          /* ignore */
+        }
+        alert(message);
+        return;
+      }
+      router.refresh();
+    } catch {
+      alert("Network error while starting the meeting.");
+    } finally {
+      setStartingMeeting(false);
+    }
+  }
 
   /* ── End meeting ───────────────────────────────────────────────── */
   async function handleEndMeeting() {
@@ -382,7 +426,8 @@ export function LiveMeetingView({
   }
 
   const isEnded = status === "CANCELLED";
-  const isInProgress = status === "CONFIRMED" || status === "PENDING";
+  const hasStarted = initialStartedAt != null;
+  const isInProgress = !isEnded && (hasStarted || status === "CONFIRMED" || status === "PENDING");
   const openActions = localActions.filter((a) => a.status === "OPEN");
   const totalActions = localActions.length;
 
@@ -440,10 +485,16 @@ export function LiveMeetingView({
           <span className="rounded-md bg-[var(--primary-container)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-on-primary">
             Anaxi Core
           </span>
-          {isInProgress && !isEnded && (
+          {hasStarted && !isEnded && (
             <span className="flex items-center gap-1.5 text-sm font-semibold text-scale-strong-text">
               <span className="inline-block h-2 w-2 rounded-full bg-scale-strong-bg0" />
               IN PROGRESS
+            </span>
+          )}
+          {!hasStarted && !isEnded && (status === "CONFIRMED" || status === "PENDING") && (
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-muted">
+              <span className="inline-block h-2 w-2 rounded-full bg-muted" />
+              NOT STARTED
             </span>
           )}
           {isEnded && (
@@ -458,7 +509,10 @@ export function LiveMeetingView({
           <div className="space-y-2">
             <H1>{title}</H1>
             <div className="flex flex-wrap items-center gap-4">
-              <span className="flex items-center gap-1.5 font-mono text-sm text-muted">
+              <span
+                className="flex items-center gap-1.5 font-mono text-sm text-muted"
+                title={hasStarted ? "Elapsed since start" : "Timer starts when you start the meeting"}
+              >
                 <svg className="h-3.5 w-3.5 text-text" viewBox="0 0 16 16" fill="currentColor">
                   <circle cx="8" cy="8" r="6" />
                 </svg>
@@ -468,7 +522,17 @@ export function LiveMeetingView({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {canStartMeeting && !isEnded && !hasStarted && (
+              <Button
+                type="button"
+                className="rounded-xl px-5"
+                disabled={startingMeeting}
+                onClick={() => void handleStartMeeting()}
+              >
+                {startingMeeting ? "Starting..." : "Start meeting"}
+              </Button>
+            )}
             <button
               type="button"
               onClick={handleSaveDraft}
