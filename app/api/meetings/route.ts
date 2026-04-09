@@ -14,17 +14,47 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { title, type, startDateTime, endDateTime, location, notes, attendeeIds = [] } = body;
+    const {
+      title,
+      type,
+      startDateTime,
+      endDateTime,
+      location,
+      notes,
+      attendeeIds = [],
+      status,
+      startNow,
+    } = body;
 
-    if (!title || !type || !startDateTime || !endDateTime) {
-      return NextResponse.json({ error: "title, type, startDateTime and endDateTime are required" }, { status: 400 });
+    if (!title || !type) {
+      return NextResponse.json({ error: "title and type are required" }, { status: 400 });
     }
 
-    const start = new Date(startDateTime);
-    const end = new Date(endDateTime);
+    let start: Date;
+    let end: Date;
+    if (startNow === true) {
+      start = new Date();
+      end = new Date(start.getTime() + 60 * 60 * 1000);
+    } else {
+      if (!startDateTime || !endDateTime) {
+        return NextResponse.json(
+          { error: "startDateTime and endDateTime are required unless startNow is true" },
+          { status: 400 },
+        );
+      }
+      start = new Date(startDateTime);
+      end = new Date(endDateTime);
+    }
+
     if (end <= start) {
       return NextResponse.json({ error: "endDateTime must be after startDateTime" }, { status: 400 });
     }
+
+    const allowedStatus = ["PENDING", "CONFIRMED", "CANCELLED"] as const;
+    const resolvedStatus =
+      typeof status === "string" && allowedStatus.includes(status as (typeof allowedStatus)[number])
+        ? (status as (typeof allowedStatus)[number])
+        : undefined;
 
     const meeting = await createMeeting(user.tenantId, user.id, {
       title,
@@ -34,6 +64,8 @@ export async function POST(req: Request) {
       location,
       notes,
       attendeeIds,
+      status: resolvedStatus ?? (startNow === true ? "CONFIRMED" : undefined),
+      startedAt: startNow === true ? start : undefined,
     });
 
     void Promise.allSettled(
