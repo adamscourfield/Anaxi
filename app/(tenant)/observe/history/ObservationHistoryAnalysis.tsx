@@ -420,7 +420,7 @@ export function ObservationHistoryAnalysis({
                       <span className="font-semibold text-text">
                         {timelineWeeks.reduce((s, w) => s + w.count, 0).toLocaleString()}
                       </span>{" "}
-                      total in range
+                      total in window
                     </span>
                   )}
               </div>
@@ -428,58 +428,142 @@ export function ObservationHistoryAnalysis({
           )}
         </div>
 
-        {/* Coaching pairs */}
         {showCoachingSection && (
           <div className="md:col-span-2 lg:col-span-12">
             <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               Coaching pairs — weekly coverage
             </h3>
             <p className="mt-1 max-w-3xl text-[0.8125rem] text-muted">
-              Each row is an assigned coach and coachee. A green cell means at least one observation that week with that
-              coach observing that coachee. Aim for consistent green across weeks (weekly rhythm).
+              Green weeks had at least one observation with this coach observing this coachee. Hover for the observation
+              date; click to open details.
             </p>
+            {coachingCoachFilterOptions.length > 0 || coachingCoacheeFilterOptions.length > 0 ? (
+              <CoachingPairFilterForm
+                historyFilterQueryString={historyFilterQueryString}
+                coachOptions={coachingCoachFilterOptions}
+                coacheeOptions={coachingCoacheeFilterOptions}
+                coachId={coachingCoachId}
+                coacheeId={coachingCoacheeId}
+              />
+            ) : null}
             {pairWeekly.length === 0 ? (
-              <p className="mt-4 text-sm text-muted">No coaching assignments in this school.</p>
+              <p className="mt-4 text-sm text-muted">
+                {coachingCoachId || coachingCoacheeId
+                  ? "No coaching pairs match these people."
+                  : "No coaching assignments in this school."}
+              </p>
             ) : (
-              <div className="mt-4 overflow-x-auto rounded-xl border border-border/20">
-                <table className="w-full min-w-[640px] text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-border/20 bg-surface-container-low/80 text-[0.6875rem] uppercase tracking-[0.06em] text-muted">
-                      <th className="px-3 py-2.5 font-semibold">Pair</th>
-                      <th className="px-3 py-2.5 font-semibold whitespace-nowrap">In range</th>
-                      <th className="px-3 py-2.5 font-semibold whitespace-nowrap">Weeks with obs.</th>
-                      <th className="min-w-[240px] px-3 py-2.5 font-semibold">Weeks (oldest → newest)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/15">
-                    {pairWeekly.map((p) => (
-                      <tr key={`${p.coachId}-${p.coacheeId}`} className="calm-transition hover:bg-accent/[0.03]">
-                        <td className="px-3 py-2.5">
-                          <span className="font-medium text-text">{p.coachName}</span>
-                          <span className="text-muted"> → </span>
-                          <span className="font-medium text-text">{p.coacheeName}</span>
-                        </td>
-                        <td className="px-3 py-2.5 tabular-nums text-muted">{p.observationCount}</td>
-                        <td className="px-3 py-2.5 tabular-nums text-muted">
-                          {p.weeksWithObservation} / {p.weekHit.length}
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <div className="flex flex-wrap gap-0.5" title={p.weekLabels.join(", ")}>
-                            {p.weekHit.map((hit, i) => (
-                              <span
-                                key={i}
-                                className={`inline-block h-3 w-3 shrink-0 rounded-sm ${
-                                  hit ? "bg-[var(--scale-strong-bar)]" : "bg-[var(--surface-container-high)]"
-                                }`}
-                                title={`${p.weekLabels[i] ?? ""}: ${hit ? "observed" : "no observation"}`}
-                              />
-                            ))}
-                          </div>
-                        </td>
+              <div className="table-shell mt-4">
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full min-w-[640px] text-left text-sm">
+                    <thead>
+                      <tr className="table-head-row text-left">
+                        <th className="px-5 py-3.5">Pair</th>
+                        <th className="px-4 py-3.5 whitespace-nowrap">
+                          <span className="inline-flex flex-col gap-0.5">
+                            <span>Coaching obs.</span>
+                            <span className="text-[0.625rem] font-normal normal-case tracking-normal text-muted">
+                              in this period
+                            </span>
+                          </span>
+                        </th>
+                        <th className="px-4 py-3.5 whitespace-nowrap">Weeks with obs.</th>
+                        <th className="min-w-[240px] px-4 py-3.5">Weeks (oldest → newest)</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {pairWeekly.map((p) => (
+                        <tr key={`${p.coachId}-${p.coacheeId}`} className="group table-row calm-transition">
+                          <td className="px-5 py-4">
+                            <span className="font-semibold text-text">{p.coachName}</span>
+                            <span className="text-muted"> → </span>
+                            <span className="font-semibold text-text">{p.coacheeName}</span>
+                          </td>
+                          <td className="px-4 py-4 tabular-nums text-muted">
+                            <span title="Observations where this coach was the observer and this teacher was observed, within the chart period above (and your other filters).">
+                              {p.observationCount}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 tabular-nums text-muted">
+                            {p.weeksWithObservation} / {p.weekHit.length}
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex flex-wrap gap-1">
+                              {p.weekHit.map((hit, i) => {
+                                const obsId = p.weekObservationIds[i];
+                                const iso = p.weekObservationDates[i];
+                                const weekLbl = p.weekLabels[i] ?? "";
+                                if (hit && obsId && iso) {
+                                  return (
+                                    <Link
+                                      key={i}
+                                      href={`/observe/${obsId}`}
+                                      className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm bg-[var(--scale-strong-bar)] calm-transition hover:ring-2 hover:ring-accent/40 hover:ring-offset-1 hover:ring-offset-surface-container-lowest"
+                                      title={`Observation ${formatObsDate(iso)} — click for details`}
+                                      onMouseEnter={(e) =>
+                                        showTip(e, `Observation\n${formatObsDate(iso)}\nClick to open`)
+                                      }
+                                      onMouseMove={moveTip}
+                                      onMouseLeave={hideTip}
+                                    />
+                                  );
+                                }
+                                return (
+                                  <span
+                                    key={i}
+                                    className="inline-block h-4 w-4 shrink-0 rounded-sm bg-[var(--surface-container-high)]"
+                                    title={`${weekLbl}: no observation`}
+                                    onMouseEnter={(e) => showTip(e, `${weekLbl}\nNo observation`)}
+                                    onMouseMove={moveTip}
+                                    onMouseLeave={hideTip}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="md:hidden divide-y divide-border/20">
+                  {pairWeekly.map((p) => (
+                    <div key={`${p.coachId}-${p.coacheeId}`} className="px-4 py-3.5">
+                      <p className="text-[0.875rem] font-semibold text-text">
+                        {p.coachName} <span className="font-normal text-muted">→</span> {p.coacheeName}
+                      </p>
+                      <p className="mt-1 text-[0.8125rem] text-muted">
+                        {p.observationCount} coaching observation{p.observationCount === 1 ? "" : "s"} this period ·{" "}
+                        {p.weeksWithObservation}/{p.weekHit.length} weeks with obs.
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {p.weekHit.map((hit, i) => {
+                          const obsId = p.weekObservationIds[i];
+                          const iso = p.weekObservationDates[i];
+                          const weekLbl = p.weekLabels[i] ?? "";
+                          if (hit && obsId && iso) {
+                            return (
+                              <Link
+                                key={i}
+                                href={`/observe/${obsId}`}
+                                className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm bg-[var(--scale-strong-bar)]"
+                                title={`Observation ${formatObsDate(iso)}`}
+                              />
+                            );
+                          }
+                          return (
+                            <span
+                              key={i}
+                              className="inline-block h-4 w-4 shrink-0 rounded-sm bg-[var(--surface-container-high)]"
+                              title={`${weekLbl}: no observation`}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
