@@ -80,6 +80,10 @@ export default async function ObservationHistoryPage({
   const windowDays = Number(searchParams?.window || "");
   const useWindow = Number.isFinite(windowDays) && windowDays > 0 && !from && !to;
   const windowStart = useWindow ? new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000) : null;
+  const analysisPresetRaw = String(searchParams?.analysis || "").trim();
+  const analysisPreset = parseObservationAnalysisPreset(analysisPresetRaw) ?? "26w";
+  const coachingCoachIdRaw = String(searchParams?.coachingCoach || "").trim();
+  const coachingCoacheeIdRaw = String(searchParams?.coachingCoachee || "").trim();
 
   const [teachers, observers, hodMemberships, coachAssignments, tenantSignalLabels] = await Promise.all([
     (prisma as any).user.findMany({ where: { tenantId: user.tenantId, isActive: true }, orderBy: { fullName: "asc" } }),
@@ -226,7 +230,10 @@ export default async function ObservationHistoryPage({
     !!to ||
     !!phaseFilter ||
     !!signalKeyFilter ||
-    useWindow;
+    useWindow ||
+    analysisPreset !== "26w" ||
+    !!coachingCoachId ||
+    !!coachingCoacheeId;
 
   const signalFilterOptions = [...tenantSignalDefs]
     .sort((a, b) => a.order - b.order)
@@ -247,6 +254,9 @@ export default async function ObservationHistoryPage({
     if (phaseFilter) params.set("phase", phaseFilter);
     if (signalKeyFilter) params.set("signalKey", signalKeyFilter);
     if (useWindow) params.set("window", String(windowDays));
+    if (analysisPreset !== "26w") params.set("analysis", analysisPreset);
+    if (coachingCoachId) params.set("coachingCoach", coachingCoachId);
+    if (coachingCoacheeId) params.set("coachingCoachee", coachingCoacheeId);
     if (p > 1) params.set("page", String(p));
     const qs = params.toString();
     return `/observe/history${qs ? `?${qs}` : ""}`;
@@ -266,6 +276,21 @@ export default async function ObservationHistoryPage({
 
   const rangeStart = (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, totalCount as number);
+
+  const historyFilterQuery = new URLSearchParams();
+  if (teacherId) historyFilterQuery.set("teacherId", teacherId);
+  if (observerId) historyFilterQuery.set("observerId", observerId);
+  if (subject) historyFilterQuery.set("subject", subject);
+  if (yearGroup) historyFilterQuery.set("yearGroup", yearGroup);
+  if (from) historyFilterQuery.set("from", from);
+  if (to) historyFilterQuery.set("to", to);
+  if (phaseFilter) historyFilterQuery.set("phase", phaseFilter);
+  if (signalKeyFilter) historyFilterQuery.set("signalKey", signalKeyFilter);
+  if (useWindow) historyFilterQuery.set("window", String(windowDays));
+  if (analysisPreset !== "26w") historyFilterQuery.set("analysis", analysisPreset);
+  if (coachingCoachId) historyFilterQuery.set("coachingCoach", coachingCoachId);
+  if (coachingCoacheeId) historyFilterQuery.set("coachingCoachee", coachingCoacheeId);
+  const historyFilterQueryString = historyFilterQuery.toString();
 
   return (
     <div className="space-y-6">
@@ -304,6 +329,9 @@ export default async function ObservationHistoryPage({
         signalOptions={signalFilterOptions}
         defaults={{ teacherId, observerId, subject, from, to, signalKey: signalKeyFilter }}
         preservedWindowDays={useWindow ? windowDays : null}
+        preservedAnalysisPreset={analysisPreset}
+        preservedCoachingCoachId={coachingCoachId}
+        preservedCoachingCoacheeId={coachingCoacheeId}
         showTeacherFilters={user.role !== "TEACHER"}
         hasFilters={hasFilters}
       />
