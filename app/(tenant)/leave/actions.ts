@@ -1,6 +1,7 @@
 "use server";
 
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { sendLeaveDecisionEmail } from "@/lib/email";
 import { requireFeature } from "@/lib/guards";
 import { canManageLoa } from "@/lib/loa";
 import { prisma } from "@/lib/prisma";
@@ -54,7 +55,10 @@ export async function decideLoaRequest(formData: FormData) {
   const decisionType = String(formData.get("decisionType") || "");
   const decisionNotes = String(formData.get("decisionNotes") || "").trim();
 
-  const request = await (prisma as any).lOARequest.findFirst({ where: { id: requestId, tenantId: user.tenantId } });
+  const request = await (prisma as any).lOARequest.findFirst({
+    where: { id: requestId, tenantId: user.tenantId },
+    include: { requester: { select: { email: true, fullName: true } } },
+  });
   if (!request) throw new Error("NOT_FOUND");
   if (request.requesterId === user.id) throw new Error("CANNOT_APPROVE_OWN_LOA");
   const canManage = await canManageLoa(user, request.requesterId);
@@ -80,6 +84,12 @@ export async function decideLoaRequest(formData: FormData) {
     }
   });
 
+  void sendLeaveDecisionEmail({
+    to: request.requester.email,
+    requesterName: request.requester.fullName,
+    status,
+    leaveRequestId: requestId,
+  });
   revalidatePath(`/leave/${requestId}`);
   revalidatePath("/leave/calendar");
   revalidatePath("/leave/pending");

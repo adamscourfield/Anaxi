@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { sendEmail, sendOnboardingEmail } from "@/lib/email";
+import { sendEmail, sendOnboardingEmail, sendObservationEmail, sendMeetingInviteEmail, sendLeaveDecisionEmail } from "@/lib/email";
 
 // Stub global fetch
 const fetchMock = vi.fn();
@@ -135,6 +135,132 @@ describe("sendOnboardingEmail", () => {
     const result = await sendOnboardingEmail({
       to: "teacher@school.example",
       fullName: "Jane Doe",
+    });
+
+    expect(result.status).toBe("not_configured");
+  });
+});
+
+describe("sendObservationEmail", () => {
+  it("sends an email with the correct observation content", async () => {
+    process.env.RESEND_API_KEY = "test-key";
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    const result = await sendObservationEmail({
+      to: "teacher@school.example",
+      teacherName: "Jane Doe",
+      observerName: "Bob Smith",
+      observationId: "obs_abc123",
+    });
+
+    expect(result.status).toBe("sent");
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.subject).toBe("New observation from Bob Smith");
+    expect(body.text).toContain("Hi Jane Doe");
+    expect(body.text).toContain("Bob Smith");
+    expect(body.text).toContain("/observe/obs_abc123");
+  });
+
+  it("returns not_configured when no API key", async () => {
+    delete process.env.RESEND_API_KEY;
+
+    const result = await sendObservationEmail({
+      to: "teacher@school.example",
+      teacherName: "Jane Doe",
+      observerName: "Bob Smith",
+      observationId: "obs_abc123",
+    });
+
+    expect(result.status).toBe("not_configured");
+  });
+});
+
+describe("sendMeetingInviteEmail", () => {
+  it("sends an email with the correct meeting invite content", async () => {
+    process.env.RESEND_API_KEY = "test-key";
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    const result = await sendMeetingInviteEmail({
+      to: "attendee@school.example",
+      attendeeName: "Carol White",
+      title: "Year 10 Review",
+      startDateTime: new Date("2026-03-10T09:00:00Z"),
+      meetingId: "mtg_xyz456",
+    });
+
+    expect(result.status).toBe("sent");
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.subject).toBe("Meeting invite: Year 10 Review");
+    expect(body.text).toContain("Hi Carol White");
+    expect(body.text).toContain("Year 10 Review");
+    expect(body.text).toContain("/meetings/mtg_xyz456");
+  });
+
+  it("returns not_configured when no API key", async () => {
+    delete process.env.RESEND_API_KEY;
+
+    const result = await sendMeetingInviteEmail({
+      to: "attendee@school.example",
+      attendeeName: "Carol White",
+      title: "Year 10 Review",
+      startDateTime: new Date("2026-03-10T09:00:00Z"),
+      meetingId: "mtg_xyz456",
+    });
+
+    expect(result.status).toBe("not_configured");
+  });
+});
+
+describe("sendLeaveDecisionEmail", () => {
+  it("sends an email for an approved-with-pay decision", async () => {
+    process.env.RESEND_API_KEY = "test-key";
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    const result = await sendLeaveDecisionEmail({
+      to: "staff@school.example",
+      requesterName: "Alice Green",
+      status: "APPROVED_WITH_PAY",
+      leaveRequestId: "loa_def789",
+    });
+
+    expect(result.status).toBe("sent");
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.subject).toBe("Your leave request has been approved with pay");
+    expect(body.text).toContain("Hi Alice Green");
+    expect(body.text).toContain("approved with pay");
+    expect(body.text).toContain("/leave/loa_def789");
+  });
+
+  it("sends an email for a denied decision", async () => {
+    process.env.RESEND_API_KEY = "test-key";
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    const result = await sendLeaveDecisionEmail({
+      to: "staff@school.example",
+      requesterName: "Alice Green",
+      status: "DENIED",
+      leaveRequestId: "loa_def789",
+    });
+
+    expect(result.status).toBe("sent");
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.subject).toBe("Your leave request has been denied");
+    expect(body.text).toContain("denied");
+    expect(body.text).toContain("/leave/loa_def789");
+  });
+
+  it("returns not_configured when no API key", async () => {
+    delete process.env.RESEND_API_KEY;
+
+    const result = await sendLeaveDecisionEmail({
+      to: "staff@school.example",
+      requesterName: "Alice Green",
+      status: "APPROVED_WITHOUT_PAY",
+      leaveRequestId: "loa_def789",
     });
 
     expect(result.status).toBe("not_configured");
