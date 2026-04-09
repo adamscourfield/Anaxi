@@ -287,6 +287,7 @@ export default function ComparisonPage() {
                       <>
                         <th className="pb-2 pr-3 text-right">4+<br /><span className="text-[8px] font-normal normal-case">from→to</span></th>
                         <th className="pb-2 pr-3 text-right">5+<br /><span className="text-[8px] font-normal normal-case">from→to</span></th>
+                        <th className="pb-2 pr-3 text-right">7+<br /><span className="text-[8px] font-normal normal-case">from→to</span></th>
                       </>
                     )}
                     {isALevel && (
@@ -303,6 +304,7 @@ export default function ComparisonPage() {
                     const isExpanded = expandedSubject === sc.subject;
                     const thr4 = sc.thresholdDelta["4+"] as { from: number; to: number } | undefined;
                     const thr5 = sc.thresholdDelta["5+"] as { from: number; to: number } | undefined;
+                    const thr7 = sc.thresholdDelta["7+"] as { from: number; to: number } | undefined;
                     const thrA = sc.thresholdDelta["A+"] as { from: number; to: number } | undefined;
                     const thrC = sc.thresholdDelta["C+"] as { from: number; to: number } | undefined;
 
@@ -333,6 +335,9 @@ export default function ComparisonPage() {
                               </td>
                               <td className="py-2.5 pr-3 text-right tabular-nums text-xs">
                                 {thr5 ? <><span className="text-[var(--on-surface-muted)]">{thr5.from}%</span><span className="text-[var(--on-surface-muted)]">→</span><span className={thr5.to > thr5.from ? "text-[var(--success)] font-bold" : thr5.to < thr5.from ? "text-[var(--error)] font-bold" : ""}>{thr5.to}%</span></> : "—"}
+                              </td>
+                              <td className="py-2.5 pr-3 text-right tabular-nums text-xs">
+                                {thr7 ? <><span className="text-[var(--on-surface-muted)]">{thr7.from}%</span><span className="text-[var(--on-surface-muted)]">→</span><span className={thr7.to > thr7.from ? "text-[var(--success)] font-bold" : thr7.to < thr7.from ? "text-[var(--error)] font-bold" : ""}>{thr7.to}%</span></> : "—"}
                               </td>
                             </>
                           )}
@@ -424,11 +429,14 @@ export default function ComparisonPage() {
                         <div className="space-y-1.5">
                           {students.map((s) => (
                             <div key={s.studentId} className="flex items-center gap-2">
-                              <span className="flex-1 truncate text-sm text-[var(--on-surface)]">
+                              <Link
+                                href={`/students/${s.studentId}`}
+                                className="calm-transition flex-1 min-w-0 truncate text-sm text-[var(--on-surface)] hover:underline hover:text-[var(--accent)]"
+                              >
                                 {s.name}
                                 {s.ppFlag && <span className="ml-1 rounded-full bg-violet-100 px-1.5 text-[9px] text-violet-700">PP</span>}
                                 {s.sendFlag && <span className="ml-1 rounded-full bg-blue-100 px-1.5 text-[9px] text-blue-700">SEN</span>}
-                              </span>
+                              </Link>
                               <span className="shrink-0 text-xs text-[var(--on-surface-muted)] tabular-nums">
                                 #{s.fromRank} → #{s.toRank}
                               </span>
@@ -493,8 +501,13 @@ export default function ComparisonPage() {
                 ) : (
                   <div className="space-y-1.5">
                     {students.map((s) => (
-                      <div key={`${s.studentId}-${s.from}`} className="flex items-center justify-between">
-                        <span className="text-sm text-[var(--on-surface)] truncate">{s.name}</span>
+                      <div key={`${s.studentId}-${s.from}`} className="flex items-center justify-between gap-2">
+                        <Link
+                          href={`/students/${s.studentId}`}
+                          className="calm-transition min-w-0 truncate text-sm text-[var(--on-surface)] hover:underline hover:text-[var(--accent)]"
+                        >
+                          {s.name}
+                        </Link>
                         <span className={`text-sm font-bold tabular-nums ${cls} shrink-0`}>
                           {s.from} → {s.to}
                         </span>
