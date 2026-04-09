@@ -1,16 +1,26 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function LandingNav() {
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[var(--outline-variant)]">
-      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="text-xl font-semibold text-[var(--on-surface)] tracking-tight">
-          Anaxi
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[var(--outline-variant)]">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        {/* Logo + wordmark */}
+        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <Image
+            src="/anaxi-logo.png"
+            alt=""
+            width={32}
+            height={32}
+            className="h-8 w-8 object-contain"
+          />
+          <span className="text-sm font-semibold text-[var(--on-surface)] tracking-tight uppercase tracking-[0.1em]">
+            Anaxi
+          </span>
         </Link>
 
         {/* Center nav */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-8">
           <Link
             href="#core"
             className="text-sm font-medium text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] transition-colors duration-150"
@@ -26,18 +36,19 @@ export default function LandingNav() {
         </nav>
 
         {/* Right actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <Link
             href="/login"
-            className="text-sm font-medium text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] transition-colors duration-150"
+            className="hidden sm:block text-sm font-medium text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] transition-colors duration-150"
           >
-            Login
+            Sign in
           </Link>
           <Link
             href="/login"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--primary-container)] text-white text-sm font-medium hover:opacity-90 transition-opacity duration-150"
+            className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90"
+            style={{ background: "var(--primary-container)" }}
           >
-            Get Started
+            Request Demo
           </Link>
         </div>
       </div>
