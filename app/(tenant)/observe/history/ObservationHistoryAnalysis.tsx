@@ -30,7 +30,7 @@ const PRESET_META: Record<
   week: { label: "Last week", short: "Week" },
   month: { label: "Last month", short: "Month" },
   academic_year: { label: "Academic year", short: "Academic year" },
-  26w: { label: "~26 weeks", short: "26 wks" },
+  "26w": { label: "~26 weeks", short: "26 wks" },
 };
 
 type TooltipState = { x: number; y: number; text: string } | null;
