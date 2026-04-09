@@ -408,17 +408,45 @@ export default async function StudentDetailPage({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="overflow-hidden rounded-xl border border-border/40 bg-surface-container-lowest/90 shadow-ambient">
             <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface-container-low/80">
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.06em] text-muted">
+                    Metric
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.06em] text-muted"
+                  >
+                    <span className="block text-text">Change</span>
+                    <span className="mt-0.5 block font-normal normal-case tracking-normal text-[11px] text-muted">
+                      vs start of {windowDays}-day window
+                    </span>
+                  </th>
+                  <th
+                    scope="col"
+                    className="border-l border-border/60 bg-surface-container-low/60 px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.06em] text-muted"
+                  >
+                    <span className="block text-text">Latest snapshot</span>
+                    <span className="mt-0.5 block font-normal normal-case tracking-normal text-[11px] text-muted">
+                      {analysisProfile.currentSnapshot
+                        ? fmtDate(analysisProfile.currentSnapshot.snapshotDate)
+                        : "No snapshot in this window"}
+                    </span>
+                  </th>
+                </tr>
+              </thead>
               <tbody className="divide-y divide-divider">
                 <tr>
-                  <td className="py-2 text-muted">Attendance</td>
-                  <td className="py-2 text-right">
+                  <td className="px-4 py-2.5 text-muted">Attendance</td>
+                  <td className="px-4 py-2.5 text-right">
                     {analysisProfile.attendanceDelta !== null ? (
                       <span
                         className={`tabular-nums font-medium ${
                           analysisProfile.attendanceDelta < 0 ? "text-red-600" : "text-scale-strong-text"
                         }`}
+                        title="Change in attendance rate (percentage points)"
                       >
                         {analysisProfile.attendanceDelta > 0 ? "+" : ""}
                         {analysisProfile.attendanceDelta.toFixed(1)} pp
@@ -427,31 +455,67 @@ export default async function StudentDetailPage({
                       <span className="text-muted">—</span>
                     )}
                   </td>
+                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                    {analysisProfile.currentSnapshot
+                      ? `${analysisProfile.currentSnapshot.attendancePct.toFixed(1)}%`
+                      : "—"}
+                  </td>
                 </tr>
-                <tr><td className="py-2 text-muted">On calls</td><td className="py-2 text-right"><DeltaCell value={analysisProfile.onCallsDelta} /></td></tr>
-                <tr><td className="py-2 text-muted">Detentions</td><td className="py-2 text-right"><DeltaCell value={analysisProfile.detentionsDelta} /></td></tr>
-                <tr><td className="py-2 text-muted">Lateness</td><td className="py-2 text-right"><DeltaCell value={analysisProfile.latenessDelta} /></td></tr>
-                <tr><td className="py-2 text-muted">Internal exclusions</td><td className="py-2 text-right"><DeltaCell value={analysisProfile.internalExclusionsDelta} /></td></tr>
-                <tr><td className="py-2 text-muted">Suspensions</td><td className="py-2 text-right"><DeltaCell value={analysisProfile.suspensionsDelta} /></td></tr>
+                <tr>
+                  <td className="px-4 py-2.5 text-muted">On calls</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <DeltaCell value={analysisProfile.onCallsDelta} />
+                  </td>
+                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                    {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.onCallsCount : "—"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5 text-muted">Detentions</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <DeltaCell value={analysisProfile.detentionsDelta} />
+                  </td>
+                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                    {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.detentionsCount : "—"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5 text-muted">Lateness</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <DeltaCell value={analysisProfile.latenessDelta} />
+                  </td>
+                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                    {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.latenessCount : "—"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5 text-muted">Internal exclusions</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <DeltaCell value={analysisProfile.internalExclusionsDelta} />
+                  </td>
+                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                    {analysisProfile.currentSnapshot
+                      ? analysisProfile.currentSnapshot.internalExclusionsCount
+                      : "—"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5 text-muted">Suspensions</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <DeltaCell value={analysisProfile.suspensionsDelta} />
+                  </td>
+                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                    {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.suspensionsCount : "—"}
+                  </td>
+                </tr>
               </tbody>
             </table>
-
-            {analysisProfile.currentSnapshot ? (
-              <table className="w-full text-sm">
-                <tbody className="divide-y divide-divider">
-                  <tr><td className="py-2 text-muted">Snapshot date</td><td className="py-2 text-right tabular-nums font-medium text-text">{fmtDate(analysisProfile.currentSnapshot.snapshotDate)}</td></tr>
-                  <tr><td className="py-2 text-muted">Attendance</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.attendancePct.toFixed(1)}%</td></tr>
-                  <tr><td className="py-2 text-muted">On calls</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.onCallsCount}</td></tr>
-                  <tr><td className="py-2 text-muted">Detentions</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.detentionsCount}</td></tr>
-                  <tr><td className="py-2 text-muted">Lateness</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.latenessCount}</td></tr>
-                  <tr><td className="py-2 text-muted">Internal exclusions</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.internalExclusionsCount}</td></tr>
-                  <tr><td className="py-2 text-muted">Suspensions</td><td className="py-2 text-right tabular-nums font-medium text-text">{analysisProfile.currentSnapshot.suspensionsCount}</td></tr>
-                </tbody>
-              </table>
-            ) : (
-              <BodyText className="text-muted">No snapshot data in the selected window.</BodyText>
-            )}
           </div>
+          {!analysisProfile.currentSnapshot ? (
+            <MetaText className="mt-2">
+              No snapshot in this window — the change column may still show movement across the period.
+            </MetaText>
+          ) : null}
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <form
