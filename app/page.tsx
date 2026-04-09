@@ -58,7 +58,7 @@ export default function LandingPage() {
           />
         </div>
 
-        <h1 className="mt-9 text-5xl font-bold tracking-[-0.04em] text-[var(--on-surface)] sm:text-6xl sm:tracking-[-0.045em]">
+        <h1 className="mt-9 text-3xl font-light tracking-[-0.03em] text-[var(--on-surface)] sm:text-4xl sm:tracking-[-0.032em]">
           Anaxi
         </h1>
 
