@@ -69,10 +69,14 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
         type={typeLabel}
         status={meeting.status}
         startDateTime={new Date(meeting.startDateTime).toISOString()}
+        startedAt={
+          meeting.startedAt ? new Date(meeting.startedAt).toISOString() : null
+        }
         attendees={meeting.attendees}
         initialNotes={meeting.notes ?? ""}
         actions={meeting.actions ?? []}
         canEdit={canEdit}
+        canStartMeeting={isCreator}
         canAddActions={canAddActions}
         currentUserId={user.id}
         avgActionsForType={avgActionsForType}

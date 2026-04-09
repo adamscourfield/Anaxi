@@ -37,6 +37,7 @@ export async function createMeeting(
       status: input.status ?? "PENDING",
       startDateTime: input.startDateTime,
       endDateTime: input.endDateTime,
+      startedAt: input.startedAt ?? null,
       location: input.location ?? null,
       notes: input.notes ?? null,
       createdByUserId,
@@ -81,6 +82,15 @@ export async function updateMeeting(
   if (input.location !== undefined) data.location = input.location;
   if (input.notes !== undefined) data.notes = input.notes;
   if (input.status !== undefined) data.status = input.status;
+  if (input.startedAt !== undefined) {
+    if (existing.status === "CANCELLED") {
+      throw new Error("cannot start a cancelled meeting");
+    }
+    if (existing.startedAt != null && input.startedAt != null) {
+      throw new Error("meeting already started");
+    }
+    data.startedAt = input.startedAt;
+  }
 
   return (prisma as any).meeting.update({
     where: { id: meetingId },

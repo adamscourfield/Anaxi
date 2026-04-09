@@ -29,6 +29,11 @@ export async function createMeetingAction(formData: FormData) {
   });
 
   revalidatePath("/meetings");
+  const fiveMin = 5 * 60 * 1000;
+  const scheduledStart = new Date(meeting.startDateTime).getTime();
+  if (scheduledStart - Date.now() > fiveMin) {
+    redirect("/meetings");
+  }
   redirect(`/meetings/${meeting.id}`);
 }
 

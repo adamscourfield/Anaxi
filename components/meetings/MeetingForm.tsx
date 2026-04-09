@@ -142,7 +142,10 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
   const [location, setLocation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [isDraft, setIsDraft] = useState(false);
+  const submitIntentRef = useRef<"draft" | "schedule" | "startNow">("schedule");
+
+  /** Redirect to list for scheduled meetings that are not starting in the next few minutes. */
+  const FUTURE_REDIRECT_THRESHOLD_MS = 5 * 60 * 1000;
 
   const filteredUsers = users.filter(
     (u) =>
@@ -167,6 +170,7 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
 
     const form = e.currentTarget;
     const data = new FormData(form);
+    const intent = submitIntentRef.current;
 
     const dateVal = data.get("date") as string;
     const timeVal = data.get("time") as string;
@@ -177,16 +181,24 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
       ? new Date(startDateTime.getTime() + 60 * 60 * 1000)
       : null;
 
-    const body = {
+    const isDraft = intent === "draft";
+    const startNow = intent === "startNow";
+
+    const body: Record<string, unknown> = {
       title: data.get("title") as string,
       type: data.get("type") as string,
-      startDateTime: startDateTime?.toISOString(),
-      endDateTime: endDateTime?.toISOString(),
       location: location || undefined,
       notes: notes || undefined,
       attendeeIds: selectedAttendees.map((a) => a.id),
       status: isDraft ? "PENDING" : "CONFIRMED",
     };
+
+    if (startNow) {
+      body.startNow = true;
+    } else {
+      body.startDateTime = startDateTime?.toISOString();
+      body.endDateTime = endDateTime?.toISOString();
+    }
 
     try {
       const res = await fetch("/api/meetings", {
@@ -203,7 +215,15 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
       }
 
       const meeting = await res.json();
-      router.push(`/meetings/${meeting.id}`);
+      const scheduledStart = meeting.startDateTime
+        ? new Date(meeting.startDateTime).getTime()
+        : Date.now();
+      const goToDetail =
+        startNow ||
+        meeting.startedAt != null ||
+        scheduledStart - Date.now() <= FUTURE_REDIRECT_THRESHOLD_MS;
+      router.push(goToDetail ? `/meetings/${meeting.id}` : "/meetings");
+      setSubmitting(false);
     } catch {
       setError("Network error");
       setSubmitting(false);
@@ -217,10 +237,25 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
         title="New Meeting"
         subtitle="Schedule an institutional coordination or review session."
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <button
               type="submit"
-              onClick={() => setIsDraft(true)}
+              onClick={() => {
+                submitIntentRef.current = "startNow";
+              }}
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-4 py-2.5 text-sm font-semibold text-text calm-transition hover:bg-accent/15 disabled:opacity-60"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="5 3 19 12 5 21 5 3" strokeLinejoin="round" />
+              </svg>
+              {submitting ? "Starting..." : "Start meeting now"}
+            </button>
+            <button
+              type="submit"
+              onClick={() => {
+                submitIntentRef.current = "draft";
+              }}
               disabled={submitting}
               className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-container-lowest px-4 py-2.5 text-sm font-semibold text-text calm-transition hover:bg-surface-container-low disabled:opacity-60"
             >
@@ -228,7 +263,9 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
             </button>
             <button
               type="submit"
-              onClick={() => setIsDraft(false)}
+              onClick={() => {
+                submitIntentRef.current = "schedule";
+              }}
               disabled={submitting}
               className="inline-flex items-center gap-2 rounded-xl bg-text px-5 py-2.5 text-sm font-semibold text-bg calm-transition hover:opacity-90 disabled:opacity-60"
             >
