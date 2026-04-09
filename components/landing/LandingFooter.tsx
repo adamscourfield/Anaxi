@@ -67,14 +67,8 @@ export default function LandingFooter() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-xs transition-colors duration-150"
+                      className="text-xs transition-colors duration-150 footer-link"
                       style={{ color: "rgba(255,255,255,0.45)" }}
-                      onMouseOver={(e) =>
-                        ((e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.75)")
-                      }
-                      onMouseOut={(e) =>
-                        ((e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.45)")
-                      }
                     >
                       {link.label}
                     </Link>

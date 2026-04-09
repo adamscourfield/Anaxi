@@ -785,3 +785,7 @@ textarea:focus-visible {
     animation: none;
   }
 }
+
+.footer-link:hover {
+  color: rgba(255,255,255,0.75) !important;
+}
