@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Inter, Newsreader } from "next/font/google";
+import { Inter } from "next/font/google";
 import { SessionProvider } from "@/components/session-provider";
 
 const inter = Inter({
@@ -8,16 +8,9 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  variable: "--font-newsreader",
-  display: "swap",
-});
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${newsreader.variable} ${inter.className}`}>
+    <html lang="en" className={`${inter.variable} ${inter.className}`}>
       <body className="bg-[var(--surface-bright)] text-[var(--on-surface)]">
           <SessionProvider>{children}</SessionProvider>
         </body>

@@ -22,9 +22,9 @@ export default function ValuePropsSection() {
       <div className="max-w-6xl mx-auto px-6">
         {/* Centered headline */}
         <div className="text-center mb-16 max-w-2xl mx-auto">
-          <h2 className="font-newsreader text-4xl font-semibold text-[var(--on-surface)] tracking-tight">
+          <h2 className="text-4xl font-semibold text-[var(--on-surface)] tracking-tight">
             Crafted for the most ambitious{" "}
-            <em className="font-newsreader italic font-semibold">educational institutions.</em>
+            <em className="italic font-semibold">educational institutions.</em>
           </h2>
         </div>
 

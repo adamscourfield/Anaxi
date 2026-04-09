@@ -7,8 +7,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
-        newsreader: ['var(--font-newsreader)', 'Georgia', 'Times New Roman', 'serif'],
-        serif: ['var(--font-newsreader)', 'Georgia', 'Times New Roman', 'serif'],
+        serif: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         // ── Design System: The Modern Academic Ledger ──────────────

@@ -4,7 +4,7 @@ export default function CTASection() {
   return (
     <section className="bg-[var(--surface-container-low)] py-24">
       <div className="max-w-3xl mx-auto px-6 text-center">
-        <h2 className="font-newsreader text-4xl lg:text-5xl font-semibold text-[var(--on-surface)] tracking-tight mb-5">
+        <h2 className="text-4xl lg:text-5xl font-semibold text-[var(--on-surface)] tracking-tight mb-5">
           Ready to evolve your institutional intelligence?
         </h2>
         <p className="text-sm text-[var(--on-surface-variant)] leading-relaxed mb-10 max-w-xl mx-auto">

@@ -12,7 +12,7 @@ export default function DualEngineSection() {
         {/* Section header */}
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-12">
           <div className="max-w-xl">
-            <h2 className="font-newsreader text-4xl font-semibold text-[var(--on-surface)] tracking-tight mb-3">
+            <h2 className="text-4xl font-semibold text-[var(--on-surface)] tracking-tight mb-3">
               Dual-Engine Architecture
             </h2>
             <p className="text-sm text-[var(--on-surface-variant)] leading-relaxed">
@@ -56,7 +56,7 @@ export default function DualEngineSection() {
                   <rect x="7" y="11" width="6" height="6" rx="1" stroke="var(--on-surface)" strokeWidth="1.5" />
                 </svg>
               </div>
-              <h3 className="font-newsreader text-2xl font-semibold text-[var(--on-surface)] mb-2">Anaxi Core</h3>
+              <h3 className="text-2xl font-semibold text-[var(--on-surface)] mb-2">Anaxi Core</h3>
               <p className="text-sm text-[var(--on-surface-variant)] leading-relaxed">
                 Refined operational confidence. A clinical approach to school logistics and staff governance.
               </p>
@@ -117,7 +117,7 @@ export default function DualEngineSection() {
                   <path d="M10 4V2M6 5.5 4.5 4M14 5.5 15.5 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </div>
-              <h3 className="font-newsreader text-2xl font-semibold text-white mb-2">Anaxi Learn</h3>
+              <h3 className="text-2xl font-semibold text-white mb-2">Anaxi Learn</h3>
               <p className="text-sm text-white/70 leading-relaxed">
                 Deep pedagogical integrity. Bridging the gap between cognitive science and classroom delivery.
               </p>

@@ -13,7 +13,7 @@ export default function HeroSection() {
               <span className="inline-block text-2xs font-semibold uppercase tracking-[0.15em] text-[var(--on-surface-variant)] mb-5">
                 Institutional Intelligence
               </span>
-              <h1 className="font-newsreader text-5xl lg:text-6xl font-semibold text-[var(--on-surface)] leading-[1.05] tracking-tight mb-5">
+              <h1 className="text-5xl lg:text-6xl font-semibold text-[var(--on-surface)] leading-[1.05] tracking-tight mb-5">
                 The Future of Education
               </h1>
               <p className="text-base text-[var(--on-surface-variant)] leading-relaxed max-w-md">
