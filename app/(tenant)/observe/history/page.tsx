@@ -9,10 +9,12 @@ import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { formatYearGroup } from "@/modules/observations/yearGroup";
 import { pedagogicalSignalTooltip } from "@/modules/observations/signalTooltip";
+import { computeObservationHistoryAnalytics } from "@/modules/observations/observationHistoryAnalytics";
 import {
-  computeObservationHistoryAnalytics,
-  resolveObservationAnalysisRange,
-} from "@/modules/observations/observationHistoryAnalytics";
+  observationFilterDateBounds,
+  parseObservationAnalysisPreset,
+  resolveObservationAnalysisRangeUnified,
+} from "@/modules/observations/observationHistoryAnalysisRange";
 import {
   buildObservationHistoryWhere,
   OBSERVATION_HISTORY_PHASE_FILTERS,
@@ -80,6 +82,8 @@ export default async function ObservationHistoryPage({
   const windowDays = Number(searchParams?.window || "");
   const useWindow = Number.isFinite(windowDays) && windowDays > 0 && !from && !to;
   const windowStart = useWindow ? new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000) : null;
+  const analysisPresetRaw = String(searchParams?.analysis || "").trim();
+  const analysisPreset = parseObservationAnalysisPreset(analysisPresetRaw) ?? "26w";
 
   const [teachers, observers, hodMemberships, coachAssignments, tenantSignalLabels] = await Promise.all([
     (prisma as any).user.findMany({ where: { tenantId: user.tenantId, isActive: true }, orderBy: { fullName: "asc" } }),
@@ -148,7 +152,7 @@ export default async function ObservationHistoryPage({
       }),
       (prisma as any).observation.findMany({
         where,
-        select: { observerId: true, observedTeacherId: true, observedAt: true },
+        select: { id: true, observerId: true, observedTeacherId: true, observedAt: true },
       }),
       showPairMatrix && (user.role === "ADMIN" || user.role === "SLT" || user.role === "SUPER_ADMIN")
         ? (prisma as any).coachAssignment.findMany({
@@ -175,14 +179,15 @@ export default async function ObservationHistoryPage({
     (observerUsers as { id: string; role: UserRole }[]).map((u) => [u.id, u.role]),
   );
 
-  const analyticsObs = (obsRowsForAnalysis as { observerId: string; observedTeacherId: string; observedAt: Date }[]).map(
-    (o) => ({
-      observedTeacherId: o.observedTeacherId,
-      observerId: o.observerId,
-      observedAt: o.observedAt,
-      observerRole: roleByObserver.get(o.observerId) ?? ("TEACHER" as UserRole),
-    }),
-  );
+  const analyticsObs = (
+    obsRowsForAnalysis as { id: string; observerId: string; observedTeacherId: string; observedAt: Date }[]
+  ).map((o) => ({
+    id: o.id,
+    observedTeacherId: o.observedTeacherId,
+    observerId: o.observerId,
+    observedAt: o.observedAt,
+    observerRole: roleByObserver.get(o.observerId) ?? ("TEACHER" as UserRole),
+  }));
 
   let coachAssignmentsForAnalytics: {
     coachUserId: string;
@@ -207,10 +212,22 @@ export default async function ObservationHistoryPage({
     }));
   }
 
-  const analysisRange = resolveObservationAnalysisRange({ from, to, useWindow, windowStart });
+  const analysisRange = resolveObservationAnalysisRangeUnified({
+    analysisPreset,
+    from,
+    to,
+    useWindow,
+    windowStart,
+  });
+  const filterDateBounds = observationFilterDateBounds({ from, to, useWindow, windowStart });
+  const analyticsRange =
+    analysisRange.emptyIntersection && filterDateBounds
+      ? { start: filterDateBounds.start, end: filterDateBounds.end }
+      : { start: analysisRange.start, end: analysisRange.end };
+
   const historyAnalytics = computeObservationHistoryAnalytics({
     observations: analyticsObs,
-    range: analysisRange,
+    range: analyticsRange,
     coachAssignments: coachAssignmentsForAnalytics,
     showCoachingSection: showPairMatrix,
   });
@@ -226,7 +243,8 @@ export default async function ObservationHistoryPage({
     !!to ||
     !!phaseFilter ||
     !!signalKeyFilter ||
-    useWindow;
+    useWindow ||
+    analysisPreset !== "26w";
 
   const signalFilterOptions = [...tenantSignalDefs]
     .sort((a, b) => a.order - b.order)
@@ -247,6 +265,8 @@ export default async function ObservationHistoryPage({
     if (phaseFilter) params.set("phase", phaseFilter);
     if (signalKeyFilter) params.set("signalKey", signalKeyFilter);
     if (useWindow) params.set("window", String(windowDays));
+    if (analysisPreset !== "26w") params.set("analysis", analysisPreset);
+    if (yearGroup) params.set("yearGroup", yearGroup);
     if (p > 1) params.set("page", String(p));
     const qs = params.toString();
     return `/observe/history${qs ? `?${qs}` : ""}`;
@@ -266,6 +286,18 @@ export default async function ObservationHistoryPage({
 
   const rangeStart = (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, totalCount as number);
+
+  const historyFilterQuery = new URLSearchParams();
+  if (teacherId) historyFilterQuery.set("teacherId", teacherId);
+  if (observerId) historyFilterQuery.set("observerId", observerId);
+  if (subject) historyFilterQuery.set("subject", subject);
+  if (yearGroup) historyFilterQuery.set("yearGroup", yearGroup);
+  if (from) historyFilterQuery.set("from", from);
+  if (to) historyFilterQuery.set("to", to);
+  if (phaseFilter) historyFilterQuery.set("phase", phaseFilter);
+  if (signalKeyFilter) historyFilterQuery.set("signalKey", signalKeyFilter);
+  if (useWindow) historyFilterQuery.set("window", String(windowDays));
+  const historyFilterQueryString = historyFilterQuery.toString();
 
   return (
     <div className="space-y-6">
@@ -290,6 +322,10 @@ export default async function ObservationHistoryPage({
 
       <ObservationHistoryAnalysis
         rangeLabel={analysisRange.label}
+        analysisPreset={analysisPreset}
+        emptyIntersection={analysisRange.emptyIntersection}
+        chartFellBackToTableDates={analysisRange.emptyIntersection && !!filterDateBounds}
+        historyFilterQueryString={historyFilterQueryString}
         roleCounts={historyAnalytics.roleCounts}
         pairWeekly={historyAnalytics.pairWeekly}
         timelineWeeks={historyAnalytics.timelineWeeks}
@@ -304,6 +340,7 @@ export default async function ObservationHistoryPage({
         signalOptions={signalFilterOptions}
         defaults={{ teacherId, observerId, subject, from, to, signalKey: signalKeyFilter }}
         preservedWindowDays={useWindow ? windowDays : null}
+        preservedAnalysisPreset={analysisPreset}
         showTeacherFilters={user.role !== "TEACHER"}
         hasFilters={hasFilters}
       />
