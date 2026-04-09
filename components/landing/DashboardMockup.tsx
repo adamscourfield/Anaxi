@@ -27,7 +27,7 @@ export default function DashboardMockup() {
           <span className="text-2xs font-semibold uppercase tracking-widest text-[var(--on-surface-variant)]">
             Efficiency Index
           </span>
-          <span className="text-xl font-bold text-[var(--on-surface)] font-newsreader">94.1%</span>
+          <span className="text-xl font-bold text-[var(--on-surface)]">94.1%</span>
         </div>
         <div className="w-full h-1.5 bg-[var(--surface-container)] rounded-full overflow-hidden">
           <div

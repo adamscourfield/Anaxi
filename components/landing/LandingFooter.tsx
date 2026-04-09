@@ -28,7 +28,7 @@ export default function LandingFooter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-10">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <span className="font-newsreader text-lg font-semibold text-[var(--on-surface)]">Anaxi</span>
+            <span className="text-lg font-semibold text-[var(--on-surface)]">Anaxi</span>
             <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed mt-2 max-w-[200px]">
               The modern academic ledger for progressive educational institutions globally.
             </p>

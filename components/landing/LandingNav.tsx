@@ -5,7 +5,7 @@ export default function LandingNav() {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[var(--outline-variant)]">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="font-newsreader text-xl font-semibold text-[var(--on-surface)] tracking-tight">
+        <Link href="/" className="text-xl font-semibold text-[var(--on-surface)] tracking-tight">
           Anaxi
         </Link>
 

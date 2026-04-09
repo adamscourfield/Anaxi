@@ -291,10 +291,10 @@ body {
   color: var(--on-surface);
 }
 
-/* ── Serif headlines ────────────────────────────────────────────── */
+/* ── Display headlines (Inter) ──────────────────────────────────── */
 .font-display,
 .font-headline {
-  font-family: var(--font-newsreader), Georgia, 'Times New Roman', serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────── */
