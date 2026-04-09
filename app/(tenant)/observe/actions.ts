@@ -60,7 +60,7 @@ export async function createObservation(formData: FormData) {
     }
   });
 
-  void sendObservationEmail({
+  await sendObservationEmail({
     to: teacher.email,
     teacherName: teacher.fullName,
     observerName: user.fullName,
@@ -119,7 +119,7 @@ export async function submitObservationDraft(formData: FormData) {
     }
   });
 
-  void sendObservationEmail({
+  await sendObservationEmail({
     to: teacher.email,
     teacherName: teacher.fullName,
     observerName: user.fullName,
