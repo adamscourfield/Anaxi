@@ -429,11 +429,14 @@ export default function ComparisonPage() {
                         <div className="space-y-1.5">
                           {students.map((s) => (
                             <div key={s.studentId} className="flex items-center gap-2">
-                              <span className="flex-1 truncate text-sm text-[var(--on-surface)]">
+                              <Link
+                                href={`/students/${s.studentId}`}
+                                className="calm-transition flex-1 min-w-0 truncate text-sm text-[var(--on-surface)] hover:underline hover:text-[var(--accent)]"
+                              >
                                 {s.name}
                                 {s.ppFlag && <span className="ml-1 rounded-full bg-violet-100 px-1.5 text-[9px] text-violet-700">PP</span>}
                                 {s.sendFlag && <span className="ml-1 rounded-full bg-blue-100 px-1.5 text-[9px] text-blue-700">SEN</span>}
-                              </span>
+                              </Link>
                               <span className="shrink-0 text-xs text-[var(--on-surface-muted)] tabular-nums">
                                 #{s.fromRank} → #{s.toRank}
                               </span>
