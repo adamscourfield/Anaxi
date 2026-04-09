@@ -7,6 +7,7 @@ export interface CreateMeetingInput {
   notes?: string;
   attendeeIds: string[];
   status?: "PENDING" | "CONFIRMED" | "CANCELLED";
+  startedAt?: Date | null;
 }
 
 export interface UpdateMeetingInput {
@@ -18,6 +19,7 @@ export interface UpdateMeetingInput {
   notes?: string;
   attendeeIds?: string[];
   status?: "PENDING" | "CONFIRMED" | "CANCELLED";
+  startedAt?: Date | null;
 }
 
 export interface MeetingAttendeeDetail {
@@ -34,6 +36,7 @@ export interface MeetingDetail {
   status: string;
   startDateTime: Date;
   endDateTime: Date;
+  startedAt?: Date | null;
   location?: string | null;
   notes?: string | null;
   createdByUserId: string;
