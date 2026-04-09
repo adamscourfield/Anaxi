@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
+import type { UserRole } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
 import { getTenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
@@ -8,9 +9,18 @@ import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { formatYearGroup } from "@/modules/observations/yearGroup";
 import { pedagogicalSignalTooltip } from "@/modules/observations/signalTooltip";
+import {
+  computeObservationHistoryAnalytics,
+  resolveObservationAnalysisRange,
+} from "@/modules/observations/observationHistoryAnalytics";
+import {
+  buildObservationHistoryWhere,
+  OBSERVATION_HISTORY_PHASE_FILTERS,
+} from "@/modules/observations/observationHistoryWhere";
 import { Avatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/page-header";
 import { HistoryFilters } from "./HistoryFilters";
+import { ObservationHistoryAnalysis } from "./ObservationHistoryAnalysis";
 
 /* ── Signal dot colours by scale level ────────────────────────────────── */
 const SIGNAL_DOT_COLOR: Record<string, string> = {
@@ -40,16 +50,6 @@ const PHASE_BADGE: Record<string, string> = {
 /* ── Pagination constants ─────────────────────────────────────────────── */
 const PAGE_SIZE = 10;
 
-const VALID_PHASE_FILTERS = new Set([
-  "INSTRUCTION",
-  "GUIDED_PRACTICE",
-  "INDEPENDENT_PRACTICE",
-  "UNKNOWN",
-  "THRESHOLD",
-  "TRANSITION_START",
-  "BOOKS",
-]);
-
 function formatLongDate(date: Date | string): string {
   const d = new Date(date);
   return `${String(d.getDate()).padStart(2, "0")} ${d.toLocaleDateString("en-GB", { month: "short" })} ${d.getFullYear()}`;
@@ -70,12 +70,12 @@ export default async function ObservationHistoryPage({
   const from = String(searchParams?.from || "");
   const to = String(searchParams?.to || "");
   const phaseRaw = String(searchParams?.phase || "").trim();
-  const phaseFilter = VALID_PHASE_FILTERS.has(phaseRaw) ? phaseRaw : "";
+  const phaseFilter = OBSERVATION_HISTORY_PHASE_FILTERS.has(phaseRaw) ? phaseRaw : "";
   const signalKeyRaw = String(searchParams?.signalKey || "").trim();
   const schoolType = await getTenantSchoolType(user.tenantId);
   const tenantSignalDefs = getSignalDefinitionsForSchoolType(schoolType);
   const validSignalKeys = new Set(tenantSignalDefs.map((s) => s.key));
-  const signalKeyFilter = validSignalKeys.has(signalKeyRaw) ? signalKeyRaw : "";
+  const signalKeyFilter = (validSignalKeys as Set<string>).has(signalKeyRaw) ? signalKeyRaw : "";
   const page = Math.max(1, Number(searchParams?.page || "1"));
   const windowDays = Number(searchParams?.window || "");
   const useWindow = Number.isFinite(windowDays) && windowDays > 0 && !from && !to;
@@ -102,45 +102,23 @@ export default async function ObservationHistoryPage({
   const hodVisibleUserIds = new Set((hodDeptMemberships as any[]).map((m: any) => m.userId));
   const coachVisibleUserIds = new Set(coacheeUserIds);
 
-  const where: any = {
+  const { where, allowedTeacherIds } = buildObservationHistoryWhere({
     tenantId: user.tenantId,
-    ...(subject ? { subject } : {}),
-    ...(yearGroup ? { yearGroup } : {}),
-    ...(observerId ? { observerId } : {}),
-    ...(phaseFilter ? { phase: phaseFilter } : {}),
-    ...(signalKeyFilter
-      ? {
-          signals: {
-            some: { signalKey: signalKeyFilter },
-          },
-        }
-      : {}),
-    ...((from || to || useWindow)
-      ? {
-          observedAt: {
-            ...(from ? { gte: new Date(from) } : {}),
-            ...(to ? { lte: new Date(to) } : {}),
-            ...(useWindow && windowStart ? { gte: windowStart } : {}),
-          },
-        }
-      : {}),
-  };
-
-  let allowedTeacherIds: Set<string> | null = null;
-
-  if (user.role === "TEACHER") {
-    where.observedTeacherId = user.id;
-    allowedTeacherIds = new Set([user.id]);
-  } else if (user.role === "ADMIN" || user.role === "SLT" || user.role === "SUPER_ADMIN") {
-    if (teacherId) where.observedTeacherId = teacherId;
-  } else {
-    allowedTeacherIds = new Set<string>([...Array.from(hodVisibleUserIds), ...Array.from(coachVisibleUserIds)]);
-    if (teacherId) {
-      where.observedTeacherId = allowedTeacherIds.has(teacherId) ? teacherId : "__NO_MATCH__";
-    } else {
-      where.observedTeacherId = { in: Array.from(allowedTeacherIds) };
-    }
-  }
+    userRole: user.role,
+    userId: user.id,
+    teacherId,
+    subject,
+    yearGroup,
+    observerId,
+    from,
+    to,
+    phaseFilter,
+    signalKeyFilter,
+    useWindow,
+    windowStart,
+    hodVisibleUserIds,
+    coacheeUserIds,
+  });
 
   const visibleTeachers = allowedTeacherIds
     ? (teachers as any[]).filter((t: any) => (allowedTeacherIds as Set<string>).has(t.id))
@@ -150,17 +128,92 @@ export default async function ObservationHistoryPage({
   if (user.role === "TEACHER") scopedFilterWhere.observedTeacherId = user.id;
   else if (allowedTeacherIds) scopedFilterWhere.observedTeacherId = { in: Array.from(allowedTeacherIds) };
 
-  const [totalCount, observations, distinctSubjects] = await Promise.all([
-    (prisma as any).observation.count({ where }),
-    (prisma as any).observation.findMany({
-      where,
-      include: { observedTeacher: true, observer: true, signals: true },
-      orderBy: { observedAt: "desc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+  const showPairMatrix = user.role !== "TEACHER";
+
+  const [totalCount, observations, distinctSubjects, obsRowsForAnalysis, tenantCoachAssignments] =
+    await Promise.all([
+      (prisma as any).observation.count({ where }),
+      (prisma as any).observation.findMany({
+        where,
+        include: { observedTeacher: true, observer: true, signals: true },
+        orderBy: { observedAt: "desc" },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+      }),
+      (prisma as any).observation.findMany({
+        where: scopedFilterWhere,
+        distinct: ["subject"],
+        select: { subject: true },
+        orderBy: { subject: "asc" },
+      }),
+      (prisma as any).observation.findMany({
+        where,
+        select: { observerId: true, observedTeacherId: true, observedAt: true },
+      }),
+      showPairMatrix && (user.role === "ADMIN" || user.role === "SLT" || user.role === "SUPER_ADMIN")
+        ? (prisma as any).coachAssignment.findMany({
+            where: { tenantId: user.tenantId },
+            include: {
+              coach: { select: { fullName: true } },
+              coachee: { select: { fullName: true } },
+            },
+          })
+        : Promise.resolve([]),
+    ]);
+
+  const observerIds = [
+    ...new Set((obsRowsForAnalysis as { observerId: string }[]).map((o) => o.observerId)),
+  ];
+  const observerUsers =
+    observerIds.length === 0
+      ? []
+      : await (prisma as any).user.findMany({
+          where: { id: { in: observerIds } },
+          select: { id: true, role: true },
+        });
+  const roleByObserver = new Map(
+    (observerUsers as { id: string; role: UserRole }[]).map((u) => [u.id, u.role]),
+  );
+
+  const analyticsObs = (obsRowsForAnalysis as { observerId: string; observedTeacherId: string; observedAt: Date }[]).map(
+    (o) => ({
+      observedTeacherId: o.observedTeacherId,
+      observerId: o.observerId,
+      observedAt: o.observedAt,
+      observerRole: roleByObserver.get(o.observerId) ?? ("TEACHER" as UserRole),
     }),
-    (prisma as any).observation.findMany({ where: scopedFilterWhere, distinct: ["subject"], select: { subject: true }, orderBy: { subject: "asc" } }),
-  ]);
+  );
+
+  let coachAssignmentsForAnalytics: {
+    coachUserId: string;
+    coacheeUserId: string;
+    coachName: string;
+    coacheeName: string;
+  }[] = [];
+  if (user.role === "ADMIN" || user.role === "SLT" || user.role === "SUPER_ADMIN") {
+    coachAssignmentsForAnalytics = (tenantCoachAssignments as any[]).map((a: any) => ({
+      coachUserId: a.coachUserId,
+      coacheeUserId: a.coacheeUserId,
+      coachName: a.coach.fullName,
+      coacheeName: a.coachee.fullName,
+    }));
+  } else if (showPairMatrix) {
+    coachAssignmentsForAnalytics = (coachAssignments as any[]).map((a: any) => ({
+      coachUserId: a.coachUserId,
+      coacheeUserId: a.coacheeUserId,
+      coachName: user.fullName,
+      coacheeName:
+        (teachers as any[]).find((t: any) => t.id === a.coacheeUserId)?.fullName ?? "Coachee",
+    }));
+  }
+
+  const analysisRange = resolveObservationAnalysisRange({ from, to, useWindow, windowStart });
+  const historyAnalytics = computeObservationHistoryAnalytics({
+    observations: analyticsObs,
+    range: analysisRange,
+    coachAssignments: coachAssignmentsForAnalytics,
+    showCoachingSection: showPairMatrix,
+  });
 
   const obsList = observations as any[];
   const totalPages = Math.max(1, Math.ceil((totalCount as number) / PAGE_SIZE));
@@ -233,6 +286,14 @@ export default async function ObservationHistoryPage({
             </Link>
           ) : undefined
         }
+      />
+
+      <ObservationHistoryAnalysis
+        rangeLabel={analysisRange.label}
+        roleCounts={historyAnalytics.roleCounts}
+        pairWeekly={historyAnalytics.pairWeekly}
+        timelineWeeks={historyAnalytics.timelineWeeks}
+        showCoachingSection={showPairMatrix}
       />
 
       {/* ── Filters ─────────────────────────────────────────────────────── */}
