@@ -25,9 +25,7 @@ if (!process.env.NEXTAUTH_SECRET) {
 }
 
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ["@prisma/client", "bcryptjs"],
-  },
+  serverExternalPackages: ["@prisma/client", "bcryptjs"],
   images: {
     remotePatterns: [
       {
