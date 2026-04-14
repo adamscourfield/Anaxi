@@ -11,25 +11,6 @@ import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels
 import { ClearDraftOnSuccess } from "../components/ClearDraftOnSuccess";
 import { PrintExportButtons } from "../components/PrintExportButtons";
 
-/** Observation review badges: lavender (consistent) and coral (strong) per review UI spec */
-const SCALE_DISPLAY: Record<string, { label: string; pillClass: string }> = {
-  LIMITED: {
-    label: "Limited",
-    pillClass: "bg-scale-limited-bg text-scale-limited-text",
-  },
-  SOME: {
-    label: "Some",
-    pillClass: "bg-scale-some-bg text-scale-some-text",
-  },
-  CONSISTENT: {
-    label: "Consistent",
-    pillClass: "bg-[#ede9fe] text-[#5b21b6]",
-  },
-  STRONG: {
-    label: "Strong",
-    pillClass: "bg-[#ffe4e6] text-[#9f1239]",
-  },
-};
 
 function initials(name: string) {
   return name
@@ -107,6 +88,16 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
   const draftKey = `observation-draft:${user.tenantId}:${user.id}`;
   const schoolType = await getTenantSchoolType(user.tenantId);
   const observationSignalDefs = getSignalsForPhase(observation.phase, schoolType);
+
+  const positiveSignals = observationSignalDefs.filter((signal) => {
+    const scaleKey = (signalMap.get(signal.key) as any)?.valueKey as string | undefined;
+    return scaleKey === "CONSISTENT" || scaleKey === "STRONG";
+  });
+
+  const focusSignals = observationSignalDefs.filter((signal) => {
+    const scaleKey = (signalMap.get(signal.key) as any)?.valueKey as string | undefined;
+    return scaleKey === "SOME" || scaleKey === "LIMITED";
+  });
 
   const teacherDept = (observedDeptMemberships as any[])[0]?.department?.fullName ?? null;
   const teacherName: string = observation.observedTeacher?.fullName ?? "Unknown Teacher";
@@ -192,38 +183,48 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                 Signal Summary
               </SectionHeader>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {observationSignalDefs.map((signal) => {
+              <div className="space-y-2">
+                {positiveSignals.map((signal) => {
                   const override = (labelMap as any)[signal.key];
                   const displayName = override?.displayName || signal.displayNameDefault;
-                  const value = signalMap.get(signal.key);
-                  const scaleKey = value?.valueKey as string | undefined;
-                  const display = scaleKey ? SCALE_DISPLAY[scaleKey] : null;
-                  const isSkipped = value?.notObserved && !value?.valueKey;
-
                   return (
-                    <div
-                      key={signal.key}
-                      className="flex items-center justify-between gap-3 rounded-xl bg-surface-container-low px-4 py-3.5"
-                    >
-                      <span className="min-w-0 truncate text-[0.8125rem] font-medium text-text">{displayName}</span>
-                      <div className="shrink-0">
-                        {display ? (
-                          <span
-                            className={`inline-flex rounded-full px-2.5 py-1 text-[0.625rem] font-bold uppercase tracking-wide ${display.pillClass}`}
-                          >
-                            {display.label}
-                          </span>
-                        ) : isSkipped ? (
-                          <span className="text-[0.75rem] text-muted">Skipped</span>
-                        ) : (
-                          <span className="text-[0.75rem] text-muted">—</span>
-                        )}
-                      </div>
+                    <div key={signal.key} className="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                        <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
+                          <path d="M3 8l3.5 3.5L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <span className="text-[0.8125rem] font-medium text-text">{displayName}</span>
                     </div>
                   );
                 })}
+                {positiveSignals.length === 0 && (
+                  <p className="text-[0.8125rem] text-muted italic">No signals rated consistent or strong in this session.</p>
+                )}
               </div>
+
+              {focusSignals.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="mb-3 text-[0.875rem] font-semibold text-text">What I need to focus on</h3>
+                  <div className="space-y-2">
+                    {focusSignals.map((signal) => {
+                      const override = (labelMap as any)[signal.key];
+                      const displayName = override?.displayName || signal.displayNameDefault;
+                      return (
+                        <div key={signal.key} className="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                            <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5">
+                              <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </span>
+                          <span className="text-[0.8125rem] font-medium text-text">{displayName}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </section>
 
             {observation.contextNote && (
