@@ -13,6 +13,7 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "seed:demo": "tsx prisma/seed.demo.ts",
     "seed:demo:reset": "tsx prisma/seed.demo.ts --reset",
+    "seed:godmode": "tsx prisma/seed.godmode.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
