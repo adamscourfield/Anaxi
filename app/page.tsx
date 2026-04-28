@@ -47,6 +47,16 @@ export default function LandingPage() {
 
       <main className="flex flex-1 flex-col justify-center px-4 py-16 sm:px-6 md:px-8 md:py-20 lg:px-10">
         <div className="mx-auto w-full max-w-[900px] text-center">
+          <div className="mb-8 flex justify-center sm:mb-10">
+            <Image
+              src="/anaxi-logo.png"
+              alt="Anaxi"
+              width={56}
+              height={56}
+              priority
+              className="h-14 w-14 object-contain sm:h-16 sm:w-16"
+            />
+          </div>
           <h1 className="text-pretty text-[clamp(2.25rem,8vw,4.25rem)] font-bold leading-[1.02] tracking-[-0.045em] text-[var(--on-surface)]">
             <span className="block">Institutional</span>
             <span className="block text-[var(--on-surface-variant)]">Awareness</span>
