@@ -1,5 +1,5 @@
 import { TenantRouteSkeleton } from "@/components/tenant-route-skeleton";
 
-export default function AssessmentsSegmentLoading() {
+export default function MyActionsLoading() {
   return <TenantRouteSkeleton variant="table" />;
 }

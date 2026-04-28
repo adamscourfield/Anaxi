@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
 import { H1, MetaText } from "@/components/ui/typography";
 import { toast } from "@/components/toast-provider";
 
@@ -166,8 +167,8 @@ function LinkUrlDialog({
       cancelLabel="Cancel"
       onClose={onClose}
       onConfirm={() => {
-        const result = onConfirmUrl(url.trim());
-        return result;
+        const r = onConfirmUrl(url.trim());
+        if (r === false) return false;
       }}
     >
       <label className="block">
@@ -182,8 +183,8 @@ function LinkUrlDialog({
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
-              const result = onConfirmUrl(url.trim());
-              if (result !== false) onClose();
+              const ok = onConfirmUrl(url.trim());
+              if (ok !== false) onClose();
             }
           }}
         />
@@ -354,6 +355,40 @@ export function LiveMeetingView({
     },
     [meetingId],
   );
+
+  function openInsertLinkDialog() {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    linkInsertRef.current = {
+      start: ta.selectionStart,
+      end: ta.selectionEnd,
+      selected: notes.slice(ta.selectionStart, ta.selectionEnd) || "link text",
+    };
+    setLinkDialogOpen(true);
+  }
+
+  function applyInsertedLink(url: string): boolean {
+    const ta = textareaRef.current;
+    const p = linkInsertRef.current;
+    if (!ta || !p) {
+      setLinkDialogOpen(false);
+      return true;
+    }
+    if (!url) {
+      toast("Enter a URL for the link.", "error");
+      return false;
+    }
+    const formatted = `[${p.selected}](${url})`;
+    const newValue = notes.slice(0, p.start) + formatted + notes.slice(p.end);
+    handleNotesChange(newValue);
+    setLinkDialogOpen(false);
+    linkInsertRef.current = null;
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(p.start, p.start + formatted.length);
+    });
+    return true;
+  }
 
   /* ── Start meeting (timer) ─────────────────────────────────────── */
   async function handleStartMeeting() {
@@ -848,17 +883,16 @@ export function LiveMeetingView({
         onClose={() => setLinkDialogOpen(false)}
         onConfirmUrl={applyInsertedLink}
       />
-      <ConfirmDialog
+      <DestructiveConfirmDialog
         open={endMeetingOpen}
         title="End meeting?"
         confirmLabel="End meeting"
         cancelLabel="Cancel"
-        variant="danger"
         onClose={() => setEndMeetingOpen(false)}
         onConfirm={() => void handleEndMeeting()}
       >
         This will mark the session as completed and return you to the meetings list.
-      </ConfirmDialog>
+      </DestructiveConfirmDialog>
     </div>
   );
 }

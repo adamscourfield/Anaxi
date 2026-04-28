@@ -68,7 +68,6 @@ export function TenantLayoutClient({
 }: TenantLayoutClientProps) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const pathname = usePathname();
 
   const navProps = {
     role,

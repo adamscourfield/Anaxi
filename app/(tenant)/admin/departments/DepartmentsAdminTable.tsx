@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState, useRef } from "react";
 import { Avatar } from "@/components/ui/avatar";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
 
 type DeptMember = {
   userId: string;
@@ -370,12 +370,11 @@ export function DepartmentsAdminTable({
       <form ref={deleteFormRef} action={deleteDepartmentAction} className="hidden" aria-hidden="true">
         {deleteTarget && <input type="hidden" name="id" value={deleteTarget.id} />}
       </form>
-      <ConfirmDialog
+      <DestructiveConfirmDialog
         open={deleteTarget != null}
         title="Delete department?"
         confirmLabel="Delete"
         cancelLabel="Cancel"
-        variant="danger"
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {
           if (deleteFormRef.current) deleteFormRef.current.requestSubmit();
@@ -384,7 +383,7 @@ export function DepartmentsAdminTable({
         {deleteTarget
           ? `This will permanently remove "${deleteTarget.name}" and cannot be undone.`
           : null}
-      </ConfirmDialog>
+      </DestructiveConfirmDialog>
     </>
   );
 }
