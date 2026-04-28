@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 type QuickActionItem = {
   label: string;
   href: string;
-  icon: string;
+  icon: ReactNode;
 };
 
 export function QuickActionButton({ items }: { items: QuickActionItem[] }) {
@@ -46,7 +47,9 @@ export function QuickActionButton({ items }: { items: QuickActionItem[] }) {
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm text-text calm-transition hover:bg-[var(--surface-container-low)]"
             >
-              <span className="text-base">{item.icon}</span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-container-low)] text-muted [&_svg]:h-4 [&_svg]:w-4">
+                {item.icon}
+              </span>
               {item.label}
             </Link>
           ))}
