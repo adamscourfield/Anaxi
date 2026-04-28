@@ -1,8 +1,17 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import {
+  AuthBackLink,
+  AuthCard,
+  AuthFieldLabel,
+  AuthFlowMain,
+  AuthNav,
+  AuthPageHeader,
+  AuthShell,
+} from "@/components/auth-shell";
+import { Button } from "@/components/ui/button";
 
 type State = "idle" | "loading" | "sent" | "error";
 
@@ -26,136 +35,91 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ background: "var(--surface-bright)", color: "var(--on-surface)" }}
-    >
-      {/* Top nav */}
-      <nav className="fixed top-0 w-full z-50 flex items-center px-8 h-20 glass-surface">
-        <div className="flex items-center gap-3">
-          <Image src="/anaxi-logo.png" alt="Anaxi" width={32} height={32} priority className="h-8 w-8 object-contain" />
-          <div className="h-4 w-px mx-2" style={{ background: "var(--divider-subtle)" }} />
-          <span className="text-[11px] font-semibold tracking-[0.12em] uppercase" style={{ color: "var(--on-surface-variant)" }}>
-            Anaxi
-          </span>
-        </div>
-      </nav>
+    <AuthShell variant="light">
+      <AuthNav />
+      <AuthFlowMain>
+        <AuthPageHeader
+          title="Reset password"
+          subtitle="Enter your email and we'll send you a link to set a new password."
+        />
 
-      <main className="flex-grow flex items-center justify-center px-6 py-24">
-        <div className="w-full max-w-[440px] flex flex-col">
+        <AuthCard>
+          {state === "sent" ? (
+            <div className="space-y-4 py-2 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-container-low)]">
+                <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6" aria-hidden>
+                  <path
+                    d="M3.5 10 7.5 14l9-8"
+                    stroke="var(--on-surface)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <p className="text-[15px] font-semibold text-text">Check your email</p>
+              <p className="text-[13px] leading-relaxed text-muted">
+                If an account exists for that address, we&apos;ve sent a password reset link. It expires in 1
+                hour.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <AuthFieldLabel htmlFor="email">Email</AuthFieldLabel>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@school.edu"
+                  className="field"
+                  required
+                  autoComplete="email"
+                />
+              </div>
 
-          {/* Header */}
-          <div className="mb-10 text-center md:text-left">
-            <h1 className="text-4xl font-bold mb-3" style={{ color: "var(--on-surface)" }}>
-              Reset Password
-            </h1>
-            <p className="text-base leading-relaxed" style={{ color: "var(--on-surface-variant)" }}>
-              Enter your email and we&apos;ll send you a link to set a new password.
-            </p>
-          </div>
-
-          {/* Card */}
-          <div
-            className="p-1 rounded-[1.5rem]"
-            style={{
-              background: "rgba(255,255,255,0.80)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              boxShadow: "0 32px 64px -16px rgba(25,28,30,0.04)",
-            }}
-          >
-            <div
-              className="p-8 rounded-[1.375rem]"
-              style={{
-                background: "var(--surface-container-lowest)",
-                border: "1px solid color-mix(in srgb, var(--outline-variant) 10%, transparent)",
-              }}
-            >
-              {state === "sent" ? (
-                <div className="space-y-4 text-center py-2">
-                  <div
-                    className="mx-auto flex h-12 w-12 items-center justify-center rounded-full"
-                    style={{ background: "var(--surface-container-low)" }}
-                  >
-                    <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M3.5 10 7.5 14l9-8" stroke="var(--on-surface)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                  <p className="text-[15px] font-semibold" style={{ color: "var(--on-surface)" }}>Check your email</p>
-                  <p className="text-[13px] leading-relaxed" style={{ color: "var(--on-surface-variant)" }}>
-                    If an account exists for that address, we&apos;ve sent a password reset link. It expires in 1 hour.
+              {state === "error" ? (
+                <div
+                  className="rounded-[0.75rem] border border-[var(--coral-border)] px-4 py-3"
+                  style={{ background: "var(--pill-error-bg)" }}
+                >
+                  <p className="text-[13px] text-[var(--pill-error-text)]">
+                    Something went wrong. Please try again.
                   </p>
                 </div>
-              ) : (
-                <form onSubmit={onSubmit} className="space-y-5">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="email"
-                      className="block text-[11px] font-bold tracking-widest uppercase ml-1"
-                      style={{ color: "var(--on-surface-variant)" }}
-                    >
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="you@school.edu"
-                      className="field"
-                      required
-                      autoComplete="email"
+              ) : null}
+
+              <Button type="submit" disabled={state === "loading"} className="w-full">
+                {state === "loading" ? "Sending…" : "Send reset link"}
+                {state !== "loading" ? (
+                  <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>
+                    <path
+                      d="M3.5 8h9M9 4.5 12.5 8 9 11.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
-                  </div>
+                  </svg>
+                ) : null}
+              </Button>
+            </form>
+          )}
+        </AuthCard>
 
-                  {state === "error" && (
-                    <div
-                      className="px-4 py-3 rounded-[0.75rem]"
-                      style={{
-                        background: "var(--pill-error-bg)",
-                        border: "1px solid rgba(254,159,159,0.20)",
-                      }}
-                    >
-                      <p className="text-[13px]" style={{ color: "var(--pill-error-text)" }}>
-                        Something went wrong. Please try again.
-                      </p>
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={state === "loading"}
-                    className="w-full py-3 rounded-[0.75rem] text-sm font-semibold tracking-[0.01em] calm-transition disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-[0.98] flex items-center justify-center gap-2"
-                    style={{
-                      background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%)",
-                      color: "var(--on-primary)",
-                    }}
-                  >
-                    {state === "loading" ? "Sending…" : "Send reset link"}
-                    {state !== "loading" && (
-                      <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M3.5 8h9M9 4.5 12.5 8 9 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-8 flex items-center justify-center">
+        {state === "sent" ? (
+          <div className="mt-8 flex justify-center">
             <Link
               href="/login"
-              className="text-[13px] calm-transition flex items-center gap-1.5 hover:opacity-70"
-              style={{ color: "var(--on-surface-variant)" }}
+              className="calm-transition text-[13px] text-muted hover:opacity-70"
             >
-              <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Back to sign in
+              Return to sign in
             </Link>
           </div>
-        </div>
-      </main>
-    </div>
+        ) : (
+          <AuthBackLink href="/login" />
+        )}
+      </AuthFlowMain>
+    </AuthShell>
   );
 }
