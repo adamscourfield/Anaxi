@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MetaText } from "@/components/ui/typography";
+import { toast } from "@/components/toast-provider";
 
 interface NotesEditorProps {
   meetingId: string;
@@ -30,14 +31,17 @@ export function NotesEditor({ meetingId, initialNotes, canEdit, onSave }: NotesE
       if (!res.ok) {
         const json = await res.json();
         setError(json.error ?? "Failed to save");
+        toast(json.error ?? "Failed to save", "error");
         setSaving(false);
         return;
       }
       setNotes(draft);
       setEditing(false);
       onSave?.(draft);
+      toast("Notes saved", "success");
     } catch {
       setError("Network error");
+      toast("Network error", "error");
     } finally {
       setSaving(false);
     }

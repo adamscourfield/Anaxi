@@ -123,15 +123,15 @@ export default function NewCyclePage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        const msg = d.error || "Failed to create cycle";
-        setError(msg);
-        toast(msg, "error");
+        setError(d.error || "Failed to create cycle");
+        toast(d.error || "Failed to create cycle", "error");
         return;
       }
       const { cycle } = await res.json();
       setCycleId(cycle.id);
       toast("Cycle created. Add your result points.", "success");
       setStep("points");
+      toast("Cycle created", "success");
     } finally {
       setLoading(false);
     }
@@ -173,14 +173,14 @@ export default function NewCyclePage() {
         });
         if (!res.ok) {
           const d = await res.json();
-          const msg = d.error || `Failed to create "${p.label}"`;
-          setPointsError(msg);
-          toast(msg, "error");
+          setPointsError(d.error || `Failed to create "${p.label}"`);
+          toast(d.error || `Failed to create "${p.label}"`, "error");
           return;
         }
       }
       toast("Result points saved.", "success");
       setStep("done");
+      toast("Result points created", "success");
     } finally {
       setPointsLoading(false);
     }

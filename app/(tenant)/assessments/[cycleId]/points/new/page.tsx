@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { toast } from "@/components/toast-provider";
 
 type PointType = "BASELINE" | "INTERNAL_ASSESSMENT" | "INTERNAL_MOCK" | "TEACHER_PREDICTION" | "EXTERNAL_FINAL" | "OTHER";
 
@@ -44,7 +45,7 @@ export default function NewResultPointPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!label.trim()) { setError("Name is required."); return; }
+    if (!label.trim()) { setError("Name is required."); toast("Name is required.", "error"); return; }
     setError(null);
     setLoading(true);
     try {
@@ -65,9 +66,11 @@ export default function NewResultPointPage() {
       if (!res.ok) {
         const d = await res.json();
         setError(d.error || "Failed to create result point");
+        toast(d.error || "Failed to create result point", "error");
         return;
       }
       const { point } = await res.json();
+      toast("Result point created", "success");
       router.push(`/assessments/${cycleId}/points/${point.id}/upload`);
     } finally {
       setLoading(false);

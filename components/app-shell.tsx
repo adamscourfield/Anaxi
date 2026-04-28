@@ -1,11 +1,9 @@
 "use client";
 
-import { ReactNode } from "react";
-import { NavigationProgress } from "@/components/navigation-progress";
 import { ToastProvider } from "@/components/toast-provider";
+import { NavigationProgress } from "@/components/navigation-progress";
 
-/** Global chrome: navigation feedback + toasts. Wrap inside SessionProvider. */
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <ToastProvider>
       <NavigationProgress />

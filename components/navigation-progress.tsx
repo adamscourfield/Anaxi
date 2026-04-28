@@ -3,44 +3,45 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
-/**
- * Thin top bar — visible during route transitions so clicks feel acknowledged.
- */
 export function NavigationProgress() {
   const pathname = usePathname();
   const routeKey = pathname;
-  const [phase, setPhase] = useState<"hidden" | "run" | "done">("hidden");
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [phase, setPhase] = useState<"idle" | "run" | "finish">("idle");
   const prevKey = useRef(routeKey);
+  const finishTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (prevKey.current === routeKey) return;
     prevKey.current = routeKey;
-
-    if (timerRef.current) clearTimeout(timerRef.current);
-
+    if (finishTimer.current) clearTimeout(finishTimer.current);
     setPhase("run");
-
-    timerRef.current = setTimeout(() => {
-      setPhase("done");
-      timerRef.current = setTimeout(() => setPhase("hidden"), 280);
-    }, 120);
-
+    const t1 = setTimeout(() => setPhase("finish"), 240);
+    finishTimer.current = setTimeout(() => {
+      setPhase("idle");
+      finishTimer.current = null;
+    }, 520);
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      clearTimeout(t1);
     };
   }, [routeKey]);
 
-  if (phase === "hidden") return null;
+  useEffect(
+    () => () => {
+      if (finishTimer.current) clearTimeout(finishTimer.current);
+    },
+    [],
+  );
+
+  if (phase === "idle") return null;
 
   return (
     <div
-      className="pointer-events-none fixed left-0 right-0 top-0 z-[100] h-[3px] overflow-hidden bg-transparent motion-reduce:hidden"
+      className="pointer-events-none fixed left-0 top-0 z-[99] h-[3px] w-full overflow-hidden motion-reduce:hidden"
       aria-hidden
     >
       <div
-        className={`h-full origin-left rounded-none bg-gradient-to-r from-[var(--primary)] via-[var(--primary-container)] to-[var(--primary)] ${
-          phase === "run" ? "animate-nav-run" : "animate-nav-finish"
+        className={`h-full origin-left bg-gradient-to-r from-primary via-primary-container to-primary ${
+          phase === "run" ? "motion-safe:animate-nav-run" : "motion-safe:animate-nav-finish"
         }`}
       />
     </div>
