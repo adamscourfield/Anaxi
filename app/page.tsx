@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
   return (
@@ -67,12 +66,33 @@ export default function LandingPage() {
             with evidence, not guesswork.
           </p>
 
-          <div className="mt-10 flex flex-col items-center gap-3 sm:mt-12">
-            <Button asChild className="min-w-[11rem]">
-              <Link href="/login">Sign in</Link>
-            </Button>
-            <p className="max-w-sm text-pretty text-[12px] leading-relaxed text-muted/75">
-              Use your work email if your school already uses Anaxi.
+          <div className="mt-12 flex flex-col items-center sm:mt-14">
+            <div
+              className="mb-6 h-px w-12 bg-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)]"
+              aria-hidden
+            />
+            <Link
+              href="/login"
+              className="group relative inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[var(--on-surface)] px-9 text-[13px] font-medium tracking-[-0.015em] text-[var(--surface-bright)] shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.04),0_10px_28px_-6px_rgba(0,0,0,0.18)] outline-none ring-1 ring-black/[0.04] transition-[transform,box-shadow,opacity] duration-200 hover:opacity-[0.94] hover:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_14px_36px_-8px_rgba(0,0,0,0.22)] focus-visible:ring-2 focus-visible:ring-[var(--on-surface)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-bright)] active:scale-[0.985] motion-reduce:transition-none motion-reduce:hover:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.04),0_10px_28px_-6px_rgba(0,0,0,0.18)]"
+            >
+              Sign in
+              <svg
+                className="h-[15px] w-[15px] shrink-0 opacity-80 transition-transform duration-200 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
+                viewBox="0 0 15 15"
+                fill="none"
+                aria-hidden
+              >
+                <path
+                  d="M3 7.5h8m0 0L8.5 4M11 7.5 8.5 11"
+                  stroke="currentColor"
+                  strokeWidth="1.35"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+            <p className="mt-5 max-w-[17rem] text-center text-[11px] leading-[1.45] text-muted/60">
+              For existing schools. Continue with your school-issued email.
             </p>
           </div>
         </div>
