@@ -600,6 +600,141 @@ textarea:focus-visible {
   gap: 0.75rem;
 }
 
+/* ── Table filter panels (shared chrome across list / explorer / admin) ─ */
+.filter-panel {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-container-low) 85%, var(--surface-container-lowest));
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 22%, transparent);
+  box-shadow: var(--shadow-ambient);
+  padding: 1.25rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .filter-panel {
+    padding: 1.5rem 1.5rem;
+  }
+}
+
+/* Uppercase micro-label for filter fields — use with filter toolbars */
+.filter-field-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+}
+
+/* Inputs inside filter panels: lift slightly from panel tint */
+.field-filter-trigger {
+  background: var(--surface-container-lowest) !important;
+  border-radius: 10px;
+}
+
+/* Primary / secondary actions in filter rows (Apply / Clear) */
+.btn-filter-primary {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  border-radius: var(--radius-md);
+  border: 0;
+  background: var(--primary);
+  padding: 0.625rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--on-primary);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  transition:
+    opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-filter-primary:hover {
+  opacity: 0.92;
+}
+
+.btn-filter-secondary {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 55%, transparent);
+  background: var(--surface-container-lowest);
+  padding: 0.625rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  transition:
+    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-filter-secondary:hover {
+  background: var(--surface-container-low);
+  color: var(--on-surface);
+}
+
+@media (min-width: 640px) {
+  .btn-filter-primary {
+    min-width: 140px;
+    width: auto;
+  }
+  .btn-filter-secondary {
+    min-width: 100px;
+    width: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .btn-filter-primary {
+    min-width: 160px;
+  }
+}
+
+/* Compact actions in horizontal toolbars (e.g. inline Apply in explorer bars) */
+.btn-filter-primary--compact,
+.btn-filter-secondary--compact {
+  min-width: 0;
+  width: auto;
+  padding: 0.375rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* Filter row: actions align right on wide layouts */
+.filter-actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .filter-actions {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .filter-actions {
+    margin-left: auto;
+    width: auto;
+    flex: none;
+  }
+
+  /* Toolbar variant: keep actions left-aligned (e.g. coaching filters) */
+  .filter-actions.filter-actions--inline {
+    margin-left: 0;
+  }
+}
+
 .filter-period-toggle {
   display: inline-flex;
   align-items: center;
@@ -646,7 +781,16 @@ textarea:focus-visible {
   overflow: hidden;
   border-radius: var(--radius-lg);
   background: var(--surface-container-lowest);
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 18%, transparent);
   box-shadow: var(--shadow-ambient);
+}
+
+.table-shell thead .table-head-row th {
+  border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 22%, transparent);
+}
+
+.table-shell tbody .table-row td {
+  vertical-align: middle;
 }
 
 .table-header-strip {

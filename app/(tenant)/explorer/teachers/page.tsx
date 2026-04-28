@@ -314,7 +314,7 @@ export default async function ExplorerTeachersPage({
       />
 
       {/* ── Controls bar ────────────────────────────────────────────────────── */}
-      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+      <div className="filter-panel">
       <div className="filter-bar">
         {/* Window selector */}
         <div className="filter-period-toggle">
@@ -355,7 +355,7 @@ export default async function ExplorerTeachersPage({
           <select
             name="departmentId"
             defaultValue={departmentId ?? ""}
-            className="field min-w-[160px] !rounded-lg !py-1.5 !text-[0.8125rem]"
+            className="field field-filter-trigger min-w-[160px] !py-1.5 !text-[0.8125rem]"
           >
             <option value="">All Departments</option>
             {scopedDepartments.map((d) => (
@@ -364,16 +364,13 @@ export default async function ExplorerTeachersPage({
               </option>
             ))}
           </select>
-          <button
-            type="submit"
-            className="rounded-lg bg-primary px-4 py-1.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:opacity-90"
-          >
+          <button type="submit" className="btn-filter-primary btn-filter-primary--compact">
             Apply
           </button>
           {departmentId && (
             <Link
               href={buildUrl({ departmentId: "", page: "1" })}
-              className="rounded-lg border border-border/40 bg-surface-container-lowest px-4 py-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text"
+              className="btn-filter-secondary btn-filter-secondary--compact"
             >
               Clear
             </Link>
