@@ -9,6 +9,20 @@ import {
   continuationLabel,
 } from "./leave-calendar-helpers";
 
+type CalendarContinuationBlock = { key: string; type: "continuation"; request: any };
+type CalendarEventBlock = {
+  key: string;
+  type: "event";
+  request: any;
+  bar: string;
+  wrap: string;
+  titleC: string;
+  subC: string;
+  title: string;
+  showSpanDot: boolean;
+};
+type CalendarBlock = CalendarContinuationBlock | CalendarEventBlock;
+
 type Props = {
   monthAnchor: Date;
   /** Requests that overlap the visible month */
@@ -120,7 +134,7 @@ export function LeaveCalendarGrid({
               return rStart <= dayEnd && rEnd >= dayStart;
             });
 
-            const eventBlocks = entries.flatMap((request: any) => {
+            const eventBlocks: CalendarBlock[] = entries.flatMap((request: any): CalendarBlock[] => {
               const rStart = new Date(request.startDate);
               const rEnd = new Date(request.endDate);
               const span = daysSpan(rStart, rEnd);

@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolType";
+import type { SignalDefinition } from "@/modules/observations/signalTypes";
 import { loadDraft, persistDraft } from "./observationDraft";
 import { ObservationStageLayout } from "./ObservationStageLayout";
 
-type Signal = { key: string; order: number; displayNameDefault: string; phaseRelevance: string[] };
 type LabelMap = Record<string, { displayName: string; description?: string }>;
 
 const SCALE_DISPLAY: Record<string, { label: string; color: string; dot: string; text: string }> = {
@@ -35,7 +35,7 @@ export function ReviewList({
   schoolType,
 }: {
   draftKey: string;
-  signals: Signal[];
+  signals: SignalDefinition[];
   labelMap: LabelMap;
   action: (formData: FormData) => void;
   schoolType: TenantSchoolType;
@@ -44,8 +44,8 @@ export function ReviewList({
   const allSignals = useMemo(() => [...signals].sort((a, b) => a.order - b.order), [signals]);
   const [draft, setDraft] = useState(() => loadDraft(draftKey, allSignals.map((s) => s.key)));
   const orderedSignals = useMemo(
-    () => getSignalsForPhase(draft.context.phase, schoolType) as Signal[],
-    [draft.context.phase, schoolType]
+    () => getSignalsForPhase(draft.context.phase, schoolType),
+    [draft.context.phase, schoolType],
   );
 
   const completed = orderedSignals.filter((s) => {
