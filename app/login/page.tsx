@@ -184,6 +184,11 @@ export default function LoginPage() {
         .animate-auth-fade-up {
           animation: auth-fade-up 0.55s ease both;
         }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-auth-fade-up {
+            animation: none;
+          }
+        }
       `}</style>
     </AuthShell>
   );

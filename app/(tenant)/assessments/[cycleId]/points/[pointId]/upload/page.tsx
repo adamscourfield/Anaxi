@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { toast } from "@/components/toast-provider";
 import type { GradeFormat } from "@prisma/client";
 
 type Step = "setup" | "detect" | "done";
@@ -94,7 +95,7 @@ export default function UploadSubjectResultsPage() {
     try {
       const res = await fetch(`/api/assessments/points/${pointId}/upload`, { method: "POST", body: form });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Failed to parse file"); return; }
+      if (!res.ok) { setError(data.error || "Failed to parse file"); toast(data.error || "Failed to parse file", "error"); return; }
 
       setDetectedSubjects(data.detectedSubjects ?? []);
       setSelectedSubjects(new Set(data.detectedSubjects ?? []));
@@ -103,6 +104,7 @@ export default function UploadSubjectResultsPage() {
       setSubjectCounts(data.subjectCounts ?? {});
       setTotalRecords(data.totalRecords ?? 0);
       setStep("detect");
+      toast("Subject columns detected. Select what to import.", "success");
     } finally {
       setLoading(false);
     }
@@ -124,8 +126,9 @@ export default function UploadSubjectResultsPage() {
     try {
       const res = await fetch(`/api/assessments/points/${pointId}/upload`, { method: "POST", body: form });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Import failed"); return; }
+      if (!res.ok) { setError(data.error || "Import failed"); toast(data.error || "Import failed", "error"); return; }
       setImportResult(data);
+      toast(`Imported ${data.subjectsImported ?? 0} subject${(data.subjectsImported ?? 0) !== 1 ? "s" : ""} (${data.totalProcessed ?? 0} entries).`, "success");
       setStep("done");
     } finally {
       setLoading(false);

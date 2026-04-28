@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { toast } from "@/components/toast-provider";
 
 type QualificationType = "GCSE" | "A_LEVEL" | "PERCENTAGE" | "OTHER";
 
@@ -122,11 +123,14 @@ export default function NewCyclePage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        setError(d.error || "Failed to create cycle");
+        const msg = d.error || "Failed to create cycle";
+        setError(msg);
+        toast(msg, "error");
         return;
       }
       const { cycle } = await res.json();
       setCycleId(cycle.id);
+      toast("Cycle created. Add your result points.", "success");
       setStep("points");
     } finally {
       setLoading(false);
@@ -142,6 +146,7 @@ export default function NewCyclePage() {
     const selected = points.filter((p) => p.selected);
     if (selected.length === 0) {
       setPointsError("Select at least one result point.");
+      toast("Select at least one result point.", "error");
       setPointsLoading(false);
       return;
     }
@@ -168,10 +173,13 @@ export default function NewCyclePage() {
         });
         if (!res.ok) {
           const d = await res.json();
-          setPointsError(d.error || `Failed to create "${p.label}"`);
+          const msg = d.error || `Failed to create "${p.label}"`;
+          setPointsError(msg);
+          toast(msg, "error");
           return;
         }
       }
+      toast("Result points saved.", "success");
       setStep("done");
     } finally {
       setPointsLoading(false);

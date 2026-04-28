@@ -807,6 +807,13 @@ textarea:focus-visible {
   .landing-beam {
     animation: none;
   }
+  .motion-safe\:animate-page-enter,
+  .motion-safe\:animate-toast-in,
+  .motion-safe\:animate-pulse-subtle,
+  .motion-safe\:animate-nav-run,
+  .motion-safe\:animate-nav-finish {
+    animation: none !important;
+  }
 }
 
 .footer-link:hover {
