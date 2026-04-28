@@ -196,8 +196,8 @@ export function TenantNav({
   const sidebarWidth = collapsed ? "w-[var(--sidebar-collapsed-width)]" : "w-[var(--sidebar-width)]";
 
   const shellClass = isDrawer
-    ? "fixed left-0 top-0 z-50 flex h-screen w-[min(100vw,280px)] max-w-[min(100vw,280px)] flex-col border-r border-border/40 shadow-lg calm-transition glass-surface"
-    : `hidden md:flex fixed left-0 top-0 z-30 h-screen flex-col calm-transition glass-surface ${sidebarWidth}`;
+    ? "fixed left-0 top-0 z-50 flex h-screen w-[min(100vw,280px)] max-w-[min(100vw,280px)] flex-col border-r border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] shadow-lg calm-transition glass-surface"
+    : `hidden md:flex fixed left-0 top-0 z-30 h-screen flex-col border-r border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] shadow-sm calm-transition glass-surface ${sidebarWidth}`;
 
   return (
     <aside
@@ -210,9 +210,9 @@ export function TenantNav({
         <Link
           href="/home"
           onClick={() => isDrawer && onNavigate?.()}
-          className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} group`}
+          className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} group calm-transition rounded-[0.75rem] ${collapsed ? "p-1" : "px-1 py-0.5 -mx-1"} motion-safe:group-hover:-translate-y-px motion-safe:group-active:scale-[0.99]`}
         >
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.75rem] bg-[var(--surface-container-high)]">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.75rem] bg-[var(--surface-container-high)] shadow-sm calm-transition group-hover:shadow-md">
             <Image src="/anaxi-logo.png" alt="Anaxi" width={22} height={22} priority className="h-[22px] w-[22px] object-contain" />
           </span>
           {!collapsed && (
@@ -251,10 +251,10 @@ export function TenantNav({
                         href={item.href}
                         title={collapsed ? item.label : undefined}
                         onClick={() => isDrawer && onNavigate?.()}
-                        className={`group flex items-center ${collapsed ? "justify-center px-2" : "justify-between pl-5 pr-3"} rounded-[0.75rem] py-2 calm-transition ${
+                        className={`group flex items-center ${collapsed ? "justify-center px-2" : "justify-between pl-5 pr-3"} rounded-[0.75rem] py-2 calm-transition motion-safe:active:scale-[0.99] ${
                           active
-                            ? "bg-[var(--surface-container)] text-[var(--on-surface)] font-semibold"
-                            : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
+                            ? "bg-[var(--surface-container)] text-[var(--on-surface)] font-semibold shadow-sm"
+                            : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] motion-safe:hover:translate-x-0.5"
                         }`}
                       >
                         <span className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"} min-w-0`}>
@@ -290,7 +290,7 @@ export function TenantNav({
                 });
                 router.push(`/login/sign-out?${q.toString()}`);
               }}
-              className={`group flex items-center ${collapsed ? "justify-center px-2" : "gap-2.5 pl-5 pr-3"} w-full rounded-[0.75rem] py-2 text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]`}
+              className={`group flex items-center ${collapsed ? "justify-center px-2" : "gap-2.5 pl-5 pr-3"} w-full rounded-[0.75rem] py-2 text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] motion-safe:hover:translate-x-0.5 motion-safe:active:scale-[0.99]`}
             >
               <NavIcon name="logout" active={false} />
               {!collapsed && <span className="text-[13px]">Log out</span>}
@@ -312,7 +312,7 @@ export function TenantNav({
       {collapsed && !isDrawer && (
         <button
           onClick={() => setCollapsed(false)}
-          className="absolute -right-3.5 top-20 z-40 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] shadow-ambient backdrop-blur-sm calm-transition hover:text-[var(--on-surface)]"
+          className="absolute -right-3.5 top-20 z-40 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] shadow-ambient backdrop-blur-sm calm-transition hover:text-[var(--on-surface)] hover:shadow-md motion-safe:active:scale-95"
           type="button"
           title="Expand navigation"
         >

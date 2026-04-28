@@ -202,6 +202,7 @@ const config: Config = {
         xl:      "var(--shadow-xl)",
         ambient: "var(--shadow-ambient)",
         float:   "var(--shadow-float)",
+        header:  "var(--shadow-header)",
       },
       transitionTimingFunction: {
         calm: "cubic-bezier(0,0,0.2,1)",
@@ -223,23 +224,13 @@ const config: Config = {
         "4xl": ["2.25rem",   { lineHeight: "1.1",  letterSpacing: "-0.03em" }],
       },
       keyframes: {
-        "toast-in": {
-          "0%": { opacity: "0", transform: "translateY(8px) scale(0.98)" },
-          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
-        },
-        "nav-run": {
-          "0%": { transform: "scaleX(0.02)" },
-          "100%": { transform: "scaleX(0.85)" },
-        },
-        "nav-finish": {
-          "0%": { transform: "scaleX(0.85)" },
-          "100%": { transform: "scaleX(1)" },
+        pageEnter: {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },
       animation: {
-        "toast-in": "toast-in 0.22s cubic-bezier(0,0,0.2,1) forwards",
-        "nav-run": "nav-run 0.35s cubic-bezier(0.4,0,0.2,1) forwards",
-        "nav-finish": "nav-finish 0.28s cubic-bezier(0,0,0.2,1) forwards",
+        "page-enter": "pageEnter 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards",
       },
     }
   },
