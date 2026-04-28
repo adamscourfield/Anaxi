@@ -109,8 +109,10 @@ export default async function ExplorerObservationsPage({
     obsWhere.subject = { contains: subject, mode: "insensitive" };
   }
 
+  const teacherRoleFilter = ["TEACHER", "LEADER", "HOD", "SLT"] as const;
+
   // ─── Fetch data ───────────────────────────────────────────────────────────
-  const [observations, departments] = await Promise.all([
+  const [observations, departments, teachersForFilter] = await Promise.all([
     (prisma as any).observation.findMany({
       where: obsWhere,
       include: {
@@ -125,11 +127,42 @@ export default async function ExplorerObservationsPage({
       where: { tenantId: user.tenantId },
       orderBy: { name: "asc" },
     }),
+    (prisma as any).user.findMany({
+      where: {
+        tenantId: user.tenantId,
+        isActive: true,
+        role: { in: [...teacherRoleFilter] },
+        ...(hodScopedTeacherIds ? { id: { in: hodScopedTeacherIds } } : {}),
+      },
+      select: { id: true, fullName: true },
+      orderBy: { fullName: "asc" },
+      take: 500,
+    }),
   ]);
 
   const obsList = observations as any[];
 
   const hasFilters = departmentId || teacherMembershipId || yearGroup || subject;
+
+  function buildObservationsUrl(overrides: Record<string, string | undefined>) {
+    const merged: Record<string, string> = {
+      windowDays: String(windowDays),
+      ...(departmentId ? { departmentId } : {}),
+      ...(teacherMembershipId ? { teacherMembershipId } : {}),
+      ...(yearGroup ? { yearGroup } : {}),
+      ...(subject ? { subject } : {}),
+      ...Object.fromEntries(
+        Object.entries(overrides).filter((e): e is [string, string] => e[1] !== undefined),
+      ),
+    };
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v === undefined) delete merged[k];
+    }
+    const qs = new URLSearchParams(merged).toString();
+    return `/explorer/observations${qs ? `?${qs}` : ""}`;
+  }
+
+  const fieldSurface = "field !bg-surface-container-lowest rounded-[10px] !py-2.5 !text-[0.8125rem]";
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -140,88 +173,142 @@ export default async function ExplorerObservationsPage({
         eyebrow="Explorer"
         title="Observations"
         subtitle="Recent classroom observations with signal coverage details."
+        actions={
+          showExport ? (
+            <form action="/api/explorer/export" method="POST" className="shrink-0">
+              <input type="hidden" name="view" value="INSTRUCTION_LIST" />
+              <input type="hidden" name="windowDays" value={String(windowDays)} />
+              {departmentId ? <input type="hidden" name="departmentId" value={departmentId} /> : null}
+              {teacherMembershipId ? (
+                <input type="hidden" name="teacherMembershipId" value={teacherMembershipId} />
+              ) : null}
+              {yearGroup ? <input type="hidden" name="yearGroup" value={yearGroup} /> : null}
+              {subject ? <input type="hidden" name="subject" value={subject} /> : null}
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:bg-primary-container"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                  <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
+                  <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Export CSV
+              </button>
+            </form>
+          ) : undefined
+        }
       />
 
-      {/* ── Window selector + Filters ──────────────────────────────────────── */}
+      {/* ── Filters (aligned with Signals / Students explorer) ─────────────── */}
       <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
-      <form className="filter-bar">
-        {/* Window selector */}
-        <div className="filter-period-toggle">
-          {VALID_WINDOWS.map((w) => (
-            <button
-              key={w}
-              type="submit"
-              name="windowDays"
-              value={String(w)}
-              className={`filter-period-btn ${windowDays === w ? "filter-period-btn-active" : ""}`}
-            >
-              {w}D
-            </button>
-          ))}
-        </div>
+        <div className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4">
+          <div className="flex min-w-0 flex-col gap-1.5 lg:min-w-[220px] lg:flex-none">
+            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+              Time window
+            </span>
+            <div className="filter-period-toggle w-fit max-w-full">
+              {VALID_WINDOWS.map((w) => (
+                <Link
+                  key={w}
+                  href={buildObservationsUrl({ windowDays: String(w) })}
+                  className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
+                >
+                  {w}D
+                </Link>
+              ))}
+            </div>
+          </div>
 
-        {/* Department */}
-        <select name="departmentId" defaultValue={departmentId} className="field min-w-[160px] !rounded-lg !py-1.5 !text-[0.8125rem]">
-          <option value="">All Departments</option>
-          {(departments as any[]).map((d: any) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-
-        {/* Year Group */}
-        <input
-          name="yearGroup"
-          type="text"
-          defaultValue={yearGroup}
-          placeholder="Year Group (e.g. 10)"
-          className="field min-w-[150px] !rounded-lg !py-1.5 !text-[0.8125rem]"
-        />
-
-        {/* Subject */}
-        <input
-          name="subject"
-          type="text"
-          defaultValue={subject}
-          placeholder="Subject (e.g. Maths)"
-          className="field min-w-[150px] !rounded-lg !py-1.5 !text-[0.8125rem]"
-        />
-
-        <div className="ml-auto flex items-center gap-2">
-          {/* Apply */}
-          <button
-            type="submit"
-            className="rounded-lg bg-primary px-4 py-1.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:opacity-90"
+          <form
+            id="observations-explorer-filters"
+            method="get"
+            action="/explorer/observations"
+            className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end"
           >
-            Apply
-          </button>
-          {hasFilters && (
-            <Link
-              href={`/explorer/observations?windowDays=${windowDays}`}
-              className="rounded-lg border border-border/40 bg-surface-container-lowest px-4 py-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text"
-            >
-              Clear
-            </Link>
-          )}
-          {/* Export */}
-          {showExport && (
+            <input type="hidden" name="windowDays" value={String(windowDays)} />
+
+            <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:min-w-[200px] lg:max-w-[min(100%,280px)]">
+              <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                Department
+              </span>
+              <select
+                name="departmentId"
+                defaultValue={departmentId}
+                className={fieldSurface}
+              >
+                <option value="">All departments</option>
+                {(departments as any[]).map((d: any) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:min-w-[200px] lg:max-w-[min(100%,280px)]">
+              <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                Teacher
+              </span>
+              <select
+                name="teacherMembershipId"
+                defaultValue={teacherMembershipId}
+                className={fieldSurface}
+              >
+                <option value="">All teachers</option>
+                {(teachersForFilter as { id: string; fullName: string }[]).map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.fullName}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:min-w-[140px] lg:max-w-[min(100%,200px)]">
+              <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                Year group
+              </span>
+              <input
+                name="yearGroup"
+                type="text"
+                defaultValue={yearGroup}
+                placeholder="e.g. 10"
+                className={fieldSurface}
+              />
+            </label>
+
+            <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:min-w-[160px] lg:max-w-[min(100%,240px)]">
+              <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                Subject
+              </span>
+              <input
+                name="subject"
+                type="text"
+                defaultValue={subject}
+                placeholder="e.g. Maths"
+                className={fieldSurface}
+              />
+            </label>
+          </form>
+
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
             <button
               type="submit"
-              formAction="/api/explorer/export"
-              formMethod="POST"
-              name="view"
-              value="observations"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-[0.8125rem] font-semibold text-on-primary calm-transition hover:opacity-90"
+              form="observations-explorer-filters"
+              className="field !flex w-full flex-nowrap items-center justify-center whitespace-nowrap border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
             >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-              </svg>
-              Export Data
+              Apply Filters
             </button>
-          )}
+            {hasFilters && (
+              <Link
+                href={`/explorer/observations?windowDays=${windowDays}`}
+                className="field flex w-full items-center justify-center border border-border/40 bg-surface-container-lowest py-2.5 text-center text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[100px] lg:w-auto"
+              >
+                Clear
+              </Link>
+            )}
+          </div>
         </div>
-      </form>
       </div>
 
       {/* ── Result count ───────────────────────────────────────────────────── */}
