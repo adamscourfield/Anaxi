@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { DriverChips } from "@/components/ui/driver-chips";
+import { DataTableEmpty } from "@/components/ui/data-table-empty";
+import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import Link from "next/link";
 import type { RiskBand } from "@/modules/analysis/studentRisk";
 
@@ -50,15 +52,17 @@ export default async function TriangulationPage() {
   const { students, meta } = result;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/assessments" className="text-sm text-[var(--on-surface-muted)] hover:underline">
-          ← Assessments
-        </Link>
-      </div>
+    <div className="space-y-8 pb-8">
+      <AssessmentsBreadcrumb
+        items={[
+          { label: "Attainment", href: "/assessments" },
+          { label: "Dual-flagged students" },
+        ]}
+      />
 
       <PageHeader
-        title="Dual-Flagged Students"
+        eyebrow="Attainment"
+        title="Dual-flagged students"
         subtitle="Students with both a high pastoral risk band and low attainment scores — highest priority for intervention."
       />
 
@@ -79,10 +83,11 @@ export default async function TriangulationPage() {
       </div>
 
       {students.length === 0 ? (
-        <Card>
-          <p className="text-sm text-[var(--on-surface-muted)]">
-            No students are currently dual-flagged. This means no students with a Priority or Urgent pastoral risk band also have assessment scores below 50%.
-          </p>
+        <Card className="overflow-hidden p-0">
+          <DataTableEmpty
+            title="No dual-flagged students right now"
+            description="When a student has Priority or Urgent pastoral risk and assessment scores below 50%, they appear here."
+          />
         </Card>
       ) : (
         <div className="space-y-3">

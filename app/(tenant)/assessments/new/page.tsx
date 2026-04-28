@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
+import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 
 type QualificationType = "GCSE" | "A_LEVEL" | "PERCENTAGE" | "OTHER";
 
@@ -205,8 +206,14 @@ export default function NewCyclePage() {
 
   if (step === "done") {
     return (
-      <div className="max-w-2xl space-y-6">
-        <PageHeader title="Cycle created" subtitle={`"${cycleLabel}" is ready.`} />
+      <div className="max-w-2xl space-y-8">
+        <AssessmentsBreadcrumb
+          items={[
+            { label: "Attainment", href: "/assessments" },
+            { label: "Cycle created" },
+          ]}
+        />
+        <PageHeader eyebrow="Attainment" title="Cycle created" subtitle={`"${cycleLabel}" is ready.`} />
         <Card className="space-y-4">
           <p className="text-sm text-[var(--on-surface-muted)]">
             Result points have been created. Upload subject results for each point to begin analysis.
@@ -225,14 +232,16 @@ export default function NewCyclePage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div className="flex items-center gap-3">
-        <a href="/assessments" className="text-sm text-[var(--on-surface-muted)] hover:underline">
-          ← Cycles
-        </a>
-      </div>
+    <div className="max-w-2xl space-y-8">
+      <AssessmentsBreadcrumb
+        items={[
+          { label: "Attainment", href: "/assessments" },
+          { label: "New cycle" },
+        ]}
+      />
       <PageHeader
-        title="New Attainment Cycle"
+        eyebrow="Attainment"
+        title="New cycle"
         subtitle="A cycle tracks one cohort's outcomes across an academic year."
       />
 

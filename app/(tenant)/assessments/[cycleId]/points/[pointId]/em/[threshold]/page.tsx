@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { EMTargetGroupToolbar } from "./EMTargetGroupToolbar";
+import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 
 function getInitials(name: string): string {
   const parts = name.split(" ").filter(Boolean);
@@ -268,22 +269,20 @@ export default async function EMThresholdPage({
 
   return (
     <div className="w-full space-y-8 pb-16">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
-        <Link href="/assessments" className="calm-transition hover:text-[var(--on-surface)]">Attainment Cycles</Link>
-        <span>›</span>
-        <Link href={`/assessments/${cycleId}`} className="calm-transition hover:text-[var(--on-surface)]">{currentPoint.cycle.label}</Link>
-        <span>›</span>
-        <Link href={`/assessments/${cycleId}/points/${pointId}`} className="calm-transition hover:text-[var(--on-surface)]">{currentPoint.label}</Link>
-        <span>›</span>
-        <span className="text-[var(--on-surface)]">E&M {targetThreshold}+</span>
-      </div>
+      <AssessmentsBreadcrumb
+        items={[
+          { label: "Attainment", href: "/assessments" },
+          { label: currentPoint.cycle.label, href: `/assessments/${cycleId}` },
+          { label: currentPoint.label, href: `/assessments/${cycleId}/points/${pointId}` },
+          { label: `E&M ${targetThreshold}+` },
+        ]}
+      />
 
       {/* Page Header */}
       <PageHeader
-        eyebrow={`${currentPoint.cycle.label} · ${currentPoint.label}`}
-        title={`English & Maths ${targetThreshold}+ Target Group`}
-        subtitle={`Students who have not yet achieved grade ${targetThreshold} or above in both English and Maths. Use the filter below to include those who have met the threshold or everyone.`}
+        eyebrow="English & Maths"
+        title={`Grade ${targetThreshold}+ target group`}
+        subtitle={`Students who have not yet achieved grade ${targetThreshold} or above in both English and Maths. Filter to include those who have met the threshold or everyone.`}
       />
 
       {/* Top 4 Metrics Cards */}

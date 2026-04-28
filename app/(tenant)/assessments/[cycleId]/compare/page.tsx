@@ -14,6 +14,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import Link from "next/link";
+import { DataTableEmpty } from "@/components/ui/data-table-empty";
+import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import type { PointType, ResultStatus } from "@prisma/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -192,17 +194,20 @@ export default function ComparisonPage() {
     .slice(0, 10);
 
   return (
-    <div className="w-full space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
-        <Link href="/assessments" className="hover:underline">Cycles</Link>
-        <span>›</span>
-        <Link href={`/assessments/${cycleId}`} className="hover:underline">{cycleLabel || "Cycle"}</Link>
-        <span>›</span>
-        <span className="text-[var(--on-surface)]">Comparison</span>
-      </div>
+    <div className="w-full space-y-8 pb-16">
+      <AssessmentsBreadcrumb
+        items={[
+          { label: "Attainment", href: "/assessments" },
+          { label: cycleLabel || "Cycle", href: `/assessments/${cycleId}` },
+          { label: "Comparison" },
+        ]}
+      />
 
-      <PageHeader title="Comparison" subtitle="Track progress, accuracy, and movement between any two result points." />
+      <PageHeader
+        eyebrow="Attainment"
+        title="Compare result points"
+        subtitle="Track progress, accuracy, and movement between any two result points in this cycle."
+      />
 
       {/* Point selectors */}
       <Card className="space-y-4">
@@ -250,8 +255,19 @@ export default function ComparisonPage() {
       {loading && <p className="text-sm text-[var(--on-surface-muted)]">Loading comparison…</p>}
 
       {!loading && data && data.subjects.length === 0 && (
-        <Card className="py-10 text-center">
-          <p className="text-[var(--on-surface-muted)]">No shared subjects between these two result points.</p>
+        <Card className="overflow-hidden p-0">
+          <DataTableEmpty
+            title="No overlap between these points"
+            description="There are no shared subjects with data at both selected result points. Pick two points that have subject uploads, or add results first."
+            action={
+              <Link
+                href={`/assessments/${cycleId}`}
+                className="text-sm font-semibold text-accent underline-offset-2 hover:underline"
+              >
+                Back to cycle
+              </Link>
+            }
+          />
         </Card>
       )}
 

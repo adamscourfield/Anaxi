@@ -14,6 +14,8 @@ import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { SectionHeader } from "@/components/ui/section-header";
 import Link from "next/link";
+import { DataTableEmpty } from "@/components/ui/data-table-empty";
+import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import type { GradeFormat, PointType, ResultStatus } from "@prisma/client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -389,20 +391,20 @@ export default function ResultPointPage() {
   ) : null;
 
   return (
-    <div className="w-full space-y-7">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
-        <Link href="/assessments" className="calm-transition hover:text-[var(--on-surface)]">Cycles</Link>
-        <span>›</span>
-        <Link href={`/assessments/${cycleId}`} className="calm-transition hover:text-[var(--on-surface)]">{point?.cycle.label ?? "Cycle"}</Link>
-        <span>›</span>
-        <span className="text-[var(--on-surface)]">{point?.label ?? "Result point"}</span>
-      </div>
+    <div className="w-full space-y-8">
+      <AssessmentsBreadcrumb
+        items={[
+          { label: "Attainment", href: "/assessments" },
+          { label: point?.cycle.label ?? "Cycle", href: `/assessments/${cycleId}` },
+          { label: point?.label ?? "Result point" },
+        ]}
+      />
 
       {/* Page Header */}
       <PageHeader
-        eyebrow={point?.cycle.label}
-        title={point?.label ?? "Result Point"}
+        eyebrow="Result point"
+        title={point?.label ?? "Result point"}
+        subtitle="Analysis for all uploaded subjects at this snapshot."
         meta={metaBadges}
         actions={headerActions}
       />
@@ -410,14 +412,21 @@ export default function ResultPointPage() {
       {error && <p className="text-sm text-[var(--error)]">{error}</p>}
 
       {metrics && metrics.totalEntries === 0 && (
-        <Card className="py-12 text-center">
-          <p className="text-[var(--on-surface-muted)]">No results uploaded for this result point.</p>
-          <Link
-            href={`/assessments/${cycleId}/points/${pointId}/upload`}
-            className="mt-2 inline-block text-sm text-[var(--accent)] hover:underline"
-          >
-            Upload subject results
-          </Link>
+        <Card className="overflow-hidden p-0">
+          <DataTableEmpty
+            title="No results uploaded yet"
+            description="Upload a CSV for one or more subjects to unlock distributions, E&M measures, and comparisons."
+            action={
+              point?.resultStatus !== "LOCKED" ? (
+                <Link
+                  href={`/assessments/${cycleId}/points/${pointId}/upload`}
+                  className="text-sm font-semibold text-accent underline-offset-2 hover:underline"
+                >
+                  Upload subject results
+                </Link>
+              ) : undefined
+            }
+          />
         </Card>
       )}
 

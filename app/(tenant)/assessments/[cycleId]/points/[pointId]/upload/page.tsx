@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
+import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import type { GradeFormat } from "@prisma/client";
 
 type Step = "setup" | "detect" | "done";
@@ -133,8 +134,15 @@ export default function UploadSubjectResultsPage() {
 
   if (step === "done" && importResult) {
     return (
-      <div className="max-w-2xl space-y-6">
-        <PageHeader title="Upload complete" />
+      <div className="max-w-2xl space-y-8">
+        <AssessmentsBreadcrumb
+          items={[
+            { label: "Attainment", href: "/assessments" },
+            { label: cycleLabel || "Cycle", href: `/assessments/${cycleId}` },
+            { label: "Upload complete" },
+          ]}
+        />
+        <PageHeader eyebrow="Attainment" title="Upload complete" subtitle="Your file was processed and results are being matched to students." />
         <Card className="space-y-5">
           <SectionHeader
             title={`${importResult.subjectsImported} subject${importResult.subjectsImported !== 1 ? "s" : ""} uploaded`}
@@ -182,25 +190,37 @@ export default function UploadSubjectResultsPage() {
 
   if (isLocked) {
     return (
-      <div className="max-w-2xl space-y-6">
-        <PageHeader title="Result point locked" subtitle="This result point has been locked and cannot accept new uploads." />
+      <div className="max-w-2xl space-y-8">
+        <AssessmentsBreadcrumb
+          items={[
+            { label: "Attainment", href: "/assessments" },
+            { label: cycleLabel || "Cycle", href: `/assessments/${cycleId}` },
+            { label: "Locked" },
+          ]}
+        />
+        <PageHeader
+          eyebrow="Attainment"
+          title="Result point locked"
+          subtitle="This result point has been locked and cannot accept new uploads."
+        />
         <Button variant="ghost" onClick={() => router.push(`/assessments/${cycleId}`)}>← Back to cycle</Button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
-        <a href="/assessments" className="hover:underline">Cycles</a>
-        <span>›</span>
-        <a href={`/assessments/${cycleId}`} className="hover:underline">{cycleLabel || "Cycle"}</a>
-        <span>›</span>
-        <span className="text-[var(--on-surface)]">Upload — {pointLabel || "Result point"}</span>
-      </div>
+    <div className="max-w-3xl space-y-8">
+      <AssessmentsBreadcrumb
+        items={[
+          { label: "Attainment", href: "/assessments" },
+          { label: cycleLabel || "Cycle", href: `/assessments/${cycleId}` },
+          { label: pointLabel ? `Upload — ${pointLabel}` : "Upload results" },
+        ]}
+      />
 
       <PageHeader
-        title="Upload Subject Results"
+        eyebrow="Attainment"
+        title="Upload subject results"
         subtitle="Upload a CSV with grades for one or more subjects. The system will auto-detect subject columns."
       />
 
