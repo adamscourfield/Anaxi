@@ -363,7 +363,7 @@ function LeadershipHome({
         {/* Right column: Attendance + Observations */}
         <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[340px]">
           {/* Attendance box */}
-          <Card className="flex min-h-0 flex-1 flex-col justify-between">
+          <Card className="flex min-h-0 flex-1 flex-col gap-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Attendance Mastery</p>
             <div>
               <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
@@ -391,7 +391,7 @@ function LeadershipHome({
 
           {/* Observations this week box */}
           <Link href="/explorer/observations" className="flex min-h-0 flex-1 flex-col">
-          <Card className="flex min-h-0 flex-1 flex-col justify-between calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer">
+          <Card className="flex min-h-0 flex-1 flex-col gap-4 calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations This Week</p>
             <div>
               <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
@@ -778,9 +778,9 @@ function LeadershipHome({
 
           {/* Dual-flagged student list */}
           {attainmentSummary.topDualFlagged.length > 0 && (
-            <Card tone="inset" className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+            <Card tone="inset" className="space-y-3 !p-4 sm:!p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                   Dual-flagged students — attainment + pastoral risk
                 </p>
                 <Link href="/assessments/triangulation" className="link-accent text-xs">
@@ -852,7 +852,7 @@ function HodHome({
     <div className="w-full min-w-0 space-y-8">
       {/* ═══ Hero: Department KPI row ═══ */}
       <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
-        <Card className="flex min-h-0 min-w-0 flex-1 flex-col justify-between">
+        <Card className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{deptName} Observations</p>
           <div>
             <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">{deptObsCount}</p>
@@ -862,7 +862,7 @@ function HodHome({
             <p className="mt-2 text-xs text-muted">{deptTeacherRows.length} teacher{deptTeacherRows.length !== 1 ? "s" : ""} · {windowDays}d window</p>
           </div>
         </Card>
-        <Card className={`flex min-h-0 min-w-0 flex-1 flex-col justify-between ${deptCpdDrift > 0 ? "!bg-[var(--surface-container)]" : ""}`}>
+        <Card className={`flex min-h-0 min-w-0 flex-1 flex-col gap-4 ${deptCpdDrift > 0 ? "!bg-[var(--surface-container)]" : ""}`}>
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{deptName} CPD Signals</p>
           <div>
             <p className={`mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] ${deptCpdDrift > 0 ? "text-[var(--warning)]" : "text-text"}`}>
@@ -1244,7 +1244,7 @@ function TeacherHome({
         </Card>
 
         <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[300px]">
-          <Card className="flex min-h-0 flex-1 flex-col justify-between">
+          <Card className="flex min-h-0 flex-1 flex-col gap-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations</p>
             <div>
               <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">{obsCount}</p>
@@ -1259,7 +1259,7 @@ function TeacherHome({
 
           {hasMeetingsFeature && (
             <Link href="/my-actions" className="flex min-h-0 flex-1 flex-col">
-              <Card className="flex min-h-0 flex-1 flex-col justify-between calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer">
+              <Card className="flex min-h-0 flex-1 flex-col gap-4 calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Open Actions</p>
                 <div>
                   <p className={`mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] ${actionCount > 0 ? "text-[var(--warning)]" : "text-text"}`}>
