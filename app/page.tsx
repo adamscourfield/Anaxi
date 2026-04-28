@@ -46,31 +46,23 @@ export default function LandingPage() {
       </header>
 
       <main className="flex flex-1 flex-col justify-center px-4 py-16 sm:px-6 md:px-8 md:py-20 lg:px-10">
-        <div className="mx-auto w-full max-w-[720px] text-center">
-          <div className="mb-8 flex items-center justify-center gap-4 sm:mb-10">
-            <span className="h-px w-10 shrink-0 bg-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)]" aria-hidden />
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted/80">
-              Institutional grade software
-            </p>
-            <span className="h-px w-10 shrink-0 bg-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)]" aria-hidden />
-          </div>
-
-          <h1 className="text-pretty text-[clamp(1.75rem,4.5vw,2.625rem)] font-bold leading-[1.12] tracking-[-0.035em]">
-            <span className="text-[var(--on-surface)]">Operational clarity.</span>{" "}
-            <span className="text-[var(--on-surface-variant)]">Pedagogical precision.</span>
+        <div className="mx-auto w-full max-w-[900px] text-center">
+          <h1 className="text-pretty text-[clamp(2.25rem,8vw,4.25rem)] font-bold leading-[1.02] tracking-[-0.045em] text-[var(--on-surface)]">
+            <span className="block">Institutional</span>
+            <span className="block text-[var(--on-surface-variant)]">Awareness</span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-[34rem] text-pretty text-[15px] leading-relaxed text-muted">
-            One calm workspace for observations, assessments, leave, and leadership signals—built for
-            schools that need decisions to be traceable, fast, and grounded in evidence.
+          <p className="mx-auto mt-8 max-w-[28rem] text-pretty text-[15px] leading-relaxed text-muted sm:mt-10">
+            Observations, assessments, and leadership signals in one place—so your school can act
+            with evidence, not guesswork.
           </p>
 
-          <div className="mt-10 flex flex-col items-center gap-4 sm:mt-12">
+          <div className="mt-10 flex flex-col items-center gap-3 sm:mt-12">
             <Button asChild className="min-w-[11rem]">
               <Link href="/login">Sign in</Link>
             </Button>
-            <p className="max-w-sm text-pretty text-[12px] leading-relaxed text-muted/80">
-              Already using Anaxi at your school? Use your work email to continue where you left off.
+            <p className="max-w-sm text-pretty text-[12px] leading-relaxed text-muted/75">
+              Use your work email if your school already uses Anaxi.
             </p>
           </div>
         </div>
