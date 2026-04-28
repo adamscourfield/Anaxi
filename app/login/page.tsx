@@ -4,7 +4,15 @@ import { FormEvent, useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { AuthFlowMain, AuthNav, AuthShell } from "@/components/auth-shell";
+import {
+  AuthCard,
+  AuthFieldLabel,
+  AuthFlowMain,
+  AuthNav,
+  AuthPageHeader,
+  AuthShell,
+} from "@/components/auth-shell";
+import { Button } from "@/components/ui/button";
 
 type School = { id: string; name: string };
 type Step = "credentials" | "selectSchool";
@@ -83,97 +91,122 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthShell variant="dark">
+    <AuthShell variant="light">
       <AuthNav />
-      <AuthFlowMain maxWidth="sm">
-        <div className="flex flex-col items-center">
-          <div className="mb-5">
-            <Image
-              src="/anaxi-logo.png"
-              alt="Anaxi"
-              width={72}
-              height={72}
-              priority
-              className="object-contain opacity-[0.92] brightness-0 invert"
+      <AuthFlowMain maxWidth="md">
+        <div className="mb-8 flex flex-col items-center sm:mb-10 sm:items-start">
+          <Image
+            src="/anaxi-logo.png"
+            alt="Anaxi"
+            width={56}
+            height={56}
+            priority
+            className="h-14 w-14 object-contain sm:h-12 sm:w-12"
+          />
+        </div>
+
+        {step === "credentials" ? (
+          <>
+            <AuthPageHeader
+              title="Sign in"
+              subtitle="Use your school email and password. If you belong to more than one school, you will choose which one to open."
+              align="start"
             />
-          </div>
+            <AuthCard>
+              <form onSubmit={onCredentialsSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <AuthFieldLabel htmlFor="login-email">Email</AuthFieldLabel>
+                  <input
+                    id="login-email"
+                    type="email"
+                    placeholder="you@school.edu"
+                    required
+                    autoFocus
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="field"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <AuthFieldLabel htmlFor="login-password">Password</AuthFieldLabel>
+                  <input
+                    id="login-password"
+                    type="password"
+                    placeholder="••••••••"
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="field"
+                  />
+                </div>
 
-          <p className="mb-12 text-[10px] font-semibold uppercase tracking-[0.32em] text-white/28">Anaxi</p>
+                {error ? (
+                  <p className="text-center text-[13px] text-[var(--pill-error-text)]" role="alert">
+                    {error}
+                  </p>
+                ) : null}
 
-          <div className="w-full">
-            {step === "credentials" ? (
-              <form onSubmit={onCredentialsSubmit} className="flex flex-col gap-2.5">
-                <input
-                  type="email"
-                  placeholder="Email"
-                  required
-                  autoFocus
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="field field--dark px-4 py-3.5 text-[14px]"
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="field field--dark px-4 py-3.5 text-[14px]"
-                />
-
-                {error ? <p className="text-center text-[12px] text-[var(--coral)]">{error}</p> : null}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="calm-transition mt-1 w-full rounded-xl bg-white/94 py-3.5 text-[13px] font-semibold tracking-[0.02em] text-[#0a0c16] active:scale-[0.98] disabled:opacity-40"
-                >
+                <Button type="submit" disabled={loading} className="w-full">
                   {loading ? "Signing in…" : "Sign in"}
-                </button>
+                </Button>
 
-                <a
-                  href="/login/forgot-password"
-                  className="calm-transition mt-1 text-center text-[12px] text-white/25 hover:opacity-60"
-                >
-                  Forgot password?
-                </a>
+                <div className="flex justify-center pt-1">
+                  <a
+                    href="/login/forgot-password"
+                    className="link-muted-accent calm-transition text-[13px]"
+                  >
+                    Forgot password?
+                  </a>
+                </div>
               </form>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <p className="mb-1 text-center text-[11px] font-medium uppercase tracking-widest text-white/28">
-                  Select school
-                </p>
-
+            </AuthCard>
+          </>
+        ) : (
+          <>
+            <AuthPageHeader
+              title="Choose school"
+              subtitle="Your account is linked to more than one organisation. Pick the one you want to open."
+              align="start"
+            />
+            <AuthCard>
+              <div className="flex flex-col gap-3">
                 {schools.map((school) => (
-                  <button
+                  <Button
                     key={school.id}
                     type="button"
-                    onClick={() => onSchoolSelect(school.id)}
+                    variant="secondary"
                     disabled={loading}
-                    className="calm-transition w-full rounded-xl border border-white/10 bg-white/[0.07] px-4 py-3.5 text-left text-[13px] font-medium text-white/88 active:scale-[0.98] hover:bg-white/[0.1] disabled:opacity-40"
+                    className="h-auto w-full justify-start py-3.5 text-left font-medium"
+                    onClick={() => onSchoolSelect(school.id)}
                   >
                     {school.name}
-                  </button>
+                  </Button>
                 ))}
 
-                {error ? <p className="text-center text-[12px] text-[var(--coral)]">{error}</p> : null}
+                {error ? (
+                  <p className="text-center text-[13px] text-[var(--pill-error-text)]" role="alert">
+                    {error}
+                  </p>
+                ) : null}
 
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  className="w-full"
+                  disabled={loading}
                   onClick={() => {
                     setStep("credentials");
                     setError(null);
                   }}
-                  className="calm-transition mt-1 text-center text-[12px] text-white/25 hover:opacity-60"
                 >
                   ← Back
-                </button>
+                </Button>
               </div>
-            )}
-          </div>
-        </div>
+            </AuthCard>
+          </>
+        )}
       </AuthFlowMain>
     </AuthShell>
   );
