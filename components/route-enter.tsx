@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
-/** Wraps children and replays a short enter animation when the pathname changes (auth routes, etc.). */
+/** Replays enter animation when pathname changes (paired with Tailwind `animate-page-enter`). */
 export function RouteEnter({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   return (

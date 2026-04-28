@@ -146,7 +146,7 @@ function SectionTable({
           <div className="border-t border-border/30 py-4 text-center">
             <Link
               href="/leave/history"
-              className="text-[0.875rem] font-medium text-muted underline-offset-4 calm-transition hover:text-text hover:underline"
+              className="link-subtle text-[0.875rem] font-medium underline-offset-4 calm-transition text-muted hover:text-text"
             >
               View full ledger history
             </Link>

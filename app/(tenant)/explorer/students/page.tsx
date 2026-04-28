@@ -451,7 +451,7 @@ export default async function StudentsPage({
                     <td className="px-4 py-4">
                       <Link
                         href={`/analysis/students/${row.studentId}?window=${windowDays}`}
-                        className="text-sm font-medium text-accent calm-transition hover:text-accentHover"
+                        className="link-accent text-sm font-medium calm-transition"
                       >
                         View →
                       </Link>

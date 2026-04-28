@@ -162,7 +162,7 @@ export function OnCallInbox({
             </div>
             <button
               type="button"
-              className="shrink-0 self-start text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--pill-error-text)] hover:underline calm-transition sm:self-auto"
+              className="link-underline shrink-0 self-start text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--pill-error-text)] calm-transition sm:self-auto"
             >
               View priority log
             </button>

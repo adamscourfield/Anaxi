@@ -74,7 +74,7 @@ export default function ResetPasswordPage() {
               <p className="text-[15px] font-semibold text-text">Invalid link</p>
               <p className="text-[13px] text-muted">
                 This password reset link is missing a token.{" "}
-                <Link href="/login/forgot-password" className="underline underline-offset-2 hover:opacity-70">
+                <Link href="/login/forgot-password" className="link-muted-accent underline-offset-2 hover:opacity-70">
                   Request a new one.
                 </Link>
               </p>

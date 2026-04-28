@@ -667,7 +667,7 @@ export default async function SubjectDetailPage({
                               {getInitials(student.name)}
                             </div>
                             <Link href={`/students/${student.id}${fromParam}`}
-                                  className="font-medium text-text calm-transition hover:text-accent">
+                                  className="link-to-accent font-medium">
                               {student.name}
                             </Link>
                           </div>

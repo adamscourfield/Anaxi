@@ -360,7 +360,7 @@ export function CsvImportMapper() {
                     {" "}
                     <a
                       href={`/api/import/jobs/${result.importJobId}/errors.csv`}
-                      className="underline"
+                      className="link-underline text-error"
                       download
                     >
                       Download error report

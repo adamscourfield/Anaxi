@@ -110,7 +110,7 @@ export function AuthBackLink({ href = "/login" }: { href?: string }) {
     <div className="mt-8 flex justify-center">
       <Link
         href={href}
-        className="calm-transition flex items-center gap-1.5 text-[13px] text-muted hover:opacity-70"
+        className="link-muted-accent calm-transition flex items-center gap-1.5 text-[13px]"
       >
         <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden>
           <path

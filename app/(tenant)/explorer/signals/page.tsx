@@ -608,7 +608,7 @@ export default async function SignalsPage({
                     <p className="truncate font-semibold text-text">
                       <Link
                         href={`/analysis/cpd/${encodeURIComponent(row.signalKey)}`}
-                        className="hover:underline"
+                        className="link-accent"
                       >
                         {row.label}
                       </Link>

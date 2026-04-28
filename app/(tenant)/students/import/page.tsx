@@ -122,10 +122,10 @@ export default async function StudentsImportPage() {
           If your CSV uses different column names, edit the mapping below to map each field to your actual column header.
         </p>
         <div className="flex flex-wrap gap-2">
-          <a href="/api/import/csv/template" className="text-xs font-medium text-accent underline underline-offset-2">
+          <a href="/api/import/csv/template" className="link-accent text-xs font-medium">
             Download blank behaviour template
           </a>
-          <a href="/api/import/csv/template?prefill=1" className="text-xs font-medium text-accent underline underline-offset-2">
+          <a href="/api/import/csv/template?prefill=1" className="link-accent text-xs font-medium">
             Download pre-populated behaviour template
           </a>
         </div>

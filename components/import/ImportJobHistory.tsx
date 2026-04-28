@@ -79,7 +79,7 @@ export function ImportJobHistory() {
               </td>
               <td className="p-3">
                 <div className="flex gap-3">
-                  <Link href={`/behaviour/import/job/${job.id}`} className="text-xs font-medium text-accent hover:text-accentHover calm-transition">
+                  <Link href={`/behaviour/import/job/${job.id}`} className="link-accent text-xs font-medium calm-transition">
                     View report
                   </Link>
                   {job.rowsFailed > 0 && (

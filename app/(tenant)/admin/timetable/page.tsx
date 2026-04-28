@@ -61,12 +61,12 @@ export default async function AdminTimetablePage() {
               <div className="mt-1 text-sm text-muted">{lastJob.rowsProcessed} imported, {lastJob.rowsFailed} failed</div>
               <div className="mt-2 flex flex-wrap gap-2 text-xs">
                 {lastJob.errorReportJson && (
-                  <a href={`/api/admin/timetable/import/jobs/${lastJob.id}/errors.csv`} download className="text-accent underline">
+                  <a href={`/api/admin/timetable/import/jobs/${lastJob.id}/errors.csv`} download className="link-accent text-xs">
                     Download error report
                   </a>
                 )}
                 {lastJob.conflictsJson && (
-                  <a href={`/api/admin/timetable/import/jobs/${lastJob.id}/conflicts.csv`} download className="text-accent underline">
+                  <a href={`/api/admin/timetable/import/jobs/${lastJob.id}/conflicts.csv`} download className="link-accent text-xs">
                     Download conflict report
                   </a>
                 )}

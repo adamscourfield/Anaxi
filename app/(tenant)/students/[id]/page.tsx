@@ -279,7 +279,7 @@ export default async function StudentDetailPage({
 
   return (
     <div className="space-y-8">
-      <Link href={backHref} className="inline-flex items-center gap-1 text-sm text-muted calm-transition hover:text-accent">
+      <Link href={backHref} className="link-muted-accent inline-flex items-center gap-1 text-sm">
         <span aria-hidden>←</span> {backLabel}
       </Link>
 
