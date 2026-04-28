@@ -32,13 +32,6 @@ const SIGNAL_DOT_COLOR: Record<string, string> = {
   LIMITED:    "bg-[var(--scale-limited-bar)]",
 };
 
-const SIGNAL_LEGEND = [
-  { label: "Strong",     className: "bg-[var(--scale-strong-bar)]" },
-  { label: "Consistent", className: "bg-[var(--scale-consistent-bar)]" },
-  { label: "Some",       className: "bg-[var(--scale-some-bar)]" },
-  { label: "Limited",    className: "bg-[var(--scale-limited-bar)]" },
-];
-
 const PHASE_BADGE: Record<string, string> = {
   INSTRUCTION:           "border-[var(--phase-instruction-text)]/30 text-[var(--phase-instruction-text)]",
   GUIDED_PRACTICE:       "border-[var(--phase-guided-text)]/30 text-[var(--phase-guided-text)]",
@@ -578,40 +571,6 @@ export default async function ObservationHistoryPage({
           )}
         </div>
       )}
-
-      {/* ── Footer: Signal Legend + Intelligence Insight ─────────────────── */}
-      <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
-        {/* Signal Legend */}
-        <div className="rounded-2xl bg-surface-container-lowest px-5 py-4">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Signal Legend</p>
-          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-            {SIGNAL_LEGEND.map((item) => (
-              <div key={item.label} className="flex items-center gap-1.5">
-                <span className={`inline-block h-2.5 w-2.5 rounded-full ${item.className}`} />
-                <span className="text-[0.75rem] text-text">{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Intelligence Insight */}
-        <div className="relative overflow-hidden rounded-2xl bg-[#e8f4f8] px-6 py-5">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Intelligence Insight</p>
-          <p className="mt-2 text-[0.9375rem] font-semibold text-text">
-            Observations are up 12% this quarter.
-          </p>
-          <p className="mt-0.5 text-[0.8125rem] text-muted">
-            Focus remains on &quot;Checking for Understanding&quot; across STEM departments.
-          </p>
-          {/* Decorative sparkle icons */}
-          <svg className="absolute right-4 bottom-3 h-12 w-12 text-[#c4dfe6] opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74L12 2z" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <svg className="absolute right-14 bottom-8 h-6 w-6 text-[#c4dfe6] opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74L12 2z" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-      </div>
     </div>
   );
 }
