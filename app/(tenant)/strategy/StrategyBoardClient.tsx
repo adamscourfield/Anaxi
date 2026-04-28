@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useId, useRef } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   createStrategyArea,
@@ -118,6 +120,32 @@ function AreaModal({
   staffList: { id: string; fullName: string }[];
 }) {
   const [pending, startTransition] = useTransition();
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<Element | null>(null);
+
+  useEffect(() => {
+    previouslyFocused.current = document.activeElement;
+    document.body.style.overflow = "hidden";
+    const t = window.setTimeout(() => {
+      const first = panelRef.current?.querySelector<HTMLElement>("input, textarea, select, button");
+      first?.focus();
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      document.body.style.overflow = "";
+      const prev = previouslyFocused.current;
+      if (prev instanceof HTMLElement) requestAnimationFrame(() => prev.focus());
+    };
+  }, []);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -133,15 +161,26 @@ function AreaModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "var(--overlay)" }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="presentation">
+      <button
+        type="button"
+        className="absolute inset-0 bg-[var(--overlay)] calm-transition"
+        aria-label="Dismiss dialog"
+        tabIndex={-1}
+        onClick={onClose}
+      />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200 outline-none"
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-2">
-          <h2 className="text-[1.125rem] font-bold tracking-tight text-text">
+          <h2 id={titleId} className="text-[1.125rem] font-bold tracking-tight text-text">
             {area ? "Edit Strategy" : "Propose New Strategy"}
           </h2>
           <button
@@ -262,6 +301,7 @@ function ActionMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   if (!canManage) return null;
 
@@ -272,7 +312,10 @@ function ActionMenu({
 
   function handleDelete() {
     setOpen(false);
-    if (!confirm("Remove this strategy area?")) return;
+    setConfirmDeleteOpen(true);
+  }
+
+  function confirmDelete() {
     startTransition(() => deleteStrategyArea(area.id));
   }
 
@@ -328,6 +371,16 @@ function ActionMenu({
           </button>
         </div>
       )}
+      <DestructiveConfirmDialog
+        open={confirmDeleteOpen}
+        title="Remove strategy area?"
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        onClose={() => setConfirmDeleteOpen(false)}
+        onConfirm={confirmDelete}
+      >
+        This removes &ldquo;{area.title}&rdquo; and its notes from the board. This cannot be undone.
+      </DestructiveConfirmDialog>
     </div>
   );
 }

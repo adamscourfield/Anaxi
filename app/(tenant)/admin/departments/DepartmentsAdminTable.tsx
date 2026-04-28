@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Avatar } from "@/components/ui/avatar";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
 
 type DeptMember = {
   userId: string;
@@ -42,6 +43,8 @@ export function DepartmentsAdminTable({
   const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set());
   const [addingMemberDeptId, setAddingMemberDeptId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const deleteFormRef = useRef<HTMLFormElement>(null);
 
   function openEdit(dept: Department) {
     setEditingDept(dept);
@@ -192,23 +195,16 @@ export function DepartmentsAdminTable({
                       <path d="M13.586 3.586a2 2 0 112.828 2.828l-9.07 9.07-3.87.968.968-3.87 9.144-9.143z" />
                     </svg>
                   </button>
-                  <form action={deleteDepartmentAction}>
-                    <input type="hidden" name="id" value={dept.id} />
-                    <button
-                      type="submit"
-                      className="rounded-md p-1.5 text-muted calm-transition hover:bg-error/10 hover:text-error"
-                      title="Delete department"
-                      onClick={(e) => {
-                        if (!confirm(`Delete "${dept.name}"? This cannot be undone.`)) {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 6h12M8 6V4h4v2M6 6v10a1 1 0 001 1h6a1 1 0 001-1V6" />
-                      </svg>
-                    </button>
-                  </form>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget({ id: dept.id, name: dept.name })}
+                    className="rounded-md p-1.5 text-muted calm-transition hover:bg-error/10 hover:text-error"
+                    title="Delete department"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 6h12M8 6V4h4v2M6 6v10a1 1 0 001 1h6a1 1 0 001-1V6" />
+                    </svg>
+                  </button>
                 </div>
                 </div>
               </div>
@@ -370,6 +366,24 @@ export function DepartmentsAdminTable({
           </div>
         </div>
       )}
+
+      <form ref={deleteFormRef} action={deleteDepartmentAction} className="hidden" aria-hidden="true">
+        {deleteTarget && <input type="hidden" name="id" value={deleteTarget.id} />}
+      </form>
+      <DestructiveConfirmDialog
+        open={deleteTarget != null}
+        title="Delete department?"
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteFormRef.current) deleteFormRef.current.requestSubmit();
+        }}
+      >
+        {deleteTarget
+          ? `This will permanently remove "${deleteTarget.name}" and cannot be undone.`
+          : null}
+      </DestructiveConfirmDialog>
     </>
   );
 }

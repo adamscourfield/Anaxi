@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import { toast } from "@/components/toast-provider";
 import type { GradeFormat } from "@prisma/client";
-import { toast } from "@/components/toast-provider";
 
 type Step = "setup" | "detect" | "done";
 
