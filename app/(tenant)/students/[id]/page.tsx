@@ -528,7 +528,7 @@ export default async function StudentDetailPage({
                 {analysisProfile.onWatchlist ? "★ On watchlist" : "Add to watchlist"}
               </Button>
             </form>
-            <Link href={`/analytics?tab=students&window=${windowDays}`} className="text-sm text-accent hover:underline">
+            <Link href={`/analytics?tab=students&window=${windowDays}`} className="link-accent text-sm">
               Open student support priorities →
             </Link>
           </div>
@@ -687,7 +687,7 @@ export default async function StudentDetailPage({
               <div className="mt-4">
                 <Link
                   href={`/assessments/${activeCycle.id}`}
-                  className="text-sm font-medium text-accent calm-transition hover:underline"
+                  className="link-accent text-sm font-medium calm-transition"
                 >
                   View attainment cycle →
                 </Link>

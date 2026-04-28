@@ -60,7 +60,7 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
   return (
     <div>
       <div className="mb-4">
-        <Link href="/meetings" className="text-sm text-accent hover:underline">← Meetings</Link>
+        <Link href="/meetings" className="link-accent text-sm">← Meetings</Link>
       </div>
 
       <LiveMeetingView

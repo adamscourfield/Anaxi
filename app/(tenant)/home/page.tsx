@@ -429,7 +429,7 @@ function LeadershipHome({
                 </p>
               </div>
             </div>
-            <Link href="/analytics?watchlist=1" className="text-sm text-accent hover:underline">
+            <Link href="/analytics?watchlist=1" className="link-accent text-sm">
               View all →
             </Link>
           </div>
@@ -744,7 +744,7 @@ function LeadershipHome({
                 </p>
               </div>
             </div>
-            <Link href="/assessments" className="text-sm text-accent hover:underline">
+            <Link href="/assessments" className="link-accent text-sm">
               All cycles →
             </Link>
           </div>
@@ -783,7 +783,7 @@ function LeadershipHome({
                 <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                   Dual-flagged students — attainment + pastoral risk
                 </p>
-                <Link href="/assessments/triangulation" className="text-xs text-accent hover:underline">
+                <Link href="/assessments/triangulation" className="link-accent text-xs">
                   View all →
                 </Link>
               </div>
@@ -930,7 +930,7 @@ function HodHome({
               title="Dept teacher priorities"
               subtitle={`${topDeptTeachers.length} teacher${topDeptTeachers.length !== 1 ? "s" : ""} in view`}
             />
-            <Link href={`/analytics?tab=teachers&window=${windowDays}&department=${deptId}`} className="text-sm text-accent hover:underline">View all →</Link>
+            <Link href={`/analytics?tab=teachers&window=${windowDays}&department=${deptId}`} className="link-accent text-sm">View all →</Link>
           </div>
           {topDeptTeachers.length === 0 ? (
             <MetaText>No observation data for your department in this window.</MetaText>
@@ -1284,7 +1284,7 @@ function TeacherHome({
               title="Your actions"
               subtitle={`${openActions.length} open action${openActions.length !== 1 ? "s" : ""}`}
             />
-            <Link href="/my-actions" className="text-sm text-accent hover:underline">View all →</Link>
+            <Link href="/my-actions" className="link-accent text-sm">View all →</Link>
           </div>
           <ul className="space-y-1">
             {openActions.slice(0, 5).map((action) => (

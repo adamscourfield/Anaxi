@@ -224,7 +224,7 @@ export default function StaffImportPage() {
             <a
               href={`/api/admin/users/import/jobs/${importResult.jobId}/errors.csv`}
               download
-              className="text-sm text-accent hover:underline"
+              className="link-accent text-sm"
             >
               Download error report CSV
             </a>
@@ -269,7 +269,7 @@ export default function StaffImportPage() {
                         <a
                           href={`/api/admin/users/import/jobs/${job.id}/errors.csv`}
                           download
-                          className="text-sm text-accent hover:underline"
+                          className="link-accent text-sm"
                         >
                           Download CSV
                         </a>

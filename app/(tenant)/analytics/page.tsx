@@ -186,7 +186,7 @@ async function TeachersTab({
             title="No observation data in this window"
             description="Widen the window or add observations so teacher drift and coverage can be computed."
             action={
-              <Link href="/observe/new" className="text-sm font-semibold text-accent underline-offset-2 hover:underline">
+              <Link href="/observe/new" className="link-accent text-sm font-semibold underline-offset-2">
                 Start an observation
               </Link>
             }
@@ -213,7 +213,7 @@ async function TeachersTab({
                     <td className="px-4 py-3 font-medium text-text">
                       <Link
                         href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
-                        className="hover:underline"
+                        className="link-subtle"
                       >
                         {row.teacherName}
                       </Link>
@@ -373,7 +373,7 @@ async function CpdTab({
             title="No CPD drift data in this window"
             description="Signals need enough observations across staff. Try a longer window or record more observations."
             action={
-              <Link href="/observe/new" className="text-sm font-semibold text-accent underline-offset-2 hover:underline">
+              <Link href="/observe/new" className="link-accent text-sm font-semibold underline-offset-2">
                 Start an observation
               </Link>
             }
@@ -403,7 +403,7 @@ async function CpdTab({
                       <td className="px-4 py-3 font-medium text-text">
                         <Link
                           href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
-                          className="hover:underline"
+                          className="link-subtle"
                         >
                           {row.label}
                         </Link>
@@ -583,7 +583,7 @@ async function StudentsTab({
               hasStudentFilters ? (
                 <Link
                   href={`/analytics?tab=students&window=${windowDays}`}
-                  className="text-sm font-semibold text-accent underline-offset-2 hover:underline"
+                  className="link-accent text-sm font-semibold underline-offset-2"
                 >
                   Clear filters
                 </Link>
@@ -616,7 +616,7 @@ async function StudentsTab({
                     <td className="sticky left-0 z-10 bg-surface px-4 py-3 font-medium text-text">
                       <Link
                         href={`/analysis/students/${row.studentId}?window=${windowDays}`}
-                        className="hover:underline"
+                        className="link-subtle"
                       >
                         {row.onWatchlist ? "★ " : ""}{row.studentName}
                       </Link>

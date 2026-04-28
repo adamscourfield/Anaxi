@@ -398,7 +398,7 @@ export default async function AnalysisPage({
                         <td className="px-5 py-4 font-medium text-text">
                           <Link
                             href={`/students/${row.studentId}`}
-                            className="calm-transition hover:text-accent hover:underline"
+                            className="link-accent calm-transition"
                           >
                             {row.studentName}
                           </Link>
@@ -465,7 +465,7 @@ export default async function AnalysisPage({
                         <td className="px-5 py-4 font-medium text-text">
                           <Link
                             href={`/analysis/students/${student.studentId}?window=${windowDays}`}
-                            className="calm-transition group-hover:text-accent hover:underline"
+                            className="link-accent calm-transition"
                           >
                             {student.studentName}
                           </Link>
