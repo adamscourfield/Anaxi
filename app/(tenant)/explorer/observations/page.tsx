@@ -5,6 +5,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { canViewExplorer, canExportExplorer } from "@/modules/authz";
 import { PageHeader } from "@/components/ui/page-header";
+import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import { Avatar } from "@/components/ui/avatar";
 import { formatPhaseLabel, phaseVariant } from "@/modules/observations/phaseLabel";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -132,27 +133,17 @@ export default async function ExplorerObservationsPage({
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <>
-      {/* Back link */}
-      <div className="mb-4">
-        <Link
-          href="/explorer"
-          className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-accent"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back to Explorer
-        </Link>
-      </div>
+    <div className="space-y-8">
+      <ExplorerBackLink />
 
       <PageHeader
+        eyebrow="Explorer"
         title="Observations"
         subtitle="Recent classroom observations with signal coverage details."
       />
 
       {/* ── Window selector + Filters ──────────────────────────────────────── */}
-      <div className="mb-6 w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
       <form className="filter-bar">
         {/* Window selector */}
         <div className="filter-period-toggle">
@@ -356,6 +347,6 @@ export default async function ExplorerObservationsPage({
       <p className="mt-8 text-[0.75rem] text-muted">
         Explorer · Observations · {windowDays}d window
       </p>
-    </>
+    </div>
   );
 }
