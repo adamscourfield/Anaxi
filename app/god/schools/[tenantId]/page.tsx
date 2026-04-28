@@ -54,7 +54,7 @@ export default async function SchoolDetailPage({ params, searchParams }: { param
           <div className="font-medium text-success">Invite created.</div>
           <MetaText>Copy this one-time link and send it securely to the admin.</MetaText>
           <details className="mt-2">
-            <summary className="cursor-pointer text-xs underline">Show invite link</summary>
+            <summary className="link-underline cursor-pointer text-xs text-muted">Show invite link</summary>
             <div className="mt-1 break-all text-xs">{decodeURIComponent(searchParams.invite)}</div>
           </details>
         </Card>

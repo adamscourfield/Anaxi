@@ -369,7 +369,7 @@ export default async function EMThresholdPage({
                         <div className="flex min-w-0 flex-col">
                           <Link
                             href={`/students/${row.id}`}
-                            className="font-medium text-text calm-transition hover:text-accent"
+                            className="link-to-accent font-medium"
                           >
                             {row.name}
                           </Link>

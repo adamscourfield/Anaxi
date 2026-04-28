@@ -284,7 +284,7 @@ export default function UploadSubjectResultsPage() {
             />
             <a
               href={`/api/assessments/template${yearGroup.trim() ? `?yearGroup=${encodeURIComponent(yearGroup.trim())}` : ""}`}
-              className="inline-block text-xs font-medium text-[var(--accent)] underline underline-offset-2"
+              className="link-accent inline-block text-xs font-medium"
             >
               Download pre-populated attainment template
             </a>

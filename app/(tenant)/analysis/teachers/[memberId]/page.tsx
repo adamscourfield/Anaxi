@@ -83,7 +83,7 @@ export default async function TeacherProfilePage({
       {/* Back link */}
       <Link
         href={`/analytics?tab=teachers&window=${windowDays}`}
-        className="text-sm text-muted hover:underline"
+        className="link-muted-accent text-sm"
       >
         ← Back to teacher priorities
       </Link>

@@ -163,8 +163,15 @@ export default async function LeaveDetailPage({ params, searchParams }: { params
           {request.medicalEvidenceUrl && (
             <div className="mt-4 rounded-xl border border-border/30 bg-surface-container-lowest/40 px-4 py-3">
               <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-muted">Medical evidence</p>
-              <p className="mt-1.5 text-[0.875rem] text-accent underline">
-                <a href={request.medicalEvidenceUrl} target="_blank" rel="noopener noreferrer">View uploaded document</a>
+              <p className="mt-1.5 text-[0.875rem]">
+                <a
+                  href={request.medicalEvidenceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link-accent"
+                >
+                  View uploaded document
+                </a>
               </p>
             </div>
           )}

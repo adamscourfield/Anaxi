@@ -232,7 +232,7 @@ export function SnapshotUploader() {
                     setImportError(null);
                     if (fileRef.current) fileRef.current.value = "";
                   }}
-                  className="mt-2 text-xs font-medium text-error hover:underline"
+                  className="link-underline mt-2 text-xs font-medium text-error"
                 >
                   Remove file
                 </button>
@@ -402,7 +402,7 @@ export function SnapshotUploader() {
               <a
                 href="/api/import/csv/template"
                 download
-                className="font-medium text-text underline decoration-[var(--outline-variant)] underline-offset-2 hover:decoration-text"
+                className="link-subtle font-medium text-text decoration-[var(--outline-variant)] underline-offset-2"
               >
                 official template
               </a>{" "}
@@ -410,7 +410,7 @@ export function SnapshotUploader() {
               <a
                 href="/api/import/csv/template?prefill=1"
                 download
-                className="font-medium text-text underline decoration-[var(--outline-variant)] underline-offset-2 hover:decoration-text"
+                className="link-subtle font-medium text-text decoration-[var(--outline-variant)] underline-offset-2"
               >
                 download a pre-populated template
               </a>{" "}
@@ -436,7 +436,7 @@ export function SnapshotUploader() {
                   <a
                     href={`/api/import/jobs/${result.importJobId}/errors.csv`}
                     download
-                    className="underline"
+                    className="link-underline text-error"
                   >
                     Download error report
                   </a>

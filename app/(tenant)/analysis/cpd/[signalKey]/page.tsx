@@ -97,7 +97,7 @@ export default async function CpdSignalDrilldownPage({
       {/* Back link */}
       <Link
         href={`/analytics?tab=cpd&${backParams.toString()}`}
-        className="text-sm text-muted hover:underline"
+        className="link-muted-accent text-sm"
       >
         ← Back to CPD priorities
       </Link>
@@ -207,7 +207,7 @@ export default async function CpdSignalDrilldownPage({
                     <td className="px-4 py-3 font-medium text-text">
                       <Link
                         href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
-                        className="hover:underline"
+                        className="link-subtle"
                       >
                         {row.teacherName}
                       </Link>

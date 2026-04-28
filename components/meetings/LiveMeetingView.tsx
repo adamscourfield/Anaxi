@@ -420,6 +420,40 @@ export function LiveMeetingView({
     }
   }
 
+  function openInsertLinkDialog() {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    linkInsertRef.current = {
+      start: ta.selectionStart,
+      end: ta.selectionEnd,
+      selected: notes.slice(ta.selectionStart, ta.selectionEnd) || "link text",
+    };
+    setLinkDialogOpen(true);
+  }
+
+  function applyInsertedLink(url: string): boolean {
+    const ta = textareaRef.current;
+    const p = linkInsertRef.current;
+    if (!ta || !p) {
+      setLinkDialogOpen(false);
+      return true;
+    }
+    if (!url) {
+      toast("Enter a URL for the link.", "error");
+      return false;
+    }
+    const formatted = `[${p.selected}](${url})`;
+    const newValue = notes.slice(0, p.start) + formatted + notes.slice(p.end);
+    handleNotesChange(newValue);
+    setLinkDialogOpen(false);
+    linkInsertRef.current = null;
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(p.start, p.start + formatted.length);
+    });
+    return true;
+  }
+
   /* ── End meeting ───────────────────────────────────────────────── */
   async function handleEndMeeting() {
     try {
