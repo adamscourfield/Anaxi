@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { H2, BodyText, MetaText } from "@/components/ui/typography";
+import { toast } from "@/components/toast-provider";
 import {
   ALL_TIMETABLE_FIELDS,
   TIMETABLE_REQUIRED_FIELDS,
@@ -116,11 +117,14 @@ export function TimetableImportMapper() {
       const data = await res.json();
       if (!res.ok) {
         setImportError(data.error ?? "Import failed");
+        toast(data.error ?? "Import failed", "error");
       } else {
         setResult(data as ImportResult);
+        toast("Timetable imported", "success");
       }
     } catch (err: unknown) {
       setImportError(String((err as Error)?.message ?? err));
+      toast("Import failed", "error");
     } finally {
       setImporting(false);
     }

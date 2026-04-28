@@ -115,6 +115,9 @@
   --shadow-lg:          0 16px 48px -8px rgba(25,28,30,0.06), 0 4px 16px -4px rgba(25,28,30,0.04);
   --shadow-xl:          0 24px 64px -12px rgba(25,28,30,0.08), 0 8px 32px -8px rgba(25,28,30,0.05);
   --shadow-float:       0 32px 64px -16px rgba(25,28,30,0.04);
+  /* Header chrome: one hairline + soft lift (reduced vs full ambient) */
+  --shadow-header:      0 1px 0 color-mix(in srgb, var(--outline-variant) 45%, transparent),
+                        0 4px 24px -4px rgba(25,28,30,0.05);
 
   /* ── Ghost border ────────────────────────────────────────────── */
   --border-ghost:       rgba(198,198,205,0.20);
@@ -363,7 +366,62 @@ textarea:focus-visible {
 }
 
 .calm-transition {
-  transition: all 200ms cubic-bezier(0.4,0,0.2,1);
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calm-transition {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Inline text links */
+.link-subtle {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--outline-variant) 55%, transparent);
+  text-underline-offset: 3px;
+  transition:
+    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.link-subtle:hover {
+  color: var(--on-surface);
+  text-decoration-color: color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+/* Accent CTAs and “View all” style links */
+.link-accent {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--primary) 28%, transparent);
+  text-underline-offset: 3px;
+  transition:
+    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.link-accent:hover {
+  color: var(--on-surface);
+  text-decoration-color: color-mix(in srgb, var(--primary) 48%, transparent);
+}
+
+/* Muted inline link → accent on hover (back links, secondary nav) */
+.link-muted-accent {
+  color: var(--on-surface-variant);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--outline-variant) 45%, transparent);
+  text-underline-offset: 3px;
+  transition:
+    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.link-muted-accent:hover {
+  color: var(--accent);
+  text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
 /* Inline text links — use instead of ad-hoc hover:underline + text-accent */
@@ -459,6 +517,10 @@ textarea:focus-visible {
   line-height: 1.5;
   color: var(--on-surface);
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  transition:
+    border-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .field::placeholder {
@@ -608,6 +670,7 @@ textarea:focus-visible {
 
 .table-row {
   border-bottom: 1px solid var(--surface-container-low);
+  transition: background-color 160ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .table-row:last-child { border-bottom: 0; }
@@ -660,6 +723,21 @@ textarea:focus-visible {
   background: rgba(247,249,251,0.80);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+/* Inline text links: predictable hover without layout shift */
+.link-subtle {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--outline-variant) 55%, transparent);
+  text-underline-offset: 3px;
+  transition:
+    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.link-subtle:hover {
+  color: var(--on-surface);
+  text-decoration-color: color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
 /* ── Glassmorphism card (floating panels, filter chips, context cards) ── */

@@ -7,6 +7,7 @@ import { MEETING_TYPE_LABELS } from "@/modules/meetings/types";
 import { StatusPill } from "@/components/ui/status-pill";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { PastMeetingsList } from "@/components/meetings/PastMeetingsList";
 
 function getInitials(name: string): string {
@@ -62,15 +63,14 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
         title="Meetings"
         actions={
           hasPermission(user.role, "meetings:create") ? (
-            <Link
-              href="/meetings/new"
-              className="calm-transition flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-on-primary hover:bg-primary-container"
-            >
-              <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4">
-                <path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5h-4.5a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z" />
-              </svg>
-              New Meeting
-            </Link>
+            <Button asChild>
+              <Link href="/meetings/new">
+                <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4">
+                  <path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5h-4.5a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z" />
+                </svg>
+                New Meeting
+              </Link>
+            </Button>
           ) : undefined
         }
       />

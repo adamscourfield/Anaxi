@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { H1, MetaText } from "@/components/ui/typography";
+import { toast } from "@/components/toast-provider";
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
@@ -303,8 +304,10 @@ export function LiveMeetingView({
             body: JSON.stringify({ notes: value }),
           });
           setSaveStatus(res.ok ? "saved" : "idle");
+          if (!res.ok) toast("Could not auto-save notes.", "error");
         } catch {
           setSaveStatus("idle");
+          toast("Could not auto-save notes.", "error");
         }
       }, 1500);
     },
@@ -329,12 +332,13 @@ export function LiveMeetingView({
         } catch {
           /* ignore */
         }
-        alert(message);
+        toast(message, "error");
         return;
       }
+      toast("Meeting started", "success");
       router.refresh();
     } catch {
-      alert("Network error while starting the meeting.");
+      toast("Network error while starting the meeting.", "error");
     } finally {
       setStartingMeeting(false);
     }
@@ -358,12 +362,13 @@ export function LiveMeetingView({
         } catch {
           /* ignore */
         }
-        alert(message);
+        toast(message, "error");
         return;
       }
+      toast("Meeting ended", "success");
       window.location.href = "/meetings";
     } catch {
-      alert("Network error while ending the meeting.");
+      toast("Network error while ending the meeting.", "error");
     }
   }
 
@@ -377,8 +382,11 @@ export function LiveMeetingView({
         body: JSON.stringify({ notes }),
       });
       setSaveStatus(res.ok ? "saved" : "idle");
+      if (res.ok) toast("Notes saved", "success");
+      else toast("Could not save notes.", "error");
     } catch {
       setSaveStatus("idle");
+      toast("Could not save notes.", "error");
     }
   }
 
@@ -401,6 +409,7 @@ export function LiveMeetingView({
       if (!res.ok) {
         const json = await res.json();
         setFormError(json.error ?? "Failed to create action");
+        toast(json.error ?? "Failed to create action", "error");
       } else {
         const newAction = await res.json();
         // Add the new action to the local list immediately
@@ -417,9 +426,11 @@ export function LiveMeetingView({
         ]);
         setTaskDesc("");
         setDueDate("");
+        toast("Action added", "success");
       }
     } catch {
       setFormError("Network error");
+      toast("Network error", "error");
     } finally {
       setSubmitting(false);
     }

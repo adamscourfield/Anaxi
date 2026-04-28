@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
 import { createLoaRequest } from "../actions";
 import { FormSelect } from "@/components/ui/form-select";
+import { Button } from "@/components/ui/button";
 
 function businessDays(start: Date, end: Date): number {
   let count = 0;
@@ -178,15 +179,12 @@ export default async function LeaveRequestPage() {
               >
                 Cancel Request
               </Link>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-xl bg-accent px-8 py-3 text-[0.9375rem] font-semibold text-on-primary shadow-sm calm-transition hover:bg-accentHover"
-              >
+              <Button type="submit" className="px-8 py-3">
                 Submit Request
-                <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4">
+                <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>
                   <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </button>
+              </Button>
             </div>
           </form>
         </div>

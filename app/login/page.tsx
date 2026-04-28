@@ -86,7 +86,7 @@ export default function LoginPage() {
     <AuthShell variant="dark">
       <AuthNav />
       <AuthFlowMain maxWidth="sm">
-        <div className="animate-auth-fade-up flex flex-col items-center">
+        <div className="flex flex-col items-center">
           <div className="mb-5">
             <Image
               src="/anaxi-logo.png"
@@ -100,7 +100,7 @@ export default function LoginPage() {
 
           <p className="mb-12 text-[10px] font-semibold uppercase tracking-[0.32em] text-white/28">Anaxi</p>
 
-          <div className="w-full [animation-delay:80ms] animate-auth-fade-up">
+          <div className="w-full">
             {step === "credentials" ? (
               <form onSubmit={onCredentialsSubmit} className="flex flex-col gap-2.5">
                 <input
@@ -175,16 +175,6 @@ export default function LoginPage() {
           </div>
         </div>
       </AuthFlowMain>
-
-      <style>{`
-        @keyframes auth-fade-up {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-auth-fade-up {
-          animation: auth-fade-up 0.55s ease both;
-        }
-      `}</style>
     </AuthShell>
   );
 }

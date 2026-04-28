@@ -7,7 +7,9 @@ import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { toast } from "@/components/toast-provider";
 import type { GradeFormat } from "@prisma/client";
+import { toast } from "@/components/toast-provider";
 
 type Step = "setup" | "detect" | "done";
 
@@ -79,8 +81,8 @@ export default function UploadSubjectResultsPage() {
 
   async function handleDetect() {
     const file = fileRef.current?.files?.[0];
-    if (!file) { setError("Select a CSV file."); return; }
-    if (!yearGroup.trim()) { setError("Enter the year group."); return; }
+    if (!file) { setError("Select a CSV file."); toast("Select a CSV file.", "error"); return; }
+    if (!yearGroup.trim()) { setError("Enter the year group."); toast("Enter the year group.", "error"); return; }
 
     setLoading(true);
     setError(null);
@@ -94,7 +96,7 @@ export default function UploadSubjectResultsPage() {
     try {
       const res = await fetch(`/api/assessments/points/${pointId}/upload`, { method: "POST", body: form });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Failed to parse file"); return; }
+      if (!res.ok) { setError(data.error || "Failed to parse file"); toast(data.error || "Failed to parse file", "error"); return; }
 
       setDetectedSubjects(data.detectedSubjects ?? []);
       setSelectedSubjects(new Set(data.detectedSubjects ?? []));
@@ -103,6 +105,7 @@ export default function UploadSubjectResultsPage() {
       setSubjectCounts(data.subjectCounts ?? {});
       setTotalRecords(data.totalRecords ?? 0);
       setStep("detect");
+      toast("Subjects detected from file", "success");
     } finally {
       setLoading(false);
     }
@@ -124,9 +127,11 @@ export default function UploadSubjectResultsPage() {
     try {
       const res = await fetch(`/api/assessments/points/${pointId}/upload`, { method: "POST", body: form });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Import failed"); return; }
+      if (!res.ok) { setError(data.error || "Import failed"); toast(data.error || "Import failed", "error"); return; }
       setImportResult(data);
+      toast(`Imported ${data.subjectsImported ?? 0} subject${(data.subjectsImported ?? 0) !== 1 ? "s" : ""} (${data.totalProcessed ?? 0} entries).`, "success");
       setStep("done");
+      toast("Results imported", "success");
     } finally {
       setLoading(false);
     }
