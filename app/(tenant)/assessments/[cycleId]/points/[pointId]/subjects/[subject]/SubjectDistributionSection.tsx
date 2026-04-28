@@ -144,7 +144,7 @@ export function SubjectDistributionSection({
       {isPercentage && pctDistTotal > 0 && (
         <div className="space-y-3">
           <SectionHeader title="Score Distribution" subtitle={`${pctDistTotal} students`} />
-          <div className="rounded-2xl bg-white p-6 shadow-ambient space-y-5">
+          <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient space-y-5">
             <div className="flex h-10 gap-0.5 overflow-hidden rounded-lg">
               {pctDistribution.map((d) => {
                 if (d.count === 0) return null;
@@ -203,7 +203,7 @@ export function SubjectDistributionSection({
       {!isPercentage && (
         <div className="space-y-3">
           <SectionHeader title="Grade Distribution" subtitle={`${distTotal > 0 ? distTotal : 0} students`} />
-          <div className="rounded-2xl bg-white p-6 shadow-ambient space-y-4">
+          <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient space-y-4">
             {distTotal > 0 ? (
               <>
                 <div className="flex h-8 gap-0.5 overflow-hidden rounded-lg">

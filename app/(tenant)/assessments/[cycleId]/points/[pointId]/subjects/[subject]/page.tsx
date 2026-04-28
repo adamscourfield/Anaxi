@@ -473,7 +473,7 @@ export default async function SubjectDetailPage({
             title="Class Comparison"
             subtitle={`${classComparison.length} teaching groups · year mean ${pctYearMean !== null ? `${round1(pctYearMean)}%` : "—"}`}
           />
-          <div className="rounded-2xl bg-white p-6 shadow-ambient">
+          <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient">
             <div className="space-y-3">
               {classComparison.map(g => (
                 <div key={g.group} className="flex items-center gap-4">
@@ -510,7 +510,7 @@ export default async function SubjectDetailPage({
           {pctPpMean !== null && pctNonPpMean !== null && (
             <div className="space-y-3">
               <SectionHeader title="Pupil Premium Gap" subtitle={`${ppResults.length} PP · ${nonPpResults.length} Non-PP`} />
-              <div className="rounded-2xl bg-white p-5 shadow-ambient space-y-4">
+              <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonPpMean - pctPpMean)} />
@@ -532,7 +532,7 @@ export default async function SubjectDetailPage({
           {pctSendMean !== null && pctNonSendMean !== null && (
             <div className="space-y-3">
               <SectionHeader title="SEND Gap" subtitle={`${sendResults.length} SEND · ${nonSendResults.length} Non-SEND`} />
-              <div className="rounded-2xl bg-white p-5 shadow-ambient space-y-4">
+              <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonSendMean - pctSendMean)} />
@@ -559,7 +559,7 @@ export default async function SubjectDetailPage({
         <div className="grid grid-cols-2 gap-5">
           <div className="space-y-3">
             <SectionHeader title="Pupil Premium Gap" subtitle={`${ppData.ppCount} PP · ${ppData.nonPpCount} Non-PP`} />
-            <div className="rounded-2xl bg-white p-5 shadow-ambient space-y-5">
+            <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-5">
               {[{ label: "4+", pp: ppData.ppT4, nonPp: ppData.nonPpT4, gap: ppData.gap4, cls: "text-amber-600" }, { label: "5+", pp: ppData.ppT5, nonPp: ppData.nonPpT5, gap: ppData.gap5, cls: "text-violet-600" }].map(({ label, pp, nonPp, gap, cls }, idx) => (
                 <div key={label} className={idx > 0 ? "border-t border-[var(--outline-variant)]/20 pt-5" : ""}>
                   <div className="flex items-center justify-between mb-3">
@@ -585,7 +585,7 @@ export default async function SubjectDetailPage({
           </div>
           <div className="space-y-3">
             <SectionHeader title="SEND Gap" subtitle={`${sendData.sendCount} SEND · ${sendData.nonSendCount} Non-SEND`} />
-            <div className="rounded-2xl bg-white p-5 shadow-ambient space-y-5">
+            <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-5">
               {[{ label: "4+", send: sendData.sendT4, nonSend: sendData.nonSendT4, gap: sendData.gap4, cls: "text-amber-600" }, { label: "5+", send: sendData.sendT5, nonSend: sendData.nonSendT5, gap: sendData.gap5, cls: "text-violet-600" }].map(({ label, send, nonSend, gap, cls }, idx) => (
                 <div key={label} className={idx > 0 ? "border-t border-[var(--outline-variant)]/20 pt-5" : ""}>
                   <div className="flex items-center justify-between mb-3">
