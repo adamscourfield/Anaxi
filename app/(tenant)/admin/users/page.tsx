@@ -2,7 +2,11 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { requireAdminUser } from "@/lib/admin";
+import {
+  assertAdminCanMutateUser,
+  assertAdminCannotAssignSuperAdminRole,
+  requireAdminUser,
+} from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -32,6 +36,7 @@ function AddStaffIcon() {
 
 export default async function AdminUsersPage() {
   const user = await requireAdminUser();
+  const canMutateSuperUsers = user.role === "SUPER_ADMIN";
   const users = await (prisma as any).user.findMany({ where: { tenantId: user.tenantId }, orderBy: { fullName: "asc" } });
   const scopes = await (prisma as any).lOAApprovalScope.findMany({ where: { tenantId: user.tenantId } });
 
@@ -56,6 +61,7 @@ export default async function AdminUsersPage() {
     const fullName = String(formData.get("fullName") || "");
     const email = String(formData.get("email") || "").toLowerCase();
     const role = String(formData.get("role") || "TEACHER") as any;
+    assertAdminCannotAssignSuperAdminRole(admin, role);
     const password = String(formData.get("password") || "Password123!");
     const hash = await bcrypt.hash(password, 10);
     await (prisma as any).user.create({
@@ -77,6 +83,7 @@ export default async function AdminUsersPage() {
     "use server";
     const admin = await requireAdminUser();
     const id = String(formData.get("id"));
+    await assertAdminCanMutateUser(admin, id, admin.tenantId);
     const active = String(formData.get("active")) === "true";
     await (prisma as any).user.updateMany({ where: { id, tenantId: admin.tenantId }, data: { isActive: !active } });
     revalidatePath("/admin/users");
@@ -86,6 +93,7 @@ export default async function AdminUsersPage() {
     "use server";
     const admin = await requireAdminUser();
     const id = String(formData.get("id"));
+    await assertAdminCanMutateUser(admin, id, admin.tenantId);
     const password = String(formData.get("password") || "Password123!");
     const hash = await bcrypt.hash(password, 10);
     await (prisma as any).user.updateMany({ where: { id, tenantId: admin.tenantId }, data: { passwordHash: hash } });
@@ -96,6 +104,7 @@ export default async function AdminUsersPage() {
     "use server";
     const admin = await requireAdminUser();
     const id = String(formData.get("id"));
+    await assertAdminCanMutateUser(admin, id, admin.tenantId);
     const enabled = String(formData.get("enabled")) === "true";
     await (prisma as any).user.updateMany({ where: { id, tenantId: admin.tenantId }, data: { canApproveAllLoa: !enabled } });
     revalidatePath("/admin/users");
@@ -105,6 +114,7 @@ export default async function AdminUsersPage() {
     "use server";
     const admin = await requireAdminUser();
     const id = String(formData.get("id"));
+    await assertAdminCanMutateUser(admin, id, admin.tenantId);
     const enabled = String(formData.get("enabled")) === "true";
     await (prisma as any).user.updateMany({ where: { id, tenantId: admin.tenantId }, data: { receivesOnCallEmails: !enabled } });
     revalidatePath("/admin/users");
@@ -116,6 +126,8 @@ export default async function AdminUsersPage() {
     const approverId = String(formData.get("approverId") || "");
     const targetUserId = String(formData.get("targetUserId") || "");
     if (!approverId || !targetUserId || approverId === targetUserId) return;
+
+    await assertAdminCanMutateUser(admin, approverId, admin.tenantId);
 
     await (prisma as any).lOAApprovalScope.upsert({
       where: {
@@ -136,6 +148,8 @@ export default async function AdminUsersPage() {
     const admin = await requireAdminUser();
     const approverId = String(formData.get("approverId") || "");
     const targetUserId = String(formData.get("targetUserId") || "");
+    await assertAdminCanMutateUser(admin, approverId, admin.tenantId);
+
     await (prisma as any).lOAApprovalScope.deleteMany({ where: { tenantId: admin.tenantId, approverId, targetUserId } });
     revalidatePath("/admin/users");
   }
@@ -174,6 +188,9 @@ export default async function AdminUsersPage() {
     const scopedLoaTargetIds = scopedLoaRaw ? scopedLoaRaw.split(",").filter(Boolean) : [];
 
     if (!userId) return;
+
+    await assertAdminCanMutateUser(admin, userId, admin.tenantId);
+    assertAdminCannotAssignSuperAdminRole(admin, role);
 
     // Update user fields
     await (prisma as any).user.updateMany({
@@ -278,6 +295,7 @@ export default async function AdminUsersPage() {
           allTeachers={allTeachers}
           scopedLoaByUser={scopedLoaByUser}
           saveAction={updateUser}
+          canEditSuperUsers={canMutateSuperUsers}
         />
       )}
     </div>

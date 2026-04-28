@@ -25,6 +25,8 @@ export type EditUserModalProps = {
   scopedLoaTargetIds: string[];
   onClose: () => void;
   saveAction: (formData: FormData) => void;
+  /** When true, viewing only — cannot save changes (e.g. tenant admin viewing a platform super admin). */
+  readOnly?: boolean;
 };
 
 // ─── Inline icons ─────────────────────────────────────────────────────────────
@@ -57,16 +59,25 @@ function ChevronDownIcon() {
 
 // ─── Toggle switch ────────────────────────────────────────────────────────────
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({
+  checked,
+  onChange,
+  disabled = false,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-[26px] w-[46px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
-        checked ? "bg-[var(--primary)]" : "bg-gray-200"
-      }`}
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      className={`relative inline-flex h-[26px] w-[46px] shrink-0 items-center rounded-full transition-colors duration-200 ${
+        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+      } ${checked ? "bg-[var(--primary)]" : "bg-gray-200"}`}
     >
       <span
         className={`inline-block h-[20px] w-[20px] rounded-full bg-white shadow-sm transition-transform duration-200 ${
@@ -97,11 +108,13 @@ function TeacherSearch({
   selectedIds,
   onAdd,
   placeholder,
+  disabled = false,
 }: {
   allTeachers: TeacherOption[];
   selectedIds: Set<string>;
   onAdd: (id: string) => void;
   placeholder: string;
+  disabled?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -129,9 +142,10 @@ function TeacherSearch({
       <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted" />
       <input
         type="text"
-        className="field w-full !rounded-xl !border-black/[0.06] !bg-[#fafbfc] !py-2.5 pl-10 pr-3 text-[0.8125rem] shadow-none"
+        className="field w-full !rounded-xl !border-black/[0.06] !bg-[#fafbfc] !py-2.5 pl-10 pr-3 text-[0.8125rem] shadow-none disabled:cursor-not-allowed disabled:opacity-60"
         placeholder={placeholder}
         value={query}
+        disabled={disabled}
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);
@@ -172,6 +186,7 @@ export function EditUserModal({
   scopedLoaTargetIds,
   onClose,
   saveAction,
+  readOnly = false,
 }: EditUserModalProps) {
   const [pending, startTransition] = useTransition();
 
@@ -198,6 +213,7 @@ export function EditUserModal({
   }, [allTeachers]);
 
   function handleSave() {
+    if (readOnly) return;
     const fd = new FormData();
     fd.set("userId", user.id);
     fd.set("role", role);
@@ -213,12 +229,12 @@ export function EditUserModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="presentation"
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-[440px] flex-col overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200"
+        className="flex max-h-[90vh] w-full max-w-[440px] flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface-container-lowest shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200"
         role="dialog"
         aria-labelledby="edit-user-title"
         aria-modal="true"
@@ -230,6 +246,11 @@ export function EditUserModal({
               {user.fullName}
             </h2>
             <p className="mt-1 truncate text-[0.8125rem] text-muted">{user.email}</p>
+            {readOnly ? (
+              <p className="mt-2 text-[0.8125rem] leading-snug text-muted">
+                Platform super admins can only be edited by another platform super admin.
+              </p>
+            ) : null}
           </div>
           <button
             type="button"
@@ -251,7 +272,8 @@ export function EditUserModal({
                 id="edit-user-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="field w-full appearance-none !rounded-xl !border-black/[0.06] !bg-[#fafbfc] pr-10 text-[0.8125rem]"
+                disabled={readOnly}
+                className="field w-full appearance-none !rounded-xl !border-black/[0.06] !bg-[#fafbfc] pr-10 text-[0.8125rem] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -270,19 +292,19 @@ export function EditUserModal({
             <ul className="mt-3 divide-y divide-[#eceef0] border-y border-[#eceef0]">
               <li className="flex items-center justify-between py-3.5">
                 <span className="text-[0.8125rem] text-text">On-call requests</span>
-                <Toggle checked={onCallRequests} onChange={setOnCallRequests} />
+                <Toggle checked={onCallRequests} onChange={setOnCallRequests} disabled={readOnly} />
               </li>
               <li className="flex items-center justify-between py-3.5">
                 <span className="text-[0.8125rem] text-text">Leave of absence</span>
-                <Toggle checked={leaveOfAbsence} onChange={setLeaveOfAbsence} />
+                <Toggle checked={leaveOfAbsence} onChange={setLeaveOfAbsence} disabled={readOnly} />
               </li>
               <li className="flex items-center justify-between py-3.5">
                 <span className="text-[0.8125rem] text-text">Budgetary approval</span>
-                <Toggle checked={budgetaryApproval} onChange={setBudgetaryApproval} />
+                <Toggle checked={budgetaryApproval} onChange={setBudgetaryApproval} disabled={readOnly} />
               </li>
               <li className="flex items-center justify-between py-3.5">
                 <span className="text-[0.8125rem] text-text">Teacher observations</span>
-                <Toggle checked={teacherObservations} onChange={setTeacherObservations} />
+                <Toggle checked={teacherObservations} onChange={setTeacherObservations} disabled={readOnly} />
               </li>
             </ul>
           </div>
@@ -291,7 +313,7 @@ export function EditUserModal({
             <h3 className="text-[0.8125rem] font-semibold text-text">Teacher observation scoping</h3>
             <div className="flex items-center justify-between">
               <span className="text-[0.8125rem] text-muted">All teachers</span>
-              <Toggle checked={obsAllTeachers} onChange={setObsAllTeachers} />
+              <Toggle checked={obsAllTeachers} onChange={setObsAllTeachers} disabled={readOnly} />
             </div>
             {!obsAllTeachers && (
               <TeacherSearch
@@ -299,6 +321,7 @@ export function EditUserModal({
                 selectedIds={obsTeacherIds}
                 onAdd={(id) => setObsTeacherIds((prev) => new Set(prev).add(id))}
                 placeholder="Add teachers by name…"
+                disabled={readOnly}
               />
             )}
           </div>
@@ -313,6 +336,7 @@ export function EditUserModal({
                   setLoaAllTeachers(v);
                   if (v) setLoaTeacherIds(new Set());
                 }}
+                disabled={readOnly}
               />
             </div>
             {!loaAllTeachers && (
@@ -322,6 +346,7 @@ export function EditUserModal({
                   selectedIds={loaTeacherIds}
                   onAdd={(id) => setLoaTeacherIds((prev) => new Set(prev).add(id))}
                   placeholder="Add teachers by name…"
+                  disabled={readOnly}
                 />
                 {loaTeacherIds.size > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -336,8 +361,9 @@ export function EditUserModal({
                           {teacher.fullName}
                           <button
                             type="button"
-                            className="text-muted hover:text-text"
+                            className="text-muted hover:text-text disabled:pointer-events-none disabled:opacity-40"
                             aria-label={`Remove ${teacher.fullName}`}
+                            disabled={readOnly}
                             onClick={() =>
                               setLoaTeacherIds((prev) => {
                                 const next = new Set(prev);
@@ -365,16 +391,18 @@ export function EditUserModal({
             disabled={pending}
             className="rounded-xl px-4 py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-[#fafbfc] hover:text-text disabled:opacity-50"
           >
-            Cancel
+            {readOnly ? "Close" : "Cancel"}
           </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={pending}
-            className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-[0.8125rem] font-semibold text-on-primary shadow-ambient calm-transition hover:bg-primary-container disabled:opacity-50"
-          >
-            {pending ? "Saving…" : "Save changes"}
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={pending}
+              className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-[0.8125rem] font-semibold text-on-primary shadow-ambient calm-transition hover:bg-primary-container disabled:opacity-50"
+            >
+              {pending ? "Saving…" : "Save changes"}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
