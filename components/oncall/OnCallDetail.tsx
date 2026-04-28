@@ -9,6 +9,7 @@ import { OnCallStatusBadge } from "./OnCallStatusBadge";
 import { H3, MetaText } from "@/components/ui/typography";
 import { REQUEST_TYPE_LABELS } from "@/modules/oncall/types";
 import { StatusPill } from "@/components/ui/status-pill";
+import { toast } from "@/components/toast-provider";
 
 interface OnCallDetailRequest {
   id: string;
@@ -63,8 +64,26 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
     try {
       const res = await fetch(`/api/oncall/${request.id}/${action}`, { method: "POST" });
       if (res.ok) {
+        const msg =
+          action === "acknowledge"
+            ? "Request acknowledged"
+            : action === "resolve"
+              ? "Request resolved"
+              : "Request cancelled";
+        toast(msg, "success");
         router.refresh();
+      } else {
+        let message = "Something went wrong.";
+        try {
+          const data = await res.json();
+          if (data?.error && typeof data.error === "string") message = data.error;
+        } catch {
+          /* ignore */
+        }
+        toast(message, "error");
       }
+    } catch {
+      toast("Network error", "error");
     } finally {
       setActionPending(null);
     }

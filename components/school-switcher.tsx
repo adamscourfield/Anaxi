@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/toast-provider";
 
 type TenantOption = {
   tenantId: string;
@@ -40,8 +41,12 @@ export function SchoolSwitcher({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tenantId }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast("Could not switch school", "error");
+        return;
+      }
       await update({ targetTenantId: tenantId });
+      toast("Switched school", "success");
       router.push("/home");
       router.refresh();
     } finally {

@@ -66,6 +66,7 @@ export function TenantLayoutClient({
   userEmail,
   userRole,
 }: TenantLayoutClientProps) {
+  const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
 
