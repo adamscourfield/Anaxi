@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -7,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { StatCard } from "@/components/ui/stat-card";
 import { LeaveTable, type LeaveRow } from "./LeaveTable";
 import { LeaveCalendarGrid } from "./LeaveCalendarGrid";
+import { LeaveCreatedToast } from "@/components/leave/leave-created-toast";
+import { Button } from "@/components/ui/button";
 
 /* ── Helpers ────────────────────────────────────────────────────── */
 
@@ -74,7 +77,6 @@ export default async function LeavePage({
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "LEAVE");
   const manager = await canManageLoa(user);
-  const created = String(searchParams?.created || "") === "1";
 
   const view = String(searchParams?.view || "list");
   const monthParam = String(searchParams?.month || "");
@@ -186,6 +188,9 @@ export default async function LeavePage({
 
   return (
     <div className="space-y-6">
+      <Suspense fallback={null}>
+        <LeaveCreatedToast />
+      </Suspense>
       <PageHeader
         title="Leave of Absence"
         actions={
@@ -247,22 +252,21 @@ export default async function LeavePage({
               </Link>
             </div>
 
-            <Link
-              href="/leave/request"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-[0.875rem] font-semibold text-white shadow-sm calm-transition hover:bg-primary-container"
-            >
-              <svg
-                className="h-3.5 w-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Request Leave
-            </Link>
+            <Button asChild className="rounded-xl px-4 py-2.5 text-[0.875rem] shadow-sm">
+              <Link href="/leave/request">
+                <svg
+                  className="h-3.5 w-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Request Leave
+              </Link>
+            </Button>
           </div>
         }
       />
@@ -311,24 +315,6 @@ export default async function LeavePage({
         />
       </div>
 
-      {/* Success banner */}
-      {created && (
-        <div className="flex items-center gap-3 rounded-xl border border-status-approved-border bg-status-approved-bg px-4 py-3">
-          <svg
-            className="h-4 w-4 shrink-0 text-scale-strong-text"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <p className="text-[0.875rem] text-scale-strong-text">
-            Leave request submitted — you can track its status below.
-          </p>
-        </div>
-      )}
-
       {isCalendar ? (
         <LeaveCalendarGrid
           monthAnchor={calendarDate}
@@ -355,12 +341,9 @@ export default async function LeavePage({
           <p className="mt-1 text-[0.8125rem] text-muted">
             Submitted requests will appear here with approval status.
           </p>
-          <Link
-            href="/leave/request"
-            className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[0.875rem] font-semibold text-white calm-transition hover:bg-primary-container"
-          >
-            Submit first request
-          </Link>
+          <Button asChild className="mt-4 rounded-xl px-4 py-2.5 text-[0.875rem]">
+            <Link href="/leave/request">Submit first request</Link>
+          </Button>
         </div>
       ) : (
         <LeaveTable pendingRows={pendingRows} completedRows={completedRows} isManager={manager} />

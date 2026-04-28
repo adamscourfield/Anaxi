@@ -202,6 +202,7 @@ const config: Config = {
         xl:      "var(--shadow-xl)",
         ambient: "var(--shadow-ambient)",
         float:   "var(--shadow-float)",
+        header:  "var(--shadow-header)",
       },
       transitionTimingFunction: {
         calm: "cubic-bezier(0,0,0.2,1)",
