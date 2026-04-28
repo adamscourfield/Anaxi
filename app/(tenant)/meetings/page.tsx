@@ -152,7 +152,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
                   return (
                     <tr key={m.id} className="table-row">
                       <td className="px-5 py-4">
-                        <Link href={`/meetings/${m.id}`} className="hover:underline">
+                        <Link href={`/meetings/${m.id}`} className="link-subtle font-semibold text-text">
                           <p className="font-semibold text-text">{m.title}</p>
                           <p className="text-xs text-muted">{typeLabel}</p>
                         </Link>

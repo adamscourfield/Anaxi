@@ -486,7 +486,7 @@ export default async function SignalsPage({
                       <td className="py-3.5 pl-4 pr-3 font-medium text-text">
                         <Link
                           href={`/analysis/cpd/${encodeURIComponent(row.signalKey)}`}
-                          className="calm-transition group-hover:text-accent hover:underline"
+                          className="link-accent calm-transition"
                           title={row.label}
                         >
                           <span className="block max-w-[140px] truncate">{row.label}</span>
@@ -608,7 +608,7 @@ export default async function SignalsPage({
                     <p className="truncate font-semibold text-text">
                       <Link
                         href={`/analysis/cpd/${encodeURIComponent(row.signalKey)}`}
-                        className="hover:underline"
+                        className="link-accent"
                       >
                         {row.label}
                       </Link>

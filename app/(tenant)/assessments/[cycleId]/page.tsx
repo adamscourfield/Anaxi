@@ -169,7 +169,7 @@ export default async function CycleDetailPage({
           <H2>Result Points</H2>
           <Link
             href={`/assessments/${cycle.id}/points/new`}
-            className="text-[15px] font-bold text-text hover:underline"
+            className="link-accent text-[15px] font-bold text-text"
           >
             + Add point
           </Link>
@@ -183,7 +183,7 @@ export default async function CycleDetailPage({
               action={
                 <Link
                   href={`/assessments/${cycle.id}/points/new`}
-                  className="text-sm font-semibold text-accent underline-offset-2 hover:underline"
+                  className="link-accent text-sm font-semibold underline-offset-2"
                 >
                   Add the first result point
                 </Link>

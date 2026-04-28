@@ -420,7 +420,7 @@ export default function ResultPointPage() {
               point?.resultStatus !== "LOCKED" ? (
                 <Link
                   href={`/assessments/${cycleId}/points/${pointId}/upload`}
-                  className="text-sm font-semibold text-accent underline-offset-2 hover:underline"
+                  className="link-accent text-sm font-semibold underline-offset-2"
                 >
                   Upload subject results
                 </Link>
@@ -584,7 +584,7 @@ export default function ResultPointPage() {
                         <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
                           <Link
                             href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`}
-                            className="text-[var(--accent)] calm-transition hover:underline"
+                            className="link-accent calm-transition"
                           >
                             {sm.subject}
                           </Link>
@@ -675,7 +675,7 @@ export default function ResultPointPage() {
                             <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
                               <Link
                                 href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`}
-                                className="text-[var(--accent)] calm-transition hover:underline"
+                                className="link-accent calm-transition"
                               >
                                 {sm.subject}
                               </Link>
@@ -967,7 +967,7 @@ export default function ResultPointPage() {
                             <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
                               <Link
                                 href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`}
-                                className="text-[var(--accent)] calm-transition hover:underline"
+                                className="link-accent calm-transition"
                               >
                                 {sm.subject}
                               </Link>

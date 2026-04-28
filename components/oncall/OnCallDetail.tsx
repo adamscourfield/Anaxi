@@ -165,7 +165,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
         )}
       </div>
 
-      <Link href="/on-call" className="calm-transition inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent">
+      <Link href="/on-call" className="link-muted-accent inline-flex items-center gap-1.5 text-sm">
         &larr; Back to on call inbox
       </Link>
     </div>

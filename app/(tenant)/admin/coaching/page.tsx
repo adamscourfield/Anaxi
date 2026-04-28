@@ -165,7 +165,7 @@ export default async function AdminCoachingPage({
             {(filterCoach || filterCoachee) && (
               <a
                 href="/admin/coaching"
-                className="text-xs text-accent hover:underline"
+                className="link-accent text-xs"
               >
                 Clear filters
               </a>

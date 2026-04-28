@@ -107,7 +107,7 @@ export function ActionCard({ action, currentUserId, onComplete }: ActionCardProp
               <span className="text-border">·</span>
               <Link
                 href={`/meetings/${action.meeting.id}`}
-                className="calm-transition font-medium text-accent hover:text-accentHover"
+                className="link-accent calm-transition text-[0.75rem] font-medium"
                 onClick={(e) => e.stopPropagation()}
               >
                 {action.meeting.title}

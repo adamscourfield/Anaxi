@@ -10,7 +10,7 @@ export function AssessmentsBreadcrumb({ items }: { items: BreadcrumbItem[] }) {
         <span key={`${item.label}-${i}`} className="flex items-center gap-2">
           {i > 0 ? <span aria-hidden className="text-muted/70">›</span> : null}
           {item.href ? (
-            <Link href={item.href} className="calm-transition hover:text-text hover:underline">
+            <Link href={item.href} className="link-subtle calm-transition text-muted hover:text-text">
               {item.label}
             </Link>
           ) : (

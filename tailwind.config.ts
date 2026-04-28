@@ -222,6 +222,15 @@ const config: Config = {
         "3xl": ["1.875rem",  { lineHeight: "1.2",  letterSpacing: "-0.025em" }],
         "4xl": ["2.25rem",   { lineHeight: "1.1",  letterSpacing: "-0.03em" }],
       },
+      keyframes: {
+        pageEnter: {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "page-enter": "pageEnter 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+      },
     }
   },
   plugins: []

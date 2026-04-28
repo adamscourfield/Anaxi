@@ -97,7 +97,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
   return (
     <div className="space-y-4">
-      <Link href="/admin" className="text-xs text-accent hover:underline">← Back to Admin</Link>
+      <Link href="/admin" className="link-accent text-xs">← Back to Admin</Link>
       <PageHeader title="Platform" subtitle="Configure school metadata, thresholds, and module availability." />
 
       <div className="segmented-toggle">

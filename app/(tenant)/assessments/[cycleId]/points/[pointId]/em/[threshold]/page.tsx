@@ -73,7 +73,7 @@ export default async function EMThresholdPage({
     return (
       <div className="w-full text-center py-12">
         <p className="text-muted">English or Maths assessments not found in this result point.</p>
-        <Link href={`/assessments/${cycleId}/points/${pointId}`} className="text-accent mt-4 inline-block hover:underline">
+        <Link href={`/assessments/${cycleId}/points/${pointId}`} className="link-accent mt-4 inline-block">
           Back to analysis
         </Link>
       </div>
@@ -369,7 +369,7 @@ export default async function EMThresholdPage({
                         <div className="flex min-w-0 flex-col">
                           <Link
                             href={`/students/${row.id}`}
-                            className="font-medium text-text calm-transition hover:text-accent"
+                            className="link-to-accent font-medium"
                           >
                             {row.name}
                           </Link>

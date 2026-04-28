@@ -285,7 +285,7 @@ export function TimetableImportMapper() {
                     — {result.rowsFailed} rows had errors{" "}
                     <a
                       href={`/api/admin/timetable/import/jobs/${result.importJobId}/errors.csv`}
-                      className="underline"
+                      className="link-underline text-error"
                       download
                     >
                       Download error report
@@ -298,7 +298,7 @@ export function TimetableImportMapper() {
                   {result.conflictCount} conflict(s) (e.g. unknown teacher emails){" "}
                   <a
                     href={`/api/admin/timetable/import/jobs/${result.importJobId}/conflicts.csv`}
-                    className="underline"
+                    className="link-underline text-warning"
                     download
                   >
                     Download conflict report

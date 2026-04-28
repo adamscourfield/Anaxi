@@ -262,7 +262,7 @@ export default function ComparisonPage() {
             action={
               <Link
                 href={`/assessments/${cycleId}`}
-                className="text-sm font-semibold text-accent underline-offset-2 hover:underline"
+                className="link-accent text-sm font-semibold underline-offset-2"
               >
                 Back to cycle
               </Link>
@@ -447,7 +447,7 @@ export default function ComparisonPage() {
                             <div key={s.studentId} className="flex items-center gap-2">
                               <Link
                                 href={`/students/${s.studentId}`}
-                                className="calm-transition flex-1 min-w-0 truncate text-sm text-[var(--on-surface)] hover:underline hover:text-[var(--accent)]"
+                                className="link-to-accent calm-transition flex-1 min-w-0 truncate text-sm"
                               >
                                 {s.name}
                                 {s.ppFlag && <span className="ml-1 rounded-full bg-violet-100 px-1.5 text-[9px] text-violet-700">PP</span>}
@@ -520,7 +520,7 @@ export default function ComparisonPage() {
                       <div key={`${s.studentId}-${s.from}`} className="flex items-center justify-between gap-2">
                         <Link
                           href={`/students/${s.studentId}`}
-                          className="calm-transition min-w-0 truncate text-sm text-[var(--on-surface)] hover:underline hover:text-[var(--accent)]"
+                          className="link-to-accent calm-transition min-w-0 truncate text-sm"
                         >
                           {s.name}
                         </Link>

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { RouteEnter } from "@/components/route-enter";
 
 export function AuthShell({
   variant,
@@ -109,7 +110,7 @@ export function AuthBackLink({ href = "/login" }: { href?: string }) {
     <div className="mt-8 flex justify-center">
       <Link
         href={href}
-        className="calm-transition flex items-center gap-1.5 text-[13px] text-muted hover:opacity-70"
+        className="link-muted-accent calm-transition flex items-center gap-1.5 text-[13px]"
       >
         <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden>
           <path
@@ -137,7 +138,9 @@ export function AuthFlowMain({
   const mw = maxWidth === "sm" ? "max-w-[320px]" : "max-w-[440px]";
   return (
     <main className="flex flex-grow flex-col items-center justify-center px-6 py-24 pt-28 md:pt-24">
-      <div className={`flex w-full flex-col ${mw}`}>{children}</div>
+      <div className={`flex w-full flex-col ${mw}`}>
+        <RouteEnter>{children}</RouteEnter>
+      </div>
     </main>
   );
 }
