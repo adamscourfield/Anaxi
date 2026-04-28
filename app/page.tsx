@@ -30,7 +30,7 @@ export default function LandingPage() {
         }}
       />
 
-      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center border-b border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] px-4 shadow-header glass-surface sm:px-6 lg:px-10">
+      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center border-b border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-[var(--surface-bright)] px-4 shadow-header sm:px-6 lg:px-10">
         <div className="mx-auto flex w-full max-w-[1400px] items-center gap-3">
           <Image
             src="/anaxi-logo.png"

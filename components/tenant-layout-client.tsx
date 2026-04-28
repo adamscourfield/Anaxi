@@ -102,7 +102,7 @@ export function TenantLayoutClient({
         className="ml-0 flex min-h-screen flex-col calm-transition md:ml-[var(--sidebar-width)]"
         id="tenant-content"
       >
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] px-4 shadow-header glass-surface sm:px-6 lg:px-10">
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-[var(--surface-bright)] px-4 shadow-header sm:px-6 lg:px-10">
           <button
             type="button"
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.75rem] text-[var(--on-surface)] calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-sm motion-safe:active:scale-[0.97] md:hidden"
