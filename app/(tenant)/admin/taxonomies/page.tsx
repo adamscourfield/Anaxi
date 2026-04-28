@@ -371,7 +371,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
     <div className="space-y-6">
       <Link
         href="/admin"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline"
+        className="link-accent inline-flex items-center gap-1.5 text-xs font-medium"
       >
         <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3">
           <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -402,7 +402,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
         </svg>
         <p>
           For <span className="font-medium text-text">group-based</span> leave approval, use{" "}
-          <a className="font-medium text-accent hover:underline" href="/admin/leave-approvals">
+          <a className="link-accent font-medium" href="/admin/leave-approvals">
             Leave approval rules
           </a>
           . Here you manage dropdown values, notification emails, and per-person LOA authorisers.

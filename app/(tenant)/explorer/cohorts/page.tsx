@@ -305,7 +305,7 @@ export default async function CohortsPage({
                     <td className="px-5 py-3 font-medium text-text">
                       <Link
                         href={`/analysis/students?yearGroup=${encodeURIComponent(row.yearGroup)}&window=${windowDays}`}
-                        className="calm-transition group-hover:text-accent hover:underline"
+                        className="link-accent calm-transition"
                       >
                         {row.yearGroup}
                       </Link>

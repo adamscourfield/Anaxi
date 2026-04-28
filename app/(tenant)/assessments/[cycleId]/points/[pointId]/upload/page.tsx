@@ -308,8 +308,8 @@ export default function UploadSubjectResultsPage() {
           />
 
           <div className="flex gap-3 text-xs">
-            <button className="text-[var(--accent)] hover:underline" onClick={() => setSelectedSubjects(new Set(detectedSubjects))}>Select all</button>
-            <button className="text-[var(--accent)] hover:underline" onClick={() => setSelectedSubjects(new Set())}>Deselect all</button>
+            <button type="button" className="link-accent text-xs" onClick={() => setSelectedSubjects(new Set(detectedSubjects))}>Select all</button>
+            <button type="button" className="link-accent text-xs" onClick={() => setSelectedSubjects(new Set())}>Deselect all</button>
           </div>
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">

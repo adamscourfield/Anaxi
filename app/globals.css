@@ -377,6 +377,53 @@ textarea:focus-visible {
   }
 }
 
+/* Inline text links */
+.link-subtle {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--outline-variant) 55%, transparent);
+  text-underline-offset: 3px;
+  transition:
+    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.link-subtle:hover {
+  color: var(--on-surface);
+  text-decoration-color: color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+/* Accent CTAs and “View all” style links */
+.link-accent {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--primary) 28%, transparent);
+  text-underline-offset: 3px;
+  transition:
+    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.link-accent:hover {
+  color: var(--on-surface);
+  text-decoration-color: color-mix(in srgb, var(--primary) 48%, transparent);
+}
+
+/* Muted inline link → accent on hover (back links, secondary nav) */
+.link-muted-accent {
+  color: var(--on-surface-variant);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--outline-variant) 45%, transparent);
+  text-underline-offset: 3px;
+  transition:
+    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.link-muted-accent:hover {
+  color: var(--accent);
+  text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
 /* ── Panel ─────────────────────────────────────────────────────── */
 .panel {
   border-radius: var(--radius-lg);

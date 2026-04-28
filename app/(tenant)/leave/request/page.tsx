@@ -175,7 +175,7 @@ export default async function LeaveRequestPage() {
             <div className="flex items-center justify-between pt-2">
               <Link
                 href="/leave"
-                className="text-[0.875rem] font-medium text-accent calm-transition hover:text-accentHover"
+                className="link-muted-accent text-[0.875rem] font-medium"
               >
                 Cancel Request
               </Link>

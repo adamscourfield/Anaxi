@@ -101,7 +101,7 @@ export default async function AdminLanguagePage() {
 
   return (
     <div className="space-y-6">
-      <Link href="/admin" className="text-xs text-accent hover:underline">← Back to Admin</Link>
+      <Link href="/admin" className="link-accent text-xs">← Back to Admin</Link>
       <PageHeader
         title="Terminology"
         subtitle="Configure all language, vocabulary, and signal wording used across the product."

@@ -420,7 +420,7 @@ export default function ResultPointPage() {
               point?.resultStatus !== "LOCKED" ? (
                 <Link
                   href={`/assessments/${cycleId}/points/${pointId}/upload`}
-                  className="text-sm font-semibold text-accent underline-offset-2 hover:underline"
+                  className="link-accent text-sm font-semibold underline-offset-2"
                 >
                   Upload subject results
                 </Link>

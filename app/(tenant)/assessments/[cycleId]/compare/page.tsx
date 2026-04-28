@@ -262,7 +262,7 @@ export default function ComparisonPage() {
             action={
               <Link
                 href={`/assessments/${cycleId}`}
-                className="text-sm font-semibold text-accent underline-offset-2 hover:underline"
+                className="link-accent text-sm font-semibold underline-offset-2"
               >
                 Back to cycle
               </Link>
