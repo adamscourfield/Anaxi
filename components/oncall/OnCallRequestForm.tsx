@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { REASON_CATEGORIES, LOCATION_SUGGESTIONS } from "@/modules/oncall/types";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/toast-provider";
 
 interface Student {
   id: string;
@@ -54,10 +56,11 @@ export function OnCallRequestForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedStudent) { setError("Please select a student"); return; }
-    if (!location.trim()) { setError("Please enter a location"); return; }
+    if (!selectedStudent) { setError("Please select a student"); toast("Please select a student", "error"); return; }
+    if (!location.trim()) { setError("Please enter a location"); toast("Please enter a location", "error"); return; }
     if (requestType === "BEHAVIOUR" && !reason) {
       setError("Please select a reason");
+      toast("Please select a reason", "error");
       return;
     }
     setError(null);
@@ -78,12 +81,15 @@ export function OnCallRequestForm({
       if (!res.ok) {
         const data = await res.json();
         setError(data.error ?? "Failed to submit");
+        toast(data.error ?? "Failed to submit", "error");
         return;
       }
+      toast("On-call request raised", "success");
       router.push("/on-call");
       router.refresh();
     } catch {
       setError("Network error. Please try again.");
+      toast("Network error. Please try again.", "error");
     } finally {
       setSubmitting(false);
     }
@@ -340,18 +346,14 @@ export function OnCallRequestForm({
                 This request will alert all available on-call staff members immediately.
               </p>
             </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-text px-5 py-2.5 text-sm font-semibold text-bg calm-transition hover:opacity-90 disabled:opacity-60 sm:w-auto"
-            >
+            <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
               {submitting ? "Submitting..." : "Submit on call request"}
               {!submitting && (
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
                   <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

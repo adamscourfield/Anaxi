@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { toast } from "@/components/toast-provider";
 
 type QualificationType = "GCSE" | "A_LEVEL" | "PERCENTAGE" | "OTHER";
 
@@ -123,11 +124,13 @@ export default function NewCyclePage() {
       if (!res.ok) {
         const d = await res.json();
         setError(d.error || "Failed to create cycle");
+        toast(d.error || "Failed to create cycle", "error");
         return;
       }
       const { cycle } = await res.json();
       setCycleId(cycle.id);
       setStep("points");
+      toast("Cycle created", "success");
     } finally {
       setLoading(false);
     }
@@ -169,10 +172,12 @@ export default function NewCyclePage() {
         if (!res.ok) {
           const d = await res.json();
           setPointsError(d.error || `Failed to create "${p.label}"`);
+          toast(d.error || `Failed to create "${p.label}"`, "error");
           return;
         }
       }
       setStep("done");
+      toast("Result points created", "success");
     } finally {
       setPointsLoading(false);
     }
