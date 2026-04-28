@@ -228,9 +228,14 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        pulseSubtle: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
       },
       animation: {
         "page-enter": "pageEnter 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "pulse-subtle": "pulseSubtle 1.8s ease-in-out infinite",
       },
     }
   },

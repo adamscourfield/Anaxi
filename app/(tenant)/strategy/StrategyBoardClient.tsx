@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   createStrategyArea,
@@ -262,6 +263,7 @@ function ActionMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   if (!canManage) return null;
 
@@ -272,8 +274,7 @@ function ActionMenu({
 
   function handleDelete() {
     setOpen(false);
-    if (!confirm("Remove this strategy area?")) return;
-    startTransition(() => deleteStrategyArea(area.id));
+    setConfirmDeleteOpen(true);
   }
 
   return (
@@ -328,6 +329,19 @@ function ActionMenu({
           </button>
         </div>
       )}
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Remove strategy area?"
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        variant="danger"
+        onClose={() => setConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          startTransition(() => deleteStrategyArea(area.id));
+        }}
+      >
+        This removes &ldquo;{area.title}&rdquo; and its notes from the board. This cannot be undone.
+      </ConfirmDialog>
     </div>
   );
 }
