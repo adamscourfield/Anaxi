@@ -213,12 +213,12 @@ export function EditUserModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="presentation"
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-[440px] flex-col overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200"
+        className="flex max-h-[90vh] w-full max-w-[440px] flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface-container-lowest shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200"
         role="dialog"
         aria-labelledby="edit-user-title"
         aria-modal="true"
