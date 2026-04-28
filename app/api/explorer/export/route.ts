@@ -137,19 +137,35 @@ export async function POST(req: NextRequest) {
     } else if (view === "INSTRUCTION_LIST") {
       const windowStart = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
       const obsWhere: any = { tenantId: user.tenantId, observedAt: { gte: windowStart } };
+
+      let scopedTeacherIds: string[] | null = null;
+      if (user.role === "HOD" && hodDepartmentIds.length > 0) {
+        const hodMembers = await (prisma as any).departmentMembership.findMany({
+          where: { tenantId: user.tenantId, departmentId: { in: hodDepartmentIds } },
+          select: { userId: true },
+        });
+        scopedTeacherIds = (hodMembers as any[]).map((m: any) => m.userId);
+        obsWhere.observedTeacherId = { in: scopedTeacherIds };
+      }
+
       if (departmentId) {
         const deptMembers = await (prisma as any).departmentMembership.findMany({
           where: { tenantId: user.tenantId, departmentId },
+          select: { userId: true },
         });
-        const ids = (deptMembers as any[]).map((m: any) => m.userId);
-        obsWhere.observedTeacherId = { in: ids };
-      } else if (user.role === "HOD" && hodDepartmentIds.length > 0) {
-        const deptMembers = await (prisma as any).departmentMembership.findMany({
-          where: { tenantId: user.tenantId, departmentId: { in: hodDepartmentIds } },
-        });
-        const ids = (deptMembers as any[]).map((m: any) => m.userId);
-        obsWhere.observedTeacherId = { in: ids };
+        const deptUserIds = (deptMembers as any[]).map((m: any) => m.userId);
+        if (scopedTeacherIds) {
+          const intersection = deptUserIds.filter((id: string) => scopedTeacherIds!.includes(id));
+          obsWhere.observedTeacherId = { in: intersection };
+        } else {
+          obsWhere.observedTeacherId = { in: deptUserIds };
+        }
       }
+
+      if (teacherMembershipId) {
+        obsWhere.observedTeacherId = teacherMembershipId;
+      }
+
       if (yearGroup) obsWhere.yearGroup = yearGroup;
       if (subject) obsWhere.subject = { contains: subject, mode: "insensitive" };
 
