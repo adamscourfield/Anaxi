@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { H2 } from "@/components/ui/typography";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
+import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import Link from "next/link";
 import type { QualificationType, PointType } from "@prisma/client";
 
@@ -63,14 +64,15 @@ export default async function AssessmentsPage() {
   const archivedCycles = cycles.filter((c) => !c.isActive);
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-10">
       <PageHeader
-        title="Attainment Cycles"
+        eyebrow="Attainment"
+        title="Cycles"
         subtitle="Track cohort-level outcomes across the academic year — from baselines through to final results."
         actions={
           <Link
             href="/assessments/new"
-            className="shrink-0 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-[0.75rem] bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-5 py-2.5 text-sm font-semibold tracking-[0.01em] text-[var(--on-primary)] shadow-[0_4px_16px_rgba(0,0,0,0.12)] calm-transition hover:opacity-90 active:scale-[0.98]"
           >
             New cycle
           </Link>
@@ -78,17 +80,19 @@ export default async function AssessmentsPage() {
       />
 
       {cycles.length === 0 && (
-        <Card className="py-16 text-center">
-          <p className="text-lg font-medium text-[var(--on-surface)]">No attainment cycles yet</p>
-          <p className="mt-2 text-sm text-[var(--on-surface-muted)]">
-            Create a cycle for a cohort to start tracking attainment across the academic year.
-          </p>
-          <Link
-            href="/assessments/new"
-            className="mt-5 inline-block rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-white"
-          >
-            Create your first cycle
-          </Link>
+        <Card className="overflow-hidden p-0">
+          <DataTableEmpty
+            title="No attainment cycles yet"
+            description="Create a cycle for a cohort to start tracking attainment across the academic year."
+            action={
+              <Link
+                href="/assessments/new"
+                className="inline-flex items-center justify-center gap-2 rounded-[0.75rem] bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-5 py-2.5 text-sm font-semibold tracking-[0.01em] text-[var(--on-primary)] shadow-[0_4px_16px_rgba(0,0,0,0.12)] calm-transition hover:opacity-90 active:scale-[0.98]"
+              >
+                Create your first cycle
+              </Link>
+            }
+          />
         </Card>
       )}
 

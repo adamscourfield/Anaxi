@@ -19,6 +19,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
+import { MetaText } from "@/components/ui/typography";
 import { SubjectStudentsFilterBar } from "./SubjectStudentsFilterBar";
 import {
   SubjectDistributionSection,
@@ -27,6 +28,7 @@ import {
 import type { GradeFormat } from "@prisma/client";
 import { hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
 import { competitionRank } from "@/modules/assessments/ranking";
+import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -431,22 +433,23 @@ export default async function SubjectDetailPage({
 
   return (
     <div className="w-full space-y-8 pb-16">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
-        <Link href="/assessments" className="calm-transition hover:text-[var(--on-surface)]">Cycles</Link>
-        <span>›</span>
-        <Link href={`/assessments/${cycleId}`} className="calm-transition hover:text-[var(--on-surface)]">{currentPoint.cycle.label}</Link>
-        <span>›</span>
-        <Link href={`/assessments/${cycleId}/points/${pointId}`} className="calm-transition hover:text-[var(--on-surface)]">{currentPoint.label}</Link>
-        <span>›</span>
-        <span className="text-[var(--on-surface)]">{subjectName}</span>
-      </div>
+      <AssessmentsBreadcrumb
+        items={[
+          { label: "Attainment", href: "/assessments" },
+          { label: currentPoint.cycle.label, href: `/assessments/${cycleId}` },
+          { label: currentPoint.label, href: `/assessments/${cycleId}/points/${pointId}` },
+          { label: subjectName },
+        ]}
+      />
 
       {/* Page Header */}
       <PageHeader
-        eyebrow={`${currentPoint.cycle.label} · ${currentPoint.label}`}
+        eyebrow="Subject"
         title={subjectName}
-        subtitle={`${graded.length} students assessed · ${formatLabel}${isPercentage && pctYearMean !== null ? ` · Year mean ${round1(pctYearMean)}%` : ""}`}
+        subtitle={`${formatLabel} · ${graded.length} students assessed${
+          isPercentage && pctYearMean !== null ? ` · Year mean ${round1(pctYearMean)}%` : ""
+        }`}
+        meta={<MetaText>{currentPoint.cycle.label} · {currentPoint.label}</MetaText>}
       />
 
       <SubjectDistributionSection

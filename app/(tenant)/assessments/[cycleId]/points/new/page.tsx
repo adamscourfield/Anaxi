@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
+import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 
 type PointType = "BASELINE" | "INTERNAL_ASSESSMENT" | "INTERNAL_MOCK" | "TEACHER_PREDICTION" | "EXTERNAL_FINAL" | "OTHER";
 
@@ -74,17 +75,18 @@ export default function NewResultPointPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
-        <a href="/assessments" className="hover:underline">Cycles</a>
-        <span>›</span>
-        <a href={`/assessments/${cycleId}`} className="hover:underline">{cycleLabel || "Cycle"}</a>
-        <span>›</span>
-        <span>New result point</span>
-      </div>
+    <div className="max-w-2xl space-y-8">
+      <AssessmentsBreadcrumb
+        items={[
+          { label: "Attainment", href: "/assessments" },
+          { label: cycleLabel || "Cycle", href: `/assessments/${cycleId}` },
+          { label: "New result point" },
+        ]}
+      />
 
       <PageHeader
-        title="Add Result Point"
+        eyebrow="Attainment"
+        title="New result point"
         subtitle="A result point is a cohort-wide attainment snapshot — a mock, baseline, prediction, or final results."
       />
 

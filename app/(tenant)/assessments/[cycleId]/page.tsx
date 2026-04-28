@@ -4,7 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { StatCard } from "@/components/ui/stat-card";
-import { H2 } from "@/components/ui/typography";
+import { H2, MetaText } from "@/components/ui/typography";
+import { PageHeader } from "@/components/ui/page-header";
+import { DataTableEmpty } from "@/components/ui/data-table-empty";
+import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { Card } from "@/components/ui/card";
 import type { PointType, ResultStatus, QualificationType } from "@prisma/client";
 
 // ─── Type badges ─────────────────────────────────────────────────────────────
@@ -39,6 +43,13 @@ const STATUS_COLOURS: Record<ResultStatus, string> = {
   VALIDATED: "bg-blue-50 text-blue-600",
   PUBLISHED: "bg-emerald-50 text-emerald-600",
   LOCKED: "bg-primary text-white",
+};
+
+const QUAL_LABELS: Record<QualificationType, string> = {
+  GCSE: "GCSE",
+  A_LEVEL: "A Level",
+  PERCENTAGE: "Percentage",
+  OTHER: "Other",
 };
 
 function formatAssessedDate(value: Date | string | null | undefined): string | null {
@@ -100,13 +111,24 @@ export default async function CycleDetailPage({
   ).size;
 
   return (
-    <div className="w-full space-y-6 pb-16">
-      {/* Top Breadcrumb & Header info (Kept for context, but subtly integrated) */}
-      <div className="flex items-center gap-2 text-sm text-[var(--on-surface-muted)]">
-        <Link href="/assessments" className="hover:underline">Attainment Cycles</Link>
-        <span>›</span>
-        <span className="text-[var(--on-surface)]">{cycle.label}</span>
-      </div>
+    <div className="w-full space-y-8 pb-16">
+      <AssessmentsBreadcrumb
+        items={[
+          { label: "Attainment", href: "/assessments" },
+          { label: cycle.label },
+        ]}
+      />
+
+      <PageHeader
+        eyebrow="Attainment cycle"
+        title={cycle.label}
+        subtitle={
+          cycle.cohortLabel
+            ? `${cycle.cohortLabel} · ${cycle.academicYear}`
+            : cycle.academicYear
+        }
+        meta={<MetaText>{QUAL_LABELS[cycle.qualificationType]} · {cycle.points.length} result point{cycle.points.length !== 1 ? "s" : ""}</MetaText>}
+      />
 
       {/* Summary stats — StatCard sizing matches Attainment Cycles list & dashboards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -154,15 +176,20 @@ export default async function CycleDetailPage({
         </div>
 
         {cycle.points.length === 0 && (
-          <div className="rounded-2xl bg-white py-12 text-center shadow-ambient">
-            <p className="text-muted">No result points yet.</p>
-            <Link
-              href={`/assessments/${cycle.id}/points/new`}
-              className="mt-2 inline-block text-sm font-semibold text-text hover:underline"
-            >
-              Add the first result point
-            </Link>
-          </div>
+          <Card className="overflow-hidden p-0">
+            <DataTableEmpty
+              title="No result points yet"
+              description="Add a baseline, mock, or final results snapshot to start recording grades for this cycle."
+              action={
+                <Link
+                  href={`/assessments/${cycle.id}/points/new`}
+                  className="text-sm font-semibold text-accent underline-offset-2 hover:underline"
+                >
+                  Add the first result point
+                </Link>
+              }
+            />
+          </Card>
         )}
 
         <div className="space-y-6">

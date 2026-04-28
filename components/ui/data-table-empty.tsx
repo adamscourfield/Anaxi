@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { MetaText } from "@/components/ui/typography";
 
-/** Empty state for wide data cards (analytics tables, explorer lists) */
+/** Empty state for wide data cards (analytics, assessments tables) */
 export function DataTableEmpty({
   title,
   description,
