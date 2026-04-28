@@ -290,10 +290,11 @@ export default async function ExplorerPage() {
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <>
+    <div className="space-y-8">
       <PageHeader
+        eyebrow="Analysis"
         title="Explorer"
-        subtitle="Data analysis command centre. Dive into performance, drift, and behaviour across your school."
+        subtitle="Command centre for teachers, departments, signals, and behaviour — tuned to a rolling observation window."
         meta={
           <MetaText>
             {WINDOW_DAYS}d window · Updated {computedAtStr}
@@ -644,6 +645,6 @@ export default async function ExplorerPage() {
       <p className="mt-10 text-[0.75rem] text-muted">
         Explorer · {WINDOW_DAYS}d window · {computedAtStr}
       </p>
-    </>
+    </div>
   );
 }

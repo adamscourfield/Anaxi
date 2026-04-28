@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { AuthFlowMain, AuthNav, AuthShell } from "@/components/auth-shell";
 
 type School = { id: string; name: string };
 type Step = "credentials" | "selectSchool";
@@ -76,169 +77,114 @@ export default function LoginPage() {
       return;
     }
     const session = await getSession();
-    const role = (session?.user as any)?.role;
+    const role = (session?.user as { role?: string })?.role;
     router.push(role === "SUPER_ADMIN" ? "/god" : res?.url || "/home");
     router.refresh();
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-[320px] flex flex-col items-center">
+    <AuthShell variant="dark">
+      <AuthNav />
+      <AuthFlowMain maxWidth="sm">
+        <div className="animate-auth-fade-up flex flex-col items-center">
+          <div className="mb-5">
+            <Image
+              src="/anaxi-logo.png"
+              alt="Anaxi"
+              width={72}
+              height={72}
+              priority
+              className="object-contain opacity-[0.92] brightness-0 invert"
+            />
+          </div>
 
-        {/* Logo — the hero */}
-        <div className="mb-5" style={{ animation: "fadeUp 0.6s ease both" }}>
-          <Image
-            src="/anaxi-logo.png"
-            alt="Anaxi"
-            width={72}
-            height={72}
-            priority
-            className="object-contain"
-            style={{ filter: "brightness(0) invert(1)", opacity: 0.92 }}
-          />
-        </div>
+          <p className="mb-12 text-[10px] font-semibold uppercase tracking-[0.32em] text-white/28">Anaxi</p>
 
-        {/* Wordmark */}
-        <p
-          className="mb-12 text-[10px] font-semibold tracking-[0.32em] uppercase"
-          style={{ color: "rgba(255,255,255,0.28)", animation: "fadeUp 0.6s 0.05s ease both" }}
-        >
-          Anaxi
-        </p>
+          <div className="w-full [animation-delay:80ms] animate-auth-fade-up">
+            {step === "credentials" ? (
+              <form onSubmit={onCredentialsSubmit} className="flex flex-col gap-2.5">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  required
+                  autoFocus
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="field field--dark px-4 py-3.5 text-[14px]"
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="field field--dark px-4 py-3.5 text-[14px]"
+                />
 
-        {/* Form */}
-        <div
-          className="w-full"
-          style={{ animation: "fadeUp 0.6s 0.1s ease both" }}
-        >
-          {step === "credentials" ? (
-            <form onSubmit={onCredentialsSubmit} className="flex flex-col gap-2.5">
-              <input
-                type="email"
-                placeholder="Email"
-                required
-                autoFocus
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3.5 rounded-xl text-[14px] outline-none transition-all duration-200"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.09)",
-                  color: "rgba(255,255,255,0.90)",
-                  caretColor: "white",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.border = "1px solid rgba(255,255,255,0.22)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.08)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.border = "1px solid rgba(255,255,255,0.09)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                }}
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3.5 rounded-xl text-[14px] outline-none transition-all duration-200"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.09)",
-                  color: "rgba(255,255,255,0.90)",
-                  caretColor: "white",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.border = "1px solid rgba(255,255,255,0.22)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.08)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.border = "1px solid rgba(255,255,255,0.09)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                }}
-              />
+                {error ? <p className="text-center text-[12px] text-[var(--coral)]">{error}</p> : null}
 
-              {error && (
-                <p className="text-center text-[12px]" style={{ color: "#fe9f9f" }}>
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full mt-1 py-3.5 rounded-xl text-[13px] font-semibold tracking-[0.02em] transition-all duration-150 disabled:opacity-40 active:scale-[0.98]"
-                style={{
-                  background: "rgba(255,255,255,0.94)",
-                  color: "#0a0c16",
-                }}
-              >
-                {loading ? "Signing in…" : "Sign in"}
-              </button>
-
-              <a
-                href="/login/forgot-password"
-                className="mt-1 text-center text-[12px] transition-opacity duration-150 hover:opacity-60"
-                style={{ color: "rgba(255,255,255,0.25)" }}
-              >
-                Forgot password?
-              </a>
-            </form>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <p
-                className="text-center text-[11px] font-medium tracking-widest uppercase mb-1"
-                style={{ color: "rgba(255,255,255,0.28)" }}
-              >
-                Select school
-              </p>
-
-              {schools.map((school) => (
                 <button
-                  key={school.id}
-                  onClick={() => onSchoolSelect(school.id)}
+                  type="submit"
                   disabled={loading}
-                  className="w-full px-4 py-3.5 rounded-xl text-left text-[13px] font-medium transition-all duration-150 disabled:opacity-40 hover:opacity-80 active:scale-[0.98]"
-                  style={{
-                    background: "rgba(255,255,255,0.07)",
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    color: "rgba(255,255,255,0.88)",
-                  }}
+                  className="calm-transition mt-1 w-full rounded-xl bg-white/94 py-3.5 text-[13px] font-semibold tracking-[0.02em] text-[#0a0c16] active:scale-[0.98] disabled:opacity-40"
                 >
-                  {school.name}
+                  {loading ? "Signing in…" : "Sign in"}
                 </button>
-              ))}
 
-              {error && (
-                <p className="text-center text-[12px]" style={{ color: "#fe9f9f" }}>
-                  {error}
+                <a
+                  href="/login/forgot-password"
+                  className="calm-transition mt-1 text-center text-[12px] text-white/25 hover:opacity-60"
+                >
+                  Forgot password?
+                </a>
+              </form>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <p className="mb-1 text-center text-[11px] font-medium uppercase tracking-widest text-white/28">
+                  Select school
                 </p>
-              )}
 
-              <button
-                onClick={() => { setStep("credentials"); setError(null); }}
-                className="mt-1 text-center text-[12px] transition-opacity duration-150 hover:opacity-60"
-                style={{ color: "rgba(255,255,255,0.25)" }}
-              >
-                ← Back
-              </button>
-            </div>
-          )}
+                {schools.map((school) => (
+                  <button
+                    key={school.id}
+                    type="button"
+                    onClick={() => onSchoolSelect(school.id)}
+                    disabled={loading}
+                    className="calm-transition w-full rounded-xl border border-white/10 bg-white/[0.07] px-4 py-3.5 text-left text-[13px] font-medium text-white/88 active:scale-[0.98] hover:bg-white/[0.1] disabled:opacity-40"
+                  >
+                    {school.name}
+                  </button>
+                ))}
+
+                {error ? <p className="text-center text-[12px] text-[var(--coral)]">{error}</p> : null}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep("credentials");
+                    setError(null);
+                  }}
+                  className="calm-transition mt-1 text-center text-[12px] text-white/25 hover:opacity-60"
+                >
+                  ← Back
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </AuthFlowMain>
 
       <style>{`
-        @keyframes fadeUp {
+        @keyframes auth-fade-up {
           from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        input::placeholder {
-          color: rgba(255,255,255,0.28);
+        .animate-auth-fade-up {
+          animation: auth-fade-up 0.55s ease both;
         }
       `}</style>
-    </div>
+    </AuthShell>
   );
 }

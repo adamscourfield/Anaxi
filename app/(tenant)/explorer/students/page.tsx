@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
+import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
@@ -228,22 +229,12 @@ export default async function StudentsPage({
 
   // ── render ──────────────────────────────────────────────────────
   return (
-    <>
-      {/* ── Back link ───────────────────────────────────────────── */}
-      <div className="mb-4">
-        <Link
-          href="/explorer"
-          className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-accent"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back to Explorer
-        </Link>
-      </div>
+    <div className="space-y-8">
+      <ExplorerBackLink />
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <PageHeader
+        eyebrow="Explorer"
         title="Students"
         subtitle="Risk bands, attendance, and flags for your cohort."
         actions={
@@ -620,6 +611,6 @@ export default async function StudentsPage({
         Explorer · Students · {windowDays}d window · Updated{" "}
         {computedAt.toLocaleDateString("en-GB")}
       </p>
-    </>
+    </div>
   );
 }

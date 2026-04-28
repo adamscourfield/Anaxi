@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
-import { H3 } from "@/components/ui/typography";
+import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
+import { H3, MetaText } from "@/components/ui/typography";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
@@ -214,24 +215,14 @@ export default async function DepartmentsPage({
   /* ---------------------------------------------------------------- */
 
   return (
-    <>
-      {/* Back link */}
-      <div className="mb-4">
-        <Link
-          href="/explorer"
-          className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-accent"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back to Explorer
-        </Link>
-      </div>
+    <div className="space-y-8">
+      <ExplorerBackLink />
 
       {/* ── Header ─────────────────────────────────────────────── */}
       <PageHeader
-        title="Departments Explorer"
-        eyebrow={<>{totalSignals} signals monitored</>}
+        eyebrow="Explorer"
+        title="Departments"
+        meta={<MetaText>{totalSignals} signals monitored</MetaText>}
         subtitle={
           <span className="mt-2 block max-w-2xl border-l-2 border-border pl-4">
             Cross-institutional pedagogical signal monitoring and faculty
@@ -430,6 +421,6 @@ export default async function DepartmentsPage({
       <p className="mt-8 text-[0.75rem] text-muted">
         Explorer · Departments · {windowDays}d window
       </p>
-    </>
+    </div>
   );
 }

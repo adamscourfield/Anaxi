@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
@@ -26,6 +27,26 @@ import {
   DualFlaggedStudent,
 } from "@/modules/home/hydration";
 import { QuickActionButton } from "@/components/dashboard/QuickActionButton";
+import {
+  HomeCardHeading,
+  HomeCardHeadingSm,
+  HomeEmptyPanel,
+  HomePageHeader,
+  HomePrimaryLink,
+  HomeSectionHeader,
+  IconBell,
+  IconBolt,
+  IconCalendar,
+  IconChartBar,
+  IconClipboard,
+  IconPhone,
+  IconSearch,
+  IconSparkles,
+  IconStar,
+  IconTrendDown,
+  IconTrendUp,
+  IconUmbrella,
+} from "@/components/home/home-chrome";
 
 const DEFAULT_WINDOW_DAYS = 21;
 const ALLOWED_WINDOW_DAYS = [7, 14, 21, 28];
@@ -159,22 +180,22 @@ function PageTitle({
   quickActionItems,
 }: {
   windowDays: number;
-  quickActionItems: { label: string; href: string; icon: string }[];
+  quickActionItems: { label: string; href: string; icon: ReactNode }[];
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1 className="min-w-0 text-pretty text-[22px] font-bold tracking-[-0.03em] text-text sm:text-[28px]">
-        Institutional Pulse
-      </h1>
-      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch] pb-0.5 sm:pb-0">
-          <WindowSelector windowDays={windowDays} />
-        </div>
-        <div className="shrink-0">
-          <QuickActionButton items={quickActionItems} />
-        </div>
-      </div>
-    </div>
+    <HomePageHeader
+      eyebrow="Dashboard"
+      title="Institutional Pulse"
+      subtitle="Coverage, signals, and operational status for your school — tuned to the selected window."
+      actions={
+        <>
+          <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch] pb-0.5 sm:pb-0">
+            <WindowSelector windowDays={windowDays} />
+          </div>
+          {quickActionItems.length > 0 ? <QuickActionButton items={quickActionItems} /> : null}
+        </>
+      }
+    />
   );
 }
 
@@ -254,7 +275,7 @@ function LeadershipHome({
   );
 
   return (
-    <div className="w-full min-w-0 space-y-6">
+    <div className="w-full min-w-0 space-y-8">
       {/* ═══ Hero Section 1: On-Call Status + Attendance + Observations ═══ */}
       <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
         {/* On-Call Live Status (main box) */}
@@ -262,23 +283,22 @@ function LeadershipHome({
           id="on-call-status-card"
           className="scroll-mt-20 flex min-h-0 min-w-0 flex-1 flex-col gap-4"
         >
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-on-primary text-lg">🔔</span>
-              <h2 className="min-w-0 text-pretty text-[1rem] font-bold tracking-[-0.01em] text-text">
-                Anaxi Core: On-Call Status
-              </h2>
-            </div>
-            {openOnCalls.length > 0 && (
-              <StatusPill variant="error" size="sm">LIVE RESPONSE</StatusPill>
-            )}
-          </div>
+          <HomeCardHeading
+            icon={<IconBell />}
+            title="On-call status"
+            subtitle="Anaxi core response"
+            end={openOnCalls.length > 0 ? <StatusPill variant="error" size="sm">LIVE RESPONSE</StatusPill> : null}
+          />
           {onCallDetails.length === 0 ? (
             <div
               id="immediate-support-needed"
-              className="scroll-mt-20 flex min-h-0 flex-1 flex-col rounded-xl bg-[var(--surface-container-low)] p-4"
+              className="scroll-mt-20 flex min-h-0 flex-1 flex-col"
             >
-              <MetaText>No recent on-call requests.</MetaText>
+              <HomeEmptyPanel
+                icon={<IconBell className="text-muted" />}
+                title="No recent on-call activity"
+                description="When staff raise an on-call, it will appear here for triage."
+              />
             </div>
           ) : (
             <div
@@ -357,7 +377,9 @@ function LeadershipHome({
               </div>
               {attendanceDelta !== null && (
                 <p className="mt-2 flex items-center gap-1 text-xs text-muted">
-                  <span className={attendanceDelta >= 0 ? "text-positive" : "text-negative"}>📈</span>
+                  <span className={attendanceDelta >= 0 ? "text-positive" : "text-negative"}>
+                    {attendanceDelta >= 0 ? <IconTrendUp className="inline h-3.5 w-3.5" /> : <IconTrendDown className="inline h-3.5 w-3.5" />}
+                  </span>
                   <span className={attendanceDelta >= 0 ? "text-positive" : "text-negative"}>
                     {attendanceDelta >= 0 ? "+" : ""}{attendanceDelta.toFixed(1)}%
                   </span>{" "}
@@ -397,9 +419,11 @@ function LeadershipHome({
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">★</span>
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-amber-600 [&_svg]:h-4 [&_svg]:w-4">
+                <IconStar />
+              </span>
               <div>
-                <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Your Watchlist</h2>
+                <h2 className="text-base font-bold tracking-[-0.01em] text-text">Your watchlist</h2>
                 <p className="text-xs text-muted">
                   {effectiveWatchlistStudents.length} student{effectiveWatchlistStudents.length !== 1 ? "s" : ""} being monitored
                 </p>
@@ -495,29 +519,29 @@ function LeadershipHome({
       {/* ═══ Hero Section 2: Leave Governance ═══ */}
       {hasLeaveFeature && (
         <section className="rounded-xl border-0 bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] p-4 outline-none ring-0 sm:p-6 md:p-8">
-          <div
-            className={`flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${pendingLeaveDetails.length > 0 ? "mb-8" : "mb-4"}`}
-          >
-            <div className="min-w-0">
-              <h2 className="text-2xl font-bold tracking-[-0.02em] text-text">Leave Governance</h2>
-              <p className="mt-1 text-pretty text-sm text-muted">
-                Pending administrative approvals for {leaveGovernanceQuarterLabel()}
-              </p>
-            </div>
-            <Link
-              href="/leave/pending"
-              className="group inline-flex shrink-0 items-center gap-1 text-sm font-bold text-text calm-transition hover:opacity-80"
-            >
-              View All Requests
-              <span className="inline-block transition-transform group-hover:translate-x-0.5" aria-hidden>
-                →
-              </span>
-            </Link>
-          </div>
+          <HomeSectionHeader
+            eyebrow="Operations"
+            title="Leave governance"
+            description={`Pending administrative approvals for ${leaveGovernanceQuarterLabel()}`}
+            action={
+              <Link
+                href="/leave/pending"
+                className="group inline-flex shrink-0 items-center gap-1 text-sm font-bold text-text calm-transition hover:opacity-80"
+              >
+                View all requests
+                <span className="inline-block transition-transform group-hover:translate-x-0.5" aria-hidden>
+                  →
+                </span>
+              </Link>
+            }
+          />
+
           {pendingLeaveDetails.length === 0 ? (
-            <MetaText>No pending leave requests.</MetaText>
+            <div className="mt-6 rounded-xl border border-dashed border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] px-5 py-10 text-center">
+              <MetaText>No pending leave requests.</MetaText>
+            </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {pendingLeaveDetails.map((leave) => {
                 const reasonUpper = (leave.reasonLabel ?? "PERSONAL").toUpperCase();
                 const isEmergency = reasonUpper.includes("EMERGENCY") || reasonUpper.includes("URGENT");
@@ -603,8 +627,10 @@ function LeadershipHome({
         {/* CPD Priorities (dark box) */}
         <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient lg:col-span-5">
           <div className="flex items-center gap-2">
-            <span className="text-lg">✦</span>
-            <h2 className="text-[1rem] font-bold tracking-[-0.01em]">CPD Priorities</h2>
+            <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
+              <IconSparkles />
+            </span>
+            <h2 className="text-base font-bold tracking-[-0.01em]">CPD priorities</h2>
           </div>
           {topCpd.length === 0 ? (
             <p className="text-sm text-on-primary/60">No weakening signals detected in this window.</p>
@@ -635,13 +661,11 @@ function LeadershipHome({
 
         {/* Staff Needing Intervention */}
         <Card className="space-y-4 lg:col-span-4">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">⚡</span>
-            <div>
-              <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Staff Intervention</h2>
-              <p className="text-xs text-muted">{interventionStaff.length} staff needing support</p>
-            </div>
-          </div>
+          <HomeCardHeadingSm
+            icon={<IconBolt className="text-amber-600" />}
+            title="Staff intervention"
+            subtitle={`${interventionStaff.length} staff needing support`}
+          />
           {interventionStaff.length === 0 ? (
             <MetaText>All staff stable — no intervention needed.</MetaText>
           ) : (
@@ -668,10 +692,12 @@ function LeadershipHome({
         <Card tone="inset" className="space-y-4 lg:col-span-3">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Observation Coverage</h2>
+              <h2 className="text-base font-bold tracking-[-0.01em] text-text">Observation coverage</h2>
               <p className="text-xs text-muted">Least observed this window</p>
             </div>
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-container)] text-sm">🔍</span>
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-container)] text-muted [&_svg]:h-4 [&_svg]:w-4">
+              <IconSearch />
+            </span>
           </div>
           {leastObserved.length === 0 ? (
             <MetaText>No teacher data available.</MetaText>
@@ -707,9 +733,11 @@ function LeadershipHome({
           {/* Section header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">📊</span>
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-muted [&_svg]:h-4 [&_svg]:w-4">
+                <IconChartBar />
+              </span>
               <div>
-                <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Attainment</h2>
+                <h2 className="text-base font-bold tracking-[-0.01em] text-text">Attainment</h2>
                 <p className="text-xs text-muted">
                   {attainmentSummary.cycleLabel}
                   {attainmentSummary.latestPointLabel && ` · ${attainmentSummary.latestPointLabel}`}
@@ -821,7 +849,7 @@ function HodHome({
   const deptCpdDrift = allDeptDriftingCpd.length;
 
   return (
-    <div className="w-full min-w-0 space-y-6">
+    <div className="w-full min-w-0 space-y-8">
       {/* ═══ Hero: Department KPI row ═══ */}
       <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
         <Card className="flex min-h-0 min-w-0 flex-1 flex-col justify-between">
@@ -865,8 +893,10 @@ function HodHome({
       <section className="grid gap-4 lg:grid-cols-12">
         <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient lg:col-span-5">
           <div className="flex items-center gap-2">
-            <span className="text-lg">✦</span>
-            <h2 className="text-[1rem] font-bold tracking-[-0.01em]">Dept CPD Priorities</h2>
+            <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
+              <IconSparkles />
+            </span>
+            <h2 className="text-base font-bold tracking-[-0.01em]">Dept CPD priorities</h2>
           </div>
           {topDeptCpd.length === 0 ? (
             <p className="text-sm text-on-primary/60">No weakening signals detected in this window.</p>
@@ -895,13 +925,11 @@ function HodHome({
 
         <Card className="space-y-4 lg:col-span-7">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">⚡</span>
-              <div>
-                <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Dept Teacher Priorities</h2>
-                <p className="text-xs text-muted">{topDeptTeachers.length} teacher{topDeptTeachers.length !== 1 ? "s" : ""} in view</p>
-              </div>
-            </div>
+            <HomeCardHeadingSm
+              icon={<IconBolt className="text-amber-600" />}
+              title="Dept teacher priorities"
+              subtitle={`${topDeptTeachers.length} teacher${topDeptTeachers.length !== 1 ? "s" : ""} in view`}
+            />
             <Link href={`/analytics?tab=teachers&window=${windowDays}&department=${deptId}`} className="text-sm text-accent hover:underline">View all →</Link>
           </div>
           {topDeptTeachers.length === 0 ? (
@@ -930,32 +958,30 @@ function HodHome({
       {/* ═══ Your Observations ═══ */}
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">📊</span>
-            <div>
-              <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Your Recent Observations</h2>
-              {selfProfile && selfProfile.teacherCoverage > 0 && (
-                <p className="text-xs text-muted">
-                  {selfProfile.teacherCoverage} observation{selfProfile.teacherCoverage !== 1 ? "s" : ""} in last {windowDays} days
-                  {selfProfile.lastObservationAt && (
-                    <> · Last: {new Date(selfProfile.lastObservationAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</>
-                  )}
-                </p>
-              )}
-            </div>
-          </div>
-          {selfProfile && selfProfile.teacherCoverage > 0 && (
-            <StatusPill variant="accent" size="sm">{selfProfile.teacherCoverage} obs</StatusPill>
-          )}
+          <HomeCardHeadingSm
+            icon={<IconChartBar className="text-[var(--info)]" />}
+            title="Your recent observations"
+            subtitle={
+              selfProfile && selfProfile.teacherCoverage > 0
+                ? `${selfProfile.teacherCoverage} observation${selfProfile.teacherCoverage !== 1 ? "s" : ""} in last ${windowDays} days${
+                    selfProfile.lastObservationAt
+                      ? ` · Last: ${new Date(selfProfile.lastObservationAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+                      : ""
+                  }`
+                : undefined
+            }
+            end={selfProfile && selfProfile.teacherCoverage > 0 ? <StatusPill variant="accent" size="sm">{selfProfile.teacherCoverage} obs</StatusPill> : null}
+          />
         </div>
         {!selfProfile || selfProfile.teacherCoverage === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl bg-[var(--surface-container-low)] p-6 text-center">
-            <span className="mb-2 text-2xl">📝</span>
-            <BodyText className="text-muted">No observations captured yet.</BodyText>
-            <Link href="/observe/new" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-[12px] font-semibold text-on-primary calm-transition hover:opacity-90">
-              Start an observation →
-            </Link>
-          </div>
+          <HomeEmptyPanel
+            icon={<IconClipboard className="text-muted" />}
+            title="No observations yet"
+            description="Start an observation to see your signal profile and trends here."
+            action={
+              <HomePrimaryLink href="/observe/new">Start an observation</HomePrimaryLink>
+            }
+          />
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -1044,8 +1070,10 @@ function HodHome({
       {wholeSchoolTop1 && (
         <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient">
           <div className="flex items-center gap-2">
-            <span className="text-lg">✦</span>
-            <h2 className="text-[1rem] font-bold tracking-[-0.01em]">Whole-school focus</h2>
+            <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
+              <IconSparkles />
+            </span>
+            <h2 className="text-base font-bold tracking-[-0.01em]">Whole-school focus</h2>
           </div>
           <p className="text-sm font-medium">{wholeSchoolTop1.label}</p>
           <div className="space-y-1">
@@ -1115,33 +1143,24 @@ function TeacherHome({
   };
 
   return (
-    <div className="w-full min-w-0 space-y-6">
+    <div className="w-full min-w-0 space-y-8">
       {/* ═══ Hero Section: Observations + KPI Tiles ═══ */}
       <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
         <Card className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-lg">📊</span>
-              <div>
-                <h2 className="min-w-0 text-pretty text-[1rem] font-bold tracking-[-0.01em] text-text">
-                  Your Recent Observations
-                </h2>
-                <p className="text-xs text-muted">{windowDays}-day window</p>
-              </div>
-            </div>
-            {obsCount > 0 && (
-              <StatusPill variant="accent" size="sm">{obsCount} observation{obsCount !== 1 ? "s" : ""}</StatusPill>
-            )}
-          </div>
+          <HomeCardHeading
+            icon={<IconChartBar className="text-[var(--info)]" />}
+            title="Your recent observations"
+            subtitle={`${windowDays}-day window`}
+            end={obsCount > 0 ? <StatusPill variant="accent" size="sm">{obsCount} observation{obsCount !== 1 ? "s" : ""}</StatusPill> : null}
+          />
 
           {!selfProfile || selfProfile.teacherCoverage === 0 ? (
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-xl bg-[var(--surface-container-low)] p-6 text-center">
-              <span className="mb-2 text-2xl">📝</span>
-              <BodyText className="text-muted">No observations captured yet in this window.</BodyText>
-              <Link href="/observe/new" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-[12px] font-semibold text-on-primary calm-transition hover:opacity-90">
-                Start an observation →
-              </Link>
-            </div>
+            <HomeEmptyPanel
+              icon={<IconClipboard className="text-muted" />}
+              title="No observations in this window"
+              description="Capture an observation to see strengths and areas to watch."
+              action={<HomePrimaryLink href="/observe/new">Start an observation</HomePrimaryLink>}
+            />
           ) : (
             <div className="flex min-h-0 flex-1 flex-col gap-4">
               <MetaText>
@@ -1260,13 +1279,11 @@ function TeacherHome({
       {hasMeetingsFeature && openActions.length > 0 && (
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm">⚡</span>
-              <div>
-                <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Your Actions</h2>
-                <p className="text-xs text-muted">{openActions.length} open action{openActions.length !== 1 ? "s" : ""}</p>
-              </div>
-            </div>
+            <HomeCardHeadingSm
+              icon={<IconBolt className="text-amber-600" />}
+              title="Your actions"
+              subtitle={`${openActions.length} open action${openActions.length !== 1 ? "s" : ""}`}
+            />
             <Link href="/my-actions" className="text-sm text-accent hover:underline">View all →</Link>
           </div>
           <ul className="space-y-1">
@@ -1302,7 +1319,7 @@ function TeacherHome({
                   <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-container)] text-muted">
                     <LeaveCalendarIcon />
                   </span>
-                  <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">Leave of absence</h2>
+                  <h2 className="text-base font-bold tracking-[-0.01em] text-text">Leave of absence</h2>
                 </div>
                 {loaRequest && (
                   <StatusPill variant={loaStatusPill[loaRequest.status] ?? "neutral"} size="sm">
@@ -1340,8 +1357,10 @@ function TeacherHome({
             <Card className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-lg">🔔</span>
-                  <h2 className="text-[1rem] font-bold tracking-[-0.01em] text-text">On call</h2>
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
+                    <IconBell />
+                  </span>
+                  <h2 className="text-base font-bold tracking-[-0.01em] text-text">On call</h2>
                 </div>
                 {onCallRequests.filter((r) => r.status === "OPEN").length > 0 && (
                   <StatusPill variant="error" size="sm">OPEN</StatusPill>
@@ -1356,7 +1375,9 @@ function TeacherHome({
                   {onCallRequests.slice(0, 3).map((req) => (
                     <li key={req.id} className="flex items-center justify-between rounded-xl bg-[var(--surface-container-low)] p-3 calm-transition hover:bg-[var(--surface-container)]">
                       <div className="flex items-center gap-2.5">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface-container)] text-[10px]">🔔</span>
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface-container)] text-muted [&_svg]:h-3 [&_svg]:w-3">
+                          <IconBell />
+                        </span>
                         <span className="text-sm font-medium text-text">{new Date(req.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
                       </div>
                       <StatusPill variant={req.status === "OPEN" ? "error" : req.status === "APPROVED" ? "success" : "neutral"} size="sm">{req.status}</StatusPill>
@@ -1381,8 +1402,10 @@ function TeacherHome({
       {wholeSchoolTop1 && (
         <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient">
           <div className="flex items-center gap-2">
-            <span className="text-lg">✦</span>
-            <h2 className="text-[1rem] font-bold tracking-[-0.01em]">Whole-school focus</h2>
+            <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
+              <IconSparkles />
+            </span>
+            <h2 className="text-base font-bold tracking-[-0.01em]">Whole-school focus</h2>
           </div>
           <p className="text-sm font-medium">{wholeSchoolTop1.label}</p>
           <div className="space-y-1">
@@ -1438,18 +1461,18 @@ export default async function HomePage({
 
 
   // Build quick action items based on enabled features
-  const quickActionItems: { label: string; href: string; icon: string }[] = [];
+  const quickActionItems: { label: string; href: string; icon: ReactNode }[] = [];
   if (enabledFeatures.has("OBSERVATIONS")) {
-    quickActionItems.push({ label: "New Observation", href: "/observe/new", icon: "📝" });
+    quickActionItems.push({ label: "New observation", href: "/observe/new", icon: <IconClipboard className="text-muted" /> });
   }
   if (enabledFeatures.has("MEETINGS")) {
-    quickActionItems.push({ label: "New Meeting", href: "/meetings/new", icon: "📅" });
+    quickActionItems.push({ label: "New meeting", href: "/meetings/new", icon: <IconCalendar className="text-[var(--info)]" /> });
   }
   if (enabledFeatures.has("ON_CALL")) {
-    quickActionItems.push({ label: "On Call", href: "/on-call/new", icon: "📞" });
+    quickActionItems.push({ label: "On call", href: "/on-call/new", icon: <IconPhone className="text-muted" /> });
   }
   if (enabledFeatures.has("LEAVE")) {
-    quickActionItems.push({ label: "Leave of Absence", href: "/leave/request", icon: "🏖️" });
+    quickActionItems.push({ label: "Leave of absence", href: "/leave/request", icon: <IconUmbrella className="text-[var(--info)]" /> });
   }
 
   const pageContent = async () => {
@@ -1538,7 +1561,7 @@ export default async function HomePage({
   const content = await pageContent();
 
   return (
-    <div className="w-full min-w-0 space-y-6">
+    <div className="w-full min-w-0 space-y-10">
       <PageTitle windowDays={windowDays} quickActionItems={quickActionItems} />
       {content}
     </div>

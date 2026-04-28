@@ -5,7 +5,9 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@/lib/types";
 import { Card } from "@/components/ui/card";
-import { H1, H2, MetaText, BodyText } from "@/components/ui/typography";
+import { PageHeader } from "@/components/ui/page-header";
+import { DataTableEmpty } from "@/components/ui/data-table-empty";
+import { H2, MetaText } from "@/components/ui/typography";
 import { StudentPrioritiesFilters } from "./StudentPrioritiesFilters";
 import { computeTeacherRiskIndex, RiskStatus } from "@/modules/analysis/teacherRisk";
 import { canViewTeacherAnalysis, canViewStudentAnalysis } from "@/modules/authz";
@@ -180,11 +182,15 @@ async function TeachersTab({
 
       <Card className="overflow-hidden p-0">
         {rows.length === 0 ? (
-          <div className="p-6">
-            <BodyText className="text-muted">
-              No observation data available for the selected window.
-            </BodyText>
-          </div>
+          <DataTableEmpty
+            title="No observation data in this window"
+            description="Widen the window or add observations so teacher drift and coverage can be computed."
+            action={
+              <Link href="/observe/new" className="text-sm font-semibold text-accent underline-offset-2 hover:underline">
+                Start an observation
+              </Link>
+            }
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -363,11 +369,15 @@ async function CpdTab({
           <MetaText>Signals showing the most widespread weakening in the selected window.</MetaText>
         </div>
         {rows.length === 0 ? (
-          <div className="p-6">
-            <BodyText className="text-muted">
-              No observation data available for the selected window.
-            </BodyText>
-          </div>
+          <DataTableEmpty
+            title="No CPD drift data in this window"
+            description="Signals need enough observations across staff. Try a longer window or record more observations."
+            action={
+              <Link href="/observe/new" className="text-sm font-semibold text-accent underline-offset-2 hover:underline">
+                Start an observation
+              </Link>
+            }
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -562,11 +572,24 @@ async function StudentsTab({
 
       <Card className="overflow-hidden p-0">
         {rows.length === 0 ? (
-          <div className="p-6">
-            <BodyText className="text-muted">
-              No students found with snapshot data in the selected window.
-            </BodyText>
-          </div>
+          <DataTableEmpty
+            title={hasStudentFilters ? "No students match these filters" : "No student snapshot data"}
+            description={
+              hasStudentFilters
+                ? "Relax filters or reset the table to see students in this window."
+                : "Behaviour snapshots may still be importing. Check back after the next sync or widen the window."
+            }
+            action={
+              hasStudentFilters ? (
+                <Link
+                  href={`/analytics?tab=students&window=${windowDays}`}
+                  className="text-sm font-semibold text-accent underline-offset-2 hover:underline"
+                >
+                  Clear filters
+                </Link>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -699,10 +722,15 @@ export default async function AnalyticsPage({
     : 21;
 
   return (
-    <div className="space-y-6">
-      <H1>Priorities</H1>
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="Analysis"
+        title="Priorities"
+        subtitle="Teacher coverage, CPD drift, and student pastoral bands — driven by the tab and time window below."
+        meta={<MetaText>Same URL controls apply across all three tabs.</MetaText>}
+      />
 
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-col gap-4 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--surface-container-lowest)] p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between md:p-5">
         <TabBar activeTab={activeTab} windowDays={windowDays} />
         <WindowSelector
           windowDays={windowDays}

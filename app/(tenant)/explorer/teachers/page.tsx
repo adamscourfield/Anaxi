@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ClickableRow } from "@/components/ui/clickable-row";
 import { PageHeader } from "@/components/ui/page-header";
+import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -278,23 +279,14 @@ export default async function ExplorerTeachersPage({
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <>
-      {/* Back link */}
-      <div className="mb-4">
-        <Link
-          href="/explorer"
-          className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-accent"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back to Explorer
-        </Link>
-      </div>
+    <div className="space-y-8">
+      <ExplorerBackLink />
 
       {/* ── Page header ────────────────────────────────────────────────────── */}
       <PageHeader
+        eyebrow="Explorer"
         title="Teachers"
+        subtitle="Observation coverage, signal means, and drift — switch window and pivot vs priorities."
         actions={
           canExport ? (
             <form action="/api/explorer/export" method="POST">
@@ -322,7 +314,7 @@ export default async function ExplorerTeachersPage({
       />
 
       {/* ── Controls bar ────────────────────────────────────────────────────── */}
-      <div className="mb-6 w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
       <div className="filter-bar">
         {/* Window selector */}
         <div className="filter-period-toggle">
@@ -678,6 +670,6 @@ export default async function ExplorerTeachersPage({
         </div>
       )}
 
-    </>
+    </div>
   );
 }

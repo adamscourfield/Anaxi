@@ -401,6 +401,29 @@ textarea:focus-visible {
   border-color: rgba(0,0,0,0.40);
 }
 
+/* Dark hero / sign-in: inputs on radial gradient (Stage 1 auth) */
+.field--dark {
+  border: 1px solid rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+}
+
+.field--dark::placeholder {
+  color: rgba(255,255,255,0.28);
+  opacity: 1;
+}
+
+.field--dark:hover {
+  border-color: rgba(255,255,255,0.14);
+}
+
+.field--dark:focus-visible {
+  outline: none;
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.22);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.12);
+}
+
 /* ── Segmented Toggle ──────────────────────────────────────────── */
 .segmented-toggle {
   display: inline-flex;
