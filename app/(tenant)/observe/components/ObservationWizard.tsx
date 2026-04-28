@@ -5,21 +5,11 @@ import { Button } from "@/components/ui/button";
 import { H2, H3, MetaText, Label } from "@/components/ui/typography";
 import type { TenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolType";
+import type { SignalDefinition } from "@/modules/observations/signalTypes";
 import type { Phase } from "./observationDraft";
 import { SignalCard } from "./SignalCard";
 
 type Teacher = { id: string; fullName: string; email: string };
-type Signal = {
-  key: string;
-  order: number;
-  displayNameDefault: string;
-  descriptionDefault: string;
-  lookFors?: string[];
-  scale: { key: string; label: string; description: string }[];
-  scaleGuidance: Record<string, string>;
-  phaseRelevance: string[];
-  isUniversal: boolean;
-};
 
 type LabelMap = Record<string, { displayName: string; description?: string }>;
 type SignalEntry = { valueKey: string | null; notObserved: boolean };
@@ -51,7 +41,7 @@ export function ObservationWizard({
   schoolType = "SECONDARY",
 }: {
   teachers: Teacher[];
-  signals: Signal[];
+  signals: SignalDefinition[];
   labelMap: LabelMap;
   action: (formData: FormData) => void;
   schoolType?: TenantSchoolType;
@@ -82,8 +72,8 @@ export function ObservationWizard({
   const allDone = completed === orderedSignals.length;
 
   const phaseFocus = useMemo(
-    () => getSignalsForPhase(context.phase, schoolType) as Signal[],
-    [context.phase, schoolType]
+    () => getSignalsForPhase(context.phase, schoolType),
+    [context.phase, schoolType],
   );
   const phaseFocusKeys = useMemo(() => new Set(phaseFocus.map((s) => s.key)), [phaseFocus]);
   const otherSignals = useMemo(
@@ -137,7 +127,7 @@ export function ObservationWizard({
     setTransientToast(changed ? "Cleared Not Observed." : "No Not Observed signals to clear.");
   };
 
-  const renderSignalList = (sectionSignals: Signal[]) => (
+  const renderSignalList = (sectionSignals: SignalDefinition[]) => (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {sectionSignals.map((signal) => {
         const override = labelMap[signal.key];

@@ -4,21 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { TenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolType";
+import type { SignalDefinition } from "@/modules/observations/signalTypes";
 import { loadDraft, persistDraft, ScaleKey } from "./observationDraft";
 import { SignalHelpSheet } from "./SignalHelpSheet";
 import { SignalTileGroup } from "./SignalTileGroup";
-
-type Signal = {
-  key: string;
-  order: number;
-  displayNameDefault: string;
-  descriptionDefault: string;
-  lookFors?: string[];
-  scaleGuidance: Record<string, string>;
-  scale: { key: string; label: string; description: string }[];
-  phaseRelevance: string[];
-  isUniversal: boolean;
-};
 
 type LabelMap = Record<string, { displayName: string; description?: string }>;
 
@@ -29,7 +18,7 @@ export function SignalFlowScreen({
   schoolType,
 }: {
   draftKey: string;
-  signals: Signal[];
+  signals: SignalDefinition[];
   labelMap: LabelMap;
   schoolType: TenantSchoolType;
 }) {
@@ -50,8 +39,8 @@ export function SignalFlowScreen({
   );
 
   const orderedSignals = useMemo(
-    () => getSignalsForPhase(draft.context.phase, schoolType) as Signal[],
-    [draft.context.phase, schoolType]
+    () => getSignalsForPhase(draft.context.phase, schoolType),
+    [draft.context.phase, schoolType],
   );
 
   const total = orderedSignals.length;
