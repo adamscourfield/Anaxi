@@ -36,7 +36,7 @@ export function StudentsFilterBar({
   const [band, setBand] = useState(currentBand);
   const [, startTransition] = useTransition();
 
-  const triggerWhite = "!bg-surface-container-lowest rounded-[10px]";
+  const triggerWhite = "field-filter-trigger";
 
   useEffect(() => {
     setQ(currentQ);
@@ -84,7 +84,7 @@ export function StudentsFilterBar({
   }
 
   return (
-    <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+    <div className="filter-panel">
       <div className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4">
         <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[200px] lg:max-w-[min(100%,360px)]">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Search</span>
@@ -179,20 +179,12 @@ export function StudentsFilterBar({
           />
         </label>
 
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
-          <button
-            type="button"
-            onClick={apply}
-            className="field flex w-full items-center justify-center border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
-          >
+        <div className="filter-actions">
+          <button type="button" onClick={apply} className="btn-filter-primary">
             Apply Filters
           </button>
           {hasAnyFilter && (
-            <button
-              type="button"
-              onClick={clear}
-              className="field flex w-full items-center justify-center border border-border/40 bg-surface-container-lowest py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[100px] lg:w-auto"
-            >
+            <button type="button" onClick={clear} className="btn-filter-secondary">
               Clear
             </button>
           )}

@@ -254,7 +254,7 @@ export default async function DepartmentsPage({
       />
 
       {/* ── Filter bar ─────────────────────────────────────────── */}
-      <div className="mb-6 w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+      <div className="mb-6 filter-panel">
       <div className="filter-bar">
         {/* Window toggle buttons */}
         <div className="filter-period-toggle">
@@ -276,7 +276,7 @@ export default async function DepartmentsPage({
           <AutoSubmitSelect
             name="departmentId"
             defaultValue={rawDeptId ?? ""}
-            className="field min-w-[180px] !rounded-lg !py-1.5 !text-[0.8125rem]"
+            className="field field-filter-trigger min-w-[180px] !py-1.5 !text-[0.8125rem]"
           >
             <option value="">All Departments</option>
             {selectableDepts.map((d) => (
