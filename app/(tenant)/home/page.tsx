@@ -389,26 +389,26 @@ function LeadershipHome({
             </div>
           </Card>
 
-          {/* Observations this week box */}
-          <Link href="/explorer/observations" className="flex min-h-0 flex-1 flex-col">
-          <Card className="flex min-h-0 flex-1 flex-col gap-4 calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations This Week</p>
-            <div>
-              <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
-                {weekObsCount}
-              </p>
-              <div className="mt-3 flex items-center gap-1">
-                {weekObsTeachers.slice(0, 3).map((t) => (
-                  <Avatar key={t.id} name={t.name} size="sm" />
-                ))}
-                {weekObsTeachers.length > 3 && (
-                  <span className="inline-flex h-7 w-auto min-w-[28px] items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-on-primary">
-                    +{weekObsTeachers.length - 3}
-                  </span>
-                )}
+          {/* Observations this week box — avoid min-h-0 so flex stretch cannot clip avatars; extra bottom pad clears rounded edge */}
+          <Link href="/explorer/observations" className="flex flex-1 flex-col">
+            <Card className="flex min-h-min flex-1 flex-col gap-4 pb-7 calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations This Week</p>
+              <div>
+                <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
+                  {weekObsCount}
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-1">
+                  {weekObsTeachers.slice(0, 3).map((t) => (
+                    <Avatar key={t.id} name={t.name} size="sm" />
+                  ))}
+                  {weekObsTeachers.length > 3 && (
+                    <span className="inline-flex h-7 w-auto min-w-[28px] items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-on-primary">
+                      +{weekObsTeachers.length - 3}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
           </Link>
         </div>
       </section>
