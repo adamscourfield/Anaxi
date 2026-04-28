@@ -129,6 +129,7 @@ export default function NewCyclePage() {
       }
       const { cycle } = await res.json();
       setCycleId(cycle.id);
+      toast("Cycle created. Add your result points.", "success");
       setStep("points");
       toast("Cycle created", "success");
     } finally {
@@ -145,6 +146,7 @@ export default function NewCyclePage() {
     const selected = points.filter((p) => p.selected);
     if (selected.length === 0) {
       setPointsError("Select at least one result point.");
+      toast("Select at least one result point.", "error");
       setPointsLoading(false);
       return;
     }
@@ -176,6 +178,7 @@ export default function NewCyclePage() {
           return;
         }
       }
+      toast("Result points saved.", "success");
       setStep("done");
       toast("Result points created", "success");
     } finally {

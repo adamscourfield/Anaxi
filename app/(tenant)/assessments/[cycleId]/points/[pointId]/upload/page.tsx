@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { toast } from "@/components/toast-provider";
 import type { GradeFormat } from "@prisma/client";
 import { toast } from "@/components/toast-provider";
 
@@ -128,6 +129,7 @@ export default function UploadSubjectResultsPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Import failed"); toast(data.error || "Import failed", "error"); return; }
       setImportResult(data);
+      toast(`Imported ${data.subjectsImported ?? 0} subject${(data.subjectsImported ?? 0) !== 1 ? "s" : ""} (${data.totalProcessed ?? 0} entries).`, "success");
       setStep("done");
       toast("Results imported", "success");
     } finally {
