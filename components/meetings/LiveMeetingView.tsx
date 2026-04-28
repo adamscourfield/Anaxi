@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { H1, MetaText } from "@/components/ui/typography";
 import { toast } from "@/components/toast-provider";
 
@@ -143,14 +144,64 @@ function AvatarStack({ attendees }: { attendees: Attendee[] }) {
 
 /* ── Formatting Toolbar ──────────────────────────────────────────────── */
 
+function LinkUrlDialog({
+  open,
+  onClose,
+  onConfirmUrl,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirmUrl: (url: string) => boolean | void;
+}) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    if (open) setUrl("");
+  }, [open]);
+
+  return (
+    <ConfirmDialog
+      open={open}
+      title="Insert link"
+      confirmLabel="Insert"
+      cancelLabel="Cancel"
+      onClose={onClose}
+      onConfirm={() => {
+        const result = onConfirmUrl(url.trim());
+        return result;
+      }}
+    >
+      <label className="block">
+        <span className="sr-only">URL</span>
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://"
+          className="field mt-1 w-full"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const result = onConfirmUrl(url.trim());
+              if (result !== false) onClose();
+            }
+          }}
+        />
+      </label>
+    </ConfirmDialog>
+  );
+}
+
 function FormattingToolbar({
   textareaRef,
   value,
   onChange,
+  onInsertLink,
 }: {
   textareaRef: React.RefObject<HTMLTextAreaElement>;
   value: string;
   onChange: (v: string) => void;
+  onInsertLink: () => void;
 }) {
   function insertFormatting(prefix: string, suffix: string, placeholder: string) {
     const ta = textareaRef.current;
@@ -182,20 +233,7 @@ function FormattingToolbar({
   }
 
   function insertLink() {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const selected = value.slice(start, end) || "link text";
-    const url = prompt("Enter URL:");
-    if (!url) return;
-    const formatted = `[${selected}](${url})`;
-    const newValue = value.slice(0, start) + formatted + value.slice(end);
-    onChange(newValue);
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.setSelectionRange(start, start + formatted.length);
-    });
+    onInsertLink();
   }
 
   return (
@@ -289,6 +327,9 @@ export function LiveMeetingView({
   const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [endMeetingOpen, setEndMeetingOpen] = useState(false);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const linkInsertRef = useRef<{ start: number; end: number; selected: string } | null>(null);
 
   /* ── Auto-save notes ───────────────────────────────────────────── */
   const handleNotesChange = useCallback(
@@ -344,9 +385,42 @@ export function LiveMeetingView({
     }
   }
 
+  function openInsertLinkDialog() {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    linkInsertRef.current = {
+      start: ta.selectionStart,
+      end: ta.selectionEnd,
+      selected: notes.slice(ta.selectionStart, ta.selectionEnd) || "link text",
+    };
+    setLinkDialogOpen(true);
+  }
+
+  function applyInsertedLink(url: string): boolean {
+    const ta = textareaRef.current;
+    const p = linkInsertRef.current;
+    if (!ta || !p) {
+      setLinkDialogOpen(false);
+      return true;
+    }
+    if (!url) {
+      toast("Enter a URL for the link.", "error");
+      return false;
+    }
+    const formatted = `[${p.selected}](${url})`;
+    const newValue = notes.slice(0, p.start) + formatted + notes.slice(p.end);
+    handleNotesChange(newValue);
+    setLinkDialogOpen(false);
+    linkInsertRef.current = null;
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(p.start, p.start + formatted.length);
+    });
+    return true;
+  }
+
   /* ── End meeting ───────────────────────────────────────────────── */
   async function handleEndMeeting() {
-    if (!confirm("End this meeting? This will mark it as completed.")) return;
     try {
       const now = new Date().toISOString();
       const res = await fetch(`/api/meetings/${meetingId}`, {
@@ -366,6 +440,7 @@ export function LiveMeetingView({
         return;
       }
       toast("Meeting ended", "success");
+      setEndMeetingOpen(false);
       window.location.href = "/meetings";
     } catch {
       toast("Network error while ending the meeting.", "error");
@@ -557,7 +632,7 @@ export function LiveMeetingView({
               Save Draft
             </button>
             {!isEnded && (
-              <Button variant="danger" className="rounded-xl px-5" onClick={handleEndMeeting}>
+              <Button variant="danger" className="rounded-xl px-5" onClick={() => setEndMeetingOpen(true)}>
                 End Meeting
               </Button>
             )}
@@ -586,6 +661,7 @@ export function LiveMeetingView({
                 textareaRef={textareaRef}
                 value={notes}
                 onChange={(v) => handleNotesChange(v)}
+                onInsertLink={openInsertLinkDialog}
               />
             )}
           </div>
@@ -766,6 +842,23 @@ export function LiveMeetingView({
           </div>
         </div>
       </div>
+
+      <LinkUrlDialog
+        open={linkDialogOpen}
+        onClose={() => setLinkDialogOpen(false)}
+        onConfirmUrl={applyInsertedLink}
+      />
+      <ConfirmDialog
+        open={endMeetingOpen}
+        title="End meeting?"
+        confirmLabel="End meeting"
+        cancelLabel="Cancel"
+        variant="danger"
+        onClose={() => setEndMeetingOpen(false)}
+        onConfirm={() => void handleEndMeeting()}
+      >
+        This will mark the session as completed and return you to the meetings list.
+      </ConfirmDialog>
     </div>
   );
 }
