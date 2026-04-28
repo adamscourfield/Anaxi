@@ -87,11 +87,14 @@ export function UserDirectoryTable({
   allTeachers,
   scopedLoaByUser,
   saveAction,
+  canEditSuperUsers = true,
 }: {
   users: UserRow[];
   allTeachers: TeacherOption[];
   scopedLoaByUser: Record<string, string[]>;
   saveAction: (formData: FormData) => void;
+  /** False when the viewer is a tenant admin — they cannot edit platform super admins. */
+  canEditSuperUsers?: boolean;
 }) {
   const [appliedSearch, setAppliedSearch] = useState("");
   const [draftSearch, setDraftSearch] = useState("");
@@ -326,13 +329,17 @@ export function UserDirectoryTable({
                         </div>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setEditingUser(u)}
-                          className="inline-flex rounded-xl border border-black/[0.08] bg-[#F1F3F5] px-4 py-2 text-[0.8125rem] font-semibold text-text calm-transition hover:border-black/[0.12] hover:bg-[#e8eaed]"
-                        >
-                          Edit
-                        </button>
+                        {u.role === "SUPER_ADMIN" && !canEditSuperUsers ? (
+                          <span className="text-[0.8125rem] text-muted">—</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setEditingUser(u)}
+                            className="inline-flex rounded-xl border border-black/[0.08] bg-[#F1F3F5] px-4 py-2 text-[0.8125rem] font-semibold text-text calm-transition hover:border-black/[0.12] hover:bg-[#e8eaed]"
+                          >
+                            Edit
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -404,6 +411,7 @@ export function UserDirectoryTable({
           scopedLoaTargetIds={scopedLoaByUser[editingUser.id] ?? []}
           onClose={() => setEditingUser(null)}
           saveAction={saveAction}
+          readOnly={editingUser.role === "SUPER_ADMIN" && !canEditSuperUsers}
         />
       )}
     </div>
