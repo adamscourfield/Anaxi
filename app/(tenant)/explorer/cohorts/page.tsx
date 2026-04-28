@@ -9,6 +9,7 @@ import {
   canViewBehaviourExplorer,
 } from "@/modules/authz";
 import { PageHeader } from "@/components/ui/page-header";
+import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import {
   computeCohortPivot,
   type CohortPivotRow,
@@ -149,21 +150,11 @@ export default async function CohortsPage({
 
   // ── render ──────────────────────────────────────────────────────
   return (
-    <>
-      {/* Back link */}
-      <div className="mb-4">
-        <Link
-          href="/explorer"
-          className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-accent"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back to Explorer
-        </Link>
-      </div>
+    <div className="space-y-8">
+      <ExplorerBackLink />
 
       <PageHeader
+        eyebrow="Explorer"
         title="Cohorts"
         subtitle="Year group behaviour metrics — attendance, incidents and welfare indicators aggregated by cohort."
         meta={
@@ -397,6 +388,6 @@ export default async function CohortsPage({
       <p className="mt-8 text-[0.75rem] text-muted">
         Explorer · Cohorts · {windowDays}d window
       </p>
-    </>
+    </div>
   );
 }

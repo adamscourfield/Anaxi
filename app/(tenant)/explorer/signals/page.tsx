@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ClickableRow } from "@/components/ui/clickable-row";
 import { PageHeader } from "@/components/ui/page-header";
+import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import { StatCard } from "@/components/ui/stat-card";
 import { H2 } from "@/components/ui/typography";
 import { notFound } from "next/navigation";
@@ -225,24 +226,14 @@ export default async function SignalsPage({
 
   // ── render ──────────────────────────────────────────────────────
   return (
-    <>
-      {/* Back link */}
-      <div className="mb-4">
-        <Link
-          href="/explorer"
-          className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-accent"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back to Explorer
-        </Link>
-      </div>
+    <div className="space-y-8">
+      <ExplorerBackLink />
 
       {/* ── Header ─────────────────────────────────────────────── */}
       <PageHeader
-        title="Signals Explorer"
-        subtitle="Monitor and analyze instructional delivery across departments. Tracking drift rates and instructional consistency metrics."
+        eyebrow="Explorer"
+        title="Signals"
+        subtitle="Instructional signals and drift — filter by department and time window."
       />
 
       {/* ── Filters (aligned with Observation History) ─────────── */}
@@ -638,6 +629,6 @@ export default async function SignalsPage({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
