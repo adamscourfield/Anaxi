@@ -222,6 +222,35 @@ const config: Config = {
         "3xl": ["1.875rem",  { lineHeight: "1.2",  letterSpacing: "-0.025em" }],
         "4xl": ["2.25rem",   { lineHeight: "1.1",  letterSpacing: "-0.03em" }],
       },
+      keyframes: {
+        "page-enter": {
+          "0%": { opacity: "0", transform: "translateY(4px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "toast-in": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "pulse-subtle": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
+        "nav-run": {
+          "0%": { transform: "scaleX(0.04)", opacity: "1" },
+          "100%": { transform: "scaleX(0.92)", opacity: "1" },
+        },
+        "nav-finish": {
+          "0%": { transform: "scaleX(0.92)", opacity: "1" },
+          "100%": { transform: "scaleX(1)", opacity: "0" },
+        },
+      },
+      animation: {
+        "page-enter": "page-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        "toast-in": "toast-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        "pulse-subtle": "pulse-subtle 1.4s ease-in-out infinite",
+        "nav-run": "nav-run 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "nav-finish": "nav-finish 280ms ease forwards",
+      },
     }
   },
   plugins: []
