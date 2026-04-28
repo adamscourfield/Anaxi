@@ -168,30 +168,32 @@ export default function StaffImportPage() {
             Preview (first {preview.length} of {rowCount} rows)
           </H2>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="p-2 text-left text-text/70">Email</th>
-                  <th className="p-2 text-left text-text/70">Full Name</th>
-                  <th className="p-2 text-left text-text/70">Role</th>
-                  <th className="p-2 text-left text-text/70">Departments</th>
-                  <th className="p-2 text-left text-text/70">HOD</th>
-                  <th className="p-2 text-left text-text/70">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {preview.map((row, i) => (
-                  <tr key={i} className="border-b border-divider">
-                    <td className="p-2 text-text">{row.email}</td>
-                    <td className="p-2 text-text">{row.fullName}</td>
-                    <td className="p-2 text-text">{row.role}</td>
-                    <td className="p-2 text-text">{row.departments.join("; ")}</td>
-                    <td className="p-2 text-text">{row.isHOD ? "Yes" : "No"}</td>
-                    <td className="p-2 text-text">{row.membershipStatus}</td>
+            <div className="table-shell">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="table-head-row text-left">
+                    <th className="px-5 py-3.5">Email</th>
+                    <th className="px-4 py-3.5">Full Name</th>
+                    <th className="px-4 py-3.5">Role</th>
+                    <th className="px-4 py-3.5">Departments</th>
+                    <th className="px-4 py-3.5">HOD</th>
+                    <th className="px-4 py-3.5">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {preview.map((row, i) => (
+                    <tr key={i} className="table-row calm-transition">
+                      <td className="px-5 py-3 text-text">{row.email}</td>
+                      <td className="px-4 py-3 text-text">{row.fullName}</td>
+                      <td className="px-4 py-3 text-text">{row.role}</td>
+                      <td className="px-4 py-3 text-text">{row.departments.join("; ")}</td>
+                      <td className="px-4 py-3 text-text">{row.isHOD ? "Yes" : "No"}</td>
+                      <td className="px-4 py-3 text-text">{row.membershipStatus}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </Card>
       )}
@@ -245,42 +247,44 @@ export default function StaffImportPage() {
         )}
         {jobs.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="p-2 text-left text-text/70">File</th>
-                  <th className="p-2 text-left text-text/70">Status</th>
-                  <th className="p-2 text-right text-text/70">Rows</th>
-                  <th className="p-2 text-right text-text/70">Failed</th>
-                  <th className="p-2 text-left text-text/70">Date</th>
-                  <th className="p-2 text-left text-text/70">Errors</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs.map((job) => (
-                  <tr key={job.id} className="border-b border-divider">
-                    <td className="p-2 text-text">{job.fileName}</td>
-                    <td className="p-2 text-text">{job.status}</td>
-                    <td className="p-2 text-right text-text">{job.rowCount}</td>
-                    <td className="p-2 text-right text-text">{job.rowsFailed}</td>
-                    <td className="p-2 text-text">{new Date(job.createdAt).toLocaleDateString()}</td>
-                    <td className="p-2">
-                      {job.rowsFailed > 0 ? (
-                        <a
-                          href={`/api/admin/users/import/jobs/${job.id}/errors.csv`}
-                          download
-                          className="link-accent text-sm"
-                        >
-                          Download CSV
-                        </a>
-                      ) : (
-                        <span className="text-text/40">—</span>
-                      )}
-                    </td>
+            <div className="table-shell">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="table-head-row text-left">
+                    <th className="px-5 py-3.5">File</th>
+                    <th className="px-4 py-3.5">Status</th>
+                    <th className="px-4 py-3.5 text-right">Rows</th>
+                    <th className="px-4 py-3.5 text-right">Failed</th>
+                    <th className="px-4 py-3.5">Date</th>
+                    <th className="px-5 py-3.5">Errors</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {jobs.map((job) => (
+                    <tr key={job.id} className="table-row calm-transition">
+                      <td className="px-5 py-3 text-text">{job.fileName}</td>
+                      <td className="px-4 py-3 text-text">{job.status}</td>
+                      <td className="px-4 py-3 text-right text-text">{job.rowCount}</td>
+                      <td className="px-4 py-3 text-right text-text">{job.rowsFailed}</td>
+                      <td className="px-4 py-3 text-text">{new Date(job.createdAt).toLocaleDateString()}</td>
+                      <td className="px-5 py-3">
+                        {job.rowsFailed > 0 ? (
+                          <a
+                            href={`/api/admin/users/import/jobs/${job.id}/errors.csv`}
+                            download
+                            className="link-accent text-sm"
+                          >
+                            Download CSV
+                          </a>
+                        ) : (
+                          <span className="text-text/40">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </Card>

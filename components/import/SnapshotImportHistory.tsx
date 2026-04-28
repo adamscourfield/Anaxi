@@ -102,65 +102,67 @@ export function SnapshotImportHistory({
       </div>
 
       {/* Table */}
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="table-head-row">
-            <th className="px-6 py-3 text-left">Filename</th>
-            <th className="px-4 py-3 text-left">Date &amp; Time</th>
-            <th className="px-4 py-3 text-center">Status</th>
-            <th className="px-4 py-3 text-right">Rows</th>
-            <th className="px-6 py-3 text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visibleJobs.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="px-6 py-8 text-center text-sm text-muted">
-                No import jobs yet.
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="table-head-row">
+              <th className="px-6 py-3 text-left">Filename</th>
+              <th className="px-4 py-3 text-left">Date &amp; Time</th>
+              <th className="px-4 py-3 text-center">Status</th>
+              <th className="px-4 py-3 text-right">Rows</th>
+              <th className="px-6 py-3 text-right">Action</th>
             </tr>
-          ) : (
-            visibleJobs.map((job) => {
-              const { text, variant } = statusLabel(job.status);
-              return (
-                <tr key={job.id} className="table-row">
-                  <td className="px-6 py-3.5">
-                    <div className="flex items-center gap-3">
-                      {fileIcon(job.status)}
-                      <span className="text-sm font-medium text-text">
-                        {job.fileName ?? "—"}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 text-sm text-muted">
-                    {formatDate(job.createdAt)}
-                  </td>
-                  <td className="px-4 py-3.5 text-center">
-                    <StatusPill variant={variant} size="sm">
-                      {text}
-                    </StatusPill>
-                  </td>
-                  <td className="px-4 py-3.5 text-right font-medium text-text tabular-nums">
-                    {(job.rowsProcessed || job.rowCount).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-3.5 text-right">
-                    <Link
-                      href={`/behaviour/import/job/${job.id}`}
-                      className={`text-xs font-semibold uppercase tracking-wide ${
-                        job.status === "FAILED"
-                          ? "text-error hover:text-error/80"
-                          : "text-muted hover:text-text"
-                      } calm-transition`}
-                    >
-                      View Log
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {visibleJobs.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-muted">
+                  No import jobs yet.
+                </td>
+              </tr>
+            ) : (
+              visibleJobs.map((job) => {
+                const { text, variant } = statusLabel(job.status);
+                return (
+                  <tr key={job.id} className="table-row calm-transition">
+                    <td className="px-6 py-3.5">
+                      <div className="flex items-center gap-3">
+                        {fileIcon(job.status)}
+                        <span className="text-sm font-medium text-text">
+                          {job.fileName ?? "—"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-muted">
+                      {formatDate(job.createdAt)}
+                    </td>
+                    <td className="px-4 py-3.5 text-center">
+                      <StatusPill variant={variant} size="sm">
+                        {text}
+                      </StatusPill>
+                    </td>
+                    <td className="px-4 py-3.5 text-right font-medium text-text tabular-nums">
+                      {(job.rowsProcessed || job.rowCount).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-3.5 text-right">
+                      <Link
+                        href={`/behaviour/import/job/${job.id}`}
+                        className={`text-xs font-semibold uppercase tracking-wide ${
+                          job.status === "FAILED"
+                            ? "text-error hover:text-error/80"
+                            : "text-muted hover:text-text"
+                        } calm-transition`}
+                      >
+                        View Log
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between px-6 py-3">

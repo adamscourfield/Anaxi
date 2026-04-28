@@ -88,35 +88,39 @@ export default async function AdminTimetablePage() {
           <div className="p-4"><EmptyState title="No timetable entries" description="Import a timetable file to populate this view." /></div>
         ) : (
           <div className="overflow-x-auto p-4 pt-3">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-bg/60 text-left text-xs uppercase tracking-[0.05em] text-muted">
-                  <th className="p-2">Class code</th>
-                  <th className="p-2">Subject</th>
-                  <th className="p-2">Year</th>
-                  <th className="p-2">Teacher email</th>
-                  <th className="p-2">Day</th>
-                  <th className="p-2">Period</th>
-                  <th className="p-2">Room</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(recentEntries as any[]).map((entry: any) => (
-                  <tr key={entry.id} className="border-b border-border/70 last:border-0">
-                    <td className="p-2">{entry.classCode}</td>
-                    <td className="p-2">{entry.subject}</td>
-                    <td className="p-2">{entry.yearGroup}</td>
-                    <td className="p-2">
-                      {entry.teacherEmailRaw ?? "—"}
-                      {!entry.teacherUserId && entry.teacherEmailRaw && <span className="ml-1 text-xs text-warning">(unmatched)</span>}
-                    </td>
-                    <td className="p-2">{entry.dayOfWeek ?? "—"}</td>
-                    <td className="p-2">{entry.period ?? "—"}</td>
-                    <td className="p-2">{entry.room ?? "—"}</td>
+            <div className="table-shell">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="table-head-row text-left">
+                    <th className="px-5 py-3.5">Class code</th>
+                    <th className="px-4 py-3.5">Subject</th>
+                    <th className="px-4 py-3.5">Year</th>
+                    <th className="px-4 py-3.5">Teacher email</th>
+                    <th className="px-4 py-3.5">Day</th>
+                    <th className="px-4 py-3.5">Period</th>
+                    <th className="px-4 py-3.5">Room</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(recentEntries as any[]).map((entry: any) => (
+                    <tr key={entry.id} className="table-row calm-transition">
+                      <td className="px-5 py-3">{entry.classCode}</td>
+                      <td className="px-4 py-3">{entry.subject}</td>
+                      <td className="px-4 py-3">{entry.yearGroup}</td>
+                      <td className="px-4 py-3">
+                        {entry.teacherEmailRaw ?? "—"}
+                        {!entry.teacherUserId && entry.teacherEmailRaw && (
+                          <span className="ml-1 text-xs text-warning">(unmatched)</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">{entry.dayOfWeek ?? "—"}</td>
+                      <td className="px-4 py-3">{entry.period ?? "—"}</td>
+                      <td className="px-4 py-3">{entry.room ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </Card>

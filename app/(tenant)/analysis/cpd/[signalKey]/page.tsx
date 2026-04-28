@@ -187,62 +187,63 @@ export default async function CpdSignalDrilldownPage({
               </BodyText>
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-bg text-left text-xs font-medium text-muted">
-                  <th className="px-4 py-3">Teacher</th>
-                  <th className="px-4 py-3">Department(s)</th>
-                  <th className="px-4 py-3 text-right">Coverage</th>
-                  <th className="px-4 py-3 text-right">Current</th>
-                  <th className="px-4 py-3 text-right">Previous</th>
-                  <th className="px-4 py-3 text-right">Δ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {affectedTeachers.map((row) => (
-                  <tr
-                    key={row.teacherMembershipId}
-                    className="border-b border-divider last:border-0 hover:bg-bg"
-                  >
-                    <td className="px-4 py-3 font-medium text-text">
-                      <Link
-                        href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
-                        className="link-subtle"
-                      >
-                        {row.teacherName}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {row.deptNames.length > 0 ? row.deptNames.join(", ") : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {row.teacherCoverage}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {row.currentMean !== null ? row.currentMean.toFixed(2) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {row.prevMean !== null ? row.prevMean.toFixed(2) : "—"}
-                    </td>
-                    <td
-                      className={`px-4 py-3 text-right tabular-nums font-medium ${
-                        row.delta === null
-                          ? "text-muted"
-                          : row.delta < 0
-                          ? "text-scale-some-text"
-                          : row.delta > 0
-                          ? "text-scale-strong-text"
-                          : "text-muted"
-                      }`}
-                    >
-                      {row.delta !== null
-                        ? `${row.delta > 0 ? "+" : ""}${row.delta.toFixed(2)}`
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="table-shell border-0 rounded-none shadow-none">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="table-head-row">
+                      <th className="px-5 py-3.5">Teacher</th>
+                      <th className="px-4 py-3.5">Department(s)</th>
+                      <th className="px-4 py-3.5 text-right">Coverage</th>
+                      <th className="px-4 py-3.5 text-right">Current</th>
+                      <th className="px-4 py-3.5 text-right">Previous</th>
+                      <th className="px-4 py-3.5 text-right">Δ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {affectedTeachers.map((row) => (
+                      <tr key={row.teacherMembershipId} className="table-row calm-transition">
+                        <td className="px-5 py-4 font-medium text-text">
+                          <Link
+                            href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
+                            className="link-subtle"
+                          >
+                            {row.teacherName}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-4 text-muted">
+                          {row.deptNames.length > 0 ? row.deptNames.join(", ") : "—"}
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">
+                          {row.teacherCoverage}
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">
+                          {row.currentMean !== null ? row.currentMean.toFixed(2) : "—"}
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">
+                          {row.prevMean !== null ? row.prevMean.toFixed(2) : "—"}
+                        </td>
+                        <td
+                          className={`px-4 py-4 text-right tabular-nums font-medium ${
+                            row.delta === null
+                              ? "text-muted"
+                              : row.delta < 0
+                                ? "text-scale-some-text"
+                                : row.delta > 0
+                                  ? "text-scale-strong-text"
+                                  : "text-muted"
+                          }`}
+                        >
+                          {row.delta !== null
+                            ? `${row.delta > 0 ? "+" : ""}${row.delta.toFixed(2)}`
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </Card>
       ) : (

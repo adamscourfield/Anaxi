@@ -821,6 +821,16 @@ textarea:focus-visible {
 
 .table-row:hover { background: var(--surface-container-low); }
 
+/* Emphasised row (e.g. drift drivers) — stacks with .table-row */
+.table-row-highlight {
+  border-left: 3px solid var(--amber-border);
+  background: color-mix(in srgb, var(--scale-some-light) 45%, var(--surface-container-lowest));
+}
+
+.table-row-highlight:hover {
+  background: color-mix(in srgb, var(--scale-some-light) 65%, var(--surface-container-low));
+}
+
 .sticky-first-column {
   position: sticky;
   left: 0;

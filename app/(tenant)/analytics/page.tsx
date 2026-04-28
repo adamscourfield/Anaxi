@@ -192,58 +192,57 @@ async function TeachersTab({
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-bg text-left text-xs font-medium text-muted">
-                  <th className="px-4 py-3">Teacher</th>
-                  <th className="px-4 py-3">Department(s)</th>
-                  <th className="px-4 py-3">Coverage</th>
-                  <th className="px-4 py-3">Drift status</th>
-                  <th className="px-4 py-3">Drift score</th>
-                  <th className="px-4 py-3">Last observed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr
-                    key={row.teacherMembershipId}
-                    className="border-b border-divider last:border-0 hover:bg-bg"
-                  >
-                    <td className="px-4 py-3 font-medium text-text">
-                      <Link
-                        href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
-                        className="link-subtle"
-                      >
-                        {row.teacherName}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {row.departmentNames.length > 0 ? row.departmentNames.join(", ") : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {row.teacherCoverage} observation{row.teacherCoverage !== 1 ? "s" : ""}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_PILL[row.status]}`}>
-                        {STATUS_LABELS[row.status]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {row.status === "LOW_COVERAGE" ? "—" : row.normalizedIDS.toFixed(1)}
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {row.lastObservationAt
-                        ? new Date(row.lastObservationAt).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                          })
-                        : "—"}
-                    </td>
+          <div className="table-shell border-0 rounded-none shadow-none">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="table-head-row">
+                    <th className="px-5 py-3.5">Teacher</th>
+                    <th className="px-4 py-3.5">Department(s)</th>
+                    <th className="px-4 py-3.5">Coverage</th>
+                    <th className="px-4 py-3.5">Drift status</th>
+                    <th className="px-4 py-3.5">Drift score</th>
+                    <th className="px-4 py-3.5">Last observed</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.teacherMembershipId} className="table-row calm-transition">
+                      <td className="px-5 py-4 font-medium text-text">
+                        <Link
+                          href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
+                          className="link-subtle"
+                        >
+                          {row.teacherName}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-4 text-muted">
+                        {row.departmentNames.length > 0 ? row.departmentNames.join(", ") : "—"}
+                      </td>
+                      <td className="px-4 py-4 text-muted">
+                        {row.teacherCoverage} observation{row.teacherCoverage !== 1 ? "s" : ""}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_PILL[row.status]}`}>
+                          {STATUS_LABELS[row.status]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-muted">
+                        {row.status === "LOW_COVERAGE" ? "—" : row.normalizedIDS.toFixed(1)}
+                      </td>
+                      <td className="px-4 py-4 text-muted">
+                        {row.lastObservationAt
+                          ? new Date(row.lastObservationAt).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                            })
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </Card>
@@ -379,58 +378,57 @@ async function CpdTab({
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-bg text-left text-xs font-medium text-muted">
-                  <th className="px-4 py-3">Signal</th>
-                  <th className="px-4 py-3 text-right">Drift rate (%)</th>
-                  <th className="px-4 py-3 text-right">Avg negative delta</th>
-                  <th className="px-4 py-3 text-right">Teachers covered</th>
-                  <th className="px-4 py-3 text-right">Improving rate (%)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => {
-                  const params = new URLSearchParams();
-                  params.set("window", String(windowDays));
-                  if (departmentId) params.set("department", departmentId);
-                  return (
-                    <tr
-                      key={row.signalKey}
-                      className="border-b border-divider last:border-0 hover:bg-bg"
-                    >
-                      <td className="px-4 py-3 font-medium text-text">
-                        <Link
-                          href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
-                          className="link-subtle"
-                        >
-                          {row.label}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-muted">
-                        {row.teachersCovered === 0
-                          ? "—"
-                          : `${Math.round(row.driftRate * 100)}%`}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-muted">
-                        {row.avgNegativeDelta !== null
-                          ? row.avgNegativeDelta.toFixed(2)
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-muted">
-                        {row.teachersCovered}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-muted">
-                        {row.teachersCovered === 0
-                          ? "—"
-                          : `${Math.round(row.improvingRate * 100)}%`}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="table-shell border-0 rounded-none shadow-none">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="table-head-row">
+                    <th className="px-5 py-3.5">Signal</th>
+                    <th className="px-4 py-3.5 text-right">Drift rate (%)</th>
+                    <th className="px-4 py-3.5 text-right">Avg negative delta</th>
+                    <th className="px-4 py-3.5 text-right">Teachers covered</th>
+                    <th className="px-4 py-3.5 text-right">Improving rate (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => {
+                    const params = new URLSearchParams();
+                    params.set("window", String(windowDays));
+                    if (departmentId) params.set("department", departmentId);
+                    return (
+                      <tr key={row.signalKey} className="table-row calm-transition">
+                        <td className="px-5 py-4 font-medium text-text">
+                          <Link
+                            href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
+                            className="link-subtle"
+                          >
+                            {row.label}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">
+                          {row.teachersCovered === 0
+                            ? "—"
+                            : `${Math.round(row.driftRate * 100)}%`}
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">
+                          {row.avgNegativeDelta !== null
+                            ? row.avgNegativeDelta.toFixed(2)
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">
+                          {row.teachersCovered}
+                        </td>
+                        <td className="px-4 py-4 text-right tabular-nums text-muted">
+                          {row.teachersCovered === 0
+                            ? "—"
+                            : `${Math.round(row.improvingRate * 100)}%`}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </Card>
@@ -591,109 +589,111 @@ async function StudentsTab({
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-bg text-left text-xs font-medium text-muted">
-                  <th className="sticky left-0 z-20 bg-bg px-4 py-3">Student</th>
-                  <th className="px-4 py-3">Year</th>
-                  <th className="px-4 py-3">Band</th>
-                  <th className="px-4 py-3 text-right">Score</th>
-                  <th className="px-4 py-3">Key drivers</th>
-                  <th className="px-4 py-3 text-right">Attendance (%)</th>
-                  <th className="px-4 py-3 text-right">Detentions Δ</th>
-                  <th className="px-4 py-3 text-right">On calls Δ</th>
-                  <th className="px-4 py-3">Flags</th>
-                  <th className="px-4 py-3">Confidence</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr
-                    key={row.studentId}
-                    className="border-b border-divider last:border-0 hover:bg-bg"
-                  >
-                    <td className="sticky left-0 z-10 bg-surface px-4 py-3 font-medium text-text">
-                      <Link
-                        href={`/analysis/students/${row.studentId}?window=${windowDays}`}
-                        className="link-subtle"
-                      >
-                        {row.onWatchlist ? "★ " : ""}{row.studentName}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-muted">{row.yearGroup ?? "—"}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${BAND_PILL[row.band]}`}
-                      >
-                        {BAND_LABELS[row.band]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">{row.riskScore}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {row.drivers.map((d) => (
-                          <span
-                            key={d.metric}
-                            className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-scale-some-text"
-                          >
-                            {d.label}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {row.attendancePct !== null ? `${row.attendancePct.toFixed(1)}%` : "—"}
-                      {row.attendanceDelta !== null && (
-                        <span
-                          className={`ml-1 text-xs ${
-                            row.attendanceDelta < 0 ? "text-red-600" : "text-scale-strong-text"
-                          }`}
-                        >
-                          ({row.attendanceDelta > 0 ? "+" : ""}
-                          {row.attendanceDelta.toFixed(1)})
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {row.detentionsDelta !== null
-                        ? row.detentionsDelta > 0
-                          ? `+${row.detentionsDelta}`
-                          : String(row.detentionsDelta)
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {row.onCallsDelta !== null
-                        ? row.onCallsDelta > 0
-                          ? `+${row.onCallsDelta}`
-                          : String(row.onCallsDelta)
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        {row.sendFlag && (
-                          <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
-                            SEND
-                          </span>
-                        )}
-                        {row.ppFlag && (
-                          <span className="rounded-full bg-scale-consistent-light px-2 py-0.5 text-xs text-blue-700">
-                            PP
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[row.confidence]}`}
-                      >
-                        {row.confidence === "HIGH" ? "High" : "Low"}
-                      </span>
-                    </td>
+          <div className="table-shell border-0 rounded-none shadow-none">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="table-head-row">
+                    <th className="sticky-first-column-header sticky left-0 z-20 px-5 py-3.5 text-left">
+                      Student
+                    </th>
+                    <th className="px-4 py-3.5">Year</th>
+                    <th className="px-4 py-3.5">Band</th>
+                    <th className="px-4 py-3.5 text-right">Score</th>
+                    <th className="px-4 py-3.5">Key drivers</th>
+                    <th className="px-4 py-3.5 text-right">Attendance (%)</th>
+                    <th className="px-4 py-3.5 text-right">Detentions Δ</th>
+                    <th className="px-4 py-3.5 text-right">On calls Δ</th>
+                    <th className="px-4 py-3.5">Flags</th>
+                    <th className="px-4 py-3.5">Confidence</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.studentId} className="table-row calm-transition">
+                      <td className="sticky-first-column px-5 py-4 font-medium text-text shadow-[4px_0_12px_-4px_rgba(0,0,0,0.06)]">
+                        <Link
+                          href={`/analysis/students/${row.studentId}?window=${windowDays}`}
+                          className="link-subtle"
+                        >
+                          {row.onWatchlist ? "★ " : ""}
+                          {row.studentName}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-4 text-muted">{row.yearGroup ?? "—"}</td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${BAND_PILL[row.band]}`}
+                        >
+                          {BAND_LABELS[row.band]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-right tabular-nums text-muted">{row.riskScore}</td>
+                      <td className="px-4 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {row.drivers.map((d) => (
+                            <span
+                              key={d.metric}
+                              className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-scale-some-text"
+                            >
+                              {d.label}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-right tabular-nums text-muted">
+                        {row.attendancePct !== null ? `${row.attendancePct.toFixed(1)}%` : "—"}
+                        {row.attendanceDelta !== null && (
+                          <span
+                            className={`ml-1 text-xs ${
+                              row.attendanceDelta < 0 ? "text-red-600" : "text-scale-strong-text"
+                            }`}
+                          >
+                            ({row.attendanceDelta > 0 ? "+" : ""}
+                            {row.attendanceDelta.toFixed(1)})
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-right tabular-nums text-muted">
+                        {row.detentionsDelta !== null
+                          ? row.detentionsDelta > 0
+                            ? `+${row.detentionsDelta}`
+                            : String(row.detentionsDelta)
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-4 text-right tabular-nums text-muted">
+                        {row.onCallsDelta !== null
+                          ? row.onCallsDelta > 0
+                            ? `+${row.onCallsDelta}`
+                            : String(row.onCallsDelta)
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex gap-1">
+                          {row.sendFlag && (
+                            <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
+                              SEND
+                            </span>
+                          )}
+                          {row.ppFlag && (
+                            <span className="rounded-full bg-scale-consistent-light px-2 py-0.5 text-xs text-blue-700">
+                              PP
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[row.confidence]}`}
+                        >
+                          {row.confidence === "HIGH" ? "High" : "Low"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </Card>

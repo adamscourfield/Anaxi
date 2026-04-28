@@ -78,25 +78,27 @@ export default async function ImportJobPage({
           <div className="p-4 pb-0">
             <H2 className="text-base">Errors ({job.errors.length})</H2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-bg/60 text-left text-xs uppercase tracking-[0.05em] text-muted">
-                  <th className="p-2">Row</th>
-                  <th className="p-2">Field</th>
-                  <th className="p-2">Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(job.errors as any[]).map((err: any) => (
-                  <tr key={err.id} className="border-b border-border/70 last:border-0">
-                    <td className="p-2">{err.rowNumber}</td>
-                    <td className="p-2">{err.field}</td>
-                    <td className="p-2">{err.message}</td>
+          <div className="table-shell border-0 rounded-none shadow-none">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="table-head-row">
+                    <th className="px-5 py-3">Row</th>
+                    <th className="px-4 py-3">Field</th>
+                    <th className="px-4 py-3">Error</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(job.errors as any[]).map((err: any) => (
+                    <tr key={err.id} className="table-row calm-transition">
+                      <td className="px-5 py-3 tabular-nums text-muted">{err.rowNumber}</td>
+                      <td className="px-4 py-3">{err.field}</td>
+                      <td className="px-4 py-3">{err.message}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </Card>
       )}

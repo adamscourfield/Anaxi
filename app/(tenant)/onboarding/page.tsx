@@ -219,37 +219,39 @@ export default async function OnboardingPage({
             <H2>Step 5: Signal labels</H2>
             <MetaText>Customise observation signal display names for your school&apos;s language.</MetaText>
             <div className="overflow-x-auto">
-              <table className="table-shell w-full">
-                <thead>
-                  <tr className="table-head-row">
-                    <th className="p-2 text-left">Signal</th>
-                    <th className="p-2 text-left">Display name</th>
-                    <th className="p-2 text-left">Description (optional)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {getAllSignalDefinitionsForTenantLabels().map((signal) => (
-                    <tr className="table-row align-top" key={signal.key}>
-                      <td className="p-2 font-mono text-xs">{signal.key}</td>
-                      <td className="p-2">
-                        <input
-                          name={`display_${signal.key}`}
-                          defaultValue={signal.displayNameDefault}
-                          className="field w-full"
-                          required
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input
-                          name={`description_${signal.key}`}
-                          defaultValue={signal.descriptionDefault}
-                          className="field w-full"
-                        />
-                      </td>
+              <div className="table-shell">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="table-head-row text-left">
+                      <th className="px-5 py-3.5">Signal</th>
+                      <th className="px-4 py-3.5">Display name</th>
+                      <th className="px-4 py-3.5">Description (optional)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {getAllSignalDefinitionsForTenantLabels().map((signal) => (
+                      <tr className="table-row align-top" key={signal.key}>
+                        <td className="px-5 py-3 font-mono text-xs">{signal.key}</td>
+                        <td className="px-4 py-3">
+                          <input
+                            name={`display_${signal.key}`}
+                            defaultValue={signal.displayNameDefault}
+                            className="field w-full"
+                            required
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input
+                            name={`description_${signal.key}`}
+                            defaultValue={signal.descriptionDefault}
+                            className="field w-full"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
             <div className="flex gap-2">
               <a href="/onboarding?step=4"><Button type="button" variant="secondary">Back</Button></a>

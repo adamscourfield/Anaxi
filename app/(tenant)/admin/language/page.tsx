@@ -181,60 +181,62 @@ export default async function AdminLanguagePage() {
             />
           </div>
           <form action={saveSignalLabels} className="space-y-3 px-5 pb-5">
-            <div className="overflow-x-auto rounded-lg border border-border/60">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-bg/60 text-left text-xs uppercase tracking-[0.05em] text-muted">
-                    <th className="px-4 py-3">Signal</th>
-                    <th className="px-4 py-3">Default name</th>
-                    <th className="px-4 py-3">Display name</th>
-                    <th className="px-4 py-3">Description</th>
-                    <th className="px-4 py-3 text-center">Reset</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {signalCatalog.map((signal) => {
-                    const override = signalLabels[signal.key];
-                    return (
-                      <tr className="border-b border-border/60 align-top last:border-0" key={signal.key}>
-                        <td className="px-4 py-3 font-mono text-xs text-muted">{signal.key}</td>
-                        <td className="px-4 py-3 text-sm text-muted">{signal.displayNameDefault}</td>
-                        <td className="px-4 py-3">
-                          <input
-                            name={`display_${signal.key}`}
-                            defaultValue={override?.displayName || signal.displayNameDefault}
-                            minLength={2}
-                            maxLength={80}
-                            required
-                            className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <textarea
-                            name={`description_${signal.key}`}
-                            defaultValue={override?.description ?? signal.descriptionDefault}
-                            maxLength={240}
-                            rows={2}
-                            className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <Button
-                            formAction={resetSignal}
-                            name="signalKey"
-                            value={signal.key}
-                            type="submit"
-                            variant="ghost"
-                            className="px-2 py-1 text-xs"
-                          >
-                            Reset
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="overflow-x-auto">
+              <div className="table-shell">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="table-head-row text-left">
+                      <th className="px-5 py-3.5">Signal</th>
+                      <th className="px-4 py-3.5">Default name</th>
+                      <th className="px-4 py-3.5">Display name</th>
+                      <th className="px-4 py-3.5">Description</th>
+                      <th className="px-4 py-3.5 text-center">Reset</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {signalCatalog.map((signal) => {
+                      const override = signalLabels[signal.key];
+                      return (
+                        <tr className="table-row align-top" key={signal.key}>
+                          <td className="px-5 py-3 font-mono text-xs text-muted">{signal.key}</td>
+                          <td className="px-4 py-3 text-sm text-muted">{signal.displayNameDefault}</td>
+                          <td className="px-4 py-3">
+                            <input
+                              name={`display_${signal.key}`}
+                              defaultValue={override?.displayName || signal.displayNameDefault}
+                              minLength={2}
+                              maxLength={80}
+                              required
+                              className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <textarea
+                              name={`description_${signal.key}`}
+                              defaultValue={override?.description ?? signal.descriptionDefault}
+                              maxLength={240}
+                              rows={2}
+                              className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <Button
+                              formAction={resetSignal}
+                              name="signalKey"
+                              value={signal.key}
+                              type="submit"
+                              variant="ghost"
+                              className="px-2 py-1 text-xs"
+                            >
+                              Reset
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
             <div className="pt-1">
               <Button type="submit">Save signal labels</Button>

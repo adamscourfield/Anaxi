@@ -280,26 +280,26 @@ export default async function CohortsPage({
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl glass-card">
+        <div className="table-shell">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-border/30 bg-surface-container-lowest/40 text-left text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-                  <th className="px-5 py-3">Year Group</th>
-                  <th className="px-4 py-3 text-right">Students</th>
-                  <th className="px-4 py-3 text-right">Attendance</th>
-                  <th className="px-4 py-3 text-right">Detentions</th>
-                  <th className="px-4 py-3 text-right">On Calls</th>
-                  <th className="px-4 py-3 text-right">Lateness</th>
-                  <th className="px-4 py-3 text-right">Suspensions</th>
-                  <th className="px-4 py-3 text-right">Exclusions</th>
+                <tr className="table-head-row text-left">
+                  <th className="px-5 py-3.5">Year Group</th>
+                  <th className="px-4 py-3.5 text-right">Students</th>
+                  <th className="px-4 py-3.5 text-right">Attendance</th>
+                  <th className="px-4 py-3.5 text-right">Detentions</th>
+                  <th className="px-4 py-3.5 text-right">On Calls</th>
+                  <th className="px-4 py-3.5 text-right">Lateness</th>
+                  <th className="px-4 py-3.5 text-right">Suspensions</th>
+                  <th className="px-4 py-3.5 text-right">Exclusions</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => (
                   <tr
                     key={row.yearGroup}
-                    className="group border-b border-border/20 last:border-0 calm-transition hover:bg-surface-container-lowest/50"
+                    className="group table-row calm-transition"
                   >
                     {/* Year Group (linked) */}
                     <td className="px-5 py-3 font-medium text-text">
