@@ -75,9 +75,9 @@ function Toggle({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className={`relative inline-flex h-[26px] w-[46px] shrink-0 items-center rounded-full transition-colors duration-200 ${
+      className={`relative inline-flex h-[26px] w-[46px] shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)] ${
         disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-      } ${checked ? "bg-[var(--primary)]" : "bg-gray-200"}`}
+      } ${checked ? "bg-[var(--primary)]" : "bg-surface-container-high"}`}
     >
       <span
         className={`inline-block h-[20px] w-[20px] rounded-full bg-white shadow-sm transition-transform duration-200 ${
@@ -212,6 +212,13 @@ export function EditUserModal({
     return map;
   }, [allTeachers]);
 
+  const roleSelectRef = useRef<HTMLSelectElement>(null);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => roleSelectRef.current?.focus({ preventScroll: true }), 0);
+    return () => window.clearTimeout(t);
+  }, []);
+
   function handleSave() {
     if (readOnly) return;
     const fd = new FormData();
@@ -269,6 +276,7 @@ export function EditUserModal({
             </label>
             <div className="relative">
               <select
+                ref={roleSelectRef}
                 id="edit-user-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}

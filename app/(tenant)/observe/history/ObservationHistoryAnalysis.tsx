@@ -247,7 +247,7 @@ export function ObservationHistoryAnalysis({
           <span className="font-medium text-text">{rangeLabel}</span>
         </p>
         {emptyIntersection ? (
-          <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[0.8125rem] text-text">
+          <p className="mt-2 rounded-lg border border-scale-some/30 bg-scale-some-light/80 px-3 py-2 text-[0.8125rem] text-text">
             {chartFellBackToTableDates
               ? "The chart range you picked does not overlap your table date filters, so the charts below use your table date range instead. Widen the table dates or choose another chart range."
               : "No overlap between this chart range and your table date filters — widen dates or pick another range."}

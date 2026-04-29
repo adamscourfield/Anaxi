@@ -34,7 +34,7 @@ export default function DashboardMockup() {
           className="flex items-center gap-1 px-2 py-0.5 rounded-full"
           style={{ background: "rgba(5,150,105,0.08)" }}
         >
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <div className="w-1.5 h-1.5 rounded-full bg-scale-strong" />
           <span className="text-2xs font-medium" style={{ color: "#059669" }}>
             Live
           </span>

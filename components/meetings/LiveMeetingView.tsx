@@ -420,40 +420,6 @@ export function LiveMeetingView({
     }
   }
 
-  function openInsertLinkDialog() {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    linkInsertRef.current = {
-      start: ta.selectionStart,
-      end: ta.selectionEnd,
-      selected: notes.slice(ta.selectionStart, ta.selectionEnd) || "link text",
-    };
-    setLinkDialogOpen(true);
-  }
-
-  function applyInsertedLink(url: string): boolean {
-    const ta = textareaRef.current;
-    const p = linkInsertRef.current;
-    if (!ta || !p) {
-      setLinkDialogOpen(false);
-      return true;
-    }
-    if (!url) {
-      toast("Enter a URL for the link.", "error");
-      return false;
-    }
-    const formatted = `[${p.selected}](${url})`;
-    const newValue = notes.slice(0, p.start) + formatted + notes.slice(p.end);
-    handleNotesChange(newValue);
-    setLinkDialogOpen(false);
-    linkInsertRef.current = null;
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.setSelectionRange(p.start, p.start + formatted.length);
-    });
-    return true;
-  }
-
   /* ── End meeting ───────────────────────────────────────────────── */
   async function handleEndMeeting() {
     try {
@@ -608,7 +574,7 @@ export function LiveMeetingView({
           </span>
           {hasStarted && !isEnded && (
             <span className="flex items-center gap-1.5 text-sm font-semibold text-scale-strong-text">
-              <span className="inline-block h-2 w-2 rounded-full bg-scale-strong-bg0" />
+              <span className="inline-block h-2 w-2 rounded-full bg-scale-strong" />
               IN PROGRESS
             </span>
           )}
@@ -818,7 +784,7 @@ export function LiveMeetingView({
                       {/* Status circle */}
                       <div className="mt-0.5 flex-shrink-0">
                         {action.status === "DONE" ? (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-scale-strong-bg0">
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-scale-strong">
                             <svg className="h-2.5 w-2.5 text-on-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                               <polyline points="20 6 9 17 4 12" />
                             </svg>

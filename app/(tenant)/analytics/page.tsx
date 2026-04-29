@@ -634,7 +634,7 @@ async function StudentsTab({
                           {row.drivers.map((d) => (
                             <span
                               key={d.metric}
-                              className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-scale-some-text"
+                              className="rounded-full bg-scale-some-light px-2 py-0.5 text-xs text-scale-some-text"
                             >
                               {d.label}
                             </span>

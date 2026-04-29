@@ -38,7 +38,7 @@ Anaxi is a single Next.js 14 app with a PostgreSQL 16 database (via Docker Compo
 
 ### Gotchas
 
-- **`npm run build` fails** with a slug conflict error. This is a pre-existing issue related to the assessments route structure. The dev server (`npm run dev`) works fine.
+- Run `npm run build` before release; it validates types, lint, and static generation (including `/login` with Suspense).
 - **Login with `admin@demo.school`** will fail if both the base seed and demo seed have been run, because this email exists in two tenants and the auth code rejects ambiguous matches. Either pass `tenantId=demo_academy` in the login form, or use a unique-email user like `sarah.chen@demo.school` / `Password123!`.
 - **Docker in Cloud VMs** requires `fuse-overlayfs` storage driver and `iptables-legacy`. These are already configured when the environment is set up.
 - The `.env` file is created from `.env.example` — defaults work for local dev without any changes needed (except `NEXTAUTH_SECRET` should be set to any non-empty string).

@@ -9,6 +9,7 @@ import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import Link from "next/link";
 import type { RiskBand } from "@/modules/analysis/studentRisk";
+import { PP_TAG_CLASS, SEN_TAG_CLASS } from "@/lib/assessments/chartColours";
 
 const BAND_LABEL: Record<RiskBand, string> = {
   URGENT: "Urgent",
@@ -102,10 +103,10 @@ export default async function TriangulationPage() {
                       <span className="text-xs text-[var(--on-surface-muted)]">{student.yearGroup}</span>
                     )}
                     {student.ppFlag && (
-                      <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">PP</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${PP_TAG_CLASS}`}>PP</span>
                     )}
                     {student.sendFlag && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">SEND</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${SEN_TAG_CLASS}`}>SEND</span>
                     )}
                   </div>
                   <div className="mt-1">
