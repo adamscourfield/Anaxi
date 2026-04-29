@@ -539,7 +539,7 @@ function LeadershipHome({
             title="Leave governance"
             subtitle={`Pending administrative approvals for ${leaveGovernanceQuarterLabel()}`}
             end={
-              <Link href="/leave/pending" className="link-accent shrink-0 text-sm font-semibold">
+              <Link href="/leave#pending-requests" className="link-accent shrink-0 text-sm font-semibold">
                 View all →
               </Link>
             }
@@ -592,17 +592,17 @@ function LeadershipHome({
                     <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
                       {isEmergency ? (
                         <Button variant="primary" asChild className="min-h-0 px-4 py-2 text-xs">
-                          <Link href="/leave/pending">Review in queue</Link>
+                          <Link href="/leave#pending-requests">Review in queue</Link>
                         </Button>
                       ) : (
                         <>
                           <Button variant="ghost" asChild className="min-h-0 px-3 py-2 text-xs text-[var(--pill-error-text)] hover:bg-status-denied-light">
-                            <Link href="/leave/pending" aria-label={`Decline or review leave for ${leave.requesterName}`}>
+                            <Link href="/leave#pending-requests" aria-label={`Decline or review leave for ${leave.requesterName}`}>
                               Decline
                             </Link>
                           </Button>
                           <Button variant="secondary" asChild className="min-h-0 px-4 py-2 text-xs">
-                            <Link href="/leave/pending" aria-label={`Approve leave for ${leave.requesterName}`}>
+                            <Link href="/leave#pending-requests" aria-label={`Approve leave for ${leave.requesterName}`}>
                               Approve
                             </Link>
                           </Button>

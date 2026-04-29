@@ -53,6 +53,11 @@ const nextConfig = {
         destination: "/analytics?tab=students",
         permanent: true,
       },
+      {
+        source: "/leave/pending",
+        destination: "/leave#pending-requests",
+        permanent: true,
+      },
     ];
   },
 };
