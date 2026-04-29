@@ -17,6 +17,12 @@ import Link from "next/link";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import type { PointType, ResultStatus } from "@prisma/client";
+import {
+  finalPointChipClass,
+  pointTypePillClasses,
+  ppInlineBadgeClassLg,
+  sendInlineBadgeClassLg,
+} from "@/modules/assessments/attainmentColours";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,11 +96,8 @@ type RankMovementData = {
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
 const POINT_TYPE_COLOURS: Record<string, string> = {
+  ...pointTypePillClasses,
   BASELINE: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
-  INTERNAL_ASSESSMENT: "bg-blue-100 text-blue-700",
-  INTERNAL_MOCK: "bg-amber-100 text-amber-700",
-  TEACHER_PREDICTION: "bg-violet-100 text-violet-700",
-  EXTERNAL_FINAL: "bg-emerald-100 text-emerald-700",
   OTHER: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
 };
 
@@ -194,7 +197,7 @@ export default function ComparisonPage() {
     .slice(0, 10);
 
   return (
-    <div className="w-full space-y-8 pb-16">
+    <div className="anx-reports-page w-full space-y-8 pb-16">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -243,7 +246,7 @@ export default function ComparisonPage() {
               {POINT_TYPE_LABELS[data.toPoint.pointType]}
             </span>
             {data.toPoint.isFinalPoint && (
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+              <span className={finalPointChipClass}>
                 Final point
               </span>
             )}
@@ -389,8 +392,8 @@ export default function ComparisonPage() {
                                       <tr key={s.studentId}>
                                         <td className="py-1 pr-3 text-[var(--on-surface)]">
                                           {s.name}
-                                          {s.ppFlag && <span className="ml-1 rounded-full bg-violet-100 px-1.5 text-[9px] text-violet-700">PP</span>}
-                                          {s.sendFlag && <span className="ml-1 rounded-full bg-blue-100 px-1.5 text-[9px] text-blue-700">SEND</span>}
+                                          {s.ppFlag && <span className={`ml-1 ${ppInlineBadgeClassLg}`}>PP</span>}
+                                          {s.sendFlag && <span className={`ml-1 ${sendInlineBadgeClassLg}`}>SEND</span>}
                                         </td>
                                         <td className="py-1 pr-3 text-center font-semibold text-[var(--on-surface-muted)]">{s.from ?? "—"}</td>
                                         <td className="py-1 pr-3 text-center font-semibold text-[var(--on-surface)]">{s.to ?? "—"}</td>
@@ -450,8 +453,8 @@ export default function ComparisonPage() {
                                 className="link-to-accent calm-transition flex-1 min-w-0 truncate text-sm"
                               >
                                 {s.name}
-                                {s.ppFlag && <span className="ml-1 rounded-full bg-violet-100 px-1.5 text-[9px] text-violet-700">PP</span>}
-                                {s.sendFlag && <span className="ml-1 rounded-full bg-blue-100 px-1.5 text-[9px] text-blue-700">SEN</span>}
+                                {s.ppFlag && <span className={`ml-1 ${ppInlineBadgeClassLg}`}>PP</span>}
+                                {s.sendFlag && <span className={`ml-1 ${sendInlineBadgeClassLg}`}>SEN</span>}
                               </Link>
                               <span className="shrink-0 text-xs text-[var(--on-surface-muted)] tabular-nums">
                                 #{s.fromRank} → #{s.toRank}

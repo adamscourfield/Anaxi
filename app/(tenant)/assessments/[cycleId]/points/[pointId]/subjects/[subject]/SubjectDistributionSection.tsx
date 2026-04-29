@@ -4,6 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { SectionHeader } from "@/components/ui/section-header";
 import type { GradeFormat } from "@prisma/client";
+import {
+  gcseGradeBadgeClass,
+  aLevelGradeBadgeClass,
+  pctScoreBadgeClass,
+  pctBandBarStyle,
+  gradeDistributionBarStyle,
+  thresholdHeaderGcse,
+} from "@/modules/assessments/attainmentColours";
 
 export type DistributionModalStudentRow = {
   id: string;
@@ -21,67 +29,19 @@ type PctDistEntry = { band: string; from: number; to: number; count: number };
 type PctThreshold = { label: string; count: number; pct: number };
 
 function gcseColour(g: string | number | null): string {
-  if (g === null) return "bg-surface-container-low text-muted";
-  const n = Number(g);
-  if (n >= 8) return "bg-emerald-600 text-white";
-  if (n >= 7) return "bg-green-500 text-white";
-  if (n >= 6) return "bg-blue-500 text-white";
-  if (n >= 5) return "bg-violet-500 text-white";
-  if (n >= 4) return "bg-amber-500 text-white";
-  if (n >= 3) return "bg-orange-500 text-white";
-  return "bg-red-600 text-white";
+  return gcseGradeBadgeClass(g);
 }
 
 function aLevelColour(g: string): string {
-  switch (g.toUpperCase()) {
-    case "A*":
-      return "bg-emerald-600 text-white";
-    case "A":
-      return "bg-green-500 text-white";
-    case "B":
-      return "bg-blue-500 text-white";
-    case "C":
-      return "bg-violet-500 text-white";
-    case "D":
-      return "bg-amber-500 text-white";
-    case "E":
-      return "bg-orange-500 text-white";
-    default:
-      return "bg-red-700 text-white";
-  }
+  return aLevelGradeBadgeClass(g);
 }
 
 function pctColour(score: number): string {
-  if (score >= 80) return "bg-emerald-600 text-white";
-  if (score >= 70) return "bg-green-500 text-white";
-  if (score >= 60) return "bg-blue-500 text-white";
-  if (score >= 50) return "bg-violet-500 text-white";
-  if (score >= 40) return "bg-amber-500 text-white";
-  if (score >= 30) return "bg-orange-500 text-white";
-  return "bg-red-600 text-white";
+  return pctScoreBadgeClass(score);
 }
 
 function pctBandDistributionStyle(from: number, to: number): { bar: string; swatch: string } {
-  if (from >= 70) return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
-  if (to <= 40) return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
-  return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
-}
-
-/** Stacked grade bars: same contrast pattern as percentage bands (dark+white / light+dark). */
-function gradeDistributionBarStyle(
-  grade: string,
-  format: "GCSE" | "A_LEVEL",
-): { bar: string; swatch: string } {
-  if (format === "GCSE") {
-    const n = Number(grade);
-    if (Number.isFinite(n) && n >= 8) return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
-    if (Number.isFinite(n) && n <= 2) return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
-    return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
-  }
-  const g = grade.toUpperCase();
-  if (g === "A*" || g === "A") return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
-  if (g === "U" || g === "E") return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
-  return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
+  return pctBandBarStyle(from, to);
 }
 
 function avgDisplay(row: DistributionModalStudentRow): string {
@@ -249,9 +209,9 @@ export function SubjectDistributionSection({
                 {isGcse && (
                   <div className="flex flex-wrap gap-3 pt-1 border-t border-[var(--outline-variant)]/20">
                     {[
-                      { label: "4+", threshold: 4, cls: "text-amber-600" },
-                      { label: "5+", threshold: 5, cls: "text-violet-600" },
-                      { label: "7+", threshold: 7, cls: "text-green-600" },
+                      { label: "4+", threshold: 4, cls: thresholdHeaderGcse.t4 },
+                      { label: "5+", threshold: 5, cls: thresholdHeaderGcse.t5 },
+                      { label: "7+", threshold: 7, cls: thresholdHeaderGcse.t7 },
                     ].map(({ label, threshold, cls }) => {
                       const count = distribution
                         .filter((e) => Number(e.grade) >= threshold)

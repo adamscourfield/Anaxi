@@ -70,7 +70,7 @@ function roleLabel(role: string): string {
 
 function statusInfo(user: UserRow): { label: string; color: string; dotClass: string } {
   if (user.isActive) {
-    return { label: "Active", color: "text-text", dotClass: "bg-emerald-500" };
+    return { label: "Active", color: "text-text", dotClass: "bg-scale-strong" };
   }
   return { label: "Inactive", color: "text-text", dotClass: "bg-on-surface-variant/45" };
 }

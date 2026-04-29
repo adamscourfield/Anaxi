@@ -8,16 +8,17 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import { toast } from "@/components/toast-provider";
+import { pointTypePillClasses } from "@/modules/assessments/attainmentColours";
 
 type PointType = "BASELINE" | "INTERNAL_ASSESSMENT" | "INTERNAL_MOCK" | "TEACHER_PREDICTION" | "EXTERNAL_FINAL" | "OTHER";
 
 const POINT_TYPE_OPTIONS: Array<{ value: PointType; label: string; description: string; colour: string }> = [
-  { value: "BASELINE", label: "Baseline", description: "Starting point for the cohort", colour: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]" },
-  { value: "INTERNAL_ASSESSMENT", label: "Internal Assessment", description: "School-set assessment", colour: "bg-blue-100 text-blue-700" },
-  { value: "INTERNAL_MOCK", label: "Internal Mock", description: "Mock examination", colour: "bg-amber-100 text-amber-700" },
-  { value: "TEACHER_PREDICTION", label: "Teacher Prediction", description: "Predicted grades", colour: "bg-violet-100 text-violet-700" },
-  { value: "EXTERNAL_FINAL", label: "External Final Results", description: "Official exam board outcomes", colour: "bg-emerald-100 text-emerald-700" },
-  { value: "OTHER", label: "Other", description: "Custom result point", colour: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]" },
+  { value: "BASELINE", label: "Baseline", description: "Starting point for the cohort", colour: pointTypePillClasses.BASELINE },
+  { value: "INTERNAL_ASSESSMENT", label: "Internal Assessment", description: "School-set assessment", colour: pointTypePillClasses.INTERNAL_ASSESSMENT },
+  { value: "INTERNAL_MOCK", label: "Internal Mock", description: "Mock examination", colour: pointTypePillClasses.INTERNAL_MOCK },
+  { value: "TEACHER_PREDICTION", label: "Teacher Prediction", description: "Predicted grades", colour: pointTypePillClasses.TEACHER_PREDICTION },
+  { value: "EXTERNAL_FINAL", label: "External Final Results", description: "Official exam board outcomes", colour: pointTypePillClasses.EXTERNAL_FINAL },
+  { value: "OTHER", label: "Other", description: "Custom result point", colour: pointTypePillClasses.OTHER },
 ];
 
 export default function NewResultPointPage() {

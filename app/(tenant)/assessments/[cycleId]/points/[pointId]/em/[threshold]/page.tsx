@@ -6,24 +6,17 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { EMTargetGroupToolbar } from "./EMTargetGroupToolbar";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import {
+  gcseGradeBadgeClass,
+  ppTableBadgeClass,
+  sendTableBadgeClass,
+} from "@/modules/assessments/attainmentColours";
 
 function getInitials(name: string): string {
   const parts = name.split(" ").filter(Boolean);
   if (parts.length >= 2)
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   return name.substring(0, 2).toUpperCase();
-}
-
-function gcseColour(g: string | number | null): string {
-  if (g === null) return "bg-surface-container-low text-muted";
-  const n = Number(g);
-  if (n >= 8) return "bg-emerald-600 text-white";
-  if (n >= 7) return "bg-green-500 text-white";
-  if (n >= 6) return "bg-blue-500 text-text";
-  if (n >= 5) return "bg-violet-500 text-white";
-  if (n >= 4) return "bg-amber-500 text-text";
-  if (n >= 3) return "bg-orange-500 text-white";
-  return "bg-red-600 text-white";
 }
 
 export default async function EMThresholdPage({
@@ -262,13 +255,13 @@ export default async function EMThresholdPage({
 
   function getTrendIcon(diff: number | null) {
     if (diff === null) return <span className="text-muted">—</span>;
-    if (diff > 0.1) return <span className="text-emerald-500 font-bold">↗ +{diff}</span>;
-    if (diff < -0.1) return <span className="text-red-500 font-bold">↘ {diff}</span>;
+    if (diff > 0.1) return <span className="font-bold text-scale-strong-text">↗ +{diff}</span>;
+    if (diff < -0.1) return <span className="font-bold text-scale-limited-text">↘ {diff}</span>;
     return <span className="text-muted font-bold">→ {diff}</span>;
   }
 
   return (
-    <div className="w-full space-y-8 pb-16">
+    <div className="anx-reports-page w-full space-y-8 pb-16">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -382,12 +375,12 @@ export default async function EMThresholdPage({
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap gap-1.5">
                         {row.sendFlag && (
-                          <span className="rounded bg-primary-container px-2 py-0.5 text-[10px] font-semibold uppercase text-on-primary">
+                          <span className={sendTableBadgeClass}>
                             SEN
                           </span>
                         )}
                         {row.ppFlag && (
-                          <span className="rounded bg-primary-container px-2 py-0.5 text-[10px] font-semibold uppercase text-on-primary">
+                          <span className={ppTableBadgeClass}>
                             PP
                           </span>
                         )}
@@ -399,14 +392,14 @@ export default async function EMThresholdPage({
 
                     {/* English Grade */}
                     <td className="px-4 py-4 text-center">
-                      <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${gcseColour(row.eRaw)}`}>
+                      <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${gcseGradeBadgeClass(row.eRaw)}`}>
                         {row.eRaw}
                       </span>
                     </td>
 
                     {/* Maths Grade */}
                     <td className="px-4 py-4 text-center">
-                      <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${gcseColour(row.mRaw)}`}>
+                      <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${gcseGradeBadgeClass(row.mRaw)}`}>
                         {row.mRaw}
                       </span>
                     </td>
@@ -415,7 +408,7 @@ export default async function EMThresholdPage({
                     <td className="px-4 py-4 text-center align-middle">
                       <div className="inline-flex items-center justify-center">
                       {row.met ? (
-                         <div className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-status-approved-light text-status-approved-text">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                          </div>
                       ) : (

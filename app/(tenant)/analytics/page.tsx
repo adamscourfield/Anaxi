@@ -635,7 +635,7 @@ async function StudentsTab({
                         {row.drivers.map((d) => (
                           <span
                             key={d.metric}
-                            className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-scale-some-text"
+                            className="rounded-full bg-scale-some-light px-2 py-0.5 text-xs text-scale-some-text"
                           >
                             {d.label}
                           </span>
@@ -647,7 +647,7 @@ async function StudentsTab({
                       {row.attendanceDelta !== null && (
                         <span
                           className={`ml-1 text-xs ${
-                            row.attendanceDelta < 0 ? "text-red-600" : "text-scale-strong-text"
+                            row.attendanceDelta < 0 ? "text-scale-limited-text" : "text-scale-strong-text"
                           }`}
                         >
                           ({row.attendanceDelta > 0 ? "+" : ""}
@@ -677,7 +677,7 @@ async function StudentsTab({
                           </span>
                         )}
                         {row.ppFlag && (
-                          <span className="rounded-full bg-scale-consistent-light px-2 py-0.5 text-xs text-blue-700">
+                          <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
                             PP
                           </span>
                         )}
@@ -722,7 +722,7 @@ export default async function AnalyticsPage({
     : 21;
 
   return (
-    <div className="space-y-8">
+    <div className="anx-reports-page space-y-8">
       <PageHeader
         eyebrow="Analysis"
         title="Priorities"

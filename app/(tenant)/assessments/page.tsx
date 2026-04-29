@@ -8,6 +8,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import Link from "next/link";
 import type { QualificationType, PointType } from "@prisma/client";
+import { qualificationTypePillClasses } from "@/modules/assessments/attainmentColours";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -18,12 +19,7 @@ const QUAL_LABELS: Record<QualificationType, string> = {
   OTHER: "Other",
 };
 
-const QUAL_COLOURS: Record<QualificationType, string> = {
-  GCSE: "bg-blue-100 text-blue-700",
-  A_LEVEL: "bg-violet-100 text-violet-700",
-  PERCENTAGE: "bg-emerald-100 text-emerald-700",
-  OTHER: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
-};
+const QUAL_COLOURS = qualificationTypePillClasses;
 
 function totalEntries(cycle: {
   points: Array<{ assessments: Array<{ entryCount: number }> }>;

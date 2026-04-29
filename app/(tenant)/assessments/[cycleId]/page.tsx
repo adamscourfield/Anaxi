@@ -11,6 +11,7 @@ import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chro
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { PointType, ResultStatus, QualificationType } from "@prisma/client";
+import { pointTypePillClasses, resultStatusPillClasses } from "@/modules/assessments/attainmentColours";
 
 // ─── Type badges ─────────────────────────────────────────────────────────────
 
@@ -23,14 +24,7 @@ const POINT_TYPE_LABELS: Record<PointType, string> = {
   OTHER: "Other",
 };
 
-const POINT_TYPE_COLOURS: Record<PointType, string> = {
-  BASELINE: "bg-surface-container-low text-muted",
-  INTERNAL_ASSESSMENT: "bg-blue-50 text-blue-600",
-  INTERNAL_MOCK: "bg-surface-container-low text-muted",
-  TEACHER_PREDICTION: "bg-violet-50 text-violet-600",
-  EXTERNAL_FINAL: "bg-emerald-50 text-emerald-600",
-  OTHER: "bg-surface-container-low text-muted",
-};
+const POINT_TYPE_COLOURS = pointTypePillClasses;
 
 const STATUS_LABELS: Record<ResultStatus, string> = {
   DRAFT: "Draft",
@@ -39,12 +33,7 @@ const STATUS_LABELS: Record<ResultStatus, string> = {
   LOCKED: "Locked",
 };
 
-const STATUS_COLOURS: Record<ResultStatus, string> = {
-  DRAFT: "bg-surface-container-low text-muted",
-  VALIDATED: "bg-blue-50 text-blue-600",
-  PUBLISHED: "bg-emerald-50 text-emerald-600",
-  LOCKED: "bg-primary text-white",
-};
+const STATUS_COLOURS = resultStatusPillClasses;
 
 const QUAL_LABELS: Record<QualificationType, string> = {
   GCSE: "GCSE",
@@ -112,7 +101,7 @@ export default async function CycleDetailPage({
   ).size;
 
   return (
-    <div className="w-full space-y-8 pb-16">
+    <div className="anx-reports-page w-full space-y-8 pb-16">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -152,7 +141,7 @@ export default async function CycleDetailPage({
           accentPlacement="none"
           tone="softGrey"
           context={
-            <span className="font-semibold text-emerald-600">↗ +12% from Y10</span>
+            <span className="font-semibold text-scale-strong-text">↗ +12% from Y10</span>
           }
         />
         <StatCard

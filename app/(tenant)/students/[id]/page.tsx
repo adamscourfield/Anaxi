@@ -84,7 +84,7 @@ type AttainmentRow = {
 
 function DeltaCell({ value }: { value: number | null }) {
   if (value === null) return <span className="text-muted">—</span>;
-  const color = value > 0 ? "text-red-600" : value < 0 ? "text-scale-strong-text" : "text-muted";
+  const color = value > 0 ? "text-scale-limited-text" : value < 0 ? "text-scale-strong-text" : "text-muted";
   return (
     <span className={`tabular-nums font-medium ${color}`}>
       {value > 0 ? `+${value}` : String(value)}
@@ -444,7 +444,7 @@ export default async function StudentDetailPage({
                     {analysisProfile.attendanceDelta !== null ? (
                       <span
                         className={`tabular-nums font-medium ${
-                          analysisProfile.attendanceDelta < 0 ? "text-red-600" : "text-scale-strong-text"
+                          analysisProfile.attendanceDelta < 0 ? "text-scale-limited-text" : "text-scale-strong-text"
                         }`}
                         title="Change in attendance rate (percentage points)"
                       >
@@ -626,7 +626,7 @@ export default async function StudentDetailPage({
                           : delta > 0.05
                             ? "text-scale-strong-text font-medium"
                             : delta < -0.05
-                              ? "text-red-600 font-medium"
+                              ? "text-scale-limited-text font-medium"
                               : "text-muted";
 
                       const cellHover =
@@ -653,7 +653,7 @@ export default async function StudentDetailPage({
                                   : curr - prev > 0.05
                                     ? "text-scale-strong-text"
                                     : curr - prev < -0.05
-                                      ? "text-red-600"
+                                      ? "text-scale-limited-text"
                                       : "text-text";
                             const label = p.label?.trim() || `Assessment ${i + 1}`;
                             return (
