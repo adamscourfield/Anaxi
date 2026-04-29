@@ -98,7 +98,7 @@ export function StatCard({
         <div className="flex items-start justify-between gap-2">
           {icon ? (
             <span
-              className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl [&_svg]:h-5 [&_svg]:w-5 ${iconTileClassName ?? "bg-[var(--surface-container-low)] text-muted"}`}
+              className={`inline-flex h-10 w-10 shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5 ${iconTileClassName ?? "rounded-xl bg-[var(--surface-container-low)] text-muted"}`}
             >
               {icon}
             </span>

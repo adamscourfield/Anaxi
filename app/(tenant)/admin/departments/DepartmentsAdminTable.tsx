@@ -84,7 +84,7 @@ export function DepartmentsAdminTable({
           return (
             <div
               key={dept.id}
-              className="overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient calm-transition hover:shadow-md"
+              className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)] calm-transition hover:shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)]"
             >
               {/* Department header row */}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-3 px-5 py-4">
@@ -92,19 +92,19 @@ export function DepartmentsAdminTable({
                 <button
                   type="button"
                   onClick={() => toggleExpand(dept.id)}
-                  className="shrink-0 rounded-lg p-1.5 text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
+                  className="shrink-0 rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] p-1.5 text-muted calm-transition hover:border-border hover:bg-[var(--surface-container-low)] hover:text-text"
                   title={isExpanded ? "Collapse" : "Expand staff"}
                 >
                   <svg
                     viewBox="0 0 20 20"
                     fill="none"
-                    className={`h-4 w-4 calm-transition ${isExpanded ? "rotate-90" : ""}`}
+                    className={`h-4 w-4 calm-transition ${isExpanded ? "rotate-180" : ""}`}
                     stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    <path d="M7 7l3 3 3-3" />
+                    <path d="M6 8l4 4 4-4" />
                   </svg>
                 </button>
 
@@ -138,7 +138,7 @@ export function DepartmentsAdminTable({
 
                     {/* Staff — inline number + label */}
                     <div
-                      className="hidden items-baseline gap-1.5 rounded-xl bg-[var(--surface-container-low)] px-2.5 py-1.5 tabular-nums sm:inline-flex"
+                      className="hidden items-baseline gap-1 rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--surface-container-low)]/80 px-3 py-1.5 tabular-nums sm:inline-flex"
                       title="Staff in department"
                     >
                       <span className="text-sm font-semibold text-text">{dept.memberships.length}</span>
@@ -172,11 +172,11 @@ export function DepartmentsAdminTable({
                   </div>
 
                 {/* Actions */}
-                <div className="flex shrink-0 items-center gap-0.5 border-l border-[var(--surface-container-low)] pl-2 sm:pl-3">
+                <div className="flex shrink-0 items-center gap-1 border-l border-[color-mix(in_srgb,var(--outline-variant)_20%,transparent)] pl-2 sm:pl-3">
                   <button
                     type="button"
                     onClick={() => openAddMember(dept)}
-                    className="rounded-md p-1.5 text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] text-muted calm-transition hover:border-border hover:bg-surface-container-low hover:text-text"
                     title="Add staff member"
                   >
                     <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -188,7 +188,7 @@ export function DepartmentsAdminTable({
                   <button
                     type="button"
                     onClick={() => openEdit(dept)}
-                    className="rounded-md p-1.5 text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] text-muted calm-transition hover:border-border hover:bg-surface-container-low hover:text-text"
                     title="Rename department"
                   >
                     <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -198,7 +198,7 @@ export function DepartmentsAdminTable({
                   <button
                     type="button"
                     onClick={() => setDeleteTarget({ id: dept.id, name: dept.name })}
-                    className="rounded-md p-1.5 text-muted calm-transition hover:bg-error/10 hover:text-error"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] text-muted calm-transition hover:border-error/40 hover:bg-error/10 hover:text-error"
                     title="Delete department"
                   >
                     <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

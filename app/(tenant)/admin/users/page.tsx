@@ -34,6 +34,44 @@ function AddStaffIcon() {
   );
 }
 
+function KpiUsersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.75">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function KpiActiveIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.75">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function KpiLeaveIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.75">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function KpiAdminIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.75">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
 export default async function AdminUsersPage() {
   const user = await requireAdminUser();
   const canMutateSuperUsers = user.role === "SUPER_ADMIN";
@@ -220,17 +258,22 @@ export default async function AdminUsersPage() {
       {/* ── Header ─────────────────────────────────────────────────── */}
       <PageHeader
         eyebrow={<>Internal&ensp;›&ensp;User Directory</>}
+        eyebrowClassName="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted/55"
         title="User Directory"
+        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
+        subtitle="Manage staff accounts, roles, and institutional access."
+        subtitleClassName="max-w-full text-pretty text-sm font-medium leading-relaxed text-muted/90 md:max-w-2xl"
+        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8"
         actions={
           <>
             <Link href="/admin/users/import">
-              <Button variant="secondary" type="button" className="gap-2">
+              <Button variant="secondary" type="button" className="gap-2 rounded-full border border-border/80 bg-surface-container-lowest px-4 py-2.5 shadow-sm hover:bg-surface-container-low">
                 <UploadIcon />
                 Upload Ledger
               </Button>
             </Link>
             <Link href="/admin/users/import">
-              <Button variant="primary" type="button" className="gap-2">
+              <Button variant="primary" type="button" className="gap-2 rounded-full px-5 py-2.5">
                 <AddStaffIcon />
                 Add Staff
               </Button>
@@ -239,13 +282,16 @@ export default async function AdminUsersPage() {
         }
       />
 
-      {/* ── Summary stats (KPI row — matches Explorer / Signals) ───── */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      {/* ── Summary stats (KPI row — User Directory reference) ───── */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-5">
         <StatCard
+          layout="kpi"
           label="Total Staff"
           value={allUsers.length.toLocaleString()}
           tone="glass"
-          contextVariant="inline"
+          showChevron={false}
+          icon={<KpiUsersIcon />}
+          iconTileClassName="rounded-full bg-[rgba(99,102,241,0.12)] text-[#4f46e5]"
           context={
             <span className="font-medium text-muted">
               {activeCount} active · {inactiveCount} inactive
@@ -253,19 +299,23 @@ export default async function AdminUsersPage() {
           }
         />
         <StatCard
+          layout="kpi"
           label="Active Now"
           value={activeCount.toLocaleString()}
           tone="glass"
-          contextVariant="inline"
-          context={
-            <span className="font-medium text-muted">Institutional presence: {activePercent}%</span>
-          }
+          showChevron={false}
+          icon={<KpiActiveIcon />}
+          iconTileClassName="rounded-full bg-[rgba(16,185,129,0.12)] text-[#059669]"
+          context={<span className="font-medium text-muted">Institutional presence: {activePercent}%</span>}
         />
         <StatCard
+          layout="kpi"
           label="On Leave"
           value={inactiveCount.toLocaleString()}
           tone="glass"
-          contextVariant="inline"
+          showChevron={false}
+          icon={<KpiLeaveIcon />}
+          iconTileClassName="rounded-full bg-[rgba(245,158,11,0.14)] text-[#b45309]"
           context={
             inactiveCount > 0 ? (
               <span className="inline-flex items-center gap-1 font-semibold text-error">
@@ -278,10 +328,13 @@ export default async function AdminUsersPage() {
           }
         />
         <StatCard
+          layout="kpi"
           label="Administrators"
           value={adminCount.toLocaleString()}
           tone="glass"
-          contextVariant="inline"
+          showChevron={false}
+          icon={<KpiAdminIcon />}
+          iconTileClassName="rounded-full bg-[rgba(59,130,246,0.12)] text-[#2563eb]"
           context={<span className="font-medium text-muted">Core system access</span>}
         />
       </div>

@@ -4,7 +4,6 @@ import { requireAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { StatusPill } from "@/components/ui/status-pill";
 import { PageHeader } from "@/components/ui/page-header";
-import { H2 } from "@/components/ui/typography";
 
 type AdminRow = {
   href: string;
@@ -13,6 +12,26 @@ type AdminRow = {
   icon: ReactNode;
   badge?: ReactNode;
 };
+
+/** Tinted icon wells — matches Institutional Dashboard reference (purple / blue / green / amber). */
+function rowIconWell(href: string): string {
+  if (href === "/admin/users" || href === "/admin/settings") {
+    return "bg-[rgba(99,102,241,0.10)] text-[#4f46e5]";
+  }
+  if (href === "/admin/departments" || href === "/admin/taxonomies") {
+    return "bg-[rgba(59,130,246,0.10)] text-[#2563eb]";
+  }
+  if (href === "/admin/coaching" || href === "/admin/timetable") {
+    return "bg-[rgba(16,185,129,0.10)] text-[#059669]";
+  }
+  if (href === "/admin/leave-approvals" || href === "/admin/terminology") {
+    return "bg-[rgba(245,158,11,0.12)] text-[#b45309]";
+  }
+  if (href === "/admin/imports") {
+    return "bg-[var(--surface-container-high)] text-[var(--on-surface-variant)]";
+  }
+  return "bg-[var(--surface-container-low)] text-muted";
+}
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -106,10 +125,11 @@ const ChevronRight = () => (
 // ─── Row component ────────────────────────────────────────────────────────────
 
 function AdminRowItem({ row, isLast }: { row: AdminRow; isLast: boolean }) {
+  const well = rowIconWell(row.href);
   return (
     <Link href={row.href} className="group block">
-      <div className={`flex items-center gap-4 px-5 py-4 calm-transition group-hover:bg-[var(--surface-container-low)] ${!isLast ? "border-b border-[var(--surface-container-low)]" : ""}`}>
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--surface-container-low)] text-muted">
+      <div className={`flex items-center gap-4 px-5 py-4 calm-transition group-hover:bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] ${!isLast ? "border-b border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)]" : ""}`}>
+        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl [&_svg]:shrink-0 calm-transition group-hover:shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${well}`}>
           {row.icon}
         </div>
         <div className="min-w-0 flex-1">
@@ -129,15 +149,17 @@ function AdminRowItem({ row, isLast }: { row: AdminRow; isLast: boolean }) {
 
 function Section({ title, tag, rows }: { title: string; tag: string; rows: AdminRow[] }) {
   return (
-    <section className="space-y-3">
-      <div className="flex items-baseline justify-between">
-        <H2>{title}</H2>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted/60">{tag}</span>
-      </div>
-      <div className="overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient">
-        {rows.map((row, i) => (
-          <AdminRowItem key={row.href} row={row} isLast={i === rows.length - 1} />
-        ))}
+    <section className="space-y-0">
+      <div className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)]">
+        <div className="flex items-baseline justify-between gap-4 border-b border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] px-5 py-4 sm:px-6">
+          <h2 className="text-base font-semibold tracking-[-0.02em] text-text">{title}</h2>
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted/55">{tag.toUpperCase()}</span>
+        </div>
+        <div>
+          {rows.map((row, i) => (
+            <AdminRowItem key={row.href} row={row} isLast={i === rows.length - 1} />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -165,11 +187,38 @@ export default async function AdminIndexPage() {
   const hasTimetable = timetableCount > 0;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       {/* ── Header ──────────────────────────────────────────────────── */}
       <PageHeader
         title="Institutional Dashboard"
+        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
         subtitle="Manage foundational administrative architecture, staff hierarchies, and semantic datasets from a single unified ledger."
+        subtitleClassName="max-w-full text-pretty text-sm font-medium leading-relaxed text-muted/90 md:max-w-2xl"
+        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8"
+        actions={
+          <>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-surface-container-lowest px-4 py-2 text-[0.8125rem] font-medium text-text shadow-sm calm-transition hover:border-outline-variant hover:bg-surface-container-low"
+            >
+              <svg className="h-3.5 w-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+              </svg>
+              Filter
+            </button>
+            <a
+              href="/api/admin/ledger/export"
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-4 py-2 text-[0.8125rem] font-semibold text-[var(--on-primary)] shadow-[var(--shadow-btn)] calm-transition hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px"
+            >
+              <svg className="h-3.5 w-3.5 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Export Ledger
+            </a>
+          </>
+        }
       />
 
       {/* ── People & Access ─────────────────────────────────────────── */}
