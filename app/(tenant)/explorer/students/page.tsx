@@ -236,22 +236,17 @@ export default async function StudentsPage({
       {/* ── Header ──────────────────────────────────────────────── */}
       <PageHeader
         eyebrow="Explorer"
-        eyebrowClassName="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted"
         title="Students"
-        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
         subtitle="Risk bands, attendance, and flags for your cohort."
-        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8"
+        className="anx-page-header-shell"
         actions={
           <>
             {showExport && (
               <form action="/api/explorer/export" method="POST" className="inline">
                 <input type="hidden" name="view" value="STUDENT_RISK" />
                 <input type="hidden" name="windowDays" value={String(windowDays)} />
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:border-text/25 hover:bg-[var(--surface-container-low)]"
-                >
-                  <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <button type="submit" className="anx-btn-pill-ghost calm-transition font-semibold">
+                  <svg className="anx-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
                     <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
                     <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
@@ -260,11 +255,8 @@ export default async function StudentsPage({
                 </button>
               </form>
             )}
-            <Link
-              href="/students/import"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary shadow-md calm-transition hover:bg-primaryBtnHover hover:shadow-lg motion-safe:hover:-translate-y-px active:scale-[0.98]"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <Link href="/students/import" className="anx-btn-pill-primary calm-transition">
+              <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M14 2v6h6M12 18v-6M9 15h6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

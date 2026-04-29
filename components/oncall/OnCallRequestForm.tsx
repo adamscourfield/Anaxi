@@ -107,7 +107,7 @@ export function OnCallRequestForm({
   return (
     <div className="w-full min-w-0 space-y-8 md:mx-auto md:max-w-2xl">
       {/* ── Page header ───────────────────────────────────────────── */}
-      <header className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8">
+      <header className="anx-page-header-shell">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
           <div className="min-w-0 space-y-2">
             <h1 className="text-pretty text-[clamp(1.625rem,3.5vw,2rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text">

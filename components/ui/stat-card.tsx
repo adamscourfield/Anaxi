@@ -114,7 +114,7 @@ export function StatCard({
     );
 
     const kpiInner = (
-      <div className={`group overflow-hidden rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)] ${kpiSurfaceClass}`}>
+      <div className={`group overflow-hidden rounded-2xl shadow-[var(--anx-elevated-shadow)] ${kpiSurfaceClass}`}>
         {kpiBody}
       </div>
     );

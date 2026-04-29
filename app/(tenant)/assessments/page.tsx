@@ -66,11 +66,10 @@ export default async function AssessmentsPage() {
       <PageHeader
         eyebrow="Attainment"
         title="Cycles"
-        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
         subtitle="Track cohort-level outcomes across the academic year — from baselines through to final results."
-        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-10"
+        className="anx-page-header-shell"
         actions={
-          <Button asChild className="rounded-full px-6">
+          <Button asChild className="h-10 min-h-0 rounded-full px-6 shadow-md">
             <Link href="/assessments/new" className="gap-2">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                 <path d="M12 5v14M5 12h14" />

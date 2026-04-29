@@ -215,7 +215,7 @@ export function AdminSettingsForms({
 
   if (tab === "school") {
     return (
-      <div className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)] sm:p-8">
+      <div className="overflow-hidden rounded-2xl anx-elevated-card p-6 sm:p-8">
         <div className="mb-6">
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">School details</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">Set the school name, timezone, and default insight window.</p>
@@ -227,7 +227,7 @@ export function AdminSettingsForms({
         >
           <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">School name</label>
+              <label className="anx-label-micro">School name</label>
               <input
                 name="schoolName"
                 defaultValue={settings?.schoolName ?? ""}
@@ -236,7 +236,7 @@ export function AdminSettingsForms({
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Timezone</label>
+              <label className="anx-label-micro">Timezone</label>
               <select
                 name="timezone"
                 defaultValue={settings?.timezone ?? "Europe/London"}
@@ -251,7 +251,7 @@ export function AdminSettingsForms({
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Default insight window</label>
+              <label className="anx-label-micro">Default insight window</label>
               <select
                 name="defaultInsightWindowDays"
                 defaultValue={String(settings?.defaultInsightWindowDays ?? 21)}
@@ -268,7 +268,7 @@ export function AdminSettingsForms({
             <summary className="cursor-pointer text-sm font-semibold text-text">Advanced thresholds</summary>
             <div className="mt-4 grid max-w-2xl gap-4 sm:grid-cols-3">
               <div>
-                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Drift delta</label>
+                <label className="anx-label-micro">Drift delta</label>
                 <input
                   type="number"
                   step="0.01"
@@ -278,7 +278,7 @@ export function AdminSettingsForms({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Min observations</label>
+                <label className="anx-label-micro">Min observations</label>
                 <input
                   type="number"
                   name="minObservationCount"
@@ -287,7 +287,7 @@ export function AdminSettingsForms({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Behaviour spike %</label>
+                <label className="anx-label-micro">Behaviour spike %</label>
                 <input
                   type="number"
                   step="1"
@@ -325,10 +325,10 @@ export function AdminSettingsForms({
                 <input type="hidden" name="enabled" value={String(feature.enabled)} />
                 <button
                   type="submit"
-                  className={`group flex w-full items-center gap-4 rounded-2xl border p-4 text-left shadow-[0_1px_2px_rgba(0,0,0,0.04)] calm-transition sm:p-5 ${
+                  className={`group flex w-full items-center gap-4 rounded-2xl border p-4 text-left calm-transition sm:p-5 ${
                     feature.enabled
-                      ? "border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-lowest)] hover:border-[color-mix(in_srgb,var(--primary)_18%,var(--outline-variant))] hover:shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)]"
-                      : "border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] bg-[var(--surface-container-low)]/40 hover:border-border hover:bg-[var(--surface-container-low)]/70"
+                      ? "border-[var(--anx-card-border-strong)] bg-[var(--surface-container-lowest)] shadow-[var(--anx-elevated-shadow)] hover:shadow-[var(--anx-elevated-shadow-hover)]"
+                      : "border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] bg-[var(--surface-container-low)]/40 shadow-[var(--anx-elevated-shadow)] hover:border-border hover:bg-[var(--surface-container-low)]/70"
                   }`}
                 >
                   <span

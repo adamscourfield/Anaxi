@@ -15,17 +15,15 @@ export function HomePageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-10">
+    <header className="anx-page-header-shell">
       <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-2">
           {eyebrow ? (
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">{eyebrow}</p>
+            <p className="anx-eyebrow">{eyebrow}</p>
           ) : null}
-          <h1 className="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.12] tracking-[-0.035em] text-text">
-            {title}
-          </h1>
+          <h1 className="anx-page-title">{title}</h1>
           {subtitle ? (
-            <p className="max-w-2xl text-pretty text-[13px] leading-relaxed text-muted/90">{subtitle}</p>
+            <p className="anx-page-subtitle">{subtitle}</p>
           ) : null}
         </div>
         {actions ? (

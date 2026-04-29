@@ -7,7 +7,6 @@ import {
   assertAdminCannotAssignSuperAdminRole,
   requireAdminUser,
 } from "@/lib/admin";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -17,7 +16,7 @@ import { UserDirectoryTable } from "./UserDirectoryTable";
 
 function UploadIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 20 20" fill="none" className="anx-icon-inline" xmlns="http://www.w3.org/2000/svg">
       <path d="M10 3v10M6 7l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -26,7 +25,7 @@ function UploadIcon() {
 
 function AddStaffIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 20 20" fill="none" className="anx-icon-inline" xmlns="http://www.w3.org/2000/svg">
       <path d="M13 7a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="1.5" />
       <path d="M4 17v-1a5 5 0 015-5h2a5 5 0 015 5v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       <path d="M16 4v4M14 6h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -258,25 +257,18 @@ export default async function AdminUsersPage() {
       {/* ── Header ─────────────────────────────────────────────────── */}
       <PageHeader
         eyebrow={<>Internal&ensp;›&ensp;User Directory</>}
-        eyebrowClassName="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted/55"
         title="User Directory"
-        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
         subtitle="Manage staff accounts, roles, and institutional access."
-        subtitleClassName="max-w-full text-pretty text-sm font-medium leading-relaxed text-muted/90 md:max-w-2xl"
-        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8"
+        className="anx-page-header-shell"
         actions={
           <>
-            <Link href="/admin/users/import">
-              <Button variant="secondary" type="button" className="gap-2 rounded-full border border-border/80 bg-surface-container-lowest px-4 py-2.5 shadow-sm hover:bg-surface-container-low">
-                <UploadIcon />
-                Upload Ledger
-              </Button>
+            <Link href="/admin/users/import" className="anx-btn-pill-ghost calm-transition">
+              <UploadIcon />
+              Upload Ledger
             </Link>
-            <Link href="/admin/users/import">
-              <Button variant="primary" type="button" className="gap-2 rounded-full px-5 py-2.5">
-                <AddStaffIcon />
-                Add Staff
-              </Button>
+            <Link href="/admin/users/import" className="anx-btn-pill-primary calm-transition">
+              <AddStaffIcon />
+              Add Staff
             </Link>
           </>
         }

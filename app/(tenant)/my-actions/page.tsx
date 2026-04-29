@@ -26,6 +26,7 @@ export default async function MyActionsPage() {
         eyebrow="Operations"
         title="My Actions"
         subtitle="Stay on top of meeting follow-ups and deadlines."
+        className="anx-page-header-shell"
         meta={
           <>
             <StatusPill variant="neutral">{openCount} open</StatusPill>
@@ -35,11 +36,8 @@ export default async function MyActionsPage() {
           </>
         }
         actions={
-          <Link
-            href="/meetings"
-            className="calm-transition inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm hover:border-outline-variant hover:bg-[var(--surface-container-low)]"
-          >
-            <svg className="h-3.5 w-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+          <Link href="/meetings" className="anx-btn-pill-ghost calm-transition font-semibold">
+            <svg className="anx-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
               <rect x="3" y="4" width="18" height="18" rx="2" />
               <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />

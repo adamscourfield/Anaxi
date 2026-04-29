@@ -61,11 +61,11 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <PageHeader
         title="Meetings"
-        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
-        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8"
+        subtitle="Plan agendas, capture actions, and follow up after each session."
+        className="anx-page-header-shell"
         actions={
           hasPermission(user.role, "meetings:create") ? (
-            <Button asChild className="rounded-full px-6 shadow-md">
+            <Button asChild className="h-10 min-h-0 rounded-full px-6 shadow-md">
               <Link href="/meetings/new" className="gap-2">
                 <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4" aria-hidden>
                   <path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5h-4.5a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z" />

@@ -69,22 +69,21 @@ export default async function BehaviourImportPage() {
     <div className="space-y-8">
       <PageHeader
         title="Import Student Snapshot Data"
-        titleClassName="text-pretty text-[clamp(1.5rem,3.5vw,2rem)] font-bold leading-[1.12] tracking-[-0.03em] text-text"
         subtitle={
           <>
             Bulk synchronize student behavior and assessment records using standardized CSV snapshots.
             Ensure all headers match the institutional ledger template.
           </>
         }
-        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-10"
+        className="anx-page-header-shell"
       />
 
       <SnapshotUploader />
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <div className="home-hero-glass flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)] sm:p-6">
+        <div className="home-hero-glass flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+            <p className="anx-label-micro">
               Total Records Sync&apos;d
             </p>
             <div className="mt-2 flex flex-wrap items-baseline gap-2">
@@ -113,9 +112,9 @@ export default async function BehaviourImportPage() {
           </div>
         </div>
 
-        <div className="home-hero-glass flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)] sm:p-6">
+        <div className="home-hero-glass flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Integrity Score</p>
+            <p className="anx-label-micro">Integrity Score</p>
             <div className="mt-2 flex flex-wrap items-baseline gap-2">
               <span className="text-[2rem] font-bold leading-none tracking-[-0.03em] text-text tabular-nums sm:text-[2.25rem]">
                 {integrityScore}%

@@ -84,7 +84,7 @@ export function DepartmentsAdminTable({
           return (
             <div
               key={dept.id}
-              className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)] calm-transition hover:shadow-[0_4px_24px_-8px_rgba(0,0,0,0.08)]"
+              className="overflow-hidden rounded-xl anx-elevated-card calm-transition anx-elevated-card--hover"
             >
               {/* Department header row */}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-3 px-5 py-4">

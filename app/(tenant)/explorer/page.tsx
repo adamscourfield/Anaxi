@@ -293,12 +293,11 @@ export default async function ExplorerPage() {
       <PageHeader
         eyebrow="Analysis"
         title="Explorer"
-        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
         subtitle="Command centre for teachers, departments, signals, and behaviour — tuned to a rolling observation window."
-        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-10"
+        className="anx-page-header-shell"
         meta={
           <span className="inline-flex flex-wrap items-center gap-2 text-[0.8125rem] leading-snug text-muted">
-            <svg className="h-4 w-4 shrink-0 text-muted/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+            <svg className="anx-icon-inline opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
               <rect x="3" y="5" width="18" height="16" rx="2" strokeLinejoin="round" />
               <path strokeLinecap="round" d="M16 3v4M8 3v4M3 11h18" />
             </svg>

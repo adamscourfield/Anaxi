@@ -193,8 +193,7 @@ export default async function LeavePage({
       </Suspense>
       <PageHeader
         title="Leave of Absence"
-        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
-        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8"
+        className="anx-page-header-shell"
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <div className="segmented-toggle" role="group" aria-label="Leave view">

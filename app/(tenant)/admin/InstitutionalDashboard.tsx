@@ -200,7 +200,7 @@ function AdminRowItem({
 function SectionBlock({ title, tag, rows }: DashboardSectionDef) {
   return (
     <section className="space-y-0">
-      <div className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)]">
+      <div className="overflow-hidden rounded-2xl anx-elevated-card">
         <div className="flex items-baseline justify-between gap-4 border-b border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] px-5 py-4 sm:px-6">
           <h2 className="text-base font-semibold tracking-[-0.02em] text-text">{title}</h2>
           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted/55">{tag.toUpperCase()}</span>
@@ -261,13 +261,11 @@ export function InstitutionalDashboard({ sections }: { sections: DashboardSectio
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8">
+      <div className="flex flex-col gap-4 anx-page-header-shell">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-2">
-            <h1 className="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text">
-              Institutional Dashboard
-            </h1>
-            <p className="max-w-full text-pretty text-sm font-medium leading-relaxed text-muted/90 md:max-w-2xl">
+            <h1 className="anx-page-title">Institutional Dashboard</h1>
+            <p className="anx-page-subtitle">
               Manage foundational administrative architecture, staff hierarchies, and semantic datasets from a single
               unified ledger.
             </p>
@@ -278,22 +276,19 @@ export function InstitutionalDashboard({ sections }: { sections: DashboardSectio
               onClick={toggleFilter}
               aria-expanded={filterOpen}
               aria-controls={panelId}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[0.8125rem] font-medium shadow-sm calm-transition ${
+              className={`anx-btn-pill-ghost calm-transition ${
                 filterActive
-                  ? "border-[color-mix(in_srgb,var(--primary)_28%,var(--outline-variant))] bg-surface-container-low text-text"
-                  : "border-border/80 bg-surface-container-lowest text-text hover:border-outline-variant hover:bg-surface-container-low"
+                  ? "border-[color-mix(in_srgb,var(--primary)_28%,var(--outline-variant))] bg-surface-container-low"
+                  : ""
               }`}
             >
-              <svg className="h-3.5 w-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
+              <svg className="anx-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
               </svg>
               Filter
             </button>
-            <a
-              href="/api/admin/ledger/export"
-              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-4 py-2 text-[0.8125rem] font-semibold text-[var(--on-primary)] shadow-[var(--shadow-btn)] calm-transition hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px"
-            >
-              <svg className="h-3.5 w-3.5 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
+            <a href="/api/admin/ledger/export" className="anx-btn-pill-primary calm-transition">
+              <svg className="h-3.5 w-3.5 shrink-0 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />

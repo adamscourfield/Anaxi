@@ -64,20 +64,15 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   return (
     <div className="space-y-8">
       <div>
-        <Link
-          href="/admin"
-          className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-surface-container-lowest px-3.5 py-1.5 text-xs font-medium text-muted shadow-sm calm-transition hover:border-outline-variant hover:bg-surface-container-low hover:text-text"
-        >
+        <Link href="/admin" className="anx-link-back calm-transition">
           <span aria-hidden>←</span>
           Back to Admin
         </Link>
       </div>
       <PageHeader
         title="Platform"
-        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
         subtitle="Configure school metadata, thresholds, and module availability."
-        subtitleClassName="max-w-full text-pretty text-sm font-medium leading-relaxed text-muted/90 md:max-w-2xl"
-        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8"
+        className="anx-page-header-shell"
       />
 
       <div className="segmented-toggle max-w-md" role="tablist" aria-label="Platform sections">
