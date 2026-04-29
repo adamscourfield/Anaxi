@@ -5,19 +5,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { EMTargetGroupToolbar } from "./EMTargetGroupToolbar";
+import { EMTargetGroupAccordions } from "./EMTargetGroupAccordions";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
-import {
-  gcseGradeBadgeClass,
-  ppTableBadgeClass,
-  sendTableBadgeClass,
-} from "@/modules/assessments/attainmentColours";
-
-function getInitials(name: string): string {
-  const parts = name.split(" ").filter(Boolean);
-  if (parts.length >= 2)
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return name.substring(0, 2).toUpperCase();
-}
 
 export default async function EMThresholdPage({
   params,
@@ -179,7 +168,9 @@ export default async function EMThresholdPage({
     const eScore = engMap.get(id)!.normalizedScore;
     const mScore = mathsMap.get(id)!.normalizedScore;
 
-    const met = eScore !== null && Math.round(eScore * 9) >= targetThreshold && mScore !== null && Math.round(mScore * 9) >= targetThreshold;
+    const eMeets = eScore !== null && Math.round(eScore * 9) >= targetThreshold;
+    const mMeets = mScore !== null && Math.round(mScore * 9) >= targetThreshold;
+    const met = eMeets && mMeets;
 
     const cAvg = cCounts.get(id) ? +(cSums.get(id)! / cCounts.get(id)!).toFixed(2) : null;
     const pAvg = prevAvgMap.get(id) ? +(prevAvgMap.get(id)!.toFixed(2)) : null;
@@ -198,6 +189,8 @@ export default async function EMThresholdPage({
       eRaw,
       mRaw,
       met,
+      eMeets,
+      mMeets,
       cAvg,
       avgDiff
     };
@@ -253,15 +246,8 @@ export default async function EMThresholdPage({
     return a.name.localeCompare(b.name);
   });
 
-  function getTrendIcon(diff: number | null) {
-    if (diff === null) return <span className="text-muted">—</span>;
-    if (diff > 0.1) return <span className="font-bold text-scale-strong-text">↗ +{diff}</span>;
-    if (diff < -0.1) return <span className="font-bold text-scale-limited-text">↘ {diff}</span>;
-    return <span className="text-muted font-bold">→ {diff}</span>;
-  }
-
   return (
-    <div className="anx-reports-page w-full space-y-8 pb-16">
+    <div className="anx-reports-page min-h-full w-full space-y-8 bg-[color-mix(in_srgb,var(--surface-container)_42%,var(--surface-container-lowest))] pb-16">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -279,7 +265,7 @@ export default async function EMThresholdPage({
       />
 
       {/* Top 4 Metrics Cards */}
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
         <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted">English {targetThreshold}+</p>
           <div className="mt-3">
@@ -295,7 +281,7 @@ export default async function EMThresholdPage({
           <p className="mt-2 text-xs font-semibold text-muted">{mathsMeets} students met</p>
         </div>
         <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">PP vs Non-PP Gap</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">PP vs Non-PP gap</p>
           <div className="mt-3">
              <span className="text-3xl font-bold leading-none tracking-tight text-text">
                {Math.abs(nonPpPct - ppPct)}pp
@@ -306,7 +292,7 @@ export default async function EMThresholdPage({
           </p>
         </div>
         <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">SEND vs Non-SEND Gap</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">SEND vs Non-SEND gap</p>
           <div className="mt-3">
              <span className="text-3xl font-bold leading-none tracking-tight text-text">
                {Math.abs(nonSendPct - sendPct)}pp
@@ -330,111 +316,10 @@ export default async function EMThresholdPage({
         />
       </div>
 
-      {/* Student list */}
-      <div className="mt-4 table-shell">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="table-head-row text-left">
-                <th className="px-5 py-3">Name</th>
-                <th className="px-4 py-3">Flags</th>
-                <th className="px-4 py-3 text-center">English</th>
-                <th className="px-4 py-3 text-center">Maths</th>
-                <th className="px-4 py-3 text-center">Met both</th>
-                <th className="px-4 py-3 text-center">Overall avg</th>
-                <th className="px-4 py-3 text-center">vs prev point</th>
-              </tr>
-            </thead>
-            <tbody>
-              {studentsData.length === 0 ? (
-                <tr className="table-row">
-                  <td colSpan={7} className="px-5 py-8 text-center text-muted">No students match your criteria.</td>
-                </tr>
-              ) : (
-                studentsData.map((row) => (
-                  <tr key={row.id} className="group table-row calm-transition">
-                    {/* Name */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-xs font-semibold text-on-surface-variant">
-                          {getInitials(row.name)}
-                        </div>
-                        <div className="flex min-w-0 flex-col">
-                          <Link
-                            href={`/students/${row.id}`}
-                            className="link-to-accent font-medium"
-                          >
-                            {row.name}
-                          </Link>
-                          <span className="text-[11px] text-muted">Year {row.year ?? "—"}</span>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Flags */}
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-1.5">
-                        {row.sendFlag && (
-                          <span className={sendTableBadgeClass}>
-                            SEN
-                          </span>
-                        )}
-                        {row.ppFlag && (
-                          <span className={ppTableBadgeClass}>
-                            PP
-                          </span>
-                        )}
-                        {!row.sendFlag && !row.ppFlag && (
-                          <span className="text-xs text-muted">—</span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* English Grade */}
-                    <td className="px-4 py-4 text-center">
-                      <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${gcseGradeBadgeClass(row.eRaw)}`}>
-                        {row.eRaw}
-                      </span>
-                    </td>
-
-                    {/* Maths Grade */}
-                    <td className="px-4 py-4 text-center">
-                      <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${gcseGradeBadgeClass(row.mRaw)}`}>
-                        {row.mRaw}
-                      </span>
-                    </td>
-
-                    {/* Met Threshold */}
-                    <td className="px-4 py-4 text-center align-middle">
-                      <div className="inline-flex items-center justify-center">
-                      {row.met ? (
-                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-status-approved-light text-status-approved-text">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                         </div>
-                      ) : (
-                         <div className="h-6 w-6 rounded-full bg-surface-container-low text-muted flex items-center justify-center">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-                         </div>
-                      )}
-                      </div>
-                    </td>
-
-                    {/* Overall Average */}
-                    <td className="px-4 py-4 text-center">
-                      <span className="font-semibold tabular-nums text-text">{row.cAvg ?? "—"}</span>
-                    </td>
-
-                    {/* Direction of Travel */}
-                    <td className="px-4 py-4 text-center">
-                      {getTrendIcon(row.avgDiff)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        <div className="border-t border-border/20 px-5 py-3.5">
+      {/* Student list — grouped accordions by subject gap pattern */}
+      <div className="mt-2">
+        <EMTargetGroupAccordions students={studentsData} />
+        <div className="mt-4 px-0.5">
           <p className="text-[0.8125rem] text-muted">
             Showing{" "}
             <span className="font-semibold text-text">{studentsData.length}</span>
