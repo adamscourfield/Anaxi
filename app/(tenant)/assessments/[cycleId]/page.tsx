@@ -11,7 +11,7 @@ import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chro
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { PointType, ResultStatus, QualificationType } from "@prisma/client";
-import { RESULT_POINT_TYPE_BADGE, RESULT_STATUS_BADGE } from "@/lib/assessments/chartColours";
+import { pointTypePillClasses, resultStatusPillClasses } from "@/modules/assessments/attainmentColours";
 
 // ─── Type badges ─────────────────────────────────────────────────────────────
 
@@ -24,7 +24,7 @@ const POINT_TYPE_LABELS: Record<PointType, string> = {
   OTHER: "Other",
 };
 
-const POINT_TYPE_COLOURS: Record<PointType, string> = RESULT_POINT_TYPE_BADGE as Record<PointType, string>;
+const POINT_TYPE_COLOURS = pointTypePillClasses;
 
 const STATUS_LABELS: Record<ResultStatus, string> = {
   DRAFT: "Draft",
@@ -33,7 +33,7 @@ const STATUS_LABELS: Record<ResultStatus, string> = {
   LOCKED: "Locked",
 };
 
-const STATUS_COLOURS: Record<ResultStatus, string> = RESULT_STATUS_BADGE as Record<ResultStatus, string>;
+const STATUS_COLOURS = resultStatusPillClasses;
 
 const QUAL_LABELS: Record<QualificationType, string> = {
   GCSE: "GCSE",
@@ -101,7 +101,7 @@ export default async function CycleDetailPage({
   ).size;
 
   return (
-    <div className="w-full space-y-8 pb-16">
+    <div className="anx-reports-page w-full space-y-8 pb-16">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -141,7 +141,7 @@ export default async function CycleDetailPage({
           accentPlacement="none"
           tone="softGrey"
           context={
-            <span className="font-semibold text-emerald-600">↗ +12% from Y10</span>
+            <span className="font-semibold text-scale-strong-text">↗ +12% from Y10</span>
           }
         />
         <StatCard
@@ -229,7 +229,7 @@ export default async function CycleDetailPage({
                         </Button>
                       )}
                       {hasData && (
-                        <Button asChild variant="secondary" className="px-4 py-2 text-xs font-bold shadow-sm">
+                        <Button asChild variant="secondary" className="px-4 py-2 text-xs font-bold">
                           <Link href={`/assessments/${cycle.id}/points/${point.id}`}>View analysis</Link>
                         </Button>
                       )}
@@ -269,13 +269,13 @@ export default async function CycleDetailPage({
                       {point.assessments.slice(0, 8).map((a) => (
                         <span
                           key={a.id}
-                          className="rounded-full border border-border/70 bg-[var(--surface-container-lowest)] px-4 py-1.5 text-[11px] font-bold text-muted shadow-sm"
+                          className="rounded-full border border-border/70 bg-[var(--surface-container-lowest)] px-4 py-1.5 text-[11px] font-bold text-muted anx-card-elevated"
                         >
                           {a.subject}
                         </span>
                       ))}
                       {point.assessments.length > 8 && (
-                        <span className="rounded-full border border-border/40 bg-[var(--surface-container-low)] px-4 py-1.5 text-[11px] font-bold text-muted shadow-sm">
+                        <span className="rounded-full border border-border/40 bg-[var(--surface-container-low)] px-4 py-1.5 text-[11px] font-bold text-muted anx-card-elevated">
                           +{point.assessments.length - 8} MORE
                         </span>
                       )}

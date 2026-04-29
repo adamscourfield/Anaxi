@@ -102,10 +102,10 @@ export function TenantLayoutClient({
         className="ml-0 flex min-h-screen flex-col calm-transition md:ml-[var(--sidebar-width)]"
         id="tenant-content"
       >
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-[var(--surface-bright)] px-4 shadow-header sm:px-6 lg:px-10">
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 bg-[var(--bg)] px-4 sm:px-6 lg:px-10">
           <button
             type="button"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.75rem] text-[var(--on-surface)] calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-sm motion-safe:active:scale-[0.97] md:hidden"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.75rem] text-[var(--on-surface)] calm-transition hover:bg-[var(--surface-container-low)] anx-hover-elevate motion-safe:active:scale-[0.97] md:hidden"
             onClick={() => setMobileNavOpen(true)}
             aria-expanded={mobileNavOpen}
             aria-controls="tenant-nav-drawer"
@@ -118,7 +118,7 @@ export function TenantLayoutClient({
           </div>
           <Link
             href="/profile"
-            className="flex shrink-0 items-center gap-2 rounded-[0.75rem] px-2 py-1.5 calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-sm motion-safe:active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 focus-visible:ring-offset-2 sm:gap-3 sm:px-2.5 sm:py-1.5"
+            className="flex shrink-0 items-center gap-2 rounded-[0.75rem] px-2 py-1.5 calm-transition hover:bg-[var(--surface-container-low)] anx-hover-elevate motion-safe:active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 focus-visible:ring-offset-2 sm:gap-3 sm:px-2.5 sm:py-1.5"
           >
             <div className="hidden flex-col items-end sm:flex">
               <span className="max-w-[140px] truncate text-[13px] font-bold leading-tight tracking-[-0.01em] text-[var(--on-surface)]">

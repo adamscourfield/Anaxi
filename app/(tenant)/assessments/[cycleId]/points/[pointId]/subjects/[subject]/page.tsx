@@ -30,16 +30,18 @@ import { hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
 import { competitionRank } from "@/modules/assessments/ranking";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import {
-  gcseNumericCellClass,
-  aLevelLetterCellClass,
-  percentileCellClass,
-  gapBadgeSoftClass,
-  deltaBarClass,
-  SERIES_ALT_BAR_CLASS,
-  SEN_TAG_CLASS,
-  PP_TAG_CLASS,
-  PP_SERIES_BAR_CLASS,
-} from "@/lib/assessments/chartColours";
+  aLevelGradeBadgeClass,
+  barNegativeClass,
+  barPositiveClass,
+  gapBadgeClass,
+  gcseGradeBadgeClass,
+  pctScoreBadgeClass,
+  ppBarFillClass,
+  sendBarFillClass,
+  sendTableBadgeClass,
+  ppTableBadgeClass,
+  thresholdHeaderGcse,
+} from "@/modules/assessments/attainmentColours";
 
 function GapBadge({ gap }: { gap: number }) {
   const cls = gapBadgeSoftClass(gap);
@@ -62,6 +64,18 @@ function getInitials(name: string): string {
   return name.substring(0, 2).toUpperCase();
 }
 
+function gcseColour(g: string | number | null): string {
+  return gcseGradeBadgeClass(g);
+}
+
+function aLevelColour(g: string): string {
+  return aLevelGradeBadgeClass(g);
+}
+
+function pctColour(score: number): string {
+  return pctScoreBadgeClass(score);
+}
+
 function gcseThresholdPct(
   results: Array<{ normalizedScore: number | null; status: string }>,
   threshold: number
@@ -79,6 +93,14 @@ function avg(values: number[]): number | null {
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+function GapBadge({ gap }: { gap: number }) {
+  return (
+    <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[12px] font-bold tabular-nums ${gapBadgeClass(gap)}`}>
+      {gap > 0 ? "+" : ""}{gap}pp gap
+    </span>
+  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -403,7 +425,7 @@ export default async function SubjectDetailPage({
   const formatLabel = isGcse ? "GCSE" : isPercentage ? (assessment.gradeFormat === "RAW" ? "Raw score" : "Percentage") : "A-Level";
 
   return (
-    <div className="w-full space-y-8 pb-16">
+    <div className="anx-reports-page w-full space-y-8 pb-16">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -452,7 +474,7 @@ export default async function SubjectDetailPage({
                   <span className="w-10 text-right text-xs text-[var(--on-surface-muted)] tabular-nums">{g.count}</span>
                   <div className="relative flex-1 h-6 overflow-hidden rounded bg-[var(--surface-container)]">
                     <div
-                      className={`absolute inset-y-0 left-0 rounded ${deltaBarClass(g.vsYearMean >= 0)}`}
+                      className={`absolute inset-y-0 left-0 rounded ${g.vsYearMean >= 0 ? barPositiveClass : barNegativeClass}`}
                       style={{ width: `${Math.min(100, g.mean)}%` }}
                     />
                     {/* Year mean marker */}
@@ -486,7 +508,7 @@ export default async function SubjectDetailPage({
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonPpMean - pctPpMean)} />
                 </div>
-                {[{ label: "Non-PP", value: round1(pctNonPpMean), cls: "bg-[var(--on-surface)]" }, { label: "PP", value: round1(pctPpMean), cls: PP_SERIES_BAR_CLASS }].map(({ label, value, cls }) => (
+                {[{ label: "Non-PP", value: round1(pctNonPpMean), cls: "bg-[var(--on-surface)]" }, { label: "PP", value: round1(pctPpMean), cls: ppBarFillClass }].map(({ label, value, cls }) => (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
@@ -508,7 +530,7 @@ export default async function SubjectDetailPage({
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonSendMean - pctSendMean)} />
                 </div>
-                {[{ label: "Non-SEND", value: round1(pctNonSendMean), cls: "bg-[var(--on-surface)]" }, { label: "SEND", value: round1(pctSendMean), cls: SERIES_ALT_BAR_CLASS }].map(({ label, value, cls }) => (
+                {[{ label: "Non-SEND", value: round1(pctNonSendMean), cls: "bg-[var(--on-surface)]" }, { label: "SEND", value: round1(pctSendMean), cls: sendBarFillClass }].map(({ label, value, cls }) => (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
@@ -531,14 +553,14 @@ export default async function SubjectDetailPage({
           <div className="space-y-3">
             <SectionHeader title="Pupil Premium Gap" subtitle={`${ppData.ppCount} PP · ${ppData.nonPpCount} Non-PP`} />
             <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-5">
-              {[{ label: "4+", pp: ppData.ppT4, nonPp: ppData.nonPpT4, gap: ppData.gap4, cls: "text-scale-some-text" }, { label: "5+", pp: ppData.ppT5, nonPp: ppData.nonPpT5, gap: ppData.gap5, cls: "text-cat-violet-text" }].map(({ label, pp, nonPp, gap, cls }, idx) => (
+              {[{ label: "4+", pp: ppData.ppT4, nonPp: ppData.nonPpT4, gap: ppData.gap4, cls: thresholdHeaderGcse.t4 }, { label: "5+", pp: ppData.ppT5, nonPp: ppData.nonPpT5, gap: ppData.gap5, cls: thresholdHeaderGcse.t5 }].map(({ label, pp, nonPp, gap, cls }, idx) => (
                 <div key={label} className={idx > 0 ? "border-t border-[var(--outline-variant)]/20 pt-5" : ""}>
                   <div className="flex items-center justify-between mb-3">
                     <span className={`text-xs font-bold uppercase tracking-wider ${cls}`}>{label} Threshold</span>
                     <GapBadge gap={gap} />
                   </div>
                   <div className="space-y-2">
-                    {[{ name: "Non-PP", val: nonPp, bar: "bg-[var(--on-surface)]" }, { name: "PP", val: pp, bar: PP_SERIES_BAR_CLASS }].map(({ name, val, bar }) => (
+                    {[{ name: "Non-PP", val: nonPp, bar: "bg-[var(--on-surface)]" }, { name: "PP", val: pp, bar: ppBarFillClass }].map(({ name, val, bar }) => (
                       <div key={name}>
                         <div className="flex justify-between items-baseline mb-1">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
@@ -557,14 +579,14 @@ export default async function SubjectDetailPage({
           <div className="space-y-3">
             <SectionHeader title="SEND Gap" subtitle={`${sendData.sendCount} SEND · ${sendData.nonSendCount} Non-SEND`} />
             <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-5">
-              {[{ label: "4+", send: sendData.sendT4, nonSend: sendData.nonSendT4, gap: sendData.gap4, cls: "text-scale-some-text" }, { label: "5+", send: sendData.sendT5, nonSend: sendData.nonSendT5, gap: sendData.gap5, cls: "text-cat-violet-text" }].map(({ label, send, nonSend, gap, cls }, idx) => (
+              {[{ label: "4+", send: sendData.sendT4, nonSend: sendData.nonSendT4, gap: sendData.gap4, cls: thresholdHeaderGcse.t4 }, { label: "5+", send: sendData.sendT5, nonSend: sendData.nonSendT5, gap: sendData.gap5, cls: thresholdHeaderGcse.t5 }].map(({ label, send, nonSend, gap, cls }, idx) => (
                 <div key={label} className={idx > 0 ? "border-t border-[var(--outline-variant)]/20 pt-5" : ""}>
                   <div className="flex items-center justify-between mb-3">
                     <span className={`text-xs font-bold uppercase tracking-wider ${cls}`}>{label} Threshold</span>
                     <GapBadge gap={gap} />
                   </div>
                   <div className="space-y-2">
-                    {[{ name: "Non-SEND", val: nonSend, bar: "bg-[var(--on-surface)]" }, { name: "SEND", val: send, bar: SERIES_ALT_BAR_CLASS }].map(({ name, val, bar }) => (
+                    {[{ name: "Non-SEND", val: nonSend, bar: "bg-[var(--on-surface)]" }, { name: "SEND", val: send, bar: sendBarFillClass }].map(({ name, val, bar }) => (
                       <div key={name}>
                         <div className="flex justify-between items-baseline mb-1">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
@@ -648,10 +670,10 @@ export default async function SubjectDetailPage({
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
                             {student.sendFlag && (
-                              <span className={`rounded ${PP_TAG_CLASS} px-1.5 py-0.5 text-[10px] font-semibold uppercase`}>SEN</span>
+                              <span className={sendTableBadgeClass}>SEN</span>
                             )}
                             {student.ppFlag && (
-                              <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${PP_TAG_CLASS}`}>PP</span>
+                              <span className={ppTableBadgeClass}>PP</span>
                             )}
                             {!student.sendFlag && !student.ppFlag && (
                               <span className="text-xs text-muted">—</span>

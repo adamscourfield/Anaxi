@@ -18,10 +18,11 @@ import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import type { PointType, ResultStatus } from "@prisma/client";
 import {
-  RESULT_POINT_TYPE_BADGE,
-  PP_TAG_CLASS,
-  SEN_TAG_CLASS,
-} from "@/lib/assessments/chartColours";
+  finalPointChipClass,
+  pointTypePillClasses,
+  ppInlineBadgeClassLg,
+  sendInlineBadgeClassLg,
+} from "@/modules/assessments/attainmentColours";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,7 +95,11 @@ type RankMovementData = {
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
-const POINT_TYPE_COLOURS: Record<string, string> = RESULT_POINT_TYPE_BADGE;
+const POINT_TYPE_COLOURS: Record<string, string> = {
+  ...pointTypePillClasses,
+  BASELINE: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
+  OTHER: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
+};
 
 const POINT_TYPE_LABELS: Record<string, string> = {
   BASELINE: "Baseline", INTERNAL_ASSESSMENT: "Internal Assessment",
@@ -192,7 +197,7 @@ export default function ComparisonPage() {
     .slice(0, 10);
 
   return (
-    <div className="w-full space-y-8 pb-16">
+    <div className="anx-reports-page w-full space-y-8 pb-16">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -241,7 +246,7 @@ export default function ComparisonPage() {
               {POINT_TYPE_LABELS[data.toPoint.pointType]}
             </span>
             {data.toPoint.isFinalPoint && (
-              <span className="rounded-full bg-scale-strong-light px-2 py-0.5 text-[10px] font-semibold text-scale-strong-text">
+              <span className={finalPointChipClass}>
                 Final point
               </span>
             )}
@@ -394,34 +399,32 @@ export default function ComparisonPage() {
                           <tr key={`${sc.subject}-expanded`}>
                             <td colSpan={99} className="bg-surface-container-low p-4">
                               <div className="max-h-64 overflow-y-auto">
-                                <div className="table-shell table-shell--nested">
-                                  <table className="w-full text-xs">
-                                    <thead>
-                                      <tr className="table-head-row text-left">
-                                        <th className="px-4 py-2 text-left">Student</th>
-                                        <th className="px-3 py-2 text-center">From</th>
-                                        <th className="px-3 py-2 text-center">To</th>
-                                        <th className="px-4 py-2 text-right">Change</th>
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="text-[9px] font-semibold uppercase tracking-wide text-[var(--on-surface-muted)]">
+                                      <th className="pb-1.5 pr-3 text-left">Student</th>
+                                      <th className="pb-1.5 pr-3 text-center">From</th>
+                                      <th className="pb-1.5 pr-3 text-center">To</th>
+                                      <th className="pb-1.5 text-right">Change</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-[var(--outline-variant)]/20">
+                                    {sc.students.map((s) => (
+                                      <tr key={s.studentId}>
+                                        <td className="py-1 pr-3 text-[var(--on-surface)]">
+                                          {s.name}
+                                          {s.ppFlag && <span className={`ml-1 ${ppInlineBadgeClassLg}`}>PP</span>}
+                                          {s.sendFlag && <span className={`ml-1 ${sendInlineBadgeClassLg}`}>SEND</span>}
+                                        </td>
+                                        <td className="py-1 pr-3 text-center font-semibold text-[var(--on-surface-muted)]">{s.from ?? "—"}</td>
+                                        <td className="py-1 pr-3 text-center font-semibold text-[var(--on-surface)]">{s.to ?? "—"}</td>
+                                        <td className={`py-1 text-right font-bold ${deltaCls(s.delta)}`}>
+                                          {deltaLabel(s.delta, sc.gradeFormat)}
+                                        </td>
                                       </tr>
-                                    </thead>
-                                    <tbody>
-                                      {sc.students.map((s) => (
-                                        <tr key={s.studentId} className="table-row calm-transition">
-                                          <td className="px-4 py-2 text-[var(--on-surface)]">
-                                            {s.name}
-                                            {s.ppFlag && <span className={`ml-1 rounded-full px-1.5 text-[9px] ${PP_TAG_CLASS}`}>PP</span>}
-                                            {s.sendFlag && <span className={`ml-1 rounded-full px-1.5 text-[9px] ${SEN_TAG_CLASS}`}>SEND</span>}
-                                          </td>
-                                          <td className="px-3 py-2 text-center font-semibold text-[var(--on-surface-muted)]">{s.from ?? "—"}</td>
-                                          <td className="px-3 py-2 text-center font-semibold text-[var(--on-surface)]">{s.to ?? "—"}</td>
-                                          <td className={`px-4 py-2 text-right font-bold ${deltaCls(s.delta)}`}>
-                                            {deltaLabel(s.delta, sc.gradeFormat)}
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
+                                    ))}
+                                  </tbody>
+                                </table>
                               </div>
                             </td>
                           </tr>
@@ -472,8 +475,8 @@ export default function ComparisonPage() {
                                 className="link-to-accent calm-transition flex-1 min-w-0 truncate text-sm"
                               >
                                 {s.name}
-                                {s.ppFlag && <span className={`ml-1 rounded-full px-1.5 text-[9px] ${PP_TAG_CLASS}`}>PP</span>}
-                                {s.sendFlag && <span className={`ml-1 rounded-full px-1.5 text-[9px] ${SEN_TAG_CLASS}`}>SEN</span>}
+                                {s.ppFlag && <span className={`ml-1 ${ppInlineBadgeClassLg}`}>PP</span>}
+                                {s.sendFlag && <span className={`ml-1 ${sendInlineBadgeClassLg}`}>SEN</span>}
                               </Link>
                               <span className="shrink-0 text-xs text-[var(--on-surface-muted)] tabular-nums">
                                 #{s.fromRank} → #{s.toRank}

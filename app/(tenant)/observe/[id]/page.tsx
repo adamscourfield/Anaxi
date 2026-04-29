@@ -34,7 +34,7 @@ function SectionHeader({
 }) {
   return (
     <div className="mb-4 flex items-center gap-2">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-15 text-amber-800 [&_svg]:h-4 [&_svg]:w-4">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-scale-some-light text-scale-some-text [&_svg]:h-4 [&_svg]:w-4">
         {icon}
       </span>
       <h2 className="text-[0.9375rem] font-semibold tracking-tight text-text">{children}</h2>
@@ -189,7 +189,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                   const displayName = override?.displayName || signal.displayNameDefault;
                   return (
                     <div key={signal.key} className="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-scale-strong-light text-scale-strong-text">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-status-approved-light text-status-approved-text">
                         <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
                           <path d="M3 8l3.5 3.5L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>

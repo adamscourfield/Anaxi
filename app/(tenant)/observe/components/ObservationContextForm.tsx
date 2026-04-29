@@ -254,7 +254,7 @@ export function ObservationContextForm({
                     onClick={() => setContext((c) => ({ ...c, phase: phase.key }))}
                     className={`flex flex-col items-center gap-2 rounded-xl border-2 px-4 py-4 text-center calm-transition ${
                       selected
-                        ? "border-primary bg-primary/[0.06] text-primary shadow-sm"
+                        ? "border-primary bg-primary/[0.06] text-primary anx-card-elevated"
                         : "border-border/30 bg-surface-container-lowest/70 text-muted hover:border-border hover:bg-surface-container-lowest/90"
                     }`}
                   >

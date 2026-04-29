@@ -589,28 +589,25 @@ async function StudentsTab({
             }
           />
         ) : (
-          <div className="table-shell border-0 rounded-none shadow-none">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="table-head-row">
-                    <th className="sticky-first-column-header sticky left-0 z-20 px-5 py-3.5 text-left">
-                      Student
-                    </th>
-                    <th className="px-4 py-3.5">Year</th>
-                    <th className="px-4 py-3.5">Band</th>
-                    <th className="px-4 py-3.5 text-right">Score</th>
-                    <th className="px-4 py-3.5">Key drivers</th>
-                    <th className="px-4 py-3.5 text-right">Attendance (%)</th>
-                    <th className="px-4 py-3.5 text-right">Detentions Δ</th>
-                    <th className="px-4 py-3.5 text-right">On calls Δ</th>
-                    <th className="px-4 py-3.5">Flags</th>
-                    <th className="px-4 py-3.5">Confidence</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.studentId} className="table-row calm-transition">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-bg text-left text-xs font-medium text-muted">
+                  <th className="sticky left-0 z-20 bg-bg px-4 py-3">Student</th>
+                  <th className="px-4 py-3">Year</th>
+                  <th className="px-4 py-3">Band</th>
+                  <th className="px-4 py-3 text-right">Score</th>
+                  <th className="px-4 py-3">Key drivers</th>
+                  <th className="px-4 py-3 text-right">Attendance (%)</th>
+                  <th className="px-4 py-3 text-right">Detentions Δ</th>
+                  <th className="px-4 py-3 text-right">On calls Δ</th>
+                  <th className="px-4 py-3">Flags</th>
+                  <th className="px-4 py-3">Confidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.studentId} className="table-row calm-transition">
                       <td className="sticky-first-column px-5 py-4 font-medium text-text shadow-[4px_0_12px_-4px_rgba(0,0,0,0.06)]">
                         <Link
                           href={`/analysis/students/${row.studentId}?window=${windowDays}`}
@@ -646,7 +643,7 @@ async function StudentsTab({
                         {row.attendanceDelta !== null && (
                           <span
                             className={`ml-1 text-xs ${
-                              row.attendanceDelta < 0 ? "text-red-600" : "text-scale-strong-text"
+                              row.attendanceDelta < 0 ? "text-scale-limited-text" : "text-scale-strong-text"
                             }`}
                           >
                             ({row.attendanceDelta > 0 ? "+" : ""}
@@ -676,7 +673,7 @@ async function StudentsTab({
                             </span>
                           )}
                           {row.ppFlag && (
-                            <span className="rounded-full bg-scale-consistent-light px-2 py-0.5 text-xs text-blue-700">
+                            <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
                               PP
                             </span>
                           )}
@@ -694,7 +691,6 @@ async function StudentsTab({
                 </tbody>
               </table>
             </div>
-          </div>
         )}
       </Card>
 
@@ -722,7 +718,7 @@ export default async function AnalyticsPage({
     : 21;
 
   return (
-    <div className="space-y-8">
+    <div className="anx-reports-page space-y-8">
       <PageHeader
         eyebrow="Analysis"
         title="Priorities"

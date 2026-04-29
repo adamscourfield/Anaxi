@@ -16,7 +16,7 @@ export function ScaleChips({ options, value, disabled, onChange }: { options: Sc
             title={option.description}
             className={`calm-transition rounded-xl border px-3 py-1.5 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/12 focus-visible:ring-offset-2 disabled:opacity-40 ${
               value === option.key
-                ? "border-accent/30 bg-primary text-on-primary shadow-sm hover:bg-primary-container active:bg-primary-container"
+                ? "border-accent/30 bg-primary text-on-primary anx-card-elevated hover:bg-primary-container active:bg-primary-container"
                 : "border-border/60 bg-surface/80 text-text hover:border-border hover:bg-divider/50"
             }`}
           >

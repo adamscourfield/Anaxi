@@ -858,6 +858,33 @@ textarea:focus-visible {
   border: 1px solid color-mix(in srgb, var(--outline-variant) 20%, transparent);
 }
 
+/* ── Solid cards & density surfaces (tenant UI, reports, modals) ─────────────── */
+/* Prefer these over ad-hoc shadow-sm + gray-200 so elevation stays on tokens. */
+.anx-card {
+  border-radius: var(--radius-lg);
+  background: var(--surface-container-lowest);
+  box-shadow: var(--shadow-ambient);
+}
+
+.anx-card-inset {
+  border-radius: var(--radius-md);
+  background: var(--surface-container-low);
+  box-shadow: var(--shadow-sm);
+}
+
+.anx-card-elevated {
+  box-shadow: var(--shadow-sm);
+}
+
+.anx-hover-elevate:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Optional scope: denser tables / PDF-style pages can nest .anx-card-inset */
+.anx-reports-page .anx-card {
+  border-radius: var(--radius-md);
+}
+
 /* ── Divider: Subtle ────────────────────────────────────────────── */
 /* Ghost divider using outline-variant at 30% opacity. Use instead   */
 /* of hardcoded rgba() values for horizontal divider lines.          */
@@ -888,7 +915,9 @@ textarea:focus-visible {
     color: #111 !important;
   }
 
-  .glass-card {
+  .glass-card,
+  .anx-card,
+  .anx-card-inset {
     background: white !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
@@ -910,6 +939,8 @@ textarea:focus-visible {
 
   /* Page breaks */
   .glass-card,
+  .anx-card,
+  .anx-card-inset,
   section {
     break-inside: avoid;
   }

@@ -75,7 +75,7 @@ export function ActionCard({ action, currentUserId, onComplete }: ActionCardProp
         <div
           className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-[1.5px] ${
             isDone
-              ? "border-emerald-500 bg-scale-strong-bg0"
+              ? "border-scale-strong-bar bg-scale-strong-bg"
               : isBlocked
               ? "border-amber-400 bg-scale-some-bg"
               : "border-border"
