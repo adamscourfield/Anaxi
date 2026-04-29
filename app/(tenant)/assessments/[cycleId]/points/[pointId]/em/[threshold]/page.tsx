@@ -247,7 +247,7 @@ export default async function EMThresholdPage({
   });
 
   return (
-    <div className="anx-reports-page min-h-full w-full space-y-8 bg-[color-mix(in_srgb,var(--surface-container)_42%,var(--surface-container-lowest))] pb-16">
+    <div className="anx-reports-page min-h-full w-full space-y-8 bg-[color-mix(in_srgb,var(--surface-container)_38%,var(--surface-container-lowest))] pb-16">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -257,79 +257,73 @@ export default async function EMThresholdPage({
         ]}
       />
 
-      {/* Page Header */}
-      <PageHeader variant="ledger"
+      <PageHeader
+        variant="ledger"
         eyebrow="English & Maths"
         title={`Grade ${targetThreshold}+ target group`}
         subtitle={`Students who have not yet achieved grade ${targetThreshold} or above in both English and Maths. Filter to include those who have met the threshold or everyone.`}
       />
 
-      {/* Top 4 Metrics Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
-        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">English {targetThreshold}+</p>
-          <div className="mt-3">
-             <span className="text-3xl font-bold leading-none tracking-tight text-text">{engPct}%</span>
-          </div>
-          <p className="mt-2 text-xs font-semibold text-muted">{engMeets} students met</p>
-        </div>
-        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">Maths {targetThreshold}+</p>
-          <div className="mt-3">
-             <span className="text-3xl font-bold leading-none tracking-tight text-text">{mathsPct}%</span>
-          </div>
-          <p className="mt-2 text-xs font-semibold text-muted">{mathsMeets} students met</p>
-        </div>
-        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">PP vs Non-PP gap</p>
-          <div className="mt-3">
-             <span className="text-3xl font-bold leading-none tracking-tight text-text">
-               {Math.abs(nonPpPct - ppPct)}pp
-             </span>
-          </div>
-          <p className="mt-2 text-xs font-semibold text-muted">
-             {nonPpPct}% Non-PP vs {ppPct}% PP (Both E&M)
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-5">
+        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+            English {targetThreshold}+
+          </p>
+          <p className="mt-4 text-4xl font-bold leading-none tracking-tight text-text tabular-nums">{engPct}%</p>
+          <p className="mt-3 text-sm text-muted">
+            <span className="font-semibold text-text">{engMeets}</span> students met
           </p>
         </div>
-        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">SEND vs Non-SEND gap</p>
-          <div className="mt-3">
-             <span className="text-3xl font-bold leading-none tracking-tight text-text">
-               {Math.abs(nonSendPct - sendPct)}pp
-             </span>
-          </div>
-          <p className="mt-2 text-xs font-semibold text-muted">
-             {nonSendPct}% Non-SEND vs {sendPct}% SEND
+        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+            Maths {targetThreshold}+
+          </p>
+          <p className="mt-4 text-4xl font-bold leading-none tracking-tight text-text tabular-nums">{mathsPct}%</p>
+          <p className="mt-3 text-sm text-muted">
+            <span className="font-semibold text-text">{mathsMeets}</span> students met
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">PP vs Non-PP gap</p>
+          <p className="mt-4 text-4xl font-bold leading-none tracking-tight text-text tabular-nums">
+            {Math.abs(nonPpPct - ppPct)}pp
+          </p>
+          <p className="mt-3 text-sm leading-snug text-muted">
+            {nonPpPct}% Non-PP vs {ppPct}% PP{" "}
+            <span className="text-[var(--on-surface-variant)]">(Both E&amp;M)</span>
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">SEND vs Non-SEND gap</p>
+          <p className="mt-4 text-4xl font-bold leading-none tracking-tight text-text tabular-nums">
+            {Math.abs(nonSendPct - sendPct)}pp
+          </p>
+          <p className="mt-3 text-sm leading-snug text-muted">
+            {nonSendPct}% Non-SEND vs {sendPct}% SEND
           </p>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="mb-6">
-        <EMTargetGroupToolbar
-          basePath={basePath}
-          defaultSearch={studentSearch}
-          defaultMet={defaultMet}
-          defaultPp={defaultPp}
-          defaultSend={defaultSend}
-          hasFilters={hasToolbarFilters}
-        />
-      </div>
+      <EMTargetGroupToolbar
+        basePath={basePath}
+        defaultSearch={studentSearch}
+        defaultMet={defaultMet}
+        defaultPp={defaultPp}
+        defaultSend={defaultSend}
+        hasFilters={hasToolbarFilters}
+      />
 
-      {/* Student list — grouped accordions by subject gap pattern */}
-      <div className="mt-2">
+      <div className="space-y-3">
         <EMTargetGroupAccordions students={studentsData} />
-        <div className="mt-4 px-0.5">
-          <p className="text-[0.8125rem] text-muted">
-            Showing{" "}
-            <span className="font-semibold text-text">{studentsData.length}</span>
-            {filterMet === "all"
-              ? " students"
-              : filterMet === "true"
-                ? " students who met both"
-                : " students not yet meeting both"}
-          </p>
-        </div>
+        <p className="text-sm text-muted">
+          Showing{" "}
+          <span className="font-semibold text-text">{studentsData.length}</span>
+          {filterMet === "all"
+            ? " students"
+            : filterMet === "true"
+              ? " students who met both"
+              : " students not yet meeting both"}
+        </p>
       </div>
     </div>
   );
