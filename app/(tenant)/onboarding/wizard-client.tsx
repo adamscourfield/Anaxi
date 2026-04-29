@@ -35,7 +35,7 @@ export default function OnboardingWizardClient({
             key={label}
             className={`calm-transition flex-1 rounded-lg px-2 py-1.5 text-center font-medium ${
               i === stepIndex
-                ? "border border-accent/20 bg-[var(--accent-tint)] text-text shadow-sm"
+                ? "border border-accent/20 bg-[var(--accent-tint)] text-text anx-card-elevated"
                 : i < stepIndex
                 ? "bg-accent/10 text-accent"
                 : "bg-surface/60 text-muted"

@@ -1019,7 +1019,7 @@ export default function ResultPointPage() {
             <div className="p-0 overflow-y-auto flex-1">
               {modalView.type === 'EM' && (
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20 shadow-sm z-10">
+                  <thead className="sticky top-0 z-10 border-b border-[var(--outline-variant)]/20 anx-card-inset">
                     <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
                       <th className="p-3 pl-4">Student</th>
                       <th className="p-3 text-center">Status</th>
@@ -1067,7 +1067,7 @@ export default function ResultPointPage() {
 
               {modalView.type === 'GRADE' && (
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20 shadow-sm z-10">
+                  <thead className="sticky top-0 z-10 border-b border-[var(--outline-variant)]/20 anx-card-inset">
                     <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
                       <th className="p-3 pl-4">Student</th>
                       <th className="p-3 text-center">Grade in {modalView.subject}</th>

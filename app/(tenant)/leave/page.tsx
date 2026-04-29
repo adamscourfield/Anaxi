@@ -205,7 +205,7 @@ export default async function LeavePage({
                 href="/leave?view=list"
                 className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium calm-transition ${
                   !isCalendar
-                    ? "bg-surface-container-lowest text-text shadow-sm"
+                    ? "bg-surface-container-lowest text-text anx-card-elevated"
                     : "text-muted hover:text-text"
                 }`}
               >
@@ -227,7 +227,7 @@ export default async function LeavePage({
                 href="/leave?view=calendar"
                 className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium calm-transition ${
                   isCalendar
-                    ? "bg-surface-container-lowest text-text shadow-sm"
+                    ? "bg-surface-container-lowest text-text anx-card-elevated"
                     : "text-muted hover:text-text"
                 }`}
               >
@@ -252,7 +252,7 @@ export default async function LeavePage({
               </Link>
             </div>
 
-            <Button asChild className="rounded-xl px-4 py-2.5 text-[0.875rem] shadow-sm">
+            <Button asChild className="rounded-xl px-4 py-2.5 text-[0.875rem]">
               <Link href="/leave/request">
                 <svg
                   className="h-3.5 w-3.5"

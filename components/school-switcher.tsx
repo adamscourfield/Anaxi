@@ -62,7 +62,7 @@ export function SchoolSwitcher({
         type="button"
         onClick={() => setOpen(!open)}
         disabled={switching}
-        className="flex min-w-0 max-w-full items-center gap-2 rounded-[0.75rem] px-3 py-1.5 calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-sm disabled:opacity-60 motion-safe:active:scale-[0.99]"
+        className="flex min-w-0 max-w-full items-center gap-2 rounded-[0.75rem] px-3 py-1.5 calm-transition hover:bg-[var(--surface-container-low)] anx-hover-elevate disabled:opacity-60 motion-safe:active:scale-[0.99]"
         style={{ border: "1px solid color-mix(in srgb, var(--outline-variant) 35%, transparent)" }}
       >
         <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-accentSurface text-[10px] font-bold text-accent">

@@ -77,10 +77,10 @@ function Toggle({
       onClick={() => !disabled && onChange(!checked)}
       className={`relative inline-flex h-[26px] w-[46px] shrink-0 items-center rounded-full transition-colors duration-200 ${
         disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-      } ${checked ? "bg-[var(--primary)]" : "bg-gray-200"}`}
+      } ${checked ? "bg-[var(--primary)]" : "bg-[var(--surface-container-high)]"}`}
     >
       <span
-        className={`inline-block h-[20px] w-[20px] rounded-full bg-white shadow-sm transition-transform duration-200 ${
+        className={`inline-block h-[20px] w-[20px] rounded-full bg-[var(--surface-container-lowest)] anx-card-elevated transition-transform duration-200 ${
           checked ? "translate-x-[23px]" : "translate-x-[3px]"
         }`}
       />

@@ -72,7 +72,7 @@ function statusInfo(user: UserRow): { label: string; color: string; dotClass: st
   if (user.isActive) {
     return { label: "Active", color: "text-text", dotClass: "bg-emerald-500" };
   }
-  return { label: "Inactive", color: "text-text", dotClass: "bg-gray-400" };
+  return { label: "Inactive", color: "text-text", dotClass: "bg-on-surface-variant/45" };
 }
 
 const PAGE_SIZE = 20;

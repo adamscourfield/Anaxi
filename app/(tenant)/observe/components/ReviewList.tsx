@@ -227,7 +227,7 @@ export function ReviewList({
               <button
                 type="submit"
                 disabled={!allDone}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-container px-6 py-3.5 text-[0.875rem] font-semibold text-on-primary shadow-sm calm-transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-container px-6 py-3.5 text-[0.875rem] font-semibold text-on-primary calm-transition anx-card-elevated hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />

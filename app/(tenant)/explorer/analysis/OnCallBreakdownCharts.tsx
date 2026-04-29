@@ -229,7 +229,7 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
               {modal.rows.map((r) => (
                 <li
                   key={r.id}
-                  className="rounded-xl bg-[var(--surface-container-low)] px-4 py-3.5 text-sm shadow-sm"
+                  className="anx-card-inset rounded-xl px-4 py-3.5 text-sm"
                 >
                   <p className="font-semibold text-[var(--on-surface)]">{r.studentName}</p>
                   <p className="mt-0.5 text-xs text-muted">

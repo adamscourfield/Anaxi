@@ -1055,10 +1055,10 @@ function HodHome({
               })()}
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
-              <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+              <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                 View your signal profile →
               </Link>
-              <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+              <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                 View observations →
               </Link>
             </div>
@@ -1232,10 +1232,10 @@ function TeacherHome({
                 )}
               </div>
               <div className="flex flex-wrap gap-2 pt-1">
-                <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   View your signal profile →
                 </Link>
-                <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   View observations →
                 </Link>
               </div>
@@ -1344,10 +1344,10 @@ function TeacherHome({
                 </div>
               )}
               <div className="flex flex-wrap gap-2">
-                <Link href="/leave/request" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                <Link href="/leave/request" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   Request leave →
                 </Link>
-                <Link href="/leave" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                <Link href="/leave" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   View status →
                 </Link>
               </div>
@@ -1386,10 +1386,10 @@ function TeacherHome({
                 </ul>
               )}
               <div className="flex flex-wrap gap-2">
-                <Link href="/on-call/new" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                <Link href="/on-call/new" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   Log on-call →
                 </Link>
-                <Link href="/on-call" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] hover:shadow-sm">
+                <Link href="/on-call" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   View requests →
                 </Link>
               </div>

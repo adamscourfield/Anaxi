@@ -240,7 +240,7 @@ export default async function CycleDetailPage({
                         </Button>
                       )}
                       {hasData && (
-                        <Button asChild variant="secondary" className="px-4 py-2 text-xs font-bold shadow-sm">
+                        <Button asChild variant="secondary" className="px-4 py-2 text-xs font-bold">
                           <Link href={`/assessments/${cycle.id}/points/${point.id}`}>View analysis</Link>
                         </Button>
                       )}
@@ -280,13 +280,13 @@ export default async function CycleDetailPage({
                       {point.assessments.slice(0, 8).map((a) => (
                         <span
                           key={a.id}
-                          className="rounded-full border border-border/70 bg-[var(--surface-container-lowest)] px-4 py-1.5 text-[11px] font-bold text-muted shadow-sm"
+                          className="rounded-full border border-border/70 bg-[var(--surface-container-lowest)] px-4 py-1.5 text-[11px] font-bold text-muted anx-card-elevated"
                         >
                           {a.subject}
                         </span>
                       ))}
                       {point.assessments.length > 8 && (
-                        <span className="rounded-full border border-border/40 bg-[var(--surface-container-low)] px-4 py-1.5 text-[11px] font-bold text-muted shadow-sm">
+                        <span className="rounded-full border border-border/40 bg-[var(--surface-container-low)] px-4 py-1.5 text-[11px] font-bold text-muted anx-card-elevated">
                           +{point.assessments.length - 8} MORE
                         </span>
                       )}
