@@ -793,6 +793,19 @@ textarea:focus-visible {
   vertical-align: middle;
 }
 
+/* Nested / inset tables (expand rows, previews) — subtler than page-level shells */
+.table-shell.table-shell--nested {
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--outline-variant) 14%, transparent);
+}
+
+.table-shell.table-shell--nested thead .table-head-row th {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 10px;
+}
+
 .table-header-strip {
   display: flex;
   flex-wrap: wrap;

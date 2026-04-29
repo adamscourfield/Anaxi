@@ -296,43 +296,45 @@ export function SubjectDistributionSection({
               </button>
             </div>
 
-            <div className="p-0 overflow-y-auto flex-1">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20 shadow-sm z-10">
-                  <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-                    <th className="p-3 pl-4">Student</th>
-                    <th className="p-3 text-center">{scoreColumnLabel}</th>
-                    <th className="p-3 text-center">Overall avg</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--outline-variant)]/10">
-                  {[...modal.students].sort((a, b) => a.name.localeCompare(b.name)).map((st) => (
-                    <tr key={st.id} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
-                      <td className="p-3 pl-4 font-medium">
-                        <Link href={`/students/${st.id}`} className="calm-transition hover:text-[var(--accent)]">
-                          {st.name}
-                        </Link>
-                      </td>
-                      <td className="p-3 text-center">
-                        {st.isPercentage && st.rawValue ? (
-                          <span
-                            className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-bold tabular-nums ${st.score !== null ? pctColour(st.score) : "bg-[var(--surface-container)] text-[var(--on-surface)]"}`}
-                          >
-                            {st.rawValue}
-                          </span>
-                        ) : (
-                          <span
-                            className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${st.isGcse ? gcseColour(st.rawValue) : aLevelColour(st.rawValue)}`}
-                          >
-                            {st.rawValue}
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3 text-center text-[var(--on-surface-muted)] tabular-nums">{avgDisplay(st)}</td>
+            <div className="p-3 overflow-y-auto flex-1">
+              <div className="table-shell border-0 shadow-none">
+                <table className="w-full text-left text-sm">
+                  <thead className="sticky top-0 z-10 bg-surface-container-lowest">
+                    <tr className="table-head-row">
+                      <th className="px-5 py-3">Student</th>
+                      <th className="px-4 py-3 text-center">{scoreColumnLabel}</th>
+                      <th className="px-4 py-3 text-center">Overall avg</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {[...modal.students].sort((a, b) => a.name.localeCompare(b.name)).map((st) => (
+                      <tr key={st.id} className="table-row calm-transition">
+                        <td className="px-5 py-3 font-medium">
+                          <Link href={`/students/${st.id}`} className="calm-transition hover:text-[var(--accent)]">
+                            {st.name}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {st.isPercentage && st.rawValue ? (
+                            <span
+                              className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-bold tabular-nums ${st.score !== null ? pctColour(st.score) : "bg-[var(--surface-container)] text-[var(--on-surface)]"}`}
+                            >
+                              {st.rawValue}
+                            </span>
+                          ) : (
+                            <span
+                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${st.isGcse ? gcseColour(st.rawValue) : aLevelColour(st.rawValue)}`}
+                            >
+                              {st.rawValue}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center text-[var(--on-surface-muted)] tabular-nums">{avgDisplay(st)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

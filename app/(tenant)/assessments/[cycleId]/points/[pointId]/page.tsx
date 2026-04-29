@@ -1016,93 +1016,97 @@ export default function ResultPointPage() {
               </button>
             </div>
 
-            <div className="p-0 overflow-y-auto flex-1">
+            <div className="p-3 overflow-y-auto flex-1">
               {modalView.type === 'EM' && (
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20 shadow-sm z-10">
-                    <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-                      <th className="p-3 pl-4">Student</th>
-                      <th className="p-3 text-center">Status</th>
-                      <th className="p-3 text-center">English Grade</th>
-                      <th className="p-3 text-center">Maths Grade</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--outline-variant)]/10">
-                    {modalView.students.sort((a, b) => {
-                       if (a.met !== b.met) return a.met ? -1 : 1;
-                       return a.name.localeCompare(b.name);
-                    }).map(st => (
-                      <tr key={st.studentId} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
-                        <td className="p-3 pl-4 font-medium">
-                          <Link href={`/students/${st.studentId}`} className="calm-transition hover:text-[var(--accent)]">
-                            {st.name}
-                          </Link>
-                        </td>
-                        <td className="p-3 text-center">
-                          {st.met ? (
-                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Met</span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Not Met</span>
-                          )}
-                        </td>
-                        <td className="p-3 text-center">
-                          <span
-                            className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseColour(st.engRaw)}`}
-                          >
-                            {st.engRaw}
-                          </span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span
-                            className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseColour(st.mathRaw)}`}
-                          >
-                            {st.mathRaw}
-                          </span>
-                        </td>
+                <div className="table-shell border-0 shadow-none">
+                  <table className="w-full text-left text-sm">
+                    <thead className="sticky top-0 z-10 bg-surface-container-lowest">
+                      <tr className="table-head-row">
+                        <th className="px-5 py-3">Student</th>
+                        <th className="px-4 py-3 text-center">Status</th>
+                        <th className="px-4 py-3 text-center">English Grade</th>
+                        <th className="px-4 py-3 text-center">Maths Grade</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-
-              {modalView.type === 'GRADE' && (
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--outline-variant)]/20 shadow-sm z-10">
-                    <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-                      <th className="p-3 pl-4">Student</th>
-                      <th className="p-3 text-center">Grade in {modalView.subject}</th>
-                      <th className="p-3 text-center">Avg Grade (All Subjects)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--outline-variant)]/10">
-                    {modalView.students.sort((a, b) => a.name.localeCompare(b.name)).map(st => {
-                      const allScores = metrics?.subjects.flatMap(sm => sm.students.filter(s => s.studentId === st.studentId && s.score !== null).map(s => s.score!)) || [];
-                      const avg = allScores.length > 0 ? (allScores.reduce((a,b) => a+b, 0) / allScores.length) : null;
-                      const avgDisplay = avg !== null ? (metrics?.dominantFormat === 'GCSE' ? (avg * 9).toFixed(1) : (avg * 100).toFixed(0) + '%') : 'N/A';
-                      return (
-                        <tr key={st.studentId} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
-                          <td className="p-3 pl-4 font-medium">
+                    </thead>
+                    <tbody>
+                      {modalView.students.sort((a, b) => {
+                         if (a.met !== b.met) return a.met ? -1 : 1;
+                         return a.name.localeCompare(b.name);
+                      }).map(st => (
+                        <tr key={st.studentId} className="table-row calm-transition">
+                          <td className="px-5 py-3 font-medium">
                             <Link href={`/students/${st.studentId}`} className="calm-transition hover:text-[var(--accent)]">
                               {st.name}
                             </Link>
                           </td>
-                          <td className="p-3 text-center">
+                          <td className="px-4 py-3 text-center">
+                            {st.met ? (
+                              <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Met</span>
+                            ) : (
+                              <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Not Met</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
                             <span
-                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${
-                                modalView.gradeFormat === "GCSE"
-                                  ? gcseColour(st.rawValue)
-                                  : aLevelColour(st.rawValue)
-                              }`}
+                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseColour(st.engRaw)}`}
                             >
-                              {st.rawValue}
+                              {st.engRaw}
                             </span>
                           </td>
-                          <td className="p-3 text-center text-[var(--on-surface-muted)]">{avgDisplay}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseColour(st.mathRaw)}`}
+                            >
+                              {st.mathRaw}
+                            </span>
+                          </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {modalView.type === 'GRADE' && (
+                <div className="table-shell border-0 shadow-none">
+                  <table className="w-full text-left text-sm">
+                    <thead className="sticky top-0 z-10 bg-surface-container-lowest">
+                      <tr className="table-head-row">
+                        <th className="px-5 py-3">Student</th>
+                        <th className="px-4 py-3 text-center">Grade in {modalView.subject}</th>
+                        <th className="px-4 py-3 text-center">Avg Grade (All Subjects)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {modalView.students.sort((a, b) => a.name.localeCompare(b.name)).map(st => {
+                        const allScores = metrics?.subjects.flatMap(sm => sm.students.filter(s => s.studentId === st.studentId && s.score !== null).map(s => s.score!)) || [];
+                        const avg = allScores.length > 0 ? (allScores.reduce((a,b) => a+b, 0) / allScores.length) : null;
+                        const avgDisplay = avg !== null ? (metrics?.dominantFormat === 'GCSE' ? (avg * 9).toFixed(1) : (avg * 100).toFixed(0) + '%') : 'N/A';
+                        return (
+                          <tr key={st.studentId} className="table-row calm-transition">
+                            <td className="px-5 py-3 font-medium">
+                              <Link href={`/students/${st.studentId}`} className="calm-transition hover:text-[var(--accent)]">
+                                {st.name}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${
+                                  modalView.gradeFormat === "GCSE"
+                                    ? gcseColour(st.rawValue)
+                                    : aLevelColour(st.rawValue)
+                                }`}
+                              >
+                                {st.rawValue}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center text-[var(--on-surface-muted)]">{avgDisplay}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
               {modalView.students.length === 0 && (
                  <div className="p-8 text-center text-[var(--on-surface-muted)]">

@@ -153,27 +153,29 @@ export default function UploadSubjectResultsPage() {
             subtitle={`${importResult.totalProcessed} entries matched to students`}
           />
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[var(--outline-variant)]/30 text-left text-xs font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">
-                  <th className="pb-2 pr-4">Subject</th>
-                  <th className="pb-2 pr-4 text-right">Matched</th>
-                  <th className="pb-2 text-right">Failed</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--outline-variant)]/20">
-                {importResult.results.map((r) => (
-                  <tr key={r.subject}>
-                    <td className="py-2 pr-4 font-medium">{r.subject}</td>
-                    <td className="py-2 pr-4 text-right tabular-nums text-[var(--success)]">{r.rowsProcessed}</td>
-                    <td className={`py-2 text-right tabular-nums ${r.rowsFailed > 0 ? "text-[var(--error)]" : "text-[var(--on-surface-muted)]"}`}>
-                      {r.rowsFailed}
-                    </td>
+          <div className="table-shell border-0 rounded-none shadow-none">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="table-head-row text-left">
+                    <th className="px-5 py-3.5">Subject</th>
+                    <th className="px-4 py-3.5 text-right">Matched</th>
+                    <th className="px-5 py-3.5 text-right">Failed</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {importResult.results.map((r) => (
+                    <tr key={r.subject} className="table-row calm-transition">
+                      <td className="px-5 py-3 font-medium">{r.subject}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-[var(--success)]">{r.rowsProcessed}</td>
+                      <td className={`px-5 py-3 text-right tabular-nums ${r.rowsFailed > 0 ? "text-[var(--error)]" : "text-[var(--on-surface-muted)]"}`}>
+                        {r.rowsFailed}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="flex gap-3">
@@ -348,25 +350,29 @@ export default function UploadSubjectResultsPage() {
 
           {preview.length > 0 && (
             <div className="overflow-x-auto">
-              <p className="mb-1.5 text-xs text-[var(--on-surface-muted)]">Preview ({Math.min(preview.length, 20)} of {totalRecords} records)</p>
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-[var(--outline-variant)]/30 text-[10px] font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">
-                    <th className="pb-1.5 pr-3 text-left">Student</th>
-                    <th className="pb-1.5 pr-3 text-left">Subject</th>
-                    <th className="pb-1.5 text-left">Grade</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.slice(0, 20).map((r, i) => (
-                    <tr key={i} className="border-b border-[var(--outline-variant)]/20 last:border-0">
-                      <td className="py-1.5 pr-3 text-[var(--on-surface)]">{r.studentName}</td>
-                      <td className="py-1.5 pr-3 text-[var(--on-surface-muted)]">{r.subject}</td>
-                      <td className="py-1.5 font-semibold text-[var(--accent)]">{r.rawValue}</td>
+              <p className="mb-2 text-xs text-[var(--on-surface-muted)]">
+                Preview ({Math.min(preview.length, 20)} of {totalRecords} records)
+              </p>
+              <div className="table-shell table-shell--nested">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="table-head-row text-left">
+                      <th className="px-4 py-2">Student</th>
+                      <th className="px-3 py-2">Subject</th>
+                      <th className="px-4 py-2">Grade</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {preview.slice(0, 20).map((r, i) => (
+                      <tr key={i} className="table-row calm-transition">
+                        <td className="px-4 py-2 text-[var(--on-surface)]">{r.studentName}</td>
+                        <td className="px-3 py-2 text-[var(--on-surface-muted)]">{r.subject}</td>
+                        <td className="px-4 py-2 font-semibold text-[var(--accent)]">{r.rawValue}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
