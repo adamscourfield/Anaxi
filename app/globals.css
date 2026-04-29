@@ -540,7 +540,11 @@ textarea:focus-visible {
   color: var(--on-surface-variant);
   cursor: pointer;
   white-space: nowrap;
-  transition: color 180ms cubic-bezier(0.4,0,0.2,1), background-color 180ms cubic-bezier(0.4,0,0.2,1), box-shadow 180ms cubic-bezier(0.4,0,0.2,1), transform 180ms cubic-bezier(0.4,0,0.2,1);
+  transition:
+    color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .segmented-toggle-btn:hover:not(.segmented-toggle-btn-active) {
@@ -554,6 +558,12 @@ textarea:focus-visible {
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.06),
     0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .segmented-toggle-btn-active {
+    transform: scale(1.02);
+  }
 }
 
 .filter-bar {
@@ -866,6 +876,42 @@ textarea:focus-visible {
   border: 1px solid color-mix(in srgb, var(--outline-variant) 20%, transparent);
 }
 
+/* Dashboard hero tiles: frosted lift over page background */
+.home-hero-glass {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--surface-container-lowest) 78%, transparent) 0%,
+    color-mix(in srgb, var(--surface-container-low) 52%, transparent) 100%
+  );
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 16%, transparent);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 14px 44px -14px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 70%, transparent);
+}
+
+/* CPD / whole-school dark hero: same corner radius language as dashboard cards */
+.home-cpd-hero {
+  border-radius: 1rem;
+  background: linear-gradient(155deg, #0c0c0e 0%, #18181f 38%, #101014 100%) !important;
+  color: var(--on-primary);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 22px 56px -20px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-cpd-bar-fill {
+    transition: width 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .home-stat-bar-fill {
+    transition: width 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
 /* ── Solid cards & density surfaces (tenant UI, reports, modals) ─────────────── */
 /* Prefer these over ad-hoc shadow-sm + gray-200 so elevation stays on tokens. */
 .anx-card {
@@ -923,11 +969,36 @@ textarea:focus-visible {
     box-shadow: var(--shadow-lg);
     transform: translateY(-1px);
   }
+  .home-hero-glass.home-pressable-card:hover {
+    background: linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-container-lowest) 88%, transparent) 0%,
+      color-mix(in srgb, var(--surface-container-low) 62%, transparent) 100%
+    );
+    border-color: color-mix(in srgb, var(--outline-variant) 24%, transparent);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.05),
+      0 20px 48px -16px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 85%, transparent);
+    transform: translateY(-1px);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-pressable-card:hover {
     background-color: var(--surface-container-low);
     box-shadow: var(--shadow-lg);
+  }
+  .home-hero-glass.home-pressable-card:hover {
+    background: linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-container-lowest) 88%, transparent) 0%,
+      color-mix(in srgb, var(--surface-container-low) 62%, transparent) 100%
+    );
+    border-color: color-mix(in srgb, var(--outline-variant) 24%, transparent);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.05),
+      0 20px 48px -16px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 85%, transparent);
   }
 }
 

@@ -355,7 +355,7 @@ function LeadershipHome({
         {/* Right column: Attendance + Observations */}
         <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[340px]">
           {/* Attendance box */}
-          <Card className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+          <Card className="home-hero-glass flex min-h-0 flex-1 flex-col gap-4 rounded-2xl !p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Attendance</p>
             <div>
               <p className="mt-0.5 text-[2.5rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums sm:text-[2.625rem]">
@@ -363,7 +363,7 @@ function LeadershipHome({
               </p>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--surface-container)_88%,transparent)]">
                 <div
-                  className="h-full rounded-full bg-[var(--primary)] calm-transition"
+                  className="home-stat-bar-fill h-full rounded-full bg-[var(--primary)]"
                   style={{ width: `${Math.min(attendancePct ?? 0, 100)}%` }}
                 />
               </div>
@@ -388,7 +388,7 @@ function LeadershipHome({
 
           {/* Observations this week box — avoid min-h-0 so flex stretch cannot clip avatars; extra bottom pad clears rounded edge */}
           <Link href="/explorer/observations" className="flex flex-1 flex-col">
-            <Card className="home-pressable-card flex min-h-min flex-1 cursor-pointer flex-col gap-4 rounded-2xl !p-6 pb-7 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+            <Card className="home-hero-glass home-pressable-card flex min-h-min flex-1 cursor-pointer flex-col gap-4 rounded-2xl !p-6 pb-7">
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Observations this week</p>
               <div>
                 <p className="mt-0.5 text-[2.5rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums sm:text-[2.625rem]">
@@ -623,7 +623,7 @@ function LeadershipHome({
       {/* ═══ Hero Section 3: Signal Analysis ═══ */}
       <section className="grid gap-4 lg:grid-cols-12">
         {/* CPD Priorities (dark box) */}
-        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient lg:col-span-5">
+        <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary lg:col-span-5 rounded-2xl">
           <div className="flex items-center gap-2">
             <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
               <IconSparkles />
@@ -644,8 +644,11 @@ function LeadershipHome({
                       <span className="text-sm font-medium">{row.label}</span>
                       <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
                     </div>
-                    <div className="mt-1 h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
-                      <div className="h-full rounded-full bg-surface-container-lowest/80" style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }} />
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                      <div
+                        className="home-cpd-bar-fill h-full rounded-full bg-surface-container-lowest/80"
+                        style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }}
+                      />
                     </div>
                   </Link>
                 ))}
@@ -896,7 +899,7 @@ function HodHome({
 
       {/* ═══ Department Analysis Grid ═══ */}
       <section className="grid gap-4 lg:grid-cols-12">
-        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient lg:col-span-5">
+        <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary lg:col-span-5 rounded-2xl">
           <div className="flex items-center gap-2">
             <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
               <IconSparkles />
@@ -914,8 +917,11 @@ function HodHome({
                       <span className="text-sm font-medium">{row.label}</span>
                       <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
                     </div>
-                    <div className="mt-1 h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
-                      <div className="h-full rounded-full bg-surface-container-lowest/80" style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }} />
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                      <div
+                        className="home-cpd-bar-fill h-full rounded-full bg-surface-container-lowest/80"
+                        style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }}
+                      />
                     </div>
                     <p className="mt-1 text-[11px] text-on-primary/60">{row.teachersCovered} covered</p>
                   </Link>
@@ -1075,7 +1081,7 @@ function HodHome({
 
       {/* ═══ Whole-school focus (dark card) ═══ */}
       {wholeSchoolTop1 && (
-        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient">
+        <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary rounded-2xl">
           <div className="flex items-center gap-2">
             <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
               <IconSparkles />
@@ -1089,7 +1095,10 @@ function HodHome({
               <span className="text-sm font-bold">{Math.round(wholeSchoolTop1.driftRate * 100)}%</span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-              <div className="h-full rounded-full bg-surface-container-lowest/80" style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }} />
+              <div
+                className="home-cpd-bar-fill h-full rounded-full bg-surface-container-lowest/80"
+                style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
+              />
             </div>
           </div>
           <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
@@ -1409,7 +1418,7 @@ function TeacherHome({
 
       {/* ═══ Whole-school focus (dark card) ═══ */}
       {wholeSchoolTop1 && (
-        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient">
+        <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary rounded-2xl">
           <div className="flex items-center gap-2">
             <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
               <IconSparkles />
@@ -1423,7 +1432,10 @@ function TeacherHome({
               <span className="text-sm font-bold">{Math.round(wholeSchoolTop1.driftRate * 100)}%</span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-              <div className="h-full rounded-full bg-surface-container-lowest/80" style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }} />
+              <div
+                className="home-cpd-bar-fill h-full rounded-full bg-surface-container-lowest/80"
+                style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
+              />
             </div>
           </div>
           <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
