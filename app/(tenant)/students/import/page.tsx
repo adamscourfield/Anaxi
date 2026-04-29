@@ -90,8 +90,11 @@ export default async function StudentsImportPage() {
 
       <Card className="space-y-4">
         <SectionHeader title="CSV column guide" subtitle="Your CSV file must have a header row. Column names must match exactly (case-sensitive)." />
-        <div className="overflow-x-auto">
-          <div className="table-shell">
+        <div className="table-shell">
+          <p className="sr-only" id="students-import-csv-guide-scroll-hint">
+            This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+          </p>
+          <div className="overflow-x-auto" aria-describedby="students-import-csv-guide-scroll-hint">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="table-head-row">

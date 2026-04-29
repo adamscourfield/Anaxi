@@ -458,7 +458,10 @@ export default async function SignalsPage({
         </div>
       ) : (
         <div className="mt-6 table-shell">
-          <div className="overflow-x-auto">
+          <p className="sr-only" id="explorer-signals-scroll-hint">
+            This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+          </p>
+          <div className="overflow-x-auto" aria-describedby="explorer-signals-scroll-hint">
             <table className="w-full text-sm">
               <thead>
                 <tr className="table-head-row text-left">

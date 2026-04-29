@@ -409,6 +409,10 @@ export default async function StudentDetailPage({
           </div>
 
           <div className="table-shell">
+            <p className="sr-only" id="student-profile-metrics-scroll-hint">
+              This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+            </p>
+            <div className="overflow-x-auto" aria-describedby="student-profile-metrics-scroll-hint">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-surface-container-low">
@@ -510,6 +514,7 @@ export default async function StudentDetailPage({
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
           {!analysisProfile.currentSnapshot ? (
             <MetaText className="mt-2">
@@ -542,7 +547,11 @@ export default async function StudentDetailPage({
           {(student.subjectTeachers as any[]).length === 0 ? (
             <BodyText className="mt-4 text-muted">No subject teachers linked.</BodyText>
           ) : (
-            <div className="table-shell mt-4 overflow-x-auto">
+            <div className="table-shell mt-4">
+              <p className="sr-only" id="student-profile-teachers-scroll-hint">
+                This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+              </p>
+              <div className="overflow-x-auto" aria-describedby="student-profile-teachers-scroll-hint">
               <table className="w-full min-w-[320px] text-sm">
                 <thead>
                   <tr className="table-head-row">
@@ -564,6 +573,7 @@ export default async function StudentDetailPage({
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </Card>
@@ -591,8 +601,11 @@ export default async function StudentDetailPage({
               </div>
             ) : (
               <div className="mt-4 table-shell">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[480px] text-left text-sm">
+                <p className="sr-only" id="student-profile-assessments-scroll-hint">
+                  This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+                </p>
+                <div className="overflow-x-auto" aria-describedby="student-profile-assessments-scroll-hint">
+                <table className="w-full min-w-[480px] text-left text-sm">
                     <thead>
                       <tr className="table-head-row">
                         <th className="sticky-first-column-header sticky left-0 z-20 px-5 py-3.5 text-left">Subject</th>
@@ -701,7 +714,11 @@ export default async function StudentDetailPage({
         {chronSnapshots.length === 0 ? (
           <BodyText className="mt-4 text-muted">No rows to show.</BodyText>
         ) : (
-          <div className="table-shell mt-4 overflow-x-auto">
+          <div className="table-shell mt-4">
+            <p className="sr-only" id="student-profile-snapshots-scroll-hint">
+              This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+            </p>
+            <div className="overflow-x-auto" aria-describedby="student-profile-snapshots-scroll-hint">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="table-head-row">
@@ -736,6 +753,7 @@ export default async function StudentDetailPage({
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </Card>

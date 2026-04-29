@@ -281,7 +281,10 @@ export default async function CohortsPage({
         </div>
       ) : (
         <div className="table-shell">
-          <div className="overflow-x-auto">
+          <p className="sr-only" id="explorer-cohorts-scroll-hint">
+            This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+          </p>
+          <div className="overflow-x-auto" aria-describedby="explorer-cohorts-scroll-hint">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="table-head-row text-left">

@@ -394,7 +394,10 @@ export default async function ExplorerTeachersPage({
             </div>
           ) : (
             <div className="table-shell">
-              <div className="overflow-x-auto">
+              <p className="sr-only" id="explorer-teachers-pivot-scroll-hint">
+                This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+              </p>
+              <div className="overflow-x-auto" aria-describedby="explorer-teachers-pivot-scroll-hint">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="table-head-row">
@@ -509,7 +512,10 @@ export default async function ExplorerTeachersPage({
             </div>
           ) : (
             <div className="table-shell">
-              <div className="overflow-x-auto">
+              <p className="sr-only" id="explorer-teachers-priorities-scroll-hint">
+                This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+              </p>
+              <div className="overflow-x-auto" aria-describedby="explorer-teachers-priorities-scroll-hint">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="table-head-row">

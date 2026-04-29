@@ -338,7 +338,10 @@ export default async function AnalysisPage({
               </p>
               {topTeachers.length > 0 ? (
                 <div className="table-shell">
-                  <div className="overflow-x-auto">
+                  <p className="sr-only" id="explorer-analysis-oncall-requesters-scroll-hint">
+                    This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+                  </p>
+                  <div className="overflow-x-auto" aria-describedby="explorer-analysis-oncall-requesters-scroll-hint">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="table-head-row text-left">
@@ -379,7 +382,10 @@ export default async function AnalysisPage({
         ) : (
           <div className="border-t border-[var(--divider-subtle)] p-6 sm:p-8 sm:pt-6">
             <div className="table-shell">
-              <div className="overflow-x-auto">
+              <p className="sr-only" id="explorer-analysis-suspensions-scroll-hint">
+                This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+              </p>
+              <div className="overflow-x-auto" aria-describedby="explorer-analysis-suspensions-scroll-hint">
                 <table className="w-full min-w-[480px] text-sm">
                   <thead>
                     <tr className="table-head-row text-left">
@@ -439,7 +445,10 @@ export default async function AnalysisPage({
         ) : (
           <div className="border-t border-[var(--divider-subtle)] p-6 sm:p-8 sm:pt-6">
             <div className="table-shell">
-              <div className="overflow-x-auto">
+              <p className="sr-only" id="explorer-analysis-high-priority-scroll-hint">
+                This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+              </p>
+              <div className="overflow-x-auto" aria-describedby="explorer-analysis-high-priority-scroll-hint">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="table-head-row text-left">

@@ -63,7 +63,11 @@ export default function StudentsLoading() {
       </div>
 
       <div className="table-shell overflow-hidden">
-        <table className="w-full text-sm">
+        <p className="sr-only" id="students-list-loading-scroll-hint">
+          This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+        </p>
+        <div className="overflow-x-auto" aria-describedby="students-list-loading-scroll-hint">
+          <table className="w-full text-sm">
           <thead>
             <tr className="table-head-row text-left">
               <th className="px-5 py-4 font-semibold">Name</th>
@@ -81,6 +85,7 @@ export default function StudentsLoading() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
