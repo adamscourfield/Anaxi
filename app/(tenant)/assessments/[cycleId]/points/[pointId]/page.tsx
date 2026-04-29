@@ -34,6 +34,7 @@ import {
   ppInlineBadgeClassLg,
   ppNumericClass,
   sendInlineBadgeClass,
+  sendInlineBadgeClassLg,
   sendNumericClass,
   swatchHighClass,
   swatchLowClass,
@@ -43,6 +44,8 @@ import {
   gapBadgeClass,
   thresholdHeaderALevel,
   thresholdHeaderGcse,
+  resultStatusPillClasses,
+  emProgressFillClass,
 } from "@/modules/assessments/attainmentColours";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -252,6 +255,7 @@ function PctDistCompact({ distribution }: { distribution: BandCount[] }) {
 }
 
 const POINT_TYPE_COLOURS = pointTypePillClasses;
+const RESULT_STATUS_BADGE = resultStatusPillClasses;
 
 const POINT_TYPE_LABELS: Record<string, string> = {
   BASELINE: "Baseline", INTERNAL_ASSESSMENT: "Internal Assessment",

@@ -29,6 +29,7 @@ import type { GradeFormat } from "@prisma/client";
 import { hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
 import { competitionRank } from "@/modules/assessments/ranking";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { percentileCellClass, gcseNumericCellClass, aLevelLetterCellClass } from "@/lib/assessments/chartColours";
 import {
   aLevelGradeBadgeClass,
   barNegativeClass,
@@ -42,15 +43,6 @@ import {
   ppTableBadgeClass,
   thresholdHeaderGcse,
 } from "@/modules/assessments/attainmentColours";
-
-function GapBadge({ gap }: { gap: number }) {
-  const cls = gapBadgeSoftClass(gap);
-  return (
-    <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[12px] font-bold tabular-nums ${cls}`}>
-      {gap > 0 ? "+" : ""}{gap}pp gap
-    </span>
-  );
-}
 
 const A_LEVEL_SCORE: Record<string, number> = {
   "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1,
