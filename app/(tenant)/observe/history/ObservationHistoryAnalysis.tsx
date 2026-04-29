@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ObservationAnalysisPreset } from "@/modules/observations/observationHistoryAnalysisRange";
 import { OBSERVATION_ANALYSIS_PRESETS } from "@/modules/observations/observationHistoryAnalysisRange";
 import { FormSelect } from "@/components/ui/form-select";
@@ -91,6 +91,45 @@ function nearestTimelineIndex(svgX: number, n: number, innerW: number, padL: num
   const innerX = svgX - padL;
   const t = Math.max(0, Math.min(1, innerX / innerW));
   return Math.round(t * (n - 1));
+}
+
+type PolyPoint = { x: number; y: number };
+
+/**
+ * Clamp targetX to the polyline's x-range and return the point on the line plus an SVG path
+ * from the first vertex through vertices up to that point (for a “traveled” stroke).
+ */
+function pointOnPolylineAtX(pts: PolyPoint[], targetX: number): { x: number; y: number; pathD: string } | null {
+  if (pts.length === 0) return null;
+  if (pts.length === 1) {
+    const p = pts[0];
+    return { x: p.x, y: p.y, pathD: `M ${p.x} ${p.y}` };
+  }
+  const x0 = pts[0].x;
+  const xLast = pts[pts.length - 1].x;
+  const tx = Math.max(x0, Math.min(xLast, targetX));
+
+  let i = 0;
+  while (i < pts.length - 1 && pts[i + 1].x < tx) i += 1;
+
+  if (i >= pts.length - 1) {
+    const last = pts[pts.length - 1];
+    const pathD = pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+    return { x: last.x, y: last.y, pathD };
+  }
+
+  const a = pts[i];
+  const b = pts[i + 1];
+  const denom = b.x - a.x;
+  const t = denom === 0 ? 0 : (tx - a.x) / denom;
+  const y = a.y + t * (b.y - a.y);
+
+  let pathD = `M ${pts[0].x} ${pts[0].y}`;
+  for (let k = 1; k <= i; k++) {
+    pathD += ` L ${pts[k].x} ${pts[k].y}`;
+  }
+  pathD += ` L ${tx} ${y}`;
+  return { x: tx, y, pathD };
 }
 
 function tooltipPlacementForClient(clientX: number, clientY: number): "default" | "above" | "left" {
@@ -224,8 +263,22 @@ export function ObservationHistoryAnalysis({
   coachingCoacheeId,
 }: Props) {
   const [tip, setTip] = useState<TooltipState>(null);
-  /** Hovered week index on the timeline SVG (chart-wide cursor tracking). */
-  const [timelineHoverIdx, setTimelineHoverIdx] = useState<number | null>(null);
+  /** Nearest week index to cursor (tooltip + primary marker). */
+  const [timelineSnapIdx, setTimelineSnapIdx] = useState<number | null>(null);
+  /** Smoothed crosshair position on the line (SVG coords) + path for emphasized segment. */
+  const [timelineGuide, setTimelineGuide] = useState<{ x: number; y: number; pathD: string } | null>(null);
+
+  const smoothCrosshairXRef = useRef<number | null>(null);
+  const targetCrosshairXRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+
+  const cancelTimelineRaf = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  }, []);
+
   const chartSvgId = useId().replace(/[^a-zA-Z0-9_-]/g, "_");
 
   const showTip = useCallback((e: React.MouseEvent, text: string) => {
@@ -252,8 +305,12 @@ export function ObservationHistoryAnalysis({
 
   const hideTip = useCallback(() => {
     setTip(null);
-    setTimelineHoverIdx(null);
-  }, []);
+    setTimelineSnapIdx(null);
+    setTimelineGuide(null);
+    cancelTimelineRaf();
+    smoothCrosshairXRef.current = null;
+    targetCrosshairXRef.current = null;
+  }, [cancelTimelineRaf]);
 
   const maxRole = useMemo(() => Math.max(...roleCounts.map((r) => r.count), 1), [roleCounts]);
   const maxTimeline = useMemo(
@@ -289,6 +346,50 @@ export function ObservationHistoryAnalysis({
     return { d: lineD, fillD, points: pts, w, h, padL, padR, padT, padB };
   }, [timelineWeeks, maxTimeline]);
 
+  const linePointsRef = useRef(linePoints);
+  linePointsRef.current = linePoints;
+
+  const scheduleTimelineSmoothing = useCallback(() => {
+    if (rafRef.current !== null) return;
+
+    const tick = () => {
+      const pts = linePointsRef.current.points;
+      const target = targetCrosshairXRef.current;
+      let sx = smoothCrosshairXRef.current;
+
+      if (pts.length === 0 || target == null || sx == null) {
+        rafRef.current = null;
+        return;
+      }
+
+      const alpha = 0.26;
+      sx += (target - sx) * alpha;
+      if (Math.abs(sx - target) < 0.4) sx = target;
+      smoothCrosshairXRef.current = sx;
+
+      const on = pointOnPolylineAtX(pts, sx);
+      if (on) setTimelineGuide({ x: on.x, y: on.y, pathD: on.pathD });
+
+      if (Math.abs(sx - target) > 0.08) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        rafRef.current = null;
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  useEffect(() => () => cancelTimelineRaf(), [cancelTimelineRaf]);
+
+  useEffect(() => {
+    smoothCrosshairXRef.current = null;
+    targetCrosshairXRef.current = null;
+    cancelTimelineRaf();
+    setTimelineGuide(null);
+    setTimelineSnapIdx(null);
+  }, [linePoints.d, cancelTimelineRaf]);
+
   const handleTimelineSvgMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
       const svg = e.currentTarget;
@@ -307,8 +408,12 @@ export function ObservationHistoryAnalysis({
         local.x >= L && local.x <= L + innerW && local.y >= T && local.y <= T + innerH;
 
       if (!inPlot) {
-        setTimelineHoverIdx(null);
+        setTimelineSnapIdx(null);
+        setTimelineGuide(null);
         setTip(null);
+        cancelTimelineRaf();
+        smoothCrosshairXRef.current = null;
+        targetCrosshairXRef.current = null;
         return;
       }
 
@@ -316,29 +421,34 @@ export function ObservationHistoryAnalysis({
       const p = pts[idx];
       if (!p) return;
 
-      setTimelineHoverIdx(idx);
+      setTimelineSnapIdx(idx);
 
-      const rect = svg.getBoundingClientRect();
-      const vb = svg.viewBox.baseVal;
-      const sx = rect.width / vb.width;
-      const sy = rect.height / vb.height;
-      const anchorX = rect.left + p.x * sx;
-      const anchorY = rect.top + p.y * sy;
+      targetCrosshairXRef.current = local.x;
+      if (smoothCrosshairXRef.current == null) {
+        smoothCrosshairXRef.current = local.x;
+        const on = pointOnPolylineAtX(pts, local.x);
+        if (on) setTimelineGuide({ x: on.x, y: on.y, pathD: on.pathD });
+      }
+      scheduleTimelineSmoothing();
 
       setTip({
-        x: anchorX,
-        y: anchorY,
+        x: e.clientX,
+        y: e.clientY,
         text: `Week of ${p.label}\n${p.count.toLocaleString()} observation${p.count === 1 ? "" : "s"}`,
-        placement: tooltipPlacementForClient(anchorX, anchorY),
+        placement: tooltipPlacementForClient(e.clientX, e.clientY),
       });
     },
-    [linePoints.points],
+    [linePoints.points, cancelTimelineRaf, scheduleTimelineSmoothing],
   );
 
   const handleTimelineSvgLeave = useCallback(() => {
-    setTimelineHoverIdx(null);
+    setTimelineSnapIdx(null);
+    setTimelineGuide(null);
     setTip(null);
-  }, []);
+    cancelTimelineRaf();
+    smoothCrosshairXRef.current = null;
+    targetCrosshairXRef.current = null;
+  }, [cancelTimelineRaf]);
 
   const timelineSvgPlot = useMemo(() => {
     const padL = linePoints.padL;
@@ -348,17 +458,12 @@ export function ObservationHistoryAnalysis({
     const plotW = linePoints.w - padL - padR;
     const plotH = linePoints.h - padT - padB;
     const pts = linePoints.points;
-    const hi = timelineHoverIdx;
-    const hoverPt = hi !== null && hi >= 0 && hi < pts.length ? pts[hi] : null;
-    const segmentD =
-      hi !== null && hi >= 0 && hi < pts.length
-        ? pts
-            .slice(0, hi + 1)
-            .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
-            .join(" ")
-        : "";
-    return { padL, padT, padB, plotW, plotH, pts, hi, hoverPt, segmentD };
-  }, [linePoints, timelineHoverIdx]);
+    const snapIdx = timelineSnapIdx;
+    const guide = timelineGuide;
+    const segmentD = guide?.pathD ?? "";
+    const hoverX = guide?.x ?? null;
+    return { padL, padT, padB, plotW, plotH, pts, snapIdx, segmentD, hoverX };
+  }, [linePoints, timelineSnapIdx, timelineGuide]);
 
   const barTrack =
     "relative h-7 min-w-0 flex-1 overflow-hidden rounded-xl bg-[var(--surface-container-high)] calm-transition";
@@ -465,13 +570,13 @@ export function ObservationHistoryAnalysis({
             Observations over time
           </h3>
           <p className="mt-1 text-[0.8125rem] text-muted">
-            Move along the chart to snap to each week; the tooltip follows the nearest point.
+            Move along the chart: the guide glides along the line and the tooltip stays by your cursor.
           </p>
           {!hasTimeline ? (
             <p className="mt-4 text-sm text-muted">No weeks in range.</p>
           ) : (
             (() => {
-              const { padL, padT, plotW, plotH, pts, hi, hoverPt, segmentD } = timelineSvgPlot;
+              const { padL, padT, plotW, plotH, pts, snapIdx, segmentD, hoverX } = timelineSvgPlot;
               return (
                 <div className="mt-4 w-full overflow-x-auto rounded-2xl border border-border/25 bg-gradient-to-b from-[var(--surface-container-high)]/40 to-transparent p-4">
                   <svg
@@ -543,7 +648,7 @@ export function ObservationHistoryAnalysis({
                       strokeLinecap="round"
                       filter={`url(#${chartSvgId}-glow)`}
                       className="pointer-events-none calm-transition"
-                      strokeOpacity={hi !== null ? 0.22 : 1}
+                      strokeOpacity={snapIdx !== null ? 0.22 : 1}
                     />
                     {segmentD ? (
                       <path
@@ -557,21 +662,21 @@ export function ObservationHistoryAnalysis({
                         strokeOpacity={1}
                       />
                     ) : null}
-                    {hoverPt ? (
+                    {hoverX != null ? (
                       <line
-                        x1={hoverPt.x}
-                        x2={hoverPt.x}
+                        x1={hoverX}
+                        x2={hoverX}
                         y1={padT}
                         y2={padT + plotH}
                         stroke="rgb(99 102 241)"
                         strokeOpacity={0.28}
                         strokeWidth="1"
-                        className="pointer-events-none calm-transition"
+                        className="pointer-events-none"
                       />
                     ) : null}
                     {pts.map((p, i) => {
-                      const active = hi === i;
-                      const dim = hi !== null && !active;
+                      const active = snapIdx === i;
+                      const dim = snapIdx !== null && !active;
                       return (
                         <g key={p.weekKey} className="pointer-events-none calm-transition">
                           <circle
