@@ -107,40 +107,42 @@ export default async function OnCallFeedPage({ searchParams }: { searchParams: R
           }
         />
       ) : (
-        <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr className="border-b border-border/80 text-left text-xs uppercase tracking-wide text-muted">
-                <th className="px-3 py-2 font-medium">Time</th>
-                <th className="px-3 py-2 font-medium">Student</th>
-                <th className="px-3 py-2 text-center font-medium">Category</th>
-                <th className="px-3 py-2 font-medium">Location</th>
-                <th className="px-3 py-2 font-medium">Reason</th>
-                <th className="px-3 py-2 text-center font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(requests as any[]).map((r: any) => (
-                <tr key={r.id} className="border-b border-border/70 last:border-0 hover:bg-bg/40">
-                  <td className="px-3 py-2">
-                    <Link className="link-accent font-medium underline-offset-2" href={`/on-call/${r.id}`}>
-                      {new Date(r.createdAt).toLocaleTimeString()}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2">
-                    {r.student?.fullName} ({r.student?.yearGroup || "-"})
-                  </td>
-                  <td className="px-3 py-2 text-center">{r.category}</td>
-                  <td className="px-3 py-2">{r.location || "-"}</td>
-                  <td className="px-3 py-2">{r.behaviourReasonCategory || "-"}</td>
-                  <td className="px-3 py-2 text-center">
-                    <StatusPill variant={FEED_STATUS_PILL[r.status] ?? "neutral"}>{r.status}</StatusPill>
-                  </td>
+        <div className="table-shell">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead>
+                <tr className="table-head-row">
+                  <th className="px-5 py-3.5">Time</th>
+                  <th className="px-4 py-3.5">Student</th>
+                  <th className="px-4 py-3.5 text-center">Category</th>
+                  <th className="px-4 py-3.5">Location</th>
+                  <th className="px-4 py-3.5">Reason</th>
+                  <th className="px-4 py-3.5 text-center">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+              </thead>
+              <tbody>
+                {(requests as any[]).map((r: any) => (
+                  <tr key={r.id} className="table-row calm-transition">
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <Link className="link-accent font-medium underline-offset-2" href={`/on-call/${r.id}`}>
+                        {new Date(r.createdAt).toLocaleTimeString()}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      {r.student?.fullName} ({r.student?.yearGroup || "-"})
+                    </td>
+                    <td className="px-4 py-3.5 text-center">{r.category}</td>
+                    <td className="px-4 py-3.5">{r.location || "-"}</td>
+                    <td className="px-4 py-3.5">{r.behaviourReasonCategory || "-"}</td>
+                    <td className="px-4 py-3.5 text-center">
+                      <StatusPill variant={FEED_STATUS_PILL[r.status] ?? "neutral"}>{r.status}</StatusPill>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </div>
   );

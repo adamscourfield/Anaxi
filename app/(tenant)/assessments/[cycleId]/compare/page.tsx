@@ -291,32 +291,53 @@ export default function ComparisonPage() {
           {/* Subject comparison table */}
           <Card className="space-y-4">
             <SectionHeader title="Subject movement" subtitle="Click a subject to expand student-level detail" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--outline-variant)]/30 text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-                    <th className="pb-2 pr-4 text-left">Subject</th>
-                    <th className="pb-2 pr-3 text-right">N</th>
-                    <th className="pb-2 pr-3 text-right">Improved</th>
-                    <th className="pb-2 pr-3 text-right">Declined</th>
-                    {isGcse && (
-                      <>
-                        <th className="pb-2 pr-3 text-right">4+<br /><span className="text-[8px] font-normal normal-case">from→to</span></th>
-                        <th className="pb-2 pr-3 text-right">5+<br /><span className="text-[8px] font-normal normal-case">from→to</span></th>
-                        <th className="pb-2 pr-3 text-right">7+<br /><span className="text-[8px] font-normal normal-case">from→to</span></th>
-                      </>
-                    )}
-                    {isALevel && (
-                      <>
-                        <th className="pb-2 pr-3 text-right">A+<br /><span className="text-[8px] font-normal normal-case">from→to</span></th>
-                        <th className="pb-2 pr-3 text-right">C+<br /><span className="text-[8px] font-normal normal-case">from→to</span></th>
-                      </>
-                    )}
-                    <th className="pb-2 text-right">Avg change</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--outline-variant)]/20">
-                  {data.subjects.sort((a, b) => a.subject.localeCompare(b.subject)).map((sc) => {
+            <div className="table-shell border-0 rounded-none shadow-none">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="table-head-row">
+                      <th className="px-5 py-3 text-left">Subject</th>
+                      <th className="px-4 py-3 text-right">N</th>
+                      <th className="px-4 py-3 text-right">Improved</th>
+                      <th className="px-4 py-3 text-right">Declined</th>
+                      {isGcse && (
+                        <>
+                          <th className="px-4 py-3 text-right">
+                            4+
+                            <br />
+                            <span className="text-[9px] font-normal normal-case tracking-normal text-muted">from→to</span>
+                          </th>
+                          <th className="px-4 py-3 text-right">
+                            5+
+                            <br />
+                            <span className="text-[9px] font-normal normal-case tracking-normal text-muted">from→to</span>
+                          </th>
+                          <th className="px-4 py-3 text-right">
+                            7+
+                            <br />
+                            <span className="text-[9px] font-normal normal-case tracking-normal text-muted">from→to</span>
+                          </th>
+                        </>
+                      )}
+                      {isALevel && (
+                        <>
+                          <th className="px-4 py-3 text-right">
+                            A+
+                            <br />
+                            <span className="text-[9px] font-normal normal-case tracking-normal text-muted">from→to</span>
+                          </th>
+                          <th className="px-4 py-3 text-right">
+                            C+
+                            <br />
+                            <span className="text-[9px] font-normal normal-case tracking-normal text-muted">from→to</span>
+                          </th>
+                        </>
+                      )}
+                      <th className="px-5 py-3 text-right">Avg change</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.subjects.sort((a, b) => a.subject.localeCompare(b.subject)).map((sc) => {
                     const isExpanded = expandedSubject === sc.subject;
                     const thr4 = sc.thresholdDelta["4+"] as { from: number; to: number } | undefined;
                     const thr5 = sc.thresholdDelta["5+"] as { from: number; to: number } | undefined;
@@ -328,79 +349,81 @@ export default function ComparisonPage() {
                       <>
                         <tr
                           key={sc.subject}
-                          className="cursor-pointer hover:bg-[var(--surface-container-low)]"
+                          className="table-row calm-transition cursor-pointer"
                           onClick={() => setExpandedSubject(isExpanded ? null : sc.subject)}
                         >
-                          <td className="py-2.5 pr-4 font-medium text-[var(--on-surface)]">
+                          <td className="px-5 py-3.5 pr-4 font-medium text-[var(--on-surface)]">
                             {sc.subject}
                             <span className="ml-1 text-[10px] text-[var(--on-surface-muted)]">{isExpanded ? "▲" : "▼"}</span>
                           </td>
-                          <td className="py-2.5 pr-3 text-right tabular-nums text-[var(--on-surface-muted)]">
+                          <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-[var(--on-surface-muted)]">
                             {sc.toCount}
                           </td>
-                          <td className="py-2.5 pr-3 text-right font-semibold tabular-nums text-[var(--success)]">
+                          <td className="px-4 py-3.5 pr-3 text-right font-semibold tabular-nums text-[var(--success)]">
                             {sc.improved}
                           </td>
-                          <td className="py-2.5 pr-3 text-right font-semibold tabular-nums text-[var(--error)]">
+                          <td className="px-4 py-3.5 pr-3 text-right font-semibold tabular-nums text-[var(--error)]">
                             {sc.declined}
                           </td>
                           {isGcse && (
                             <>
-                              <td className="py-2.5 pr-3 text-right tabular-nums text-xs">
+                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs">
                                 {thr4 ? <><span className="text-[var(--on-surface-muted)]">{thr4.from}%</span><span className="text-[var(--on-surface-muted)]">→</span><span className={thr4.to > thr4.from ? "text-[var(--success)] font-bold" : thr4.to < thr4.from ? "text-[var(--error)] font-bold" : ""}>{thr4.to}%</span></> : "—"}
                               </td>
-                              <td className="py-2.5 pr-3 text-right tabular-nums text-xs">
+                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs">
                                 {thr5 ? <><span className="text-[var(--on-surface-muted)]">{thr5.from}%</span><span className="text-[var(--on-surface-muted)]">→</span><span className={thr5.to > thr5.from ? "text-[var(--success)] font-bold" : thr5.to < thr5.from ? "text-[var(--error)] font-bold" : ""}>{thr5.to}%</span></> : "—"}
                               </td>
-                              <td className="py-2.5 pr-3 text-right tabular-nums text-xs">
+                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs">
                                 {thr7 ? <><span className="text-[var(--on-surface-muted)]">{thr7.from}%</span><span className="text-[var(--on-surface-muted)]">→</span><span className={thr7.to > thr7.from ? "text-[var(--success)] font-bold" : thr7.to < thr7.from ? "text-[var(--error)] font-bold" : ""}>{thr7.to}%</span></> : "—"}
                               </td>
                             </>
                           )}
                           {isALevel && (
                             <>
-                              <td className="py-2.5 pr-3 text-right tabular-nums text-xs">
+                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs">
                                 {thrA ? <><span className="text-[var(--on-surface-muted)]">{thrA.from}%</span>→<span className={thrA.to > thrA.from ? "text-[var(--success)] font-bold" : thrA.to < thrA.from ? "text-[var(--error)] font-bold" : ""}>{thrA.to}%</span></> : "—"}
                               </td>
-                              <td className="py-2.5 pr-3 text-right tabular-nums text-xs">
+                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs">
                                 {thrC ? <><span className="text-[var(--on-surface-muted)]">{thrC.from}%</span>→<span className={thrC.to > thrC.from ? "text-[var(--success)] font-bold" : thrC.to < thrC.from ? "text-[var(--error)] font-bold" : ""}>{thrC.to}%</span></> : "—"}
                               </td>
                             </>
                           )}
-                          <td className={`py-2.5 text-right tabular-nums ${deltaCls(sc.meanDelta)}`}>
+                          <td className={`px-5 py-3.5 text-right tabular-nums ${deltaCls(sc.meanDelta)}`}>
                             {deltaLabel(sc.meanDelta, sc.gradeFormat)}
                           </td>
                         </tr>
                         {isExpanded && (
                           <tr key={`${sc.subject}-expanded`}>
-                            <td colSpan={99} className="bg-[var(--surface-container-low)] p-4">
+                            <td colSpan={99} className="bg-surface-container-low p-4">
                               <div className="max-h-64 overflow-y-auto">
-                                <table className="w-full text-xs">
-                                  <thead>
-                                    <tr className="text-[9px] font-semibold uppercase tracking-wide text-[var(--on-surface-muted)]">
-                                      <th className="pb-1.5 pr-3 text-left">Student</th>
-                                      <th className="pb-1.5 pr-3 text-center">From</th>
-                                      <th className="pb-1.5 pr-3 text-center">To</th>
-                                      <th className="pb-1.5 text-right">Change</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-[var(--outline-variant)]/20">
-                                    {sc.students.map((s) => (
-                                      <tr key={s.studentId}>
-                                        <td className="py-1 pr-3 text-[var(--on-surface)]">
-                                          {s.name}
-                                          {s.ppFlag && <span className="ml-1 rounded-full bg-violet-100 px-1.5 text-[9px] text-violet-700">PP</span>}
-                                          {s.sendFlag && <span className="ml-1 rounded-full bg-blue-100 px-1.5 text-[9px] text-blue-700">SEND</span>}
-                                        </td>
-                                        <td className="py-1 pr-3 text-center font-semibold text-[var(--on-surface-muted)]">{s.from ?? "—"}</td>
-                                        <td className="py-1 pr-3 text-center font-semibold text-[var(--on-surface)]">{s.to ?? "—"}</td>
-                                        <td className={`py-1 text-right font-bold ${deltaCls(s.delta)}`}>
-                                          {deltaLabel(s.delta, sc.gradeFormat)}
-                                        </td>
+                                <div className="table-shell table-shell--nested">
+                                  <table className="w-full text-xs">
+                                    <thead>
+                                      <tr className="table-head-row text-left">
+                                        <th className="px-4 py-2 text-left">Student</th>
+                                        <th className="px-3 py-2 text-center">From</th>
+                                        <th className="px-3 py-2 text-center">To</th>
+                                        <th className="px-4 py-2 text-right">Change</th>
                                       </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                    </thead>
+                                    <tbody>
+                                      {sc.students.map((s) => (
+                                        <tr key={s.studentId} className="table-row calm-transition">
+                                          <td className="px-4 py-2 text-[var(--on-surface)]">
+                                            {s.name}
+                                            {s.ppFlag && <span className="ml-1 rounded-full bg-violet-100 px-1.5 text-[9px] text-violet-700">PP</span>}
+                                            {s.sendFlag && <span className="ml-1 rounded-full bg-blue-100 px-1.5 text-[9px] text-blue-700">SEND</span>}
+                                          </td>
+                                          <td className="px-3 py-2 text-center font-semibold text-[var(--on-surface-muted)]">{s.from ?? "—"}</td>
+                                          <td className="px-3 py-2 text-center font-semibold text-[var(--on-surface)]">{s.to ?? "—"}</td>
+                                          <td className={`px-4 py-2 text-right font-bold ${deltaCls(s.delta)}`}>
+                                            {deltaLabel(s.delta, sc.gradeFormat)}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
                               </div>
                             </td>
                           </tr>
@@ -408,8 +431,9 @@ export default function ComparisonPage() {
                       </>
                     );
                   })}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </Card>
 

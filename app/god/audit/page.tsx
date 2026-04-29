@@ -62,34 +62,43 @@ export default async function GodAuditPage({
       </Card>
 
       <Card className="overflow-hidden p-0">
-        <div className="overflow-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-bg/60 text-left text-xs uppercase tracking-[0.05em] text-muted">
-                <th className="px-3 py-2">When</th>
-                <th className="px-3 py-2">Actor</th>
-                <th className="px-3 py-2">Action</th>
-                <th className="px-3 py-2">School</th>
-                <th className="px-3 py-2">Target</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r: any) => (
-                <tr key={r.id} className="border-t border-border/70">
-                  <td className="px-3 py-2">{new Date(r.createdAt).toLocaleString("en-GB")}</td>
-                  <td className="px-3 py-2">{r.actor?.fullName ?? r.actor?.email ?? "—"}</td>
-                  <td className="px-3 py-2">{r.action}</td>
-                  <td className="px-3 py-2">{r.tenant?.name ?? "platform"}</td>
-                  <td className="px-3 py-2">{r.targetType}{r.targetId ? `:${r.targetId}` : ""}</td>
+        <div className="table-shell border-0 rounded-none shadow-none">
+          <div className="overflow-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="table-head-row">
+                  <th className="px-5 py-3">When</th>
+                  <th className="px-4 py-3">Actor</th>
+                  <th className="px-4 py-3">Action</th>
+                  <th className="px-4 py-3">School</th>
+                  <th className="px-4 py-3">Target</th>
                 </tr>
-              ))}
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-3 py-6 text-center text-sm text-muted">No audit rows.</td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((r: any) => (
+                  <tr key={r.id} className="table-row calm-transition">
+                    <td className="px-5 py-3.5 whitespace-nowrap tabular-nums text-muted">
+                      {new Date(r.createdAt).toLocaleString("en-GB")}
+                    </td>
+                    <td className="px-4 py-3.5">{r.actor?.fullName ?? r.actor?.email ?? "—"}</td>
+                    <td className="px-4 py-3.5">{r.action}</td>
+                    <td className="px-4 py-3.5">{r.tenant?.name ?? "platform"}</td>
+                    <td className="px-4 py-3.5">
+                      {r.targetType}
+                      {r.targetId ? `:${r.targetId}` : ""}
+                    </td>
+                  </tr>
+                ))}
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-sm text-muted">
+                      No audit rows.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
         </div>
       </Card>
 

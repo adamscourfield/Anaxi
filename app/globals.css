@@ -748,6 +748,19 @@ textarea:focus-visible {
   vertical-align: middle;
 }
 
+/* Nested / inset tables (expand rows, previews) — subtler than page-level shells */
+.table-shell.table-shell--nested {
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--outline-variant) 14%, transparent);
+}
+
+.table-shell.table-shell--nested thead .table-head-row th {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 10px;
+}
+
 .table-header-strip {
   display: flex;
   flex-wrap: wrap;
@@ -775,6 +788,16 @@ textarea:focus-visible {
 .table-row:last-child { border-bottom: 0; }
 
 .table-row:hover { background: var(--surface-container-low); }
+
+/* Emphasised row (e.g. drift drivers) — stacks with .table-row */
+.table-row-highlight {
+  border-left: 3px solid var(--amber-border);
+  background: color-mix(in srgb, var(--scale-some-light) 45%, var(--surface-container-lowest));
+}
+
+.table-row-highlight:hover {
+  background: color-mix(in srgb, var(--scale-some-light) 65%, var(--surface-container-low));
+}
 
 .sticky-first-column {
   position: sticky;

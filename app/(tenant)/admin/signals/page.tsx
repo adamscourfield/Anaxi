@@ -56,50 +56,52 @@ export default async function AdminSignalsPage() {
         </div>
         <form action={saveAll} className="space-y-3 p-4 pt-3">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-bg/60 text-left text-xs uppercase tracking-[0.05em] text-muted">
-                  <th className="p-2">Signal key</th>
-                  <th className="p-2">Default</th>
-                  <th className="p-2">Tenant display name</th>
-                  <th className="p-2">Tenant description</th>
-                  <th className="p-2 text-center">Reset</th>
-                </tr>
-              </thead>
-              <tbody>
-                {signalCatalog.map((signal) => {
-                  const override = labels[signal.key];
-                  return (
-                    <tr className="border-b border-border/70 align-top last:border-0" key={signal.key}>
-                      <td className="p-2 font-mono text-xs">{signal.key}</td>
-                      <td className="p-2">{signal.displayNameDefault}</td>
-                      <td className="p-2">
-                        <input
-                          name={`display_${signal.key}`}
-                          defaultValue={override?.displayName || signal.displayNameDefault}
-                          minLength={2}
-                          maxLength={80}
-                          required
-                          className="w-full rounded-lg border border-border bg-bg px-2 py-1.5"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <textarea
-                          name={`description_${signal.key}`}
-                          defaultValue={override?.description ?? signal.descriptionDefault}
-                          maxLength={240}
-                          rows={2}
-                          className="w-full rounded-lg border border-border bg-bg px-2 py-1.5"
-                        />
-                      </td>
-                      <td className="p-2 text-center">
-                        <Button formAction={resetOne} name="signalKey" value={signal.key} className="px-2 py-1 text-xs" variant="ghost" type="submit">Reset</Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="table-shell">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="table-head-row text-left">
+                    <th className="px-5 py-3.5">Signal key</th>
+                    <th className="px-4 py-3.5">Default</th>
+                    <th className="px-4 py-3.5">Tenant display name</th>
+                    <th className="px-4 py-3.5">Tenant description</th>
+                    <th className="px-4 py-3.5 text-center">Reset</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {signalCatalog.map((signal) => {
+                    const override = labels[signal.key];
+                    return (
+                      <tr className="table-row align-top" key={signal.key}>
+                        <td className="px-5 py-3 font-mono text-xs">{signal.key}</td>
+                        <td className="px-4 py-3">{signal.displayNameDefault}</td>
+                        <td className="px-4 py-3">
+                          <input
+                            name={`display_${signal.key}`}
+                            defaultValue={override?.displayName || signal.displayNameDefault}
+                            minLength={2}
+                            maxLength={80}
+                            required
+                            className="w-full rounded-lg border border-border bg-bg px-2 py-1.5"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <textarea
+                            name={`description_${signal.key}`}
+                            defaultValue={override?.description ?? signal.descriptionDefault}
+                            maxLength={240}
+                            rows={2}
+                            className="w-full rounded-lg border border-border bg-bg px-2 py-1.5"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Button formAction={resetOne} name="signalKey" value={signal.key} className="px-2 py-1 text-xs" variant="ghost" type="submit">Reset</Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
           <Button type="submit">Save changes</Button>
         </form>

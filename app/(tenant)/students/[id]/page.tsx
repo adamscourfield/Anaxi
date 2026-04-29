@@ -408,27 +408,27 @@ export default async function StudentDetailPage({
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-border/40 bg-surface-container-lowest/90 shadow-ambient">
+          <div className="table-shell">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-surface-container-low/80">
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.06em] text-muted">
+                <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-surface-container-low">
+                  <th scope="col" className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-[0.06em] text-muted">
                     Metric
                   </th>
                   <th
                     scope="col"
                     className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.06em] text-muted"
                   >
-                    <span className="block text-text">Change</span>
+                    <span className="block normal-case font-semibold tracking-[0.06em] text-text">Change</span>
                     <span className="mt-0.5 block font-normal normal-case tracking-normal text-[11px] text-muted">
                       vs start of {windowDays}-day window
                     </span>
                   </th>
                   <th
                     scope="col"
-                    className="border-l border-border/60 bg-surface-container-low/60 px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.06em] text-muted"
+                    className="border-l border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] bg-surface-container-low px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.06em] text-muted"
                   >
-                    <span className="block text-text">Latest snapshot</span>
+                    <span className="block normal-case font-semibold tracking-[0.06em] text-text">Latest snapshot</span>
                     <span className="mt-0.5 block font-normal normal-case tracking-normal text-[11px] text-muted">
                       {analysisProfile.currentSnapshot
                         ? fmtDate(analysisProfile.currentSnapshot.snapshotDate)
@@ -437,10 +437,10 @@ export default async function StudentDetailPage({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-divider">
-                <tr>
-                  <td className="px-4 py-2.5 text-muted">Attendance</td>
-                  <td className="px-4 py-2.5 text-right">
+              <tbody>
+                <tr className="table-row">
+                  <td className="px-5 py-3 text-muted">Attendance</td>
+                  <td className="px-4 py-3 text-right">
                     {analysisProfile.attendanceDelta !== null ? (
                       <span
                         className={`tabular-nums font-medium ${
@@ -455,56 +455,56 @@ export default async function StudentDetailPage({
                       <span className="text-muted">—</span>
                     )}
                   </td>
-                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
                     {analysisProfile.currentSnapshot
                       ? `${analysisProfile.currentSnapshot.attendancePct.toFixed(1)}%`
                       : "—"}
                   </td>
                 </tr>
-                <tr>
-                  <td className="px-4 py-2.5 text-muted">On calls</td>
-                  <td className="px-4 py-2.5 text-right">
+                <tr className="table-row">
+                  <td className="px-5 py-3 text-muted">On calls</td>
+                  <td className="px-4 py-3 text-right">
                     <DeltaCell value={analysisProfile.onCallsDelta} />
                   </td>
-                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
                     {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.onCallsCount : "—"}
                   </td>
                 </tr>
-                <tr>
-                  <td className="px-4 py-2.5 text-muted">Detentions</td>
-                  <td className="px-4 py-2.5 text-right">
+                <tr className="table-row">
+                  <td className="px-5 py-3 text-muted">Detentions</td>
+                  <td className="px-4 py-3 text-right">
                     <DeltaCell value={analysisProfile.detentionsDelta} />
                   </td>
-                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
                     {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.detentionsCount : "—"}
                   </td>
                 </tr>
-                <tr>
-                  <td className="px-4 py-2.5 text-muted">Lateness</td>
-                  <td className="px-4 py-2.5 text-right">
+                <tr className="table-row">
+                  <td className="px-5 py-3 text-muted">Lateness</td>
+                  <td className="px-4 py-3 text-right">
                     <DeltaCell value={analysisProfile.latenessDelta} />
                   </td>
-                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
                     {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.latenessCount : "—"}
                   </td>
                 </tr>
-                <tr>
-                  <td className="px-4 py-2.5 text-muted">Internal exclusions</td>
-                  <td className="px-4 py-2.5 text-right">
+                <tr className="table-row">
+                  <td className="px-5 py-3 text-muted">Internal exclusions</td>
+                  <td className="px-4 py-3 text-right">
                     <DeltaCell value={analysisProfile.internalExclusionsDelta} />
                   </td>
-                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
                     {analysisProfile.currentSnapshot
                       ? analysisProfile.currentSnapshot.internalExclusionsCount
                       : "—"}
                   </td>
                 </tr>
-                <tr>
-                  <td className="px-4 py-2.5 text-muted">Suspensions</td>
-                  <td className="px-4 py-2.5 text-right">
+                <tr className="table-row">
+                  <td className="px-5 py-3 text-muted">Suspensions</td>
+                  <td className="px-4 py-3 text-right">
                     <DeltaCell value={analysisProfile.suspensionsDelta} />
                   </td>
-                  <td className="border-l border-border/40 bg-surface-container-low/40 px-4 py-2.5 text-right tabular-nums font-medium text-text">
+                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
                     {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.suspensionsCount : "—"}
                   </td>
                 </tr>
@@ -590,27 +590,24 @@ export default async function StudentDetailPage({
                 />
               </div>
             ) : (
-              <div className="table-shell mt-4 overflow-x-auto">
-                <table className="w-full min-w-[480px] text-sm">
-                  <thead>
-                    <tr className="table-head-row">
-                      <th className="sticky left-0 z-10 bg-[var(--surface-container-low)] px-4 py-3 text-left font-semibold tracking-[0.08em]">
-                        Subject
-                      </th>
+              <div className="mt-4 table-shell">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[480px] text-left text-sm">
+                    <thead>
+                      <tr className="table-head-row">
+                        <th className="sticky-first-column-header sticky left-0 z-20 px-5 py-3.5 text-left">Subject</th>
                       {attainmentBySubject[0]?.points.map((p, i) => {
                         const label = p.label?.trim() || `Assessment ${i + 1}`;
                         return (
                           <th
                             key={`${p.ordinal}-${label}`}
-                            className="bg-[var(--surface-container-low)] px-3 py-3 text-center font-semibold tracking-[0.08em]"
+                            className="px-3 py-3 text-center"
                           >
                             {label}
                           </th>
                         );
                       })}
-                      <th className="bg-[var(--surface-container-low)] px-3 py-3 text-center font-semibold tracking-[0.08em]">
-                        Overall Δ
-                      </th>
+                      <th className="px-3 py-3 text-center">Overall Δ</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -638,7 +635,7 @@ export default async function StudentDetailPage({
                           className="group/assessment-row table-row calm-transition hover:bg-transparent"
                         >
                           <td
-                            className={`sticky left-0 z-[1] bg-[var(--surface-container-lowest)] px-4 py-3 font-medium text-text shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)] ${cellHover}`}
+                            className={`sticky-first-column z-[1] px-5 py-3 font-medium text-text shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)] ${cellHover}`}
                           >
                             {subject}
                           </td>
@@ -681,6 +678,7 @@ export default async function StudentDetailPage({
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
             {activeCycle && attainmentBySubject.length > 0 ? (

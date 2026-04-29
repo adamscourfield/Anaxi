@@ -20,27 +20,41 @@ export default async function AdminImportsPage() {
         {jobs.length === 0 ? (
           <div className="p-4"><EmptyState title="No import jobs yet" description="Imported files will appear here with status and errors." /></div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-bg/60 text-left text-xs uppercase tracking-[0.05em] text-muted">
-                <th className="p-2">Type</th><th className="p-2 text-center">Status</th><th className="p-2">File</th><th className="p-2 text-center">Rows</th><th className="p-2">Error summary</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(jobs as any[]).map((j: any) => (
-                <tr key={j.id} className="border-b border-border/70 align-top last:border-0">
-                  <td className="p-2">{j.type}</td>
-                  <td className="p-2 text-center">{j.status}</td>
-                  <td className="p-2">{j.fileName}</td>
-                  <td className="p-2 text-center">{j.rowCount}</td>
-                  <td className="p-2">
-                    <div>{j.errorSummary || "-"}</div>
-                    {j.errors?.length ? <ul className="list-disc pl-5 text-xs text-muted">{j.errors.map((e: any) => <li key={e.id}>row {e.rowNumber} {e.field}: {e.message}</li>)}</ul> : null}
-                  </td>
+          <div className="table-shell border-0 rounded-none shadow-none">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="table-head-row text-left">
+                  <th className="px-5 py-3.5">Type</th>
+                  <th className="px-4 py-3.5 text-center">Status</th>
+                  <th className="px-4 py-3.5">File</th>
+                  <th className="px-4 py-3.5 text-center">Rows</th>
+                  <th className="px-5 py-3.5">Error summary</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(jobs as any[]).map((j: any) => (
+                  <tr key={j.id} className="table-row align-top calm-transition">
+                    <td className="px-5 py-3">{j.type}</td>
+                    <td className="px-4 py-3 text-center">{j.status}</td>
+                    <td className="px-4 py-3">{j.fileName}</td>
+                    <td className="px-4 py-3 text-center">{j.rowCount}</td>
+                    <td className="px-5 py-3">
+                      <div>{j.errorSummary || "-"}</div>
+                      {j.errors?.length ? (
+                        <ul className="list-disc pl-5 text-xs text-muted">
+                          {j.errors.map((e: any) => (
+                            <li key={e.id}>
+                              row {e.rowNumber} {e.field}: {e.message}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
     </div>

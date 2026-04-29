@@ -135,54 +135,56 @@ export default async function TeacherProfilePage({
               : `Drift score: ${profile.normalizedIDS.toFixed(1)} · Sorted by worst change first`}
           </MetaText>
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-bg text-left text-xs font-medium text-muted">
-              <th className="px-4 py-3">Signal</th>
-              <th className="px-4 py-3 text-right">Current</th>
-              <th className="px-4 py-3 text-right">Previous</th>
-              <th className="px-4 py-3 text-right">Δ</th>
-              <th className="px-4 py-3 text-right">Coverage</th>
-            </tr>
-          </thead>
-          <tbody>
-            {profile.signals.map((sig) => {
-              const isDriver = sig.driftContribution > 0;
-              return (
-                <tr
-                  key={sig.signalKey}
-                  className={`border-b border-divider last:border-0 ${
-                    isDriver ? "border-l-2 border-l-amber-400 bg-scale-some-bg/40" : ""
-                  }`}
-                >
-                  <td className="px-4 py-3 font-medium text-text">{sig.label}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-muted">
-                    {sig.currentMean !== null ? sig.currentMean.toFixed(2) : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-muted">
-                    {sig.prevMean !== null ? sig.prevMean.toFixed(2) : "—"}
-                  </td>
-                  <td
-                    className={`px-4 py-3 text-right tabular-nums font-medium ${
-                      sig.delta === null
-                        ? "text-muted"
-                        : sig.delta < 0
-                        ? "text-scale-some-text"
-                        : sig.delta > 0
-                        ? "text-scale-strong-text"
-                        : "text-muted"
-                    }`}
-                  >
-                    {sig.delta !== null
-                      ? `${sig.delta > 0 ? "+" : ""}${sig.delta.toFixed(2)}`
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-right text-muted">{sig.coverageCount}</td>
+        <div className="table-shell border-0 rounded-none shadow-none">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="table-head-row">
+                  <th className="px-5 py-3.5">Signal</th>
+                  <th className="px-4 py-3.5 text-right">Current</th>
+                  <th className="px-4 py-3.5 text-right">Previous</th>
+                  <th className="px-4 py-3.5 text-right">Δ</th>
+                  <th className="px-4 py-3.5 text-right">Coverage</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {profile.signals.map((sig) => {
+                  const isDriver = sig.driftContribution > 0;
+                  return (
+                    <tr
+                      key={sig.signalKey}
+                      className={`table-row calm-transition ${isDriver ? "table-row-highlight" : ""}`}
+                    >
+                      <td className="px-5 py-4 font-medium text-text">{sig.label}</td>
+                      <td className="px-4 py-4 text-right tabular-nums text-muted">
+                        {sig.currentMean !== null ? sig.currentMean.toFixed(2) : "—"}
+                      </td>
+                      <td className="px-4 py-4 text-right tabular-nums text-muted">
+                        {sig.prevMean !== null ? sig.prevMean.toFixed(2) : "—"}
+                      </td>
+                      <td
+                        className={`px-4 py-4 text-right tabular-nums font-medium ${
+                          sig.delta === null
+                            ? "text-muted"
+                            : sig.delta < 0
+                              ? "text-scale-some-text"
+                              : sig.delta > 0
+                                ? "text-scale-strong-text"
+                                : "text-muted"
+                        }`}
+                      >
+                        {sig.delta !== null
+                          ? `${sig.delta > 0 ? "+" : ""}${sig.delta.toFixed(2)}`
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-4 text-right text-muted">{sig.coverageCount}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </Card>
 
       {/* Footer */}

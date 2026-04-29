@@ -131,7 +131,8 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
           </div>
         ) : (
           <div className="table-shell">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
               <thead>
                 <tr className="table-head-row">
                   <th className="px-5 py-3 text-left">Meeting Title</th>
@@ -150,7 +151,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
                   const statusVariant = m.status === "CONFIRMED" ? "success" : m.status === "CANCELLED" ? "error" : "warning";
 
                   return (
-                    <tr key={m.id} className="table-row">
+                    <tr key={m.id} className="table-row calm-transition">
                       <td className="px-5 py-4">
                         <Link href={`/meetings/${m.id}`} className="link-subtle font-semibold text-text">
                           <p className="font-semibold text-text">{m.title}</p>
@@ -192,6 +193,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </section>

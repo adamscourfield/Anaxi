@@ -91,32 +91,34 @@ export default async function StudentsImportPage() {
       <Card className="space-y-4">
         <SectionHeader title="CSV column guide" subtitle="Your CSV file must have a header row. Column names must match exactly (case-sensitive)." />
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-bg/60 text-left text-xs uppercase tracking-wide text-muted">
-                <th className="px-3 py-2 font-medium">Column name</th>
-                <th className="px-3 py-2 font-medium text-center">Required</th>
-                <th className="px-3 py-2 font-medium">Description</th>
-                <th className="px-3 py-2 font-medium text-muted">Example</th>
-              </tr>
-            </thead>
-            <tbody>
-              {COLUMN_GUIDE.map(({ field, required, description, example }) => (
-                <tr key={field} className="border-b border-border/50 last:border-0">
-                  <td className="px-3 py-2 font-mono text-[12px] font-semibold text-accent">{field}</td>
-                  <td className="px-3 py-2 text-center">
-                    {required ? (
-                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-error align-middle" title="Required" />
-                    ) : (
-                      <span className="text-xs text-muted">opt.</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-muted">{description}</td>
-                  <td className="px-3 py-2 font-mono text-[12px] text-muted">{example}</td>
+          <div className="table-shell">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="table-head-row">
+                  <th className="px-5 py-3.5">Column name</th>
+                  <th className="px-4 py-3.5 text-center">Required</th>
+                  <th className="px-4 py-3.5">Description</th>
+                  <th className="px-4 py-3.5 text-muted">Example</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {COLUMN_GUIDE.map(({ field, required, description, example }) => (
+                  <tr key={field} className="table-row calm-transition">
+                    <td className="px-5 py-3 font-mono text-[12px] font-semibold text-accent">{field}</td>
+                    <td className="px-4 py-3 text-center">
+                      {required ? (
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-error align-middle" title="Required" />
+                      ) : (
+                        <span className="text-xs text-muted">opt.</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-muted">{description}</td>
+                    <td className="px-4 py-3 font-mono text-[12px] text-muted">{example}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
         <p className="text-xs text-muted">
           If your CSV uses different column names, edit the mapping below to map each field to your actual column header.
