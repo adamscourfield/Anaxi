@@ -32,7 +32,7 @@ export default async function AdminVocabPage() {
   return (
     <div className="space-y-4">
       <Link href="/admin/terminology" className="link-accent text-xs">← Back to Terminology</Link>
-      <PageHeader title="Terminology · Vocabulary" subtitle="Set singular/plural labels for behaviour event language." />
+      <PageHeader variant="ledger" title="Terminology · Vocabulary" subtitle="Set singular/plural labels for behaviour event language." />
       <Card className="text-sm text-muted">
         This controls event nouns (for example: detention/detentions). For broader UI wording, use <a className="link-accent" href="/admin/language">Language</a>.
       </Card>

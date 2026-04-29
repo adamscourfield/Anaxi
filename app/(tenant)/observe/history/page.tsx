@@ -329,7 +329,7 @@ export default async function ObservationHistoryPage({
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Observation History"
         subtitle="Secure academic ledger of pedagogical data across all departments."
         actions={

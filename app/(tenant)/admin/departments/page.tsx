@@ -123,11 +123,10 @@ export default async function AdminDepartmentsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow={<>Administration&ensp;›&ensp;Academic Departments</>}
         title="Academic Departments"
         subtitle="Structure your school: departments, heads of department, and staff assignments for the current year."
-        className="anx-page-header-shell"
         actions={
           <>
             <Link href="/api/admin/departments/export" className="anx-btn-pill-ghost calm-transition">

@@ -153,7 +153,7 @@ export default async function CohortsPage({
     <div className="space-y-8">
       <ExplorerBackLink />
 
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Explorer"
         title="Cohorts"
         subtitle="Year group behaviour metrics — attendance, incidents and welfare indicators aggregated by cohort."

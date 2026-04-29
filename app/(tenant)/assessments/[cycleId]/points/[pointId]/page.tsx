@@ -371,7 +371,7 @@ export default function ResultPointPage() {
       />
 
       {/* Page Header */}
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Result point"
         title={point?.label ?? "Result point"}
         subtitle="Analysis for all uploaded subjects at this snapshot."

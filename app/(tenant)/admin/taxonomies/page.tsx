@@ -379,7 +379,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
         Back to Admin
       </Link>
 
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Taxonomies"
         subtitle="Configure leave reasons, on-call options, and who can approve leave. Changes apply to new requests; existing records keep their labels."
         actions={

@@ -290,11 +290,10 @@ export default async function ExplorerPage() {
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-8">
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Analysis"
         title="Explorer"
         subtitle="Command centre for teachers, departments, signals, and behaviour — tuned to a rolling observation window."
-        className="anx-page-header-shell"
         meta={
           <span className="inline-flex flex-wrap items-center gap-2 text-[0.8125rem] leading-snug text-muted">
             <svg className="anx-icon-inline opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>

@@ -71,7 +71,7 @@ export default async function AdminCoachingPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Coaching Assignments"
         subtitle="Manage coach-to-coachee pairs across your institution."
       />

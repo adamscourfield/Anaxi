@@ -219,7 +219,7 @@ export default function NewCyclePage() {
             { label: "Cycle created" },
           ]}
         />
-        <PageHeader eyebrow="Attainment" title="Cycle created" subtitle={`"${cycleLabel}" is ready.`} />
+        <PageHeader variant="ledger" eyebrow="Attainment" title="Cycle created" subtitle={`"${cycleLabel}" is ready.`} />
         <Card className="space-y-4">
           <p className="text-sm text-[var(--on-surface-muted)]">
             Result points have been created. Upload subject results for each point to begin analysis.
@@ -245,7 +245,7 @@ export default function NewCyclePage() {
           { label: "New cycle" },
         ]}
       />
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Attainment"
         title="New cycle"
         subtitle="A cycle tracks one cohort's outcomes across an academic year."

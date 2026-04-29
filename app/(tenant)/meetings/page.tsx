@@ -59,10 +59,9 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
   return (
     <div className="space-y-8">
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Meetings"
         subtitle="Plan agendas, capture actions, and follow up after each session."
-        className="anx-page-header-shell"
         actions={
           hasPermission(user.role, "meetings:create") ? (
             <Button asChild className="h-10 min-h-0 rounded-full px-6 shadow-md">

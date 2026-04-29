@@ -719,7 +719,7 @@ export default async function AnalyticsPage({
 
   return (
     <div className="anx-reports-page space-y-8">
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Analysis"
         title="Priorities"
         subtitle="Teacher coverage, CPD drift, and student pastoral bands — driven by the tab and time window below."

@@ -22,11 +22,10 @@ export default async function MyActionsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Operations"
         title="My Actions"
         subtitle="Stay on top of meeting follow-ups and deadlines."
-        className="anx-page-header-shell"
         meta={
           <>
             <StatusPill variant="neutral">{openCount} open</StatusPill>

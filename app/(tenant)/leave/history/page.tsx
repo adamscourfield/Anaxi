@@ -87,7 +87,7 @@ export default async function LeaveHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Leave of Absence"
         title="Ledger History"
         subtitle="Browse every leave request and filter by status or keyword."

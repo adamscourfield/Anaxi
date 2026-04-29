@@ -62,10 +62,9 @@ export default async function StrategyPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Strategy Board"
         subtitle={<>{activeAreas} active · {completedAreas} complete · {totalAreas} total</>}
-        className="anx-page-header-shell"
         actions={
           <>
             <button type="button" className="anx-btn-pill-ghost calm-transition">

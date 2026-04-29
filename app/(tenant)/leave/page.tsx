@@ -191,9 +191,8 @@ export default async function LeavePage({
       <Suspense fallback={null}>
         <LeaveCreatedToast />
       </Suspense>
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Leave of Absence"
-        className="anx-page-header-shell"
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <div className="segmented-toggle" role="group" aria-label="Leave view">

@@ -102,7 +102,7 @@ export default async function AdminLeaveApprovalsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Leave Approval Rules"
         subtitle="Manage approval groups, approvers, and optional scoped staff coverage for leave requests."
         actions={

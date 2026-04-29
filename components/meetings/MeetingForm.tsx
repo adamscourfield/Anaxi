@@ -233,7 +233,7 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
   return (
     <form onSubmit={handleSubmit}>
       {/* ── Page Header ─────────────────────────────────────────── */}
-      <PageHeader
+      <PageHeader variant="ledger"
         title="New Meeting"
         subtitle="Schedule an institutional coordination or review session."
         actions={

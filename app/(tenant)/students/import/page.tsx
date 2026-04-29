@@ -46,7 +46,7 @@ export default async function StudentsImportPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Import Student Snapshots"
         subtitle="Upload a CSV file of behaviour data for a given date. Each row is one student."
       />

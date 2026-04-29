@@ -169,7 +169,7 @@ export default async function ExplorerObservationsPage({
     <div className="space-y-8">
       <ExplorerBackLink />
 
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Explorer"
         title="Observations"
         subtitle="Recent classroom observations with signal coverage details."

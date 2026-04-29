@@ -63,9 +63,8 @@ export default async function OnCallHomePage() {
 
   return (
     <div className="w-full min-w-0 space-y-8">
-      <PageHeader
+      <PageHeader variant="ledger"
         title="On Call"
-        className="anx-page-header-shell"
         actions={
           <>
             <button type="button" className="anx-btn-pill-ghost w-full calm-transition sm:w-auto">

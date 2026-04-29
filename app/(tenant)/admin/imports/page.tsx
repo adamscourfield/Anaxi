@@ -15,7 +15,7 @@ export default async function AdminImportsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Import Jobs" subtitle="Recent import status, row counts, and top errors." />
+      <PageHeader variant="ledger" title="Import Jobs" subtitle="Recent import status, row counts, and top errors." />
       <Card className="overflow-hidden p-0">
         {jobs.length === 0 ? (
           <div className="p-4"><EmptyState title="No import jobs yet" description="Imported files will appear here with status and errors." /></div>

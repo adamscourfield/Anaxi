@@ -255,11 +255,10 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-8">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow={<>Internal&ensp;›&ensp;User Directory</>}
         title="User Directory"
         subtitle="Manage staff accounts, roles, and institutional access."
-        className="anx-page-header-shell"
         actions={
           <>
             <Link href="/admin/users/import" className="anx-btn-pill-ghost calm-transition">

@@ -234,11 +234,10 @@ export default async function StudentsPage({
       <ExplorerBackLink />
 
       {/* ── Header ──────────────────────────────────────────────── */}
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Explorer"
         title="Students"
         subtitle="Risk bands, attendance, and flags for your cohort."
-        className="anx-page-header-shell"
         actions={
           <>
             {showExport && (

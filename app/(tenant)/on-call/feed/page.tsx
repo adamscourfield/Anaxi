@@ -47,7 +47,7 @@ export default async function OnCallFeedPage({ searchParams }: { searchParams: R
 
   return (
     <div className="w-full min-w-0 space-y-5">
-      <PageHeader
+      <PageHeader variant="ledger"
         title={`Today's ${vocab.on_calls.plural} feed`}
         subtitle={`${requests.length} request${requests.length === 1 ? "" : "s"} · ${todayLabel}`}
       />

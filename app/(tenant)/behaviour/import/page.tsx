@@ -67,7 +67,7 @@ export default async function BehaviourImportPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Import Student Snapshot Data"
         subtitle={
           <>
@@ -75,7 +75,6 @@ export default async function BehaviourImportPage() {
             Ensure all headers match the institutional ledger template.
           </>
         }
-        className="anx-page-header-shell"
       />
 
       <SnapshotUploader />

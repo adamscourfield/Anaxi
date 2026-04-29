@@ -69,10 +69,9 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           Back to Admin
         </Link>
       </div>
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Platform"
         subtitle="Configure school metadata, thresholds, and module availability."
-        className="anx-page-header-shell"
       />
 
       <div className="segmented-toggle max-w-md" role="tablist" aria-label="Platform sections">

@@ -63,11 +63,10 @@ export default async function AssessmentsPage() {
 
   return (
     <div className="w-full space-y-10">
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Attainment"
         title="Cycles"
         subtitle="Track cohort-level outcomes across the academic year — from baselines through to final results."
-        className="anx-page-header-shell"
         actions={
           <Button asChild className="h-10 min-h-0 rounded-full px-6 shadow-md">
             <Link href="/assessments/new" className="gap-2">
