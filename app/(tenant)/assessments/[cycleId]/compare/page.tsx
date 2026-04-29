@@ -422,25 +422,9 @@ export default function ComparisonPage() {
                                           {deltaLabel(s.delta, sc.gradeFormat)}
                                         </td>
                                       </tr>
-                                    </thead>
-                                    <tbody>
-                                      {sc.students.map((s) => (
-                                        <tr key={s.studentId} className="table-row calm-transition">
-                                          <td className="px-4 py-2 text-[var(--on-surface)]">
-                                            {s.name}
-                                            {s.ppFlag && <span className={`ml-1 rounded-full px-1.5 text-[9px] ${PP_TAG_CLASS}`}>PP</span>}
-                                            {s.sendFlag && <span className={`ml-1 rounded-full px-1.5 text-[9px] ${SEN_TAG_CLASS}`}>SEND</span>}
-                                          </td>
-                                          <td className="px-3 py-2 text-center font-semibold text-[var(--on-surface-muted)]">{s.from ?? "—"}</td>
-                                          <td className="px-3 py-2 text-center font-semibold text-[var(--on-surface)]">{s.to ?? "—"}</td>
-                                          <td className={`px-4 py-2 text-right font-bold ${deltaCls(s.delta)}`}>
-                                            {deltaLabel(s.delta, sc.gradeFormat)}
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
+                                    ))}
+                                  </tbody>
+                                </table>
                               </div>
                             </td>
                           </tr>

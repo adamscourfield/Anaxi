@@ -17,6 +17,7 @@ import Link from "next/link";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import type { GradeFormat, PointType, ResultStatus } from "@prisma/client";
+import { aLevelLetterCellClass, gcseNumericCellClass } from "@/lib/assessments/chartColours";
 import {
   aLevelBarClasses,
   barNegativeClass,
@@ -983,91 +984,51 @@ export default function ResultPointPage() {
 
             <div className="p-3 overflow-y-auto flex-1">
               {modalView.type === 'EM' && (
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 z-10 border-b border-[var(--outline-variant)]/20 anx-card-inset">
-                    <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
-                      <th className="p-3 pl-4">Student</th>
-                      <th className="p-3 text-center">Status</th>
-                      <th className="p-3 text-center">English Grade</th>
-                      <th className="p-3 text-center">Maths Grade</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--outline-variant)]/10">
-                    {modalView.students.sort((a, b) => {
-                       if (a.met !== b.met) return a.met ? -1 : 1;
-                       return a.name.localeCompare(b.name);
-                    }).map(st => (
-                      <tr key={st.studentId} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
-                        <td className="p-3 pl-4 font-medium">
-                          <Link href={`/students/${st.studentId}`} className="calm-transition hover:text-[var(--accent)]">
-                            {st.name}
-                          </Link>
-                        </td>
-                        <td className="p-3 text-center">
-                          {st.met ? (
-                            <span className={metPillClass}>Met</span>
-                          ) : (
-                            <span className={notMetPillClass}>Not Met</span>
-                          )}
-                        </td>
-                        <td className="p-3 text-center">
-                          <span
-                            className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseGradeBadgeClass(st.engRaw)}`}
-                          >
-                            {st.engRaw}
-                          </span>
-                        </td>
-                        <td className="p-3 text-center">
-                          <span
-                            className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseGradeBadgeClass(st.mathRaw)}`}
-                          >
-                            {st.mathRaw}
-                          </span>
-                        </td>
+                <div className="table-shell border-0 shadow-none">
+                  <table className="w-full text-left text-sm">
+                    <thead className="sticky top-0 z-10 border-b border-[var(--outline-variant)]/20 anx-card-inset">
+                      <tr className="table-head-row">
+                        <th className="px-5 py-3">Student</th>
+                        <th className="px-4 py-3 text-center">Status</th>
+                        <th className="px-4 py-3 text-center">English Grade</th>
+                        <th className="px-4 py-3 text-center">Maths Grade</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {modalView.students.sort((a, b) => {
-                        if (a.met !== b.met) return a.met ? -1 : 1;
-                        return a.name.localeCompare(b.name);
-                      }).map((st) => (
-                        <tr key={st.studentId} className="table-row calm-transition">
-                          <td className="px-5 py-3 font-medium">
-                            <Link href={`/students/${st.studentId}`} className="calm-transition hover:text-[var(--accent)]">
-                              {st.name}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {st.met ? (
-                              <span className="inline-flex items-center rounded-full bg-scale-strong-light px-2 py-0.5 text-xs font-semibold text-scale-strong-text">
-                                Met
+                      {modalView.students
+                        .sort((a, b) => {
+                          if (a.met !== b.met) return a.met ? -1 : 1;
+                          return a.name.localeCompare(b.name);
+                        })
+                        .map((st) => (
+                          <tr key={st.studentId} className="table-row calm-transition">
+                            <td className="px-5 py-3 font-medium">
+                              <Link
+                                href={`/students/${st.studentId}`}
+                                className="calm-transition hover:text-[var(--accent)]"
+                              >
+                                {st.name}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {st.met ? <span className={metPillClass}>Met</span> : <span className={notMetPillClass}>Not Met</span>}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseGradeBadgeClass(st.engRaw)}`}
+                              >
+                                {st.engRaw}
                               </span>
-                            ) : (
-                              <span className="inline-flex items-center rounded-full bg-scale-limited-light px-2 py-0.5 text-xs font-semibold text-scale-limited-text">
-                                Not Met
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseGradeBadgeClass(st.mathRaw)}`}
+                              >
+                                {st.mathRaw}
                               </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span
-                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${
-                                modalView.gradeFormat === "GCSE"
-                                  ? gcseGradeBadgeClass(st.rawValue)
-                                  : aLevelGradeBadgeClass(st.rawValue)
-                              }`}
-                            >
-                              {st.engRaw}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span
-                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseNumericCellClass(st.mathRaw)}`}
-                            >
-                              {st.mathRaw}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>

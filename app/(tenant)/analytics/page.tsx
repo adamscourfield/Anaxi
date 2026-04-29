@@ -607,92 +607,7 @@ async function StudentsTab({
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr
-                    key={row.studentId}
-                    className="border-b border-divider last:border-0 hover:bg-bg"
-                  >
-                    <td className="sticky left-0 z-10 bg-surface px-4 py-3 font-medium text-text">
-                      <Link
-                        href={`/analysis/students/${row.studentId}?window=${windowDays}`}
-                        className="link-subtle"
-                      >
-                        {row.onWatchlist ? "★ " : ""}{row.studentName}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-muted">{row.yearGroup ?? "—"}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${BAND_PILL[row.band]}`}
-                      >
-                        {BAND_LABELS[row.band]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">{row.riskScore}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {row.drivers.map((d) => (
-                          <span
-                            key={d.metric}
-                            className="rounded-full bg-scale-some-light px-2 py-0.5 text-xs text-scale-some-text"
-                          >
-                            {d.label}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {row.attendancePct !== null ? `${row.attendancePct.toFixed(1)}%` : "—"}
-                      {row.attendanceDelta !== null && (
-                        <span
-                          className={`ml-1 text-xs ${
-                            row.attendanceDelta < 0 ? "text-scale-limited-text" : "text-scale-strong-text"
-                          }`}
-                        >
-                          ({row.attendanceDelta > 0 ? "+" : ""}
-                          {row.attendanceDelta.toFixed(1)})
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {row.detentionsDelta !== null
-                        ? row.detentionsDelta > 0
-                          ? `+${row.detentionsDelta}`
-                          : String(row.detentionsDelta)
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted">
-                      {row.onCallsDelta !== null
-                        ? row.onCallsDelta > 0
-                          ? `+${row.onCallsDelta}`
-                          : String(row.onCallsDelta)
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        {row.sendFlag && (
-                          <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
-                            SEND
-                          </span>
-                        )}
-                        {row.ppFlag && (
-                          <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
-                            PP
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[row.confidence]}`}
-                      >
-                        {row.confidence === "HIGH" ? "High" : "Low"}
-                      </span>
-                    </td>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.studentId} className="table-row calm-transition">
+                  <tr key={row.studentId} className="table-row calm-transition">
                       <td className="sticky-first-column px-5 py-4 font-medium text-text shadow-[4px_0_12px_-4px_rgba(0,0,0,0.06)]">
                         <Link
                           href={`/analysis/students/${row.studentId}?window=${windowDays}`}
@@ -728,7 +643,7 @@ async function StudentsTab({
                         {row.attendanceDelta !== null && (
                           <span
                             className={`ml-1 text-xs ${
-                              row.attendanceDelta < 0 ? "text-red-600" : "text-scale-strong-text"
+                              row.attendanceDelta < 0 ? "text-scale-limited-text" : "text-scale-strong-text"
                             }`}
                           >
                             ({row.attendanceDelta > 0 ? "+" : ""}
@@ -758,7 +673,7 @@ async function StudentsTab({
                             </span>
                           )}
                           {row.ppFlag && (
-                            <span className="rounded-full bg-scale-consistent-light px-2 py-0.5 text-xs text-blue-700">
+                            <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
                               PP
                             </span>
                           )}
@@ -776,7 +691,6 @@ async function StudentsTab({
                 </tbody>
               </table>
             </div>
-          </div>
         )}
       </Card>
 
