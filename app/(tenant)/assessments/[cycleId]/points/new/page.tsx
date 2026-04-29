@@ -88,7 +88,7 @@ export default function NewResultPointPage() {
         ]}
       />
 
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Attainment"
         title="New result point"
         subtitle="A result point is a cohort-wide attainment snapshot — a mock, baseline, prediction, or final results."

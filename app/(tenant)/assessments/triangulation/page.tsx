@@ -61,7 +61,7 @@ export default async function TriangulationPage() {
         ]}
       />
 
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Attainment"
         title="Dual-flagged students"
         subtitle="Students with both a high pastoral risk band and low attainment scores — highest priority for intervention."

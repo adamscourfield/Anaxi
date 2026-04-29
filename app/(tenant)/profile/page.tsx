@@ -38,7 +38,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <PageHeader title="Your Profile" subtitle="Account details and permissions." />
+      <PageHeader variant="ledger" title="Your Profile" subtitle="Account details and permissions." />
 
       {/* Avatar + name */}
       <Card className="flex items-center gap-5">

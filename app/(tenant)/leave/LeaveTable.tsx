@@ -34,10 +34,10 @@ function SectionTable({
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-[1.0625rem] font-semibold tracking-tight text-text">{title}</h2>
+        <h2 className="text-lg font-bold tracking-[-0.02em] text-text">{title}</h2>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-xl border border-border/50 bg-surface-container-low px-3.5 py-2 text-[0.8125rem] font-medium text-muted calm-transition hover:border-black/[0.1] hover:text-text"
+          className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-2 text-[0.8125rem] font-semibold text-muted shadow-sm calm-transition hover:border-text/15 hover:text-text"
         >
           <svg
             className="h-3.5 w-3.5 text-muted"
@@ -58,17 +58,17 @@ function SectionTable({
             <thead>
               <tr className="table-head-row text-left">
                 {isManager && (
-                  <th className="px-5 py-3.5">
+                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                     Staff member
                   </th>
                 )}
-                <th className="px-5 py-3.5">
+                <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Requested dates
                 </th>
-                <th className="px-5 py-3.5">
+                <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Reason
                 </th>
-                <th className="px-5 py-3.5 text-right">
+                <th className="px-5 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                   {mode === "pending" ? "Actions" : "Status"}
                 </th>
               </tr>
@@ -104,7 +104,7 @@ function SectionTable({
                       </td>
                     )}
                     <td className="px-5 py-4">
-                      <p className="font-medium text-text">{row.dateRangeLine}</p>
+                      <p className="font-semibold text-text">{row.dateRangeLine}</p>
                       <p className="mt-0.5 text-[0.8125rem] text-muted">
                         {row.days} working day{row.days !== 1 ? "s" : ""}
                       </p>
@@ -116,7 +116,7 @@ function SectionTable({
                       {mode === "pending" ? (
                         <Link
                           href={`/leave/${row.id}`}
-                          className="inline-flex rounded-md border border-border/60 bg-surface-container-low px-4 py-2 text-sm font-semibold text-text calm-transition hover:border-border hover:bg-surface-container-high"
+                          className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-[var(--surface-container-lowest)] px-5 py-2 text-sm font-semibold text-text shadow-sm calm-transition hover:border-text/20 hover:bg-[var(--surface-container-low)]"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {actionLabel}

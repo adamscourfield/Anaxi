@@ -109,7 +109,7 @@ export default async function CycleDetailPage({
         ]}
       />
 
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Attainment cycle"
         title={cycle.label}
         subtitle={

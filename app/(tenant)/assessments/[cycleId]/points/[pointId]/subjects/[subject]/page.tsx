@@ -428,7 +428,7 @@ export default async function SubjectDetailPage({
       />
 
       {/* Page Header */}
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Subject"
         title={subjectName}
         subtitle={`${formatLabel} · ${graded.length} students assessed${

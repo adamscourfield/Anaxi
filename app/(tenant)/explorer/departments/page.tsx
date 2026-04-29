@@ -219,7 +219,7 @@ export default async function DepartmentsPage({
       <ExplorerBackLink />
 
       {/* ── Header ─────────────────────────────────────────────── */}
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Explorer"
         title="Departments"
         meta={<MetaText>{totalSignals} signals monitored</MetaText>}

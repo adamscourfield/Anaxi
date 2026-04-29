@@ -187,27 +187,18 @@ export default async function LeavePage({
   const isCalendar = view === "calendar";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Suspense fallback={null}>
         <LeaveCreatedToast />
       </Suspense>
-      <PageHeader
+      <PageHeader variant="ledger"
         title="Leave of Absence"
         actions={
           <div className="flex flex-wrap items-center gap-3">
-            {/* List / Calendar segmented control */}
-            <div
-              className="inline-flex items-center gap-0.5 rounded-[14px] bg-[var(--surface-container-high)] p-1"
-              role="group"
-              aria-label="Leave view"
-            >
+            <div className="segmented-toggle" role="group" aria-label="Leave view">
               <Link
                 href="/leave?view=list"
-                className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium calm-transition ${
-                  !isCalendar
-                    ? "bg-surface-container-lowest text-text anx-card-elevated"
-                    : "text-muted hover:text-text"
-                }`}
+                className={`segmented-toggle-btn inline-flex items-center gap-2 ${!isCalendar ? "segmented-toggle-btn-active" : ""}`}
               >
                 <svg
                   className="h-3.5 w-3.5 shrink-0"
@@ -215,6 +206,7 @@ export default async function LeavePage({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
+                  aria-hidden
                 >
                   <path
                     d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
@@ -225,13 +217,9 @@ export default async function LeavePage({
               </Link>
               <Link
                 href="/leave?view=calendar"
-                className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium calm-transition ${
-                  isCalendar
-                    ? "bg-surface-container-lowest text-text anx-card-elevated"
-                    : "text-muted hover:text-text"
-                }`}
+                className={`segmented-toggle-btn inline-flex items-center gap-2 ${isCalendar ? "segmented-toggle-btn-active" : ""}`}
               >
-                <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none">
+                <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none" aria-hidden>
                   <rect
                     x="3.5"
                     y="4.5"
@@ -252,14 +240,15 @@ export default async function LeavePage({
               </Link>
             </div>
 
-            <Button asChild className="rounded-xl px-4 py-2.5 text-[0.875rem]">
-              <Link href="/leave/request">
+            <Button asChild className="rounded-full px-5 shadow-md">
+              <Link href="/leave/request" className="gap-2">
                 <svg
-                  className="h-3.5 w-3.5"
+                  className="h-4 w-4"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2.5"
+                  aria-hidden
                 >
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
@@ -271,43 +260,78 @@ export default async function LeavePage({
         }
       />
 
-      {/* Stat cards — KPI row aligned with Explorer / Signals */}
-      <div className="grid grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4">
+      {/* Stat cards — KPI row */}
+      <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
         <StatCard
+          layout="kpi"
           label="Total pending"
           value={String(totalPending).padStart(2, "0")}
           tone="glass"
-          contextVariant="inline"
+          showChevron={false}
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <circle cx="12" cy="12" r="10" />
+              <path strokeLinecap="round" d="M12 6v6l4 2" />
+            </svg>
+          }
+          iconTileClassName="bg-[var(--pill-error-bg)] text-[var(--pill-error-text)]"
+          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
           context={
             totalPending > 0 ? (
-              <span className="font-semibold text-error">Needs review</span>
+              <span className="font-semibold text-[var(--error)]">Needs review</span>
             ) : (
               <span className="font-medium text-muted">Queue clear</span>
             )
           }
         />
         <StatCard
+          layout="kpi"
           label="Approved (month)"
           value={String(approvedThisMonth).padStart(2, "0")}
           tone="glass"
-          contextVariant="inline"
+          showChevron={false}
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          }
+          iconTileClassName="bg-[var(--status-approved-light)] text-[var(--status-approved-text)]"
+          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
           context={<span className="font-medium text-muted">This month</span>}
         />
         <StatCard
+          layout="kpi"
           label="Denied (month)"
           value={String(deniedThisMonth).padStart(2, "0")}
           tone="glass"
-          contextVariant="inline"
+          showChevron={false}
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <circle cx="12" cy="12" r="10" />
+              <path strokeLinecap="round" d="M15 9l-6 6M9 9l6 6" />
+            </svg>
+          }
+          iconTileClassName="bg-[var(--surface-container)] text-muted"
+          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
           context={<span className="font-medium text-muted">This month</span>}
         />
         <StatCard
+          layout="kpi"
           label="Average response"
           value={avgResponseStr}
           tone="glass"
-          contextVariant="inline"
+          showChevron={false}
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+          iconTileClassName="bg-[var(--cat-blue-bg)] text-[var(--cat-blue-text)]"
+          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
           context={
             <span
-              className={`font-medium ${avgDays !== null && avgDays > 5 ? "font-semibold text-warning" : "text-muted"}`}
+              className={`font-medium ${avgDays !== null && avgDays > 5 ? "font-semibold text-[var(--warning)]" : "text-muted"}`}
             >
               {avgDays !== null && avgDays > 5 ? "Above target" : "Median turnaround"}
             </span>

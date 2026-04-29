@@ -33,10 +33,10 @@ export function QuickActionButton({ items }: { items: QuickActionItem[] }) {
         aria-label="Quick actions menu"
         className="inline-flex items-center gap-2 rounded-full bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-on-primary calm-transition anx-card-elevated hover:bg-primaryBtnHover hover:shadow-md active:scale-[0.98]"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
-          <path d="M7 1L8.5 5.5L13 7L8.5 8.5L7 13L5.5 8.5L1 7L5.5 5.5L7 1Z" fill="currentColor" />
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0" aria-hidden>
+          <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
         </svg>
-        Quick Action
+        + Quick Action
       </button>
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-border/80 bg-surface-container-lowest p-1.5 shadow-lg">

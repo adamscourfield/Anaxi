@@ -53,6 +53,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     <Link
       key={value}
       href={`/admin/settings?tab=${value}`}
+      role="tab"
+      aria-selected={tab === value}
       className={`segmented-toggle-btn ${tab === value ? "segmented-toggle-btn-active" : ""}`}
     >
       {label}
@@ -60,11 +62,19 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   );
 
   return (
-    <div className="space-y-4">
-      <Link href="/admin" className="link-accent text-xs">← Back to Admin</Link>
-      <PageHeader title="Platform" subtitle="Configure school metadata, thresholds, and module availability." />
+    <div className="space-y-8">
+      <div>
+        <Link href="/admin" className="anx-link-back calm-transition">
+          <span aria-hidden>←</span>
+          Back to Admin
+        </Link>
+      </div>
+      <PageHeader variant="ledger"
+        title="Platform"
+        subtitle="Configure school metadata, thresholds, and module availability."
+      />
 
-      <div className="segmented-toggle">
+      <div className="segmented-toggle max-w-md" role="tablist" aria-label="Platform sections">
         {tabLink("school", "School settings")}
         {tabLink("modules", "Modules")}
       </div>

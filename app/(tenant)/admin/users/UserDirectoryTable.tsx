@@ -191,7 +191,7 @@ export function UserDirectoryTable({
   return (
     <div className="space-y-0">
       {/* ── Filters (aligned with Observation History) ───────────── */}
-      <div className="mb-6 filter-panel">
+          <div className="mb-6 filter-panel rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)]">
         <form
           key={filterFormKey}
           onSubmit={applyFilters}
@@ -259,7 +259,7 @@ export function UserDirectoryTable({
           </label>
 
           <div className="filter-actions">
-            <button type="submit" className="btn-filter-primary">
+            <button type="submit" className="btn-filter-primary btn-filter-primary--pill">
               Apply Filters
             </button>
             {hasAppliedFilters && (
@@ -271,18 +271,21 @@ export function UserDirectoryTable({
         </form>
       </div>
 
-      <p className="mb-3 text-[0.8125rem] text-muted">
-        Sorted by <span className="font-medium text-text">{sortLabel}</span>
-        {filtered.length !== users.length ? (
-          <>
-            {" "}
-            · <span className="font-medium text-text">{filtered.length}</span> of {users.length} shown
-          </>
-        ) : null}
-      </p>
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Staff Directory</h2>
+        <p className="text-[0.8125rem] text-muted">
+          Sorted by <span className="font-medium text-text">{sortLabel}</span>
+          {filtered.length !== users.length ? (
+            <>
+              {" "}
+              · <span className="font-medium text-text">{filtered.length}</span> of {users.length} shown
+            </>
+          ) : null}
+        </p>
+      </div>
 
       {/* ── Table (Observation History table-shell) ───────────────── */}
-      <div className="table-shell">
+      <div className="table-shell rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)]">
         <p className="sr-only" id="user-directory-scroll-hint">
           This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
         </p>
@@ -290,10 +293,10 @@ export function UserDirectoryTable({
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="table-head-row text-left">
-                <th className="px-5 py-3.5">Staff member</th>
-                <th className="px-5 py-3.5">Institutional role</th>
-                <th className="px-5 py-3.5">Status</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
+                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Staff member</th>
+                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Institutional role</th>
+                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Status</th>
+                <th className="px-5 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.1em]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -331,8 +334,11 @@ export function UserDirectoryTable({
                           <button
                             type="button"
                             onClick={() => setEditingUser(u)}
-                            className="inline-flex rounded-md border border-border/60 bg-surface-container-low px-4 py-2 text-sm font-semibold text-text calm-transition hover:border-border hover:bg-surface-container-high"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-surface-container-lowest px-3.5 py-2 text-sm font-semibold text-text shadow-sm calm-transition hover:border-border hover:bg-surface-container-low"
                           >
+                            <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 text-muted" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-9.07 9.07-3.87.968.968-3.87 9.144-9.143z" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
                             Edit
                           </button>
                         )}

@@ -46,7 +46,7 @@ export default async function AdminSignalsPage() {
   return (
     <div className="space-y-4">
       <Link href="/admin/terminology" className="link-accent text-xs">← Back to Terminology</Link>
-      <PageHeader title="Observation Signals" subtitle="Edit signal display names and descriptions used in observation workflows." />
+      <PageHeader variant="ledger" title="Observation Signals" subtitle="Edit signal display names and descriptions used in observation workflows." />
       <Card className="text-sm text-muted">
         Use this for signal-level wording only. For cross-module wording, use <a className="link-accent" href="/admin/language">Language</a>.
       </Card>

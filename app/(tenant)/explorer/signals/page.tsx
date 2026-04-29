@@ -230,7 +230,7 @@ export default async function SignalsPage({
       <ExplorerBackLink />
 
       {/* ── Header ─────────────────────────────────────────────── */}
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Explorer"
         title="Signals"
         subtitle="Instructional signals and drift — filter by department and time window."

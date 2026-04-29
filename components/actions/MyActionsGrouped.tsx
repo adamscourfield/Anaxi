@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ActionCard } from "./ActionCard";
 
 type Status = "OPEN" | "BLOCKED" | "DONE";
@@ -38,9 +39,46 @@ const TAB_DOT: Record<Tab, string> = {
   Done: "bg-scale-strong-bar",
 };
 
+const HASH_TO_TAB: Record<string, Tab> = {
+  "": "All",
+  all: "All",
+  open: "Open",
+  blocked: "Blocked",
+  done: "Done",
+};
+
+function tabToHash(tab: Tab): string {
+  if (tab === "All") return "";
+  return tab.toLowerCase();
+}
+
 export function MyActionsGrouped({ grouped: initial, currentUserId }: MyActionsGroupedProps) {
+  const router = useRouter();
   const [grouped, setGrouped] = useState(initial);
   const [activeTab, setActiveTab] = useState<Tab>("All");
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      const raw = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "").toLowerCase() : "";
+      const next = HASH_TO_TAB[raw] ?? "All";
+      setActiveTab(next);
+    };
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
+
+  const setTab = useCallback(
+    (tab: Tab) => {
+      setActiveTab(tab);
+      const h = tabToHash(tab);
+      if (typeof window !== "undefined") {
+        const url = h ? `${window.location.pathname}${window.location.search}#${h}` : `${window.location.pathname}${window.location.search}`;
+        router.replace(url, { scroll: false });
+      }
+    },
+    [router],
+  );
 
   const handleComplete = useCallback((actionId: string) => {
     setGrouped((prev) => {
@@ -80,7 +118,7 @@ export function MyActionsGrouped({ grouped: initial, currentUserId }: MyActionsG
           return (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => setTab(tab)}
               className={`segmented-toggle-btn flex items-center gap-1.5 ${isActive ? "segmented-toggle-btn-active" : ""}`}
             >
               {tab !== "All" && (
@@ -97,16 +135,18 @@ export function MyActionsGrouped({ grouped: initial, currentUserId }: MyActionsG
 
       {/* Actions list */}
       {tabActions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-14">
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
-            <svg className="h-5 w-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-lowest)_60%,transparent)] py-16">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-container)] text-text shadow-sm ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)]">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <p className="text-[0.875rem] font-semibold text-text">
+          <p className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">
             {activeTab === "All" ? "No actions assigned to you" : `No ${activeTab.toLowerCase()} actions`}
           </p>
-          <p className="mt-1 text-[0.8125rem] text-muted">Actions created in meetings will appear here.</p>
+          <p className="mt-1.5 max-w-sm text-center text-[0.8125rem] leading-relaxed text-muted">
+            Actions created in meetings will appear here.
+          </p>
         </div>
       ) : (
         <div className="space-y-2">

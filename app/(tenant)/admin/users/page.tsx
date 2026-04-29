@@ -7,7 +7,6 @@ import {
   assertAdminCannotAssignSuperAdminRole,
   requireAdminUser,
 } from "@/lib/admin";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -17,7 +16,7 @@ import { UserDirectoryTable } from "./UserDirectoryTable";
 
 function UploadIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 20 20" fill="none" className="anx-icon-inline" xmlns="http://www.w3.org/2000/svg">
       <path d="M10 3v10M6 7l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -26,10 +25,48 @@ function UploadIcon() {
 
 function AddStaffIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 20 20" fill="none" className="anx-icon-inline" xmlns="http://www.w3.org/2000/svg">
       <path d="M13 7a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="1.5" />
       <path d="M4 17v-1a5 5 0 015-5h2a5 5 0 015 5v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       <path d="M16 4v4M14 6h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function KpiUsersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.75">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function KpiActiveIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.75">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function KpiLeaveIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.75">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function KpiAdminIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.75">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   );
 }
@@ -218,34 +255,34 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-8">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow={<>Internal&ensp;›&ensp;User Directory</>}
         title="User Directory"
+        subtitle="Manage staff accounts, roles, and institutional access."
         actions={
           <>
-            <Link href="/admin/users/import">
-              <Button variant="secondary" type="button" className="gap-2">
-                <UploadIcon />
-                Upload Ledger
-              </Button>
+            <Link href="/admin/users/import" className="anx-btn-pill-ghost calm-transition">
+              <UploadIcon />
+              Upload Ledger
             </Link>
-            <Link href="/admin/users/import">
-              <Button variant="primary" type="button" className="gap-2">
-                <AddStaffIcon />
-                Add Staff
-              </Button>
+            <Link href="/admin/users/import" className="anx-btn-pill-primary calm-transition">
+              <AddStaffIcon />
+              Add Staff
             </Link>
           </>
         }
       />
 
-      {/* ── Summary stats (KPI row — matches Explorer / Signals) ───── */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      {/* ── Summary stats (KPI row — User Directory reference) ───── */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-5">
         <StatCard
+          layout="kpi"
           label="Total Staff"
           value={allUsers.length.toLocaleString()}
           tone="glass"
-          contextVariant="inline"
+          showChevron={false}
+          icon={<KpiUsersIcon />}
+          iconTileClassName="rounded-full bg-[rgba(99,102,241,0.12)] text-[#4f46e5]"
           context={
             <span className="font-medium text-muted">
               {activeCount} active · {inactiveCount} inactive
@@ -253,19 +290,23 @@ export default async function AdminUsersPage() {
           }
         />
         <StatCard
+          layout="kpi"
           label="Active Now"
           value={activeCount.toLocaleString()}
           tone="glass"
-          contextVariant="inline"
-          context={
-            <span className="font-medium text-muted">Institutional presence: {activePercent}%</span>
-          }
+          showChevron={false}
+          icon={<KpiActiveIcon />}
+          iconTileClassName="rounded-full bg-[rgba(16,185,129,0.12)] text-[#059669]"
+          context={<span className="font-medium text-muted">Institutional presence: {activePercent}%</span>}
         />
         <StatCard
+          layout="kpi"
           label="On Leave"
           value={inactiveCount.toLocaleString()}
           tone="glass"
-          contextVariant="inline"
+          showChevron={false}
+          icon={<KpiLeaveIcon />}
+          iconTileClassName="rounded-full bg-[rgba(245,158,11,0.14)] text-[#b45309]"
           context={
             inactiveCount > 0 ? (
               <span className="inline-flex items-center gap-1 font-semibold text-error">
@@ -278,10 +319,13 @@ export default async function AdminUsersPage() {
           }
         />
         <StatCard
+          layout="kpi"
           label="Administrators"
           value={adminCount.toLocaleString()}
           tone="glass"
-          contextVariant="inline"
+          showChevron={false}
+          icon={<KpiAdminIcon />}
+          iconTileClassName="rounded-full bg-[rgba(59,130,246,0.12)] text-[#2563eb]"
           context={<span className="font-medium text-muted">Core system access</span>}
         />
       </div>

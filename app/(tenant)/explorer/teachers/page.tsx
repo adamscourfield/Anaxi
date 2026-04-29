@@ -283,7 +283,7 @@ export default async function ExplorerTeachersPage({
       <ExplorerBackLink />
 
       {/* ── Page header ────────────────────────────────────────────────────── */}
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Explorer"
         title="Teachers"
         subtitle="Observation coverage, signal means, and drift — switch window and pivot vs priorities."

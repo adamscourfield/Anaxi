@@ -206,7 +206,7 @@ export default function ComparisonPage() {
         ]}
       />
 
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Attainment"
         title="Compare result points"
         subtitle="Track progress, accuracy, and movement between any two result points in this cycle."

@@ -45,14 +45,14 @@ export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
         return (
           <div
             key={m.id}
-            className="flex items-center gap-4 rounded-2xl glass-card px-5 py-4 shadow-ambient"
+            className="explorer-kpi-tile flex items-center gap-4 rounded-2xl px-5 py-4"
           >
             {/* Date badge */}
-            <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl border border-border/30 bg-surface">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-accent">
+            <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-lowest)] shadow-sm">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                 {formatMonth(date)}
               </span>
-              <span className="text-lg font-bold leading-tight text-text">
+              <span className="text-lg font-bold leading-tight tracking-[-0.02em] text-text">
                 {formatDay(date)}
               </span>
             </div>
@@ -65,7 +65,7 @@ export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
 
             {/* Action count */}
             <div className="flex-shrink-0 text-right">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Action Count</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Action count</p>
               <p className="text-sm font-bold text-text">{actionCount} item{actionCount !== 1 ? "s" : ""}</p>
             </div>
 

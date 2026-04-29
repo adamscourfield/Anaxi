@@ -100,6 +100,15 @@
   --warning-text:       #92400e;
   --info:               #6366f1;
 
+  /* ── Institutional UI pass (headers, pills, elevated cards) ─── */
+  --anx-header-rule:           color-mix(in srgb, var(--outline-variant) 22%, transparent);
+  --anx-card-border:           color-mix(in srgb, var(--outline-variant) 18%, transparent);
+  --anx-card-border-strong:     color-mix(in srgb, var(--outline-variant) 22%, transparent);
+  --anx-elevated-shadow:        0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 40px -12px rgba(0, 0, 0, 0.08);
+  --anx-elevated-shadow-hover:  0 4px 24px -8px rgba(0, 0, 0, 0.08);
+  --anx-page-title-size:        clamp(1.75rem, 4vw, 2.25rem);
+  --anx-pill-ghost-border:      color-mix(in srgb, var(--outline-variant) 35%, transparent);
+
   /* ── Layout ────────────────────────────────────────────────────── */
   --radius:             24px;
   --radius-lg:          24px;
@@ -523,22 +532,28 @@ textarea:focus-visible {
 .segmented-toggle {
   display: inline-flex;
   align-items: center;
-  border-radius: 10px;
-  background: var(--surface-container-high);
-  padding: 3px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--surface-container-high) 92%, var(--surface-container) 8%);
+  padding: 4px;
   gap: 2px;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
 .segmented-toggle-btn {
-  border-radius: 8px;
-  padding: 6px 14px;
+  border-radius: 9999px;
+  padding: 7px 16px;
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.25;
+  letter-spacing: 0.01em;
   color: var(--on-surface-variant);
   cursor: pointer;
   white-space: nowrap;
-  transition: all 200ms cubic-bezier(0.4,0,0.2,1);
+  transition:
+    color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .segmented-toggle-btn:hover:not(.segmented-toggle-btn-active) {
@@ -549,7 +564,15 @@ textarea:focus-visible {
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .segmented-toggle-btn-active {
+    transform: scale(1.02);
+  }
 }
 
 .filter-bar {
@@ -613,6 +636,13 @@ textarea:focus-visible {
 
 .btn-filter-primary:hover {
   opacity: 0.92;
+}
+
+/* Pill-shaped primary in filter toolbars (Explorer Students, etc.) */
+.btn-filter-primary.btn-filter-primary--pill {
+  border-radius: 9999px;
+  padding: 0.65rem 1.35rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .btn-filter-secondary {
@@ -862,6 +892,87 @@ textarea:focus-visible {
   border: 1px solid color-mix(in srgb, var(--outline-variant) 20%, transparent);
 }
 
+/* Dashboard hero tiles: frosted lift over page background */
+.home-hero-glass {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--surface-container-lowest) 78%, transparent) 0%,
+    color-mix(in srgb, var(--surface-container-low) 52%, transparent) 100%
+  );
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 16%, transparent);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 14px 44px -14px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 70%, transparent);
+}
+
+/* CPD / whole-school dark hero: same corner radius language as dashboard cards */
+/* Explorer hub: top metric tiles (frosted, circular icon well) */
+.explorer-kpi-tile {
+  border-radius: 1rem;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--surface-container-lowest) 82%, transparent) 0%,
+    color-mix(in srgb, var(--surface-container-low) 48%, transparent) 100%
+  );
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 16%, transparent);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 14px 44px -14px rgba(0, 0, 0, 0.09),
+    inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 65%, transparent);
+}
+
+.explorer-kpi-hover {
+  transition:
+    transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .group:hover .explorer-kpi-hover {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .explorer-kpi-hover {
+    transform: none !important;
+  }
+}
+
+.home-cpd-hero {
+  border-radius: 1rem;
+  background: linear-gradient(155deg, #0c0c0e 0%, #18181f 38%, #101014 100%) !important;
+  color: var(--on-primary);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 22px 56px -20px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-cpd-bar-fill {
+    transition: width 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .home-stat-bar-fill {
+    transition: width 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+.anx-label-micro {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--on-surface-variant);
+}
+
 /* ── Solid cards & density surfaces (tenant UI, reports, modals) ─────────────── */
 /* Prefer these over ad-hoc shadow-sm + gray-200 so elevation stays on tokens. */
 .anx-card {
@@ -882,6 +993,156 @@ textarea:focus-visible {
 
 .anx-hover-elevate:hover {
   box-shadow: var(--shadow-sm);
+}
+
+/* ── Cross-page consistency (institutional polish pass) ───────────── */
+.anx-page-header-shell {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--anx-header-rule);
+  padding-bottom: 2rem;
+}
+
+.anx-page-title {
+  text-wrap: pretty;
+  font-size: var(--anx-page-title-size);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  color: var(--text);
+}
+
+.anx-page-subtitle {
+  max-width: 100%;
+  text-wrap: pretty;
+  font-size: 0.875rem;
+  line-height: 1.625;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--on-surface-variant) 90%, transparent);
+}
+
+@media (min-width: 768px) {
+  .anx-page-subtitle {
+    max-width: 42rem;
+  }
+}
+
+.anx-eyebrow {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: color-mix(in srgb, var(--on-surface-variant) 55%, transparent);
+}
+
+.anx-elevated-card {
+  border-radius: 1rem;
+  border: 1px solid var(--anx-card-border);
+  background: var(--surface-container-lowest);
+  box-shadow: var(--anx-elevated-shadow);
+}
+
+.anx-elevated-card--hover:hover {
+  box-shadow: var(--anx-elevated-shadow-hover);
+}
+
+/* Ghost pill (toolbar / secondary actions) — fixed min-height for alignment */
+.anx-btn-pill-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 35%, transparent);
+  background: var(--surface-container-lowest);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.anx-btn-pill-ghost:hover {
+  border-color: var(--outline-variant);
+  background: var(--surface-container-low);
+}
+
+/* Primary pill (deep slate CTA) */
+.anx-btn-pill-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 9999px;
+  border: 0;
+  background: linear-gradient(to bottom right, var(--primary), var(--primary-container));
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--on-primary);
+  box-shadow: var(--shadow-btn);
+  transition:
+    opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.anx-btn-pill-primary:hover {
+  opacity: 0.95;
+  box-shadow: var(--shadow-btn-hover);
+}
+
+.anx-btn-pill-primary .anx-icon-inline {
+  color: var(--on-primary);
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .anx-btn-pill-primary:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.anx-icon-inline {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  color: var(--icon-muted);
+}
+
+/* Compact pill for “Back to …” nav (smaller than toolbar pills) */
+.anx-link-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2rem;
+  padding: 0 0.875rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 35%, transparent);
+  background: var(--surface-container-lowest);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--on-surface-variant);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.anx-link-back:hover {
+  border-color: var(--outline-variant);
+  background: var(--surface-container-low);
+  color: var(--text);
 }
 
 /* ── Dashboard / home: consistent interactive surfaces ───────────── */
@@ -919,11 +1180,36 @@ textarea:focus-visible {
     box-shadow: var(--shadow-lg);
     transform: translateY(-1px);
   }
+  .home-hero-glass.home-pressable-card:hover {
+    background: linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-container-lowest) 88%, transparent) 0%,
+      color-mix(in srgb, var(--surface-container-low) 62%, transparent) 100%
+    );
+    border-color: color-mix(in srgb, var(--outline-variant) 24%, transparent);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.05),
+      0 20px 48px -16px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 85%, transparent);
+    transform: translateY(-1px);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-pressable-card:hover {
     background-color: var(--surface-container-low);
     box-shadow: var(--shadow-lg);
+  }
+  .home-hero-glass.home-pressable-card:hover {
+    background: linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-container-lowest) 88%, transparent) 0%,
+      color-mix(in srgb, var(--surface-container-low) 62%, transparent) 100%
+    );
+    border-color: color-mix(in srgb, var(--outline-variant) 24%, transparent);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.05),
+      0 20px 48px -16px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 85%, transparent);
   }
 }
 

@@ -15,15 +15,15 @@ export function HomePageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="border-b border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] pb-8">
-      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1.5">
+    <header className="anx-page-header-shell">
+      <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
           {eyebrow ? (
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted/70">{eyebrow}</p>
+            <p className="anx-eyebrow">{eyebrow}</p>
           ) : null}
-          <h1 className="text-pretty text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">{title}</h1>
+          <h1 className="anx-page-title">{title}</h1>
           {subtitle ? (
-            <p className="max-w-2xl text-pretty text-[13px] leading-relaxed text-muted">{subtitle}</p>
+            <p className="anx-page-subtitle">{subtitle}</p>
           ) : null}
         </div>
         {actions ? (
@@ -82,11 +82,11 @@ export function HomeCardHeading({
         : "bg-[var(--surface-container)] text-text";
 
   return (
-    <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-      <div className="flex min-w-0 items-center gap-3">
+    <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3.5">
         {icon ? (
           <span
-            className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl [&_svg]:h-5 [&_svg]:w-5 ${tile}`}
+            className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.06)] [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem] ${tile}`}
           >
             {icon}
           </span>

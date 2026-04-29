@@ -272,7 +272,7 @@ export default async function EMThresholdPage({
       />
 
       {/* Page Header */}
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="English & Maths"
         title={`Grade ${targetThreshold}+ target group`}
         subtitle={`Students who have not yet achieved grade ${targetThreshold} or above in both English and Maths. Filter to include those who have met the threshold or everyone.`}

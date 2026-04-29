@@ -146,7 +146,7 @@ export default function UploadSubjectResultsPage() {
             { label: "Upload complete" },
           ]}
         />
-        <PageHeader eyebrow="Attainment" title="Upload complete" subtitle="Your file was processed and results are being matched to students." />
+        <PageHeader variant="ledger" eyebrow="Attainment" title="Upload complete" subtitle="Your file was processed and results are being matched to students." />
         <Card className="space-y-5">
           <SectionHeader
             title={`${importResult.subjectsImported} subject${importResult.subjectsImported !== 1 ? "s" : ""} uploaded`}
@@ -204,7 +204,7 @@ export default function UploadSubjectResultsPage() {
             { label: "Locked" },
           ]}
         />
-        <PageHeader
+        <PageHeader variant="ledger"
           eyebrow="Attainment"
           title="Result point locked"
           subtitle="This result point has been locked and cannot accept new uploads."
@@ -224,7 +224,7 @@ export default function UploadSubjectResultsPage() {
         ]}
       />
 
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Attainment"
         title="Upload subject results"
         subtitle="Upload a CSV with grades for one or more subjects. The system will auto-detect subject columns."

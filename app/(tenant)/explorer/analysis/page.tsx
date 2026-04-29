@@ -220,7 +220,7 @@ export default async function AnalysisPage({
     <div className="anx-reports-page space-y-8">
       <ExplorerBackLink />
 
-      <PageHeader
+      <PageHeader variant="ledger"
         eyebrow="Explorer"
         title="Behaviour analysis"
         subtitle="Cohort behaviour, attendance, and on-call patterns for the selected window."

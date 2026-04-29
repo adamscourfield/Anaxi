@@ -123,29 +123,27 @@ export default async function AdminDepartmentsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        eyebrow="Administration"
+      <PageHeader variant="ledger"
+        eyebrow={<>Administration&ensp;›&ensp;Academic Departments</>}
         title="Academic Departments"
         subtitle="Structure your school: departments, heads of department, and staff assignments for the current year."
         actions={
           <>
-            <Link href="/api/admin/departments/export">
-              <Button type="button" variant="secondary" className="gap-2">
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10 3v14M6 13l4 4 4-4" />
-                </svg>
-                Export ledger
-              </Button>
+            <Link href="/api/admin/departments/export" className="anx-btn-pill-ghost calm-transition">
+              <svg className="anx-icon-inline" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M10 3v14M6 13l4 4 4-4" />
+              </svg>
+              Export ledger
             </Link>
             <form action={createDepartment} className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <input
                 name="name"
                 placeholder="New department name"
-                className="w-full min-w-[12rem] rounded-xl border border-border/60 bg-surface-container-lowest/90 px-4 py-2.5 text-sm text-text shadow-inner placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-52"
+                className="h-10 w-full min-w-[12rem] rounded-full border border-border/60 bg-surface-container-lowest/90 px-4 text-sm text-text shadow-inner placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-52"
                 required
               />
-              <Button type="submit" className="gap-2 shrink-0">
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <Button type="submit" className="h-10 min-h-0 shrink-0 gap-2 rounded-full px-5 py-0">
+                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                   <path d="M10 4v12M4 10h12" />
                 </svg>
                 Add department
