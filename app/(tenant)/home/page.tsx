@@ -29,7 +29,6 @@ import {
 import { QuickActionButton } from "@/components/dashboard/QuickActionButton";
 import { Button } from "@/components/ui/button";
 import {
-  DashboardHero,
   HomeCardHeading,
   HomeCardHeadingSm,
   HomeEmptyPanel,
@@ -173,24 +172,24 @@ function PageTitle({
   quickActionItems: { label: string; href: string; icon: ReactNode }[];
 }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted/60">Dashboard</p>
-        <h1 className="text-2xl font-bold tracking-[-0.025em] text-text">Institutional Pulse</h1>
-      </div>
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch] pb-0.5 sm:pb-0">
-          <WindowSelector windowDays={windowDays} />
-        </div>
-        {quickActionItems.length > 0 ? <QuickActionButton items={quickActionItems} /> : null}
-      </div>
-    </div>
+    <HomePageHeader
+      eyebrow="Dashboard"
+      title="Institutional Pulse"
+      subtitle="Coverage, signals, and operational status for your school — tuned to the selected window."
+      actions={
+        <>
+          <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch] pb-0.5 sm:pb-0">
+            <WindowSelector windowDays={windowDays} />
+          </div>
+          {quickActionItems.length > 0 ? <QuickActionButton items={quickActionItems} /> : null}
+        </>
+      }
+    />
   );
 }
 
 function LeadershipHome({
   windowDays,
-  userName,
   cpdRows,
   teacherRows,
   cohortRows,
@@ -207,7 +206,6 @@ function LeadershipHome({
   watchlistStudents,
 }: {
   windowDays: number;
-  userName: string;
   cpdRows: CpdPriorityRow[];
   teacherRows: TeacherRiskRow[];
   cohortRows: CohortPivotRow[];
@@ -225,8 +223,10 @@ function LeadershipHome({
 }) {
   const allDriftingCpd = cpdRows.filter((r) => r.teachersDriftingDown > 0);
   const topCpd = allDriftingCpd.slice(0, 3);
+  const topTeachers = teacherRows.slice(0, 3);
+  const totalObs = teacherRows.reduce((sum, r) => sum + r.teacherCoverage, 0);
 
-  // Attendance
+  // Attendance: compute school-wide average from cohort data
   const cohortWithAttendance = cohortRows.filter((r) => r.attendanceMean !== null);
   const attendancePct =
     cohortWithAttendance.length > 0
@@ -237,226 +237,177 @@ function LeadershipHome({
       ? cohortWithAttendance.reduce((sum, r) => sum + (r.attendanceDelta ?? 0), 0) / cohortWithAttendance.length
       : null;
 
-  // Least observed teachers
+  // Least observed teachers (sorted ascending by coverage)
   const leastObserved = [...teacherRows]
     .sort((a, b) => a.teacherCoverage - b.teacherCoverage)
     .slice(0, 3);
 
-  // Staff needing intervention
+  // Staff needing intervention (SIGNIFICANT_DRIFT or EMERGING_DRIFT)
   const interventionStaff = teacherRows
     .filter((r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT")
     .slice(0, 3);
 
-  // Watchlist students
+  // Watchlist students (prefer explicitly-provided watchlist rows, otherwise derive from student rows)
   const bandOrder: Record<string, number> = { URGENT: 0, PRIORITY: 1, WATCH: 2, STABLE: 3 };
   const derivedWatchlistStudents = studentRows
     .filter((r) => r.onWatchlist)
     .sort((a, b) => (bandOrder[a.band] ?? 9) - (bandOrder[b.band] ?? 9));
   const effectiveWatchlistStudents = watchlistStudents ?? derivedWatchlistStudents;
 
-  // Live on-calls
+  // On-call: separate open vs resolved
   const openOnCalls = onCallDetails.filter((r) => r.status === "OPEN" || r.status === "ACKNOWLEDGED");
+  const resolvedOnCalls = onCallDetails.filter((r) => r.status === "RESOLVED");
 
-  // Greeting
-  const hour = new Date().getUTCHours() + 1; // BST approximation
-  const greetingPrefix =
-    hour >= 5 && hour < 12 ? "Good morning" : hour >= 12 && hour < 17 ? "Good afternoon" : "Good evening";
-  const firstName = userName.split(" ")[0];
-
-  // Attendance tone for hero
-  const attendanceTone =
-    attendancePct === null ? "default" : attendancePct < 90 ? "error" : attendancePct < 95 ? "warning" : "success";
+  const topOnCallRows = onCallDetails.slice(0, 3);
+  const firstImmediateSupportIdx = topOnCallRows.findIndex(
+    (oc) => oc.status === "OPEN" || oc.status === "ACKNOWLEDGED"
+  );
 
   return (
-    <div className="w-full min-w-0 space-y-6">
-
-      {/* ═══ Hero Banner ═══ */}
-      <DashboardHero
-        eyebrow={`Institutional Pulse · ${windowDays}-day window`}
-        greeting={`${greetingPrefix}, ${firstName}`}
-        kpis={[
-          {
-            label: "Attendance",
-            value: attendancePct !== null ? `${attendancePct.toFixed(1)}%` : "—",
-            context:
-              attendanceDelta !== null
-                ? `${attendanceDelta >= 0 ? "+" : ""}${attendanceDelta.toFixed(1)}% vs last week`
-                : "School-wide average",
-            tone: attendanceTone,
-          },
-          {
-            label: "Obs this week",
-            value: weekObsCount,
-            context: `${weekObsTeachers.length} teacher${weekObsTeachers.length !== 1 ? "s" : ""} observed`,
-          },
-          {
-            label: "Pending leave",
-            value: pendingLeaveCount,
-            context: pendingLeaveCount > 0 ? "Awaiting approval" : "All clear",
-            tone: pendingLeaveCount > 0 ? "warning" : "default",
-          },
-          {
-            label: "Live on-calls",
-            value: openOnCallCount,
-            context: openOnCallCount > 0 ? "Active response" : "No active calls",
-            tone: openOnCallCount > 0 ? "error" : "default",
-          },
-        ]}
-      />
-
-      {/* ═══ Live On-Call Alert (only shown when active) ═══ */}
-      {openOnCalls.length > 0 && (
-        <div
-          id="immediate-support-needed"
-          className="scroll-mt-20 overflow-hidden rounded-2xl border border-[var(--error)]/25 bg-[var(--error-container)]"
+    <div className="w-full min-w-0 space-y-8">
+      {/* ═══ Hero Section 1: On-Call Status + Attendance + Observations ═══ */}
+      <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
+        {/* On-Call Live Status (main box) */}
+        <Card
+          id="on-call-status-card"
+          className="scroll-mt-20 flex min-h-0 min-w-0 flex-1 flex-col gap-4"
         >
-          <div className="flex items-center gap-3 border-b border-[var(--error)]/20 px-5 py-3.5">
-            <span className="relative flex h-2.5 w-2.5 shrink-0" aria-hidden>
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--error)] opacity-60" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--error)]" />
-            </span>
-            <p className="flex-1 text-sm font-semibold text-[var(--on-error-container)]">
-              Live Response — {openOnCalls.length} active on-call{openOnCalls.length !== 1 ? "s" : ""}
-            </p>
-            <Link
-              href="/on-call"
-              className="shrink-0 text-xs font-semibold text-[var(--on-error-container)]/60 calm-transition hover:text-[var(--on-error-container)]"
-            >
-              View inbox →
-            </Link>
-          </div>
-          <div className="divide-y divide-[var(--error)]/10">
-            {openOnCalls.slice(0, 3).map((oc) => {
-              const mins = Math.round((Date.now() - new Date(oc.createdAt).getTime()) / 60000);
-              const timeAgo = mins < 60 ? `${mins}m ago` : `${Math.round(mins / 60)}h ago`;
-              return (
-                <Link
-                  key={oc.id}
-                  href={`/on-call/${oc.id}`}
-                  className="flex items-center gap-3 px-5 py-4 calm-transition hover:bg-[var(--error)]/5"
-                >
-                  <Avatar name={oc.requesterName} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-[var(--on-error-container)]">{oc.requesterName}</p>
-                    <p className="text-xs text-[var(--on-error-container)]/60">{oc.location}</p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-xs font-semibold text-[var(--error)]">Triggered {timeAgo}</p>
-                    <p className="text-[0.625rem] uppercase tracking-wide text-[var(--on-error-container)]/40">{oc.status}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ═══ Signal Analysis ═══ */}
-      <section className="grid gap-4 lg:grid-cols-12">
-        {/* CPD Priorities (dark) */}
-        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient lg:col-span-5">
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
-              <IconSparkles />
-            </span>
-            <h2 className="text-base font-bold tracking-[-0.01em]">CPD priorities</h2>
-          </div>
-          {topCpd.length === 0 ? (
-            <p className="text-sm text-on-primary/60">No weakening signals detected in this window.</p>
-          ) : (
-            <>
-              <p className="text-sm text-on-primary/70">
-                {topCpd.length} signal{topCpd.length !== 1 ? "s" : ""} weakening across {teacherRows.length} teachers in the {windowDays}-day window.
-              </p>
-              <div className="space-y-3">
-                {topCpd.map((row) => (
-                  <Link key={row.signalKey} href={`/analysis/cpd/${row.signalKey}?window=${windowDays}`} className="home-row-link-on-dark -mx-2 block rounded-xl p-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{row.label}</span>
-                      <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
-                    </div>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-                      <div className="h-full rounded-full bg-surface-container-lowest/80" style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }} />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="mt-2 inline-block shrink-0 text-sm font-semibold text-on-primary/90 underline decoration-white/25 underline-offset-2 calm-transition hover:text-on-primary">
-                View all →
-              </Link>
-            </>
-          )}
-        </Card>
-
-        {/* Staff Needing Intervention */}
-        <Card className="space-y-4 lg:col-span-4">
-          <HomeCardHeadingSm
-            icon={<IconBolt className="text-scale-some-text" />}
-            title="Staff intervention"
-            subtitle={`${interventionStaff.length} staff needing support`}
+          <HomeCardHeading
+            icon={<IconBell />}
+            title="On-call status"
+            subtitle="Anaxi core response"
+            end={openOnCalls.length > 0 ? <StatusPill variant="error" size="sm">LIVE RESPONSE</StatusPill> : null}
           />
-          {interventionStaff.length === 0 ? (
-            <MetaText>All staff stable — no intervention needed.</MetaText>
+          {onCallDetails.length === 0 ? (
+            <div
+              id="immediate-support-needed"
+              className="scroll-mt-20 flex min-h-0 flex-1 flex-col"
+            >
+              <HomeEmptyPanel
+                icon={<IconBell className="text-muted" />}
+                title="No recent on-call activity"
+                description="When staff raise an on-call, it will appear here for triage."
+              />
+            </div>
           ) : (
-            <ul className="space-y-2">
-              {interventionStaff.map((row) => (
-                <li key={row.teacherMembershipId}>
-                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="home-row-link flex items-center justify-between gap-2 p-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Avatar name={row.teacherName} />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
-                        <p className="text-[11px] text-muted">{row.departmentNames.join(", ") || "No dept"}</p>
-                      </div>
+            <div
+              className={`flex min-h-0 flex-1 flex-col space-y-2 ${firstImmediateSupportIdx === -1 ? "scroll-mt-20" : ""}`}
+              id={firstImmediateSupportIdx === -1 ? "immediate-support-needed" : undefined}
+            >
+              {topOnCallRows.map((oc, i) => (
+                <div
+                  key={oc.id}
+                  id={i === firstImmediateSupportIdx ? "immediate-support-needed" : undefined}
+                  className={`flex min-w-0 flex-col gap-2 rounded-xl p-3 calm-transition sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-4 ${
+                    i === firstImmediateSupportIdx ? "scroll-mt-20" : ""
+                  } ${
+                    oc.status === "OPEN" || oc.status === "ACKNOWLEDGED"
+                      ? "bg-[var(--surface-container-low)]"
+                      : "bg-[var(--surface-container-lowest)]"
+                  }`}
+                >
+                  <Link
+                    href={`/on-call/${oc.id}`}
+                    className="home-row-link flex min-w-0 flex-1 items-center gap-2 sm:min-w-0 sm:gap-3"
+                  >
+                    <Avatar name={oc.requesterName} size="md" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-text">{oc.requesterName}</p>
+                      <p className="truncate text-xs text-muted">{oc.location}</p>
                     </div>
-                    <StatusPill variant={RISK_STATUS_PILL[row.status]} size="sm">{RISK_STATUS_LABELS[row.status]}</StatusPill>
                   </Link>
-                </li>
+                  <div className="flex min-w-0 shrink-0 flex-row flex-wrap items-center justify-end gap-x-2 gap-y-1 text-right sm:flex-nowrap">
+                    {(oc.status === "OPEN" || oc.status === "ACKNOWLEDGED") ? (
+                      <>
+                        <div className="hidden max-w-[140px] flex-col items-end gap-0.5 sm:flex sm:max-w-none">
+                          <span className="text-xs font-medium text-[var(--error)]">Immediate Support Needed</span>
+                          <span className="text-xs text-muted">
+                            {(() => {
+                              const mins = Math.round((Date.now() - new Date(oc.createdAt).getTime()) / 60000);
+                              return mins < 60 ? `Triggered ${mins}m ago` : `Triggered ${Math.round(mins / 60)}h ago`;
+                            })()}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-medium text-[var(--error)] sm:hidden">Live</span>
+                        <Link
+                          href="/on-call"
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm text-on-primary calm-transition hover:bg-primaryBtnHover sm:h-8 sm:w-8"
+                          aria-label="Open on-call inbox"
+                        >
+                          →
+                        </Link>
+                      </>
+                    ) : (
+                      <span className="min-w-0 max-w-full truncate text-[10px] text-muted sm:max-w-none sm:overflow-visible sm:whitespace-normal sm:text-xs">
+                        RESOLVED · {new Date(oc.resolvedAt ?? oc.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </Card>
 
-        {/* Observation Coverage */}
-        <Card tone="inset" className="space-y-4 lg:col-span-3">
-          <div className="flex items-center justify-between">
+        {/* Right column: Attendance + Observations */}
+        <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[340px]">
+          {/* Attendance box */}
+          <Card className="flex min-h-0 flex-1 flex-col gap-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Attendance</p>
             <div>
-              <h2 className="text-base font-bold tracking-[-0.01em] text-text">Observation coverage</h2>
-              <p className="text-xs text-muted">Least observed this window</p>
+              <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
+                {attendancePct !== null ? `${attendancePct.toFixed(1)}%` : "—"}
+              </p>
+              <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--surface-container)]">
+                <div
+                  className="h-full rounded-full bg-[var(--primary)]"
+                  style={{ width: `${Math.min(attendancePct ?? 0, 100)}%` }}
+                />
+              </div>
+              {attendanceDelta !== null && (
+                <p className="mt-2 flex items-center gap-1 text-xs text-muted">
+                  <span className={attendanceDelta >= 0 ? "text-positive" : "text-negative"}>
+                    {attendanceDelta >= 0 ? <IconTrendUp className="inline h-3.5 w-3.5" /> : <IconTrendDown className="inline h-3.5 w-3.5" />}
+                  </span>
+                  <span className={attendanceDelta >= 0 ? "text-positive" : "text-negative"}>
+                    {attendanceDelta >= 0 ? "+" : ""}{attendanceDelta.toFixed(1)}%
+                  </span>{" "}
+                  from last week
+                </p>
+              )}
+              {attendancePct !== null && (
+                <p className="mt-2 text-xs text-muted">
+                  School-wide mean across cohorts with attendance data ({windowDays}-day window).
+                </p>
+              )}
             </div>
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-container)] text-muted [&_svg]:h-4 [&_svg]:w-4">
-              <IconSearch />
-            </span>
-          </div>
-          {leastObserved.length === 0 ? (
-            <MetaText>No teacher data available.</MetaText>
-          ) : (
-            <ul className="space-y-2">
-              {leastObserved.map((row) => (
-                <li key={row.teacherMembershipId}>
-                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="home-row-link flex items-center justify-between gap-2 p-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Avatar name={row.teacherName} />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
-                        <p className="text-[11px] text-muted">{row.departmentNames.join(", ") || "No dept"}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--surface-container)] text-[10px] font-bold text-text">
-                        {row.teacherCoverage}
-                      </span>
-                      <span className="text-[11px] text-muted">obs</span>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+          </Card>
+
+          {/* Observations this week box — avoid min-h-0 so flex stretch cannot clip avatars; extra bottom pad clears rounded edge */}
+          <Link href="/explorer/observations" className="flex flex-1 flex-col">
+            <Card className="home-pressable-card flex min-h-min flex-1 cursor-pointer flex-col gap-4 pb-7">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations This Week</p>
+              <div>
+                <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
+                  {weekObsCount}
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-1">
+                  {weekObsTeachers.slice(0, 3).map((t) => (
+                    <Avatar key={t.id} name={t.name} size="sm" />
+                  ))}
+                  {weekObsTeachers.length > 3 && (
+                    <span className="inline-flex h-7 w-auto min-w-[28px] items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-on-primary">
+                      +{weekObsTeachers.length - 3}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </Card>
+          </Link>
+        </div>
       </section>
 
-      {/* ═══ Leave Governance ═══ */}
+      {/* ═══ Watchlist ═══ */}
       {hasStudentAnalysisFeature && effectiveWatchlistStudents.length > 0 && (
         <Card className="space-y-4">
           {/* Header */}
@@ -666,6 +617,111 @@ function LeadershipHome({
         </Card>
       )}
 
+      {/* ═══ Hero Section 3: Signal Analysis ═══ */}
+      <section className="grid gap-4 lg:grid-cols-12">
+        {/* CPD Priorities (dark box) */}
+        <Card className="space-y-4 !bg-[var(--primary)] !text-on-primary !shadow-ambient lg:col-span-5">
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
+              <IconSparkles />
+            </span>
+            <h2 className="text-base font-bold tracking-[-0.01em]">CPD priorities</h2>
+          </div>
+          {topCpd.length === 0 ? (
+            <p className="text-sm text-on-primary/60">No weakening signals detected in this window.</p>
+          ) : (
+            <>
+              <p className="text-sm text-on-primary/70">
+                {topCpd.length} signal{topCpd.length !== 1 ? "s" : ""} weakening across {teacherRows.length} teachers in the {windowDays}-day window.
+              </p>
+              <div className="space-y-3">
+                {topCpd.map((row) => (
+                  <Link key={row.signalKey} href={`/analysis/cpd/${row.signalKey}?window=${windowDays}`} className="home-row-link-on-dark -mx-2 block rounded-xl p-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{row.label}</span>
+                      <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
+                      <div className="h-full rounded-full bg-surface-container-lowest/80" style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="mt-2 inline-block shrink-0 text-sm font-semibold text-on-primary/90 underline decoration-white/25 underline-offset-2 calm-transition hover:text-on-primary">
+                View all →
+              </Link>
+            </>
+          )}
+        </Card>
+
+        {/* Staff Needing Intervention */}
+        <Card className="space-y-4 lg:col-span-4">
+          <HomeCardHeadingSm
+            icon={<IconBolt className="text-scale-some-text" />}
+            title="Staff intervention"
+            subtitle={`${interventionStaff.length} staff needing support`}
+          />
+          {interventionStaff.length === 0 ? (
+            <MetaText>All staff stable — no intervention needed.</MetaText>
+          ) : (
+            <ul className="space-y-2">
+              {interventionStaff.map((row) => (
+                <li key={row.teacherMembershipId}>
+                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="home-row-link flex items-center justify-between gap-2 p-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Avatar name={row.teacherName} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
+                        <p className="text-[11px] text-muted">{row.departmentNames.join(", ") || "No dept"}</p>
+                      </div>
+                    </div>
+                    <StatusPill variant={RISK_STATUS_PILL[row.status]} size="sm">{RISK_STATUS_LABELS[row.status]}</StatusPill>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        {/* Least Observed Teachers */}
+        <Card tone="inset" className="space-y-4 lg:col-span-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold tracking-[-0.01em] text-text">Observation coverage</h2>
+              <p className="text-xs text-muted">Least observed this window</p>
+            </div>
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-container)] text-muted [&_svg]:h-4 [&_svg]:w-4">
+              <IconSearch />
+            </span>
+          </div>
+          {leastObserved.length === 0 ? (
+            <MetaText>No teacher data available.</MetaText>
+          ) : (
+            <ul className="space-y-2">
+              {leastObserved.map((row) => (
+                <li key={row.teacherMembershipId}>
+                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="home-row-link flex items-center justify-between gap-2 p-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Avatar name={row.teacherName} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
+                        <p className="text-[11px] text-muted">{row.departmentNames.join(", ") || "No dept"}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--surface-container)] text-[10px] font-bold text-text">
+                        {row.teacherCoverage}
+                      </span>
+                      <span className="text-[11px] text-muted">obs</span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </section>
+
       {/* ═══ Attainment Summary ═══ */}
       {attainmentSummary && (
         <Card className="space-y-4">
@@ -767,7 +823,6 @@ function LeadershipHome({
 
 function HodHome({
   windowDays,
-  userName,
   deptCpdRows,
   deptTeacherRows,
   deptName,
@@ -779,7 +834,6 @@ function HodHome({
   activeDeptId,
 }: {
   windowDays: number;
-  userName: string;
   deptCpdRows: CpdPriorityRow[];
   deptTeacherRows: TeacherRiskRow[];
   deptName: string;
@@ -796,40 +850,32 @@ function HodHome({
   const deptObsCount = deptTeacherRows.reduce((sum, r) => sum + r.teacherCoverage, 0);
   const deptCpdDrift = allDeptDriftingCpd.length;
 
-  const hour = new Date().getUTCHours() + 1;
-  const greetingPrefix =
-    hour >= 5 && hour < 12 ? "Good morning" : hour >= 12 && hour < 17 ? "Good afternoon" : "Good evening";
-  const firstName = userName.split(" ")[0];
-
   return (
     <div className="w-full min-w-0 space-y-8">
-      {/* ═══ Hero Banner ═══ */}
-      <DashboardHero
-        eyebrow={`${deptName} · ${windowDays}-day window`}
-        greeting={`${greetingPrefix}, ${firstName}`}
-        kpis={[
-          {
-            label: "Dept observations",
-            value: deptObsCount,
-            context: `${deptTeacherRows.length} teacher${deptTeacherRows.length !== 1 ? "s" : ""} in view`,
-          },
-          {
-            label: "CPD signals",
-            value: deptCpdDrift,
-            context: deptCpdDrift > 0 ? `${deptCpdDrift} weakening` : "All stable",
-            tone: deptCpdDrift > 0 ? "warning" : "success",
-          },
-          {
-            label: "Your observations",
-            value: selfProfile?.teacherCoverage ?? 0,
-            context: "this window",
-          },
-          {
-            label: "Teachers in view",
-            value: deptTeacherRows.length,
-          },
-        ]}
-      />
+      {/* ═══ Hero: Department KPI row ═══ */}
+      <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
+        <Card className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{deptName} Observations</p>
+          <div>
+            <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">{deptObsCount}</p>
+            <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--surface-container)]">
+              <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(deptObsCount * 5, 100)}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-muted">{deptTeacherRows.length} teacher{deptTeacherRows.length !== 1 ? "s" : ""} · {windowDays}d window</p>
+          </div>
+        </Card>
+        <Card className={`flex min-h-0 min-w-0 flex-1 flex-col gap-4 ${deptCpdDrift > 0 ? "!bg-[var(--surface-container)]" : ""}`}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{deptName} CPD Signals</p>
+          <div>
+            <p className={`mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] ${deptCpdDrift > 0 ? "text-[var(--warning)]" : "text-text"}`}>
+              {deptCpdDrift}
+            </p>
+            <p className="mt-2 text-xs text-muted">
+              {deptCpdDrift > 0 ? `${deptCpdDrift} signal${deptCpdDrift !== 1 ? "s" : ""} weakening` : "All signals stable ✓"}
+            </p>
+          </div>
+        </Card>
+      </section>
 
       {allDepts.length > 1 && (
         <div className="segmented-toggle">
@@ -1054,7 +1100,6 @@ function HodHome({
 
 function TeacherHome({
   windowDays,
-  userName,
   selfProfile,
   openActions,
   loaRequest,
@@ -1066,7 +1111,6 @@ function TeacherHome({
   hasOnCallFeature,
 }: {
   windowDays: number;
-  userName: string;
   selfProfile: Awaited<ReturnType<typeof computeTeacherSignalProfile>>;
   openActions: MeetingActionSummary[];
   loaRequest: LoaSummary | null;
@@ -1102,53 +1146,9 @@ function TeacherHome({
     CANCELLED: "neutral",
   };
 
-  const hour = new Date().getUTCHours() + 1;
-  const greetingPrefix =
-    hour >= 5 && hour < 12 ? "Good morning" : hour >= 12 && hour < 17 ? "Good afternoon" : "Good evening";
-  const firstName = userName.split(" ")[0];
-
-  // Build hero KPIs
-  const teacherKpis: Array<{
-    label: string;
-    value: string | number;
-    context?: string;
-    tone?: "default" | "warning" | "error" | "success";
-  }> = [
-    {
-      label: "Observations",
-      value: obsCount,
-      context: obsCount > 0 ? `in the last ${windowDays} days` : "Start observing",
-    },
-  ];
-  if (hasMeetingsFeature) {
-    teacherKpis.push({
-      label: "Open actions",
-      value: actionCount,
-      context: actionCount > 0 ? "need your attention" : "All clear",
-      tone: actionCount > 0 ? "warning" : "default",
-    });
-  }
-  if (wholeSchoolTop1) {
-    teacherKpis.push({
-      label: "School CPD focus",
-      value: `${Math.round(wholeSchoolTop1.driftRate * 100)}%`,
-      context:
-        wholeSchoolTop1.label.length > 32
-          ? wholeSchoolTop1.label.substring(0, 32) + "…"
-          : wholeSchoolTop1.label,
-    });
-  }
-
   return (
     <div className="w-full min-w-0 space-y-8">
-      {/* ═══ Hero Banner ═══ */}
-      <DashboardHero
-        eyebrow={`Your teaching profile · ${windowDays}-day window`}
-        greeting={`${greetingPrefix}, ${firstName}`}
-        kpis={teacherKpis}
-      />
-
-      {/* ═══ Observations + KPI Tiles ═══ */}
+      {/* ═══ Hero Section: Observations + KPI Tiles ═══ */}
       <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
         <Card className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
           <HomeCardHeading
@@ -1498,7 +1498,6 @@ export default async function HomePage({
       return (
         <LeadershipHome
           windowDays={windowDays}
-          userName={user.fullName}
           cpdRows={cpdRows}
           teacherRows={teacherRows}
           cohortRows={cohortRows}
@@ -1534,7 +1533,6 @@ export default async function HomePage({
       return (
         <HodHome
           windowDays={windowDays}
-          userName={user.fullName}
           deptCpdRows={deptCpdRows}
           deptTeacherRows={filteredTeacherRows}
           deptName={deptName}
@@ -1553,7 +1551,6 @@ export default async function HomePage({
     return (
       <TeacherHome
         windowDays={windowDays}
-        userName={user.fullName}
         selfProfile={selfProfile}
         openActions={openActionsData as MeetingActionSummary[]}
         loaRequest={loaData as LoaSummary | null}
