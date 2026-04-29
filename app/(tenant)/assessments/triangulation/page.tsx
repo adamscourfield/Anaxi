@@ -9,7 +9,7 @@ import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import Link from "next/link";
 import type { RiskBand } from "@/modules/analysis/studentRisk";
-import { PP_TAG_CLASS, SEN_TAG_CLASS } from "@/lib/assessments/chartColours";
+import { triangulationPpClass, triangulationSendClass } from "@/modules/assessments/attainmentColours";
 
 const BAND_LABEL: Record<RiskBand, string> = {
   URGENT: "Urgent",
@@ -53,7 +53,7 @@ export default async function TriangulationPage() {
   const { students, meta } = result;
 
   return (
-    <div className="space-y-8 pb-8">
+    <div className="anx-reports-page space-y-8 pb-8">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -103,10 +103,10 @@ export default async function TriangulationPage() {
                       <span className="text-xs text-[var(--on-surface-muted)]">{student.yearGroup}</span>
                     )}
                     {student.ppFlag && (
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${PP_TAG_CLASS}`}>PP</span>
+                      <span className={triangulationPpClass}>PP</span>
                     )}
                     {student.sendFlag && (
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${SEN_TAG_CLASS}`}>SEND</span>
+                      <span className={triangulationSendClass}>SEND</span>
                     )}
                   </div>
                   <div className="mt-1">

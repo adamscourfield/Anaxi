@@ -589,23 +589,105 @@ async function StudentsTab({
             }
           />
         ) : (
-          <div className="table-shell border-0 rounded-none shadow-none">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="table-head-row">
-                    <th className="sticky-first-column-header sticky left-0 z-20 px-5 py-3.5 text-left">
-                      Student
-                    </th>
-                    <th className="px-4 py-3.5">Year</th>
-                    <th className="px-4 py-3.5">Band</th>
-                    <th className="px-4 py-3.5 text-right">Score</th>
-                    <th className="px-4 py-3.5">Key drivers</th>
-                    <th className="px-4 py-3.5 text-right">Attendance (%)</th>
-                    <th className="px-4 py-3.5 text-right">Detentions Δ</th>
-                    <th className="px-4 py-3.5 text-right">On calls Δ</th>
-                    <th className="px-4 py-3.5">Flags</th>
-                    <th className="px-4 py-3.5">Confidence</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-bg text-left text-xs font-medium text-muted">
+                  <th className="sticky left-0 z-20 bg-bg px-4 py-3">Student</th>
+                  <th className="px-4 py-3">Year</th>
+                  <th className="px-4 py-3">Band</th>
+                  <th className="px-4 py-3 text-right">Score</th>
+                  <th className="px-4 py-3">Key drivers</th>
+                  <th className="px-4 py-3 text-right">Attendance (%)</th>
+                  <th className="px-4 py-3 text-right">Detentions Δ</th>
+                  <th className="px-4 py-3 text-right">On calls Δ</th>
+                  <th className="px-4 py-3">Flags</th>
+                  <th className="px-4 py-3">Confidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    key={row.studentId}
+                    className="border-b border-divider last:border-0 hover:bg-bg"
+                  >
+                    <td className="sticky left-0 z-10 bg-surface px-4 py-3 font-medium text-text">
+                      <Link
+                        href={`/analysis/students/${row.studentId}?window=${windowDays}`}
+                        className="link-subtle"
+                      >
+                        {row.onWatchlist ? "★ " : ""}{row.studentName}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-muted">{row.yearGroup ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${BAND_PILL[row.band]}`}
+                      >
+                        {BAND_LABELS[row.band]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-muted">{row.riskScore}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {row.drivers.map((d) => (
+                          <span
+                            key={d.metric}
+                            className="rounded-full bg-scale-some-light px-2 py-0.5 text-xs text-scale-some-text"
+                          >
+                            {d.label}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-muted">
+                      {row.attendancePct !== null ? `${row.attendancePct.toFixed(1)}%` : "—"}
+                      {row.attendanceDelta !== null && (
+                        <span
+                          className={`ml-1 text-xs ${
+                            row.attendanceDelta < 0 ? "text-scale-limited-text" : "text-scale-strong-text"
+                          }`}
+                        >
+                          ({row.attendanceDelta > 0 ? "+" : ""}
+                          {row.attendanceDelta.toFixed(1)})
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-muted">
+                      {row.detentionsDelta !== null
+                        ? row.detentionsDelta > 0
+                          ? `+${row.detentionsDelta}`
+                          : String(row.detentionsDelta)
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-muted">
+                      {row.onCallsDelta !== null
+                        ? row.onCallsDelta > 0
+                          ? `+${row.onCallsDelta}`
+                          : String(row.onCallsDelta)
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        {row.sendFlag && (
+                          <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
+                            SEND
+                          </span>
+                        )}
+                        {row.ppFlag && (
+                          <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
+                            PP
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[row.confidence]}`}
+                      >
+                        {row.confidence === "HIGH" ? "High" : "Low"}
+                      </span>
+                    </td>
                   </tr>
                 </thead>
                 <tbody>
@@ -722,7 +804,7 @@ export default async function AnalyticsPage({
     : 21;
 
   return (
-    <div className="space-y-8">
+    <div className="anx-reports-page space-y-8">
       <PageHeader
         eyebrow="Analysis"
         title="Priorities"

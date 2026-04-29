@@ -8,7 +8,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import { toast } from "@/components/toast-provider";
-import { RESULT_POINT_TYPE_BADGE } from "@/lib/assessments/chartColours";
+import { pointTypePillClasses } from "@/modules/assessments/attainmentColours";
 
 type QualificationType = "GCSE" | "A_LEVEL" | "PERCENTAGE" | "OTHER";
 
@@ -204,7 +204,11 @@ export default function NewCyclePage() {
     OTHER: "Other",
   };
 
-  const POINT_TYPE_COLOURS: Record<string, string> = RESULT_POINT_TYPE_BADGE;
+  const POINT_TYPE_COLOURS: Record<string, string> = {
+    ...pointTypePillClasses,
+    BASELINE: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
+    OTHER: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
+  };
 
   if (step === "done") {
     return (

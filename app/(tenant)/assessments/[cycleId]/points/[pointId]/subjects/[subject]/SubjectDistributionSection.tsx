@@ -5,12 +5,13 @@ import Link from "next/link";
 import { SectionHeader } from "@/components/ui/section-header";
 import type { GradeFormat } from "@prisma/client";
 import {
-  gcseNumericCellClass,
-  aLevelLetterCellClass,
-  percentileCellClass,
-  pctBandDistributionStyle,
+  gcseGradeBadgeClass,
+  aLevelGradeBadgeClass,
+  pctScoreBadgeClass,
+  pctBandBarStyle,
   gradeDistributionBarStyle,
-} from "@/lib/assessments/chartColours";
+  thresholdHeaderGcse,
+} from "@/modules/assessments/attainmentColours";
 
 export type DistributionModalStudentRow = {
   id: string;
@@ -26,6 +27,22 @@ export type DistributionModalStudentRow = {
 type GradeDistEntry = { grade: string; count: number };
 type PctDistEntry = { band: string; from: number; to: number; count: number };
 type PctThreshold = { label: string; count: number; pct: number };
+
+function gcseColour(g: string | number | null): string {
+  return gcseGradeBadgeClass(g);
+}
+
+function aLevelColour(g: string): string {
+  return aLevelGradeBadgeClass(g);
+}
+
+function pctColour(score: number): string {
+  return pctScoreBadgeClass(score);
+}
+
+function pctBandDistributionStyle(from: number, to: number): { bar: string; swatch: string } {
+  return pctBandBarStyle(from, to);
+}
 
 function avgDisplay(row: DistributionModalStudentRow): string {
   if (row.avg === null) return "—";
@@ -192,9 +209,9 @@ export function SubjectDistributionSection({
                 {isGcse && (
                   <div className="flex flex-wrap gap-3 pt-1 border-t border-[var(--outline-variant)]/20">
                     {[
-                      { label: "4+", threshold: 4, cls: "text-amber-600" },
-                      { label: "5+", threshold: 5, cls: "text-violet-600" },
-                      { label: "7+", threshold: 7, cls: "text-green-600" },
+                      { label: "4+", threshold: 4, cls: thresholdHeaderGcse.t4 },
+                      { label: "5+", threshold: 5, cls: thresholdHeaderGcse.t5 },
+                      { label: "7+", threshold: 7, cls: thresholdHeaderGcse.t7 },
                     ].map(({ label, threshold, cls }) => {
                       const count = distribution
                         .filter((e) => Number(e.grade) >= threshold)

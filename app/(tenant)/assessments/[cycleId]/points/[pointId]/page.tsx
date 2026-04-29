@@ -18,19 +18,31 @@ import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import type { GradeFormat, PointType, ResultStatus } from "@prisma/client";
 import {
-  gcseNumericCellClass,
-  aLevelLetterCellClass,
-  gapBadgeSoftClass,
-  pctBandDistributionStyle,
+  aLevelBarClasses,
+  barNegativeClass,
+  barNeutralClass,
+  barPositiveClass,
+  finalPointChipClass,
+  gcseGradeBadgeClass,
   gradeDistributionBarStyle,
-  deltaBarClass,
-  SERIES_ALT_BAR_CLASS,
-  SEN_TAG_CLASS,
-  PP_TAG_CLASS,
-  PP_SERIES_BAR_CLASS,
-  RESULT_POINT_TYPE_BADGE,
-  RESULT_STATUS_BADGE,
-} from "@/lib/assessments/chartColours";
+  metPillClass,
+  notMetPillClass,
+  pctBandBarStyle,
+  pointTypePillClasses,
+  ppInlineBadgeClass,
+  ppInlineBadgeClassLg,
+  ppNumericClass,
+  sendInlineBadgeClass,
+  sendNumericClass,
+  swatchHighClass,
+  swatchLowClass,
+  swatchMidClass,
+  aLevelGradeBadgeClass,
+  pctScoreBadgeClass,
+  gapBadgeClass,
+  thresholdHeaderALevel,
+  thresholdHeaderGcse,
+} from "@/modules/assessments/attainmentColours";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -134,9 +146,8 @@ function gapCls(gap: number) {
 }
 
 function GapBadge({ gap }: { gap: number }) {
-  const cls = gapBadgeSoftClass(gap);
   return (
-    <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-bold tabular-nums ${cls}`}>
+    <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-bold tabular-nums ${gapBadgeClass(gap)}`}>
       {gap > 0 ? "+" : ""}{gap}pp
     </span>
   );
@@ -178,6 +189,12 @@ function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{
   );
 }
 
+/** Stacked bar + legend swatch for each 10% band (same as subject detail page). */
+function pctBandDistributionStyle(from: number, to: number): { bar: string; swatch: string } {
+  return pctBandBarStyle(from, to);
+}
+
+/** Compact 10% band distribution for percentage/raw rows (matches subject detail page). */
 function PctDistCompact({ distribution }: { distribution: BandCount[] }) {
   const total = distribution.reduce((s, d) => s + d.count, 0);
   if (total === 0) return <span className="text-xs text-[var(--on-surface-muted)]">No data</span>;
@@ -233,7 +250,7 @@ function PctDistCompact({ distribution }: { distribution: BandCount[] }) {
   );
 }
 
-const POINT_TYPE_COLOURS: Record<string, string> = RESULT_POINT_TYPE_BADGE;
+const POINT_TYPE_COLOURS = pointTypePillClasses;
 
 const POINT_TYPE_LABELS: Record<string, string> = {
   BASELINE: "Baseline", INTERNAL_ASSESSMENT: "Internal Assessment",
@@ -312,7 +329,7 @@ export default function ResultPointPage() {
         {STATUS_LABELS[point.resultStatus]}
       </span>
       {point.isFinalPoint && (
-        <span className="rounded-full bg-scale-strong-light px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-scale-strong-text">
+        <span className={finalPointChipClass}>
           Final
         </span>
       )}
@@ -339,7 +356,7 @@ export default function ResultPointPage() {
   ) : null;
 
   return (
-    <div className="w-full space-y-8">
+    <div className="anx-reports-page w-full space-y-8">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -407,7 +424,7 @@ export default function ResultPointPage() {
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-white">{metrics.gcseBasics.em4}%</span>
                   </div>
                   <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-primary-container">
-                    <div className="bg-scale-strong rounded-r-full" style={{ width: `${metrics.gcseBasics.em4}%` }}></div>
+                    <div className={`${emProgressFillClass} rounded-r-full`} style={{ width: `${metrics.gcseBasics.em4}%` }}></div>
                   </div>
                 </Link>
 
@@ -481,10 +498,10 @@ export default function ResultPointPage() {
               <SectionHeader title="Overall Grade Profile" subtitle={`${metrics.aLevelSummary.total} entries`} />
               <div className="grid grid-cols-4 gap-3">
                 {[
-                  { label: "A* rate", val: metrics.aLevelSummary.aStarPct, cls: "bg-scale-strong" },
-                  { label: "A or above", val: metrics.aLevelSummary.aPct, cls: "bg-scale-consistent" },
-                  { label: "B or above", val: metrics.aLevelSummary.bPct, cls: "bg-cat-blue-text" },
-                  { label: "C+ pass", val: metrics.aLevelSummary.cPlusPct, cls: "bg-cat-violet-text" },
+                  { label: "A* rate", val: metrics.aLevelSummary.aStarPct, cls: aLevelBarClasses.aStar },
+                  { label: "A or above", val: metrics.aLevelSummary.aPct, cls: aLevelBarClasses.a },
+                  { label: "B or above", val: metrics.aLevelSummary.bPct, cls: aLevelBarClasses.b },
+                  { label: "C+ pass", val: metrics.aLevelSummary.cPlusPct, cls: aLevelBarClasses.cPlus },
                 ].map(({ label, val, cls }) => (
                   <div key={label} className="rounded-xl bg-[var(--surface-container-low)] p-3">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
@@ -510,17 +527,17 @@ export default function ResultPointPage() {
                       <th className="px-4 py-3 text-right">N</th>
                       {isGcse && (
                         <>
-                          <th className="px-4 py-3 text-right text-scale-some-text">4+</th>
-                          <th className="px-4 py-3 text-right text-cat-violet-text">5+</th>
-                          <th className="px-4 py-3 text-right text-scale-strong-text">7+</th>
+                          <th className={`px-4 py-3 text-right ${thresholdHeaderGcse.t4}`}>4+</th>
+                          <th className={`px-4 py-3 text-right ${thresholdHeaderGcse.t5}`}>5+</th>
+                          <th className={`px-4 py-3 text-right ${thresholdHeaderGcse.t7}`}>7+</th>
                         </>
                       )}
                       {isALevel && (
                         <>
-                          <th className="px-4 py-3 text-right text-scale-strong-text">A*</th>
-                          <th className="px-4 py-3 text-right text-scale-consistent-text">A+</th>
-                          <th className="px-4 py-3 text-right text-cat-blue-text">B+</th>
-                          <th className="px-4 py-3 text-right text-cat-violet-text">C+</th>
+                          <th className={`px-4 py-3 text-right ${thresholdHeaderALevel.aStar}`}>A*</th>
+                          <th className={`px-4 py-3 text-right ${thresholdHeaderALevel.aPlus}`}>A+</th>
+                          <th className={`px-4 py-3 text-right ${thresholdHeaderALevel.bPlus}`}>B+</th>
+                          <th className={`px-4 py-3 text-right ${thresholdHeaderALevel.cPlus}`}>C+</th>
                         </>
                       )}
                       <th className="px-4 py-3">Distribution</th>
@@ -540,17 +557,17 @@ export default function ResultPointPage() {
                         <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface-muted)]">{sm.presentCount}</td>
                         {isGcse && (
                           <>
-                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-scale-some-text">{sm.thresholds["4+"]}%</td>
-                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-cat-violet-text">{sm.thresholds["5+"]}%</td>
-                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-scale-strong-text">{sm.thresholds["7+"]}%</td>
+                            <td className={`px-4 py-4 text-right font-semibold tabular-nums ${thresholdHeaderGcse.t4}`}>{sm.thresholds["4+"]}%</td>
+                            <td className={`px-4 py-4 text-right font-semibold tabular-nums ${thresholdHeaderGcse.t5}`}>{sm.thresholds["5+"]}%</td>
+                            <td className={`px-4 py-4 text-right font-semibold tabular-nums ${thresholdHeaderGcse.t7}`}>{sm.thresholds["7+"]}%</td>
                           </>
                         )}
                         {isALevel && (
                           <>
-                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-scale-strong-text">{sm.thresholds["A*"]}%</td>
-                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-scale-consistent-text">{sm.thresholds["A+"]}%</td>
-                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-cat-blue-text">{sm.thresholds["B+"]}%</td>
-                            <td className="px-4 py-4 text-right font-semibold tabular-nums text-cat-violet-text">{sm.thresholds["C+"]}%</td>
+                            <td className={`px-4 py-4 text-right font-semibold tabular-nums ${thresholdHeaderALevel.aStar}`}>{sm.thresholds["A*"]}%</td>
+                            <td className={`px-4 py-4 text-right font-semibold tabular-nums ${thresholdHeaderALevel.aPlus}`}>{sm.thresholds["A+"]}%</td>
+                            <td className={`px-4 py-4 text-right font-semibold tabular-nums ${thresholdHeaderALevel.bPlus}`}>{sm.thresholds["B+"]}%</td>
+                            <td className={`px-4 py-4 text-right font-semibold tabular-nums ${thresholdHeaderALevel.cPlus}`}>{sm.thresholds["C+"]}%</td>
                           </>
                         )}
                         <td className="px-4 py-4 min-w-[160px] align-top">
@@ -629,12 +646,12 @@ export default function ResultPointPage() {
                               </Link>
                             </td>
                             <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.pp!.nonPpT4}%</td>
-                            <td className="px-4 py-4 text-right tabular-nums text-cat-violet-text">{sm.pp!.t4}%</td>
+                            <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>{sm.pp!.t4}%</td>
                             <td className="px-4 py-4 text-right">
                               <GapBadge gap={sm.pp!.gap4} />
                             </td>
                             <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.pp!.nonPpT5}%</td>
-                            <td className="px-4 py-4 text-right tabular-nums text-cat-violet-text">{sm.pp!.t5}%</td>
+                            <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>{sm.pp!.t5}%</td>
                             <td className="px-4 py-4 text-right">
                               <GapBadge gap={sm.pp!.gap5} />
                             </td>
@@ -681,7 +698,7 @@ export default function ResultPointPage() {
                       const heightPct = pctYearHistogram.maxBand > 0 ? (b.count / pctYearHistogram.maxBand) * 100 : 0;
                       const inTop = b.from >= 70;
                       const inBottom = b.to <= 40;
-                      const bg = inTop ? "bg-scale-strong" : inBottom ? "bg-negative" : "bg-cat-indigo-bg";
+                      const bg = inTop ? barPositiveClass : inBottom ? barNegativeClass : barNeutralClass;
                       return (
                         <div
                           key={b.band}
@@ -724,21 +741,21 @@ export default function ResultPointPage() {
                   </p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[10px] text-[var(--on-surface-muted)]">
                     <span className="flex items-center gap-1.5">
-                      <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm bg-negative" />
+                      <span className={`inline-block h-2.5 w-2.5 shrink-0 rounded-sm ${swatchLowClass}`} />
                       <span>
                         Below 40%:{" "}
                         <span className="font-semibold tabular-nums text-[var(--on-surface)]">{pctYearHistogram.below40}</span>
                       </span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm bg-cat-indigo-bg" />
+                      <span className={`inline-block h-2.5 w-2.5 shrink-0 rounded-sm ${swatchMidClass}`} />
                       <span>
                         40–70%:{" "}
                         <span className="font-semibold tabular-nums text-[var(--on-surface)]">{pctYearHistogram.band4070}</span>
                       </span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm bg-scale-strong" />
+                      <span className={`inline-block h-2.5 w-2.5 shrink-0 rounded-sm ${swatchHighClass}`} />
                       <span>
                         70%+:{" "}
                         <span className="font-semibold tabular-nums text-[var(--on-surface)]">{pctYearHistogram.band70p}</span>
@@ -760,9 +777,9 @@ export default function ResultPointPage() {
                           <th className="px-4 py-3 text-right">N</th>
                           <th className="px-4 py-3 text-right">Mean</th>
                           <th className="px-4 py-3 text-right">Median</th>
-                          <th className="px-4 py-3 text-right text-cat-violet-text">PP mean</th>
+                          <th className={`px-4 py-3 text-right ${ppNumericClass}`}>PP mean</th>
                           <th className="px-4 py-3 text-right">PP gap</th>
-                          <th className="px-4 py-3 text-right text-[var(--info)]">SEND mean</th>
+                          <th className={`px-4 py-3 text-right ${sendNumericClass}`}>SEND mean</th>
                           <th className="px-4 py-3 text-right">SEND gap</th>
                         </tr>
                       </thead>
@@ -770,7 +787,7 @@ export default function ResultPointPage() {
                         {pctSummary.subjects.map((sm) => {
                           const isExpanded = expandedPctSubject === sm.subject;
                           const gapCls = (gap: number | null) =>
-                            gap === null ? "" : gap <= 5 ? "text-[var(--success)]" : gap <= 15 ? "text-scale-some-text" : "text-[var(--error)]";
+                            gap === null ? "" : gap <= 5 ? "text-[var(--success)]" : gap <= 15 ? "text-[var(--warning-text)]" : "text-[var(--error)]";
                           return (
                             <>
                               <tr
@@ -785,13 +802,13 @@ export default function ResultPointPage() {
                                 <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface-muted)]">{sm.presentCount}</td>
                                 <td className="px-4 py-4 text-right font-bold tabular-nums text-[var(--on-surface)]">{sm.mean}%</td>
                                 <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface-muted)]">{sm.median}%</td>
-                                <td className="px-4 py-4 text-right tabular-nums text-cat-violet-text">
+                                <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>
                                   {sm.ppMean !== null ? `${sm.ppMean}%` : "—"}
                                 </td>
                                 <td className={`px-4 py-4 text-right font-semibold tabular-nums ${gapCls(sm.ppGap)}`}>
                                   {sm.ppGap !== null ? `${sm.ppGap > 0 ? "+" : ""}${sm.ppGap}pp` : "—"}
                                 </td>
-                                <td className="px-4 py-4 text-right tabular-nums text-[var(--info)]">
+                                <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>
                                   {sm.sendMean !== null ? `${sm.sendMean}%` : "—"}
                                 </td>
                                 <td className={`px-4 py-4 text-right font-semibold tabular-nums ${gapCls(sm.sendGap)}`}>
@@ -812,7 +829,7 @@ export default function ResultPointPage() {
                                                 <span className="w-32 truncate text-xs text-[var(--on-surface)]">{tg.group}</span>
                                                 <div className="flex h-4 flex-1 overflow-hidden rounded bg-[var(--surface-container)]">
                                                   <div
-                                                    className={`h-full rounded ${deltaBarClass(tg.vsYearMean >= 0)}`}
+                                                    className={`h-full rounded ${tg.vsYearMean >= 0 ? barPositiveClass : barNegativeClass}`}
                                                     style={{ width: `${Math.min(100, (tg.mean / 100) * 100)}%` }}
                                                   />
                                                 </div>
@@ -835,8 +852,8 @@ export default function ResultPointPage() {
                                                 <div key={s.studentId} className="flex items-center justify-between gap-2">
                                                   <span className="truncate text-xs text-[var(--on-surface)]">
                                                     {s.name}
-                                                    {s.ppFlag && <span className={`ml-1 rounded-full px-1 text-[9px] ${PP_TAG_CLASS}`}>PP</span>}
-                                                    {s.sendFlag && <span className={`ml-1 rounded-full px-1 text-[9px] ${SEN_TAG_CLASS}`}>SEN</span>}
+                                                    {s.ppFlag && <span className={`ml-1 ${ppInlineBadgeClass}`}>PP</span>}
+                                                    {s.sendFlag && <span className={`ml-1 ${sendInlineBadgeClass}`}>SEN</span>}
                                                   </span>
                                                   <span className={`shrink-0 text-xs font-bold tabular-nums ${cls}`}>{s.score}%</span>
                                                 </div>
@@ -875,8 +892,8 @@ export default function ResultPointPage() {
                           <span className="w-5 text-right text-[10px] font-bold tabular-nums text-[var(--on-surface-muted)]">{s.rank}</span>
                           <span className="flex-1 truncate text-sm text-[var(--on-surface)]">
                             {s.name}
-                            {s.ppFlag && <span className={`ml-1 rounded-full px-1.5 text-[9px] ${PP_TAG_CLASS}`}>PP</span>}
-                            {s.sendFlag && <span className={`ml-1 rounded-full px-1.5 text-[9px] ${SEN_TAG_CLASS}`}>SEN</span>}
+                            {s.ppFlag && <span className={`ml-1 ${ppInlineBadgeClassLg}`}>PP</span>}
+                            {s.sendFlag && <span className={`ml-1 ${sendInlineBadgeClassLg}`}>SEN</span>}
                           </span>
                           <span className={`shrink-0 text-sm font-bold tabular-nums ${cls}`}>{s.overallMean}%</span>
                         </div>
@@ -921,12 +938,12 @@ export default function ResultPointPage() {
                               </Link>
                             </td>
                             <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.send!.nonSendT4}%</td>
-                            <td className="px-4 py-4 text-right tabular-nums text-cat-violet-text">{sm.send!.t4}%</td>
+                            <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>{sm.send!.t4}%</td>
                             <td className="px-4 py-4 text-right">
                               <GapBadge gap={sm.send!.gap4} />
                             </td>
                             <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.send!.nonSendT5}%</td>
-                            <td className="px-4 py-4 text-right tabular-nums text-cat-violet-text">{sm.send!.t5}%</td>
+                            <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>{sm.send!.t5}%</td>
                             <td className="px-4 py-4 text-right">
                               <GapBadge gap={sm.send!.gap5} />
                             </td>
@@ -966,14 +983,47 @@ export default function ResultPointPage() {
 
             <div className="p-3 overflow-y-auto flex-1">
               {modalView.type === 'EM' && (
-                <div className="table-shell border-0 shadow-none">
-                  <table className="w-full text-left text-sm">
-                    <thead className="sticky top-0 z-10 border-b border-[var(--outline-variant)]/20 anx-card-inset">
-                      <tr className="table-head-row">
-                        <th className="px-5 py-3">Student</th>
-                        <th className="px-4 py-3 text-center">Status</th>
-                        <th className="px-4 py-3 text-center">English Grade</th>
-                        <th className="px-4 py-3 text-center">Maths Grade</th>
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 z-10 border-b border-[var(--outline-variant)]/20 anx-card-inset">
+                    <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
+                      <th className="p-3 pl-4">Student</th>
+                      <th className="p-3 text-center">Status</th>
+                      <th className="p-3 text-center">English Grade</th>
+                      <th className="p-3 text-center">Maths Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--outline-variant)]/10">
+                    {modalView.students.sort((a, b) => {
+                       if (a.met !== b.met) return a.met ? -1 : 1;
+                       return a.name.localeCompare(b.name);
+                    }).map(st => (
+                      <tr key={st.studentId} className="hover:bg-[var(--surface-container-low)]/50 transition-colors">
+                        <td className="p-3 pl-4 font-medium">
+                          <Link href={`/students/${st.studentId}`} className="calm-transition hover:text-[var(--accent)]">
+                            {st.name}
+                          </Link>
+                        </td>
+                        <td className="p-3 text-center">
+                          {st.met ? (
+                            <span className={metPillClass}>Met</span>
+                          ) : (
+                            <span className={notMetPillClass}>Not Met</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-center">
+                          <span
+                            className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseGradeBadgeClass(st.engRaw)}`}
+                          >
+                            {st.engRaw}
+                          </span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <span
+                            className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseGradeBadgeClass(st.mathRaw)}`}
+                          >
+                            {st.mathRaw}
+                          </span>
+                        </td>
                       </tr>
                     </thead>
                     <tbody>
@@ -1000,7 +1050,11 @@ export default function ResultPointPage() {
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span
-                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${gcseNumericCellClass(st.engRaw)}`}
+                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${
+                                modalView.gradeFormat === "GCSE"
+                                  ? gcseGradeBadgeClass(st.rawValue)
+                                  : aLevelGradeBadgeClass(st.rawValue)
+                              }`}
                             >
                               {st.engRaw}
                             </span>
