@@ -173,6 +173,7 @@ export function SubjectDistributionSection({
                     if (d.count === 0) return null;
                     const pct = (d.count / distTotal) * 100;
                     const { bar } = gradeDistributionBarStyle(d.grade, isGcse ? "GCSE" : "A_LEVEL");
+                    const showLabel = pct >= 5 || (d.grade.length <= 2 && pct >= 2.5);
                     return (
                       <button
                         key={d.grade}
@@ -182,7 +183,7 @@ export function SubjectDistributionSection({
                         title={`Grade ${d.grade}: ${d.count} students (${Math.round(pct)}%) — click for list`}
                         onClick={() => openGrade(d.grade)}
                       >
-                        {pct > 2 ? d.grade : ""}
+                        {showLabel ? d.grade : ""}
                       </button>
                     );
                   })}
@@ -238,8 +239,20 @@ export function SubjectDistributionSection({
       )}
 
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-[var(--surface)] text-[var(--on-surface)] rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-[var(--outline-variant)]/50">
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <button
+            type="button"
+            className="fixed inset-0 z-0 bg-[var(--overlay)] backdrop-blur-[1px] animate-in fade-in duration-200"
+            aria-label="Close dialog"
+            onClick={() => setModal(null)}
+          />
+          <div className="relative z-10 flex min-h-full items-center justify-center p-4 sm:p-6 pointer-events-none">
+            <div
+              className="pointer-events-auto my-8 flex w-full max-w-2xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
               <h2 className="text-lg font-bold">
                 {modal.kind === "grade"
@@ -250,7 +263,7 @@ export function SubjectDistributionSection({
                 type="button"
                 onClick={() => setModal(null)}
                 className="text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-                aria-label="Close"
+                aria-label="Close dialog"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 6L6 18M6 6l12 12" />
@@ -258,7 +271,7 @@ export function SubjectDistributionSection({
               </button>
             </div>
 
-            <div className="p-3 overflow-y-auto flex-1">
+            <div className="min-h-0 flex-1 overflow-y-auto p-3">
               <div className="table-shell border-0 shadow-none">
                 <table className="w-full text-left text-sm">
                   <thead className="sticky top-0 z-10 border-b border-[var(--outline-variant)]/20 anx-card-inset">
@@ -297,6 +310,7 @@ export function SubjectDistributionSection({
                   </tbody>
                 </table>
               </div>
+            </div>
             </div>
           </div>
         </div>
