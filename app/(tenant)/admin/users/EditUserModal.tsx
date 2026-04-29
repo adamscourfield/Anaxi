@@ -142,7 +142,7 @@ function TeacherSearch({
       <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted" />
       <input
         type="text"
-        className="field w-full !rounded-xl !border-black/[0.06] !bg-[#fafbfc] !py-2.5 pl-10 pr-3 text-[0.8125rem] shadow-none disabled:cursor-not-allowed disabled:opacity-60"
+        className="field w-full !rounded-xl !border-black/[0.06] !bg-[var(--surface-container-highest)] !py-2.5 pl-10 pr-3 text-[0.8125rem] shadow-none disabled:cursor-not-allowed disabled:opacity-60"
         placeholder={placeholder}
         value={query}
         disabled={disabled}
@@ -153,7 +153,7 @@ function TeacherSearch({
         onFocus={() => setOpen(true)}
       />
       {open && query.trim() !== "" && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[180px] overflow-y-auto rounded-xl border border-black/[0.08] bg-white py-1 shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[180px] overflow-y-auto rounded-xl border border-black/[0.08] bg-[var(--surface-container-lowest)] py-1 shadow-lg">
           {filtered.length === 0 ? (
             <p className="px-4 py-3 text-[0.8125rem] text-muted">No teachers found</p>
           ) : (
@@ -161,7 +161,7 @@ function TeacherSearch({
               <button
                 key={t.id}
                 type="button"
-                className="flex w-full items-center px-4 py-2.5 text-left text-[0.8125rem] text-text calm-transition hover:bg-[#fafbfc]"
+                className="flex w-full items-center px-4 py-2.5 text-left text-[0.8125rem] text-text calm-transition hover:bg-[var(--surface-container-low)]"
                 onClick={() => {
                   onAdd(t.id);
                   setQuery("");
@@ -255,7 +255,7 @@ export function EditUserModal({
           <button
             type="button"
             onClick={onClose}
-            className="calm-transition shrink-0 rounded-xl p-2 text-muted hover:bg-[#fafbfc] hover:text-text"
+            className="calm-transition shrink-0 rounded-xl p-2 text-muted hover:bg-[var(--surface-container-low)] hover:text-text"
             aria-label="Close"
           >
             <CloseIcon />
@@ -273,7 +273,7 @@ export function EditUserModal({
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 disabled={readOnly}
-                className="field w-full appearance-none !rounded-xl !border-black/[0.06] !bg-[#fafbfc] pr-10 text-[0.8125rem] disabled:cursor-not-allowed disabled:opacity-60"
+                className="field w-full appearance-none !rounded-xl !border-black/[0.06] !bg-[var(--surface-container-highest)] pr-10 text-[0.8125rem] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -356,7 +356,7 @@ export function EditUserModal({
                       return (
                         <span
                           key={tid}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-[#fafbfc] px-2.5 py-1 text-[11px] font-medium text-text"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-[var(--surface-container-low)] px-2.5 py-1 text-[11px] font-medium text-text"
                         >
                           {teacher.fullName}
                           <button
@@ -389,7 +389,7 @@ export function EditUserModal({
             type="button"
             onClick={onClose}
             disabled={pending}
-            className="rounded-xl px-4 py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-[#fafbfc] hover:text-text disabled:opacity-50"
+            className="rounded-xl px-4 py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text disabled:opacity-50"
           >
             {readOnly ? "Close" : "Cancel"}
           </button>

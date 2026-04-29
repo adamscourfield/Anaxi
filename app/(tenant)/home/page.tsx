@@ -314,7 +314,7 @@ function LeadershipHome({
                   } ${
                     oc.status === "OPEN" || oc.status === "ACKNOWLEDGED"
                       ? "bg-[var(--surface-container-low)]"
-                      : "bg-white"
+                      : "bg-[var(--surface-container-lowest)]"
                   }`}
                 >
                   <Link

@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import type { PointType, ResultStatus, QualificationType } from "@prisma/client";
 
 // ─── Type badges ─────────────────────────────────────────────────────────────
@@ -202,7 +203,7 @@ export default async function CycleDetailPage({
             return (
               <div
                 key={point.id}
-                className="flex rounded-3xl bg-white p-8 shadow-ambient transition-all hover:shadow-lg"
+                className="flex rounded-3xl bg-[var(--surface-container-lowest)] p-8 shadow-ambient calm-transition motion-safe:hover:-translate-y-px motion-safe:hover:shadow-lg"
               >
                 {/* Ordinal on the left */}
                 <div className="w-12 shrink-0 pt-8">
@@ -232,22 +233,16 @@ export default async function CycleDetailPage({
                       )}
                     </div>
                     {/* Action buttons */}
-                    <div className="flex gap-3 pt-1">
+                    <div className="flex flex-wrap gap-3 pt-1">
                       {point.resultStatus !== "LOCKED" && (
-                        <Link
-                          href={`/assessments/${cycle.id}/points/${point.id}/upload`}
-                          className="rounded-[10px] bg-[#111827] px-4 py-2.5 text-xs font-bold text-white shadow hover:bg-[#1f2937] transition-colors"
-                        >
-                          Upload results
-                        </Link>
+                        <Button asChild variant="primary" className="px-4 py-2 text-xs font-bold">
+                          <Link href={`/assessments/${cycle.id}/points/${point.id}/upload`}>Upload results</Link>
+                        </Button>
                       )}
                       {hasData && (
-                        <Link
-                          href={`/assessments/${cycle.id}/points/${point.id}`}
-                          className="rounded-[10px] border border-border bg-white px-4 py-2.5 text-xs font-bold text-text shadow-sm hover:bg-surface-container-low transition-colors"
-                        >
-                          View analysis
-                        </Link>
+                        <Button asChild variant="secondary" className="px-4 py-2 text-xs font-bold shadow-sm">
+                          <Link href={`/assessments/${cycle.id}/points/${point.id}`}>View analysis</Link>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -285,13 +280,13 @@ export default async function CycleDetailPage({
                       {point.assessments.slice(0, 8).map((a) => (
                         <span
                           key={a.id}
-                          className="rounded-full border border-border bg-white px-4 py-1.5 text-[11px] font-bold text-muted shadow-sm"
+                          className="rounded-full border border-border/70 bg-[var(--surface-container-lowest)] px-4 py-1.5 text-[11px] font-bold text-muted shadow-sm"
                         >
                           {a.subject}
                         </span>
                       ))}
                       {point.assessments.length > 8 && (
-                        <span className="rounded-full border border-border/50 bg-white px-4 py-1.5 text-[11px] font-bold text-muted shadow-sm">
+                        <span className="rounded-full border border-border/40 bg-[var(--surface-container-low)] px-4 py-1.5 text-[11px] font-bold text-muted shadow-sm">
                           +{point.assessments.length - 8} MORE
                         </span>
                       )}

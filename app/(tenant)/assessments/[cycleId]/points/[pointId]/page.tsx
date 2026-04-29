@@ -464,7 +464,7 @@ export default function ResultPointPage() {
                 </Link>
 
                 {/* 5+ White Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/5`} className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-ambient calm-transition hover:shadow-lg hover:-translate-y-0.5 block">
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/5`} className="relative block cursor-pointer overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition motion-safe:hover:-translate-y-px motion-safe:hover:shadow-lg">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 5+</p>
                   <div className="mt-3">
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em5}%</span>
@@ -475,7 +475,7 @@ export default function ResultPointPage() {
                 </Link>
 
                 {/* 7+ White Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/7`} className="relative overflow-hidden rounded-2xl bg-white p-5 cursor-pointer shadow-ambient calm-transition hover:shadow-lg hover:-translate-y-0.5 block">
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/7`} className="relative block cursor-pointer overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition motion-safe:hover:-translate-y-px motion-safe:hover:shadow-lg">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 7+</p>
                   <div className="mt-3">
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em7}%</span>
@@ -492,7 +492,7 @@ export default function ResultPointPage() {
                   { label: "PP Gap — 4+ threshold", pp: metrics.gcseBasics.ppEm4, nonPp: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4 },
                   { label: "PP Gap — 5+ threshold", pp: metrics.gcseBasics.ppEm5, nonPp: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5 },
                 ].map(({ label, pp, nonPp, gap }) => (
-                  <div key={label} className="rounded-2xl bg-white p-5 shadow-ambient">
+                  <div key={label} className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
                     <div className="flex items-start justify-between">
                        <div>
                          <h3 className="text-base font-bold tracking-tight text-text">{label}</h3>

@@ -486,7 +486,7 @@ function StrategyTile({
 
   return (
     <div
-      className={`flex flex-col rounded-2xl border border-border/30 bg-surface-container-lowest p-5 shadow-ambient transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
+      className={`flex flex-col rounded-2xl border border-border/30 bg-surface-container-lowest p-5 shadow-ambient calm-transition motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-lg ${
         area.completed ? "opacity-50" : ""
       }`}
     >
