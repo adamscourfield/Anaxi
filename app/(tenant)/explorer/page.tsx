@@ -4,7 +4,6 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
-import { MetaText } from "@/components/ui/typography";
 import {
   canViewExplorer,
   canViewBehaviourExplorer,
@@ -294,36 +293,46 @@ export default async function ExplorerPage() {
       <PageHeader
         eyebrow="Analysis"
         title="Explorer"
+        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
         subtitle="Command centre for teachers, departments, signals, and behaviour — tuned to a rolling observation window."
+        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-10"
         meta={
-          <MetaText>
-            {WINDOW_DAYS}d window · Updated {computedAtStr}
-          </MetaText>
+          <span className="inline-flex flex-wrap items-center gap-2 text-[0.8125rem] leading-snug text-muted">
+            <svg className="h-4 w-4 shrink-0 text-muted/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+              <rect x="3" y="5" width="18" height="16" rx="2" strokeLinejoin="round" />
+              <path strokeLinecap="round" d="M16 3v4M8 3v4M3 11h18" />
+            </svg>
+            <span>
+              {WINDOW_DAYS}d window · Updated {computedAtStr}
+            </span>
+          </span>
         }
       />
 
       {/* ── Top Stats Row ──────────────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {/* Teachers */}
-        <Link href="/explorer/teachers" className="block">
-          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg">
-            <div className="flex items-start justify-between">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]">
+        <Link href="/explorer/teachers" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-6">
+            <div className="flex items-start justify-between gap-2">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
                 <IconTeachers />
               </span>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Real-time</span>
+              <span className="rounded-full bg-[var(--pill-error-bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
+                Real-time
+              </span>
             </div>
             <div className="mt-4">
               <p className="text-sm font-semibold text-[var(--on-surface)]">Teachers</p>
               <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-[2.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">{totalTeachers}</span>
+                <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{totalTeachers}</span>
                 <span className="text-sm text-[var(--on-surface-variant)]">tracked</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[var(--surface-container)] pt-3">
+            <div className="mt-4 border-t border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] pt-3">
               {driftingTeachers > 0 ? (
-                <p className="flex items-center gap-1.5 text-[13px] text-[var(--on-tertiary-container)]">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--on-tertiary-container)]" />
+                <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--error)]">
+                  <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" />
                   {driftingTeachers} drifting educators
                 </p>
               ) : (
@@ -334,45 +343,45 @@ export default async function ExplorerPage() {
         </Link>
 
         {/* Departments */}
-        <Link href="/explorer/departments" className="block">
-          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg">
+        <Link href="/explorer/departments" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-6">
             <div className="flex items-start justify-between">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
                 <IconDepartments />
               </span>
             </div>
             <div className="mt-4">
               <p className="text-sm font-semibold text-[var(--on-surface)]">Departments</p>
               <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-[2.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">{totalDepartments}</span>
+                <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{totalDepartments}</span>
                 <span className="text-sm text-[var(--on-surface-variant)]">depts</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[var(--surface-container)] pt-3">
+            <div className="mt-4 border-t border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] pt-3">
               <p className="text-[13px] text-[var(--on-surface-variant)]">{totalObsAcrossDepts} total observations</p>
             </div>
           </div>
         </Link>
 
         {/* Signals */}
-        <Link href="/explorer/signals" className="block">
-          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg">
+        <Link href="/explorer/signals" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-6">
             <div className="flex items-start justify-between">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
                 <IconSignals />
               </span>
             </div>
             <div className="mt-4">
               <p className="text-sm font-semibold text-[var(--on-surface)]">Signals</p>
               <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-[2.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">{totalSignals}</span>
+                <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{totalSignals}</span>
                 <span className="text-sm text-[var(--on-surface-variant)]">tracked</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[var(--surface-container)] pt-3">
+            <div className="mt-4 border-t border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] pt-3">
               {highPrioritySignals > 0 ? (
-                <p className="flex items-center gap-1.5 text-[13px] text-[var(--error)]">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--error)]" />
+                <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--error)]">
+                  <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" />
                   {highPrioritySignals} high priority
                 </p>
               ) : (
@@ -383,22 +392,22 @@ export default async function ExplorerPage() {
         </Link>
 
         {/* Observations */}
-        <Link href="/observe/history" className="block">
-          <div className="relative flex h-full flex-col justify-between rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg">
+        <Link href="/observe/history" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-6">
             <div className="flex items-start justify-between">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
                 <IconObservations />
               </span>
             </div>
             <div className="mt-4">
               <p className="text-sm font-semibold text-[var(--on-surface)]">Observations</p>
               <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-[2.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">{obsCount}</span>
+                <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{obsCount}</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[var(--surface-container)] pt-3">
+            <div className="mt-4 border-t border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] pt-3">
               <p className="text-[13px] text-[var(--on-surface-variant)]">
-                recorded in last <span className="font-semibold">{WINDOW_DAYS}d</span>
+                recorded in last <span className="font-semibold text-text">{WINDOW_DAYS}d</span>
               </p>
             </div>
           </div>
@@ -406,9 +415,9 @@ export default async function ExplorerPage() {
       </div>
 
       {/* ── Priorities Card ────────────────────────────────────────────────── */}
-      <div className="mt-4">
-        <Link href="/analytics" className="block">
-          <div className="relative rounded-2xl bg-[var(--primary)] p-5 pr-12 text-on-primary shadow-ambient calm-transition hover:opacity-90 sm:pr-14">
+      <div>
+        <Link href="/analytics" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+          <div className="home-cpd-hero relative overflow-hidden p-6 pr-14 text-on-primary calm-transition group-hover:opacity-[0.97] sm:p-7 sm:pr-16">
             <svg
               className="pointer-events-none absolute right-4 top-4 h-7 w-7 opacity-60 sm:h-8 sm:w-8"
               fill="none"
@@ -501,14 +510,14 @@ export default async function ExplorerPage() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--on-surface-variant)]">
             Pastoral Pulse
           </p>
-          <h2 className="mt-1 text-[28px] font-bold leading-tight tracking-[-0.02em] text-[var(--on-surface)]">
+          <h2 className="mt-1 text-pretty text-[clamp(1.5rem,3vw,1.75rem)] font-bold leading-tight tracking-[-0.03em] text-[var(--on-surface)]">
             Behaviour &amp; Welfare
           </h2>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3 items-stretch">
+          <div className="mt-6 grid grid-cols-1 items-stretch gap-5 md:grid-cols-3">
             {/* Students Card */}
-            <Link href="/explorer/students" className="block">
-              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
+            <Link href="/explorer/students" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-7">
                 <WatermarkGradCap />
                 <p className="text-lg font-semibold text-[var(--on-surface)]">Students</p>
                 <div className="mt-3 flex items-baseline gap-3">
@@ -520,18 +529,18 @@ export default async function ExplorerPage() {
                     <p className="text-[11px] text-[var(--on-surface-variant)]">Managed Enrollment</p>
                   </div>
                 </div>
-                <div className="mt-5 flex gap-3">
-                  <div className="rounded-xl border border-[var(--outline-variant)]/40 bg-[var(--surface-container-low)] px-4 py-3 calm-transition hover:bg-[var(--surface-container)]">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-tertiary-container)]">Urgent Action</p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <div className="rounded-xl border border-[color-mix(in_srgb,var(--error)_18%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_45%,var(--surface-container-lowest))] px-4 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--pill-error-text)]">Urgent Action</p>
                     <div className="mt-1 flex items-baseline gap-1.5">
-                      <span className="text-xl font-bold text-[var(--on-surface)]">{urgentStudents}</span>
+                      <span className="text-xl font-bold tabular-nums text-[var(--on-surface)]">{urgentStudents}</span>
                       <span className="text-xs text-[var(--on-surface-variant)]">students</span>
                     </div>
                   </div>
-                  <div className="px-4 py-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Safe State</p>
+                  <div className="rounded-xl border border-[color-mix(in_srgb,var(--success)_20%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_55%,var(--surface-container-lowest))] px-4 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--pill-success-text)]">Safe State</p>
                     <div className="mt-1 flex items-baseline gap-1.5">
-                      <span className="text-xl font-bold text-[var(--on-surface)]">{safeStudents}</span>
+                      <span className="text-xl font-bold tabular-nums text-[var(--on-surface)]">{safeStudents}</span>
                       <span className="text-xs text-[var(--on-surface-variant)]">students</span>
                     </div>
                   </div>
@@ -540,8 +549,8 @@ export default async function ExplorerPage() {
             </Link>
 
             {/* Cohorts Card */}
-            <Link href="/explorer/cohorts" className="block">
-              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
+            <Link href="/explorer/cohorts" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-7">
                 <WatermarkDiamond />
                 <p className="text-lg font-semibold text-[var(--on-surface)]">Cohorts</p>
                 <div className="mt-3 flex items-baseline gap-3">
@@ -554,9 +563,9 @@ export default async function ExplorerPage() {
                   </div>
                 </div>
                 <div className="mt-8">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-container-high)]">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--surface-container-high)_90%,transparent)]">
                     <div
-                      className="h-full rounded-full bg-[var(--on-surface)]"
+                      className="home-stat-bar-fill h-full rounded-full bg-[var(--on-surface)]"
                       style={{ width: `${academicLoadPct}%` }}
                     />
                   </div>
@@ -569,8 +578,8 @@ export default async function ExplorerPage() {
             </Link>
 
             {/* Behaviour Analysis Card */}
-            <Link href="/explorer/analysis" className="block">
-              <div className="relative h-full overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient calm-transition hover:shadow-lg hover:bg-[var(--surface-container-low)]">
+            <Link href="/explorer/analysis" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-7">
                 <WatermarkChartBars />
                 <p className="text-lg font-semibold text-[var(--on-surface)]">Behaviour Analysis</p>
                 <div className="mt-3 flex items-baseline gap-3">

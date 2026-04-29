@@ -141,22 +141,24 @@ export function ObservationContextForm({
   return (
     <ObservationStageLayout currentStep={1}>
       {/* Main Card */}
-      <div className="min-w-0 w-full rounded-2xl glass-card">
-        <div className="px-4 py-6 sm:px-8 sm:py-7">
+      <div className="home-hero-glass min-w-0 w-full overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+        <div className="px-4 py-6 sm:px-8 sm:py-8">
           {/* Stage Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-2.5">
-              <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-text" xmlns="http://www.w3.org/2000/svg">
-                <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              <h2 className="text-[1.125rem] font-bold tracking-tight text-text">
-                Stage 1: Session Details
-              </h2>
+            <div className="flex items-start gap-3.5">
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)] [&_svg]:h-5 [&_svg]:w-5">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                  <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </span>
+              <div className="min-w-0 pt-0.5">
+                <h2 className="text-[1.125rem] font-bold tracking-[-0.02em] text-text">Stage 1: Session Details</h2>
+                <p className="mt-1.5 text-pretty text-[0.875rem] leading-relaxed text-muted">
+                  Define the context and primary actor for this observation period.
+                </p>
+              </div>
             </div>
-            <p className="mt-1.5 ml-0 text-pretty text-[0.875rem] text-muted sm:ml-[30px]">
-              Define the context and primary actor for this observation period.
-            </p>
           </div>
 
           {/* Form Fields - 2 Column Grid */}
@@ -252,13 +254,13 @@ export function ObservationContextForm({
                     key={phase.key}
                     type="button"
                     onClick={() => setContext((c) => ({ ...c, phase: phase.key }))}
-                    className={`flex flex-col items-center gap-2 rounded-xl border-2 px-4 py-4 text-center calm-transition ${
+                    className={`flex flex-col items-center gap-2.5 rounded-[14px] border-2 px-4 py-4 text-center calm-transition ${
                       selected
-                        ? "border-primary bg-primary/[0.06] text-primary anx-card-elevated"
-                        : "border-border/30 bg-surface-container-lowest/70 text-muted hover:border-border hover:bg-surface-container-lowest/90"
+                        ? "border-[var(--tertiary-container)] bg-[color-mix(in_srgb,var(--tertiary-container)_10%,var(--surface-container-lowest))] text-text shadow-sm ring-1 ring-[color-mix(in_srgb,var(--tertiary-container)_15%,transparent)]"
+                        : "border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--surface-container-lowest)]/80 text-muted hover:border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] hover:bg-[var(--surface-container-low)]"
                     }`}
                   >
-                    <span className={selected ? "text-primary" : "text-muted"}>{phase.icon}</span>
+                    <span className={selected ? "text-[var(--tertiary-container)]" : "text-muted"}>{phase.icon}</span>
                     <span className="text-[0.8125rem] font-semibold leading-tight">{phase.label}</span>
                   </button>
                 );
@@ -268,13 +270,13 @@ export function ObservationContextForm({
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col gap-3 border-t border-border/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5">
+        <div className="flex flex-col gap-3 border-t border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5">
           <button
             type="button"
             onClick={() => router.push("/home")}
             className="flex items-center gap-2 text-[0.875rem] font-medium text-muted calm-transition hover:text-text"
           >
-            <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
+            <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden>
               <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
             Cancel Session
@@ -289,10 +291,10 @@ export function ObservationContextForm({
               });
               router.push("/observe/new/signals");
             }}
-            className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-[0.875rem] font-semibold text-on-primary shadow-ambient calm-transition hover:bg-primary-container hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--tertiary-container)] px-7 py-3 text-[0.875rem] font-semibold text-[var(--on-primary)] shadow-[0_2px_8px_rgba(0,0,0,0.12)] calm-transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next Stage
-            <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4">
+            <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>
               <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -300,8 +302,8 @@ export function ObservationContextForm({
       </div>
 
       {/* Info Cards */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl bg-surface-container border border-border/20 p-5">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 sm:p-6">
           <div className="mb-3">
             <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-scale-limited-bar">
               <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -313,7 +315,7 @@ export function ObservationContextForm({
             Ensure you have notified the staff member at least 24 hours prior to entering the classroom environment.
           </p>
         </div>
-        <div className="rounded-2xl bg-surface-container border border-border/20 p-5">
+        <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 sm:p-6">
           <div className="mb-3">
             <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-scale-limited-bar">
               <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
@@ -327,7 +329,7 @@ export function ObservationContextForm({
             The system will automatically link previous observation trends to this teacher&apos;s final ledger report.
           </p>
         </div>
-        <div className="rounded-2xl bg-surface-container border border-border/20 p-5">
+        <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 sm:p-6">
           <div className="mb-3">
             <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-cat-violet-text">
               <path d="M4 16l4-8 4 6 4-10 4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
