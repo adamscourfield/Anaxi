@@ -229,7 +229,7 @@ export default async function CycleDetailPage({
   ).size;
 
   return (
-    <div className="anx-reports-page w-full max-w-[1120px] space-y-10 pb-16">
+    <div className="anx-reports-page w-full space-y-10 pb-16">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -388,7 +388,7 @@ export default async function CycleDetailPage({
                   </div>
 
                   {hasData ? (
-                    <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                       <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
                         <div className="flex items-center gap-2 text-zinc-500">
                           <IconBook className="h-4 w-4 shrink-0" />
