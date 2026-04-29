@@ -162,7 +162,7 @@ export default async function ExplorerObservationsPage({
     return `/explorer/observations${qs ? `?${qs}` : ""}`;
   }
 
-  const fieldSurface = "field !bg-surface-container-lowest rounded-[10px] !py-2.5 !text-[0.8125rem]";
+  const fieldSurface = "field field-filter-trigger !py-2.5 !text-[0.8125rem]";
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -201,7 +201,7 @@ export default async function ExplorerObservationsPage({
       />
 
       {/* ── Filters (aligned with Signals / Students explorer) ─────────────── */}
-      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+      <div className="filter-panel">
         <div className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4">
           <div className="flex min-w-0 flex-col gap-1.5 lg:min-w-[220px] lg:flex-none">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
@@ -291,18 +291,18 @@ export default async function ExplorerObservationsPage({
             </label>
           </form>
 
-          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
+          <div className="filter-actions">
             <button
               type="submit"
               form="observations-explorer-filters"
-              className="field !flex w-full flex-nowrap items-center justify-center whitespace-nowrap border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+              className="btn-filter-primary"
             >
               Apply Filters
             </button>
             {hasFilters && (
               <Link
                 href={`/explorer/observations?windowDays=${windowDays}`}
-                className="field flex w-full items-center justify-center border border-border/40 bg-surface-container-lowest py-2.5 text-center text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[100px] lg:w-auto"
+                className="btn-filter-secondary"
               >
                 Clear
               </Link>

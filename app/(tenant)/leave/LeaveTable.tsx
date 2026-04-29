@@ -51,23 +51,23 @@ function SectionTable({
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border/50 bg-surface-container-lowest shadow-ambient">
+      <div className="table-shell">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="bg-surface-container-low">
+              <tr className="table-head-row text-left">
                 {isManager && (
-                  <th className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+                  <th className="px-5 py-3.5">
                     Staff member
                   </th>
                 )}
-                <th className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+                <th className="px-5 py-3.5">
                   Requested dates
                 </th>
-                <th className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+                <th className="px-5 py-3.5">
                   Reason
                 </th>
-                <th className="px-5 py-3.5 text-right text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+                <th className="px-5 py-3.5 text-right">
                   {mode === "pending" ? "Actions" : "Status"}
                 </th>
               </tr>
@@ -86,7 +86,7 @@ function SectionTable({
                 rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-t border-border/30 calm-transition hover:bg-surface-container-low"
+                    className="table-row calm-transition"
                   >
                     {isManager && (
                       <td className="px-5 py-4">
@@ -143,7 +143,7 @@ function SectionTable({
           </table>
         </div>
         {mode === "completed" && rows.length > 0 && (
-          <div className="border-t border-border/30 py-4 text-center">
+          <div className="border-t border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] py-4 text-center">
             <Link
               href="/leave/history"
               className="link-subtle text-[0.875rem] font-medium underline-offset-4 calm-transition text-muted hover:text-text"

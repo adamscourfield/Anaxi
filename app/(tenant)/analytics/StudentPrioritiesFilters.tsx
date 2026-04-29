@@ -31,10 +31,10 @@ export function StudentPrioritiesFilters({
   defaults,
   hasFilters,
 }: StudentPrioritiesFiltersProps) {
-  const triggerWhite = "!bg-surface-container-lowest rounded-[10px]";
+  const triggerWhite = "field-filter-trigger";
 
   return (
-    <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+    <div className="filter-panel">
       <form
         method="get"
         action="/analytics"
@@ -136,18 +136,12 @@ export function StudentPrioritiesFilters({
           />
         </label>
 
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
-          <button
-            type="submit"
-            className="field flex w-full items-center justify-center border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
-          >
+        <div className="filter-actions">
+          <button type="submit" className="btn-filter-primary">
             Apply Filters
           </button>
           {hasFilters && (
-            <Link
-              href={`/analytics?tab=students&window=${windowDays}`}
-              className="field flex w-full items-center justify-center border border-border/40 bg-surface-container-lowest py-2.5 text-center text-[0.8125rem] font-medium text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:min-w-[100px] lg:w-auto"
-            >
+            <Link href={`/analytics?tab=students&window=${windowDays}`} className="btn-filter-secondary">
               Clear
             </Link>
           )}

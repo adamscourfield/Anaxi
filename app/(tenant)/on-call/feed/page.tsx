@@ -58,31 +58,41 @@ export default async function OnCallFeedPage({ searchParams }: { searchParams: R
         </Card>
       ) : null}
 
-      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
-        <form className="flex flex-wrap items-center gap-4" method="get">
-          <select
-            name="status"
-            defaultValue={status}
-            className="rounded-md border border-border bg-bg/60 px-3 py-2 text-sm text-text"
-          >
-            <option value="">All statuses</option>
-            <option value="SENT">SENT</option>
-            <option value="ACKNOWLEDGED">ACKNOWLEDGED</option>
-            <option value="RESOLVED">RESOLVED</option>
-            <option value="CANCELLED">CANCELLED</option>
-          </select>
+      <div className="filter-panel">
+        <form className="filter-bar" method="get">
+          <label className="flex min-w-0 flex-col gap-1.5 sm:min-w-[200px]">
+            <span className="filter-field-label">Status</span>
+            <select
+              name="status"
+              defaultValue={status}
+              className="field field-filter-trigger min-w-0 !py-2.5 !text-sm"
+            >
+              <option value="">All statuses</option>
+              <option value="SENT">SENT</option>
+              <option value="ACKNOWLEDGED">ACKNOWLEDGED</option>
+              <option value="RESOLVED">RESOLVED</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+          </label>
 
-          <input
-            name="yearGroup"
-            defaultValue={yearGroup}
-            placeholder="Year group"
-            className="rounded-md border border-border bg-bg/60 px-3 py-2 text-sm text-text"
-          />
+          <label className="flex min-w-0 flex-col gap-1.5 sm:min-w-[160px]">
+            <span className="filter-field-label">Year group</span>
+            <input
+              name="yearGroup"
+              defaultValue={yearGroup}
+              placeholder="e.g. 10"
+              className="field field-filter-trigger !py-2.5 !text-sm"
+            />
+          </label>
 
-          <Button type="submit">Apply</Button>
-          <Link href="/on-call/feed">
-            <Button type="button" variant="secondary">Reset</Button>
-          </Link>
+          <div className="filter-actions filter-actions--inline !ml-0 w-full sm:w-auto lg:ml-0">
+            <button type="submit" className="btn-filter-primary">
+              Apply
+            </button>
+            <Link href="/on-call/feed" className="btn-filter-secondary text-center no-underline">
+              Reset
+            </Link>
+          </div>
         </form>
       </div>
 

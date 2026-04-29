@@ -103,7 +103,7 @@ export function TenantRouteSkeleton({
     return (
       <div className={`mx-auto min-w-0 max-w-[1400px] space-y-6 pb-8 ${pulse}`} aria-busy="true" aria-label="Loading page">
         <HeaderBlock />
-        <div className="rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+        <div className="filter-panel">
           <div className="flex flex-wrap items-end gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="min-w-[120px] flex-1 space-y-2">

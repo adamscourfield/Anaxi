@@ -98,7 +98,7 @@ export function ReviewList({
         <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[1fr_380px]">
 
           {/* ── Left: Signal Summary ── */}
-          <div className="flex flex-col rounded-2xl bg-surface-container-low p-5 shadow-ambient">
+          <div className="flex flex-col filter-panel">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-[1rem] font-bold text-text">Signal Summary</h3>
               <button
@@ -169,7 +169,7 @@ export function ReviewList({
 
           {/* ── Right: Concluding Notes + Context + Actions ── */}
           <div className="flex flex-col gap-4">
-            <div className="flex flex-1 flex-col rounded-2xl bg-surface-container-low p-5 shadow-ambient">
+            <div className="flex flex-1 flex-col filter-panel">
               <h3 className="text-[1rem] font-bold text-text">Concluding Notes</h3>
               <div className="mt-4 flex flex-1 flex-col rounded-xl border border-border/15 bg-surface-container-lowest p-4 shadow-ambient">
                 <textarea

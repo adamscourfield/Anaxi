@@ -130,46 +130,64 @@ export default async function AdminCoachingPage({
       ) : (
         <div className="space-y-3">
           {/* Filter bar */}
-          <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
-          <form className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 flex-1 min-w-[200px] max-w-xs">
-              <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0 text-muted" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="8.5" cy="8.5" r="4.5" />
-                <path d="M14 14l3 3" />
-              </svg>
-              <input
-                name="coach"
-                defaultValue={searchParams?.coach ?? ""}
-                placeholder="Filter by coach…"
-                className="flex-1 bg-transparent text-sm text-text placeholder:text-muted focus:outline-none"
-              />
+          <div className="filter-panel">
+          <form className="filter-bar items-end" method="get">
+            <label className="flex min-w-[200px] max-w-xs flex-1 flex-col gap-1.5">
+              <span className="filter-field-label">Coach</span>
+              <div className="relative">
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="8.5" cy="8.5" r="4.5" />
+                  <path d="M14 14l3 3" />
+                </svg>
+                <input
+                  name="coach"
+                  defaultValue={searchParams?.coach ?? ""}
+                  placeholder="Filter by coach…"
+                  className="field field-filter-trigger w-full py-2.5 pl-9 pr-3 text-sm"
+                />
+              </div>
+            </label>
+            <label className="flex min-w-[200px] max-w-xs flex-1 flex-col gap-1.5">
+              <span className="filter-field-label">Coachee</span>
+              <div className="relative">
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="8.5" cy="8.5" r="4.5" />
+                  <path d="M14 14l3 3" />
+                </svg>
+                <input
+                  name="coachee"
+                  defaultValue={searchParams?.coachee ?? ""}
+                  placeholder="Filter by coachee…"
+                  className="field field-filter-trigger w-full py-2.5 pl-9 pr-3 text-sm"
+                />
+              </div>
+            </label>
+            <div className="filter-actions filter-actions--inline !ml-0 w-full sm:w-auto lg:ml-0">
+              <button type="submit" className="btn-filter-primary btn-filter-primary--compact">
+                Filter
+              </button>
+              {(filterCoach || filterCoachee) && (
+                <a href="/admin/coaching" className="btn-filter-secondary btn-filter-secondary--compact text-center no-underline">
+                  Clear
+                </a>
+              )}
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 flex-1 min-w-[200px] max-w-xs">
-              <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0 text-muted" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="8.5" cy="8.5" r="4.5" />
-                <path d="M14 14l3 3" />
-              </svg>
-              <input
-                name="coachee"
-                defaultValue={searchParams?.coachee ?? ""}
-                placeholder="Filter by coachee…"
-                className="flex-1 bg-transparent text-sm text-text placeholder:text-muted focus:outline-none"
-              />
-            </div>
-            <button
-              type="submit"
-              className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-muted calm-transition hover:border-outline-variant hover:text-text"
-            >
-              Filter
-            </button>
-            {(filterCoach || filterCoachee) && (
-              <a
-                href="/admin/coaching"
-                className="link-accent text-xs"
-              >
-                Clear filters
-              </a>
-            )}
           </form>
           </div>
 

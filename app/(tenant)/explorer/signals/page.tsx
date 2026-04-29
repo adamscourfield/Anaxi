@@ -237,7 +237,7 @@ export default async function SignalsPage({
       />
 
       {/* ── Filters (aligned with Observation History) ─────────── */}
-      <div className="w-full rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+      <div className="filter-panel">
         <div className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4">
           <div className="flex min-w-0 flex-col gap-1.5 lg:min-w-[220px] lg:flex-none">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
@@ -270,7 +270,7 @@ export default async function SignalsPage({
               <select
                 name="departmentId"
                 defaultValue={rawDeptId ?? ""}
-                className="field !bg-surface-container-lowest rounded-[10px] !py-2.5 !text-[0.8125rem]"
+                className="field field-filter-trigger !py-2.5 !text-[0.8125rem]"
               >
                 <option value="">All Departments</option>
                 {selectableDepts.map((d: any) => (
@@ -286,7 +286,7 @@ export default async function SignalsPage({
             <button
               type="submit"
               form="signals-explorer-filters"
-              className="field !flex w-full flex-nowrap items-center justify-center whitespace-nowrap border-0 bg-primary py-2.5 text-[0.8125rem] font-bold text-on-primary calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+              className="btn-filter-primary"
             >
               Apply Filters
             </button>
@@ -313,7 +313,7 @@ export default async function SignalsPage({
                       form="signals-explorer-filters"
                       name="signalKey"
                       defaultValue={signalKeyFilter ?? ""}
-                      className="field !bg-surface-container-low rounded-[10px] !py-2.5 !text-[0.8125rem]"
+                      className="field field-filter-trigger !py-2.5 !text-[0.8125rem]"
                     >
                       <option value="">All signals</option>
                       <optgroup label="Universal (classroom)">
@@ -355,7 +355,7 @@ export default async function SignalsPage({
                       form="signals-explorer-filters"
                       name="priority"
                       defaultValue={priorityFilter ?? ""}
-                      className="field !bg-surface-container-low rounded-[10px] !py-2.5 !text-[0.8125rem]"
+                      className="field field-filter-trigger !py-2.5 !text-[0.8125rem]"
                     >
                       <option value="">All priorities</option>
                       {PRIORITY_LEVELS.map((p) => (
@@ -388,7 +388,7 @@ export default async function SignalsPage({
                 )}
                 <button
                   type="submit"
-                  className="field !flex w-full flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap border border-primary bg-surface-container-lowest py-2.5 text-[0.8125rem] font-bold text-text calm-transition hover:bg-surface-container-low sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+                  className="btn-filter-primary inline-flex !w-auto items-center justify-center gap-1.5"
                 >
                   <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />

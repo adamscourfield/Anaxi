@@ -75,23 +75,23 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 rounded-2xl bg-surface-container-low p-5 shadow-ambient md:p-6">
+      <div className="filter-panel flex flex-wrap gap-4">
         <label className="flex min-w-[16rem] flex-1 flex-col gap-1.5">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Search</span>
+          <span className="filter-field-label">Search</span>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by staff name, reason, or date"
-            className="h-10 rounded-xl border border-border/60 px-3 text-sm text-text outline-none calm-transition focus:border-border"
+            className="field field-filter-trigger !py-2.5 !text-sm"
           />
         </label>
 
         <label className="flex min-w-[11rem] flex-col gap-1.5">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Status</span>
+          <span className="filter-field-label">Status</span>
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as "ALL" | HistoryRow["status"])}
-            className="h-10 rounded-xl border border-border/60 bg-surface-container-lowest px-3 text-sm text-text outline-none calm-transition focus:border-border"
+            className="field field-filter-trigger !py-2.5 !text-sm"
           >
             <option value="ALL">All statuses</option>
             <option value="PENDING">Pending</option>
@@ -101,17 +101,17 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
         </label>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border/50 bg-surface-container-lowest shadow-ambient">
+      <div className="table-shell">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="bg-surface-container-low">
+              <tr className="table-head-row text-left">
                 {isManager && (
-                  <th className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Staff member</th>
+                  <th className="px-5 py-3.5">Staff member</th>
                 )}
-                <th className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Requested dates</th>
-                <th className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Reason</th>
-                <th className="px-5 py-3.5 text-right text-[11px] font-bold uppercase tracking-[0.08em] text-muted">Status</th>
+                <th className="px-5 py-3.5">Requested dates</th>
+                <th className="px-5 py-3.5">Reason</th>
+                <th className="px-5 py-3.5 text-right">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -123,7 +123,7 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
                 </tr>
               ) : (
                 filteredRows.map((row) => (
-                  <tr key={row.id} className="border-t border-border/30 calm-transition hover:bg-surface-container-low">
+                  <tr key={row.id} className="table-row calm-transition">
                     {isManager && (
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
