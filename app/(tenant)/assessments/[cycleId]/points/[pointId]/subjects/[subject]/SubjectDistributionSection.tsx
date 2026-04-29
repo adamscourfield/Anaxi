@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { SectionHeader } from "@/components/ui/section-header";
 import type { GradeFormat } from "@prisma/client";
+import { percentileCellClass, gcseNumericCellClass, aLevelLetterCellClass } from "@/lib/assessments/chartColours";
 import {
   gcseGradeBadgeClass,
   aLevelGradeBadgeClass,

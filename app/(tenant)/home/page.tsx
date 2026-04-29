@@ -27,13 +27,13 @@ import {
   DualFlaggedStudent,
 } from "@/modules/home/hydration";
 import { QuickActionButton } from "@/components/dashboard/QuickActionButton";
+import { Button } from "@/components/ui/button";
 import {
   HomeCardHeading,
   HomeCardHeadingSm,
   HomeEmptyPanel,
   HomePageHeader,
   HomePrimaryLink,
-  HomeSectionHeader,
   IconBell,
   IconBolt,
   IconCalendar,
@@ -144,22 +144,6 @@ function LeaveCalendarIcon({ className }: { className?: string }) {
     <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <path d="M16 2v4M8 2v4M3 10h18" />
-    </svg>
-  );
-}
-
-function LeaveCloseIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
-      <path d="M18 6L6 18M6 6l12 12" />
-    </svg>
-  );
-}
-
-function LeaveCheckIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M20 6L9 17l-5-5" />
     </svg>
   );
 }
@@ -549,105 +533,88 @@ function LeadershipHome({
 
       {/* ═══ Hero Section 2: Leave Governance ═══ */}
       {hasLeaveFeature && (
-        <section className="rounded-xl border-0 bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] p-4 outline-none ring-0 sm:p-6 md:p-8">
-          <HomeSectionHeader
-            eyebrow="Operations"
+        <Card className="flex flex-col gap-4">
+          <HomeCardHeading
+            icon={<IconUmbrella />}
             title="Leave governance"
-            description={`Pending administrative approvals for ${leaveGovernanceQuarterLabel()}`}
-            action={
-              <Link
-                href="/leave/pending"
-                className="link-accent shrink-0 text-sm font-semibold"
-              >
+            subtitle={`Pending administrative approvals for ${leaveGovernanceQuarterLabel()}`}
+            end={
+              <Link href="/leave/pending" className="link-accent shrink-0 text-sm font-semibold">
                 View all →
               </Link>
             }
           />
 
           {pendingLeaveDetails.length === 0 ? (
-            <div className="mt-6 rounded-xl border border-dashed border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] px-5 py-10 text-center">
-              <MetaText>No pending leave requests.</MetaText>
-            </div>
+            <HomeEmptyPanel
+              icon={<IconUmbrella className="text-muted" />}
+              title="No pending leave requests"
+              description="When staff submit leave for approval, the newest requests will appear here."
+            />
           ) : (
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-2">
               {pendingLeaveDetails.map((leave) => {
-                const reasonUpper = (leave.reasonLabel ?? "PERSONAL").toUpperCase();
+                const reasonUpper = (leave.reasonLabel ?? "Personal").toUpperCase();
                 const isEmergency = reasonUpper.includes("EMERGENCY") || reasonUpper.includes("URGENT");
                 const isCpd = reasonUpper.includes("CPD") || reasonUpper.includes("TRAINING");
                 const pillVariant: PillVariant = isEmergency ? "error" : isCpd ? "accent" : "neutral";
+                const reasonDisplay = leave.reasonLabel?.trim() || (isEmergency ? "Emergency" : isCpd ? "CPD" : "Personal");
                 const rangeLabel = leaveDateRangeLabel(leave.startDate, leave.endDate);
                 return (
-                  <article
+                  <div
                     key={leave.id}
-                    className={`flex flex-col rounded-xl bg-surface-container-lowest p-5 shadow-ambient transition-shadow hover:shadow-lg ${
-                      isEmergency
-                        ? "border border-[var(--outline-variant)]/15 border-l-4 border-l-[#6b1619]"
-                        : "border border-[var(--outline-variant)]/15"
+                    className={`flex min-w-0 flex-col gap-3 rounded-xl p-3 calm-transition sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4 ${
+                      isEmergency ? "bg-[var(--pill-error-bg)]/35" : "bg-[var(--surface-container-low)]"
                     }`}
                   >
-                    <Link href={`/leave/${leave.id}`} className="block min-w-0 flex-1 calm-transition">
-                      <div className="flex items-start justify-between gap-2">
-                        {isEmergency ? (
-                          <span className="inline-flex items-center rounded-full bg-[#3d060b] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#fecdd3]">
-                            {leave.reasonLabel?.toUpperCase() ?? "EMERGENCY"}
-                          </span>
-                        ) : isCpd ? (
-                          <span className="inline-flex items-center rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-on-surface-variant ring-1 ring-inset ring-border/40">
-                            {leave.reasonLabel?.toUpperCase() ?? "CPD TRAINING"}
-                          </span>
-                        ) : (
-                          <StatusPill variant={pillVariant} size="sm" className="!rounded-full !text-[10px] !font-bold !uppercase !tracking-wide">
-                            {leave.reasonLabel?.toUpperCase() ?? "PERSONAL"}
-                          </StatusPill>
-                        )}
-                        <span className="shrink-0 text-[10px] font-medium text-muted">
-                          Sub: {leaveSubmissionLabel(leave.createdAt)}
-                        </span>
-                      </div>
-                      <p className="mt-4 text-sm font-bold text-text">{leave.requesterName}</p>
-                      {leave.notes ? (
-                        <p className="mt-1 text-xs italic text-muted">&ldquo;{leave.notes}&rdquo;</p>
-                      ) : (
-                        <p className="mt-1 text-xs italic text-muted opacity-60">No reason provided.</p>
-                      )}
-                    </Link>
-                    <div className="mt-4 flex items-center justify-between border-t border-[var(--outline-variant)]/15 pt-4">
-                      <div className="flex items-center gap-2 text-xs font-medium">
-                        <LeaveCalendarIcon className="shrink-0 text-muted" />
-                        <span className={isEmergency ? "text-[#c06c6c]" : "text-muted"}>{rangeLabel}</span>
-                      </div>
-                      {isEmergency ? (
-                        <Link
-                          href="/leave/pending"
-                          className="shrink-0 rounded bg-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-on-primary calm-transition hover:bg-[var(--accent-hover)]"
-                        >
-                          APPROVE NOW
-                        </Link>
-                      ) : (
-                        <div className="flex shrink-0 gap-1">
-                          <Link
-                            href="/leave/pending"
-                            aria-label={`Deny leave for ${leave.requesterName}`}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#c06c6c] calm-transition hover:bg-status-denied-light"
-                          >
-                            <LeaveCloseIcon />
-                          </Link>
-                          <Link
-                            href="/leave/pending"
-                            aria-label={`Approve leave for ${leave.requesterName}`}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-positive calm-transition hover:bg-status-approved-light"
-                          >
-                            <LeaveCheckIcon />
-                          </Link>
+                    <Link
+                      href={`/leave/${leave.id}`}
+                      className="home-row-link flex min-w-0 flex-1 items-start gap-3 sm:items-center"
+                    >
+                      <Avatar name={leave.requesterName} size="md" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-medium text-text">{leave.requesterName}</p>
+                          <StatusPill variant={pillVariant} size="sm">{reasonDisplay}</StatusPill>
                         </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
+                          <span className="inline-flex items-center gap-1">
+                            <IconCalendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            {rangeLabel}
+                          </span>
+                          <span className="text-muted/80">Submitted {leaveSubmissionLabel(leave.createdAt)}</span>
+                        </div>
+                        {leave.notes ? (
+                          <p className="mt-1.5 line-clamp-2 text-xs text-muted">&ldquo;{leave.notes}&rdquo;</p>
+                        ) : null}
+                      </div>
+                    </Link>
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
+                      {isEmergency ? (
+                        <Button variant="primary" asChild className="min-h-0 px-4 py-2 text-xs">
+                          <Link href="/leave/pending">Review in queue</Link>
+                        </Button>
+                      ) : (
+                        <>
+                          <Button variant="ghost" asChild className="min-h-0 px-3 py-2 text-xs text-[var(--pill-error-text)] hover:bg-status-denied-light">
+                            <Link href="/leave/pending" aria-label={`Decline or review leave for ${leave.requesterName}`}>
+                              Decline
+                            </Link>
+                          </Button>
+                          <Button variant="secondary" asChild className="min-h-0 px-4 py-2 text-xs">
+                            <Link href="/leave/pending" aria-label={`Approve leave for ${leave.requesterName}`}>
+                              Approve
+                            </Link>
+                          </Button>
+                        </>
                       )}
                     </div>
-                  </article>
+                  </div>
                 );
               })}
             </div>
           )}
-        </section>
+        </Card>
       )}
 
       {/* ═══ Hero Section 3: Signal Analysis ═══ */}
