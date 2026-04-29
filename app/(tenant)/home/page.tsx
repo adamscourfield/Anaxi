@@ -298,17 +298,17 @@ function LeadershipHome({
                 <div
                   key={oc.id}
                   id={i === firstImmediateSupportIdx ? "immediate-support-needed" : undefined}
-                  className={`flex min-w-0 flex-col gap-2 rounded-xl p-3 calm-transition sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-4 ${
+                  className={`group flex min-w-0 flex-col gap-2 rounded-xl p-3 calm-transition sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-4 ${
                     i === firstImmediateSupportIdx ? "scroll-mt-20" : ""
                   } ${
                     oc.status === "OPEN" || oc.status === "ACKNOWLEDGED"
-                      ? "bg-[var(--surface-container-low)]"
-                      : "bg-[var(--surface-container-lowest)]"
+                      ? "bg-[var(--surface-container-low)] group-hover:bg-[var(--surface-container)] focus-within:bg-[var(--surface-container)]"
+                      : "bg-[var(--surface-container-lowest)] group-hover:bg-[var(--surface-container-low)] focus-within:bg-[var(--surface-container-low)]"
                   }`}
                 >
                   <Link
                     href={`/on-call/${oc.id}`}
-                    className="home-row-link flex min-w-0 flex-1 items-center gap-2 sm:min-w-0 sm:gap-3"
+                    className="flex min-w-0 flex-1 items-center gap-2 sm:min-w-0 sm:gap-3"
                   >
                     <Avatar name={oc.requesterName} size="md" />
                     <div className="min-w-0 flex-1">
