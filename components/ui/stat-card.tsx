@@ -16,11 +16,11 @@ type PanelTone = "default" | "softGrey" | "softBlueGrey" | "softWarm" | "glass";
 
 const panelToneClass: Record<PanelTone, string> = {
   default: "border border-border/80 bg-surface-container-lowest shadow-ambient",
-  softGrey: "border border-black/[0.06] bg-[#F1F3F5] shadow-none",
-  softBlueGrey: "border border-black/[0.05] bg-[#E9EEF4] shadow-none",
-  softWarm: "border border-[#e8d9dc]/80 bg-[#F3EDEE] shadow-none",
+  softGrey: "border border-border/55 bg-surface-container-low shadow-none",
+  softBlueGrey: "border border-border/45 bg-surface-container shadow-none",
+  softWarm: "border border-coral/25 bg-coral-10 shadow-none",
   /** Solid floating KPI tile — matches Explorer / Signals summary cards */
-  glass: "border border-black/[0.06] bg-surface-container-lowest shadow-ambient",
+  glass: "border border-border/80 bg-surface-container-lowest shadow-ambient",
 };
 
 export function StatCard({

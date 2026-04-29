@@ -377,8 +377,9 @@ textarea:focus-visible {
   }
 }
 
-/* Inline text links */
+/* Inline text links — use instead of ad-hoc hover:underline + text-accent */
 .link-subtle {
+  color: inherit;
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--outline-variant) 55%, transparent);
   text-underline-offset: 3px;
@@ -409,52 +410,6 @@ textarea:focus-visible {
 }
 
 /* Muted inline link → accent on hover (back links, secondary nav) */
-.link-muted-accent {
-  color: var(--on-surface-variant);
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--outline-variant) 45%, transparent);
-  text-underline-offset: 3px;
-  transition:
-    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.link-muted-accent:hover {
-  color: var(--accent);
-  text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent);
-}
-
-/* Inline text links — use instead of ad-hoc hover:underline + text-accent */
-.link-subtle {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--outline-variant) 55%, transparent);
-  text-underline-offset: 3px;
-  transition:
-    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.link-subtle:hover {
-  color: var(--on-surface);
-  text-decoration-color: color-mix(in srgb, var(--primary) 35%, transparent);
-}
-
-.link-accent {
-  color: var(--accent);
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--primary) 28%, transparent);
-  text-underline-offset: 3px;
-  transition:
-    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.link-accent:hover {
-  color: var(--on-surface);
-  text-decoration-color: color-mix(in srgb, var(--primary) 48%, transparent);
-}
-
 .link-muted-accent {
   color: var(--on-surface-variant);
   text-decoration: underline;
@@ -867,21 +822,6 @@ textarea:focus-visible {
   background: rgba(247,249,251,0.80);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-}
-
-/* Inline text links: predictable hover without layout shift */
-.link-subtle {
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--outline-variant) 55%, transparent);
-  text-underline-offset: 3px;
-  transition:
-    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.link-subtle:hover {
-  color: var(--on-surface);
-  text-decoration-color: color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
 /* ── Glassmorphism card (floating panels, filter chips, context cards) ── */

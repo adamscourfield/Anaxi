@@ -287,21 +287,21 @@ export default async function EMThresholdPage({
 
       {/* Top 4 Metrics Cards */}
       <div className="grid grid-cols-4 gap-6">
-        <div className="rounded-2xl bg-white p-5 shadow-ambient">
+        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted">English {targetThreshold}+</p>
           <div className="mt-3">
              <span className="text-3xl font-bold leading-none tracking-tight text-text">{engPct}%</span>
           </div>
           <p className="mt-2 text-xs font-semibold text-muted">{engMeets} students met</p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow-ambient">
+        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted">Maths {targetThreshold}+</p>
           <div className="mt-3">
              <span className="text-3xl font-bold leading-none tracking-tight text-text">{mathsPct}%</span>
           </div>
           <p className="mt-2 text-xs font-semibold text-muted">{mathsMeets} students met</p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow-ambient">
+        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted">PP vs Non-PP Gap</p>
           <div className="mt-3">
              <span className="text-3xl font-bold leading-none tracking-tight text-text">
@@ -312,7 +312,7 @@ export default async function EMThresholdPage({
              {nonPpPct}% Non-PP vs {ppPct}% PP (Both E&M)
           </p>
         </div>
-        <div className="rounded-2xl bg-white p-5 shadow-ambient">
+        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted">SEND vs Non-SEND Gap</p>
           <div className="mt-3">
              <span className="text-3xl font-bold leading-none tracking-tight text-text">

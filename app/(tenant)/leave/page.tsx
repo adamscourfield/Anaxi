@@ -197,7 +197,7 @@ export default async function LeavePage({
           <div className="flex flex-wrap items-center gap-3">
             {/* List / Calendar segmented control */}
             <div
-              className="inline-flex items-center gap-0.5 rounded-[14px] bg-[#F1F3F5] p-1"
+              className="inline-flex items-center gap-0.5 rounded-[14px] bg-[var(--surface-container-high)] p-1"
               role="group"
               aria-label="Leave view"
             >
