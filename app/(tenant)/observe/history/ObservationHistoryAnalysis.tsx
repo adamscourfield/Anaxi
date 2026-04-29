@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ObservationAnalysisPreset } from "@/modules/observations/observationHistoryAnalysisRange";
 import { OBSERVATION_ANALYSIS_PRESETS } from "@/modules/observations/observationHistoryAnalysisRange";
 import { FormSelect } from "@/components/ui/form-select";
@@ -33,37 +33,49 @@ const PRESET_META: Record<
   "26w": { label: "~26 weeks", short: "26 wks" },
 };
 
-type TooltipState = {
-  x: number;
-  y: number;
-  text: string;
-  /** When set, tooltip is nudged away from viewport edges */
-  placement?: "default" | "above" | "left";
-} | null;
+type TooltipState = { x: number; y: number; text: string } | null;
 
-/** Gap from anchor point to tooltip box (tight so labels sit near the chart point). */
-const TOOLTIP_OFFSET = 8;
+/** Viewport padding when clamping the floating chart tooltip. */
 const TOOLTIP_MARGIN = 10;
+const TOOLTIP_GAP = 10;
 
 function ChartTooltip({ state }: { state: TooltipState }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!state) {
+      setPos(null);
+      return;
+    }
+    const el = ref.current;
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+    const w = el?.offsetWidth ?? 200;
+    const h = el?.offsetHeight ?? 48;
+    let left = state.x + TOOLTIP_GAP;
+    let top = state.y + TOOLTIP_GAP;
+    if (left + w + TOOLTIP_MARGIN > vw) {
+      left = state.x - w - TOOLTIP_GAP;
+    }
+    if (top + h + TOOLTIP_MARGIN > vh) {
+      top = state.y - h - TOOLTIP_GAP;
+    }
+    left = Math.min(Math.max(left, TOOLTIP_MARGIN), Math.max(TOOLTIP_MARGIN, vw - w - TOOLTIP_MARGIN));
+    top = Math.min(Math.max(top, TOOLTIP_MARGIN), Math.max(TOOLTIP_MARGIN, vh - h - TOOLTIP_MARGIN));
+    setPos({ left, top });
+  }, [state]);
+
   if (!state) return null;
-  const placement = state.placement ?? "default";
-  const transform =
-    placement === "above"
-      ? "translate(0, -100%)"
-      : placement === "left"
-        ? "translate(-100%, 0)"
-        : "translate(0, 0)";
-  const marginLeft = placement === "left" ? -TOOLTIP_OFFSET : TOOLTIP_OFFSET;
-  const marginTop = placement === "above" ? -TOOLTIP_OFFSET : TOOLTIP_OFFSET;
 
   return (
     <div
+      ref={ref}
       className="pointer-events-none fixed z-[100] max-w-[min(280px,calc(100vw-1.5rem))] rounded-lg border border-border/40 bg-surface-container-lowest/95 px-3 py-2 text-[0.8125rem] shadow-lg backdrop-blur-sm"
       style={{
-        left: state.x + marginLeft,
-        top: state.y + marginTop,
-        transform,
+        left: pos?.left ?? state.x + TOOLTIP_GAP,
+        top: pos?.top ?? state.y + TOOLTIP_GAP,
+        visibility: pos ? "visible" : "hidden",
       }}
       role="tooltip"
     >
@@ -113,16 +125,6 @@ function clientToSvgPoint(svg: SVGSVGElement, clientX: number, clientY: number):
   return { x: svgP.x, y: svgP.y };
 }
 
-function svgPointToClient(svg: SVGSVGElement, svgX: number, svgY: number): { x: number; y: number } | null {
-  const pt = svg.createSVGPoint();
-  pt.x = svgX;
-  pt.y = svgY;
-  const ctm = svg.getScreenCTM();
-  if (!ctm) return null;
-  const screen = pt.matrixTransform(ctm);
-  return { x: screen.x, y: screen.y };
-}
-
 function nearestTimelineIndex(svgX: number, n: number, innerW: number, padL: number): number {
   if (n <= 0) return 0;
   if (n === 1) return 0;
@@ -168,15 +170,6 @@ function pointOnPolylineAtX(pts: PolyPoint[], targetX: number): { x: number; y: 
   }
   pathD += ` L ${tx} ${y}`;
   return { x: tx, y, pathD };
-}
-
-function tooltipPlacementForClient(clientX: number, clientY: number): "default" | "above" | "left" {
-  const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
-  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
-  let p: "default" | "above" | "left" = "default";
-  if (clientX + 280 > vw - TOOLTIP_MARGIN) p = "left";
-  if (clientY + 120 > vh - TOOLTIP_MARGIN) p = "above";
-  return p;
 }
 
 type Props = {
@@ -324,7 +317,6 @@ export function ObservationHistoryAnalysis({
       x: e.clientX,
       y: e.clientY,
       text,
-      placement: tooltipPlacementForClient(e.clientX, e.clientY),
     });
   }, []);
 
@@ -335,7 +327,6 @@ export function ObservationHistoryAnalysis({
             ...prev,
             x: e.clientX,
             y: e.clientY,
-            placement: tooltipPlacementForClient(e.clientX, e.clientY),
           }
         : null,
     );
@@ -469,16 +460,10 @@ export function ObservationHistoryAnalysis({
       }
       scheduleTimelineSmoothing();
 
-      // Anchor to the week’s vertex on the line (not raw cursor) so the tooltip sits next to the marker
-      // even when the pointer is above/below the plot area within the band.
-      const anchorClient = svgPointToClient(svg, p.x, p.y);
-      const ax = anchorClient?.x ?? e.clientX;
-      const ay = anchorClient?.y ?? e.clientY;
       setTip({
-        x: ax,
-        y: ay,
+        x: e.clientX,
+        y: e.clientY,
         text: `Week of ${p.label}\n${p.count.toLocaleString()} observation${p.count === 1 ? "" : "s"}`,
-        placement: tooltipPlacementForClient(ax, ay),
       });
     },
     [linePoints.points, cancelTimelineRaf, scheduleTimelineSmoothing],
@@ -509,7 +494,7 @@ export function ObservationHistoryAnalysis({
   }, [linePoints, timelineSnapIdx, timelineGuide]);
 
   const barTrack =
-    "relative h-8 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--surface-container-high)] calm-transition";
+    "relative h-8 min-w-0 w-full overflow-hidden rounded-full bg-[var(--surface-container-high)] calm-transition";
 
   const hasRoles = roleCounts.some((r) => r.count > 0);
   const hasTimeline = timelineWeeks.length > 0;
@@ -618,16 +603,18 @@ export function ObservationHistoryAnalysis({
                       <span className="w-[7.5rem] shrink-0 truncate font-semibold text-text" title={row.label}>
                         {row.label}
                       </span>
-                      <div className={barTrack}>
+                      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                        <div className={barTrack}>
+                          <span
+                            className="pointer-events-none absolute inset-y-0 left-0 rounded-full"
+                            style={{
+                              width: `${barWidthPct(row.count, maxRole)}%`,
+                              background: `linear-gradient(90deg, ${CHART_VIOLET} 0%, ${CHART_VIOLET_SOFT} 88%, transparent 100%)`,
+                            }}
+                          />
+                        </div>
                         <span
-                          className="pointer-events-none absolute inset-y-0 left-0 rounded-full"
-                          style={{
-                            width: `${barWidthPct(row.count, maxRole)}%`,
-                            background: `linear-gradient(90deg, ${CHART_VIOLET} 0%, ${CHART_VIOLET_SOFT} 88%, transparent 100%)`,
-                          }}
-                        />
-                        <span
-                          className="relative z-[1] ml-auto flex h-full items-center pr-2.5 text-[0.8125rem] font-semibold tabular-nums"
+                          className="min-w-[2.75rem] shrink-0 text-right text-[0.8125rem] font-semibold tabular-nums"
                           style={{ color: CHART_VIOLET }}
                         >
                           {row.count.toLocaleString()}
