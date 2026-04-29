@@ -36,9 +36,11 @@ import {
   HomePrimaryLink,
   IconBell,
   IconBolt,
+  IconBookOpen,
   IconCalendar,
   IconChartBar,
   IconClipboard,
+  IconFlagOutline,
   IconPhone,
   IconSearch,
   IconSparkles,
@@ -46,6 +48,7 @@ import {
   IconTrendDown,
   IconTrendUp,
   IconUmbrella,
+  IconUsersTwo,
 } from "@/components/home/home-chrome";
 import { ppTableBadgeClass, sendTableBadgeClass } from "@/modules/assessments/attainmentColours";
 
@@ -54,6 +57,32 @@ const ALLOWED_WINDOW_DAYS = [7, 14, 21, 28];
 
 function studentAnalysisHref(studentId: string, windowDays: number): string {
   return `/analysis/students/${studentId}?window=${windowDays}`;
+}
+
+/** Year-group pill — neutral grey chip (Attainment dual-flagged row) */
+const yearGroupPillClass =
+  "inline-flex shrink-0 items-center rounded-md bg-[var(--surface-container)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.02em] text-muted";
+
+function DualFlaggedRiskBadge({ band }: { band: string }) {
+  if (band === "URGENT") {
+    return (
+      <StatusPill variant="error" size="sm">
+        Urgent
+      </StatusPill>
+    );
+  }
+  if (band === "PRIORITY") {
+    return (
+      <span className="inline-flex shrink-0 items-center rounded-full border border-[#FDBA74] bg-[rgba(255,165,0,0.1)] px-2.5 py-1 text-[11px] font-semibold text-[#92400E]">
+        Priority
+      </span>
+    );
+  }
+  return (
+    <StatusPill variant="neutral" size="sm">
+      {band}
+    </StatusPill>
+  );
 }
 
 const RISK_STATUS_LABELS: Record<RiskStatus, string> = {
@@ -730,63 +759,73 @@ function LeadershipHome({
 
       {/* ═══ Attainment Summary ═══ */}
       {attainmentSummary && (
-        <Card className="space-y-4">
-          <HomeCardHeadingSm
-            icon={<IconChartBar className="text-[var(--info)]" />}
-            title="Attainment"
-            subtitle={
-              attainmentSummary.latestPointLabel
-                ? `${attainmentSummary.cycleLabel} · ${attainmentSummary.latestPointLabel}`
-                : attainmentSummary.cycleLabel
-            }
-            end={
-              <Link href="/assessments" className="link-accent shrink-0 text-sm">
-                View all →
-              </Link>
-            }
-          />
+        <Card className="space-y-5 rounded-2xl p-6 shadow-ambient sm:p-7">
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3.5">
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.06)] [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem]">
+                <IconChartBar />
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-base font-bold tracking-[-0.01em] text-text">Attainment</h2>
+                <p className="mt-0.5 text-xs text-muted">
+                  {attainmentSummary.latestPointLabel
+                    ? `${attainmentSummary.cycleLabel} • ${attainmentSummary.latestPointLabel}`
+                    : attainmentSummary.cycleLabel}
+                </p>
+              </div>
+            </div>
+            <Link href="/assessments" className="link-muted-accent shrink-0 text-sm font-medium">
+              View all →
+            </Link>
+          </div>
 
-          {/* Stat row */}
+          {/* Stat row — KPI tiles with icons */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <StatCard
+              layout="kpi"
+              showChevron={false}
               label="Subjects assessed"
               value={attainmentSummary.subjectCount}
               context={`${attainmentSummary.totalResults.toLocaleString()} results recorded`}
-              accent="accent"
-              accentPlacement="top"
               tone="glass"
+              icon={<IconBookOpen />}
+              iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
             />
             <StatCard
+              layout="kpi"
+              showChevron={false}
               label="Students assessed"
               value={attainmentSummary.studentCount}
               context={attainmentSummary.latestPointLabel ?? "Latest point"}
-              accent="info"
-              accentPlacement="top"
               tone="glass"
+              icon={<IconUsersTwo />}
+              iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
             />
             <StatCard
+              layout="kpi"
+              showChevron={false}
               label="Dual-flagged"
               value={attainmentSummary.triangulatedCount}
               context={
                 attainmentSummary.triangulatedCount > 0
-                  ? `${attainmentSummary.urgentCount} urgent · ${attainmentSummary.priorityCount} priority`
+                  ? `${attainmentSummary.urgentCount} urgent • ${attainmentSummary.priorityCount} priority`
                   : "No students dual-flagged"
               }
-              accent={attainmentSummary.triangulatedCount > 0 ? "error" : "success"}
-              href={attainmentSummary.triangulatedCount > 0 ? "/assessments/triangulation" : undefined}
-              accentPlacement="top"
               tone="glass"
+              icon={<IconFlagOutline />}
+              iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
+              href={attainmentSummary.triangulatedCount > 0 ? "/assessments/triangulation" : undefined}
             />
           </div>
 
           {/* Dual-flagged student list */}
           {attainmentSummary.topDualFlagged.length > 0 && (
-            <Card tone="inset" className="space-y-3 !p-4 sm:!p-5">
+            <div className="space-y-3 rounded-xl bg-[var(--surface-container-low)] p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3">
                 <p className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                   Dual-flagged students — attainment + pastoral risk
                 </p>
-                <Link href="/assessments/triangulation" className="link-accent shrink-0 text-xs">
+                <Link href="/assessments/triangulation" className="link-muted-accent shrink-0 text-xs font-medium">
                   View all →
                 </Link>
               </div>
@@ -795,31 +834,27 @@ function LeadershipHome({
                   <li key={s.studentId}>
                     <Link
                       href={studentAnalysisHref(s.studentId, windowDays)}
-                      className="home-row-link flex items-center justify-between gap-3 px-3 py-2.5"
+                      className="home-row-link flex items-center gap-3 rounded-lg px-3 py-3"
                     >
+                      <Avatar name={s.studentName} size="md" tone="muted" />
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="truncate text-sm font-medium text-text">{s.studentName}</span>
-                          {s.yearGroup && <span className="text-[11px] text-muted">{s.yearGroup}</span>}
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-text">{s.studentName}</span>
+                          {s.yearGroup ? <span className={yearGroupPillClass}>{s.yearGroup}</span> : null}
                           {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
                           {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
                         </div>
-                        <p className="mt-0.5 truncate text-[11px] text-muted">
+                        <p className="mt-1 truncate text-[12px] leading-snug text-muted">
                           Lowest: {s.worstSubject} — {s.worstGrade}
                           {s.worstNormalizedScore !== null && ` (${Math.round(s.worstNormalizedScore * 100)}%)`}
                         </p>
                       </div>
-                      <StatusPill
-                        variant={s.behaviouralBand === "URGENT" ? "error" : s.behaviouralBand === "PRIORITY" ? "warning" : "neutral"}
-                        size="sm"
-                      >
-                        {s.behaviouralBand === "URGENT" ? "Urgent" : s.behaviouralBand === "PRIORITY" ? "Priority" : s.behaviouralBand}
-                      </StatusPill>
+                      <DualFlaggedRiskBadge band={s.behaviouralBand} />
                     </Link>
                   </li>
                 ))}
               </ul>
-            </Card>
+            </div>
           )}
         </Card>
       )}

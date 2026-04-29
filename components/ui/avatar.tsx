@@ -30,12 +30,18 @@ function getInitials(name: string): string {
 export function Avatar({
   name,
   size = "sm",
+  tone = "default",
 }: {
   name: string;
   size?: "sm" | "md";
+  /** Neutral grey circle (dashboard lists) vs hashed accent colors */
+  tone?: "default" | "muted";
 }) {
   const initials = getInitials(name);
-  const colorClass = COLORS[hashName(name) % COLORS.length];
+  const colorClass =
+    tone === "muted"
+      ? "bg-[var(--surface-container)] text-text"
+      : COLORS[hashName(name) % COLORS.length];
   const sizeClass = size === "sm"
     ? "h-7 w-7 text-[10px]"
     : "h-9 w-9 text-[12px]";
