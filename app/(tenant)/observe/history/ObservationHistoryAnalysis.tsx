@@ -73,7 +73,34 @@ function ChartTooltip({ state }: { state: TooltipState }) {
 }
 
 /** Plot area inside the timeline SVG (must match line chart geometry). */
-const TIMELINE_PAD = { L: 8, R: 8, T: 12, B: 28, W: 640, H: 160 };
+const TIMELINE_PAD = { L: 36, R: 8, T: 12, B: 28, W: 640, H: 160 };
+
+const CHART_VIOLET = "#7C69EF";
+const CHART_VIOLET_SOFT = "rgba(124, 105, 239, 0.14)";
+const CHART_VIOLET_TINT = "rgba(124, 105, 239, 0.12)";
+
+function SectionIconBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-[color:var(--info)]"
+      style={{ backgroundColor: CHART_VIOLET_TINT }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function InfoCircleIcon({ title: ariaLabel }: { title: string }) {
+  return (
+    <span
+      className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border/50 text-[0.625rem] font-semibold leading-none text-muted"
+      title={ariaLabel}
+      aria-label={ariaLabel}
+    >
+      i
+    </span>
+  );
+}
 
 function clientToSvgPoint(svg: SVGSVGElement, clientX: number, clientY: number): { x: number; y: number } | null {
   const pt = svg.createSVGPoint();
@@ -482,122 +509,172 @@ export function ObservationHistoryAnalysis({
   }, [linePoints, timelineSnapIdx, timelineGuide]);
 
   const barTrack =
-    "relative h-7 min-w-0 flex-1 overflow-hidden rounded-xl bg-[var(--surface-container-high)] calm-transition";
-  const barFillClass =
-    "pointer-events-none absolute inset-y-0 left-0 rounded-xl border-r border-[rgba(99,102,241,0.28)] bg-[rgba(99,102,241,0.22)]";
+    "relative h-8 min-w-0 flex-1 overflow-hidden rounded-full bg-[var(--surface-container-high)] calm-transition";
 
   const hasRoles = roleCounts.some((r) => r.count > 0);
   const hasTimeline = timelineWeeks.length > 0;
 
+  const analysisCardClass =
+    "rounded-[14px] border border-border/30 bg-surface-container-lowest shadow-ambient";
+
   return (
-    <section
-      className="rounded-2xl border border-border/30 bg-surface-container-lowest shadow-ambient"
-      onMouseLeave={hideTip}
-    >
+    <section className="space-y-5" onMouseLeave={hideTip}>
       <ChartTooltip state={tip} />
 
-      <div className="border-b border-border/20 px-5 py-4 md:px-6">
-        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Analysis</p>
-        <p className="mt-1 text-[0.8125rem] text-muted">
-          Charts use the same filters as the table. When you set table date filters, the chart window is the overlap
-          with the range you pick below (UK academic year: 1 Sep – 31 Aug). Weeks start on Monday.
-        </p>
-        <p className="mt-2 text-[0.8125rem]">
-          <span className="text-muted">Current window: </span>
-          <span className="font-medium text-text">{rangeLabel}</span>
-        </p>
-        {emptyIntersection ? (
-          <p className="mt-2 rounded-lg border border-scale-some/30 bg-scale-some-light/80 px-3 py-2 text-[0.8125rem] text-text">
-            {chartFellBackToTableDates
-              ? "The chart range you picked does not overlap your table date filters, so the charts below use your table date range instead. Widen the table dates or choose another chart range."
-              : "No overlap between this chart range and your table date filters — widen dates or pick another range."}
-          </p>
-        ) : null}
+      <div className={`${analysisCardClass} px-5 py-5 md:px-6`}>
+        <div className="flex items-start gap-3">
+          <SectionIconBox>
+            <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M4 19V5" strokeLinecap="round" />
+              <path d="M4 14h4l3-8 4 12 3-6h6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </SectionIconBox>
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Analysis</p>
+            <p className="mt-1 text-[0.8125rem] text-muted">
+              Charts use the same filters as the table. When you set table date filters, the chart window is the overlap
+              with the range you pick below (UK academic year: 1 Sep – 31 Aug). Weeks start on Monday.
+            </p>
+            <p className="mt-2 text-[0.8125rem] text-muted">
+              <span>Current window: </span>
+              <span className="font-semibold" style={{ color: CHART_VIOLET }}>
+                {rangeLabel}
+              </span>
+            </p>
+            {emptyIntersection ? (
+              <p className="mt-2 rounded-lg border border-scale-some/30 bg-scale-some-light/80 px-3 py-2 text-[0.8125rem] text-text">
+                {chartFellBackToTableDates
+                  ? "The chart range you picked does not overlap your table date filters, so the charts below use your table date range instead. Widen the table dates or choose another chart range."
+                  : "No overlap between this chart range and your table date filters — widen dates or pick another range."}
+              </p>
+            ) : null}
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {OBSERVATION_ANALYSIS_PRESETS.map((preset) => {
-            const active = analysisPreset === preset;
-            return (
-              <Link
-                key={preset}
-                href={analysisHref(preset, historyFilterQueryString)}
-                className={`inline-flex items-center rounded-full px-3.5 py-1.5 text-[0.75rem] font-semibold calm-transition ${
-                  active
-                    ? "bg-accent text-on-primary anx-card-elevated"
-                    : "border border-border/40 bg-surface-container-low text-muted hover:border-border hover:text-text"
-                }`}
-              >
-                {PRESET_META[preset].short}
-              </Link>
-            );
-          })}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {OBSERVATION_ANALYSIS_PRESETS.map((preset) => {
+                const active = analysisPreset === preset;
+                return (
+                  <Link
+                    key={preset}
+                    href={analysisHref(preset, historyFilterQueryString)}
+                    className={`inline-flex items-center rounded-full px-3.5 py-1.5 text-[0.75rem] font-semibold calm-transition ${
+                      active
+                        ? "text-white shadow-sm"
+                        : "border border-border/40 bg-surface-container-lowest text-muted hover:border-border hover:text-text"
+                    }`}
+                    style={active ? { backgroundColor: CHART_VIOLET } : undefined}
+                  >
+                    {PRESET_META[preset].short}
+                  </Link>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[0.6875rem] text-muted">
+              {PRESET_META.week.label} (7 days) · {PRESET_META.month.label} (30 days) ·{" "}
+              {PRESET_META.academic_year.label} · {PRESET_META["26w"].label}
+            </p>
+          </div>
         </div>
-        <p className="mt-2 text-[0.6875rem] text-muted">
-          {PRESET_META.week.label} (7 days) · {PRESET_META.month.label} (30 days) ·{" "}
-          {PRESET_META.academic_year.label} · {PRESET_META["26w"].label}
-        </p>
       </div>
 
-      <div className="grid gap-8 p-5 md:grid-cols-2 md:gap-10 md:p-6 lg:grid-cols-12">
-        <div className="md:col-span-2 lg:col-span-4">
-          <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-            Observations by observer role
-          </h3>
-          <p className="mt-1 text-[0.8125rem] text-muted">Hover a bar for the exact count.</p>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.38fr)_minmax(0,1fr)] lg:items-stretch">
+        <div className={`${analysisCardClass} flex flex-col p-5 md:p-6`}>
+          <div className="flex items-start gap-3">
+            <SectionIconBox>
+              <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" />
+              </svg>
+            </SectionIconBox>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                  Observations by observer role
+                </h3>
+                <InfoCircleIcon title="Counts reflect observers in your current table filters and the chart window above." />
+              </div>
+              <p className="mt-1 text-[0.8125rem] text-muted">Hover a bar for the exact count.</p>
+            </div>
+          </div>
           {!hasRoles ? (
             <p className="mt-4 text-sm text-muted">No observations in the current filter.</p>
           ) : (
-            <ul className="mt-4 space-y-2">
-              {roleCounts.map((row) => (
-                <li key={row.role}>
-                  <button
-                    type="button"
-                    className="flex w-full cursor-default items-center gap-3 rounded-lg py-0.5 text-left text-sm calm-transition hover:bg-accent/[0.04]"
-                    onMouseEnter={(e) =>
-                      showTip(
-                        e,
-                        `${row.label}\n${row.count.toLocaleString()} observation${row.count === 1 ? "" : "s"}`,
-                      )
-                    }
-                    onMouseMove={moveTip}
-                    onMouseLeave={hideTip}
-                  >
-                    <span className="w-[7.5rem] shrink-0 truncate font-medium text-text" title={row.label}>
-                      {row.label}
-                    </span>
-                    <div className={barTrack}>
-                      <span
-                        className={barFillClass}
-                        style={{ width: `${barWidthPct(row.count, maxRole)}%` }}
-                      />
-                      <span className="relative z-[1] flex h-full items-center px-2 text-[0.75rem] tabular-nums text-text">
-                        {row.count.toLocaleString()}
+            <>
+              <ul className="mt-4 space-y-3">
+                {roleCounts.map((row) => (
+                  <li key={row.role}>
+                    <button
+                      type="button"
+                      className="flex w-full cursor-default items-center gap-3 rounded-lg py-0.5 text-left text-sm calm-transition hover:bg-[rgba(124,105,239,0.06)]"
+                      onMouseEnter={(e) =>
+                        showTip(
+                          e,
+                          `${row.label}\n${row.count.toLocaleString()} observation${row.count === 1 ? "" : "s"}`,
+                        )
+                      }
+                      onMouseMove={moveTip}
+                      onMouseLeave={hideTip}
+                    >
+                      <span className="w-[7.5rem] shrink-0 truncate font-semibold text-text" title={row.label}>
+                        {row.label}
                       </span>
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
+                      <div className={barTrack}>
+                        <span
+                          className="pointer-events-none absolute inset-y-0 left-0 rounded-full"
+                          style={{
+                            width: `${barWidthPct(row.count, maxRole)}%`,
+                            background: `linear-gradient(90deg, ${CHART_VIOLET} 0%, ${CHART_VIOLET_SOFT} 88%, transparent 100%)`,
+                          }}
+                        />
+                        <span
+                          className="relative z-[1] ml-auto flex h-full items-center pr-2.5 text-[0.8125rem] font-semibold tabular-nums"
+                          style={{ color: CHART_VIOLET }}
+                        >
+                          {row.count.toLocaleString()}
+                        </span>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-auto pt-5 text-[0.6875rem] text-muted">
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ backgroundColor: CHART_VIOLET }} />{" "}
+                Total observations
+              </p>
+            </>
           )}
         </div>
 
-        <div className="md:col-span-2 lg:col-span-8">
-          <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-            Observations over time
-          </h3>
-          <p className="mt-1 text-[0.8125rem] text-muted">
-            Move along the chart: the guide glides along the line and the tooltip stays by your cursor.
-          </p>
+        <div className={`${analysisCardClass} flex flex-col p-5 md:p-6`}>
+          <div className="flex items-start gap-3">
+            <SectionIconBox>
+              <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M4 19V5" strokeLinecap="round" />
+                <path d="M4 14h4l3-8 4 12 3-6h6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </SectionIconBox>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                  Observations over time
+                </h3>
+                <InfoCircleIcon title="Weekly counts within the chart window; move the pointer along the line to inspect each week." />
+              </div>
+              <p className="mt-1 text-[0.8125rem] text-muted">
+                Move along the chart: the guide glides along the line and the tooltip stays by your cursor.
+              </p>
+            </div>
+          </div>
           {!hasTimeline ? (
             <p className="mt-4 text-sm text-muted">No weeks in range.</p>
           ) : (
             (() => {
               const { padL, padT, plotW, plotH, pts, snapIdx, segmentD, hoverX } = timelineSvgPlot;
               return (
-                <div className="mt-4 w-full overflow-x-auto rounded-2xl border border-border/25 bg-gradient-to-b from-[var(--surface-container-high)]/40 to-transparent p-4">
+                <div className="mt-4 w-full flex-1 overflow-x-auto rounded-[12px] border border-border/25 bg-gradient-to-b from-[rgba(124,105,239,0.06)] to-transparent p-4">
                   <svg
                     viewBox={`0 0 ${linePoints.w} ${linePoints.h}`}
-                    className="h-48 w-full min-w-[280px] cursor-crosshair text-accent calm-transition"
+                    className="h-48 w-full min-w-[280px] cursor-crosshair calm-transition"
                     preserveAspectRatio="xMidYMid meet"
                     role="img"
                     aria-label="Observations per week line chart"
@@ -606,14 +683,13 @@ export function ObservationHistoryAnalysis({
                   >
                     <defs>
                       <linearGradient id={`${chartSvgId}-fill`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgb(99 102 241)" stopOpacity="0.28" />
-                        <stop offset="55%" stopColor="rgb(99 102 241)" stopOpacity="0.08" />
-                        <stop offset="100%" stopColor="rgb(99 102 241)" stopOpacity="0" />
+                        <stop offset="0%" stopColor={CHART_VIOLET} stopOpacity="0.35" />
+                        <stop offset="50%" stopColor={CHART_VIOLET} stopOpacity="0.12" />
+                        <stop offset="100%" stopColor={CHART_VIOLET} stopOpacity="0" />
                       </linearGradient>
                       <linearGradient id={`${chartSvgId}-stroke`} x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="rgb(129 140 248)" />
-                        <stop offset="50%" stopColor="rgb(99 102 241)" />
-                        <stop offset="100%" stopColor="rgb(79 70 229)" />
+                        <stop offset="0%" stopColor={CHART_VIOLET} />
+                        <stop offset="100%" stopColor="#B8A9F5" />
                       </linearGradient>
                       <filter id={`${chartSvgId}-glow`} x="-20%" y="-20%" width="140%" height="140%">
                         <feGaussianBlur stdDeviation="1.2" result="blur" />
@@ -635,19 +711,31 @@ export function ObservationHistoryAnalysis({
                     />
                     {[0, 0.25, 0.5, 0.75, 1].map((t) => {
                       const y = padT + plotH * t;
+                      const tickValue = Math.round(maxTimeline * (1 - t));
                       return (
-                        <line
-                          key={t}
-                          x1={padL}
-                          x2={padL + plotW}
-                          y1={y}
-                          y2={y}
-                          stroke="var(--border)"
-                          strokeOpacity={t === 1 ? 0.35 : 0.12}
-                          strokeWidth="1"
-                          strokeDasharray={t === 1 ? undefined : "4 6"}
-                          className="pointer-events-none"
-                        />
+                        <g key={t}>
+                          <text
+                            x={padL - 8}
+                            y={y + 4}
+                            textAnchor="end"
+                            className="pointer-events-none select-none"
+                            fill="var(--on-surface-variant)"
+                            fontSize="10"
+                          >
+                            {tickValue}
+                          </text>
+                          <line
+                            x1={padL}
+                            x2={padL + plotW}
+                            y1={y}
+                            y2={y}
+                            stroke="var(--border)"
+                            strokeOpacity={t === 1 ? 0.35 : 0.2}
+                            strokeWidth="1"
+                            strokeDasharray={t === 1 ? undefined : "4 6"}
+                            className="pointer-events-none"
+                          />
+                        </g>
                       );
                     })}
                     <path
@@ -684,7 +772,7 @@ export function ObservationHistoryAnalysis({
                         x2={hoverX}
                         y1={padT}
                         y2={padT + plotH}
-                        stroke="rgb(99 102 241)"
+                        stroke={CHART_VIOLET}
                         strokeOpacity={0.28}
                         strokeWidth="1"
                         className="pointer-events-none"
@@ -700,7 +788,7 @@ export function ObservationHistoryAnalysis({
                             cy={p.y}
                             r={active ? 7.5 : 5}
                             fill="var(--surface-container-lowest)"
-                            stroke={`url(#${chartSvgId}-stroke)`}
+                            stroke={CHART_VIOLET}
                             strokeWidth={active ? 2.75 : 2}
                             opacity={dim ? 0.3 : 1}
                           />
@@ -709,7 +797,7 @@ export function ObservationHistoryAnalysis({
                               cx={p.x}
                               cy={p.y}
                               r={active ? 3.25 : 2.25}
-                              fill="rgb(99 102 241)"
+                              fill={CHART_VIOLET}
                               opacity={dim ? 0.35 : 1}
                             />
                           ) : null}
@@ -726,7 +814,11 @@ export function ObservationHistoryAnalysis({
                       style={{ touchAction: "none" }}
                     />
                   </svg>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[0.6875rem] text-muted">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.6875rem] text-muted">
+                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke={CHART_VIOLET} strokeWidth="2" aria-hidden>
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
+                    </svg>
                     {timelineWeeks.length <= 8
                       ? timelineWeeks.map((w) => (
                           <span key={w.weekKey} className="tabular-nums">
@@ -735,8 +827,8 @@ export function ObservationHistoryAnalysis({
                         ))
                       : (
                         <span>
-                          {timelineWeeks[0]?.label} … {timelineWeeks[timelineWeeks.length - 1]?.label} ·{" "}
-                          <span className="font-semibold text-text">
+                          {timelineWeeks[0]?.label} … {timelineWeeks[timelineWeeks.length - 1]?.label}{" "}
+                          <span className="font-semibold" style={{ color: CHART_VIOLET }}>
                             {timelineWeeks.reduce((s, w) => s + w.count, 0).toLocaleString()}
                           </span>{" "}
                           total in window
@@ -748,9 +840,10 @@ export function ObservationHistoryAnalysis({
             })()
           )}
         </div>
+      </div>
 
-        {showCoachingSection && (
-          <div className="md:col-span-2 lg:col-span-12">
+      {showCoachingSection ? (
+        <div className={`${analysisCardClass} p-5 md:p-6`}>
             <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               Coaching pairs — weekly coverage
             </h3>
@@ -887,9 +980,8 @@ export function ObservationHistoryAnalysis({
                 </div>
               </div>
             )}
-          </div>
-        )}
-      </div>
+        </div>
+      ) : null}
     </section>
   );
 }
