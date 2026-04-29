@@ -44,10 +44,10 @@ interface Props {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PRIORITY_CHIP: Record<Priority, string> = {
-  critical: "bg-[var(--scale-limited-bg)] text-[var(--scale-limited-text)]",
-  high:     "bg-[var(--scale-limited-bg)] text-[var(--scale-limited-text)]",
-  medium:   "bg-[var(--status-approved-bg)] text-[var(--status-approved-text)]",
-  low:      "bg-[var(--surface-container-high)] text-[var(--on-surface-variant)]",
+  critical: "bg-[var(--pill-error-bg)] text-[var(--pill-error-text)] ring-1 ring-[var(--pill-error-ring)]/60",
+  high:     "bg-[var(--pill-error-bg)] text-[var(--pill-error-text)] ring-1 ring-[var(--pill-error-ring)]/60",
+  medium:   "bg-[var(--pill-warning-bg)] text-[var(--pill-warning-text)] ring-1 ring-[var(--pill-warning-ring)]/50",
+  low:      "bg-[var(--pill-neutral-bg)] text-[var(--pill-neutral-text)] ring-1 ring-[var(--pill-neutral-ring)]/40",
 };
 
 const PRIORITY_LABEL: Record<Priority, string> = {
@@ -493,7 +493,7 @@ function StrategyTile({
       {/* Top row: priority badge + menu */}
       <div className="mb-3 flex items-start justify-between gap-2">
         <span
-          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.08em] ${PRIORITY_CHIP[area.priority]}`}
+          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${PRIORITY_CHIP[area.priority]}`}
         >
           {PRIORITY_LABEL[area.priority]}
         </span>

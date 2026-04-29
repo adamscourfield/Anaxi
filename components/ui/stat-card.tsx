@@ -55,6 +55,8 @@ export function StatCard({
   layout = "default",
   icon,
   iconTileClassName,
+  /** When `layout` is `kpi`, show chevron on the right (default: true if `href` is set). */
+  showChevron,
 }: {
   label: string;
   value: string | number;
@@ -74,6 +76,7 @@ export function StatCard({
   icon?: ReactNode;
   /** Tile behind icon, e.g. tinted square */
   iconTileClassName?: string;
+  showChevron?: boolean;
 }) {
   const labelClasses =
     labelClassName ?? "text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
@@ -89,6 +92,7 @@ export function StatCard({
       : panelToneClass[tone];
 
   if (layout === "kpi") {
+    const showChev = showChevron ?? Boolean(href);
     const kpiBody = (
       <div className="relative flex min-h-[132px] flex-col p-5 sm:min-h-[140px] sm:p-6">
         <div className="flex items-start justify-between gap-2">
@@ -101,7 +105,7 @@ export function StatCard({
           ) : (
             <span />
           )}
-          {href ? <KpiChevron /> : null}
+          {href && showChev ? <KpiChevron /> : null}
         </div>
         <p className={`${labelClasses} mt-5`}>{label}</p>
         <p className={valueClassName ? `mt-1 ${valueClassName}` : "mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] text-text"}>{value}</p>

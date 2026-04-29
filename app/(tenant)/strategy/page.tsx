@@ -64,12 +64,15 @@ export default async function StrategyPage() {
       {/* Header */}
       <PageHeader
         title="Strategy Board"
+        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
         subtitle={<>{activeAreas} active · {completedAreas} complete · {totalAreas} total</>}
+        subtitleClassName="max-w-full text-pretty text-sm font-medium leading-relaxed text-muted/90 md:max-w-2xl"
+        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8"
         actions={
           <>
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-container-lowest px-3.5 py-2 text-[0.8125rem] font-medium text-text calm-transition hover:bg-surface-container-low"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-surface-container-lowest px-4 py-2 text-[0.8125rem] font-medium text-text shadow-sm calm-transition hover:border-outline-variant hover:bg-surface-container-low"
             >
               <svg className="h-3.5 w-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
                 <line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="11" y1="18" x2="13" y2="18" />
@@ -78,7 +81,7 @@ export default async function StrategyPage() {
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-container-lowest px-3.5 py-2 text-[0.8125rem] font-medium text-text calm-transition hover:bg-surface-container-low"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-surface-container-lowest px-4 py-2 text-[0.8125rem] font-medium text-text shadow-sm calm-transition hover:border-outline-variant hover:bg-surface-container-low"
             >
               <svg className="h-3.5 w-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
