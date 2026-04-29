@@ -29,8 +29,26 @@ import type { GradeFormat } from "@prisma/client";
 import { hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
 import { competitionRank } from "@/modules/assessments/ranking";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import {
+  gcseNumericCellClass,
+  aLevelLetterCellClass,
+  percentileCellClass,
+  gapBadgeSoftClass,
+  deltaBarClass,
+  SERIES_ALT_BAR_CLASS,
+  SEN_TAG_CLASS,
+  PP_TAG_CLASS,
+  PP_SERIES_BAR_CLASS,
+} from "@/lib/assessments/chartColours";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+function GapBadge({ gap }: { gap: number }) {
+  const cls = gapBadgeSoftClass(gap);
+  return (
+    <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[12px] font-bold tabular-nums ${cls}`}>
+      {gap > 0 ? "+" : ""}{gap}pp gap
+    </span>
+  );
+}
 
 const A_LEVEL_SCORE: Record<string, number> = {
   "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1,
@@ -42,40 +60,6 @@ function getInitials(name: string): string {
   if (parts.length >= 2)
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   return name.substring(0, 2).toUpperCase();
-}
-
-function gcseColour(g: string | number | null): string {
-  if (g === null) return "bg-surface-container-low text-muted";
-  const n = Number(g);
-  if (n >= 8) return "bg-emerald-600 text-white";
-  if (n >= 7) return "bg-green-500 text-white";
-  if (n >= 6) return "bg-blue-500 text-white";
-  if (n >= 5) return "bg-violet-500 text-white";
-  if (n >= 4) return "bg-amber-500 text-white";
-  if (n >= 3) return "bg-orange-500 text-white";
-  return "bg-red-600 text-white";
-}
-
-function aLevelColour(g: string): string {
-  switch (g.toUpperCase()) {
-    case "A*": return "bg-emerald-600 text-white";
-    case "A":  return "bg-green-500 text-white";
-    case "B":  return "bg-blue-500 text-white";
-    case "C":  return "bg-violet-500 text-white";
-    case "D":  return "bg-amber-500 text-white";
-    case "E":  return "bg-orange-500 text-white";
-    default:   return "bg-red-700 text-white";
-  }
-}
-
-function pctColour(score: number): string {
-  if (score >= 80) return "bg-emerald-600 text-white";
-  if (score >= 70) return "bg-green-500 text-white";
-  if (score >= 60) return "bg-blue-500 text-white";
-  if (score >= 50) return "bg-violet-500 text-white";
-  if (score >= 40) return "bg-amber-500 text-white";
-  if (score >= 30) return "bg-orange-500 text-white";
-  return "bg-red-600 text-white";
 }
 
 function gcseThresholdPct(
@@ -95,19 +79,6 @@ function avg(values: number[]): number | null {
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
-}
-
-function GapBadge({ gap }: { gap: number }) {
-  const cls = gap <= 5
-    ? "bg-emerald-50 text-emerald-700"
-    : gap <= 15
-      ? "bg-amber-50 text-amber-700"
-      : "bg-red-50 text-red-700";
-  return (
-    <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[12px] font-bold tabular-nums ${cls}`}>
-      {gap > 0 ? "+" : ""}{gap}pp gap
-    </span>
-  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -481,7 +452,7 @@ export default async function SubjectDetailPage({
                   <span className="w-10 text-right text-xs text-[var(--on-surface-muted)] tabular-nums">{g.count}</span>
                   <div className="relative flex-1 h-6 overflow-hidden rounded bg-[var(--surface-container)]">
                     <div
-                      className={`absolute inset-y-0 left-0 rounded ${g.vsYearMean >= 0 ? "bg-emerald-400" : "bg-red-400"}`}
+                      className={`absolute inset-y-0 left-0 rounded ${deltaBarClass(g.vsYearMean >= 0)}`}
                       style={{ width: `${Math.min(100, g.mean)}%` }}
                     />
                     {/* Year mean marker */}
@@ -494,7 +465,7 @@ export default async function SubjectDetailPage({
                     )}
                   </div>
                   <span className="w-12 text-right text-sm font-bold tabular-nums text-[var(--on-surface)]">{g.mean}%</span>
-                  <span className={`w-16 text-right text-sm font-bold tabular-nums ${g.vsYearMean >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                  <span className={`w-16 text-right text-sm font-bold tabular-nums ${g.vsYearMean >= 0 ? "text-scale-strong-text" : "text-scale-limited-text"}`}>
                     {g.vsYearMean > 0 ? "+" : ""}{g.vsYearMean}pp
                   </span>
                 </div>
@@ -515,7 +486,7 @@ export default async function SubjectDetailPage({
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonPpMean - pctPpMean)} />
                 </div>
-                {[{ label: "Non-PP", value: round1(pctNonPpMean), cls: "bg-[var(--on-surface)]" }, { label: "PP", value: round1(pctPpMean), cls: "bg-violet-400" }].map(({ label, value, cls }) => (
+                {[{ label: "Non-PP", value: round1(pctNonPpMean), cls: "bg-[var(--on-surface)]" }, { label: "PP", value: round1(pctPpMean), cls: PP_SERIES_BAR_CLASS }].map(({ label, value, cls }) => (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
@@ -537,7 +508,7 @@ export default async function SubjectDetailPage({
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonSendMean - pctSendMean)} />
                 </div>
-                {[{ label: "Non-SEND", value: round1(pctNonSendMean), cls: "bg-[var(--on-surface)]" }, { label: "SEND", value: round1(pctSendMean), cls: "bg-blue-600" }].map(({ label, value, cls }) => (
+                {[{ label: "Non-SEND", value: round1(pctNonSendMean), cls: "bg-[var(--on-surface)]" }, { label: "SEND", value: round1(pctSendMean), cls: SERIES_ALT_BAR_CLASS }].map(({ label, value, cls }) => (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
@@ -560,14 +531,14 @@ export default async function SubjectDetailPage({
           <div className="space-y-3">
             <SectionHeader title="Pupil Premium Gap" subtitle={`${ppData.ppCount} PP · ${ppData.nonPpCount} Non-PP`} />
             <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-5">
-              {[{ label: "4+", pp: ppData.ppT4, nonPp: ppData.nonPpT4, gap: ppData.gap4, cls: "text-amber-600" }, { label: "5+", pp: ppData.ppT5, nonPp: ppData.nonPpT5, gap: ppData.gap5, cls: "text-violet-600" }].map(({ label, pp, nonPp, gap, cls }, idx) => (
+              {[{ label: "4+", pp: ppData.ppT4, nonPp: ppData.nonPpT4, gap: ppData.gap4, cls: "text-scale-some-text" }, { label: "5+", pp: ppData.ppT5, nonPp: ppData.nonPpT5, gap: ppData.gap5, cls: "text-cat-violet-text" }].map(({ label, pp, nonPp, gap, cls }, idx) => (
                 <div key={label} className={idx > 0 ? "border-t border-[var(--outline-variant)]/20 pt-5" : ""}>
                   <div className="flex items-center justify-between mb-3">
                     <span className={`text-xs font-bold uppercase tracking-wider ${cls}`}>{label} Threshold</span>
                     <GapBadge gap={gap} />
                   </div>
                   <div className="space-y-2">
-                    {[{ name: "Non-PP", val: nonPp, bar: "bg-[var(--on-surface)]" }, { name: "PP", val: pp, bar: "bg-violet-400" }].map(({ name, val, bar }) => (
+                    {[{ name: "Non-PP", val: nonPp, bar: "bg-[var(--on-surface)]" }, { name: "PP", val: pp, bar: PP_SERIES_BAR_CLASS }].map(({ name, val, bar }) => (
                       <div key={name}>
                         <div className="flex justify-between items-baseline mb-1">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
@@ -586,14 +557,14 @@ export default async function SubjectDetailPage({
           <div className="space-y-3">
             <SectionHeader title="SEND Gap" subtitle={`${sendData.sendCount} SEND · ${sendData.nonSendCount} Non-SEND`} />
             <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-5">
-              {[{ label: "4+", send: sendData.sendT4, nonSend: sendData.nonSendT4, gap: sendData.gap4, cls: "text-amber-600" }, { label: "5+", send: sendData.sendT5, nonSend: sendData.nonSendT5, gap: sendData.gap5, cls: "text-violet-600" }].map(({ label, send, nonSend, gap, cls }, idx) => (
+              {[{ label: "4+", send: sendData.sendT4, nonSend: sendData.nonSendT4, gap: sendData.gap4, cls: "text-scale-some-text" }, { label: "5+", send: sendData.sendT5, nonSend: sendData.nonSendT5, gap: sendData.gap5, cls: "text-cat-violet-text" }].map(({ label, send, nonSend, gap, cls }, idx) => (
                 <div key={label} className={idx > 0 ? "border-t border-[var(--outline-variant)]/20 pt-5" : ""}>
                   <div className="flex items-center justify-between mb-3">
                     <span className={`text-xs font-bold uppercase tracking-wider ${cls}`}>{label} Threshold</span>
                     <GapBadge gap={gap} />
                   </div>
                   <div className="space-y-2">
-                    {[{ name: "Non-SEND", val: nonSend, bar: "bg-[var(--on-surface)]" }, { name: "SEND", val: send, bar: "bg-blue-600" }].map(({ name, val, bar }) => (
+                    {[{ name: "Non-SEND", val: nonSend, bar: "bg-[var(--on-surface)]" }, { name: "SEND", val: send, bar: SERIES_ALT_BAR_CLASS }].map(({ name, val, bar }) => (
                       <div key={name}>
                         <div className="flex justify-between items-baseline mb-1">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
@@ -677,10 +648,10 @@ export default async function SubjectDetailPage({
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
                             {student.sendFlag && (
-                              <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-blue-700">SEN</span>
+                              <span className={`rounded ${PP_TAG_CLASS} px-1.5 py-0.5 text-[10px] font-semibold uppercase`}>SEN</span>
                             )}
                             {student.ppFlag && (
-                              <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-violet-700">PP</span>
+                              <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${PP_TAG_CLASS}`}>PP</span>
                             )}
                             {!student.sendFlag && !student.ppFlag && (
                               <span className="text-xs text-muted">—</span>
@@ -698,11 +669,11 @@ export default async function SubjectDetailPage({
                         {/* Score / Grade */}
                         <td className="px-4 py-3 text-center">
                           {isPercentage && scoreNum !== null ? (
-                            <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-bold tabular-nums ${pctColour(scoreNum)}`}>
+                            <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-bold tabular-nums ${percentileCellClass(scoreNum)}`}>
                               {student.rawValue}
                             </span>
                           ) : !isPercentage ? (
-                            <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${isGcse ? gcseColour(student.rawValue) : aLevelColour(student.rawValue)}`}>
+                            <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${isGcse ? gcseNumericCellClass(student.rawValue) : aLevelLetterCellClass(student.rawValue)}`}>
                               {student.rawValue}
                             </span>
                           ) : (
@@ -724,7 +695,7 @@ export default async function SubjectDetailPage({
                         {/* vs avg */}
                         <td className="px-4 py-3 text-center">
                           {student.diff !== null ? (
-                            <span className={`font-semibold tabular-nums ${student.diff > 0.05 ? "text-emerald-600" : student.diff < -0.05 ? "text-red-600" : "text-[var(--on-surface-muted)]"}`}>
+                            <span className={`font-semibold tabular-nums ${student.diff > 0.05 ? "text-scale-strong-text" : student.diff < -0.05 ? "text-scale-limited-text" : "text-[var(--on-surface-muted)]"}`}>
                               {student.diff > 0.05 ? "+" : ""}{isPercentage ? `${student.diff}pp` : student.diff.toFixed(1)}
                             </span>
                           ) : (

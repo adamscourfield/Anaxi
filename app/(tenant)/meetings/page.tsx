@@ -131,7 +131,10 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
           </div>
         ) : (
           <div className="table-shell">
-            <div className="overflow-x-auto">
+            <p className="sr-only" id="meetings-upcoming-scroll-hint">
+              This table scrolls horizontally on small screens.
+            </p>
+            <div className="overflow-x-auto" aria-describedby="meetings-upcoming-scroll-hint">
               <table className="w-full text-sm">
               <thead>
                 <tr className="table-head-row">

@@ -307,7 +307,7 @@ export function ObservationWizard({
           </section>
 
           <details className="space-y-3">
-            <summary className="cursor-pointer text-sm font-semibold text-text calm-transition hover:text-accent">Other signals</summary>
+            <summary className="cursor-pointer rounded-lg px-1 py-0.5 text-sm font-semibold text-text calm-transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/12 focus-visible:ring-offset-2">Other signals</summary>
             <div className="pt-2">{otherSignals.length ? renderSignalList(otherSignals) : <MetaText>No remaining signals.</MetaText>}</div>
           </details>
 

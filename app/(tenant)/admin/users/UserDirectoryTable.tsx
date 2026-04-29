@@ -70,9 +70,9 @@ function roleLabel(role: string): string {
 
 function statusInfo(user: UserRow): { label: string; color: string; dotClass: string } {
   if (user.isActive) {
-    return { label: "Active", color: "text-text", dotClass: "bg-emerald-500" };
+    return { label: "Active", color: "text-text", dotClass: "bg-scale-strong" };
   }
-  return { label: "Inactive", color: "text-text", dotClass: "bg-gray-400" };
+  return { label: "Inactive", color: "text-text", dotClass: "bg-surface-container-high" };
 }
 
 const PAGE_SIZE = 20;
@@ -283,7 +283,10 @@ export function UserDirectoryTable({
 
       {/* ── Table (Observation History table-shell) ───────────────── */}
       <div className="table-shell">
-        <div className="overflow-x-auto">
+        <p className="sr-only" id="user-directory-scroll-hint">
+          This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+        </p>
+        <div className="overflow-x-auto" aria-describedby="user-directory-scroll-hint">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="table-head-row text-left">

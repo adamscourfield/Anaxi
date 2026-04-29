@@ -4,6 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { SectionHeader } from "@/components/ui/section-header";
 import type { GradeFormat } from "@prisma/client";
+import {
+  gcseNumericCellClass,
+  aLevelLetterCellClass,
+  percentileCellClass,
+  pctBandDistributionStyle,
+  gradeDistributionBarStyle,
+} from "@/lib/assessments/chartColours";
 
 export type DistributionModalStudentRow = {
   id: string;
@@ -19,70 +26,6 @@ export type DistributionModalStudentRow = {
 type GradeDistEntry = { grade: string; count: number };
 type PctDistEntry = { band: string; from: number; to: number; count: number };
 type PctThreshold = { label: string; count: number; pct: number };
-
-function gcseColour(g: string | number | null): string {
-  if (g === null) return "bg-surface-container-low text-muted";
-  const n = Number(g);
-  if (n >= 8) return "bg-emerald-600 text-white";
-  if (n >= 7) return "bg-green-500 text-white";
-  if (n >= 6) return "bg-blue-500 text-white";
-  if (n >= 5) return "bg-violet-500 text-white";
-  if (n >= 4) return "bg-amber-500 text-white";
-  if (n >= 3) return "bg-orange-500 text-white";
-  return "bg-red-600 text-white";
-}
-
-function aLevelColour(g: string): string {
-  switch (g.toUpperCase()) {
-    case "A*":
-      return "bg-emerald-600 text-white";
-    case "A":
-      return "bg-green-500 text-white";
-    case "B":
-      return "bg-blue-500 text-white";
-    case "C":
-      return "bg-violet-500 text-white";
-    case "D":
-      return "bg-amber-500 text-white";
-    case "E":
-      return "bg-orange-500 text-white";
-    default:
-      return "bg-red-700 text-white";
-  }
-}
-
-function pctColour(score: number): string {
-  if (score >= 80) return "bg-emerald-600 text-white";
-  if (score >= 70) return "bg-green-500 text-white";
-  if (score >= 60) return "bg-blue-500 text-white";
-  if (score >= 50) return "bg-violet-500 text-white";
-  if (score >= 40) return "bg-amber-500 text-white";
-  if (score >= 30) return "bg-orange-500 text-white";
-  return "bg-red-600 text-white";
-}
-
-function pctBandDistributionStyle(from: number, to: number): { bar: string; swatch: string } {
-  if (from >= 70) return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
-  if (to <= 40) return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
-  return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
-}
-
-/** Stacked grade bars: same contrast pattern as percentage bands (dark+white / light+dark). */
-function gradeDistributionBarStyle(
-  grade: string,
-  format: "GCSE" | "A_LEVEL",
-): { bar: string; swatch: string } {
-  if (format === "GCSE") {
-    const n = Number(grade);
-    if (Number.isFinite(n) && n >= 8) return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
-    if (Number.isFinite(n) && n <= 2) return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
-    return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
-  }
-  const g = grade.toUpperCase();
-  if (g === "A*" || g === "A") return { bar: "bg-emerald-500 text-white", swatch: "bg-emerald-500" };
-  if (g === "U" || g === "E") return { bar: "bg-red-400 text-white", swatch: "bg-red-400" };
-  return { bar: "bg-indigo-100 text-indigo-950", swatch: "bg-indigo-100" };
-}
 
 function avgDisplay(row: DistributionModalStudentRow): string {
   if (row.avg === null) return "—";
@@ -317,13 +260,13 @@ export function SubjectDistributionSection({
                         <td className="px-4 py-3 text-center">
                           {st.isPercentage && st.rawValue ? (
                             <span
-                              className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-bold tabular-nums ${st.score !== null ? pctColour(st.score) : "bg-[var(--surface-container)] text-[var(--on-surface)]"}`}
+                              className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-bold tabular-nums ${st.score !== null ? percentileCellClass(st.score) : "bg-[var(--surface-container)] text-[var(--on-surface)]"}`}
                             >
                               {st.rawValue}
                             </span>
                           ) : (
                             <span
-                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${st.isGcse ? gcseColour(st.rawValue) : aLevelColour(st.rawValue)}`}
+                              className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-sm font-bold ${st.isGcse ? gcseNumericCellClass(st.rawValue) : aLevelLetterCellClass(st.rawValue)}`}
                             >
                               {st.rawValue}
                             </span>
