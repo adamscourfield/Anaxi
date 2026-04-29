@@ -41,7 +41,8 @@ type TooltipState = {
   placement?: "default" | "above" | "left";
 } | null;
 
-const TOOLTIP_OFFSET = 14;
+/** Gap from anchor point to tooltip box (tight so labels sit near the chart point). */
+const TOOLTIP_OFFSET = 8;
 const TOOLTIP_MARGIN = 10;
 
 function ChartTooltip({ state }: { state: TooltipState }) {
@@ -83,6 +84,16 @@ function clientToSvgPoint(svg: SVGSVGElement, clientX: number, clientY: number):
   const inv = ctm.inverse();
   const svgP = pt.matrixTransform(inv);
   return { x: svgP.x, y: svgP.y };
+}
+
+function svgPointToClient(svg: SVGSVGElement, svgX: number, svgY: number): { x: number; y: number } | null {
+  const pt = svg.createSVGPoint();
+  pt.x = svgX;
+  pt.y = svgY;
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return null;
+  const screen = pt.matrixTransform(ctm);
+  return { x: screen.x, y: screen.y };
 }
 
 function nearestTimelineIndex(svgX: number, n: number, innerW: number, padL: number): number {
@@ -431,11 +442,16 @@ export function ObservationHistoryAnalysis({
       }
       scheduleTimelineSmoothing();
 
+      // Anchor to the week’s vertex on the line (not raw cursor) so the tooltip sits next to the marker
+      // even when the pointer is above/below the plot area within the band.
+      const anchorClient = svgPointToClient(svg, p.x, p.y);
+      const ax = anchorClient?.x ?? e.clientX;
+      const ay = anchorClient?.y ?? e.clientY;
       setTip({
-        x: e.clientX,
-        y: e.clientY,
+        x: ax,
+        y: ay,
         text: `Week of ${p.label}\n${p.count.toLocaleString()} observation${p.count === 1 ? "" : "s"}`,
-        placement: tooltipPlacementForClient(e.clientX, e.clientY),
+        placement: tooltipPlacementForClient(ax, ay),
       });
     },
     [linePoints.points, cancelTimelineRaf, scheduleTimelineSmoothing],
