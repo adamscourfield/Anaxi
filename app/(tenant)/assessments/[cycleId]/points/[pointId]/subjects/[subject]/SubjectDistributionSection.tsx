@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { SectionHeader } from "@/components/ui/section-header";
 import type { GradeFormat } from "@prisma/client";
 import { percentileCellClass, gcseNumericCellClass, aLevelLetterCellClass } from "@/lib/assessments/chartColours";
 import {
@@ -104,7 +103,8 @@ export function SubjectDistributionSection({
     <>
       {isPercentage && pctDistTotal > 0 && (
         <div className="space-y-3">
-          <SectionHeader title="Score Distribution" subtitle={`${pctDistTotal} students`} />
+          <h2 className="text-xl font-bold text-[var(--on-surface)]">Score Distribution</h2>
+          <p className="text-sm text-[var(--on-surface-muted)]">{pctDistTotal} students</p>
           <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient space-y-5">
             <div className="flex h-10 gap-0.5 overflow-hidden rounded-lg">
               {pctDistribution.map((d) => {
@@ -163,7 +163,8 @@ export function SubjectDistributionSection({
 
       {!isPercentage && (
         <div className="space-y-3">
-          <SectionHeader title="Grade Distribution" subtitle={`${distTotal > 0 ? distTotal : 0} students`} />
+          <h2 className="text-xl font-bold text-[var(--on-surface)]">Grade Distribution</h2>
+          <p className="text-sm text-[var(--on-surface-muted)]">{distTotal > 0 ? distTotal : 0} students</p>
           <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient space-y-4">
             {distTotal > 0 ? (
               <>
