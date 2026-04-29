@@ -11,7 +11,7 @@ import { H2, MetaText, BodyText } from "@/components/ui/typography";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatusPill } from "@/components/ui/status-pill";
 import { displayGrade, hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
-import { canViewStudentAnalysis } from "@/modules/authz";
+import { canViewStudentAnalysis, canViewTeacherAnalysis } from "@/modules/authz";
 import { computeStudentRiskProfile, RiskBand, Confidence } from "@/modules/analysis/studentRisk";
 import { toggleWatchlist } from "@/app/(tenant)/analysis/students/actions";
 import { archiveStudentAction, unarchiveStudentAction } from "../actions";
@@ -324,6 +324,39 @@ export default async function StudentDetailPage({
 
   const groupedTeachers = groupSubjectTeachers(student.subjectTeachers as any[]);
 
+  const [hodMemberships, coachAssignments] = await Promise.all([
+    (prisma as any).departmentMembership.findMany({
+      where: { userId: user.id, isHeadOfDepartment: true },
+      select: { departmentId: true },
+    }),
+    (prisma as any).coachAssignment.findMany({
+      where: { coachUserId: user.id },
+      select: { coacheeUserId: true },
+    }),
+  ]);
+  const hodDepartmentIds = (hodMemberships as { departmentId: string }[]).map((m) => m.departmentId);
+  const coacheeUserIds = (coachAssignments as { coacheeUserId: string }[]).map((a) => a.coacheeUserId);
+  const viewerContext = {
+    userId: user.id,
+    role: user.role,
+    hodDepartmentIds,
+    coacheeUserIds,
+  };
+
+  const teacherIdsForProfile = groupedTeachers.map((t) => t.teacherId);
+  const teacherDeptRows =
+    teacherIdsForProfile.length > 0
+      ? await (prisma as any).departmentMembership.findMany({
+          where: { userId: { in: teacherIdsForProfile } },
+          select: { userId: true, departmentId: true },
+        })
+      : [];
+  const teacherDepartmentIdsByUser = new Map<string, string[]>();
+  for (const r of teacherDeptRows as { userId: string; departmentId: string }[]) {
+    if (!teacherDepartmentIdsByUser.has(r.userId)) teacherDepartmentIdsByUser.set(r.userId, []);
+    teacherDepartmentIdsByUser.get(r.userId)!.push(r.departmentId);
+  }
+
   return (
     <div className="space-y-8">
       <Link href={backHref} className="anx-link-back calm-transition">
@@ -621,8 +654,18 @@ export default async function StudentDetailPage({
               {groupedTeachers.map((row) => {
                 const theme = TEACHER_ROW_THEMES[teacherThemeIndex(row.teacherId)];
                 const subjectLine = row.subjects.join(", ");
-                return (
-                  <div key={row.teacherId} className="flex items-center gap-4 px-4 py-4 calm-transition hover:bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] sm:px-5">
+                const teacherDepartmentIds = teacherDepartmentIdsByUser.get(row.teacherId) ?? [];
+                const canOpenStaffProfile =
+                  analysisFeature?.enabled &&
+                  canViewTeacherAnalysis(viewerContext, {
+                    teacherUserId: row.teacherId,
+                    teacherDepartmentIds,
+                  });
+                const profileHref = `/analysis/teachers/${row.teacherId}?window=${windowDays}`;
+                const rowClass =
+                  "flex items-center gap-4 px-4 py-4 calm-transition hover:bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] sm:px-5";
+                const inner = (
+                  <>
                     <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${theme.well}`}>
                       {getInitials(row.fullName)}
                     </span>
@@ -647,6 +690,20 @@ export default async function StudentDetailPage({
                         <polyline points="9 18 15 12 9 6" />
                       </svg>
                     </span>
+                  </>
+                );
+                return canOpenStaffProfile ? (
+                  <Link
+                    key={row.teacherId}
+                    href={profileHref}
+                    aria-label={`Open staff profile for ${row.fullName}`}
+                    className={`${rowClass} outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)]`}
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={row.teacherId} className={rowClass}>
+                    {inner}
                   </div>
                 );
               })}
