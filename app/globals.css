@@ -880,6 +880,105 @@ textarea:focus-visible {
   box-shadow: var(--shadow-sm);
 }
 
+/* ── Dashboard / home: consistent interactive surfaces ───────────── */
+/* Row links: same hover fill as Card tone=interactive (no lift — reserved for whole-card links). */
+.home-row-link {
+  border-radius: 0.75rem;
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.home-row-link:hover {
+  background-color: var(--surface-container-low);
+}
+
+/* Row links on primary (CPD drill-down rows) */
+.home-row-link-on-dark {
+  border-radius: 0.75rem;
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.home-row-link-on-dark:hover {
+  background-color: color-mix(in srgb, #ffffff 10%, transparent);
+}
+
+/* Whole-card drill-in (observations tile, open actions, etc.) */
+.home-pressable-card {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home-pressable-card:hover {
+    background-color: var(--surface-container-low);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-pressable-card:hover {
+    background-color: var(--surface-container-low);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* Stat drill-in on dashboard: lift + shadow only (inner panel already has surface). */
+@media (prefers-reduced-motion: no-preference) {
+  .home-stat-drill:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-stat-drill:hover {
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* Horizontal “chip” cards (watchlist): border from outline token, same lift as pressable cards */
+.home-card-tile {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home-card-tile:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-card-tile:hover {
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* Icon tiles in section headers (8×8, matches HomeCardHeadingSm scale) */
+.home-icon-tile {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background-color: var(--surface-container);
+}
+.home-icon-tile svg {
+  height: 1rem;
+  width: 1rem;
+}
+.home-icon-tile-muted {
+  color: var(--on-surface-variant);
+}
+.home-icon-tile-info {
+  color: var(--info);
+}
+.home-icon-tile-warning {
+  color: var(--scale-some-text);
+}
+
 /* Optional scope: denser tables / PDF-style pages can nest .anx-card-inset */
 .anx-reports-page .anx-card {
   border-radius: var(--radius-md);

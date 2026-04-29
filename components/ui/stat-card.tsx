@@ -8,7 +8,7 @@ const accentBarColors: Record<AccentColor, string> = {
   success: "bg-success",
   warning: "bg-warning",
   error: "bg-error",
-  info: "bg-accent",
+  info: "bg-[var(--info)]",
 };
 
 /** Panel tone for dashboard-style stat tiles (defaults preserve the original white card). */
@@ -97,7 +97,10 @@ export function StatCard({
 
   if (href) {
     return (
-      <Link href={href} className="block calm-transition hover:shadow-lg rounded-2xl">
+      <Link
+        href={href}
+        className="home-stat-drill block rounded-2xl outline-none transition-[box-shadow,transform,background-color] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)]"
+      >
         {inner}
       </Link>
     );
