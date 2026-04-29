@@ -7,7 +7,7 @@ import { requireFeature } from "@/lib/guards";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { H1, H2, MetaText, BodyText } from "@/components/ui/typography";
+import { H2, MetaText, BodyText } from "@/components/ui/typography";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatusPill } from "@/components/ui/status-pill";
 import { displayGrade, hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
@@ -92,6 +92,51 @@ function DeltaCell({ value }: { value: number | null }) {
   );
 }
 
+const TEACHER_ROW_THEMES = [
+  { well: "bg-[rgba(99,102,241,0.14)] text-[#4f46e5]", dot: "bg-[#6366f1]" },
+  { well: "bg-[rgba(16,185,129,0.14)] text-[#059669]", dot: "bg-[#059669]" },
+  { well: "bg-[rgba(59,130,246,0.14)] text-[#2563eb]", dot: "bg-[#2563eb]" },
+  { well: "bg-[rgba(245,158,11,0.16)] text-[#b45309]", dot: "bg-[#d97706]" },
+] as const;
+
+function teacherThemeIndex(seed: string): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return h % TEACHER_ROW_THEMES.length;
+}
+
+type GroupedSubjectTeacher = {
+  teacherId: string;
+  fullName: string;
+  email: string | null;
+  subjects: string[];
+};
+
+function groupSubjectTeachers(rows: any[]): GroupedSubjectTeacher[] {
+  const map = new Map<string, { fullName: string; email: string | null; subjects: Set<string> }>();
+  for (const x of rows) {
+    const tid = x.teacher?.id ?? "";
+    if (!tid) continue;
+    const name = x.teacher?.fullName ?? "Unknown";
+    const email = (x.teacher?.email as string | null) ?? null;
+    if (!map.has(tid)) {
+      map.set(tid, { fullName: name, email, subjects: new Set() });
+    }
+    const entry = map.get(tid)!;
+    if (email && !entry.email) entry.email = email;
+    const subj = x.subject?.name;
+    if (subj) entry.subjects.add(subj);
+  }
+  return [...map.entries()]
+    .map(([teacherId, v]) => ({
+      teacherId,
+      fullName: v.fullName,
+      email: v.email,
+      subjects: [...v.subjects].sort((a, b) => a.localeCompare(b)),
+    }))
+    .sort((a, b) => a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" }));
+}
+
 export default async function StudentDetailPage({
   params,
   searchParams,
@@ -123,7 +168,7 @@ export default async function StudentDetailPage({
       snapshots: { orderBy: { snapshotDate: "desc" } },
       subjectTeachers: {
         where: { OR: [{ effectiveTo: null }, { effectiveTo: { gt: new Date() } }] },
-        include: { subject: true, teacher: { select: { fullName: true, email: true } } },
+        include: { subject: true, teacher: { select: { id: true, fullName: true, email: true } } },
         orderBy: { subject: { name: "asc" } },
       },
       changeFlags: { orderBy: { createdAt: "desc" }, take: 50 },
@@ -277,103 +322,110 @@ export default async function StudentDetailPage({
       })
     : null;
 
+  const groupedTeachers = groupSubjectTeachers(student.subjectTeachers as any[]);
+
   return (
     <div className="space-y-8">
-      <Link href={backHref} className="link-muted-accent inline-flex items-center gap-1 text-sm">
+      <Link href={backHref} className="anx-link-back calm-transition">
         <span aria-hidden>←</span> {backLabel}
       </Link>
 
-      {/* Profile header */}
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 flex-1 items-start gap-4">
-          <div
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-surface-container-high text-base font-bold text-text"
-            aria-hidden
-          >
-            {getInitials(student.fullName)}
-          </div>
-          <div className="min-w-0">
-            <H1 className="break-words">{student.fullName}</H1>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              {student.yearGroup ? (
-                <span className="rounded-md bg-surface-container-high px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">
-                  Year {student.yearGroup}
-                </span>
-              ) : null}
-              <span className="rounded-md bg-surface-container-high px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">
-                {statusLabel}
-              </span>
-              {student.sendFlag ? (
-                <span className="rounded-md bg-surface-container-high px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">
-                  SEND
-                </span>
-              ) : null}
-              {student.ppFlag ? (
-                <span className="rounded-md bg-surface-container-high px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant">
-                  PP
-                </span>
-              ) : null}
+      <header className="anx-page-header-shell">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 flex-1 items-start gap-4">
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface-container-high)] text-base font-bold tracking-tight text-text ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)]"
+              aria-hidden
+            >
+              {getInitials(student.fullName)}
             </div>
-            <MetaText className="mt-2">
-              {student.upn ? `UPN ${student.upn}` : "No UPN on record"}
-            </MetaText>
+            <div className="min-w-0">
+              <h1 className="anx-page-title break-words">{student.fullName}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {student.yearGroup ? (
+                  <span className="rounded-full bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                    Year {student.yearGroup}
+                  </span>
+                ) : null}
+                <span className="rounded-full bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                  {statusLabel}
+                </span>
+                {student.sendFlag ? (
+                  <span className="rounded-full bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                    SEND
+                  </span>
+                ) : null}
+                {student.ppFlag ? (
+                  <span className="rounded-full bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                    PP
+                  </span>
+                ) : null}
+              </div>
+              <p className="anx-page-subtitle mt-2 !text-[13px] !leading-relaxed">
+                {student.upn ? `UPN ${student.upn}` : "No UPN on record"}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {student.status === "ACTIVE" ? (
+              <form action={archiveStudentAction}>
+                <input type="hidden" name="studentId" value={student.id} />
+                <input type="hidden" name="returnTo" value={`/students/${student.id}`} />
+                <Button type="submit" variant="secondary" className="rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--secondary-container)] px-5 shadow-sm hover:bg-[var(--surface-container-high)]">
+                  Archive student
+                </Button>
+              </form>
+            ) : (
+              <form action={unarchiveStudentAction}>
+                <input type="hidden" name="studentId" value={student.id} />
+                <input type="hidden" name="returnTo" value={`/students/${student.id}`} />
+                <Button type="submit" variant="secondary" className="rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--secondary-container)] px-5 shadow-sm hover:bg-[var(--surface-container-high)]">
+                  Restore student
+                </Button>
+              </form>
+            )}
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {student.status === "ACTIVE" ? (
-            <form action={archiveStudentAction}>
-              <input type="hidden" name="studentId" value={student.id} />
-              <input type="hidden" name="returnTo" value={`/students/${student.id}`} />
-              <Button type="submit" variant="secondary">Archive student</Button>
-            </form>
-          ) : (
-            <form action={unarchiveStudentAction}>
-              <input type="hidden" name="studentId" value={student.id} />
-              <input type="hidden" name="returnTo" value={`/students/${student.id}`} />
-              <Button type="submit" variant="secondary">Restore student</Button>
-            </form>
-          )}
-        </div>
-      </div>
+      </header>
 
       {/* Latest behaviour snapshot */}
       {latestSnapshot && attDisplay !== null ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card tone="subtle" className="!p-4">
-            <MetaText className="mb-2 uppercase tracking-[0.06em]">Attendance</MetaText>
-            <div className="flex items-end justify-between gap-3">
-              <span className="text-2xl font-bold tabular-nums text-text">{attDisplay}%</span>
-              <span className="text-xs text-muted">{fmtDate(latestSnapshot.snapshotDate)}</span>
+          <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
+            <p className="anx-label-micro">Attendance</p>
+            <div className="mt-2 flex items-end justify-between gap-3">
+              <span className="text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{attDisplay}%</span>
+              <span className="text-xs font-medium text-muted">{fmtDate(latestSnapshot.snapshotDate)}</span>
             </div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surface-container-high">
+            <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-[var(--surface-container-high)]">
               <div
-                className={`h-full rounded-full ${attendanceBarColor(attPct)}`}
+                className={`h-full rounded-full ${attendanceBarColor(attPct)} home-stat-bar-fill`}
                 style={{ width: `${Math.min(100, Math.max(0, attPct!))}%` }}
               />
             </div>
-          </Card>
-          <Card tone="subtle" className="!p-4">
-            <MetaText className="mb-2 uppercase tracking-[0.06em]">On calls</MetaText>
-            <p className="text-2xl font-bold tabular-nums text-text">{latestSnapshot.onCallsCount}</p>
-          </Card>
-          <Card tone="subtle" className="!p-4">
-            <MetaText className="mb-2 uppercase tracking-[0.06em]">Detentions</MetaText>
-            <p className="text-2xl font-bold tabular-nums text-text">{latestSnapshot.detentionsCount}</p>
-          </Card>
-          <Card tone="subtle" className="!p-4">
-            <MetaText className="mb-2 uppercase tracking-[0.06em]">Lateness</MetaText>
-            <p className="text-2xl font-bold tabular-nums text-text">{latestSnapshot.latenessCount}</p>
-          </Card>
+          </div>
+          <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
+            <p className="anx-label-micro">On calls</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{latestSnapshot.onCallsCount}</p>
+          </div>
+          <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
+            <p className="anx-label-micro">Detentions</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{latestSnapshot.detentionsCount}</p>
+          </div>
+          <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
+            <p className="anx-label-micro">Lateness</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{latestSnapshot.latenessCount}</p>
+          </div>
         </div>
       ) : (
-        <Card tone="subtle">
+        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[var(--anx-elevated-shadow)]">
           <BodyText className="text-muted">No behaviour snapshot imported yet for this student.</BodyText>
-        </Card>
+        </div>
       )}
 
       {analysisProfile ? (
-        <Card>
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
+        <div className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[var(--anx-elevated-shadow)] sm:p-8">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] pb-4">
             <div>
               <H2>Pastoral risk (analysis)</H2>
               <MetaText>
@@ -529,7 +581,7 @@ export default async function StudentDetailPage({
                 await toggleWatchlist(analysisProfile.studentId);
               }}
             >
-              <Button variant={analysisProfile.onWatchlist ? "primary" : "secondary"} type="submit">
+              <Button variant={analysisProfile.onWatchlist ? "primary" : "secondary"} type="submit" className="rounded-full px-5">
                 {analysisProfile.onWatchlist ? "★ On watchlist" : "Add to watchlist"}
               </Button>
             </form>
@@ -537,62 +589,107 @@ export default async function StudentDetailPage({
               Open student support priorities →
             </Link>
           </div>
-        </Card>
+        </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* Teachers */}
-        <Card>
-          <SectionHeader title="Teachers" subtitle="Current subject assignments" />
-          {(student.subjectTeachers as any[]).length === 0 ? (
-            <BodyText className="mt-4 text-muted">No subject teachers linked.</BodyText>
-          ) : (
-            <div className="table-shell mt-4">
-              <p className="sr-only" id="student-profile-teachers-scroll-hint">
-                This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
-              </p>
-              <div className="overflow-x-auto" aria-describedby="student-profile-teachers-scroll-hint">
-              <table className="w-full min-w-[320px] text-sm">
-                <thead>
-                  <tr className="table-head-row">
-                    <th className="px-4 py-3 text-left font-semibold tracking-[0.08em]">Subject</th>
-                    <th className="px-4 py-3 text-left font-semibold tracking-[0.08em]">Teacher</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(student.subjectTeachers as any[]).map((x: any) => (
-                    <tr key={x.id} className="table-row calm-transition">
-                      <td className="px-4 py-3.5 font-medium text-text">{x.subject?.name ?? "—"}</td>
-                      <td className="px-4 py-3.5 text-muted">
-                        <span className="text-text">{x.teacher?.fullName ?? "—"}</span>
-                        {x.teacher?.email ? (
-                          <span className="mt-0.5 block text-xs text-muted">{x.teacher.email}</span>
-                        ) : null}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <div className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[var(--anx-elevated-shadow)] sm:p-8">
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Teachers</h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted">Current subject assignments</p>
+          </div>
+
+          {groupedTeachers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-low)]/40 px-6 py-14 text-center">
+              <div
+                className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-container-high)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_20%,transparent)]"
+                aria-hidden
+              >
+                <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
               </div>
+              <p className="text-sm font-semibold text-text">No subject teachers linked.</p>
+              <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted">
+                When teachers are assigned to subjects, they&apos;ll appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)]">
+              {groupedTeachers.map((row) => {
+                const theme = TEACHER_ROW_THEMES[teacherThemeIndex(row.teacherId)];
+                const subjectLine = row.subjects.join(", ");
+                return (
+                  <div key={row.teacherId} className="flex items-center gap-4 px-4 py-4 calm-transition hover:bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] sm:px-5">
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${theme.well}`}>
+                      {getInitials(row.fullName)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold tracking-[-0.01em] text-text">{row.fullName}</p>
+                      <p className="mt-1 flex items-start gap-2 text-xs leading-snug text-muted">
+                        <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${theme.dot}`} aria-hidden />
+                        <span>{subjectLine}</span>
+                      </p>
+                      {row.email ? (
+                        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+                          <svg className="h-3.5 w-3.5 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+                            <rect x="2" y="4" width="20" height="16" rx="2" />
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                          </svg>
+                          <span className="truncate">{row.email}</span>
+                        </p>
+                      ) : null}
+                    </div>
+                    <span className="shrink-0 text-muted/40" aria-hidden>
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
-        </Card>
+
+          <Link
+            href="/students/import-subject-teachers"
+            className="mt-5 flex items-start gap-3 rounded-xl border border-dashed border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-low)]/50 p-4 calm-transition hover:border-[color-mix(in_srgb,var(--outline-variant)_65%,transparent)] hover:bg-[var(--surface-container-low)]/80 sm:p-5"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--surface-container-lowest)] text-muted">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </span>
+            <span className="min-w-0 text-left">
+              <span className="block text-sm font-semibold text-text">Assign teachers to more subjects</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-muted">
+                Link teachers to additional subjects via CSV import to see their impact.
+              </span>
+            </span>
+          </Link>
+        </div>
 
         {/* Assessments */}
         {assessmentsFeature?.enabled ? (
-          <Card>
-            <SectionHeader
-              title="Assessments"
-              subtitle={activeCycle ? `Active cycle: ${activeCycle.label}` : "No active assessment cycle"}
-              href="/assessments"
-              linkLabel="Open assessments"
-            />
+          <div className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[var(--anx-elevated-shadow)] sm:p-8">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Assessments</h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  {activeCycle ? `Active cycle: ${activeCycle.label}` : "No active assessment cycle"}
+                </p>
+              </div>
+              <Link href="/assessments" className="shrink-0 text-sm font-semibold text-accent underline underline-offset-2 calm-transition hover:text-accentHover">
+                Open assessments →
+              </Link>
+            </div>
+
             {!activeCycle ? (
-              <BodyText className="mt-4 text-muted">
-                Set an active cycle under Assessments to see results here.
-              </BodyText>
+              <BodyText className="text-muted">Set an active cycle under Assessments to see results here.</BodyText>
             ) : attainmentBySubject.length === 0 ? (
-              <div className="mt-4">
+              <div className="rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] bg-[var(--surface-container-low)]/35 p-8">
                 <EmptyState
                   mode="embedded"
                   title="No assessment results"
@@ -600,111 +697,96 @@ export default async function StudentDetailPage({
                 />
               </div>
             ) : (
-              <div className="mt-4 table-shell">
-                <p className="sr-only" id="student-profile-assessments-scroll-hint">
-                  This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
-                </p>
-                <div className="overflow-x-auto" aria-describedby="student-profile-assessments-scroll-hint">
-                <table className="w-full min-w-[480px] text-left text-sm">
-                    <thead>
-                      <tr className="table-head-row">
-                        <th className="sticky-first-column-header sticky left-0 z-20 px-5 py-3.5 text-left">Subject</th>
-                      {attainmentBySubject[0]?.points.map((p, i) => {
-                        const label = p.label?.trim() || `Assessment ${i + 1}`;
-                        return (
-                          <th
-                            key={`${p.ordinal}-${label}`}
-                            className="px-3 py-3 text-center"
-                          >
-                            {label}
-                          </th>
-                        );
-                      })}
-                      <th className="px-3 py-3 text-center">Overall Δ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attainmentBySubject.map(({ subject, points }) => {
-                      const scores = points.map((p) => p.normalizedScore).filter((s): s is number => s !== null);
-                      const first = scores[0] ?? null;
-                      const last = scores[scores.length - 1] ?? null;
-                      const delta =
-                        first !== null && last !== null && scores.length > 1 ? last - first : null;
-                      const deltaColour =
-                        delta === null
-                          ? "text-muted"
-                          : delta > 0.05
-                            ? "text-scale-strong-text font-medium"
-                            : delta < -0.05
-                              ? "text-scale-limited-text font-medium"
-                              : "text-muted";
-
-                      const cellHover =
-                        "transition-colors group-hover/assessment-row:bg-[var(--surface-container-low)]";
-
-                      return (
-                        <tr
-                          key={subject}
-                          className="group/assessment-row table-row calm-transition hover:bg-transparent"
-                        >
-                          <td
-                            className={`sticky-first-column z-[1] px-5 py-3 font-medium text-text shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)] ${cellHover}`}
-                          >
-                            {subject}
-                          </td>
-                          {points.map((p, i) => {
-                            const prev = i > 0 ? points[i - 1].normalizedScore : null;
-                            const curr = p.normalizedScore;
-                            const colour =
-                              curr === null
-                                ? "text-muted"
-                                : prev === null
-                                  ? "text-text"
-                                  : curr - prev > 0.05
-                                    ? "text-scale-strong-text"
-                                    : curr - prev < -0.05
-                                      ? "text-scale-limited-text"
-                                      : "text-text";
+              <>
+                <div className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)]">
+                  <p className="sr-only" id="student-profile-assessments-scroll-hint">
+                    This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+                  </p>
+                  <div className="overflow-x-auto" aria-describedby="student-profile-assessments-scroll-hint">
+                    <table className="w-full min-w-[480px] text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-low)]">
+                          <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Subject</th>
+                          {attainmentBySubject[0]?.points.map((p, i) => {
                             const label = p.label?.trim() || `Assessment ${i + 1}`;
                             return (
-                              <td
-                                key={`${p.ordinal}-${label}`}
-                                className={`px-3 py-3 text-center tabular-nums font-semibold ${colour} ${cellHover}`}
-                              >
-                                {curr !== null ? (
-                                  displayGrade(curr, p.gradeFormat, p.maxScore)
-                                ) : (
-                                  <span className="font-normal text-muted">—</span>
-                                )}
-                              </td>
+                              <th key={`${p.ordinal}-${label}`} className="px-3 py-3.5 text-center text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                                {label}
+                              </th>
                             );
                           })}
-                          <td
-                            className={`px-3 py-3 text-center text-xs tabular-nums ${deltaColour} ${cellHover}`}
-                          >
-                            {delta === null
-                              ? "—"
-                              : `${delta > 0 ? "▲" : delta < 0 ? "▼" : "="} ${Math.abs(Math.round(delta * 100))}%`}
-                          </td>
+                          <th className="px-3 py-3.5 text-center text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Overall Δ</th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {attainmentBySubject.map(({ subject, points }) => {
+                          const scores = points.map((p) => p.normalizedScore).filter((s): s is number => s !== null);
+                          const first = scores[0] ?? null;
+                          const last = scores[scores.length - 1] ?? null;
+                          const delta =
+                            first !== null && last !== null && scores.length > 1 ? last - first : null;
+                          const deltaColour =
+                            delta === null
+                              ? "text-muted"
+                              : delta > 0.05
+                                ? "text-[var(--success)] font-semibold"
+                                : delta < -0.05
+                                  ? "text-scale-limited-text font-semibold"
+                                  : "text-text font-medium";
+
+                          return (
+                            <tr
+                              key={subject}
+                              className="border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] last:border-b-0 calm-transition hover:bg-[color-mix(in_srgb,var(--surface-container-low)_35%,transparent)]"
+                            >
+                              <td className="px-5 py-3.5 font-medium text-text">{subject}</td>
+                              {points.map((p, i) => {
+                                const prev = i > 0 ? points[i - 1].normalizedScore : null;
+                                const curr = p.normalizedScore;
+                                const colour =
+                                  curr === null
+                                    ? "text-muted"
+                                    : prev === null
+                                      ? "text-text"
+                                      : curr - prev > 0.05
+                                        ? "text-[var(--success)] font-semibold"
+                                        : curr - prev < -0.05
+                                          ? "text-scale-limited-text font-semibold"
+                                          : "text-text font-medium";
+                                const label = p.label?.trim() || `Assessment ${i + 1}`;
+                                return (
+                                  <td key={`${p.ordinal}-${label}`} className={`px-3 py-3.5 text-center tabular-nums ${colour}`}>
+                                    {curr !== null ? (
+                                      displayGrade(curr, p.gradeFormat, p.maxScore)
+                                    ) : (
+                                      <span className="font-normal text-muted">—</span>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                              <td className={`px-3 py-3.5 text-center text-xs tabular-nums ${deltaColour}`}>
+                                {delta === null
+                                  ? "—"
+                                  : `${delta > 0 ? "▲" : delta < 0 ? "▼" : "="} ${Math.abs(Math.round(delta * 100))}%`}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+                <div className="mt-5">
+                  <Link
+                    href={`/assessments/${activeCycle.id}`}
+                    className="text-sm font-semibold text-accent underline underline-offset-2 calm-transition hover:text-accentHover"
+                  >
+                    View attainment cycle →
+                  </Link>
+                </div>
+              </>
             )}
-            {activeCycle && attainmentBySubject.length > 0 ? (
-              <div className="mt-4">
-                <Link
-                  href={`/assessments/${activeCycle.id}`}
-                  className="link-accent text-sm font-medium calm-transition"
-                >
-                  View attainment cycle →
-                </Link>
-              </div>
-            ) : null}
-          </Card>
+          </div>
         ) : null}
       </div>
 
