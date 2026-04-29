@@ -229,7 +229,7 @@ function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{
           const { bar } = gradeDistributionBarStyle(d.grade, format === "GCSE" ? "GCSE" : "A_LEVEL");
           return (
             <div key={d.grade} className={`flex items-center justify-center text-[9px] font-bold ${bar} ${onGradeClick ? 'cursor-pointer hover:opacity-80' : ''}`}
-                 style={{ width: `${pct}%` }} title={`${d.grade}: ${d.count} (${Math.round(pct)}%)`}
+                 style={{ width: `${pct}%`, minWidth: "14px" }} title={`${d.grade}: ${d.count} (${Math.round(pct)}%)`}
                  onClick={() => onGradeClick && onGradeClick(d.grade)}>
               {pct > 7 && d.grade}
             </div>
