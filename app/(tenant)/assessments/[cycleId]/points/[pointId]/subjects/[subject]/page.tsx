@@ -494,19 +494,20 @@ export default async function SubjectDetailPage({
         <div className="grid grid-cols-2 gap-5">
           {pctPpMean !== null && pctNonPpMean !== null && (
             <div className="space-y-3">
-              <SectionHeader title="Pupil Premium Gap" subtitle={`${ppResults.length} PP · ${nonPpResults.length} Non-PP`} />
+              <h2 className="text-xl font-bold text-text">Pupil Premium Gap</h2>
+              <p className="text-sm text-muted">{ppResults.length} PP · {nonPpResults.length} Non-PP</p>
               <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonPpMean - pctPpMean)} />
                 </div>
-                {[{ label: "Non-PP", value: round1(pctNonPpMean), cls: "bg-[var(--on-surface)]" }, { label: "PP", value: round1(pctPpMean), cls: ppBarFillClass }].map(({ label, value, cls }) => (
+                {[{ label: "NON-PP", value: round1(pctNonPpMean), cls: "bg-[var(--on-surface)]" }, { label: "PP", value: round1(pctPpMean), cls: ppBarFillClass }].map(({ label, value, cls }) => (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
                       <span className="text-lg font-bold tabular-nums text-[var(--on-surface)]">{value}%</span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
                       <div className={`${cls} h-full rounded-r-full`} style={{ width: `${value}%` }} />
                     </div>
                   </div>
@@ -516,19 +517,20 @@ export default async function SubjectDetailPage({
           )}
           {pctSendMean !== null && pctNonSendMean !== null && (
             <div className="space-y-3">
-              <SectionHeader title="SEND Gap" subtitle={`${sendResults.length} SEND · ${nonSendResults.length} Non-SEND`} />
+              <h2 className="text-xl font-bold text-text">SEND Gap</h2>
+              <p className="text-sm text-muted">{sendResults.length} SEND · {nonSendResults.length} Non-SEND</p>
               <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonSendMean - pctSendMean)} />
                 </div>
-                {[{ label: "Non-SEND", value: round1(pctNonSendMean), cls: "bg-[var(--on-surface)]" }, { label: "SEND", value: round1(pctSendMean), cls: sendBarFillClass }].map(({ label, value, cls }) => (
+                {[{ label: "NON-SEND", value: round1(pctNonSendMean), cls: "bg-[var(--on-surface)]" }, { label: "SEND", value: round1(pctSendMean), cls: sendBarFillClass }].map(({ label, value, cls }) => (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
                       <span className="text-lg font-bold tabular-nums text-[var(--on-surface)]">{value}%</span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
                       <div className={`${cls} h-full rounded-r-full`} style={{ width: `${value}%` }} />
                     </div>
                   </div>
@@ -543,7 +545,8 @@ export default async function SubjectDetailPage({
       {isGcse && ppData && sendData && (
         <div className="grid grid-cols-2 gap-5">
           <div className="space-y-3">
-            <SectionHeader title="Pupil Premium Gap" subtitle={`${ppData.ppCount} PP · ${ppData.nonPpCount} Non-PP`} />
+              <h2 className="text-xl font-bold text-text">Pupil Premium Gap</h2>
+              <p className="text-sm text-muted">{ppData.ppCount} PP · {ppData.nonPpCount} Non-PP</p>
             <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-5">
               {[{ label: "4+", pp: ppData.ppT4, nonPp: ppData.nonPpT4, gap: ppData.gap4, cls: thresholdHeaderGcse.t4 }, { label: "5+", pp: ppData.ppT5, nonPp: ppData.nonPpT5, gap: ppData.gap5, cls: thresholdHeaderGcse.t5 }].map(({ label, pp, nonPp, gap, cls }, idx) => (
                 <div key={label} className={idx > 0 ? "border-t border-[var(--outline-variant)]/20 pt-5" : ""}>
@@ -552,13 +555,13 @@ export default async function SubjectDetailPage({
                     <GapBadge gap={gap} />
                   </div>
                   <div className="space-y-2">
-                    {[{ name: "Non-PP", val: nonPp, bar: "bg-[var(--on-surface)]" }, { name: "PP", val: pp, bar: ppBarFillClass }].map(({ name, val, bar }) => (
+                    {[{ name: "NON-PP", val: nonPp, bar: "bg-[var(--on-surface)]" }, { name: "PP", val: pp, bar: ppBarFillClass }].map(({ name, val, bar }) => (
                       <div key={name}>
                         <div className="flex justify-between items-baseline mb-1">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
                           <span className="text-base font-bold tabular-nums text-[var(--on-surface)]">{val}%</span>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
                           <div className={`${bar} h-full rounded-r-full`} style={{ width: `${val}%` }} />
                         </div>
                       </div>
@@ -569,7 +572,8 @@ export default async function SubjectDetailPage({
             </div>
           </div>
           <div className="space-y-3">
-            <SectionHeader title="SEND Gap" subtitle={`${sendData.sendCount} SEND · ${sendData.nonSendCount} Non-SEND`} />
+              <h2 className="text-xl font-bold text-text">SEND Gap</h2>
+              <p className="text-sm text-muted">{sendData.sendCount} SEND · {sendData.nonSendCount} Non-SEND</p>
             <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-5">
               {[{ label: "4+", send: sendData.sendT4, nonSend: sendData.nonSendT4, gap: sendData.gap4, cls: thresholdHeaderGcse.t4 }, { label: "5+", send: sendData.sendT5, nonSend: sendData.nonSendT5, gap: sendData.gap5, cls: thresholdHeaderGcse.t5 }].map(({ label, send, nonSend, gap, cls }, idx) => (
                 <div key={label} className={idx > 0 ? "border-t border-[var(--outline-variant)]/20 pt-5" : ""}>
@@ -578,13 +582,13 @@ export default async function SubjectDetailPage({
                     <GapBadge gap={gap} />
                   </div>
                   <div className="space-y-2">
-                    {[{ name: "Non-SEND", val: nonSend, bar: "bg-[var(--on-surface)]" }, { name: "SEND", val: send, bar: sendBarFillClass }].map(({ name, val, bar }) => (
+                    {[{ name: "NON-SEND", val: nonSend, bar: "bg-[var(--on-surface)]" }, { name: "SEND", val: send, bar: sendBarFillClass }].map(({ name, val, bar }) => (
                       <div key={name}>
                         <div className="flex justify-between items-baseline mb-1">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
                           <span className="text-base font-bold tabular-nums text-[var(--on-surface)]">{val}%</span>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
                           <div className={`${bar} h-full rounded-r-full`} style={{ width: `${val}%` }} />
                         </div>
                       </div>
@@ -599,7 +603,8 @@ export default async function SubjectDetailPage({
 
       {/* ── Student Table ────────────────────────────────────────────────── */}
       <div className="space-y-3">
-        <SectionHeader title="Students" subtitle={`${allStudents.length} assessed`} />
+        <h2 className="text-xl font-bold text-text">Students</h2>
+        <p className="text-sm text-muted">{allStudents.length} assessed</p>
 
         <SubjectStudentsFilterBar
           basePath={basePath}
@@ -616,13 +621,13 @@ export default async function SubjectDetailPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="table-head-row text-left">
-                  <th className="px-4 py-3 text-center w-10">Rank</th>
-                  <th className="px-5 py-3">Name</th>
-                  <th className="px-4 py-3">Flags</th>
-                  {isPercentage && <th className="px-4 py-3">Class</th>}
-                  <th className="px-4 py-3 text-center">{isPercentage ? "Score" : "Grade"}</th>
-                  <th className="px-4 py-3 text-center">Overall avg</th>
-                  <th className="px-4 py-3 text-center">vs avg</th>
+                  <th className="px-4 py-3 text-center w-10">RANK</th>
+                  <th className="px-5 py-3">NAME</th>
+                  <th className="px-4 py-3">FLAGS</th>
+                  {isPercentage && <th className="px-4 py-3">CLASS</th>}
+                  <th className="px-4 py-3 text-center">{isPercentage ? "SCORE" : "GRADE"}</th>
+                  <th className="px-4 py-3 text-center">OVERALL AVG</th>
+                  <th className="px-4 py-3 text-center">VS AVG</th>
                 </tr>
               </thead>
               <tbody>

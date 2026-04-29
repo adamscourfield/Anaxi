@@ -93,6 +93,81 @@ type RankMovementData = {
   teachingGroupShifts: TeachingGroupShift[];
 };
 
+// ─── Icon helpers ─────────────────────────────────────────────────────────────
+
+function IconTrendUp() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+      <polyline points="17 6 23 6 23 12" />
+    </svg>
+  );
+}
+
+function IconTrendDown() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+      <polyline points="17 18 23 18 23 12" />
+    </svg>
+  );
+}
+
+function IconEqual() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <line x1="5" y1="9" x2="19" y2="9" />
+      <line x1="5" y1="15" x2="19" y2="15" />
+    </svg>
+  );
+}
+
+function IconAvgChange() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <polyline points="6 10 12 4 18 10" />
+    </svg>
+  );
+}
+
+function ChevronDown() {
+  return (
+    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+function ChevronRight() {
+  return (
+    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
+function ThresholdArrow({ thr }: { thr: { from: number; to: number } | undefined }) {
+  if (!thr) return <span className="text-[var(--on-surface-muted)]">—</span>;
+  const up = thr.to > thr.from;
+  const down = thr.to < thr.from;
+  return (
+    <span className="whitespace-nowrap">
+      <span className="text-[var(--on-surface-muted)]">{thr.from}%</span>
+      <span className="mx-0.5 text-[var(--on-surface-muted)]">→</span>
+      <span className={up ? "font-semibold text-[var(--success)]" : down ? "font-semibold text-[var(--error)]" : "text-[var(--on-surface-muted)]"}>{thr.to}%</span>
+    </span>
+  );
+}
+
+type SortDir = "asc" | "desc";
+type SortKey = "subject" | "improved" | "declined" | "avgChange";
+
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+  if (!active) return <span className="ml-0.5 text-[10px] text-[var(--on-surface-muted)] opacity-60">↕</span>;
+  return <span className="ml-0.5 text-[10px]">{dir === "asc" ? "↑" : "↓"}</span>;
+}
+
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
 const POINT_TYPE_COLOURS: Record<string, string> = {
@@ -143,6 +218,24 @@ export default function ComparisonPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("subject");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir(key === "subject" ? "asc" : "desc"); }
+  }
+
+  function sortedSubjects(subjects: SubjectComparison[]) {
+    return [...subjects].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "subject") cmp = a.subject.localeCompare(b.subject);
+      else if (sortKey === "improved") cmp = a.improved - b.improved;
+      else if (sortKey === "declined") cmp = a.declined - b.declined;
+      else if (sortKey === "avgChange") cmp = (a.meanDelta ?? 0) - (b.meanDelta ?? 0);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }
 
   const fromIdRef = React.useRef(fromId);
   const toIdRef = React.useRef(toId);
@@ -278,17 +371,49 @@ export default function ComparisonPage() {
         <>
           {/* Summary cards */}
           <div className="grid grid-cols-4 gap-4">
-            {[
-              { label: "Avg change", value: data.summary.avgDelta !== null ? deltaLabel(data.summary.avgDelta, data.subjects[0]?.gradeFormat ?? "GCSE") : "—", colour: data.summary.avgDelta !== null && data.summary.avgDelta > 0 ? "text-[var(--success)]" : data.summary.avgDelta !== null && data.summary.avgDelta < 0 ? "text-[var(--error)]" : "text-[var(--on-surface)]" },
-              { label: "Improved", value: data.summary.totalImproved.toString(), colour: "text-[var(--success)]" },
-              { label: "Declined", value: data.summary.totalDeclined.toString(), colour: "text-[var(--error)]" },
-              { label: "Unchanged", value: data.summary.totalUnchanged.toString(), colour: "text-[var(--on-surface-muted)]" },
-            ].map(({ label, value, colour }) => (
-              <div key={label} className="rounded-xl bg-[var(--surface)] p-4 shadow-ambient ring-1 ring-[var(--outline-variant)]/30">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
-                <p className={`mt-1 text-2xl font-bold tabular-nums ${colour}`}>{value}</p>
-              </div>
-            ))}
+            {(() => {
+              const avgDelta = data.summary.avgDelta;
+              const avgUp = avgDelta !== null && avgDelta > 0;
+              const avgDown = avgDelta !== null && avgDelta < 0;
+              return [
+                {
+                  label: "Avg change",
+                  value: avgDelta !== null ? deltaLabel(avgDelta, data.subjects[0]?.gradeFormat ?? "GCSE") : "—",
+                  colour: avgUp ? "text-[var(--success)]" : avgDown ? "text-[var(--error)]" : "text-[var(--on-surface)]",
+                  icon: <IconAvgChange />,
+                  iconBg: avgUp ? "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]" : avgDown ? "bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]" : "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
+                },
+                {
+                  label: "Improved",
+                  value: data.summary.totalImproved.toString(),
+                  colour: "text-[var(--success)]",
+                  icon: <IconTrendUp />,
+                  iconBg: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]",
+                },
+                {
+                  label: "Declined",
+                  value: data.summary.totalDeclined.toString(),
+                  colour: "text-[var(--error)]",
+                  icon: <IconTrendDown />,
+                  iconBg: "bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]",
+                },
+                {
+                  label: "Unchanged",
+                  value: data.summary.totalUnchanged.toString(),
+                  colour: "text-[var(--on-surface-muted)]",
+                  icon: <IconEqual />,
+                  iconBg: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
+                },
+              ].map(({ label, value, colour, icon, iconBg }) => (
+                <div key={label} className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconBg}`}>{icon}</span>
+                  </div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
+                  <p className={`mt-1 text-2xl font-bold tabular-nums ${colour}`}>{value}</p>
+                </div>
+              ));
+            })()}
           </div>
 
           {/* Subject comparison table */}
@@ -299,10 +424,16 @@ export default function ComparisonPage() {
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="table-head-row">
-                      <th className="px-5 py-3 text-left">Subject</th>
+                      <th className="px-5 py-3 text-left cursor-pointer select-none" onClick={() => toggleSort("subject")}>
+                        Subject<SortIcon active={sortKey === "subject"} dir={sortDir} />
+                      </th>
                       <th className="px-4 py-3 text-right">N</th>
-                      <th className="px-4 py-3 text-right">Improved</th>
-                      <th className="px-4 py-3 text-right">Declined</th>
+                      <th className="px-4 py-3 text-right cursor-pointer select-none" onClick={() => toggleSort("improved")}>
+                        Improved<SortIcon active={sortKey === "improved"} dir={sortDir} />
+                      </th>
+                      <th className="px-4 py-3 text-right cursor-pointer select-none" onClick={() => toggleSort("declined")}>
+                        Declined<SortIcon active={sortKey === "declined"} dir={sortDir} />
+                      </th>
                       {isGcse && (
                         <>
                           <th className="px-4 py-3 text-right">
@@ -336,11 +467,13 @@ export default function ComparisonPage() {
                           </th>
                         </>
                       )}
-                      <th className="px-5 py-3 text-right">Avg change</th>
+                      <th className="px-5 py-3 text-right cursor-pointer select-none" onClick={() => toggleSort("avgChange")}>
+                        Avg change<SortIcon active={sortKey === "avgChange"} dir={sortDir} />
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {data.subjects.sort((a, b) => a.subject.localeCompare(b.subject)).map((sc) => {
+                    {sortedSubjects(data.subjects).map((sc) => {
                     const isExpanded = expandedSubject === sc.subject;
                     const thr4 = sc.thresholdDelta["4+"] as { from: number; to: number } | undefined;
                     const thr5 = sc.thresholdDelta["5+"] as { from: number; to: number } | undefined;
@@ -356,8 +489,10 @@ export default function ComparisonPage() {
                           onClick={() => setExpandedSubject(isExpanded ? null : sc.subject)}
                         >
                           <td className="px-5 py-3.5 pr-4 font-medium text-[var(--on-surface)]">
-                            {sc.subject}
-                            <span className="ml-1 text-[10px] text-[var(--on-surface-muted)]">{isExpanded ? "▲" : "▼"}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[var(--on-surface-muted)]">{isExpanded ? <ChevronDown /> : <ChevronRight />}</span>
+                              {sc.subject}
+                            </div>
                           </td>
                           <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-[var(--on-surface-muted)]">
                             {sc.toCount}
@@ -370,25 +505,15 @@ export default function ComparisonPage() {
                           </td>
                           {isGcse && (
                             <>
-                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs">
-                                {thr4 ? <><span className="text-[var(--on-surface-muted)]">{thr4.from}%</span><span className="text-[var(--on-surface-muted)]">→</span><span className={thr4.to > thr4.from ? "text-[var(--success)] font-bold" : thr4.to < thr4.from ? "text-[var(--error)] font-bold" : ""}>{thr4.to}%</span></> : "—"}
-                              </td>
-                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs">
-                                {thr5 ? <><span className="text-[var(--on-surface-muted)]">{thr5.from}%</span><span className="text-[var(--on-surface-muted)]">→</span><span className={thr5.to > thr5.from ? "text-[var(--success)] font-bold" : thr5.to < thr5.from ? "text-[var(--error)] font-bold" : ""}>{thr5.to}%</span></> : "—"}
-                              </td>
-                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs">
-                                {thr7 ? <><span className="text-[var(--on-surface-muted)]">{thr7.from}%</span><span className="text-[var(--on-surface-muted)]">→</span><span className={thr7.to > thr7.from ? "text-[var(--success)] font-bold" : thr7.to < thr7.from ? "text-[var(--error)] font-bold" : ""}>{thr7.to}%</span></> : "—"}
-                              </td>
+                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs"><ThresholdArrow thr={thr4} /></td>
+                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs"><ThresholdArrow thr={thr5} /></td>
+                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs"><ThresholdArrow thr={thr7} /></td>
                             </>
                           )}
                           {isALevel && (
                             <>
-                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs">
-                                {thrA ? <><span className="text-[var(--on-surface-muted)]">{thrA.from}%</span>→<span className={thrA.to > thrA.from ? "text-[var(--success)] font-bold" : thrA.to < thrA.from ? "text-[var(--error)] font-bold" : ""}>{thrA.to}%</span></> : "—"}
-                              </td>
-                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs">
-                                {thrC ? <><span className="text-[var(--on-surface-muted)]">{thrC.from}%</span>→<span className={thrC.to > thrC.from ? "text-[var(--success)] font-bold" : thrC.to < thrC.from ? "text-[var(--error)] font-bold" : ""}>{thrC.to}%</span></> : "—"}
-                              </td>
+                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs"><ThresholdArrow thr={thrA} /></td>
+                              <td className="px-4 py-3.5 pr-3 text-right tabular-nums text-xs"><ThresholdArrow thr={thrC} /></td>
                             </>
                           )}
                           <td className={`px-5 py-3.5 text-right tabular-nums ${deltaCls(sc.meanDelta)}`}>
@@ -409,7 +534,7 @@ export default function ComparisonPage() {
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-[var(--outline-variant)]/20">
-                                    {sc.students.map((s) => (
+                                    {[...sc.students].sort((a, b) => Math.abs(b.delta ?? 0) - Math.abs(a.delta ?? 0)).map((s) => (
                                       <tr key={s.studentId}>
                                         <td className="py-1 pr-3 text-[var(--on-surface)]">
                                           {s.name}
@@ -532,31 +657,28 @@ export default function ComparisonPage() {
           {/* Top improvers / decliners */}
           <div className="grid grid-cols-2 gap-4">
             {[
-              { title: "Top improvers", students: topImprovers, cls: "text-[var(--success)]" },
-              { title: "Biggest declines", students: topDecliners, cls: "text-[var(--error)]" },
-            ].map(({ title, students, cls }) => (
-              <Card key={title} className="space-y-3">
-                <SectionHeader title={title} />
+              { title: "Top Improvers", students: topImprovers, valueCls: "text-[var(--success)]", icon: <IconTrendUp />, iconBg: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]" },
+              { title: "Biggest Declines", students: topDecliners, valueCls: "text-[var(--error)]", icon: <IconTrendDown />, iconBg: "bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]" },
+            ].map(({ title, students, valueCls, icon, iconBg }) => (
+              <div key={title} className="rounded-2xl border border-[var(--outline-variant)]/60 bg-[var(--surface-container-lowest)] p-6 shadow-ambient">
+                <div className="flex items-center gap-3 mb-5">
+                  <span className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${iconBg}`}>{icon}</span>
+                  <h3 className="text-xl font-bold text-[var(--on-surface)]">{title}</h3>
+                </div>
                 {students.length === 0 ? (
                   <p className="text-xs text-[var(--on-surface-muted)]">None</p>
                 ) : (
-                  <div className="space-y-1.5">
-                    {students.map((s) => (
-                      <div key={`${s.studentId}-${s.from}`} className="flex items-center justify-between gap-2">
-                        <Link
-                          href={`/students/${s.studentId}`}
-                          className="link-to-accent calm-transition min-w-0 truncate text-sm"
-                        >
-                          {s.name}
-                        </Link>
-                        <span className={`text-sm font-bold tabular-nums ${cls} shrink-0`}>
-                          {s.from} → {s.to}
-                        </span>
+                  <div>
+                    {students.map((s, i) => (
+                      <div key={`${s.studentId}-${s.from}`} className="flex items-center gap-3 border-b border-[var(--outline-variant)]/20 py-2.5 last:border-0">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container)] text-[11px] font-bold tabular-nums text-[var(--on-surface-muted)]">{i + 1}</span>
+                        <Link href={`/students/${s.studentId}`} className="link-to-accent calm-transition min-w-0 flex-1 truncate text-sm font-medium">{s.name}</Link>
+                        <span className={`shrink-0 text-sm font-bold tabular-nums ${valueCls}`}>{s.from} → {s.to}</span>
                       </div>
                     ))}
                   </div>
                 )}
-              </Card>
+              </div>
             ))}
           </div>
         </>

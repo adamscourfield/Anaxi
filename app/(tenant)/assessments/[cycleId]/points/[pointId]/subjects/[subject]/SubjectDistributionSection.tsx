@@ -167,7 +167,7 @@ export function SubjectDistributionSection({
           <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient space-y-4">
             {distTotal > 0 ? (
               <>
-                <div className="flex h-8 gap-0.5 overflow-hidden rounded-lg">
+                <div className="flex h-14 gap-0.5 overflow-hidden rounded-lg">
                   {distribution.map((d) => {
                     if (d.count === 0) return null;
                     const pct = (d.count / distTotal) * 100;
@@ -176,12 +176,12 @@ export function SubjectDistributionSection({
                       <button
                         key={d.grade}
                         type="button"
-                        className={`flex items-center justify-center text-[11px] font-bold ${bar} cursor-pointer calm-transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]`}
-                        style={{ width: `${pct}%` }}
-                        title={`${d.grade}: ${d.count} (${Math.round(pct)}%) — click for list`}
+                        className={`flex items-center justify-center text-sm font-bold ${bar} cursor-pointer calm-transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]`}
+                        style={{ width: `${pct}%`, minWidth: "14px" }}
+                        title={`Grade ${d.grade}: ${d.count} students (${Math.round(pct)}%) — click for list`}
                         onClick={() => openGrade(d.grade)}
                       >
-                        {pct > 5 && d.grade}
+                        {pct > 2 ? d.grade : ""}
                       </button>
                     );
                   })}
@@ -201,14 +201,14 @@ export function SubjectDistributionSection({
                         >
                           <span className={`inline-block h-3 w-3 rounded-sm ${swatch}`} />
                           <span className="text-xs text-[var(--on-surface-muted)]">
-                            Grade {d.grade}: <span className="font-semibold text-[var(--on-surface)]">{d.count}</span> ({pct}%)
+                            Grade {d.grade}: <span className="font-bold text-[var(--on-surface)]">{d.count}</span> ({pct}%)
                           </span>
                         </button>
                       );
                     })}
                 </div>
                 {isGcse && (
-                  <div className="flex flex-wrap gap-3 pt-1 border-t border-[var(--outline-variant)]/20">
+                  <div className="flex flex-wrap items-baseline gap-x-8 gap-y-3 border-t border-[var(--outline-variant)]/20 pt-4">
                     {[
                       { label: "4+", threshold: 4, cls: thresholdHeaderGcse.t4 },
                       { label: "5+", threshold: 5, cls: thresholdHeaderGcse.t5 },
@@ -219,10 +219,10 @@ export function SubjectDistributionSection({
                         .reduce((s, e) => s + e.count, 0);
                       const pct = distTotal > 0 ? Math.round((count / distTotal) * 100) : 0;
                       return (
-                        <div key={label} className="flex items-baseline gap-1.5">
-                          <span className={`text-xs font-bold uppercase tracking-wider ${cls}`}>{label}</span>
-                          <span className={`text-xl font-bold tabular-nums ${cls}`}>{pct}%</span>
-                          <span className="text-xs text-[var(--on-surface-muted)]">({count} students)</span>
+                        <div key={label} className="flex items-baseline gap-2">
+                          <span className={`text-sm font-bold uppercase tracking-wider ${cls}`}>{label}</span>
+                          <span className={`text-3xl font-bold tabular-nums leading-none ${cls}`}>{pct}%</span>
+                          <span className="text-sm text-[var(--on-surface-muted)]">({count} students)</span>
                         </div>
                       );
                     })}

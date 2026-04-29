@@ -142,6 +142,65 @@ type MetricsData = {
   aLevelSummary: ALevelSummary | null;
 };
 
+// ─── KPI Icon Components ──────────────────────────────────────────────────────
+
+function IconUsersKpi() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function IconClipboardKpi() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+      <path d="M9 12h6M9 16h4" />
+    </svg>
+  );
+}
+
+function IconBookOpenKpi() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+    </svg>
+  );
+}
+
+const kpiIconCircleViolet = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]";
+const kpiIconCircleBlue = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]";
+const kpiIconCircleGreen = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]";
+
+function SubjectIcon({ subject }: { subject: string }) {
+  const s = subject.toLowerCase();
+  const paths = (() => {
+    if (s.includes("geog")) return (<><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>);
+    if (s.includes("phys")) return (<><circle cx="12" cy="12" r="3" /><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" /></>);
+    if (s.includes("chem")) return (<><path d="M9 3H5a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-4z" /><path d="M3 15h12M9 3v4" /></>);
+    if (s.includes("bio")) return (<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>);
+    if (s.includes("stat") || s.includes("math")) return (<><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></>);
+    if (s.includes("socio") || s.includes("psych") || s.includes("hist") || s.includes("poli")) return (<><circle cx="12" cy="8" r="4" /><path d="M8 16h8M10 20h4" /></>);
+    if (s.includes("french") || s.includes("spanish") || s.includes("german") || s.includes("language") || s.includes("mfl")) return (<><path d="M5 8l6 6M4 14l6-6 2-3" /><path d="M2 5h12M7 2h1M17 14l-5 5M13 19l5-5" /><path d="M15 13h6M18 10v1" /></>);
+    if (s.includes("re") || s.includes("relig")) return (<><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></>);
+    if (s.includes("music") || s.includes("drama") || s.includes("art") || s.includes("theatre")) return (<><circle cx="5.5" cy="17.5" r="2.5" /><circle cx="17.5" cy="15.5" r="2.5" /><polyline points="8 17 8 5 20 3 20 15" /><line x1="8" y1="11" x2="20" y2="9" /></>);
+    if (s.includes("comput") || s.includes("it") || s.includes("digital")) return (<><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></>);
+    if (s.includes("english") || s.includes("lit")) return (<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></>);
+    return (<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></>);
+  })();
+  return (
+    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container)] text-[var(--on-surface-muted)]">
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>{paths}</svg>
+    </span>
+  );
+}
+
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
 function gapCls(gap: number) {
@@ -281,6 +340,7 @@ export default function ResultPointPage() {
   const [modalView, setModalView] = useState<ModalView>(null);
   const [expandedPctSubject, setExpandedPctSubject] = useState<string | null>(null);
   const [gcseGapView, setGcseGapView] = useState<"pp" | "send">("pp");
+  const [gapView, setGapView] = useState<"pp" | "send">("pp");
 
   useEffect(() => {
     async function load() {
@@ -406,9 +466,9 @@ export default function ResultPointPage() {
         <>
           {/* Summary stats */}
           <div className="grid grid-cols-3 gap-5">
-            <StatCard label="Students Assessed" value={metrics.totalStudents} context="Enrolled total" />
-            <StatCard label="Grade Entries" value={metrics.totalEntries.toLocaleString()} context="98% completion" accent="success" />
-            <StatCard label="Subjects" value={metrics.subjects.length} context="Reporting depts" />
+            <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Students Assessed" value={metrics.totalStudents} context="Enrolled total" icon={<IconUsersKpi />} iconTileClassName={kpiIconCircleViolet} />
+            <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Grade Entries" value={metrics.totalEntries.toLocaleString()} context="Across all subjects" icon={<IconClipboardKpi />} iconTileClassName={kpiIconCircleBlue} />
+            <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Subjects" value={metrics.subjects.length} context="Reporting departments" icon={<IconBookOpenKpi />} iconTileClassName={kpiIconCircleGreen} />
           </div>
 
           {/* GCSE Basics */}
@@ -679,59 +739,108 @@ export default function ResultPointPage() {
             </div>
           </div>
 
-          {/* PP gap table (GCSE) */}
-          {isGcse && metrics.subjects.some((sm) => sm.pp) && (
+          {/* PP / SEND gap by subject (GCSE) — toggled */}
+          {isGcse && (metrics.subjects.some((sm) => sm.pp) || metrics.subjects.some((sm) => sm.send)) && (
             <div className="space-y-3">
-              <SectionHeader title="Pupil Premium Gap by Subject" subtitle="Percentage-point gap between Non-PP and PP students" />
-              <div className="table-shell">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="table-head-row text-left">
-                        <th className="px-5 py-3">Subject</th>
-                        <th className="px-4 py-3 text-right">Non-PP 4+</th>
-                        <th className="px-4 py-3 text-right">PP 4+</th>
-                        <th className="px-4 py-3 text-right">Gap</th>
-                        <th className="px-4 py-3 text-right">Non-PP 5+</th>
-                        <th className="px-4 py-3 text-right">PP 5+</th>
-                        <th className="px-4 py-3 text-right">Gap</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.subjects
-                        .filter((sm) => sm.pp)
-                        .sort((a, b) => (b.pp?.gap4 ?? 0) - (a.pp?.gap4 ?? 0))
-                        .map((sm) => (
-                          <tr key={sm.subject} className="group table-row calm-transition">
-                            <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
-                              <Link
-                                href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`}
-                                className="link-accent calm-transition"
-                              >
-                                {sm.subject}
-                              </Link>
-                            </td>
-                            <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.pp!.nonPpT4}%</td>
-                            <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>{sm.pp!.t4}%</td>
-                            <td className="px-4 py-4 text-right">
-                              <GapBadge gap={sm.pp!.gap4} />
-                            </td>
-                            <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.pp!.nonPpT5}%</td>
-                            <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>{sm.pp!.t5}%</td>
-                            <td className="px-4 py-4 text-right">
-                              <GapBadge gap={sm.pp!.gap5} />
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="border-t border-border/20 px-5 py-3.5">
-                  <p className="text-[0.8125rem] text-muted">
-                    {metrics.subjects.filter(sm => sm.pp).length} subjects with PP data
-                  </p>
+              <div className="flex items-center justify-between">
+                <SectionHeader title="Equity Gap by Subject" subtitle="Percentage-point gap between cohorts" />
+                <div className="flex overflow-hidden rounded-lg border border-[var(--outline-variant)]/60 text-xs font-semibold">
+                  <button type="button" onClick={() => setGapView("pp")} className={`px-4 py-1.5 calm-transition ${gapView === "pp" ? "bg-[var(--surface-container-high)] text-[var(--on-surface)]" : "text-[var(--on-surface-muted)] hover:bg-[var(--surface-container-low)]"}`}>Pupil Premium</button>
+                  <button type="button" onClick={() => setGapView("send")} className={`border-l border-[var(--outline-variant)]/60 px-4 py-1.5 calm-transition ${gapView === "send" ? "bg-[var(--surface-container-high)] text-[var(--on-surface)]" : "text-[var(--on-surface-muted)] hover:bg-[var(--surface-container-low)]"}`}>SEND</button>
                 </div>
               </div>
+              {gapView === "pp" && metrics.subjects.some((sm) => sm.pp) && (
+                <div className="table-shell">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="table-head-row text-left">
+                          <th className="px-5 py-3">Subject</th>
+                          <th className="px-4 py-3 text-right">Non-PP 4+</th>
+                          <th className="px-4 py-3 text-right">PP 4+</th>
+                          <th className="px-4 py-3 text-right">Gap</th>
+                          <th className="px-4 py-3 text-right">Non-PP 5+</th>
+                          <th className="px-4 py-3 text-right">PP 5+</th>
+                          <th className="px-4 py-3 text-right">Gap</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {metrics.subjects
+                          .filter((sm) => sm.pp)
+                          .sort((a, b) => (b.pp?.gap4 ?? 0) - (a.pp?.gap4 ?? 0))
+                          .map((sm) => (
+                            <tr key={sm.subject} className="group table-row calm-transition">
+                              <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
+                                <div className="flex items-center gap-2.5">
+                                  <SubjectIcon subject={sm.subject} />
+                                  <Link href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`} className="link-accent calm-transition">{sm.subject}</Link>
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.pp!.nonPpT4}%</td>
+                              <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>{sm.pp!.t4}%</td>
+                              <td className="px-4 py-4 text-right"><GapBadge gap={sm.pp!.gap4} /></td>
+                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.pp!.nonPpT5}%</td>
+                              <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>{sm.pp!.t5}%</td>
+                              <td className="px-4 py-4 text-right"><GapBadge gap={sm.pp!.gap5} /></td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="border-t border-border/20 px-5 py-3.5">
+                    <p className="text-[0.8125rem] text-muted">{metrics.subjects.filter(sm => sm.pp).length} subjects with PP data</p>
+                  </div>
+                </div>
+              )}
+              {gapView === "pp" && !metrics.subjects.some((sm) => sm.pp) && (
+                <p className="text-sm text-[var(--on-surface-muted)] py-4">No Pupil Premium data for this result point.</p>
+              )}
+              {gapView === "send" && metrics.subjects.some((sm) => sm.send) && (
+                <div className="table-shell">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="table-head-row text-left">
+                          <th className="px-5 py-3">Subject</th>
+                          <th className="px-4 py-3 text-right">Non-SEND 4+</th>
+                          <th className="px-4 py-3 text-right">SEND 4+</th>
+                          <th className="px-4 py-3 text-right">Gap</th>
+                          <th className="px-4 py-3 text-right">Non-SEND 5+</th>
+                          <th className="px-4 py-3 text-right">SEND 5+</th>
+                          <th className="px-4 py-3 text-right">Gap</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {metrics.subjects
+                          .filter((sm) => sm.send)
+                          .sort((a, b) => (b.send?.gap4 ?? 0) - (a.send?.gap4 ?? 0))
+                          .map((sm) => (
+                            <tr key={sm.subject} className="group table-row calm-transition">
+                              <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
+                                <div className="flex items-center gap-2.5">
+                                  <SubjectIcon subject={sm.subject} />
+                                  <Link href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`} className="link-accent calm-transition">{sm.subject}</Link>
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.send!.nonSendT4}%</td>
+                              <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>{sm.send!.t4}%</td>
+                              <td className="px-4 py-4 text-right"><GapBadge gap={sm.send!.gap4} /></td>
+                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.send!.nonSendT5}%</td>
+                              <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>{sm.send!.t5}%</td>
+                              <td className="px-4 py-4 text-right"><GapBadge gap={sm.send!.gap5} /></td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="border-t border-border/20 px-5 py-3.5">
+                    <p className="text-[0.8125rem] text-muted">{metrics.subjects.filter(sm => sm.send).length} subjects with SEND data</p>
+                  </div>
+                </div>
+              )}
+              {gapView === "send" && !metrics.subjects.some((sm) => sm.send) && (
+                <p className="text-sm text-[var(--on-surface-muted)] py-4">No SEND data for this result point.</p>
+              )}
             </div>
           )}
 
@@ -971,61 +1080,6 @@ export default function ResultPointPage() {
             </>
           )}
 
-          {/* SEND gap table (GCSE) */}
-          {isGcse && metrics.subjects.some((sm) => sm.send) && (
-            <div className="space-y-3">
-              <SectionHeader title="SEND Gap by Subject" subtitle="Percentage-point gap between Non-SEND and SEND students" />
-              <div className="table-shell">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="table-head-row text-left">
-                        <th className="px-5 py-3">Subject</th>
-                        <th className="px-4 py-3 text-right">Non-SEND 4+</th>
-                        <th className="px-4 py-3 text-right">SEND 4+</th>
-                        <th className="px-4 py-3 text-right">Gap</th>
-                        <th className="px-4 py-3 text-right">Non-SEND 5+</th>
-                        <th className="px-4 py-3 text-right">SEND 5+</th>
-                        <th className="px-4 py-3 text-right">Gap</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.subjects
-                        .filter((sm) => sm.send)
-                        .sort((a, b) => (b.send?.gap4 ?? 0) - (a.send?.gap4 ?? 0))
-                        .map((sm) => (
-                          <tr key={sm.subject} className="group table-row calm-transition">
-                            <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
-                              <Link
-                                href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`}
-                                className="link-accent calm-transition"
-                              >
-                                {sm.subject}
-                              </Link>
-                            </td>
-                            <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.send!.nonSendT4}%</td>
-                            <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>{sm.send!.t4}%</td>
-                            <td className="px-4 py-4 text-right">
-                              <GapBadge gap={sm.send!.gap4} />
-                            </td>
-                            <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.send!.nonSendT5}%</td>
-                            <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>{sm.send!.t5}%</td>
-                            <td className="px-4 py-4 text-right">
-                              <GapBadge gap={sm.send!.gap5} />
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="border-t border-border/20 px-5 py-3.5">
-                  <p className="text-[0.8125rem] text-muted">
-                    {metrics.subjects.filter(sm => sm.send).length} subjects with SEND data
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </>
       )}
 
