@@ -216,7 +216,7 @@ export default async function LeaveCalendarPage({
         </Link>
         {manager && (
           <Link
-            href="/leave/pending"
+            href="/leave#pending-requests"
             className="rounded-lg border border-border/60 bg-surface-container-lowest/70 px-3.5 py-2 text-sm font-medium text-muted backdrop-blur-sm calm-transition hover:border-accent/30 hover:text-accent"
           >
             Pending approvals

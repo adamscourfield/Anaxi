@@ -44,7 +44,6 @@ export async function createLoaRequest(formData: FormData) {
 
   revalidatePath("/leave");
   revalidatePath("/leave/calendar");
-  revalidatePath("/leave/pending");
   redirect("/leave?created=1");
 }
 
@@ -92,6 +91,5 @@ export async function decideLoaRequest(formData: FormData) {
   });
   revalidatePath(`/leave/${requestId}`);
   revalidatePath("/leave/calendar");
-  revalidatePath("/leave/pending");
   redirect(`/leave/${requestId}`);
 }
