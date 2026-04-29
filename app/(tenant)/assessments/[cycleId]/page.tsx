@@ -1,15 +1,14 @@
+import type { ReactNode } from "react";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { StatCard } from "@/components/ui/stat-card";
 import { MetaText } from "@/components/ui/typography";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import type { PointType, ResultStatus, QualificationType } from "@prisma/client";
 import { pointTypePillClasses, resultStatusPillClasses } from "@/modules/assessments/attainmentColours";
 
@@ -146,10 +145,42 @@ function IconUsers({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
-const kpiIconCircleViolet =
-  "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cat-violet-bg text-cat-violet-text";
-const kpiIconCircleBlue =
-  "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cat-blue-bg text-cat-blue-text";
+/** Pastel icon wells — reference dashboard (soft purple / soft blue circles) */
+const kpiWellViolet =
+  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
+const kpiWellBlue =
+  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
+
+function CycleOverviewTile({
+  icon,
+  wellClass,
+  label,
+  value,
+  footer,
+}: {
+  icon: ReactNode;
+  wellClass: string;
+  label: string;
+  value: string | number;
+  footer?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center rounded-2xl border border-black/[0.06] bg-surface-container-lowest px-5 pb-6 pt-7 text-center shadow-[0_1px_2px_rgba(15,23,42,0.06),0_4px_12px_rgba(15,23,42,0.04)]">
+      <span className={wellClass} aria-hidden>
+        {icon}
+      </span>
+      <p className="mt-5 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted">{label}</p>
+      <p className="mt-2 text-[2rem] font-bold leading-none tracking-[-0.03em] text-text tabular-nums">{value}</p>
+      {footer != null ? <div className="mt-2.5 text-[0.8125rem] leading-snug text-muted">{footer}</div> : null}
+    </div>
+  );
+}
+
+const btnSolidDark =
+  "inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-2.5 text-xs font-semibold text-white shadow-sm calm-transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25 focus-visible:ring-offset-2";
+
+const btnMutedOutline =
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs font-semibold text-zinc-800 shadow-none calm-transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/30 focus-visible:ring-offset-2";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -198,7 +229,7 @@ export default async function CycleDetailPage({
   ).size;
 
   return (
-    <div className="anx-reports-page w-full space-y-10 pb-16 -mx-4 bg-[var(--surface-container-low)] px-4 sm:-mx-6 sm:px-6 md:-mx-8 md:px-8 lg:-mx-10 lg:px-10">
+    <div className="anx-reports-page w-full max-w-[1120px] space-y-10 pb-16">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -223,59 +254,47 @@ export default async function CycleDetailPage({
         }
       />
 
-      {/* Overview KPI row — white cards, circular tinted icons */}
+      {/* Overview — centered columns: icon, label, large value (matches reference) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          layout="kpi"
-          tone="glass"
+        <CycleOverviewTile
+          wellClass={kpiWellViolet}
+          icon={<IconTarget />}
           label="Result points"
           value={cycle.points.length}
-          accentPlacement="none"
-          icon={<IconTarget />}
-          iconTileClassName={kpiIconCircleViolet}
         />
-        <StatCard
-          layout="kpi"
-          tone="glass"
+        <CycleOverviewTile
+          wellClass={kpiWellBlue}
+          icon={<IconBook />}
           label="Total subjects"
           value={totalSubjects}
-          accentPlacement="none"
-          icon={<IconBook />}
-          iconTileClassName={kpiIconCircleBlue}
-          context="Across all departments"
+          footer="Across all departments"
         />
-        <StatCard
-          layout="kpi"
-          tone="glass"
+        <CycleOverviewTile
+          wellClass={kpiWellViolet}
+          icon={<IconTrend />}
           label="Entries recorded"
           value={totalEntries.toLocaleString()}
-          accentPlacement="none"
-          icon={<IconTrend />}
-          iconTileClassName={kpiIconCircleViolet}
-          context={<span className="font-semibold text-status-approved-text">↗ +12% from Y10</span>}
+          footer={<span className="font-semibold text-status-approved-text">↗ +12% from Y10</span>}
         />
-        <StatCard
-          layout="kpi"
-          tone="glass"
+        <CycleOverviewTile
+          wellClass={kpiWellBlue}
+          icon={<IconShieldCheck />}
           label="Data integrity"
           value="99.7%"
-          accentPlacement="none"
-          icon={<IconShieldCheck />}
-          iconTileClassName={kpiIconCircleBlue}
-          context="Verified by Registry"
+          footer="Verified by Registry"
         />
       </div>
 
-      <section className="space-y-5">
+      <section className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-lg font-bold tracking-tight text-text">Result Points</h2>
-          <Button asChild variant="primary" className="rounded-lg px-5 text-sm font-semibold shadow-sm">
-            <Link href={`/assessments/${cycle.id}/points/new`}>+ Add point</Link>
-          </Button>
+          <Link href={`/assessments/${cycle.id}/points/new`} className={btnSolidDark}>
+            + Add point
+          </Link>
         </div>
 
         {cycle.points.length === 0 && (
-          <Card className="overflow-hidden rounded-2xl border border-border/70 bg-surface-container-lowest p-0 shadow-[var(--anx-elevated-shadow)]">
+          <Card className="overflow-hidden rounded-2xl border border-black/[0.06] bg-surface-container-lowest p-0 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_8px_24px_rgba(15,23,42,0.06)]">
             <DataTableEmpty
               title="No result points yet"
               description="Add a baseline, mock, or final results snapshot to start recording grades for this cycle."
@@ -302,91 +321,98 @@ export default async function CycleDetailPage({
             return (
               <article
                 key={point.id}
-                className="flex gap-5 rounded-2xl border border-border/60 bg-surface-container-lowest p-6 shadow-[var(--anx-elevated-shadow)] sm:gap-6 sm:p-8"
+                className="flex gap-6 rounded-2xl border border-black/[0.06] bg-surface-container-lowest p-7 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.07)] sm:gap-8 sm:p-9"
               >
-                <div className="flex shrink-0 items-start pt-1 sm:pt-0">
+                <div className="hidden shrink-0 sm:flex sm:items-start sm:pt-1">
                   <span
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-low text-sm font-bold tabular-nums text-muted sm:h-12 sm:w-12 sm:text-base"
+                    className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-100 text-lg font-bold tabular-nums text-zinc-400"
                     aria-label={`Result point ${ordinal}`}
                   >
                     {ordinal}
                   </span>
                 </div>
 
-                <div className="min-w-0 flex-1 space-y-5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1 space-y-6">
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 space-y-3">
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                         <span
-                          className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${POINT_TYPE_COLOURS[point.pointType]}`}
+                          className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}
                         >
                           {POINT_TYPE_LABELS[point.pointType]}
                         </span>
                         <span
-                          className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${STATUS_COLOURS[point.resultStatus]}`}
+                          className={`rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${STATUS_COLOURS[point.resultStatus]}`}
                         >
                           {STATUS_LABELS[point.resultStatus]}
                         </span>
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold leading-tight tracking-tight text-text sm:text-[28px] sm:tracking-[-0.03em]">
+                        <div className="flex items-start gap-3 sm:hidden">
+                          <span
+                            className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm font-bold tabular-nums text-zinc-400"
+                            aria-hidden
+                          >
+                            {ordinal}
+                          </span>
+                          <h3 className="min-w-0 text-2xl font-bold leading-tight tracking-tight text-text">
+                            {point.label}
+                          </h3>
+                        </div>
+                        <h3 className="hidden text-[1.65rem] font-bold leading-tight tracking-[-0.03em] text-text sm:block sm:text-[1.75rem]">
                           {point.label}
                         </h3>
                         {assessedDateLabel ? (
-                          <p className="mt-2 flex items-center gap-2 text-sm font-medium text-muted">
-                            <IconCalendar className="shrink-0 text-muted/80" />
-                            {assessedDateLabel}
+                          <p className="mt-2.5 flex items-center gap-2 pl-0 text-[0.9375rem] text-zinc-500 sm:pl-0">
+                            <IconCalendar className="h-4 w-4 shrink-0 text-zinc-400" />
+                            <span>{assessedDateLabel}</span>
                           </p>
                         ) : null}
                       </div>
                     </div>
 
-                    <div className="flex flex-shrink-0 flex-wrap gap-2 sm:justify-end sm:pt-1">
+                    <div className="flex flex-shrink-0 flex-wrap gap-2.5 lg:justify-end">
                       {point.resultStatus !== "LOCKED" ? (
-                        <Button asChild variant="primary" className="rounded-lg px-4 text-xs font-semibold">
-                          <Link href={`/assessments/${cycle.id}/points/${point.id}/upload`} className="gap-2">
-                            <IconUploadCloud />
-                            Upload results
-                          </Link>
-                        </Button>
+                        <Link href={`/assessments/${cycle.id}/points/${point.id}/upload`} className={btnSolidDark}>
+                          <IconUploadCloud />
+                          Upload results
+                        </Link>
                       ) : null}
                       {hasData ? (
-                        <Button asChild variant="secondary" className="rounded-lg border border-border/80 bg-surface-container-low px-4 text-xs font-semibold text-text shadow-none">
-                          <Link href={`/assessments/${cycle.id}/points/${point.id}`} className="gap-2">
-                            <IconBarChart />
-                            View analysis
-                          </Link>
-                        </Button>
+                        <Link href={`/assessments/${cycle.id}/points/${point.id}`} className={btnMutedOutline}>
+                          <IconBarChart />
+                          View analysis
+                        </Link>
                       ) : null}
                     </div>
                   </div>
 
                   {hasData ? (
                     <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
-                      <div className="rounded-xl border border-border/70 bg-transparent px-4 py-3">
-                        <div className="flex items-center gap-2 text-muted">
-                          <IconBook className="h-4 w-4 shrink-0 opacity-80" />
+                      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
+                        <div className="flex items-center gap-2 text-zinc-500">
+                          <IconBook className="h-4 w-4 shrink-0" />
                           <span className="text-[0.625rem] font-semibold uppercase tracking-[0.08em]">Subjects</span>
                         </div>
-                        <p className="mt-2 text-xl font-bold tabular-nums tracking-tight text-text">
+                        <p className="mt-2.5 text-xl font-bold tabular-nums tracking-tight text-text">
                           {point.assessments.length}
                         </p>
                       </div>
-                      <div className="rounded-xl border border-border/70 bg-transparent px-4 py-3">
-                        <div className="flex items-center gap-2 text-muted">
-                          <IconDocument className="h-4 w-4 shrink-0 opacity-80" />
+                      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
+                        <div className="flex items-center gap-2 text-zinc-500">
+                          <IconDocument className="h-4 w-4 shrink-0" />
                           <span className="text-[0.625rem] font-semibold uppercase tracking-[0.08em]">Entries</span>
                         </div>
-                        <p className="mt-2 text-xl font-bold tabular-nums tracking-tight text-text">
+                        <p className="mt-2.5 text-xl font-bold tabular-nums tracking-tight text-text">
                           {entries.toLocaleString()}
                         </p>
                       </div>
-                      <div className="rounded-xl border border-border/70 bg-transparent px-4 py-3">
-                        <div className="flex items-center gap-2 text-muted">
-                          <IconUsers className="h-4 w-4 shrink-0 opacity-80" />
+                      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
+                        <div className="flex items-center gap-2 text-zinc-500">
+                          <IconUsers className="h-4 w-4 shrink-0" />
                           <span className="text-[0.625rem] font-semibold uppercase tracking-[0.08em]">Students</span>
                         </div>
-                        <p className="mt-2 text-xl font-bold tabular-nums tracking-tight text-text">
+                        <p className="mt-2.5 text-xl font-bold tabular-nums tracking-tight text-text">
                           {matched.toLocaleString()}
                         </p>
                       </div>
@@ -394,17 +420,17 @@ export default async function CycleDetailPage({
                   ) : null}
 
                   {point.assessments.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 border-t border-zinc-100 pt-5">
                       {point.assessments.slice(0, 8).map((a) => (
                         <span
                           key={a.id}
-                          className="rounded-full border border-border/80 bg-surface-container-lowest px-3.5 py-1.5 text-[11px] font-semibold text-text"
+                          className="rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-[11px] font-semibold text-zinc-900"
                         >
                           {a.subject}
                         </span>
                       ))}
                       {point.assessments.length > 8 ? (
-                        <span className="rounded-full border border-border/60 bg-surface-container-low px-3.5 py-1.5 text-[11px] font-semibold text-muted">
+                        <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3.5 py-1.5 text-[11px] font-semibold text-zinc-500">
                           +{point.assessments.length - 8} MORE
                         </span>
                       ) : null}
