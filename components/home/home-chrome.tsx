@@ -168,6 +168,75 @@ export function HomePrimaryLink({
   );
 }
 
+/** Full-width dark hero banner with KPI strip — first thing users see on any dashboard. */
+export function DashboardHero({
+  eyebrow,
+  greeting,
+  kpis,
+  controls,
+}: {
+  eyebrow: string;
+  greeting: string;
+  kpis: Array<{
+    label: string;
+    value: string | number;
+    context?: string;
+    tone?: "default" | "warning" | "error" | "success";
+  }>;
+  controls?: ReactNode;
+}) {
+  const toneText: Record<string, string> = {
+    default: "text-white",
+    warning: "text-[var(--amber)]",
+    error: "text-[var(--coral)]",
+    success: "text-[#6ee7b7]",
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-[var(--primary-container)]">
+      {/* Hairline top sheen */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+        aria-hidden
+      />
+      <div className="relative px-7 pt-6 pb-7">
+        {/* Top row: eyebrow + title + controls */}
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-white/40">
+              {eyebrow}
+            </p>
+            <h2 className="mt-1.5 text-[1.625rem] font-bold leading-tight tracking-[-0.025em] text-white sm:text-[1.875rem]">
+              {greeting}
+            </h2>
+          </div>
+          {controls ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-3">{controls}</div>
+          ) : null}
+        </div>
+        {/* KPI strip */}
+        <div className="mt-7 grid grid-cols-2 gap-5 border-t border-white/10 pt-6 sm:grid-cols-4">
+          {kpis.map((kpi) => (
+            <div key={kpi.label} className="min-w-0">
+              <p className="truncate text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-white/40">
+                {kpi.label}
+              </p>
+              <p
+                className={`mt-0.5 text-[2.25rem] font-bold leading-none tracking-[-0.03em] tabular-nums ${toneText[kpi.tone ?? "default"]}`}
+              >
+                {kpi.value}
+              </p>
+              {kpi.context ? (
+                <p className="mt-1 text-xs leading-snug text-white/45">{kpi.context}</p>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Icons (replace emoji for consistent rendering) ───────────────── */
 
 export function IconBell({ className }: { className?: string }) {
