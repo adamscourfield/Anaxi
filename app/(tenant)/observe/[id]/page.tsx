@@ -34,7 +34,7 @@ function SectionHeader({
 }) {
   return (
     <div className="mb-4 flex items-center gap-2">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-15 text-amber-800 [&_svg]:h-4 [&_svg]:w-4">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-scale-some-light text-scale-some-text [&_svg]:h-4 [&_svg]:w-4">
         {icon}
       </span>
       <h2 className="text-[0.9375rem] font-semibold tracking-tight text-text">{children}</h2>
@@ -189,7 +189,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                   const displayName = override?.displayName || signal.displayNameDefault;
                   return (
                     <div key={signal.key} className="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-status-approved-light text-status-approved-text">
                         <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
                           <path d="M3 8l3.5 3.5L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -212,7 +212,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                       const displayName = override?.displayName || signal.displayNameDefault;
                       return (
                         <div key={signal.key} className="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3">
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-scale-some-light text-scale-some-text">
                             <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5">
                               <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

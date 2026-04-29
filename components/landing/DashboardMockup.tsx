@@ -32,10 +32,10 @@ export default function DashboardMockup() {
         </div>
         <div
           className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-          style={{ background: "rgba(5,150,105,0.08)" }}
+          style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)" }}
         >
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          <span className="text-2xs font-medium" style={{ color: "#059669" }}>
+          <div className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
+          <span className="text-2xs font-medium" style={{ color: "var(--success)" }}>
             Live
           </span>
         </div>

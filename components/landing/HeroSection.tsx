@@ -95,7 +95,7 @@ export default function HeroSection() {
                       border: "1px solid rgba(255,255,255,0.10)",
                     }}
                   >
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--success)]" />
                     <span className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
                       {signal}
                     </span>

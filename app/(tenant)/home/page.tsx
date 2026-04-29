@@ -47,6 +47,7 @@ import {
   IconTrendUp,
   IconUmbrella,
 } from "@/components/home/home-chrome";
+import { ppTableBadgeClass, sendTableBadgeClass } from "@/modules/assessments/attainmentColours";
 
 const DEFAULT_WINDOW_DAYS = 21;
 const ALLOWED_WINDOW_DAYS = [7, 14, 21, 28];
@@ -419,7 +420,7 @@ function LeadershipHome({
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-amber-600 [&_svg]:h-4 [&_svg]:w-4">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-scale-some-text [&_svg]:h-4 [&_svg]:w-4">
                 <IconStar />
               </span>
               <div>
@@ -439,11 +440,36 @@ function LeadershipHome({
             <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {effectiveWatchlistStudents.map((s) => {
                 const bandCfg = {
-                  URGENT:   { bar: "bg-[var(--error)]",   tint: "bg-red-50/70",     badge: "text-[var(--error)] bg-red-100/80",   label: "Urgent"   },
-                  PRIORITY: { bar: "bg-[var(--warning)]", tint: "bg-amber-50/60",   badge: "text-amber-700 bg-amber-100/80",      label: "Priority" },
-                  WATCH:    { bar: "bg-[var(--accent)]",  tint: "bg-blue-50/50",    badge: "text-[var(--accent)] bg-blue-100/70", label: "Watch"    },
-                  STABLE:   { bar: "bg-[var(--success)]", tint: "bg-emerald-50/50", badge: "text-[var(--success)] bg-emerald-100/70", label: "Stable" },
-                }[s.band] ?? { bar: "bg-[var(--accent)]", tint: "bg-blue-50/50", badge: "text-[var(--accent)] bg-blue-100/70", label: s.band };
+                  URGENT: {
+                    bar: "bg-[var(--error)]",
+                    tint: "bg-status-denied-light/70",
+                    badge: "text-status-denied-text bg-status-denied-light/80",
+                    label: "Urgent",
+                  },
+                  PRIORITY: {
+                    bar: "bg-[var(--warning)]",
+                    tint: "bg-scale-some-light/60",
+                    badge: "text-scale-some-text bg-scale-some-light/80",
+                    label: "Priority",
+                  },
+                  WATCH: {
+                    bar: "bg-[var(--accent)]",
+                    tint: "bg-cat-indigo-bg/50",
+                    badge: "text-[var(--accent)] bg-cat-indigo-bg/70",
+                    label: "Watch",
+                  },
+                  STABLE: {
+                    bar: "bg-[var(--success)]",
+                    tint: "bg-status-approved-light/50",
+                    badge: "text-status-approved-text bg-status-approved-light/70",
+                    label: "Stable",
+                  },
+                }[s.band] ?? {
+                  bar: "bg-[var(--accent)]",
+                  tint: "bg-cat-indigo-bg/50",
+                  badge: "text-[var(--accent)] bg-cat-indigo-bg/70",
+                  label: s.band,
+                };
 
                 return (
                   <Link
@@ -466,12 +492,8 @@ function LeadershipHome({
                       {/* Year + flags */}
                       <div className="flex flex-wrap items-center gap-1.5">
                         {s.yearGroup && <span className="text-[11px] text-muted">{s.yearGroup}</span>}
-                        {s.ppFlag && (
-                          <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">PP</span>
-                        )}
-                        {s.sendFlag && (
-                          <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">SEND</span>
-                        )}
+                        {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
+                        {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
                       </div>
 
                       {/* Attendance stat */}
@@ -483,7 +505,7 @@ function LeadershipHome({
                               s.attendancePct < 85
                                 ? "text-[var(--error)]"
                                 : s.attendancePct < 90
-                                ? "text-amber-600"
+                                ? "text-scale-some-text"
                                 : "text-[var(--success)]"
                             }`}
                           >
@@ -600,14 +622,14 @@ function LeadershipHome({
                           <Link
                             href="/leave/pending"
                             aria-label={`Deny leave for ${leave.requesterName}`}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#c06c6c] calm-transition hover:bg-red-50"
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#c06c6c] calm-transition hover:bg-status-denied-light"
                           >
                             <LeaveCloseIcon />
                           </Link>
                           <Link
                             href="/leave/pending"
                             aria-label={`Approve leave for ${leave.requesterName}`}
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-positive calm-transition hover:bg-emerald-50"
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-positive calm-transition hover:bg-status-approved-light"
                           >
                             <LeaveCheckIcon />
                           </Link>
@@ -662,7 +684,7 @@ function LeadershipHome({
         {/* Staff Needing Intervention */}
         <Card className="space-y-4 lg:col-span-4">
           <HomeCardHeadingSm
-            icon={<IconBolt className="text-amber-600" />}
+            icon={<IconBolt className="text-scale-some-text" />}
             title="Staff intervention"
             subtitle={`${interventionStaff.length} staff needing support`}
           />
@@ -794,8 +816,8 @@ function LeadershipHome({
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium text-text truncate">{s.studentName}</span>
                         {s.yearGroup && <span className="text-[11px] text-muted">{s.yearGroup}</span>}
-                        {s.ppFlag && <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">PP</span>}
-                        {s.sendFlag && <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">SEND</span>}
+                        {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
+                        {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
                       </div>
                       <p className="mt-0.5 text-[11px] text-muted truncate">
                         Lowest: {s.worstSubject} — {s.worstGrade}
@@ -926,7 +948,7 @@ function HodHome({
         <Card className="space-y-4 lg:col-span-7">
           <div className="flex items-center justify-between">
             <HomeCardHeadingSm
-              icon={<IconBolt className="text-amber-600" />}
+              icon={<IconBolt className="text-scale-some-text" />}
               title="Dept teacher priorities"
               subtitle={`${topDeptTeachers.length} teacher${topDeptTeachers.length !== 1 ? "s" : ""} in view`}
             />
@@ -987,7 +1009,7 @@ function HodHome({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-xl bg-[var(--surface-container-low)] p-4 space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-[10px]">✓</span>
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-status-approved-light text-[10px] text-status-approved-text">✓</span>
                   <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Strengths</span>
                 </div>
                 <div className="space-y-2.5">
@@ -999,13 +1021,13 @@ function HodHome({
                       <div key={sig.signalKey} className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                          <span className="text-[11px] font-bold text-emerald-600 tabular-nums">
+                          <span className="text-[11px] font-bold text-scale-strong-text tabular-nums">
                             {sig.currentMean !== null ? formatSignalRubricMean(sig.currentMean) : "—"}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-100">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-status-approved-light">
                           <div
-                            className="h-full rounded-full bg-emerald-500 calm-transition"
+                            className="h-full rounded-full bg-scale-strong calm-transition"
                             style={{
                               width:
                                 sig.currentMean !== null
@@ -1026,7 +1048,7 @@ function HodHome({
                 return hodWatchSignals.length > 0 ? (
                   <div className="rounded-xl bg-[var(--surface-container-low)] p-4 space-y-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-[10px]">⚠</span>
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-scale-some-light text-[10px] text-scale-some-text">⚠</span>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Areas to watch</span>
                     </div>
                     <div className="space-y-2.5">
@@ -1038,9 +1060,9 @@ function HodHome({
                               {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
                             </span>
                           </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-amber-100">
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-scale-some-light">
                             <div
-                              className="h-full rounded-full bg-amber-500 calm-transition"
+                              className="h-full rounded-full bg-scale-some-bar calm-transition"
                               style={{
                                 width:
                                   sig.delta !== null ? `${signalRubricDeltaBarWidthPct(sig.delta)}%` : "0%",
@@ -1173,7 +1195,7 @@ function TeacherHome({
                 {strengthSignals.length > 0 && (
                   <div className="rounded-xl bg-[var(--surface-container-low)] p-4 space-y-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-[10px]">✓</span>
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-status-approved-light text-[10px] text-status-approved-text">✓</span>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Strengths</span>
                     </div>
                     <div className="space-y-2.5">
@@ -1181,13 +1203,13 @@ function TeacherHome({
                         <div key={sig.signalKey} className="space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                            <span className="text-[11px] font-bold text-emerald-600 tabular-nums">
+                            <span className="text-[11px] font-bold text-scale-strong-text tabular-nums">
                               {sig.currentMean !== null ? formatSignalRubricMean(sig.currentMean) : "—"}
                             </span>
                           </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-100">
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-status-approved-light">
                             <div
-                              className="h-full rounded-full bg-emerald-500 calm-transition"
+                              className="h-full rounded-full bg-scale-strong calm-transition"
                               style={{
                                 width:
                                   sig.currentMean !== null
@@ -1204,7 +1226,7 @@ function TeacherHome({
                 {watchSignals.length > 0 && (
                   <div className="rounded-xl bg-[var(--surface-container-low)] p-4 space-y-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-amber-100 text-[10px]">⚠</span>
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-scale-some-light text-[10px] text-scale-some-text">⚠</span>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Areas to watch</span>
                     </div>
                     <div className="space-y-2.5">
@@ -1216,9 +1238,9 @@ function TeacherHome({
                               {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
                             </span>
                           </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-amber-100">
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-scale-some-light">
                             <div
-                              className="h-full rounded-full bg-amber-500 calm-transition"
+                              className="h-full rounded-full bg-scale-some-bar calm-transition"
                               style={{
                                 width:
                                   sig.delta !== null ? `${signalRubricDeltaBarWidthPct(sig.delta)}%` : "0%",
@@ -1280,7 +1302,7 @@ function TeacherHome({
         <Card className="space-y-4">
           <div className="flex items-center justify-between">
             <HomeCardHeadingSm
-              icon={<IconBolt className="text-amber-600" />}
+              icon={<IconBolt className="text-scale-some-text" />}
               title="Your actions"
               subtitle={`${openActions.length} open action${openActions.length !== 1 ? "s" : ""}`}
             />
