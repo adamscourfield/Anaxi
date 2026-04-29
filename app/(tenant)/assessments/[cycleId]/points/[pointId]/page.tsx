@@ -73,7 +73,8 @@ type GcseBasics = {
   em4: number; em5: number; em7: number;
   ppEm4: number; ppEm5: number; nonPpEm4: number; nonPpEm5: number;
   gap4: number; gap5: number;
-  sendEm4: number; nonSendEm4: number; sendGap4: number;
+  sendEm4: number; sendEm5: number; nonSendEm4: number; nonSendEm5: number;
+  sendGap4: number; sendGap5: number;
   students4: EMStudentResult[];
   students5: EMStudentResult[];
   students7: EMStudentResult[];
@@ -279,6 +280,7 @@ export default function ResultPointPage() {
   const [error, setError] = useState<string | null>(null);
   const [modalView, setModalView] = useState<ModalView>(null);
   const [expandedPctSubject, setExpandedPctSubject] = useState<string | null>(null);
+  const [gcseGapView, setGcseGapView] = useState<"pp" | "send">("pp");
 
   useEffect(() => {
     async function load() {
@@ -456,43 +458,102 @@ export default function ResultPointPage() {
                 </Link>
               </div>
 
-              {/* PP gap full cards */}
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                {[
-                  { label: "PP Gap — 4+ threshold", pp: metrics.gcseBasics.ppEm4, nonPp: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4 },
-                  { label: "PP Gap — 5+ threshold", pp: metrics.gcseBasics.ppEm5, nonPp: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5 },
-                ].map(({ label, pp, nonPp, gap }) => (
-                  <div key={label} className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
-                    <div className="flex items-start justify-between">
-                       <div>
-                         <h3 className="text-base font-bold tracking-tight text-text">{label}</h3>
-                         <p className="text-xs font-medium text-muted mt-0.5">Pupil Premium vs Non-Pupil Premium</p>
-                       </div>
-                       <GapBadge gap={gap} />
-                    </div>
-
-                    <div className="mt-6 space-y-4">
-                      <div>
-                        <div className="flex justify-between items-baseline mb-2">
-                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary-container)]">NON-PP</span>
-                           <span className="text-xl font-bold leading-none tracking-tight text-text">{nonPp}%</span>
-                        </div>
-                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
-                          <div className="bg-[var(--primary-container)] h-full rounded-r-full" style={{ width: `${nonPp}%` }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between items-baseline mb-2">
-                           <span className="text-[10px] font-bold uppercase tracking-widest text-muted">PP STUDENTS</span>
-                           <span className="text-xl font-bold leading-none tracking-tight text-muted">{pp}%</span>
-                        </div>
-                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
-                          <div className="bg-surface-container-high h-full rounded-r-full" style={{ width: `${pp}%` }}></div>
-                        </div>
-                      </div>
-                    </div>
+              {/* PP / SEND gap headline cards (toggle) */}
+              <div className="space-y-3 pt-2">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">Equity gaps (English & Maths)</p>
+                  <div className="segmented-toggle w-fit shrink-0" role="tablist" aria-label="Gap comparison group">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={gcseGapView === "pp"}
+                      className={`segmented-toggle-btn ${gcseGapView === "pp" ? "segmented-toggle-btn-active" : ""}`}
+                      onClick={() => setGcseGapView("pp")}
+                    >
+                      PP
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={gcseGapView === "send"}
+                      className={`segmented-toggle-btn ${gcseGapView === "send" ? "segmented-toggle-btn-active" : ""}`}
+                      onClick={() => setGcseGapView("send")}
+                    >
+                      SEND
+                    </button>
                   </div>
-                ))}
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {gcseGapView === "pp"
+                    ? [
+                        { label: "PP Gap — 4+ threshold", cohort: metrics.gcseBasics.ppEm4, baseline: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4, baselineLabel: "NON-PP", cohortLabel: "PP STUDENTS" },
+                        { label: "PP Gap — 5+ threshold", cohort: metrics.gcseBasics.ppEm5, baseline: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5, baselineLabel: "NON-PP", cohortLabel: "PP STUDENTS" },
+                      ].map(({ label, cohort, baseline, gap, baselineLabel, cohortLabel }) => (
+                        <div key={label} className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="text-base font-bold tracking-tight text-text">{label}</h3>
+                              <p className="mt-0.5 text-xs font-medium text-muted">Pupil Premium vs Non-Pupil Premium</p>
+                            </div>
+                            <GapBadge gap={gap} />
+                          </div>
+                          <div className="mt-6 space-y-4">
+                            <div>
+                              <div className="mb-2 flex items-baseline justify-between">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary-container)]">{baselineLabel}</span>
+                                <span className="text-xl font-bold leading-none tracking-tight text-text">{baseline}%</span>
+                              </div>
+                              <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
+                                <div className="h-full rounded-r-full bg-[var(--primary-container)]" style={{ width: `${baseline}%` }} />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="mb-2 flex items-baseline justify-between">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">{cohortLabel}</span>
+                                <span className="text-xl font-bold leading-none tracking-tight text-muted">{cohort}%</span>
+                              </div>
+                              <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
+                                <div className="h-full rounded-r-full bg-surface-container-high" style={{ width: `${cohort}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    : [
+                        { label: "SEND Gap — 4+ threshold", cohort: metrics.gcseBasics.sendEm4, baseline: metrics.gcseBasics.nonSendEm4, gap: metrics.gcseBasics.sendGap4, baselineLabel: "NON-SEND", cohortLabel: "SEND STUDENTS" },
+                        { label: "SEND Gap — 5+ threshold", cohort: metrics.gcseBasics.sendEm5, baseline: metrics.gcseBasics.nonSendEm5, gap: metrics.gcseBasics.sendGap5, baselineLabel: "NON-SEND", cohortLabel: "SEND STUDENTS" },
+                      ].map(({ label, cohort, baseline, gap, baselineLabel, cohortLabel }) => (
+                        <div key={label} className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="text-base font-bold tracking-tight text-text">{label}</h3>
+                              <p className="mt-0.5 text-xs font-medium text-muted">SEND vs Non-SEND</p>
+                            </div>
+                            <GapBadge gap={gap} />
+                          </div>
+                          <div className="mt-6 space-y-4">
+                            <div>
+                              <div className="mb-2 flex items-baseline justify-between">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--info)]">{baselineLabel}</span>
+                                <span className="text-xl font-bold leading-none tracking-tight text-text">{baseline}%</span>
+                              </div>
+                              <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
+                                <div className="h-full rounded-r-full bg-[var(--info)]" style={{ width: `${baseline}%` }} />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="mb-2 flex items-baseline justify-between">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">{cohortLabel}</span>
+                                <span className="text-xl font-bold leading-none tracking-tight text-muted">{cohort}%</span>
+                              </div>
+                              <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
+                                <div className="h-full rounded-r-full bg-surface-container-high" style={{ width: `${cohort}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                </div>
               </div>
             </section>
           )}
