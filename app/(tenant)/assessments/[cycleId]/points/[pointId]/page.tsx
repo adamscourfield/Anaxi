@@ -220,6 +220,11 @@ function GapBadge({ gap }: { gap: number }) {
 function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{ grade: string; count: number }>; format: GradeFormat; onGradeClick?: (grade: string) => void }) {
   const total = distribution.reduce((s, d) => s + d.count, 0);
   if (total === 0) return <span className="text-xs text-[var(--on-surface-muted)]">No data</span>;
+  const showGradeLabel = (pct: number, grade: string) => {
+    if (pct >= 5) return true;
+    if (grade.length <= 2 && pct >= 2.5) return true;
+    return false;
+  };
   return (
     <div className="space-y-1">
       <div className="flex h-5 gap-0.5 overflow-hidden rounded">
@@ -231,7 +236,7 @@ function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{
             <div key={d.grade} className={`flex items-center justify-center text-[9px] font-bold ${bar} ${onGradeClick ? 'cursor-pointer hover:opacity-80' : ''}`}
                  style={{ width: `${pct}%`, minWidth: "14px" }} title={`${d.grade}: ${d.count} (${Math.round(pct)}%)`}
                  onClick={() => onGradeClick && onGradeClick(d.grade)}>
-              {pct > 7 && d.grade}
+              {showGradeLabel(pct, d.grade) ? d.grade : ""}
             </div>
           );
         })}
@@ -1085,23 +1090,39 @@ export default function ResultPointPage() {
 
       {/* Modal overlay — grade-level and E&M drill-downs */}
       {modalView && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-[var(--surface)] text-[var(--on-surface)] rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-[var(--outline-variant)]/50">
-            <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
-              <h2 className="text-lg font-bold">
-                {modalView.type === 'GRADE'
-                  ? `Students scoring ${modalView.grade} in ${modalView.subject}`
-                  : `E&M Baseline: ${modalView.label} Students`}
-              </h2>
-              <button
-                onClick={() => setModalView(null)}
-                className="text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
-                aria-label="Close modal">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <button
+            type="button"
+            className="fixed inset-0 z-0 bg-[var(--overlay)] backdrop-blur-[1px] animate-in fade-in duration-200"
+            aria-label="Close dialog"
+            onClick={() => setModalView(null)}
+          />
+          <div className="relative z-10 flex min-h-full items-center justify-center p-4 sm:p-6 pointer-events-none">
+            <div
+              className="pointer-events-auto my-8 flex w-full max-w-2xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
+                <h2 className="text-lg font-bold">
+                  {modalView.type === "GRADE"
+                    ? `Students scoring ${modalView.grade} in ${modalView.subject}`
+                    : `E&M Baseline: ${modalView.label} Students`}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setModalView(null)}
+                  className="text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
+                  aria-label="Close modal"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-            <div className="p-3 overflow-y-auto flex-1">
+              <div className="min-h-0 flex-1 overflow-y-auto p-3">
               {modalView.type === 'EM' && (
                 <div className="table-shell border-0 shadow-none">
                   <table className="w-full text-left text-sm">
@@ -1195,10 +1216,9 @@ export default function ResultPointPage() {
                 </div>
               )}
               {modalView.students.length === 0 && (
-                 <div className="p-8 text-center text-[var(--on-surface-muted)]">
-                   No student data available.
-                 </div>
+                <div className="p-8 text-center text-[var(--on-surface-muted)]">No student data available.</div>
               )}
+            </div>
             </div>
           </div>
         </div>
