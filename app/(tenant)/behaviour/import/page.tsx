@@ -5,8 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { SnapshotUploader } from "@/components/import/SnapshotUploader";
 import { SnapshotImportHistory } from "@/components/import/SnapshotImportHistory";
-import { H1, BodyText } from "@/components/ui/typography";
-import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function BehaviourImportPage() {
   const user = await getSessionUserOrThrow();
@@ -67,72 +66,70 @@ export default async function BehaviourImportPage() {
   }));
 
   return (
-    <div className="space-y-6">
-      {/* ── Header ──────────────────────────────────────────────────── */}
-      <div>
-        <H1>Import Student Snapshot Data</H1>
-        <BodyText className="mt-1 max-w-2xl text-muted">
-          Bulk synchronize student behavior and assessment records using standardized CSV snapshots.
-          Ensure all headers match the institutional ledger template.
-        </BodyText>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Import Student Snapshot Data"
+        titleClassName="text-pretty text-[clamp(1.5rem,3.5vw,2rem)] font-bold leading-[1.12] tracking-[-0.03em] text-text"
+        subtitle={
+          <>
+            Bulk synchronize student behavior and assessment records using standardized CSV snapshots.
+            Ensure all headers match the institutional ledger template.
+          </>
+        }
+        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-10"
+      />
 
-      {/* ── Upload Section ─────────────────────────────────────────── */}
       <SnapshotUploader />
 
-      {/* ── Stat Cards ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* Total Records Sync'd */}
-        <Card className="flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div className="home-hero-glass flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)] sm:p-6">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
               Total Records Sync&apos;d
             </p>
-            <div className="mt-1.5 flex items-baseline gap-2">
-              <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-text tabular-nums">
+            <div className="mt-2 flex flex-wrap items-baseline gap-2">
+              <span className="text-[2rem] font-bold leading-none tracking-[-0.03em] text-text tabular-nums sm:text-[2.25rem]">
                 {totalRecords.toLocaleString()}
               </span>
               {growthPct !== 0 && (
                 <span
-                  className={`text-xs font-medium ${
-                    growthPct > 0 ? "text-[var(--success)]" : "text-error"
+                  className={`text-xs font-semibold tabular-nums ${
+                    growthPct > 0 ? "text-[var(--success)]" : "text-[var(--error)]"
                   }`}
                 >
-                  {growthPct > 0 ? "↗" : "↘"}{Math.abs(growthPct)}%
+                  {growthPct > 0 ? "↗" : "↘"}
+                  {Math.abs(growthPct)}%
                 </span>
               )}
             </div>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-container)] text-[var(--on-surface-variant)]">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-low)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_20%,transparent)]">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <rect x="3" y="3" width="7" height="7" />
               <rect x="14" y="3" width="7" height="7" />
               <rect x="14" y="14" width="7" height="7" />
               <rect x="3" y="14" width="7" height="7" />
             </svg>
           </div>
-        </Card>
+        </div>
 
-        {/* Integrity Score */}
-        <Card className="flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-              Integrity Score
-            </p>
-            <div className="mt-1.5 flex items-baseline gap-2">
-              <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-text tabular-nums">
+        <div className="home-hero-glass flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)] sm:p-6">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Integrity Score</p>
+            <div className="mt-2 flex flex-wrap items-baseline gap-2">
+              <span className="text-[2rem] font-bold leading-none tracking-[-0.03em] text-text tabular-nums sm:text-[2.25rem]">
                 {integrityScore}%
               </span>
-              <span className="text-xs text-muted">Institutional Std</span>
+              <span className="text-xs font-medium text-muted">Institutional Std</span>
             </div>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-container)] text-[var(--on-surface-variant)]">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-low)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_20%,transparent)]">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               <polyline points="9 12 11.25 14.25 15 9" />
             </svg>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* ── Recent Import History ──────────────────────────────────── */}

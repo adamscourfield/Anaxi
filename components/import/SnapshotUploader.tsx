@@ -12,6 +12,8 @@ import {
 } from "@/modules/students/snapshot-fields";
 import type { SnapshotMapping, CountScope } from "@/modules/students/snapshot-import";
 
+const MAX_FILE_SIZE_BYTES = 24 * 1024 * 1024; // 24MB
+
 const COUNT_SCOPE_OPTIONS: { value: CountScope; label: string }[] = [
   { value: "ROLLING_21_DAYS", label: "Rolling 21 days" },
   { value: "ROLLING_28_DAYS", label: "Rolling 28 days" },
@@ -53,10 +55,8 @@ export function SnapshotUploader() {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
 
-  const MAX_FILE_SIZE = 24 * 1024 * 1024; // 24MB
-
   const parseFile = useCallback(async (file: File) => {
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_FILE_SIZE_BYTES) {
       setImportError("File exceeds 24MB limit. Please select a smaller file.");
       return;
     }
@@ -183,12 +183,12 @@ export function SnapshotUploader() {
   const unmappedRequired = ANAXI_FIELDS.filter((f) => !fieldMap[f]);
 
   return (
-    <Card className="p-6">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+    <Card className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] !p-0 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_14px_44px_-14px_rgba(0,0,0,0.08)]">
+      <div className="grid grid-cols-1 gap-0 lg:grid-cols-[1fr_min(100%,380px)]">
         {/* Left: Upload area */}
-        <div className="space-y-4">
+        <div className="space-y-5 p-6 sm:p-8 lg:border-r lg:border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)]">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-container)] text-[var(--on-surface-variant)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface-container-low)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_15%,transparent)]">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                 <polyline points="14 2 14 8 20 8" />
@@ -251,7 +251,7 @@ export function SnapshotUploader() {
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="mt-4 rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-5 py-2 text-sm font-medium text-text transition-colors hover:bg-[var(--surface-container-low)]"
+                  className="mt-4 rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-[var(--surface-container-lowest)] px-6 py-2.5 text-sm font-semibold text-text shadow-sm transition-colors hover:bg-[var(--surface-container-low)]"
                 >
                   Browse Files
                 </button>
@@ -386,9 +386,9 @@ export function SnapshotUploader() {
         </div>
 
         {/* Right: Pro Tip + Process Import */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5 bg-[color-mix(in_srgb,var(--surface-container-low)_35%,var(--surface-container-lowest))] p-6 sm:p-8">
           {/* Pro Tip */}
-          <div className="rounded-2xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5">
+          <div className="rounded-2xl border border-[color-mix(in_srgb,var(--pill-info-ring)_35%,transparent)] bg-[color-mix(in_srgb,var(--pill-info-bg)_55%,var(--surface-container-lowest))] p-5">
             <div className="mb-2 flex items-center gap-2">
               <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--pill-info-bg)] text-[var(--pill-info-text)]">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -450,7 +450,7 @@ export function SnapshotUploader() {
             <Button
               onClick={handleImport}
               disabled={importing || unmappedRequired.length > 0 || !rawCsv}
-              className="w-full gap-2 py-3.5 text-base"
+              className="w-full gap-2 rounded-full py-3.5 text-base font-semibold shadow-md"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="17 1 21 5 17 9" />

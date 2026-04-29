@@ -119,7 +119,7 @@ export function StudentsToolbar({
         <div className="filter-actions">
           <button
             type="submit"
-            className="btn-filter-primary"
+            className="btn-filter-primary btn-filter-primary--pill"
           >
             Apply Filters
           </button>

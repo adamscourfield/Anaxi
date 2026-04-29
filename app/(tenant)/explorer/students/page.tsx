@@ -15,6 +15,7 @@ import {
   type RiskBand,
 } from "@/modules/analysis/studentRisk";
 import { StudentsToolbar } from "./StudentsToolbar";
+import { triangulationPpClass, triangulationSendClass } from "@/modules/assessments/attainmentColours";
 
 /* ─── Constants ────────────────────────────────────────────────────────────── */
 
@@ -65,13 +66,13 @@ function fmtDate(date: Date | null): string {
 function bandPillClass(band: RiskBand): string {
   switch (band) {
     case "URGENT":
-      return "bg-scale-limited-bar text-on-primary";
+      return "bg-[var(--pill-error-bg)] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]";
     case "PRIORITY":
-      return "bg-scale-limited-bar text-on-primary";
+      return "bg-[color-mix(in_srgb,var(--scale-limited-light)_88%,transparent)] text-[var(--scale-limited-text)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--scale-limited-bar)_22%,transparent)]";
     case "WATCH":
-      return "bg-scale-some-bar text-on-primary";
+      return "bg-[var(--pill-warning-bg)] text-[var(--pill-warning-text)] ring-1 ring-inset ring-[var(--pill-warning-ring)]";
     case "STABLE":
-      return "bg-scale-strong-bar text-on-primary";
+      return "bg-[var(--pill-success-bg)] text-[var(--pill-success-text)] ring-1 ring-inset ring-[var(--pill-success-ring)]";
   }
 }
 
@@ -235,8 +236,11 @@ export default async function StudentsPage({
       {/* ── Header ──────────────────────────────────────────────── */}
       <PageHeader
         eyebrow="Explorer"
+        eyebrowClassName="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted"
         title="Students"
+        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
         subtitle="Risk bands, attendance, and flags for your cohort."
+        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8"
         actions={
           <>
             {showExport && (
@@ -245,17 +249,22 @@ export default async function StudentsPage({
                 <input type="hidden" name="windowDays" value={String(windowDays)} />
                 <button
                   type="submit"
-                  className="rounded-lg border border-border/50 bg-surface-container-lowest px-4 py-2.5 text-[0.8125rem] font-medium text-text calm-transition hover:border-border hover:bg-bg"
+                  className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:border-text/25 hover:bg-[var(--surface-container-low)]"
                 >
+                  <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                    <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
+                    <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
+                  </svg>
                   Export CSV
                 </button>
               </form>
             )}
             <Link
               href="/students/import"
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary shadow-[var(--shadow-btn)] calm-transition hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary shadow-md calm-transition hover:bg-primaryBtnHover hover:shadow-lg motion-safe:hover:-translate-y-px active:scale-[0.98]"
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M14 2v6h6M12 18v-6M9 15h6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -266,13 +275,13 @@ export default async function StudentsPage({
       />
 
       {/* ── Cohort overview ───────────────────────────────────────── */}
-      <div className="mb-8 rounded-2xl glass-card p-6 sm:p-8">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-border/25">
+      <div className="explorer-kpi-tile rounded-2xl p-6 sm:p-8">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)]">
           <div className="lg:pr-8">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
               Cohort
             </p>
-            <p className="mt-2 text-[2.75rem] font-bold leading-none tracking-tight text-text sm:text-[3.25rem]">
+            <p className="mt-2 text-[2.75rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums sm:text-[3.25rem]">
               {allRows.length.toLocaleString()}
             </p>
             <p className="mt-2 text-[0.8125rem] text-muted">
@@ -284,7 +293,7 @@ export default async function StudentsPage({
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
               Avg attendance
             </p>
-            <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-text sm:text-[2.125rem]">
+            <p className="mt-2 text-[2.125rem] font-bold tabular-nums tracking-[-0.03em] text-text sm:text-[2.25rem]">
               {avgAttendance.toFixed(1)}%
             </p>
             <p className="mt-2 text-[0.8125rem] text-muted">
@@ -296,7 +305,7 @@ export default async function StudentsPage({
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
               Urgent + priority
             </p>
-            <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-text sm:text-[2.125rem]">
+            <p className="mt-2 text-[2.125rem] font-bold tabular-nums tracking-[-0.03em] text-text sm:text-[2.25rem]">
               {priorityCount}
             </p>
             <p className="mt-2 text-[0.8125rem] text-muted">
@@ -308,7 +317,7 @@ export default async function StudentsPage({
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
               Below 80% attendance
             </p>
-            <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-text sm:text-[2.125rem]">
+            <p className="mt-2 text-[2.125rem] font-bold tabular-nums tracking-[-0.03em] text-text sm:text-[2.25rem]">
               {lowAttendanceCount}
             </p>
             <p className="mt-2 text-[0.8125rem] text-muted">
@@ -400,12 +409,12 @@ export default async function StudentsPage({
                     <td className="px-4 py-4">
                       <div className="flex gap-1.5">
                         {row.sendFlag && (
-                          <span className="rounded bg-primary-container px-2 py-0.5 text-[10px] font-semibold uppercase text-on-primary">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${triangulationSendClass}`}>
                             SEN
                           </span>
                         )}
                         {row.ppFlag && (
-                          <span className="rounded bg-primary-container px-2 py-0.5 text-[10px] font-semibold uppercase text-on-primary">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${triangulationPpClass}`}>
                             PP
                           </span>
                         )}
@@ -433,9 +442,9 @@ export default async function StudentsPage({
                             : "—"}
                         </span>
                         {row.attendancePct !== null && (
-                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-container-low">
+                          <div className="h-2 w-20 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--surface-container-high)_85%,transparent)]">
                             <div
-                              className={`h-full rounded-full ${attendanceBarColor(row.attendancePct)}`}
+                              className={`home-stat-bar-fill h-full rounded-full ${attendanceBarColor(row.attendancePct)}`}
                               style={{
                                 width: `${Math.min(100, Math.max(0, row.attendancePct))}%`,
                               }}
@@ -454,7 +463,7 @@ export default async function StudentsPage({
                     <td className="px-4 py-4">
                       <Link
                         href={`/analysis/students/${row.studentId}?window=${windowDays}`}
-                        className="link-accent text-sm font-medium calm-transition"
+                        className="text-sm font-semibold text-text underline decoration-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] underline-offset-2 calm-transition hover:decoration-text"
                       >
                         View →
                       </Link>
