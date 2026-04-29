@@ -968,7 +968,7 @@ export default function ResultPointPage() {
               {modalView.type === 'EM' && (
                 <div className="table-shell border-0 shadow-none">
                   <table className="w-full text-left text-sm">
-                    <thead className="sticky top-0 z-10 bg-surface-container-lowest">
+                    <thead className="sticky top-0 z-10 border-b border-[var(--outline-variant)]/20 anx-card-inset">
                       <tr className="table-head-row">
                         <th className="px-5 py-3">Student</th>
                         <th className="px-4 py-3 text-center">Status</th>
@@ -978,9 +978,9 @@ export default function ResultPointPage() {
                     </thead>
                     <tbody>
                       {modalView.students.sort((a, b) => {
-                         if (a.met !== b.met) return a.met ? -1 : 1;
-                         return a.name.localeCompare(b.name);
-                      }).map(st => (
+                        if (a.met !== b.met) return a.met ? -1 : 1;
+                        return a.name.localeCompare(b.name);
+                      }).map((st) => (
                         <tr key={st.studentId} className="table-row calm-transition">
                           <td className="px-5 py-3 font-medium">
                             <Link href={`/students/${st.studentId}`} className="calm-transition hover:text-[var(--accent)]">
@@ -989,9 +989,13 @@ export default function ResultPointPage() {
                           </td>
                           <td className="px-4 py-3 text-center">
                             {st.met ? (
-                              <span className="inline-flex items-center rounded-full bg-scale-strong-light px-2 py-0.5 text-xs font-semibold text-scale-strong-text">Met</span>
+                              <span className="inline-flex items-center rounded-full bg-scale-strong-light px-2 py-0.5 text-xs font-semibold text-scale-strong-text">
+                                Met
+                              </span>
                             ) : (
-                              <span className="inline-flex items-center rounded-full bg-scale-limited-light px-2 py-0.5 text-xs font-semibold text-scale-limited-text">Not Met</span>
+                              <span className="inline-flex items-center rounded-full bg-scale-limited-light px-2 py-0.5 text-xs font-semibold text-scale-limited-text">
+                                Not Met
+                              </span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-center">
@@ -1018,7 +1022,7 @@ export default function ResultPointPage() {
               {modalView.type === 'GRADE' && (
                 <div className="table-shell border-0 shadow-none">
                   <table className="w-full text-left text-sm">
-                    <thead className="sticky top-0 z-10 bg-surface-container-lowest">
+                    <thead className="sticky top-0 z-10 border-b border-[var(--outline-variant)]/20 anx-card-inset">
                       <tr className="table-head-row">
                         <th className="px-5 py-3">Student</th>
                         <th className="px-4 py-3 text-center">Grade in {modalView.subject}</th>

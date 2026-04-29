@@ -242,7 +242,7 @@ export function SubjectDistributionSection({
             <div className="p-3 overflow-y-auto flex-1">
               <div className="table-shell border-0 shadow-none">
                 <table className="w-full text-left text-sm">
-                  <thead className="sticky top-0 z-10 bg-surface-container-lowest">
+                  <thead className="sticky top-0 z-10 border-b border-[var(--outline-variant)]/20 anx-card-inset">
                     <tr className="table-head-row">
                       <th className="px-5 py-3">Student</th>
                       <th className="px-4 py-3 text-center">{scoreColumnLabel}</th>

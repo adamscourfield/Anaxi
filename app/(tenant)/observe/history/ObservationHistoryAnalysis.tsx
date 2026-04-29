@@ -402,7 +402,7 @@ export function ObservationHistoryAnalysis({
                 href={analysisHref(preset, historyFilterQueryString)}
                 className={`inline-flex items-center rounded-full px-3.5 py-1.5 text-[0.75rem] font-semibold calm-transition ${
                   active
-                    ? "bg-accent text-on-primary shadow-sm"
+                    ? "bg-accent text-on-primary anx-card-elevated"
                     : "border border-border/40 bg-surface-container-low text-muted hover:border-border hover:text-text"
                 }`}
               >

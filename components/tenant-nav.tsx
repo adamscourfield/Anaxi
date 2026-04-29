@@ -197,7 +197,7 @@ export function TenantNav({
 
   const shellClass = isDrawer
     ? "fixed left-0 top-0 z-50 flex h-screen w-[min(100vw,280px)] max-w-[min(100vw,280px)] flex-col border-r border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] shadow-lg calm-transition glass-surface"
-    : `hidden md:flex fixed left-0 top-0 z-30 h-screen flex-col border-r border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] shadow-sm calm-transition glass-surface ${sidebarWidth}`;
+    : `hidden md:flex fixed left-0 top-0 z-30 h-screen flex-col border-r border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] anx-card-elevated calm-transition glass-surface ${sidebarWidth}`;
 
   return (
     <aside
@@ -212,7 +212,7 @@ export function TenantNav({
           onClick={() => isDrawer && onNavigate?.()}
           className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} group calm-transition rounded-[0.75rem] ${collapsed ? "p-1" : "px-1 py-0.5 -mx-1"} motion-safe:group-hover:-translate-y-px motion-safe:group-active:scale-[0.99]`}
         >
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.75rem] bg-[var(--surface-container-high)] shadow-sm calm-transition group-hover:shadow-md">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.75rem] bg-[var(--surface-container-high)] anx-card-elevated calm-transition group-hover:shadow-md">
             <Image src="/anaxi-logo.png" alt="Anaxi" width={22} height={22} priority className="h-[22px] w-[22px] object-contain" />
           </span>
           {!collapsed && (
@@ -253,7 +253,7 @@ export function TenantNav({
                         onClick={() => isDrawer && onNavigate?.()}
                         className={`group flex items-center ${collapsed ? "justify-center px-2" : "justify-between pl-5 pr-3"} rounded-[0.75rem] py-2 calm-transition motion-safe:active:scale-[0.99] ${
                           active
-                            ? "bg-[var(--surface-container)] text-[var(--on-surface)] font-semibold shadow-sm"
+                            ? "bg-[var(--surface-container)] text-[var(--on-surface)] font-semibold anx-card-elevated"
                             : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] motion-safe:hover:translate-x-0.5"
                         }`}
                       >

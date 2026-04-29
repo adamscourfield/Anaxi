@@ -242,7 +242,7 @@ export default async function LeaveDetailPage({ params, searchParams }: { params
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 text-[0.9375rem] font-semibold text-on-primary shadow-sm calm-transition hover:bg-accentHover"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 text-[0.9375rem] font-semibold text-on-primary calm-transition anx-card-elevated hover:bg-accentHover"
             >
               Save decision
             </button>

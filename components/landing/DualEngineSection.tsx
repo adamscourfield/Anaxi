@@ -38,7 +38,7 @@ export default function DualEngineSection() {
               onClick={() => setActiveTab("operations")}
               className={`px-4 py-2 rounded-lg text-sm font-medium calm-transition duration-150 ${
                 activeTab === "operations"
-                  ? "bg-white shadow-sm"
+                  ? "bg-white anx-card-elevated"
                   : "hover:bg-white/50"
               }`}
               style={{
@@ -53,7 +53,7 @@ export default function DualEngineSection() {
             <button
               onClick={() => setActiveTab("pedagogy")}
               className={`px-4 py-2 rounded-lg text-sm font-medium calm-transition duration-150 ${
-                activeTab === "pedagogy" ? "shadow-sm" : "hover:bg-white/50"
+                activeTab === "pedagogy" ? "anx-card-elevated" : "hover:bg-white/50"
               }`}
               style={{
                 background:

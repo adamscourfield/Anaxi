@@ -217,7 +217,7 @@ export default async function AnalysisPage({
   const secondaryStats = buildSecondaryStats(summary, labels, detentionPlural, internalExclusionPlural, suspensionPlural);
 
   return (
-    <div className="space-y-8">
+    <div className="anx-reports-page space-y-8">
       <ExplorerBackLink />
 
       <PageHeader
@@ -279,7 +279,7 @@ export default async function AnalysisPage({
               {secondaryStats.map((s) => (
                 <div
                   key={s.key}
-                  className="rounded-xl bg-[var(--surface-container-low)] px-4 py-3.5 shadow-sm"
+                  className="anx-card-inset rounded-xl px-4 py-3.5"
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">{s.label}</p>
                   <p

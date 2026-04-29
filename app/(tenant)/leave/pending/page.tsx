@@ -154,7 +154,7 @@ export default async function LeavePendingPage() {
                 {/* Action */}
                 <Link
                   href={`/leave/${request.id}`}
-                  className="shrink-0 rounded-lg bg-accent px-3.5 py-2 text-[0.8125rem] font-semibold text-on-primary  shadow-sm calm-transition hover:bg-accentHover"
+                  className="shrink-0 rounded-lg bg-accent px-3.5 py-2 text-[0.8125rem] font-semibold text-on-primary calm-transition anx-card-elevated hover:bg-accentHover"
                 >
                   Review
                 </Link>

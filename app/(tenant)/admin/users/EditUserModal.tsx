@@ -80,7 +80,7 @@ function Toggle({
       } ${checked ? "bg-[var(--primary)]" : "bg-surface-container-high"}`}
     >
       <span
-        className={`inline-block h-[20px] w-[20px] rounded-full bg-white shadow-sm transition-transform duration-200 ${
+        className={`inline-block h-[20px] w-[20px] rounded-full bg-[var(--surface-container-lowest)] anx-card-elevated transition-transform duration-200 ${
           checked ? "translate-x-[23px]" : "translate-x-[3px]"
         }`}
       />
