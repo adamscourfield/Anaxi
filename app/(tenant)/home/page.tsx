@@ -266,11 +266,11 @@ function LeadershipHome({
   return (
     <div className="w-full min-w-0 space-y-8">
       {/* ═══ Hero Section 1: On-Call Status + Attendance + Observations ═══ */}
-      <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
+      <section className="flex min-w-0 flex-col gap-5 lg:flex-row lg:items-stretch">
         {/* On-Call Live Status (main box) */}
         <Card
           id="on-call-status-card"
-          className="scroll-mt-20 flex min-h-0 min-w-0 flex-1 flex-col gap-4"
+          className="scroll-mt-20 flex min-h-0 min-w-0 flex-1 flex-col gap-5 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]"
         >
           <HomeCardHeading
             icon={<IconBell />}
@@ -298,21 +298,21 @@ function LeadershipHome({
                 <div
                   key={oc.id}
                   id={i === firstImmediateSupportIdx ? "immediate-support-needed" : undefined}
-                  className={`group flex min-w-0 flex-col gap-2 rounded-xl p-3 calm-transition sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-4 ${
+                  className={`group flex min-w-0 flex-col gap-2 rounded-[14px] border border-transparent p-3.5 calm-transition sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-4 ${
                     i === firstImmediateSupportIdx ? "scroll-mt-20" : ""
                   } ${
                     oc.status === "OPEN" || oc.status === "ACKNOWLEDGED"
-                      ? "bg-[var(--surface-container-low)] group-hover:bg-[var(--surface-container)] focus-within:bg-[var(--surface-container)]"
-                      : "bg-[var(--surface-container-lowest)] group-hover:bg-[var(--surface-container-low)] focus-within:bg-[var(--surface-container-low)]"
+                      ? "border-[color-mix(in_srgb,var(--error)_12%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_55%,var(--surface-container-lowest))] group-hover:bg-[color-mix(in_srgb,var(--pill-error-bg)_65%,var(--surface-container-low))] focus-within:bg-[color-mix(in_srgb,var(--pill-error-bg)_65%,var(--surface-container-low))]"
+                      : "bg-[var(--surface-container-low)]/80 group-hover:bg-[var(--surface-container-low)] focus-within:bg-[var(--surface-container-low)]"
                   }`}
                 >
                   <Link
                     href={`/on-call/${oc.id}`}
-                    className="flex min-w-0 flex-1 items-center gap-2 sm:min-w-0 sm:gap-3"
+                    className="home-row-link flex min-w-0 flex-1 items-center gap-3 sm:min-w-0"
                   >
                     <Avatar name={oc.requesterName} size="md" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-text">{oc.requesterName}</p>
+                      <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{oc.requesterName}</p>
                       <p className="truncate text-xs text-muted">{oc.location}</p>
                     </div>
                   </Link>
@@ -320,7 +320,7 @@ function LeadershipHome({
                     {(oc.status === "OPEN" || oc.status === "ACKNOWLEDGED") ? (
                       <>
                         <div className="hidden max-w-[140px] flex-col items-end gap-0.5 sm:flex sm:max-w-none">
-                          <span className="text-xs font-medium text-[var(--error)]">Immediate Support Needed</span>
+                          <span className="text-xs font-semibold text-[var(--error)]">Immediate Support Needed</span>
                           <span className="text-xs text-muted">
                             {(() => {
                               const mins = Math.round((Date.now() - new Date(oc.createdAt).getTime()) / 60000);
@@ -331,16 +331,19 @@ function LeadershipHome({
                         <span className="text-[10px] font-medium text-[var(--error)] sm:hidden">Live</span>
                         <Link
                           href="/on-call"
-                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm text-on-primary calm-transition hover:bg-primaryBtnHover sm:h-8 sm:w-8"
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-medium text-on-primary shadow-sm calm-transition hover:bg-primaryBtnHover sm:h-9 sm:w-9"
                           aria-label="Open on-call inbox"
                         >
                           →
                         </Link>
                       </>
                     ) : (
-                      <span className="min-w-0 max-w-full truncate text-[10px] text-muted sm:max-w-none sm:overflow-visible sm:whitespace-normal sm:text-xs">
-                        RESOLVED · {new Date(oc.resolvedAt ?? oc.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
+                      <div className="flex min-w-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
+                        <StatusPill variant="success" size="sm">RESOLVED</StatusPill>
+                        <span className="tabular-nums text-[11px] text-muted">
+                          {new Date(oc.resolvedAt ?? oc.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -350,33 +353,33 @@ function LeadershipHome({
         </Card>
 
         {/* Right column: Attendance + Observations */}
-        <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[340px]">
+        <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[340px]">
           {/* Attendance box */}
-          <Card className="flex min-h-0 flex-1 flex-col gap-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Attendance</p>
+          <Card className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Attendance</p>
             <div>
-              <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
+              <p className="mt-0.5 text-[2.5rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums sm:text-[2.625rem]">
                 {attendancePct !== null ? `${attendancePct.toFixed(1)}%` : "—"}
               </p>
-              <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--surface-container)]">
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--surface-container)_88%,transparent)]">
                 <div
-                  className="h-full rounded-full bg-[var(--primary)]"
+                  className="h-full rounded-full bg-[var(--primary)] calm-transition"
                   style={{ width: `${Math.min(attendancePct ?? 0, 100)}%` }}
                 />
               </div>
               {attendanceDelta !== null && (
-                <p className="mt-2 flex items-center gap-1 text-xs text-muted">
+                <p className="mt-3 flex flex-wrap items-center gap-1 text-[13px]">
                   <span className={attendanceDelta >= 0 ? "text-positive" : "text-negative"}>
                     {attendanceDelta >= 0 ? <IconTrendUp className="inline h-3.5 w-3.5" /> : <IconTrendDown className="inline h-3.5 w-3.5" />}
                   </span>
-                  <span className={attendanceDelta >= 0 ? "text-positive" : "text-negative"}>
+                  <span className={`font-medium tabular-nums ${attendanceDelta >= 0 ? "text-positive" : "text-negative"}`}>
                     {attendanceDelta >= 0 ? "+" : ""}{attendanceDelta.toFixed(1)}%
-                  </span>{" "}
-                  from last week
+                  </span>
+                  <span className="text-muted">from last week</span>
                 </p>
               )}
               {attendancePct !== null && (
-                <p className="mt-2 text-xs text-muted">
+                <p className="mt-2 text-[11px] leading-relaxed text-muted">
                   School-wide mean across cohorts with attendance data ({windowDays}-day window).
                 </p>
               )}
@@ -385,18 +388,18 @@ function LeadershipHome({
 
           {/* Observations this week box — avoid min-h-0 so flex stretch cannot clip avatars; extra bottom pad clears rounded edge */}
           <Link href="/explorer/observations" className="flex flex-1 flex-col">
-            <Card className="home-pressable-card flex min-h-min flex-1 cursor-pointer flex-col gap-4 pb-7">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations This Week</p>
+            <Card className="home-pressable-card flex min-h-min flex-1 cursor-pointer flex-col gap-4 rounded-2xl !p-6 pb-7 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Observations this week</p>
               <div>
-                <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
+                <p className="mt-0.5 text-[2.5rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums sm:text-[2.625rem]">
                   {weekObsCount}
                 </p>
-                <div className="mt-3 flex flex-wrap items-center gap-1">
+                <div className="mt-4 flex flex-wrap items-center gap-1.5">
                   {weekObsTeachers.slice(0, 3).map((t) => (
                     <Avatar key={t.id} name={t.name} size="sm" />
                   ))}
                   {weekObsTeachers.length > 3 && (
-                    <span className="inline-flex h-7 w-auto min-w-[28px] items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-on-primary">
+                    <span className="inline-flex h-7 w-auto min-w-[28px] items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-on-primary shadow-sm">
                       +{weekObsTeachers.length - 3}
                     </span>
                   )}
@@ -533,7 +536,7 @@ function LeadershipHome({
 
       {/* ═══ Hero Section 2: Leave Governance ═══ */}
       {hasLeaveFeature && (
-        <Card className="flex flex-col gap-4">
+        <Card className="flex flex-col gap-5 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
           <HomeCardHeading
             icon={<IconUmbrella />}
             title="Leave governance"
@@ -552,7 +555,7 @@ function LeadershipHome({
               description="When staff submit leave for approval, the newest requests will appear here."
             />
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] rounded-[14px] border border-[color-mix(in_srgb,var(--outline-variant)_28%,transparent)] bg-[var(--surface-container-lowest)]">
               {pendingLeaveDetails.map((leave) => {
                 const reasonUpper = (leave.reasonLabel ?? "Personal").toUpperCase();
                 const isEmergency = reasonUpper.includes("EMERGENCY") || reasonUpper.includes("URGENT");
@@ -563,8 +566,8 @@ function LeadershipHome({
                 return (
                   <div
                     key={leave.id}
-                    className={`flex min-w-0 flex-col gap-3 rounded-xl p-3 calm-transition sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4 ${
-                      isEmergency ? "bg-[var(--pill-error-bg)]/35" : "bg-[var(--surface-container-low)]"
+                    className={`flex min-w-0 flex-col gap-3 p-4 calm-transition first:rounded-t-[13px] last:rounded-b-[13px] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:py-4 ${
+                      isEmergency ? "bg-[color-mix(in_srgb,var(--pill-error-bg)_40%,transparent)]" : ""
                     }`}
                   >
                     <Link
@@ -574,7 +577,7 @@ function LeadershipHome({
                       <Avatar name={leave.requesterName} size="md" />
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-medium text-text">{leave.requesterName}</p>
+                          <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{leave.requesterName}</p>
                           <StatusPill variant={pillVariant} size="sm">{reasonDisplay}</StatusPill>
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
@@ -591,17 +594,17 @@ function LeadershipHome({
                     </Link>
                     <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
                       {isEmergency ? (
-                        <Button variant="primary" asChild className="min-h-0 px-4 py-2 text-xs">
+                        <Button variant="primary" asChild className="min-h-0 rounded-full px-4 py-2 text-xs">
                           <Link href="/leave#pending-requests">Review in queue</Link>
                         </Button>
                       ) : (
                         <>
-                          <Button variant="ghost" asChild className="min-h-0 px-3 py-2 text-xs text-[var(--pill-error-text)] hover:bg-status-denied-light">
+                          <Button variant="ghost" asChild className="min-h-0 rounded-full px-3 py-2 text-xs font-medium text-[var(--pill-error-text)] hover:bg-status-denied-light">
                             <Link href="/leave#pending-requests" aria-label={`Decline or review leave for ${leave.requesterName}`}>
                               Decline
                             </Link>
                           </Button>
-                          <Button variant="secondary" asChild className="min-h-0 px-4 py-2 text-xs">
+                          <Button variant="secondary" asChild className="min-h-0 rounded-full border-0 bg-[var(--surface-container-high)] px-4 py-2 text-xs font-semibold text-text shadow-none hover:bg-[var(--surface-container)]">
                             <Link href="/leave#pending-requests" aria-label={`Approve leave for ${leave.requesterName}`}>
                               Approve
                             </Link>
