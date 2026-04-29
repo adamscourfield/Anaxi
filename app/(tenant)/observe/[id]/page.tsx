@@ -380,8 +380,8 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                     <div className="min-w-0 pt-0.5">
                       <p className="text-[0.625rem] font-semibold uppercase tracking-wider text-muted">{row.label}</p>
                       {row.accent ? (
-                        <p className="mt-1 flex items-center gap-2 text-[0.875rem] font-bold uppercase tracking-wide text-[#9f1239]">
-                          <span className="h-2 w-2 rounded-full bg-[#9f1239]" aria-hidden />
+                        <p className="mt-1 flex items-center gap-2 text-[0.875rem] font-bold uppercase tracking-wide text-[var(--status-denied-text)]">
+                          <span className="h-2 w-2 rounded-full bg-[var(--status-denied-text)]" aria-hidden />
                           {row.value}
                         </p>
                       ) : (

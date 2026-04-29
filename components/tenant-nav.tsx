@@ -210,9 +210,9 @@ export function TenantNav({
         <Link
           href="/home"
           onClick={() => isDrawer && onNavigate?.()}
-          className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} group calm-transition rounded-[0.75rem] ${collapsed ? "p-1" : "px-1 py-0.5 -mx-1"} motion-safe:group-hover:-translate-y-px motion-safe:group-active:scale-[0.99]`}
+          className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} group calm-transition rounded-md ${collapsed ? "p-1" : "px-1 py-0.5 -mx-1"} motion-safe:group-hover:-translate-y-px motion-safe:group-active:scale-[0.99]`}
         >
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.75rem] bg-[var(--surface-container-high)] anx-card-elevated calm-transition group-hover:shadow-md">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-high)] anx-card-elevated calm-transition group-hover:shadow-md">
             <Image src="/anaxi-logo.png" alt="Anaxi" width={22} height={22} priority className="h-[22px] w-[22px] object-contain" />
           </span>
           {!collapsed && (
@@ -251,7 +251,7 @@ export function TenantNav({
                         href={item.href}
                         title={collapsed ? item.label : undefined}
                         onClick={() => isDrawer && onNavigate?.()}
-                        className={`group flex items-center ${collapsed ? "justify-center px-2" : "justify-between pl-5 pr-3"} rounded-[0.75rem] py-2 calm-transition motion-safe:active:scale-[0.99] ${
+                        className={`group flex items-center ${collapsed ? "justify-center px-2" : "justify-between pl-5 pr-3"} rounded-md py-2 calm-transition motion-safe:active:scale-[0.99] ${
                           active
                             ? "bg-[var(--surface-container)] text-[var(--on-surface)] font-semibold anx-card-elevated"
                             : "text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] motion-safe:hover:translate-x-0.5"
@@ -290,7 +290,7 @@ export function TenantNav({
                 });
                 router.push(`/login/sign-out?${q.toString()}`);
               }}
-              className={`group flex items-center ${collapsed ? "justify-center px-2" : "gap-2.5 pl-5 pr-3"} w-full rounded-[0.75rem] py-2 text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] motion-safe:hover:translate-x-0.5 motion-safe:active:scale-[0.99]`}
+              className={`group flex items-center ${collapsed ? "justify-center px-2" : "gap-2.5 pl-5 pr-3"} w-full rounded-md py-2 text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] motion-safe:hover:translate-x-0.5 motion-safe:active:scale-[0.99]`}
             >
               <NavIcon name="logout" active={false} />
               {!collapsed && <span className="text-[13px]">Log out</span>}
@@ -299,7 +299,7 @@ export function TenantNav({
           {!collapsed && !isDrawer && (
             <button
               onClick={() => setCollapsed(true)}
-              className="ml-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.75rem] text-[var(--outline)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
+              className="ml-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[var(--outline)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
               type="button"
               title="Collapse navigation"
             >

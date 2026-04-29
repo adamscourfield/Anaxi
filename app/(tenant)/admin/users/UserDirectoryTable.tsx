@@ -331,7 +331,7 @@ export function UserDirectoryTable({
                           <button
                             type="button"
                             onClick={() => setEditingUser(u)}
-                            className="inline-flex rounded-xl border border-black/[0.08] bg-[#F1F3F5] px-4 py-2 text-[0.8125rem] font-semibold text-text calm-transition hover:border-black/[0.12] hover:bg-[#e8eaed]"
+                            className="inline-flex rounded-md border border-border/60 bg-surface-container-low px-4 py-2 text-sm font-semibold text-text calm-transition hover:border-border hover:bg-surface-container-high"
                           >
                             Edit
                           </button>

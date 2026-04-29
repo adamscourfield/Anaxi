@@ -416,7 +416,7 @@ export default function ResultPointPage() {
 
               <div className="grid grid-cols-3 gap-4">
                 {/* 4+ Dark Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/4`} className="relative overflow-hidden rounded-2xl bg-[#0f172a] p-5 cursor-pointer shadow-ambient calm-transition hover:shadow-lg hover:-translate-y-0.5 block">
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/4`} className="relative overflow-hidden rounded-2xl bg-[var(--primary-container)] p-5 cursor-pointer shadow-ambient calm-transition hover:shadow-lg hover:-translate-y-0.5 block">
                   <div className="flex justify-between items-start">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 4+</p>
                     <div className="h-7 w-7 text-muted/60 absolute top-4 right-4">
@@ -440,7 +440,7 @@ export default function ResultPointPage() {
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em5}%</span>
                   </div>
                   <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-surface-container-low">
-                    <div className="bg-[#0f172a] h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em5}%` }}></div>
+                    <div className="bg-[var(--primary-container)] h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em5}%` }}></div>
                   </div>
                 </Link>
 
@@ -474,11 +474,11 @@ export default function ResultPointPage() {
                     <div className="mt-6 space-y-4">
                       <div>
                         <div className="flex justify-between items-baseline mb-2">
-                           <span className="text-[10px] font-bold uppercase tracking-widest text-[#0f172a]">NON-PP</span>
+                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary-container)]">NON-PP</span>
                            <span className="text-xl font-bold leading-none tracking-tight text-text">{nonPp}%</span>
                         </div>
                         <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
-                          <div className="bg-[#0f172a] h-full rounded-r-full" style={{ width: `${nonPp}%` }}></div>
+                          <div className="bg-[var(--primary-container)] h-full rounded-r-full" style={{ width: `${nonPp}%` }}></div>
                         </div>
                       </div>
                       <div>

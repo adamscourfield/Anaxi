@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 /** Major dashboard title — matches PageHeader scale */
 export function HomePageHeader({
@@ -161,12 +162,9 @@ export function HomePrimaryLink({
   children: ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      className="inline-flex items-center gap-1.5 rounded-[0.75rem] bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-5 py-2.5 text-sm font-semibold text-[var(--on-primary)] shadow-[0_4px_16px_rgba(0,0,0,0.12)] calm-transition hover:opacity-90 active:scale-[0.98]"
-    >
-      {children}
-    </Link>
+    <Button asChild>
+      <Link href={href}>{children}</Link>
+    </Button>
   );
 }
 

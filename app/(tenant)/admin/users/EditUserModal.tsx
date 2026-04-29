@@ -247,7 +247,7 @@ export function EditUserModal({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-[#eceef0] px-6 py-5">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-container)] px-6 py-5">
           <div className="min-w-0">
             <h2 id="edit-user-title" className="text-[1.0625rem] font-semibold tracking-tight text-text">
               {user.fullName}
@@ -297,7 +297,7 @@ export function EditUserModal({
 
           <div className="mt-8">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Scoped approvals</h3>
-            <ul className="mt-3 divide-y divide-[#eceef0] border-y border-[#eceef0]">
+            <ul className="mt-3 divide-y divide-[var(--surface-container)] border-y border-[var(--surface-container)]">
               <li className="flex items-center justify-between py-3.5">
                 <span className="text-[0.8125rem] text-text">On-call requests</span>
                 <Toggle checked={onCallRequests} onChange={setOnCallRequests} disabled={readOnly} />
@@ -392,7 +392,7 @@ export function EditUserModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-[#eceef0] px-6 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-[var(--surface-container)] px-6 py-4">
           <button
             type="button"
             onClick={onClose}
@@ -406,7 +406,7 @@ export function EditUserModal({
               type="button"
               onClick={handleSave}
               disabled={pending}
-              className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-[0.8125rem] font-semibold text-on-primary shadow-ambient calm-transition hover:bg-primary-container disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-md bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-5 py-2.5 text-sm font-semibold text-on-primary shadow-[var(--shadow-btn)] calm-transition hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
             >
               {pending ? "Saving…" : "Save changes"}
             </button>

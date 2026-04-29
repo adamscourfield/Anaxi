@@ -153,14 +153,14 @@ export function ReviewList({
               })}
             </div>
 
-            <div className="mt-5 flex items-start gap-3 rounded-xl border border-[#e8c4c4] bg-[#fff0f0] px-4 py-3">
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-[var(--status-denied-border)] bg-[var(--status-denied-bg)] px-4 py-3">
               <span
-                className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#c94a4a] text-[0.625rem] font-bold text-white"
+                className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--status-denied)] text-[0.625rem] font-bold text-white"
                 aria-hidden
               >
                 i
               </span>
-              <p className="text-[0.8125rem] leading-relaxed text-[#5c3d3d]">
+              <p className="text-[0.8125rem] leading-relaxed text-[var(--status-denied-text)]">
                 Once submitted, this observation will be locked for 24 hours while the Ledger processes the institutional
                 confidence score. You may request a correction link via support if required.
               </p>

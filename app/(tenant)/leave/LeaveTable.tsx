@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { StatusPill } from "@/components/ui/status-pill";
 
 export type LeaveRow = {
   id: string;
@@ -115,25 +116,15 @@ function SectionTable({
                       {mode === "pending" ? (
                         <Link
                           href={`/leave/${row.id}`}
-                          className="inline-flex rounded-xl border border-border/60 bg-surface-container-low px-4 py-2 text-[0.8125rem] font-semibold text-text calm-transition hover:border-border hover:bg-surface-container-high"
+                          className="inline-flex rounded-md border border-border/60 bg-surface-container-low px-4 py-2 text-sm font-semibold text-text calm-transition hover:border-border hover:bg-surface-container-high"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {actionLabel}
                         </Link>
                       ) : row.status === "APPROVED" ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#dcfce7] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.06em] text-[#166534]">
-                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                          Approved
-                        </span>
+                        <StatusPill variant="success">Approved</StatusPill>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ffe4e6] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.06em] text-[#9f1239]">
-                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-                          </svg>
-                          Denied
-                        </span>
+                        <StatusPill variant="error">Denied</StatusPill>
                       )}
                     </td>
                   </tr>

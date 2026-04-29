@@ -80,7 +80,7 @@ export function StatCard({
     );
 
   const inner = (
-    <div className={`overflow-hidden rounded-2xl ${panelToneClass[tone]}`}>
+    <div className={`overflow-hidden rounded-xl ${panelToneClass[tone]}`}>
       {accentPlacement === "left" ? (
         <div className="flex min-h-[5.5rem]">
           <div className={`w-2 shrink-0 self-stretch ${accentBarColors[accent]}`} aria-hidden />
@@ -99,7 +99,7 @@ export function StatCard({
     return (
       <Link
         href={href}
-        className="home-stat-drill block rounded-2xl outline-none transition-[box-shadow,transform,background-color] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)]"
+        className="home-stat-drill block rounded-xl outline-none transition-[box-shadow,transform,background-color] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)]"
       >
         {inner}
       </Link>

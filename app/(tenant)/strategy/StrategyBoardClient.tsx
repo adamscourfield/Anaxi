@@ -44,9 +44,9 @@ interface Props {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PRIORITY_CHIP: Record<Priority, string> = {
-  critical: "bg-[#3d0a0a] text-[#f8b4b4]",
-  high:     "bg-[#3d0a0a] text-[#f8b4b4]",
-  medium:   "bg-[#0a2e2e] text-[#6ee7d4]",
+  critical: "bg-[var(--scale-limited-bg)] text-[var(--scale-limited-text)]",
+  high:     "bg-[var(--scale-limited-bg)] text-[var(--scale-limited-text)]",
+  medium:   "bg-[var(--status-approved-bg)] text-[var(--status-approved-text)]",
   low:      "bg-[var(--surface-container-high)] text-[var(--on-surface-variant)]",
 };
 

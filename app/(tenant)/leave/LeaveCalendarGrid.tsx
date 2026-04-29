@@ -62,11 +62,11 @@ export function LeaveCalendarGrid({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="text-[1.25rem] font-bold capitalize tracking-tight text-text">{monthLabel}</h2>
+          <h2 className="text-xl font-bold capitalize tracking-tight text-text">{monthLabel}</h2>
           <div className="flex items-center gap-0.5">
             <Link
               href={prevMonthHref}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-[#eceef0] hover:text-text"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-[var(--surface-container)] hover:text-text"
               aria-label="Previous month"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -75,7 +75,7 @@ export function LeaveCalendarGrid({
             </Link>
             <Link
               href={nextMonthHref}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-[#eceef0] hover:text-text"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-[var(--surface-container)] hover:text-text"
               aria-label="Next month"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -87,21 +87,21 @@ export function LeaveCalendarGrid({
 
         <div className="flex flex-wrap items-center gap-5 text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
           <span className="flex items-center gap-2">
-            <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[#9ca3af]" />
+            <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--outline)]" />
             Pending
           </span>
           <span className="flex items-center gap-2">
-            <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[#16a34a]" />
+            <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--status-approved)]" />
             Approved
           </span>
           <span className="flex items-center gap-2">
-            <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[#e11d48]" />
+            <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--status-denied)]" />
             Declined
           </span>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border/50 bg-surface-container-lowest shadow-ambient">
+      <div className="overflow-hidden rounded-xl border border-border/50 bg-surface-container-lowest shadow-ambient">
         <div className="grid grid-cols-7 border-b border-border/50 bg-surface-container-low">
           {WEEKDAYS.map((wd) => (
             <div
@@ -149,25 +149,29 @@ export function LeaveCalendarGrid({
 
               const st = request.status as string;
               const bar =
-                st === "APPROVED" ? "bg-[#16a34a]" : st === "DENIED" ? "bg-[#e11d48]" : "bg-[#9ca3af]";
+                st === "APPROVED"
+                  ? "bg-[var(--status-approved)]"
+                  : st === "DENIED"
+                    ? "bg-[var(--status-denied)]"
+                    : "bg-[var(--outline)]";
               const wrap =
                 st === "APPROVED"
-                  ? "bg-[#ecfdf5] border-[#bbf7d0]"
+                  ? "bg-[var(--status-approved-bg)] border-[var(--status-approved-border)]"
                   : st === "DENIED"
-                    ? "bg-[#fff1f2] border-[#fecdd3]"
-                    : "bg-[#f3f4f6] border-border/50";
+                    ? "bg-[var(--status-denied-bg)] border-[var(--status-denied-border)]"
+                    : "bg-surface-container-low border-border/50";
               const titleC =
                 st === "APPROVED"
-                  ? "text-[#14532d]"
+                  ? "text-[var(--status-approved-text)]"
                   : st === "DENIED"
-                    ? "text-[#881337]"
-                    : "text-[#111827]";
+                    ? "text-[var(--status-denied-text)]"
+                    : "text-text";
               const subC =
                 st === "APPROVED"
-                  ? "text-[#166534]"
+                  ? "text-[var(--status-approved-text)]"
                   : st === "DENIED"
-                    ? "text-[#9f1239]"
-                    : "text-[#6b7280]";
+                    ? "text-[var(--status-denied-text)]"
+                    : "text-muted";
 
               return [
                 {
@@ -189,12 +193,12 @@ export function LeaveCalendarGrid({
                 key={key}
                 className={`group relative min-h-[112px] border-b border-r border-border/30 p-1.5 last:border-r-0 ${
                   isWeekend ? "bg-surface-container-low" : "bg-surface-container-lowest"
-                } ${isToday ? "ring-1 ring-inset ring-[#131b2e]/15" : ""}`}
+                } ${isToday ? "ring-1 ring-inset ring-[var(--primary-container)]/15" : ""}`}
               >
                 <div className="mb-1 flex items-start justify-between gap-1">
                   <span
-                    className={`text-[11px] font-bold tabular-nums ${
-                      isToday ? "text-[#131b2e]" : isWeekend ? "text-[#9ca3af]" : "text-text"
+                    className={`text-2xs font-bold tabular-nums ${
+                      isToday ? "text-[var(--primary-container)]" : isWeekend ? "text-[var(--outline-variant)]" : "text-text"
                     }`}
                   >
                     {day.getDate()}
@@ -209,7 +213,7 @@ export function LeaveCalendarGrid({
                     {!isWeekend && (
                       <Link
                         href={`/leave/request?date=${key}`}
-                        className="flex h-5 w-5 items-center justify-center rounded-md text-[13px] font-semibold leading-none text-muted opacity-0 calm-transition hover:bg-[#eceef0] hover:text-text group-hover:opacity-100"
+                        className="flex h-5 w-5 items-center justify-center rounded-md text-sm font-semibold leading-none text-muted opacity-0 calm-transition hover:bg-[var(--surface-container)] hover:text-text group-hover:opacity-100"
                         title={`Request leave for ${day.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}
                       >
                         +
@@ -223,7 +227,7 @@ export function LeaveCalendarGrid({
                     block.type === "continuation" ? (
                       <div
                         key={block.key}
-                        className="rounded-lg bg-[#f3f4f6] px-1.5 py-1 text-[9px] font-medium leading-tight text-[#94a3b8]"
+                        className="rounded-lg bg-surface-container-low px-1.5 py-1 text-[9px] font-medium leading-tight text-muted/60"
                       >
                         {continuationLabel(block.request)}
                       </div>

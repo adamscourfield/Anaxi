@@ -109,7 +109,7 @@ export default async function AdminLeaveApprovalsPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/admin/taxonomies?tab=loa-reasons"
-              className="inline-flex items-center gap-2 rounded-[0.75rem] px-5 py-2.5 text-sm font-semibold text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
+              className="inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10 6v4l3 3" />

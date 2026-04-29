@@ -127,6 +127,10 @@
   --accent-surface:     var(--surface-container);
   --icon-muted:         var(--on-surface-variant);
 
+  /* ── Button shadows ─────────────────────────────────────────────── */
+  --shadow-btn:         0 4px 16px rgba(0,0,0,0.12);
+  --shadow-btn-hover:   0 8px 24px rgba(0,0,0,0.16);
+
   /* ── Button aliases (now using deep slate) ──────────────────────── */
   --primary-btn:        var(--primary);
   --primary-btn-hover:  #1a1a1a;

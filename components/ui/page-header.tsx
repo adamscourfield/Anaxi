@@ -18,11 +18,11 @@ export function PageHeader({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-1.5">
           {eyebrow ? (
-            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted/60">{eyebrow}</div>
+            <div className="text-2xs font-semibold uppercase tracking-[0.12em] text-muted/60">{eyebrow}</div>
           ) : null}
-          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.03em] text-text">{title}</h1>
+          <h1 className="text-3xl font-bold leading-tight tracking-[-0.03em] text-text">{title}</h1>
           {subtitle ? (
-            <p className="max-w-full text-pretty text-[13px] leading-relaxed text-muted md:max-w-2xl">
+            <p className="max-w-full text-pretty text-sm leading-relaxed text-muted md:max-w-2xl">
               {subtitle}
             </p>
           ) : null}

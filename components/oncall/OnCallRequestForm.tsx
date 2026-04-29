@@ -339,10 +339,10 @@ export function OnCallRequestForm({
           {/* Warning + Submit */}
           <div className="flex flex-col gap-3 rounded-xl border border-[var(--cat-orange-bg,#fff3cd)]/60 bg-[var(--cat-orange-bg,#fff8e1)] px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-start gap-2">
-              <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#e65100]" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="mt-0.5 h-4 w-4 shrink-0 text-[var(--warning-text)]" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
               </svg>
-              <p className="min-w-0 text-pretty text-[12px] text-[#bf360c]">
+              <p className="min-w-0 text-pretty text-[12px] text-[var(--warning-text)]">
                 This request will alert all available on-call staff members immediately.
               </p>
             </div>

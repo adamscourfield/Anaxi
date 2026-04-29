@@ -385,7 +385,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
         actions={
           <Link
             href="/admin/leave-approvals"
-            className="inline-flex items-center gap-2 rounded-[0.75rem] border border-border bg-[var(--surface-container-lowest)] px-4 py-2.5 text-sm font-semibold text-text shadow-ambient calm-transition hover:bg-[var(--surface-container-low)]"
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-[var(--surface-container-lowest)] px-4 py-2.5 text-sm font-semibold text-text shadow-ambient calm-transition hover:bg-[var(--surface-container-low)]"
           >
             <svg className="h-4 w-4 text-muted" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M4 6h12M4 10h12M4 14h8" strokeLinecap="round" />

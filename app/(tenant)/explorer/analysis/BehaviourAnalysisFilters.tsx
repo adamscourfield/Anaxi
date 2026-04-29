@@ -82,7 +82,7 @@ export function BehaviourAnalysisFilters({
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center rounded-xl bg-[var(--primary)] px-5 py-2.5 text-[0.8125rem] font-semibold text-on-primary shadow-ambient calm-transition hover:opacity-90 sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+            className="inline-flex w-full items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary shadow-[var(--shadow-btn)] calm-transition hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px active:scale-[0.98] sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
           >
             Apply filters
           </button>

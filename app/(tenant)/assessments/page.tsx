@@ -6,6 +6,7 @@ import { H2 } from "@/components/ui/typography";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { QualificationType, PointType } from "@prisma/client";
 import { qualificationTypePillClasses } from "@/modules/assessments/attainmentColours";
@@ -66,12 +67,9 @@ export default async function AssessmentsPage() {
         title="Cycles"
         subtitle="Track cohort-level outcomes across the academic year — from baselines through to final results."
         actions={
-          <Link
-            href="/assessments/new"
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-[0.75rem] bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-5 py-2.5 text-sm font-semibold tracking-[0.01em] text-[var(--on-primary)] shadow-[0_4px_16px_rgba(0,0,0,0.12)] calm-transition hover:opacity-90 active:scale-[0.98]"
-          >
-            New cycle
-          </Link>
+          <Button asChild>
+            <Link href="/assessments/new">New cycle</Link>
+          </Button>
         }
       />
 
@@ -81,12 +79,9 @@ export default async function AssessmentsPage() {
             title="No attainment cycles yet"
             description="Create a cycle for a cohort to start tracking attainment across the academic year."
             action={
-              <Link
-                href="/assessments/new"
-                className="inline-flex items-center justify-center gap-2 rounded-[0.75rem] bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-5 py-2.5 text-sm font-semibold tracking-[0.01em] text-[var(--on-primary)] shadow-[0_4px_16px_rgba(0,0,0,0.12)] calm-transition hover:opacity-90 active:scale-[0.98]"
-              >
-                Create your first cycle
-              </Link>
+              <Button asChild>
+                <Link href="/assessments/new">Create your first cycle</Link>
+              </Button>
             }
           />
         </Card>

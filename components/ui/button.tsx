@@ -3,12 +3,12 @@ import { ButtonHTMLAttributes, cloneElement, forwardRef, isValidElement, ReactEl
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "tertiary";
 
 const baseClass =
-  "inline-flex items-center justify-center gap-2 rounded-[0.75rem] px-5 text-sm font-semibold tracking-[0.01em] calm-transition disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
+  "inline-flex items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold tracking-[0.01em] calm-transition disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
 const variantClasses: Record<Variant, string> = {
   // Primary: deep slate gradient (per "Glass & Gradient" rule)
   primary:
-    "py-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] text-[var(--on-primary)] shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:opacity-95 hover:shadow-[0_8px_24px_rgba(0,0,0,0.16)] motion-safe:hover:-translate-y-px motion-safe:active:translate-y-0 motion-safe:active:scale-[0.98]",
+    "py-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] text-[var(--on-primary)] shadow-[var(--shadow-btn)] hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px motion-safe:active:translate-y-0 motion-safe:active:scale-[0.98]",
   // Secondary: secondary-container background, calm alternative
   secondary:
     "py-2.5 bg-[var(--secondary-container)] text-[var(--on-surface)] hover:bg-[var(--surface-container-high)] motion-safe:active:scale-[0.98]",
@@ -17,10 +17,10 @@ const variantClasses: Record<Variant, string> = {
     "py-2.5 bg-transparent text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] motion-safe:active:scale-[0.98]",
   // Danger: coral for destructive actions
   danger:
-    "py-2.5 bg-[var(--danger-btn)] text-on-primary shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:bg-[var(--danger-btn-hover)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.14)] motion-safe:active:scale-[0.98] active:bg-[var(--danger-btn-active)]",
+    "py-2.5 bg-[var(--danger-btn)] text-on-primary shadow-[var(--shadow-btn)] hover:bg-[var(--danger-btn-hover)] hover:shadow-[var(--shadow-btn-hover)] motion-safe:active:scale-[0.98] active:bg-[var(--danger-btn-active)]",
   // Tertiary: coral — only for critical "single point of truth" actions
   tertiary:
-    "py-2.5 bg-[var(--tertiary-container)] text-[var(--on-tertiary-container)] shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:opacity-95 hover:shadow-[0_8px_24px_rgba(0,0,0,0.14)] motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]",
+    "py-2.5 bg-[var(--tertiary-container)] text-[var(--on-tertiary-container)] shadow-[var(--shadow-btn)] hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]",
 };
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

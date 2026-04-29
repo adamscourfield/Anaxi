@@ -108,7 +108,7 @@ export function TenantRouteSkeleton({
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="min-w-[120px] flex-1 space-y-2">
                 <div className="h-3 w-16 rounded bg-[var(--surface-container-high)]" />
-                <div className="h-10 w-full rounded-[10px] bg-[var(--surface-container-high)]" />
+                <div className="h-10 w-full rounded-md bg-[var(--surface-container-high)]" />
               </div>
             ))}
           </div>

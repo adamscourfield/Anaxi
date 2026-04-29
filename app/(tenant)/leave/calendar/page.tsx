@@ -139,7 +139,7 @@ export default async function LeaveCalendarPage({
 
           <Link
             href="/leave/request"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-[0.875rem] font-semibold text-white calm-transition anx-card-elevated hover:bg-primary-container"
+            className="inline-flex items-center gap-2 rounded-md bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-5 py-2.5 text-sm font-semibold text-on-primary shadow-[var(--shadow-btn)] calm-transition hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px active:scale-[0.98]"
           >
             <svg
               className="h-3.5 w-3.5"

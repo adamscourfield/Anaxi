@@ -45,7 +45,7 @@ export default function SignOutContent() {
           <form onSubmit={onSubmit} className="space-y-5">
             {error ? (
               <div
-                className="rounded-[0.75rem] border border-[var(--coral-border)] px-4 py-3"
+                className="rounded-md border border-[var(--coral-border)] px-4 py-3"
                 style={{ background: "var(--pill-error-bg)" }}
               >
                 <p className="text-[13px] text-[var(--pill-error-text)]">{error}</p>

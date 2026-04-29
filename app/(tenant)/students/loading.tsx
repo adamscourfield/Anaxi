@@ -44,17 +44,17 @@ export default function StudentsLoading() {
         <div className="flex flex-wrap items-end gap-4">
           <div className="min-w-[160px] flex-1 space-y-2">
             <div className="h-3 w-14 animate-pulse rounded bg-border/35" />
-            <div className="h-10 w-full animate-pulse rounded-[10px] bg-border/40" />
+            <div className="h-10 w-full animate-pulse rounded-md bg-border/40" />
           </div>
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="min-w-[120px] flex-1 space-y-2">
               <div className="h-3 w-16 animate-pulse rounded bg-border/35" />
-              <div className="h-10 w-full animate-pulse rounded-[10px] bg-border/40" />
+              <div className="h-10 w-full animate-pulse rounded-md bg-border/40" />
             </div>
           ))}
           <div className="flex w-full gap-2 sm:w-auto lg:ml-auto">
-            <div className="h-10 min-w-[140px] flex-1 animate-pulse rounded-[10px] bg-border/45 sm:flex-none" />
-            <div className="h-10 w-24 animate-pulse rounded-[10px] bg-border/35" />
+            <div className="h-10 min-w-[140px] flex-1 animate-pulse rounded-md bg-border/45 sm:flex-none" />
+            <div className="h-10 w-24 animate-pulse rounded-md bg-border/35" />
           </div>
         </div>
         <div className="mt-4 border-t border-border/20 pt-4">
