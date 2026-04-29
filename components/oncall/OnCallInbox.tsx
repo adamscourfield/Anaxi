@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { REQUEST_TYPE_LABELS } from "@/modules/oncall/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
-import { H2 } from "@/components/ui/typography";
 
 type Status = "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED";
 type RequestType = "BEHAVIOUR" | "FIRST_AID";
@@ -81,8 +81,10 @@ function formatYearGroup(yearGroup: string | null | undefined): string {
 }
 
 const TYPE_BADGE_CLASSES: Record<RequestType, string> = {
-  BEHAVIOUR: "bg-[var(--pill-error-bg)] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]",
-  FIRST_AID: "bg-[var(--pill-neutral-bg)] text-[var(--pill-neutral-text)] ring-1 ring-inset ring-[var(--pill-neutral-ring)]",
+  BEHAVIOUR:
+    "bg-[color-mix(in_srgb,var(--pill-error-bg)_70%,transparent)] text-[var(--pill-error-text)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--pill-error-ring)_55%,transparent)]",
+  FIRST_AID:
+    "bg-[var(--surface-container-lowest)] text-muted ring-1 ring-inset ring-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)]",
 };
 
 export function OnCallInbox({
@@ -123,49 +125,50 @@ export function OnCallInbox({
   const healthLabel = resolutionRate >= 90 ? "STABLE" : resolutionRate >= 70 ? "WARNING" : "CRITICAL";
 
   return (
-    <div className="w-full min-w-0 space-y-6">
+    <div className="w-full min-w-0 space-y-8">
       {/* ── Open Requests Section ─────────────────────────────── */}
       <section>
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-2 sm:gap-y-1">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-            <H2 className="whitespace-nowrap">Open Requests</H2>
+        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-3 sm:gap-y-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+            <h2 className="text-lg font-bold tracking-[-0.02em] text-text">Open Requests</h2>
             {openCount > 0 && (
-              <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.04em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
-                {openCount} PENDING
+              <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
+                {openCount} pending
               </span>
             )}
           </div>
           {lastUpdated && (
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted sm:text-right italic">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted not-italic">
               Last updated: {lastUpdated}
             </span>
           )}
         </div>
 
         {/* Alert banner */}
-        {openCount >= 3 && (
-          <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-[var(--pill-error-ring)] bg-[var(--pill-error-bg)] px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-5">
-            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--pill-error-ring)]">
-              <svg className="h-4 w-4 text-[var(--pill-error-text)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {openCount >= 1 && (
+          <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--error)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_45%,var(--surface-container-lowest))] px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-5 sm:py-4">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-pretty text-sm font-semibold text-[var(--pill-error-text)]">
-                {openCount} high priority incidents requiring immediate response
+              <p className="text-pretty text-sm font-semibold text-[var(--error)]">
+                {openCount} high priority incident{openCount !== 1 ? "s" : ""} requiring immediate response
               </p>
-              <p className="text-pretty text-xs text-muted">
+              <p className="mt-0.5 text-pretty text-xs text-muted">
                 Response time average is currently above target.
               </p>
             </div>
-            <button
-              type="button"
-              className="link-underline shrink-0 self-start text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--pill-error-text)] calm-transition sm:self-auto"
+            <Link
+              href="/on-call/feed"
+              className="inline-flex shrink-0 items-center gap-1 self-start text-xs font-semibold text-[var(--error)] underline decoration-[color-mix(in_srgb,var(--error)_35%,transparent)] underline-offset-2 calm-transition hover:decoration-[var(--error)] sm:self-auto"
             >
               View priority log
-            </button>
+              <span aria-hidden>→</span>
+            </Link>
           </div>
         )}
 
@@ -230,7 +233,7 @@ export function OnCallInbox({
                               <Button
                                 type="button"
                                 variant="secondary"
-                                className="min-h-10 flex-1 px-3 text-xs sm:flex-none"
+                                className="min-h-10 flex-1 rounded-full px-4 text-xs font-semibold sm:flex-none"
                                 disabled={actionPending === `${r.id}-acknowledge`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -243,7 +246,7 @@ export function OnCallInbox({
                             {showResolve && (
                               <Button
                                 type="button"
-                                className="min-h-10 flex-1 px-3 text-xs sm:flex-none"
+                                className="min-h-10 flex-1 rounded-full px-4 text-xs font-semibold sm:flex-none"
                                 disabled={actionPending === `${r.id}-resolve`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -265,13 +268,15 @@ export function OnCallInbox({
               <table className="w-full min-w-[700px] text-sm">
                 <thead>
                   <tr className="table-head-row">
-                    <th className="px-5 py-3 text-left font-semibold">Student Name</th>
-                    <th className="px-4 py-3 text-left font-semibold">Year</th>
-                    <th className="px-4 py-3 text-left font-semibold">Incident Type</th>
-                    <th className="px-4 py-3 text-left font-semibold">Location</th>
-                    <th className="px-4 py-3 text-left font-semibold">Raised By</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                      Student name
+                    </th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Year</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Incident type</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Location</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Raised by</th>
                     {(canAcknowledge || canResolve) && (
-                      <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                      <th className="px-4 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Actions</th>
                     )}
                   </tr>
                 </thead>
@@ -325,7 +330,7 @@ export function OnCallInbox({
                                 <Button
                                   type="button"
                                   variant="secondary"
-                                  className="px-3 py-1 text-xs"
+                                  className="rounded-full px-4 py-2 text-xs font-semibold"
                                   disabled={actionPending === `${r.id}-acknowledge`}
                                   onClick={() => handleAction(r.id, "acknowledge")}
                                 >
@@ -335,7 +340,7 @@ export function OnCallInbox({
                               {showResolve && (
                                 <Button
                                   type="button"
-                                  className="px-3 py-1 text-xs"
+                                  className="rounded-full px-4 py-2 text-xs font-semibold"
                                   disabled={actionPending === `${r.id}-resolve`}
                                   onClick={() => handleAction(r.id, "resolve")}
                                 >
@@ -359,7 +364,7 @@ export function OnCallInbox({
       <section>
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-2 sm:gap-y-1">
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-            <H2 className="whitespace-nowrap">Resolved Requests</H2>
+            <h2 className="whitespace-nowrap text-lg font-bold tracking-[-0.02em] text-text">Resolved Requests</h2>
             <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
               History (Today)
             </span>
@@ -443,11 +448,11 @@ export function OnCallInbox({
               <table className="w-full min-w-[650px] text-sm">
                 <thead>
                   <tr className="table-head-row">
-                    <th className="px-5 py-3 text-left font-semibold">Student Name</th>
-                    <th className="px-4 py-3 text-left font-semibold">Type</th>
-                    <th className="px-4 py-3 text-left font-semibold">Responder</th>
-                    <th className="px-4 py-3 text-left font-semibold">Resolved At</th>
-                    <th className="px-4 py-3 text-left font-semibold">Duration</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Student name</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Type</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Responder</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Resolved at</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Duration</th>
                   </tr>
                 </thead>
                 <tbody>

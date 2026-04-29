@@ -61,11 +61,13 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <PageHeader
         title="Meetings"
+        titleClassName="text-pretty text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text"
+        className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] pb-8"
         actions={
           hasPermission(user.role, "meetings:create") ? (
-            <Button asChild>
-              <Link href="/meetings/new">
-                <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4">
+            <Button asChild className="rounded-full px-6 shadow-md">
+              <Link href="/meetings/new" className="gap-2">
+                <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4" aria-hidden>
                   <path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5h-4.5a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z" />
                 </svg>
                 New Meeting
@@ -76,15 +78,23 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
       />
 
       {/* ── Stats Cards (KPI row — matches Explorer / Signals) ─────────── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <StatCard
+          layout="kpi"
           label="Open Actions"
           value={stats.openActions}
           tone="glass"
-          contextVariant="inline"
+          href="/my-actions"
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          }
+          iconTileClassName="bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)]"
+          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
           context={
             stats.newActionsSinceMonday > 0 ? (
-              <span className="font-semibold text-success">
+              <span className="font-semibold text-[var(--success)]">
                 +{stats.newActionsSinceMonday} since Mon
               </span>
             ) : (
@@ -93,22 +103,28 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
           }
         />
         <StatCard
+          layout="kpi"
           label="Completion Rate"
           value={`${stats.completionRate}%`}
           tone="glass"
-          contextVariant="inline"
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          }
+          iconTileClassName="bg-[var(--status-approved-light)] text-[var(--status-approved-text)]"
+          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
           context={<span className="font-medium text-muted">Target 95%</span>}
         />
-        <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-surface-container-lowest p-5 shadow-ambient">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Next Up</p>
+        <div className="explorer-kpi-tile flex min-h-[140px] flex-col justify-between rounded-2xl p-5 sm:p-6">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Next up</p>
           {stats.nextMeeting ? (
             <>
-              <div className="mt-2 flex flex-wrap items-baseline gap-2">
-                <span className="min-w-0 flex-1 text-[1.125rem] font-bold leading-snug tracking-[-0.01em] text-text">
-                  {stats.nextMeeting.title}
-                </span>
-              </div>
-              <p className="mt-1.5 text-[0.8125rem] font-medium text-muted">
+              <p className="mt-2 line-clamp-2 text-base font-bold leading-snug tracking-[-0.02em] text-text">
+                {stats.nextMeeting.title}
+              </p>
+              <p className="mt-2 text-[0.8125rem] leading-snug text-muted">
                 {formatTimeUntil(new Date(stats.nextMeeting.startDateTime))}
                 {stats.nextMeeting.location ? ` · ${stats.nextMeeting.location}` : ""}
               </p>
@@ -121,8 +137,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
 
       {/* ── Upcoming Meetings ───────────────────────────────────────────── */}
       <section>
-        <h2 className="mb-4 text-xl font-semibold tracking-[-0.01em] text-text">Upcoming Meetings</h2>
-        <hr className="mb-4 border-border/40" />
+        <h2 className="mb-5 text-lg font-bold tracking-[-0.02em] text-text">Upcoming Meetings</h2>
 
         {upcoming.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/60 px-6 py-10 text-center">
@@ -138,11 +153,11 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
               <table className="w-full text-sm">
               <thead>
                 <tr className="table-head-row">
-                  <th className="px-5 py-3 text-left">Meeting Title</th>
-                  <th className="px-5 py-3 text-left">Date &amp; Time</th>
-                  <th className="px-5 py-3 text-left">Location</th>
-                  <th className="px-5 py-3 text-left">Organizer</th>
-                  <th className="px-5 py-3 text-left">Status</th>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Meeting title</th>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Date &amp; time</th>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Location</th>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Organizer</th>
+                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -203,7 +218,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
 
       {/* ── Past Meetings ───────────────────────────────────────────────── */}
       <section>
-        <h2 className="mb-4 text-xl font-semibold tracking-[-0.01em] text-text">Past Meetings</h2>
+        <h2 className="mb-5 text-lg font-bold tracking-[-0.02em] text-text">Past Meetings</h2>
         <PastMeetingsList meetings={past} />
       </section>
     </div>
