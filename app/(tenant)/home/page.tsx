@@ -52,6 +52,10 @@ import { ppTableBadgeClass, sendTableBadgeClass } from "@/modules/assessments/at
 const DEFAULT_WINDOW_DAYS = 21;
 const ALLOWED_WINDOW_DAYS = [7, 14, 21, 28];
 
+function studentAnalysisHref(studentId: string, windowDays: number): string {
+  return `/analysis/students/${studentId}?window=${windowDays}`;
+}
+
 const RISK_STATUS_LABELS: Record<RiskStatus, string> = {
   SIGNIFICANT_DRIFT: "Significant",
   EMERGING_DRIFT: "Emerging",
@@ -320,7 +324,7 @@ function LeadershipHome({
                 >
                   <Link
                     href={`/on-call/${oc.id}`}
-                    className="flex min-w-0 flex-1 items-center gap-2 calm-transition hover:opacity-90 sm:min-w-0 sm:gap-3"
+                    className="home-row-link flex min-w-0 flex-1 items-center gap-2 sm:min-w-0 sm:gap-3"
                   >
                     <Avatar name={oc.requesterName} size="md" />
                     <div className="min-w-0 flex-1">
@@ -343,7 +347,7 @@ function LeadershipHome({
                         <span className="text-[10px] font-medium text-[var(--error)] sm:hidden">Live</span>
                         <Link
                           href="/on-call"
-                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm text-on-primary calm-transition hover:opacity-90 sm:h-8 sm:w-8"
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm text-on-primary calm-transition hover:bg-primaryBtnHover sm:h-8 sm:w-8"
                           aria-label="Open on-call inbox"
                         >
                           →
@@ -365,7 +369,7 @@ function LeadershipHome({
         <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[340px]">
           {/* Attendance box */}
           <Card className="flex min-h-0 flex-1 flex-col gap-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Attendance Mastery</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Attendance</p>
             <div>
               <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
                 {attendancePct !== null ? `${attendancePct.toFixed(1)}%` : "—"}
@@ -387,12 +391,17 @@ function LeadershipHome({
                   from last week
                 </p>
               )}
+              {attendancePct !== null && (
+                <p className="mt-2 text-xs text-muted">
+                  School-wide mean across cohorts with attendance data ({windowDays}-day window).
+                </p>
+              )}
             </div>
           </Card>
 
           {/* Observations this week box — avoid min-h-0 so flex stretch cannot clip avatars; extra bottom pad clears rounded edge */}
           <Link href="/explorer/observations" className="flex flex-1 flex-col">
-            <Card className="flex min-h-min flex-1 flex-col gap-4 pb-7 calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer">
+            <Card className="home-pressable-card flex min-h-min flex-1 cursor-pointer flex-col gap-4 pb-7">
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations This Week</p>
               <div>
                 <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">
@@ -475,7 +484,7 @@ function LeadershipHome({
                   <Link
                     key={s.studentId}
                     href={`/analysis/students/${s.studentId}?window=${windowDays}`}
-                    className={`group flex min-w-[176px] max-w-[196px] shrink-0 flex-col overflow-hidden rounded-2xl border border-black/[0.06] ${bandCfg.tint} calm-transition hover:-translate-y-0.5 hover:shadow-lg`}
+                    className={`home-card-tile group flex min-w-[176px] max-w-[196px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] ${bandCfg.tint}`}
                   >
                     {/* Risk band colour bar */}
                     <div className={`h-1.5 w-full ${bandCfg.bar}`} />
@@ -660,7 +669,7 @@ function LeadershipHome({
               </p>
               <div className="space-y-3">
                 {topCpd.map((row) => (
-                  <Link key={row.signalKey} href={`/analysis/cpd/${row.signalKey}?window=${windowDays}`} className="block rounded-xl p-2 -mx-2 calm-transition hover:bg-white/10">
+                  <Link key={row.signalKey} href={`/analysis/cpd/${row.signalKey}?window=${windowDays}`} className="home-row-link-on-dark -mx-2 block rounded-xl p-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{row.label}</span>
                       <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
@@ -691,7 +700,7 @@ function LeadershipHome({
             <ul className="space-y-2">
               {interventionStaff.map((row) => (
                 <li key={row.teacherMembershipId}>
-                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="flex items-center justify-between gap-2 rounded-xl p-2 hover:bg-[var(--surface-container-low)] calm-transition">
+                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="home-row-link flex items-center justify-between gap-2 p-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Avatar name={row.teacherName} />
                       <div className="min-w-0">
@@ -724,7 +733,7 @@ function LeadershipHome({
             <ul className="space-y-2">
               {leastObserved.map((row) => (
                 <li key={row.teacherMembershipId}>
-                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="flex items-center justify-between gap-2 rounded-xl p-2 hover:bg-[var(--surface-container-low)] calm-transition">
+                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="home-row-link flex items-center justify-between gap-2 p-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Avatar name={row.teacherName} />
                       <div className="min-w-0">
@@ -749,38 +758,38 @@ function LeadershipHome({
       {/* ═══ Attainment Summary ═══ */}
       {attainmentSummary && (
         <Card className="space-y-4">
-          {/* Section header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-muted [&_svg]:h-4 [&_svg]:w-4">
-                <IconChartBar />
-              </span>
-              <div>
-                <h2 className="text-base font-bold tracking-[-0.01em] text-text">Attainment</h2>
-                <p className="text-xs text-muted">
-                  {attainmentSummary.cycleLabel}
-                  {attainmentSummary.latestPointLabel && ` · ${attainmentSummary.latestPointLabel}`}
-                </p>
-              </div>
-            </div>
-            <Link href="/assessments" className="link-accent shrink-0 text-sm">
-              View all →
-            </Link>
-          </div>
+          <HomeCardHeadingSm
+            icon={<IconChartBar className="text-[var(--info)]" />}
+            title="Attainment"
+            subtitle={
+              attainmentSummary.latestPointLabel
+                ? `${attainmentSummary.cycleLabel} · ${attainmentSummary.latestPointLabel}`
+                : attainmentSummary.cycleLabel
+            }
+            end={
+              <Link href="/assessments" className="link-accent shrink-0 text-sm">
+                View all →
+              </Link>
+            }
+          />
 
           {/* Stat row */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <StatCard
               label="Subjects assessed"
               value={attainmentSummary.subjectCount}
               context={`${attainmentSummary.totalResults.toLocaleString()} results recorded`}
               accent="accent"
+              accentPlacement="top"
+              tone="glass"
             />
             <StatCard
               label="Students assessed"
               value={attainmentSummary.studentCount}
               context={attainmentSummary.latestPointLabel ?? "Latest point"}
               accent="info"
+              accentPlacement="top"
+              tone="glass"
             />
             <StatCard
               label="Dual-flagged"
@@ -792,6 +801,8 @@ function LeadershipHome({
               }
               accent={attainmentSummary.triangulatedCount > 0 ? "error" : "success"}
               href={attainmentSummary.triangulatedCount > 0 ? "/assessments/triangulation" : undefined}
+              accentPlacement="top"
+              tone="glass"
             />
           </div>
 
@@ -808,25 +819,30 @@ function LeadershipHome({
               </div>
               <ul className="space-y-1">
                 {attainmentSummary.topDualFlagged.map((s: DualFlaggedStudent) => (
-                  <li key={s.studentId} className="flex items-center justify-between gap-3 rounded-xl bg-[var(--surface-container-lowest)] px-3 py-2.5">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-text truncate">{s.studentName}</span>
-                        {s.yearGroup && <span className="text-[11px] text-muted">{s.yearGroup}</span>}
-                        {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
-                        {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
-                      </div>
-                      <p className="mt-0.5 text-[11px] text-muted truncate">
-                        Lowest: {s.worstSubject} — {s.worstGrade}
-                        {s.worstNormalizedScore !== null && ` (${Math.round(s.worstNormalizedScore * 100)}%)`}
-                      </p>
-                    </div>
-                    <StatusPill
-                      variant={s.behaviouralBand === "URGENT" ? "error" : s.behaviouralBand === "PRIORITY" ? "warning" : "neutral"}
-                      size="sm"
+                  <li key={s.studentId}>
+                    <Link
+                      href={studentAnalysisHref(s.studentId, windowDays)}
+                      className="home-row-link flex items-center justify-between gap-3 px-3 py-2.5"
                     >
-                      {s.behaviouralBand === "URGENT" ? "Urgent" : s.behaviouralBand === "PRIORITY" ? "Priority" : s.behaviouralBand}
-                    </StatusPill>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="truncate text-sm font-medium text-text">{s.studentName}</span>
+                          {s.yearGroup && <span className="text-[11px] text-muted">{s.yearGroup}</span>}
+                          {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
+                          {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
+                        </div>
+                        <p className="mt-0.5 truncate text-[11px] text-muted">
+                          Lowest: {s.worstSubject} — {s.worstGrade}
+                          {s.worstNormalizedScore !== null && ` (${Math.round(s.worstNormalizedScore * 100)}%)`}
+                        </p>
+                      </div>
+                      <StatusPill
+                        variant={s.behaviouralBand === "URGENT" ? "error" : s.behaviouralBand === "PRIORITY" ? "warning" : "neutral"}
+                        size="sm"
+                      >
+                        {s.behaviouralBand === "URGENT" ? "Urgent" : s.behaviouralBand === "PRIORITY" ? "Priority" : s.behaviouralBand}
+                      </StatusPill>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -923,7 +939,7 @@ function HodHome({
             <>
               <div className="space-y-3">
                 {topDeptCpd.map((row) => (
-                  <Link key={row.signalKey} href={`/analysis/cpd/${row.signalKey}?window=${windowDays}&department=${deptId}`} className="block rounded-xl p-2 -mx-2 calm-transition hover:bg-white/10">
+                  <Link key={row.signalKey} href={`/analysis/cpd/${row.signalKey}?window=${windowDays}&department=${deptId}`} className="home-row-link-on-dark -mx-2 block rounded-xl p-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{row.label}</span>
                       <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
@@ -959,7 +975,7 @@ function HodHome({
             <ul className="space-y-1">
               {topDeptTeachers.map((row) => (
                 <li key={row.teacherMembershipId}>
-                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="flex items-center justify-between gap-3 rounded-xl p-3 hover:bg-[var(--surface-container-low)] calm-transition">
+                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="home-row-link flex items-center justify-between gap-3 p-3">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Avatar name={row.teacherName} />
                       <div className="min-w-0">
@@ -1280,7 +1296,7 @@ function TeacherHome({
 
           {hasMeetingsFeature && (
             <Link href="/my-actions" className="flex min-h-0 flex-1 flex-col">
-              <Card className="flex min-h-0 flex-1 flex-col gap-4 calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg cursor-pointer">
+              <Card className="home-pressable-card flex min-h-0 flex-1 cursor-pointer flex-col gap-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Open Actions</p>
                 <div>
                   <p className={`mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] ${actionCount > 0 ? "text-[var(--warning)]" : "text-text"}`}>
@@ -1312,7 +1328,7 @@ function TeacherHome({
           <ul className="space-y-1">
             {openActions.slice(0, 5).map((action) => (
               <li key={action.id}>
-                <Link href="/my-actions" className="flex items-center justify-between gap-3 rounded-xl p-3 hover:bg-[var(--surface-container-low)] calm-transition">
+                <Link href="/my-actions" className="home-row-link flex items-center justify-between gap-3 p-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-low)] text-muted">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
