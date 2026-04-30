@@ -7,7 +7,7 @@
  * Adapts to GCSE (numeric 1-9) vs A-Level (A*-U) dominant format.
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
@@ -1448,6 +1448,10 @@ function PastoralScatter({
   yLabel: string;
   onDotClick: (s: PastoralStudent) => void;
 }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [hoverStudent, setHoverStudent] = useState<PastoralStudent | null>(null);
+  const [tipOffsetX, setTipOffsetX] = useState(0);
+
   const dots = students.filter((s) => s.normalisedScore !== null && s[xKey] !== null);
   if (!dots.length) {
     return (
@@ -1505,8 +1509,82 @@ function PastoralScatter({
 
   const yTicks = [0, 0.25, 0.5, 0.75, 1];
 
+  const pickNearest = (clientX: number, clientY: number, svgEl: SVGSVGElement) => {
+    const rect = svgEl.getBoundingClientRect();
+    const wrap = wrapRef.current;
+    if (rect.width < 8 || rect.height < 8 || !wrap) return;
+    const wrapRect = wrap.getBoundingClientRect();
+    const px = clientX - rect.left;
+    const py = clientY - rect.top;
+    const scaleX = rect.width / W;
+    const scaleY = rect.height / H;
+    const hitPx = 14;
+    let best: PastoralStudent | null = null;
+    let bestD = Infinity;
+    for (const s of dots) {
+      const rawX = s[xKey] as number;
+      const cx = xS(rawX) * scaleX;
+      const cy = yS(s.normalisedScore as number) * scaleY;
+      const d = Math.hypot(px - cx, py - cy);
+      if (d < bestD) {
+        bestD = d;
+        best = s;
+      }
+    }
+    if (best && bestD <= hitPx) {
+      setHoverStudent(best);
+      const rawX = best[xKey] as number;
+      const dotClientX = rect.left + xS(rawX) * scaleX;
+      setTipOffsetX(dotClientX - wrapRect.left);
+    } else {
+      setHoverStudent(null);
+    }
+  };
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
+    <div ref={wrapRef} className="relative">
+      {hoverStudent && wrapRef.current ? (
+        <div
+          className="pointer-events-none absolute z-20 max-w-[min(16rem,calc(100%-1rem)))] rounded-lg border border-black/10 bg-[var(--on-surface)] px-2.5 py-2 text-left text-[11px] leading-snug text-white shadow-lg"
+          style={{
+            left: Math.min(
+              Math.max(8, tipOffsetX),
+              wrapRef.current.offsetWidth - 8,
+            ),
+            top: 8,
+            transform: "translateX(-50%)",
+          }}
+        >
+          <p className="font-semibold">{hoverStudent.name}</p>
+          <p className="mt-1 text-white/85">
+            {xLabel}:{" "}
+            <span className="tabular-nums text-white">
+              {xKey === "attendancePct" && hoverStudent[xKey] !== null
+                ? `${Number(hoverStudent[xKey]).toFixed(1)}%`
+                : hoverStudent[xKey] !== null
+                  ? String(hoverStudent[xKey])
+                  : "—"}
+            </span>
+            <span className="mx-1 text-white/50">·</span>
+            Score: <span className="tabular-nums text-white">{hoverStudent.displayScore}</span>
+          </p>
+        </div>
+      ) : null}
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full h-auto touch-none"
+        onMouseMove={(e) => pickNearest(e.clientX, e.clientY, e.currentTarget)}
+        onMouseLeave={() => setHoverStudent(null)}
+        onTouchStart={(e) => {
+          const t = e.touches[0];
+          if (t) pickNearest(t.clientX, t.clientY, e.currentTarget);
+        }}
+        onTouchMove={(e) => {
+          const t = e.touches[0];
+          if (t) pickNearest(t.clientX, t.clientY, e.currentTarget);
+        }}
+        onTouchEnd={() => setHoverStudent(null)}
+      >
       {yTicks.map((v) => (
         <line key={v} x1={PL} x2={W - PR} y1={yS(v)} y2={yS(v)}
           stroke="var(--outline-variant)" strokeWidth={0.5} strokeOpacity={0.55} strokeDasharray="3 4" />
@@ -1530,25 +1608,34 @@ function PastoralScatter({
       <text x={10} y={H / 2} textAnchor="middle" fontSize={9} fill="var(--on-surface-muted)"
         transform={`rotate(-90 10 ${H / 2})`}>{yLabel}</text>
       {dots.map((s) => {
+        const rawX = s[xKey] as number;
         const cx = xS(rawX);
+        const cy = yS(s.normalisedScore as number);
         return (
-          <circle
-            key={s.studentId}
-            cx={cx}
-            cy={yS(s.normalisedScore as number)}
-            r={4.5}
-            fill={dotFill(s)}
-            fillOpacity={0.85}
-            stroke="var(--surface)"
-            strokeWidth={1}
-            className="cursor-pointer"
-            onClick={() => onDotClick(s)}
-          >
-            <title>{s.name} — {xLabel}: {xKey === "attendancePct" ? `${s[xKey]}%` : s[xKey]} | Score: {s.displayScore}</title>
-          </circle>
+          <g key={s.studentId}>
+            <circle
+              cx={cx}
+              cy={cy}
+              r={14}
+              fill="transparent"
+              className="cursor-pointer"
+              onClick={() => onDotClick(s)}
+            />
+            <circle
+              cx={cx}
+              cy={cy}
+              r={hoverStudent?.studentId === s.studentId ? 6 : 4.5}
+              fill={dotFill(s)}
+              fillOpacity={0.85}
+              stroke="var(--surface)"
+              strokeWidth={1}
+              className="pointer-events-none"
+            />
+          </g>
         );
       })}
     </svg>
+    </div>
   );
 }
 
@@ -1610,13 +1697,28 @@ function PastoralTab({
     return sortDir === "asc" ? av - bv : bv - av;
   });
 
+  const attendCellClass = (pct: number | null) => {
+    if (pct === null) return "text-[var(--on-surface)]";
+    if (pct >= 96) return "font-semibold text-emerald-600";
+    if (pct < 90) return "font-semibold text-red-600";
+    return "text-[var(--on-surface)]";
+  };
+
   const sortTh = (col: string, label: string) => (
     <th
       key={col}
-      className="cursor-pointer select-none px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
+      scope="col"
+      className="cursor-pointer select-none px-3 py-3.5 text-center text-[10px] font-bold uppercase tracking-wider text-neutral-500 hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
       onClick={() => toggle(col)}
     >
-      {label}{sortKey === col ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
+      <span className="inline-flex items-center justify-center gap-1">
+        {label}
+        {sortKey === col ? (
+          <span className="text-[11px] font-bold text-[var(--on-surface)]" aria-hidden>
+            {sortDir === "desc" ? "↓" : "↑"}
+          </span>
+        ) : null}
+      </span>
     </th>
   );
 
@@ -1794,31 +1896,48 @@ function PastoralTab({
 
       {/* ── Student Breakdown Table ── */}
       <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 p-5 pb-0">
-          <h2 className="text-xl font-bold text-[var(--on-surface)]">Student Breakdown</h2>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setFilterPP((v) => !v)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold calm-transition ${filterPP ? "bg-[var(--warning)] text-white" : "bg-[var(--surface-container-low)] text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"}`}
-            >
-              PP
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterSEND((v) => !v)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold calm-transition ${filterSEND ? "bg-[var(--info)] text-white" : "bg-[var(--surface-container-low)] text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"}`}
-            >
-              SEND
-            </button>
-            <span className="text-xs text-[var(--on-surface-muted)]">{filtered.length} students</span>
+        <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-5">
+          <h2 className="text-lg font-bold tracking-tight text-[var(--on-surface)] sm:text-xl">Student Breakdown</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex rounded-full border border-neutral-200/90 bg-neutral-100/80 p-0.5">
+              <button
+                type="button"
+                onClick={() => setFilterPP((v) => !v)}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold calm-transition ${
+                  filterPP
+                    ? "bg-white text-[var(--on-surface)] shadow-sm"
+                    : "text-neutral-600 hover:text-[var(--on-surface)]"
+                }`}
+              >
+                PP
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterSEND((v) => !v)}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold calm-transition ${
+                  filterSEND
+                    ? "bg-white text-[var(--on-surface)] shadow-sm"
+                    : "text-neutral-600 hover:text-[var(--on-surface)]"
+                }`}
+              >
+                SEND
+              </button>
+            </div>
+            <span className="text-[13px] text-neutral-500">
+              {filtered.length} student{filtered.length !== 1 ? "s" : ""}
+            </span>
           </div>
         </div>
-        <div className="overflow-x-auto mt-4">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto px-1 pb-1">
+          <table className="w-full min-w-[720px] border-collapse text-sm">
             <thead>
-              <tr className="border-y border-[var(--outline-variant)]/20 bg-[var(--surface-container-low)]">
-                <th className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">Student</th>
+              <tr className="border-y border-neutral-200/90">
+                <th
+                  scope="col"
+                  className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-neutral-500"
+                >
+                  Student
+                </th>
                 {sortTh("normalisedScore", "Score")}
                 {sortTh("attendancePct", "Attend %")}
                 {sortTh("latenessCount", "Lates")}
@@ -1830,34 +1949,50 @@ function PastoralTab({
             </thead>
             <tbody>
               {sorted.map((st) => (
-                <tr key={st.studentId} className="table-row calm-transition border-b border-[var(--outline-variant)]/10 last:border-0">
-                  <td className="px-5 py-2.5">
-                    <Link href={`/students/${st.studentId}`} className="font-medium hover:text-[var(--accent)] calm-transition">
+                <tr
+                  key={st.studentId}
+                  className="calm-transition border-b border-neutral-200/70 last:border-0 hover:bg-neutral-50/90"
+                >
+                  <td className="px-5 py-3.5 align-middle">
+                    <Link
+                      href={`/students/${st.studentId}`}
+                      className="font-medium text-[var(--on-surface)] hover:text-[var(--accent)] calm-transition"
+                    >
                       {st.name}
                     </Link>
-                    <div className="flex gap-1 mt-0.5">
+                    <div className="mt-1 flex flex-wrap gap-1">
                       {st.ppFlag && <span className={ppInlineBadgeClass}>PP</span>}
-                      {st.sendFlag && <span className={sendInlineBadgeClass}>SEN</span>}
+                      {st.sendFlag && <span className={sendInlineBadgeClass}>SEND</span>}
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 text-right font-semibold tabular-nums text-[var(--on-surface)]">
+                  <td className="px-3 py-3.5 text-center align-middle text-sm font-bold tabular-nums text-[var(--on-surface)]">
                     {st.displayScore}
                   </td>
-                  <td className={`px-4 py-2.5 text-right tabular-nums ${st.attendancePct !== null && st.attendancePct < 90 ? "font-bold text-[var(--error)]" : st.attendancePct !== null && st.attendancePct >= 96 ? "text-[var(--success)]" : "text-[var(--on-surface)]"}`}>
-                    {st.attendancePct !== null ? `${st.attendancePct}%` : "—"}
+                  <td className={`px-3 py-3.5 text-center align-middle text-sm tabular-nums ${attendCellClass(st.attendancePct)}`}>
+                    {st.attendancePct !== null ? `${Number(st.attendancePct).toFixed(1)}%` : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{st.latenessCount ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{st.detentionsCount ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{st.internalExclusionsCount ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{st.onCallsCount ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{st.positivePointsTotal ?? "—"}</td>
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                    {st.latenessCount ?? "—"}
+                  </td>
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                    {st.detentionsCount ?? "—"}
+                  </td>
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                    {st.internalExclusionsCount ?? "—"}
+                  </td>
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                    {st.onCallsCount ?? "—"}
+                  </td>
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                    {st.positivePointsTotal ?? "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         {filtered.length === 0 && (
-          <div className="py-8 text-center text-sm text-[var(--on-surface-muted)]">
+          <div className="px-5 py-10 text-center text-sm text-neutral-500">
             No students match the current filter.
           </div>
         )}
