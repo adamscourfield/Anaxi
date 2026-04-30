@@ -448,7 +448,7 @@ export default async function ExplorerTeachersPage({
                           {/* Teacher */}
                           <td className="whitespace-nowrap px-5 py-5">
                             <Link
-                              href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
+                              href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}&ref=explorer`}
                               className="flex items-center gap-3.5 calm-transition group-hover:text-accent"
                             >
                               <Avatar name={row.teacherName} size="md" />
@@ -578,12 +578,12 @@ export default async function ExplorerTeachersPage({
                       return (
                         <ClickableRow
                           key={row.teacherMembershipId}
-                          href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
+                          href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}&ref=explorer`}
                           className="group table-row calm-transition cursor-pointer"
                         >
                           <td className="whitespace-nowrap px-5 py-5">
                             <Link
-                              href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
+                              href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}&ref=explorer`}
                               className="flex items-center gap-3.5 calm-transition group-hover:text-accent"
                             >
                               <Avatar name={row.teacherName} size="md" />

@@ -82,6 +82,7 @@ function iconFor(href: string) {
   if (href === "/my-actions") return "check-square";
   if (href.includes("/observe/history")) return "history";
   if (href.includes("/observe")) return "radar";
+  if (href.includes("/instruction")) return "users";
   if (href.includes("/explorer")) return "grid";
   if (href.includes("/assessments")) return "chart";
   if (href.includes("/students")) return "users";
@@ -161,6 +162,7 @@ export function TenantNav({
       items: [
         ...(has("OBSERVATIONS") ? [navItem("New observation", "/observe/new")] : []),
         ...(has("OBSERVATIONS") ? [navItem("Observation history", "/observe/history")] : []),
+        ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Teachers", "/instruction/teachers")] : []),
         ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Explorer", "/explorer")] : []),
       ],
     },
