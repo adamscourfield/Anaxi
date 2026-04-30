@@ -10,7 +10,7 @@ import { computeDepartmentPivot } from "@/modules/analysis/departmentPivot";
 import { computeStudentRiskIndex } from "@/modules/analysis/studentRisk";
 import { computeCohortPivot } from "@/modules/analysis/cohortPivot";
 
-const WINDOW_OPTIONS = [7, 21, 28] as const;
+const WINDOW_OPTIONS = [7, 21, 28, 90] as const;
 type WindowDays = (typeof WINDOW_OPTIONS)[number];
 
 function escapeCsv(val: string | number | null | undefined): string {
