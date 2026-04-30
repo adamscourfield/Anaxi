@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fragment, type ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -9,13 +10,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { H2, MetaText } from "@/components/ui/typography";
 import { StudentPrioritiesFilters } from "./StudentPrioritiesFilters";
+import { PrioritiesExportButton } from "./PrioritiesExportButton";
 import { computeTeacherRiskIndex, RiskStatus } from "@/modules/analysis/teacherRisk";
 import { canViewTeacherAnalysis, canViewStudentAnalysis } from "@/modules/authz";
 import {
   computeCpdPriorities,
   getTopImprovingSignals,
 } from "@/modules/analysis/cpdPriorities";
-import { computeStudentRiskIndex, RiskBand, Confidence } from "@/modules/analysis/studentRisk";
+import { computeStudentRiskIndex, RiskBand, Confidence, BAND_ORDER } from "@/modules/analysis/studentRisk";
 
 const TABS = ["teachers", "cpd", "students"] as const;
 type Tab = (typeof TABS)[number];
@@ -27,6 +29,119 @@ const TAB_LABELS: Record<Tab, string> = {
 };
 
 const WINDOW_OPTIONS = [7, 21, 28] as const;
+
+/** Match computeTeacherRiskIndex default ordering when no URL sort. */
+const TEACHER_STATUS_ORDER: Record<RiskStatus, number> = {
+  SIGNIFICANT_DRIFT: 0,
+  EMERGING_DRIFT: 1,
+  STABLE: 2,
+  LOW_COVERAGE: 3,
+};
+
+function teacherInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
+}
+
+const AVATAR_TINTS = [
+  "bg-emerald-100 text-emerald-800",
+  "bg-violet-100 text-violet-800",
+  "bg-amber-100 text-amber-900",
+  "bg-sky-100 text-sky-800",
+  "bg-rose-100 text-rose-800",
+  "bg-indigo-100 text-indigo-800",
+];
+
+function avatarTintClass(seed: string): string {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return AVATAR_TINTS[h % AVATAR_TINTS.length]!;
+}
+
+function PrioritiesMetaBar({ items }: { items: { icon: ReactNode; label: string }[] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-1 text-xs text-muted">
+      {items.map((item, i) => (
+        <Fragment key={i}>
+          {i > 0 ? <span className="px-1 text-muted/50" aria-hidden>·</span> : null}
+          <span className="inline-flex items-center gap-1.5">
+            <span className="text-muted/80 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0" aria-hidden>
+              {item.icon}
+            </span>
+            <span>{item.label}</span>
+          </span>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+const ICON_CALENDAR = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="16" y1="2" x2="16" y2="6" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="8" y1="2" x2="8" y2="6" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="3" y1="10" x2="21" y2="10" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ICON_CHART = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+    <path d="M3 3v18h18" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M7 16l4-4 4 4 6-6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ICON_CLOCK = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+    <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
+    <polyline points="12 6 12 12 16 14" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ICON_CHEVRON_RIGHT = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 text-muted/50">
+    <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ICON_INFO = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-3.5 w-3.5 text-muted">
+    <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="12" y1="16" x2="12" y2="12" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="12" y1="8" x2="12.01" y2="8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ICON_SORT = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-3 w-3 shrink-0 opacity-50">
+    <path d="M7 15l5 5 5-5M7 9l5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ICON_TAB_TEACHER = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4 shrink-0">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="12" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ICON_TAB_CPD = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4 shrink-0">
+    <path d="M22 10v6M2 10l10-5 10 5-10 5z" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ICON_TAB_STUDENTS = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-4 w-4 shrink-0">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
 const STATUS_LABELS: Record<RiskStatus, string> = {
   SIGNIFICANT_DRIFT: "Significant drift",
@@ -61,12 +176,26 @@ const CONFIDENCE_PILL: Record<Confidence, string> = {
   LOW: "bg-risk-priority-bg text-risk-priority-text",
 };
 
+const TAB_ICONS: Record<Tab, ReactNode> = {
+  teachers: ICON_TAB_TEACHER,
+  cpd: ICON_TAB_CPD,
+  students: ICON_TAB_STUDENTS,
+};
+
+const TEACHER_SORT_COLUMNS = ["teacher", "score"] as const;
+type TeacherSortColumn = (typeof TEACHER_SORT_COLUMNS)[number];
+
+const STUDENT_SORT_COLUMNS = ["student", "score"] as const;
+type StudentSortColumn = (typeof STUDENT_SORT_COLUMNS)[number];
+
 function TabBar({
   activeTab,
   windowDays,
+  preserveParams,
 }: {
   activeTab: Tab;
   windowDays: number;
+  preserveParams?: Record<string, string>;
 }) {
   return (
     <div className="segmented-toggle">
@@ -74,12 +203,18 @@ function TabBar({
         const params = new URLSearchParams();
         params.set("tab", tab);
         params.set("window", String(windowDays));
+        if (preserveParams) {
+          for (const [k, v] of Object.entries(preserveParams)) {
+            if (v) params.set(k, v);
+          }
+        }
         return (
           <Link
             key={tab}
             href={`/analytics?${params.toString()}`}
-            className={`segmented-toggle-btn ${tab === activeTab ? "segmented-toggle-btn-active" : ""}`}
+            className={`segmented-toggle-btn inline-flex items-center gap-2 ${tab === activeTab ? "segmented-toggle-btn-active" : ""}`}
           >
+            {TAB_ICONS[tab]}
             {TAB_LABELS[tab]}
           </Link>
         );
@@ -95,7 +230,7 @@ function WindowSelector({
 }: {
   windowDays: number;
   activeTab: Tab;
-  extraParams?: Record<string, string>;
+  extraParams?: Record<string, string | undefined>;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -128,10 +263,19 @@ function WindowSelector({
 async function TeachersTab({
   user,
   windowDays,
+  searchParams,
 }: {
   user: { id: string; tenantId: string; role: UserRole };
   windowDays: number;
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
+  const rawSort = typeof searchParams?.sort === "string" ? searchParams.sort : "";
+  const sortCol: TeacherSortColumn = TEACHER_SORT_COLUMNS.includes(rawSort as TeacherSortColumn)
+    ? (rawSort as TeacherSortColumn)
+    : "score";
+  const rawDir = typeof searchParams?.dir === "string" ? searchParams.dir : "desc";
+  const sortDir = rawDir === "asc" ? "asc" : "desc";
+
   const [hodMemberships, coachAssignments] = await Promise.all([
     (prisma as any).departmentMembership.findMany({
       where: { userId: user.id, isHeadOfDepartment: true },
@@ -154,25 +298,74 @@ async function TeachersTab({
     teacherDepts.get(m.userId)!.push(m.departmentId);
   }
 
-  const rows = allRows.filter((row) =>
+  let rows = allRows.filter((row) =>
     canViewTeacherAnalysis(viewerContext, {
       teacherUserId: row.teacherMembershipId,
       teacherDepartmentIds: teacherDepts.get(row.teacherMembershipId) ?? [],
     })
   );
 
+  const collator = new Intl.Collator("en", { sensitivity: "base" });
+  rows = [...rows].sort((a, b) => {
+    if (sortCol === "teacher") {
+      const nameCmp = collator.compare(a.teacherName, b.teacherName);
+      if (nameCmp !== 0) return sortDir === "asc" ? nameCmp : -nameCmp;
+      const statusDiff = TEACHER_STATUS_ORDER[a.status] - TEACHER_STATUS_ORDER[b.status];
+      if (statusDiff !== 0) return statusDiff;
+      return b.normalizedIDS - a.normalizedIDS;
+    }
+    const statusDiff = TEACHER_STATUS_ORDER[a.status] - TEACHER_STATUS_ORDER[b.status];
+    if (statusDiff !== 0) return sortDir === "asc" ? statusDiff : -statusDiff;
+    const scoreCmp = a.normalizedIDS - b.normalizedIDS;
+    if (scoreCmp !== 0) return sortDir === "asc" ? scoreCmp : -scoreCmp;
+    return collator.compare(a.teacherName, b.teacherName);
+  });
+
   const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } });
-  const computedAt = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const computedAt = new Date().toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  function teacherListParams(overrides: Record<string, string | undefined>): string {
+    const p = new URLSearchParams();
+    p.set("tab", "teachers");
+    p.set("window", String(windowDays));
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v !== undefined && v !== "") p.set(k, v);
+    }
+    return p.toString();
+  }
+
+  const teacherSortHref = (col: TeacherSortColumn) => {
+    const nextDir =
+      sortCol === col ? (sortDir === "desc" ? "asc" : "desc") : col === "teacher" ? "asc" : "desc";
+    return `/analytics?${teacherListParams({ sort: col, dir: nextDir })}`;
+  };
 
   return (
-    <div className="space-y-6">
-      <MetaText>
-        Window: Last {windowDays} days · Based on observations · Updated {computedAt}
-      </MetaText>
+    <div className="space-y-5">
+      <PrioritiesMetaBar
+        items={[
+          { icon: ICON_CALENDAR, label: `Window: Last ${windowDays} days` },
+          { icon: ICON_CHART, label: "Based on observations" },
+          { icon: ICON_CLOCK, label: `Updated ${computedAt}` },
+        ]}
+      />
 
-      <details className="rounded-lg border border-border bg-surface p-4">
-        <summary className="cursor-pointer text-sm font-medium text-text">Metric definitions</summary>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
+      <details className="anx-priorities-definitions anx-elevated-card rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-3 shadow-[var(--shadow-ambient)]">
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-text">
+          <span className="text-muted" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+              <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          Metric definitions
+        </summary>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
           <li><strong>Coverage</strong>: Number of observations in the selected window.</li>
           <li><strong>Drift status</strong>: Whether recent signals are stable or declining.</li>
           <li><strong>Drift score</strong>: Normalized decline score (higher means greater drift).</li>
@@ -180,7 +373,7 @@ async function TeachersTab({
         </ul>
       </details>
 
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] p-0 shadow-[var(--shadow-ambient)]">
         {rows.length === 0 ? (
           <DataTableEmpty
             title="No observation data in this window"
@@ -197,23 +390,51 @@ async function TeachersTab({
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="table-head-row">
-                    <th className="px-5 py-3.5">Teacher</th>
+                    <th className="px-5 py-3.5">
+                      <Link href={teacherSortHref("teacher")} className="anx-priorities-sort-link">
+                        Teacher
+                        {ICON_SORT}
+                      </Link>
+                    </th>
                     <th className="px-4 py-3.5">Department(s)</th>
                     <th className="px-4 py-3.5">Coverage</th>
-                    <th className="px-4 py-3.5">Drift status</th>
-                    <th className="px-4 py-3.5">Drift score</th>
+                    <th className="px-4 py-3.5">
+                      <span className="inline-flex items-center gap-1">
+                        Drift status
+                        <span
+                          className="inline-flex"
+                          title="Whether recent signals are stable or declining vs the prior window."
+                        >
+                          {ICON_INFO}
+                        </span>
+                      </span>
+                    </th>
+                    <th className="px-4 py-3.5 text-right">
+                      <Link href={teacherSortHref("score")} className="anx-priorities-sort-link justify-end">
+                        Drift score
+                        {ICON_SORT}
+                      </Link>
+                    </th>
                     <th className="px-4 py-3.5">Last observed</th>
+                    <th className="w-10 px-2 py-3.5" aria-hidden />
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row.teacherMembershipId} className="table-row calm-transition">
-                      <td className="px-5 py-4 font-medium text-text">
+                      <td className="px-5 py-4">
                         <Link
                           href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
-                          className="link-subtle"
+                          className="link-subtle flex min-w-0 items-center gap-3"
                         >
-                          {row.teacherName}
+                          <span
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTintClass(row.teacherMembershipId)}`}
+                          >
+                            {teacherInitials(row.teacherName)}
+                          </span>
+                          <span className="min-w-0 truncate font-semibold text-text">
+                            {row.teacherName}
+                          </span>
                         </Link>
                       </td>
                       <td className="px-4 py-4 text-muted">
@@ -227,7 +448,7 @@ async function TeachersTab({
                           {STATUS_LABELS[row.status]}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-muted">
+                      <td className="px-4 py-4 text-right tabular-nums text-muted">
                         {row.status === "LOW_COVERAGE" ? "—" : row.normalizedIDS.toFixed(1)}
                       </td>
                       <td className="px-4 py-4 text-muted">
@@ -237,6 +458,15 @@ async function TeachersTab({
                               month: "short",
                             })
                           : "—"}
+                      </td>
+                      <td className="px-2 py-4 text-right" aria-hidden>
+                        <Link
+                          href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
+                          className="inline-flex text-muted/50 calm-transition hover:text-muted"
+                          tabIndex={-1}
+                        >
+                          {ICON_CHEVRON_RIGHT}
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -302,7 +532,7 @@ async function CpdTab({
   ]);
 
   const minCoverage: number = settings?.minObservationCount ?? 6;
-  const computedAt = new Date().toLocaleDateString("en-GB", {
+  const computedAt = new Date().toLocaleString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -313,11 +543,15 @@ async function CpdTab({
   const topImproving = getTopImprovingSignals(rows);
 
   return (
-    <div className="space-y-6">
-      <MetaText>
-        Most commonly weakening signals · Window: last {windowDays} days · Updated{" "}
-        {computedAt} · Coverage threshold: {minCoverage} obs
-      </MetaText>
+    <div className="space-y-5">
+      <PrioritiesMetaBar
+        items={[
+          { icon: ICON_CALENDAR, label: `Window: last ${windowDays} days` },
+          { icon: ICON_CHART, label: "Based on observations" },
+          { icon: ICON_CLOCK, label: `Updated ${computedAt}` },
+          { icon: ICON_INFO, label: `Coverage threshold: ${minCoverage} obs` },
+        ]}
+      />
 
       <div className="flex flex-wrap items-center gap-4">
         {departmentOptions.length > 0 && (
@@ -352,9 +586,16 @@ async function CpdTab({
         )}
       </div>
 
-      <details className="rounded-lg border border-border bg-surface p-4">
-        <summary className="cursor-pointer text-sm font-medium text-text">Metric definitions</summary>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
+      <details className="anx-priorities-definitions anx-elevated-card rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-3 shadow-[var(--shadow-ambient)]">
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-text">
+          <span className="text-muted" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+              <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          Metric definitions
+        </summary>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
           <li><strong>Drift rate</strong>: Percentage of covered teachers showing weakening for a signal.</li>
           <li><strong>Avg negative delta</strong>: Mean size of decline where decline is present.</li>
           <li><strong>Teachers covered</strong>: Number of teachers with sufficient observations in window.</li>
@@ -362,8 +603,8 @@ async function CpdTab({
         </ul>
       </details>
 
-      <Card className="overflow-hidden p-0">
-        <div className="border-b border-border px-4 py-3">
+      <Card className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] p-0 shadow-[var(--shadow-ambient)]">
+        <div className="border-b border-border bg-[var(--surface-container-low)] px-5 py-4">
           <H2>Areas for focus</H2>
           <MetaText>Signals showing the most widespread weakening in the selected window.</MetaText>
         </div>
@@ -388,6 +629,7 @@ async function CpdTab({
                     <th className="px-4 py-3.5 text-right">Avg negative delta</th>
                     <th className="px-4 py-3.5 text-right">Teachers covered</th>
                     <th className="px-4 py-3.5 text-right">Improving rate (%)</th>
+                    <th className="w-10 px-2 py-3.5" aria-hidden />
                   </tr>
                 </thead>
                 <tbody>
@@ -422,6 +664,15 @@ async function CpdTab({
                           {row.teachersCovered === 0
                             ? "—"
                             : `${Math.round(row.improvingRate * 100)}%`}
+                        </td>
+                        <td className="px-2 py-4 text-right" aria-hidden>
+                          <Link
+                            href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
+                            className="inline-flex text-muted/50 calm-transition hover:text-muted"
+                            tabIndex={-1}
+                          >
+                            {ICON_CHEVRON_RIGHT}
+                          </Link>
                         </td>
                       </tr>
                     );
@@ -504,6 +755,13 @@ async function StudentsTab({
   const filterConfidence = typeof searchParams?.confidence === "string" ? searchParams.confidence : "";
   const filterWatchlist = searchParams?.watchlist === "1";
 
+  const rawStudentSort = typeof searchParams?.sort === "string" ? searchParams.sort : "";
+  const sortCol: StudentSortColumn = STUDENT_SORT_COLUMNS.includes(rawStudentSort as StudentSortColumn)
+    ? (rawStudentSort as StudentSortColumn)
+    : "score";
+  const rawStudentDir = typeof searchParams?.dir === "string" ? searchParams.dir : "desc";
+  const sortDir = rawStudentDir === "asc" ? "asc" : "desc";
+
   const { rows: allRows, computedAt } = await computeStudentRiskIndex(
     user.tenantId,
     windowDays,
@@ -519,6 +777,22 @@ async function StudentsTab({
   if (filterBand) rows = rows.filter((r) => r.band === filterBand);
   if (filterConfidence) rows = rows.filter((r) => r.confidence === filterConfidence);
   if (filterWatchlist) rows = rows.filter((r) => r.onWatchlist);
+
+  const collator = new Intl.Collator("en", { sensitivity: "base" });
+  rows = [...rows].sort((a, b) => {
+    if (sortCol === "student") {
+      const nameCmp = collator.compare(a.studentName, b.studentName);
+      if (nameCmp !== 0) return sortDir === "asc" ? nameCmp : -nameCmp;
+      const bandDiff = BAND_ORDER[a.band] - BAND_ORDER[b.band];
+      if (bandDiff !== 0) return bandDiff;
+      return b.riskScore - a.riskScore;
+    }
+    const bandDiff = BAND_ORDER[a.band] - BAND_ORDER[b.band];
+    if (bandDiff !== 0) return sortDir === "asc" ? bandDiff : -bandDiff;
+    const scoreCmp = a.riskScore - b.riskScore;
+    if (scoreCmp !== 0) return sortDir === "asc" ? scoreCmp : -scoreCmp;
+    return collator.compare(a.studentName, b.studentName);
+  });
 
   const yearGroups = Array.from(new Set(allRows.map((r) => r.yearGroup).filter(Boolean))).sort() as string[];
 
@@ -538,15 +812,42 @@ async function StudentsTab({
     minute: "2-digit",
   });
 
+  function studentListParams(overrides: Record<string, string | undefined>): string {
+    const p = new URLSearchParams();
+    p.set("tab", "students");
+    p.set("window", String(windowDays));
+    if (filterYearGroup) p.set("yearGroup", filterYearGroup);
+    if (filterSend) p.set("send", filterSend);
+    if (filterPp) p.set("pp", filterPp);
+    if (filterBand) p.set("band", filterBand);
+    if (filterConfidence) p.set("confidence", filterConfidence);
+    if (filterWatchlist) p.set("watchlist", "1");
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v !== undefined && v !== "") p.set(k, v);
+    }
+    return p.toString();
+  }
+
+  const studentSortHref = (col: StudentSortColumn) => {
+    const nextDir =
+      sortCol === col ? (sortDir === "desc" ? "asc" : "desc") : col === "student" ? "asc" : "desc";
+    return `/analytics?${studentListParams({ sort: col, dir: nextDir })}`;
+  };
+
   return (
-    <div className="space-y-6">
-      <MetaText>
-        Window: last {windowDays} days · Updated {computedAtStr} · Based on latest snapshots
-      </MetaText>
+    <div className="space-y-5">
+      <PrioritiesMetaBar
+        items={[
+          { icon: ICON_CALENDAR, label: `Window: last ${windowDays} days` },
+          { icon: ICON_CHART, label: "Based on latest snapshots" },
+          { icon: ICON_CLOCK, label: `Updated ${computedAtStr}` },
+        ]}
+      />
 
       <StudentPrioritiesFilters
         yearGroups={yearGroups}
         windowDays={windowDays}
+        tableSort={{ sort: sortCol, dir: sortDir }}
         defaults={{
           yearGroup: filterYearGroup,
           send: filterSend,
@@ -558,9 +859,16 @@ async function StudentsTab({
         hasFilters={hasStudentFilters}
       />
 
-      <details className="rounded-lg border border-border bg-surface p-4">
-        <summary className="cursor-pointer text-sm font-medium text-text">Metric definitions</summary>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
+      <details className="anx-priorities-definitions anx-elevated-card rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-3 shadow-[var(--shadow-ambient)]">
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-text">
+          <span className="text-muted" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+              <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          Metric definitions
+        </summary>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
           <li><strong>Band</strong>: Overall risk priority based on recent trend signals.</li>
           <li><strong>Score</strong>: Composite risk score used to sort support priorities.</li>
           <li><strong>Detentions / On calls</strong>: Change from baseline window (positive means increase).</li>
@@ -568,7 +876,7 @@ async function StudentsTab({
         </ul>
       </details>
 
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] p-0 shadow-[var(--shadow-ambient)]">
         {rows.length === 0 ? (
           <DataTableEmpty
             title={hasStudentFilters ? "No students match these filters" : "No student snapshot data"}
@@ -589,32 +897,58 @@ async function StudentsTab({
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-bg text-left text-xs font-medium text-muted">
-                  <th className="sticky left-0 z-20 bg-bg px-4 py-3">Student</th>
-                  <th className="px-4 py-3">Year</th>
-                  <th className="px-4 py-3">Band</th>
-                  <th className="px-4 py-3 text-right">Score</th>
-                  <th className="px-4 py-3">Key drivers</th>
-                  <th className="px-4 py-3 text-right">Attendance (%)</th>
-                  <th className="px-4 py-3 text-right">Detentions Δ</th>
-                  <th className="px-4 py-3 text-right">On calls Δ</th>
-                  <th className="px-4 py-3">Flags</th>
-                  <th className="px-4 py-3">Confidence</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.studentId} className="table-row calm-transition">
-                      <td className="sticky-first-column px-5 py-4 font-medium text-text shadow-[4px_0_12px_-4px_rgba(0,0,0,0.06)]">
+          <div className="table-shell border-0 rounded-none shadow-none">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="table-head-row">
+                    <th className="sticky left-0 z-20 bg-[var(--surface-container-low)] px-4 py-3.5 shadow-[inset_-1px_0_0_var(--surface-container)]">
+                      <Link href={studentSortHref("student")} className="anx-priorities-sort-link">
+                        Student
+                        {ICON_SORT}
+                      </Link>
+                    </th>
+                    <th className="px-4 py-3.5">Year</th>
+                    <th className="px-4 py-3.5">Band</th>
+                    <th className="px-4 py-3.5 text-right">
+                      <Link href={studentSortHref("score")} className="anx-priorities-sort-link justify-end">
+                        Score
+                        {ICON_SORT}
+                      </Link>
+                    </th>
+                    <th className="px-4 py-3.5">
+                      <span className="inline-flex items-center gap-1">
+                        Key drivers
+                        <span className="inline-flex" title="Top contributing metrics from the latest snapshot window.">
+                          {ICON_INFO}
+                        </span>
+                      </span>
+                    </th>
+                    <th className="px-4 py-3.5 text-right">Attendance (%)</th>
+                    <th className="px-4 py-3.5 text-right">Detentions Δ</th>
+                    <th className="px-4 py-3.5 text-right">On calls Δ</th>
+                    <th className="px-4 py-3.5">Flags</th>
+                    <th className="px-4 py-3.5">Confidence</th>
+                    <th className="w-10 px-2 py-3.5" aria-hidden />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.studentId} className="table-row calm-transition">
+                      <td className="sticky-first-column px-5 py-4 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.06)]">
                         <Link
                           href={`/analysis/students/${row.studentId}?window=${windowDays}`}
-                          className="link-subtle"
+                          className="link-subtle flex min-w-0 items-center gap-3 font-semibold text-text"
                         >
-                          {row.onWatchlist ? "★ " : ""}
-                          {row.studentName}
+                          <span
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTintClass(row.studentId)}`}
+                          >
+                            {teacherInitials(row.studentName)}
+                          </span>
+                          <span className="min-w-0 truncate">
+                            {row.onWatchlist ? "★ " : ""}
+                            {row.studentName}
+                          </span>
                         </Link>
                       </td>
                       <td className="px-4 py-4 text-muted">{row.yearGroup ?? "—"}</td>
@@ -686,11 +1020,21 @@ async function StudentsTab({
                           {row.confidence === "HIGH" ? "High" : "Low"}
                         </span>
                       </td>
+                      <td className="px-2 py-4 text-right" aria-hidden>
+                        <Link
+                          href={`/analysis/students/${row.studentId}?window=${windowDays}`}
+                          className="inline-flex text-muted/50 calm-transition hover:text-muted"
+                          tabIndex={-1}
+                        >
+                          {ICON_CHEVRON_RIGHT}
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          </div>
         )}
       </Card>
 
@@ -701,6 +1045,46 @@ async function StudentsTab({
   );
 }
 
+async function resolveCpdDepartmentForAnalytics(
+  user: { id: string; tenantId: string; role: string },
+  searchParams: Record<string, string | string[] | undefined>
+): Promise<string | undefined> {
+  const rawDept = typeof searchParams?.department === "string" ? searchParams.department : undefined;
+
+  const hodMemberships = await (prisma as any).departmentMembership.findMany({
+    where: { userId: user.id, isHeadOfDepartment: true },
+    include: { department: true },
+  });
+  const hodDepartments: { id: string; name: string }[] = (hodMemberships as any[]).map((m: any) => ({
+    id: m.departmentId,
+    name: m.department.name,
+  }));
+
+  const allDepartments = await (prisma as any).department.findMany({
+    where: { tenantId: user.tenantId },
+    orderBy: { name: "asc" },
+  });
+
+  const isHod = user.role === "HOD";
+  const departmentOptions: { id: string; name: string }[] = isHod
+    ? hodDepartments
+    : (allDepartments as any[]).map((d: any) => ({ id: d.id, name: d.name }));
+
+  let departmentId: string | undefined = rawDept;
+  if (isHod && !departmentId && hodDepartments.length > 0) {
+    departmentId = hodDepartments[0].id;
+  }
+  if (isHod && departmentId) {
+    const allowed = hodDepartments.map((d) => d.id);
+    if (!allowed.includes(departmentId)) {
+      departmentId = hodDepartments[0]?.id;
+    }
+  }
+
+  if (departmentOptions.length === 0) return undefined;
+  return departmentId;
+}
+
 export default async function AnalyticsPage({
   searchParams,
 }: {
@@ -708,6 +1092,15 @@ export default async function AnalyticsPage({
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
+
+  const [hodMemberships, coachAssignments] = await Promise.all([
+    (prisma as any).departmentMembership.findMany({
+      where: { userId: user.id, isHeadOfDepartment: true },
+    }),
+    (prisma as any).coachAssignment.findMany({ where: { coachUserId: user.id } }),
+  ]);
+  const hodDepartmentIds = (hodMemberships as any[]).map((m: any) => m.departmentId);
+  const coacheeUserIds = (coachAssignments as any[]).map((a: any) => a.coacheeUserId);
 
   const rawTab = typeof searchParams?.tab === "string" ? searchParams.tab : "teachers";
   const activeTab: Tab = TABS.includes(rawTab as Tab) ? (rawTab as Tab) : "teachers";
@@ -717,37 +1110,82 @@ export default async function AnalyticsPage({
     ? (rawWindow as (typeof WINDOW_OPTIONS)[number])
     : 21;
 
+  const sp = searchParams ?? {};
+  const rawTeacherSort = typeof sp.sort === "string" ? sp.sort : "";
+  const rawTeacherDir = typeof sp.dir === "string" ? sp.dir : "";
+  const teacherSortPreserve: Record<string, string> = {};
+  if (activeTab === "teachers" && TEACHER_SORT_COLUMNS.includes(rawTeacherSort as TeacherSortColumn)) {
+    teacherSortPreserve.sort = rawTeacherSort;
+    if (rawTeacherDir === "asc" || rawTeacherDir === "desc") teacherSortPreserve.dir = rawTeacherDir;
+  }
+
+  const rawStudentSort = typeof sp.sort === "string" ? sp.sort : "";
+  const rawStudentDir = typeof sp.dir === "string" ? sp.dir : "";
+  const studentSortPreserve: Record<string, string> = {};
+  if (activeTab === "students" && STUDENT_SORT_COLUMNS.includes(rawStudentSort as StudentSortColumn)) {
+    studentSortPreserve.sort = rawStudentSort;
+    if (rawStudentDir === "asc" || rawStudentDir === "desc") studentSortPreserve.dir = rawStudentDir;
+  }
+
+  const tabPreserveParams =
+    activeTab === "teachers"
+      ? teacherSortPreserve
+      : activeTab === "students"
+        ? studentSortPreserve
+        : {};
+
+  const cpdExportDepartmentId =
+    activeTab === "cpd" ? await resolveCpdDepartmentForAnalytics(user, sp) : undefined;
+
+  const windowExtraParams: Record<string, string | undefined> =
+    activeTab === "cpd" && typeof sp.department === "string"
+      ? { department: sp.department }
+      : activeTab === "teachers"
+        ? { sort: teacherSortPreserve.sort, dir: teacherSortPreserve.dir }
+        : activeTab === "students"
+          ? {
+              sort: studentSortPreserve.sort,
+              dir: studentSortPreserve.dir,
+              yearGroup: typeof sp.yearGroup === "string" ? sp.yearGroup : undefined,
+              send: typeof sp.send === "string" ? sp.send : undefined,
+              pp: typeof sp.pp === "string" ? sp.pp : undefined,
+              band: typeof sp.band === "string" ? sp.band : undefined,
+              confidence: typeof sp.confidence === "string" ? sp.confidence : undefined,
+              watchlist: sp.watchlist === "1" ? "1" : undefined,
+            }
+          : {};
+
   return (
-    <div className="anx-reports-page space-y-8">
-      <PageHeader variant="ledger"
-        eyebrow="Analysis"
+    <div className="anx-priorities-page anx-reports-page space-y-6 pb-10">
+      <PageHeader
+        variant="ledger"
+        eyebrow="ANALYSIS"
         title="Priorities"
         subtitle="Teacher coverage, CPD drift, and student pastoral bands — driven by the tab and time window below."
         meta={<MetaText>Same URL controls apply across all three tabs.</MetaText>}
+        actions={
+          <PrioritiesExportButton
+            userId={user.id}
+            userRole={user.role}
+            hodDepartmentIds={hodDepartmentIds}
+            coacheeUserIds={coacheeUserIds}
+            activeTab={activeTab}
+            windowDays={windowDays}
+            departmentId={cpdExportDepartmentId}
+          />
+        }
       />
 
-      <div className="flex flex-col gap-4 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--surface-container-lowest)] p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between md:p-5">
-        <TabBar activeTab={activeTab} windowDays={windowDays} />
-        <WindowSelector
-          windowDays={windowDays}
-          activeTab={activeTab}
-          extraParams={
-            activeTab === "cpd" && typeof searchParams?.department === "string"
-              ? { department: searchParams.department }
-              : undefined
-          }
-        />
+      <div className="filter-panel flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <TabBar activeTab={activeTab} windowDays={windowDays} preserveParams={tabPreserveParams} />
+        <WindowSelector windowDays={windowDays} activeTab={activeTab} extraParams={windowExtraParams} />
       </div>
 
       {activeTab === "teachers" && (
-        <TeachersTab user={user} windowDays={windowDays} />
+        <TeachersTab user={user} windowDays={windowDays} searchParams={sp} />
       )}
-      {activeTab === "cpd" && (
-        <CpdTab user={user} windowDays={windowDays} searchParams={searchParams ?? {}} />
-      )}
-      {activeTab === "students" && (
-        <StudentsTab user={user} windowDays={windowDays} searchParams={searchParams ?? {}} />
-      )}
+      {activeTab === "cpd" && <CpdTab user={user} windowDays={windowDays} searchParams={sp} />}
+      {activeTab === "students" && <StudentsTab user={user} windowDays={windowDays} searchParams={sp} />}
     </div>
   );
 }

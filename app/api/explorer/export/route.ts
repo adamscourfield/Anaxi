@@ -4,8 +4,14 @@ import { requireFeature } from "@/lib/guards";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
-import { canExportExplorer, canViewBehaviourExplorer } from "@/modules/authz";
-import { computeTeacherPivot } from "@/modules/analysis/teacherRisk";
+import {
+  canExportExplorer,
+  canViewBehaviourExplorer,
+  canViewStudentAnalysis,
+  canViewTeacherAnalysis,
+} from "@/modules/authz";
+import { computeTeacherPivot, computeTeacherRiskIndex } from "@/modules/analysis/teacherRisk";
+import { computeCpdPriorities } from "@/modules/analysis/cpdPriorities";
 import { computeDepartmentPivot } from "@/modules/analysis/departmentPivot";
 import { computeStudentRiskIndex } from "@/modules/analysis/studentRisk";
 import { computeCohortPivot } from "@/modules/analysis/cohortPivot";
@@ -37,7 +43,7 @@ export async function POST(req: NextRequest) {
     const windowDays: WindowDays = WINDOW_OPTIONS.includes(rawWindow as WindowDays)
       ? (rawWindow as WindowDays)
       : 21;
-    const departmentId = (body.get("departmentId") as string) ?? "";
+    let departmentId = (body.get("departmentId") as string) ?? "";
     const yearGroup = (body.get("yearGroup") as string) ?? "";
     const teacherMembershipId = (body.get("teacherMembershipId") as string) ?? "";
     const subject = (body.get("subject") as string) ?? "";
@@ -114,6 +120,145 @@ export async function POST(req: NextRequest) {
           row.normalizedIDS.toFixed(3),
           ...signalParts,
         ]));
+      }
+    } else if (view === "PRIORITIES_TEACHERS") {
+      const deptMemberships = await (prisma as any).departmentMembership.findMany({
+        where: { tenantId: user.tenantId },
+      });
+      const teacherDepts = new Map<string, string[]>();
+      for (const m of deptMemberships as any[]) {
+        if (!teacherDepts.has(m.userId)) teacherDepts.set(m.userId, []);
+        teacherDepts.get(m.userId)!.push(m.departmentId);
+      }
+
+      const allRows = await computeTeacherRiskIndex(user.tenantId, windowDays);
+      const rows = allRows.filter((row) =>
+        canViewTeacherAnalysis(viewerContext, {
+          teacherUserId: row.teacherMembershipId,
+          teacherDepartmentIds: teacherDepts.get(row.teacherMembershipId) ?? [],
+        })
+      );
+
+      const STATUS_LABELS: Record<string, string> = {
+        SIGNIFICANT_DRIFT: "Significant drift",
+        EMERGING_DRIFT: "Emerging drift",
+        STABLE: "Stable",
+        LOW_COVERAGE: "Low coverage",
+      };
+
+      csvLines.push(
+        buildRow([
+          "Teacher",
+          "Department(s)",
+          "Coverage",
+          "Drift status",
+          "Drift score",
+          "Last observed",
+        ])
+      );
+      for (const row of rows) {
+        const lastObs =
+          row.lastObservationAt !== null
+            ? new Date(row.lastObservationAt).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "";
+        csvLines.push(
+          buildRow([
+            row.teacherName,
+            row.departmentNames.join(", "),
+            row.teacherCoverage,
+            STATUS_LABELS[row.status] ?? row.status,
+            row.status === "LOW_COVERAGE" ? "" : row.normalizedIDS.toFixed(1),
+            lastObs,
+          ])
+        );
+      }
+    } else if (view === "PRIORITIES_CPD") {
+      const hodMemberships = await (prisma as any).departmentMembership.findMany({
+        where: { userId: user.id, isHeadOfDepartment: true },
+        include: { department: true },
+      });
+      const hodDepartments: { id: string; name: string }[] = (hodMemberships as any[]).map((m: any) => ({
+        id: m.departmentId,
+        name: m.department.name,
+      }));
+      const isHod = user.role === "HOD";
+      let cpdDepartmentId = departmentId;
+      if (isHod && !cpdDepartmentId && hodDepartments.length > 0) {
+        cpdDepartmentId = hodDepartments[0].id;
+      }
+      if (isHod && cpdDepartmentId) {
+        const allowed = hodDepartments.map((d) => d.id);
+        if (!allowed.includes(cpdDepartmentId)) {
+          cpdDepartmentId = hodDepartments[0]?.id;
+        }
+      }
+      const filters = cpdDepartmentId ? { departmentId: cpdDepartmentId } : undefined;
+      const rows = await computeCpdPriorities(user.tenantId, windowDays, filters);
+
+      csvLines.push(
+        buildRow([
+          "Signal",
+          "Drift rate (%)",
+          "Avg negative delta",
+          "Teachers covered",
+          "Improving rate (%)",
+        ])
+      );
+      for (const row of rows) {
+        csvLines.push(
+          buildRow([
+            row.label,
+            row.teachersCovered === 0 ? "" : Math.round(row.driftRate * 100),
+            row.avgNegativeDelta !== null ? row.avgNegativeDelta.toFixed(2) : "",
+            row.teachersCovered,
+            row.teachersCovered === 0 ? "" : Math.round(row.improvingRate * 100),
+          ])
+        );
+      }
+    } else if (view === "PRIORITIES_STUDENTS") {
+      if (!canViewStudentAnalysis(viewerContext)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      const { rows } = await computeStudentRiskIndex(user.tenantId, windowDays, user.id);
+      csvLines.push(
+        buildRow([
+          "Student",
+          "Year",
+          "Band",
+          "Score",
+          "Drivers",
+          "Attendance%",
+          "AttendanceDelta",
+          "DetentionsDelta",
+          "OnCallsDelta",
+          "LatenessDelta",
+          "SuspensionsDelta",
+          "SEND",
+          "PP",
+        ])
+      );
+      for (const row of rows) {
+        csvLines.push(
+          buildRow([
+            row.studentName,
+            row.yearGroup ?? "",
+            row.band,
+            row.riskScore,
+            row.drivers.map((d) => d.label).join("; "),
+            row.attendancePct !== null ? row.attendancePct.toFixed(2) : "",
+            row.attendanceDelta !== null ? row.attendanceDelta.toFixed(2) : "",
+            row.detentionsDelta !== null ? row.detentionsDelta : "",
+            row.onCallsDelta !== null ? row.onCallsDelta : "",
+            row.latenessDelta !== null ? row.latenessDelta : "",
+            row.suspensionsDelta !== null ? row.suspensionsDelta : "",
+            row.sendFlag ? "Y" : "N",
+            row.ppFlag ? "Y" : "N",
+          ])
+        );
       }
     } else if (view === "INSTRUCTION_DEPARTMENTS_PIVOT") {
       const filterIds = user.role === "HOD" && hodDepartmentIds.length > 0 ? hodDepartmentIds : undefined;
