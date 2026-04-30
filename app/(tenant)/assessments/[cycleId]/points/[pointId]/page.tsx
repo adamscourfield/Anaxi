@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -401,6 +402,8 @@ export default function ResultPointPage() {
   const [teachingLoading, setTeachingLoading] = useState(false);
   const [pastoralModal, setPastoralModal] = useState<{ label: string; students: PastoralStudent[] } | null>(null);
   const [teachingModal, setTeachingModal] = useState<{ subject: string; teacherName: string; students: TeachingStudent[] } | null>(null);
+  const [portalReady, setPortalReady] = useState(false);
+  useEffect(() => setPortalReady(true), []);
 
   useEffect(() => {
     async function load() {
@@ -563,10 +566,10 @@ export default function ResultPointPage() {
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px calm-transition whitespace-nowrap ${
+                  className={`px-4 py-2.5 text-sm border-b-[3px] -mb-px calm-transition whitespace-nowrap ${
                     activeTab === tab
-                      ? "border-[var(--accent)] text-[var(--accent)]"
-                      : "border-transparent text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] hover:border-[var(--outline-variant)]"
+                      ? "border-[var(--on-surface)] font-bold text-[var(--on-surface)]"
+                      : "border-transparent font-semibold text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] hover:border-[var(--outline-variant)]"
                   }`}
                 >
                   {labels[tab]}
@@ -1191,11 +1194,13 @@ export default function ResultPointPage() {
 
           {/* ── PASTORAL TAB ────────────────────────────────────────────────── */}
           {activeTab === "pastoral" && (
-            <PastoralTab
-              data={pastoralData}
-              loading={pastoralLoading}
-              onOpenModal={(label, students) => setPastoralModal({ label, students })}
-            />
+            <div className="rounded-2xl bg-[#f8f9fa] p-4 sm:p-6">
+              <PastoralTab
+                data={pastoralData}
+                loading={pastoralLoading}
+                onOpenModal={(label, students) => setPastoralModal({ label, students })}
+              />
+            </div>
           )}
 
           {/* ── TEACHING TAB ────────────────────────────────────────────────── */}
@@ -1210,18 +1215,19 @@ export default function ResultPointPage() {
         </>
       )}
 
-      {/* Modal overlay — grade-level and E&M drill-downs */}
-      {modalView && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Modal overlay — grade-level and E&M drill-downs (portaled: layout uses transform on enter animation) */}
+      {portalReady && modalView &&
+        createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto">
           <button
             type="button"
-            className="fixed inset-0 z-0 bg-[var(--overlay)] backdrop-blur-[1px] animate-in fade-in duration-200"
+            className="fixed inset-0 z-0 bg-black/35 backdrop-blur-[2px] animate-in fade-in duration-200"
             aria-label="Close dialog"
             onClick={() => setModalView(null)}
           />
-          <div className="relative z-10 flex min-h-full items-center justify-center p-4 sm:p-6 pointer-events-none">
+          <div className="relative z-10 flex min-h-full items-start justify-center p-4 pt-[max(1rem,8vh)] pb-8 sm:p-6 sm:pt-[max(1.5rem,10vh)] pointer-events-none">
             <div
-              className="pointer-events-auto my-8 flex w-full max-w-2xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
+              className="pointer-events-auto flex w-full max-w-2xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
               role="dialog"
               aria-modal="true"
               onClick={(e) => e.stopPropagation()}
@@ -1343,8 +1349,9 @@ export default function ResultPointPage() {
             </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body,
+        )}
 
       {/* Pastoral drill-down modal */}
       {pastoralModal && (
@@ -1369,6 +1376,9 @@ function pqMean(students: PastoralStudent[], key: keyof PastoralStudent): number
 
 type QuartileDef = { label: string; short: string; students: PastoralStudent[] };
 
+/** Q4 → Q1 bar colours (highest → lowest attainment quartile). */
+const QUARTILE_BAR_FILLS = ["#88c0bc", "#b4cbe9", "#f2c093", "#ec9a9a"] as const;
+
 function QuartileChart({
   metric,
   label,
@@ -1385,19 +1395,14 @@ function QuartileChart({
   const values = quartiles.map((q) => pqMean(q.students, metric));
   const nonNull = values.filter((v): v is number => v !== null);
   const maxVal = nonNull.length ? Math.max(...nonNull) : 1;
-  const barColours = [
-    "bg-scale-strong",
-    "bg-scale-consistent",
-    "bg-scale-some",
-    "bg-scale-limited",
-  ];
   return (
-    <div className="rounded-xl bg-[var(--surface-container-low)] p-4">
+    <div className="rounded-xl border border-[var(--outline-variant)]/15 bg-[var(--surface)] p-4 shadow-sm">
       <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{label}</p>
       <div className="flex items-end gap-1.5" style={{ height: "7rem" }}>
         {quartiles.map((q, i) => {
           const val = values[i];
           const h = val !== null && maxVal > 0 ? Math.max(Math.round((val / maxVal) * 100), 4) : 0;
+          const fill = QUARTILE_BAR_FILLS[i] ?? QUARTILE_BAR_FILLS[3];
           return (
             <button
               key={q.label}
@@ -1411,8 +1416,8 @@ function QuartileChart({
               </span>
               <div className="flex w-full items-end" style={{ height: "72px" }}>
                 <div
-                  className={`w-full rounded-t calm-transition group-hover:opacity-75 ${barColours[i]}`}
-                  style={{ height: `${h}%` }}
+                  className="w-full rounded-t calm-transition group-hover:opacity-80"
+                  style={{ height: `${h}%`, backgroundColor: fill }}
                 />
               </div>
               <span className="text-[9px] font-medium text-[var(--on-surface-muted)]">{q.short}</span>
@@ -1423,6 +1428,12 @@ function QuartileChart({
     </div>
   );
 }
+
+/** Pastoral scatter legend colours (PP / SEND / PP+SEND / Other). */
+const PASTORAL_DOT_PP = "#f59e0b";
+const PASTORAL_DOT_SEND = "#3b82f6";
+const PASTORAL_DOT_BOTH = "#a855f7";
+const PASTORAL_DOT_OTHER = "#4b5563";
 
 function PastoralScatter({
   students,
@@ -1446,34 +1457,59 @@ function PastoralScatter({
     );
   }
 
-  const xVals = dots.map((s) => s[xKey] as number);
-  const xRawMin = Math.min(...xVals), xRawMax = Math.max(...xVals);
-  const pad = (xRawMax - xRawMin) * 0.1 || 5;
-  const xMin = Math.max(0, xRawMin - pad), xMax = xRawMax + pad;
-
   const W = 400, H = 260;
   const PL = 44, PR = 16, PT = 12, PB = 36;
   const plotW = W - PL - PR, plotH = H - PT - PB;
 
-  const xS = (v: number) => PL + ((v - xMin) / (xMax - xMin)) * plotW;
+  const isDetentions = xKey === "detentionsCount";
+
+  /** Detention bucket index 0..5 for axis 0,1,2,3,4,5+ */
+  const detentionBucket = (n: number) => Math.min(5, Math.max(0, Math.floor(n)));
+
+  let xS: (v: number) => number;
+  let xTickLabels: { x: number; label: string }[];
+
+  if (isDetentions) {
+    const slotW = plotW / 6;
+    xS = (v: number) => PL + (detentionBucket(v) + 0.5) * slotW;
+    xTickLabels = [0, 1, 2, 3, 4, 5].map((b) => ({
+      x: PL + (b + 0.5) * slotW,
+      label: b === 5 ? "5+" : String(b),
+    }));
+  } else {
+    const xVals = dots.map((s) => s[xKey] as number);
+    const xRawMin = Math.min(...xVals), xRawMax = Math.max(...xVals);
+    const pad = (xRawMax - xRawMin) * 0.1 || 5;
+    const xMin = Math.max(0, xRawMin - pad);
+    const xMax = xRawMax + pad;
+    xS = (v: number) => PL + ((v - xMin) / (xMax - xMin)) * plotW;
+    const xTickCount = 5;
+    const xStep = (xMax - xMin) / xTickCount;
+    xTickLabels = Array.from({ length: xTickCount + 1 }, (_, i) => {
+      const v = xMin + i * xStep;
+      return {
+        x: xS(v),
+        label: xKey === "attendancePct" ? `${Math.round(v)}%` : String(Math.round(v)),
+      };
+    });
+  }
+
   const yS = (v: number) => PT + plotH - v * plotH;
 
   const dotFill = (s: PastoralStudent) => {
-    if (s.ppFlag && s.sendFlag) return "var(--accent)";
-    if (s.ppFlag) return "var(--warning)";
-    if (s.sendFlag) return "var(--info)";
-    return "var(--on-surface-muted)";
+    if (s.ppFlag && s.sendFlag) return PASTORAL_DOT_BOTH;
+    if (s.ppFlag) return PASTORAL_DOT_PP;
+    if (s.sendFlag) return PASTORAL_DOT_SEND;
+    return PASTORAL_DOT_OTHER;
   };
 
   const yTicks = [0, 0.25, 0.5, 0.75, 1];
-  const xTickCount = 5;
-  const xStep = (xMax - xMin) / xTickCount;
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
       {yTicks.map((v) => (
         <line key={v} x1={PL} x2={W - PR} y1={yS(v)} y2={yS(v)}
-          stroke="var(--outline-variant)" strokeWidth={0.5} strokeOpacity={0.6} strokeDasharray="3 4" />
+          stroke="var(--outline-variant)" strokeWidth={0.5} strokeOpacity={0.55} strokeDasharray="3 4" />
       ))}
       <line x1={PL} x2={PL} y1={PT} y2={PT + plotH} stroke="var(--outline-variant)" strokeWidth={1} />
       <line x1={PL} x2={W - PR} y1={PT + plotH} y2={PT + plotH} stroke="var(--outline-variant)" strokeWidth={1} />
@@ -1482,37 +1518,36 @@ function PastoralScatter({
           {Math.round(v * 100)}
         </text>
       ))}
-      {Array.from({ length: xTickCount + 1 }).map((_, i) => {
-        const v = xMin + i * xStep;
-        const x = xS(v);
-        return (
-          <g key={i}>
-            <line x1={x} x2={x} y1={PT + plotH} y2={PT + plotH + 3} stroke="var(--outline-variant)" strokeWidth={0.8} />
-            <text x={x} y={PT + plotH + 14} textAnchor="middle" fontSize={8} fill="var(--on-surface-muted)">
-              {xKey === "attendancePct" ? `${Math.round(v)}%` : Math.round(v)}
-            </text>
-          </g>
-        );
-      })}
+      {xTickLabels.map((tick, i) => (
+        <g key={i}>
+          <line x1={tick.x} x2={tick.x} y1={PT + plotH} y2={PT + plotH + 3} stroke="var(--outline-variant)" strokeWidth={0.8} />
+          <text x={tick.x} y={PT + plotH + 14} textAnchor="middle" fontSize={8} fill="var(--on-surface-muted)">
+            {tick.label}
+          </text>
+        </g>
+      ))}
       <text x={W / 2} y={H - 1} textAnchor="middle" fontSize={9} fill="var(--on-surface-muted)">{xLabel}</text>
       <text x={10} y={H / 2} textAnchor="middle" fontSize={9} fill="var(--on-surface-muted)"
         transform={`rotate(-90 10 ${H / 2})`}>{yLabel}</text>
-      {dots.map((s) => (
-        <circle
-          key={s.studentId}
-          cx={xS(s[xKey] as number)}
-          cy={yS(s.normalisedScore as number)}
-          r={4.5}
-          fill={dotFill(s)}
-          fillOpacity={0.72}
-          stroke="var(--surface)"
-          strokeWidth={1}
-          className="cursor-pointer"
-          onClick={() => onDotClick(s)}
-        >
-          <title>{s.name} — {xLabel}: {xKey === "attendancePct" ? `${s[xKey]}%` : s[xKey]} | Score: {s.displayScore}</title>
-        </circle>
-      ))}
+      {dots.map((s) => {
+        const cx = xS(rawX);
+        return (
+          <circle
+            key={s.studentId}
+            cx={cx}
+            cy={yS(s.normalisedScore as number)}
+            r={4.5}
+            fill={dotFill(s)}
+            fillOpacity={0.85}
+            stroke="var(--surface)"
+            strokeWidth={1}
+            className="cursor-pointer"
+            onClick={() => onDotClick(s)}
+          >
+            <title>{s.name} — {xLabel}: {xKey === "attendancePct" ? `${s[xKey]}%` : s[xKey]} | Score: {s.displayScore}</title>
+          </circle>
+        );
+      })}
     </svg>
   );
 }
@@ -1540,7 +1575,7 @@ function PastoralTab({
   }
   if (!data) {
     return (
-      <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
+      <div className="rounded-2xl border border-black/[0.06] bg-white p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         No pastoral snapshot data available for this result point.
       </div>
     );
@@ -1589,60 +1624,101 @@ function PastoralTab({
     <div className="space-y-6">
 
       {/* ── KPI Summary Cards ── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {[
           {
             label: "Avg Attendance",
             value: cm.attendancePct !== null ? `${cm.attendancePct}%` : "—",
             sub: `${withSnapshot} of ${totalStudents} with data`,
             warn: cm.attendancePct !== null && cm.attendancePct < 92,
+            iconWrap: "bg-emerald-500/15 text-emerald-700",
+            icon: (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            ),
           },
           {
             label: "Below 90%",
             value: String(cm.below90Count),
             sub: `${cm.below90Pct}% of cohort`,
             warn: cm.below90Pct > 15,
+            iconWrap: "bg-amber-500/15 text-amber-700",
+            icon: (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M23 18l-9.5-9.5-5 5L1 6" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M17 18h6v-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ),
           },
           {
             label: "Avg Detentions",
             value: cm.detentionsCount !== null ? String(cm.detentionsCount) : "—",
             sub: "per student",
             warn: false,
+            iconWrap: "bg-violet-500/15 text-violet-700",
+            icon: (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+            ),
           },
           {
             label: "Avg On-calls",
             value: cm.onCallsCount !== null ? String(cm.onCallsCount) : "—",
             sub: "reroutings",
             warn: false,
+            iconWrap: "bg-sky-500/15 text-sky-700",
+            icon: (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+            ),
           },
           {
             label: "Avg DTAs",
             value: cm.positivePointsTotal !== null ? String(cm.positivePointsTotal) : "—",
             sub: "positive points",
             warn: false,
+            iconWrap: "bg-amber-400/25 text-amber-800",
+            icon: (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+            ),
           },
         ].map((k) => (
           <div
             key={k.label}
-            className={`rounded-xl p-4 shadow-ambient ${k.warn ? "bg-[color-mix(in_srgb,var(--error)_8%,var(--surface-container-lowest))]" : "bg-[var(--surface-container-lowest)]"}`}
+            className={`flex items-start gap-3 rounded-2xl border border-black/[0.04] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${
+              k.warn ? "ring-1 ring-red-200/80" : ""
+            }`}
           >
-            <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{k.label}</p>
-            <p className={`mt-1 text-2xl font-black tabular-nums ${k.warn ? "text-[var(--error)]" : "text-[var(--on-surface)]"}`}>
-              {k.value}
-            </p>
-            <p className="mt-0.5 text-[10px] text-[var(--on-surface-muted)]">{k.sub}</p>
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${k.iconWrap}`}>
+              {k.icon}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{k.label}</p>
+              <p className={`mt-0.5 text-2xl font-black tabular-nums leading-tight ${k.warn ? "text-[var(--error)]" : "text-[var(--on-surface)]"}`}>
+                {k.value}
+              </p>
+              <p className="mt-0.5 text-[11px] text-[var(--on-surface-muted)]">{k.sub}</p>
+            </div>
           </div>
         ))}
       </div>
 
       {/* ── Behaviour by Quartile Charts ── */}
       {quartiles.length >= 2 && (
-        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
-          <h2 className="mb-1 text-xl font-bold text-[var(--on-surface)]">Behaviour by Attainment Quartile</h2>
-          <p className="mb-4 text-[13px] text-[var(--on-surface-muted)]">
+        <div className="rounded-2xl border border-black/[0.06] bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <h2 className="mb-1 text-xl font-bold tracking-tight text-[var(--on-surface)]">Behaviour by Attainment Quartile</h2>
+          <p className="mb-5 text-[13px] leading-snug text-[var(--on-surface-muted)]">
             Mean per quartile — Q4 = highest attainment, Q1 = lowest. Click any bar to see students.
           </p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <QuartileChart
               metric="attendancePct"
               label="Attendance %"
@@ -1677,14 +1753,14 @@ function PastoralTab({
 
       {/* ── Scatter Plots ── */}
       {withSnapshot > 0 && (
-        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
-          <h2 className="mb-1 text-xl font-bold text-[var(--on-surface)]">Attainment vs Behaviour</h2>
-          <p className="mb-4 text-[13px] text-[var(--on-surface-muted)]">
+        <div className="rounded-2xl border border-black/[0.06] bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <h2 className="mb-1 text-xl font-bold tracking-tight text-[var(--on-surface)]">Attainment vs Behaviour</h2>
+          <p className="mb-4 text-[13px] leading-snug text-[var(--on-surface-muted)]">
             Each dot is one student.{" "}
-            <span className="font-semibold" style={{ color: "var(--warning)" }}>●</span> PP{" "}
-            <span className="font-semibold" style={{ color: "var(--info)" }}>●</span> SEND{" "}
-            <span className="font-semibold" style={{ color: "var(--accent)" }}>●</span> PP+SEND{" "}
-            <span className="font-semibold text-[var(--on-surface-muted)]">●</span> Other.
+            <span className="font-semibold" style={{ color: PASTORAL_DOT_PP }}>●</span> PP{" "}
+            <span className="font-semibold" style={{ color: PASTORAL_DOT_SEND }}>●</span> SEND{" "}
+            <span className="font-semibold" style={{ color: PASTORAL_DOT_BOTH }}>●</span> PP+SEND{" "}
+            <span className="font-semibold" style={{ color: PASTORAL_DOT_OTHER }}>●</span> Other.
             Click a dot to view the student.
           </p>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -1717,7 +1793,7 @@ function PastoralTab({
       )}
 
       {/* ── Student Breakdown Table ── */}
-      <div className="rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient overflow-hidden">
+      <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 p-5 pb-0">
           <h2 className="text-xl font-bold text-[var(--on-surface)]">Student Breakdown</h2>
           <div className="flex items-center gap-2">
@@ -1799,6 +1875,9 @@ function PastoralModal({
   modal: { label: string; students: PastoralStudent[] };
   onClose: () => void;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const sorted = [...modal.students].sort((a, b) => {
     if (a.attendancePct !== null && b.attendancePct !== null) return a.attendancePct - b.attendancePct;
     if (a.attendancePct === null && b.attendancePct !== null) return 1;
@@ -1806,17 +1885,17 @@ function PastoralModal({
     return a.name.localeCompare(b.name);
   });
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+  const dialog = (
+    <div className="fixed inset-0 z-[100] overflow-y-auto">
       <button
         type="button"
-        className="fixed inset-0 z-0 bg-[var(--overlay)] backdrop-blur-[1px] animate-in fade-in duration-200"
+        className="fixed inset-0 z-0 bg-black/35 backdrop-blur-[2px] animate-in fade-in duration-200"
         aria-label="Close dialog"
         onClick={onClose}
       />
-      <div className="relative z-10 flex min-h-full items-center justify-center p-4 sm:p-6 pointer-events-none">
+      <div className="relative z-10 flex min-h-full items-start justify-center p-4 pt-[max(1rem,8vh)] pb-8 sm:p-6 sm:pt-[max(1.5rem,10vh)] pointer-events-none">
         <div
-          className="pointer-events-auto my-8 flex w-full max-w-3xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
+          className="pointer-events-auto flex w-full max-w-3xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
           role="dialog"
           aria-modal="true"
           onClick={(e) => e.stopPropagation()}
@@ -1884,9 +1963,10 @@ function PastoralModal({
       </div>
     </div>
   );
-}
 
-// ─── Teaching Tab ─────────────────────────────────────────────────────────────
+  if (!mounted) return null;
+  return createPortal(dialog, document.body);
+}
 
 function TeachingTab({
   data,
@@ -2028,19 +2108,22 @@ function TeachingModal({
   modal: { subject: string; teacherName: string; students: TeachingStudent[] };
   onClose: () => void;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const sorted = [...modal.students].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+  const dialog = (
+    <div className="fixed inset-0 z-[100] overflow-y-auto">
       <button
         type="button"
-        className="fixed inset-0 z-0 bg-[var(--overlay)] backdrop-blur-[1px] animate-in fade-in duration-200"
+        className="fixed inset-0 z-0 bg-black/35 backdrop-blur-[2px] animate-in fade-in duration-200"
         aria-label="Close dialog"
         onClick={onClose}
       />
-      <div className="relative z-10 flex min-h-full items-center justify-center p-4 sm:p-6 pointer-events-none">
+      <div className="relative z-10 flex min-h-full items-start justify-center p-4 pt-[max(1rem,8vh)] pb-8 sm:p-6 sm:pt-[max(1.5rem,10vh)] pointer-events-none">
         <div
-          className="pointer-events-auto my-8 flex w-full max-w-2xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
+          className="pointer-events-auto flex w-full max-w-2xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
           role="dialog"
           aria-modal="true"
           onClick={(e) => e.stopPropagation()}
@@ -2095,4 +2178,7 @@ function TeachingModal({
       </div>
     </div>
   );
+
+  if (!mounted) return null;
+  return createPortal(dialog, document.body);
 }
