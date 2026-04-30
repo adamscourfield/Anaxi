@@ -1,11 +1,9 @@
-import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
-import { Card } from "@/components/ui/card";
-import { H1, H2, H3, MetaText, BodyText } from "@/components/ui/typography";
-import { Button } from "@/components/ui/button";
+import { H1, MetaText, BodyText } from "@/components/ui/typography";
 import { computeTeacherSignalProfile, type RiskStatus, type SignalProfileEntry } from "@/modules/analysis/teacherRisk";
 import { canViewObservation, canViewTeacherAnalysis } from "@/modules/authz";
 import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
@@ -22,10 +20,101 @@ const STATUS_LABELS: Record<RiskStatus, string> = {
 
 const STATUS_PILL: Record<RiskStatus, string> = {
   SIGNIFICANT_DRIFT: "bg-risk-urgent-bg text-risk-urgent-text",
-  EMERGING_DRIFT: "bg-scale-some-light text-scale-some-text",
+  EMERGING_DRIFT:
+    "border border-[var(--amber-border)] bg-[var(--amber-soft)] text-[#9a3412]",
   STABLE: "bg-risk-stable-bg text-risk-stable-text",
   LOW_COVERAGE: "bg-divider text-muted",
 };
+
+const OBS_CARD_SHELL =
+  "overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] bg-[var(--surface-container-lowest)] shadow-[0_1px_3px_rgba(15,23,42,0.06)]";
+
+function IconCircle({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] ${className}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function IconObservee() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px]" stroke="currentColor" strokeWidth="1.75">
+      <path
+        d="M2 12s3.5-5 10-5 10 5 10 5-3.5 5-10 5-10-5-10-5Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  );
+}
+
+function IconObserverPeople() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px]" stroke="currentColor" strokeWidth="1.75">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="9" cy="7" r="3.5" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconCalendarSmall() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-muted" stroke="currentColor" strokeWidth="1.75">
+      <rect x="3.5" y="5" width="17" height="15" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 3v4M16 3v4M3.5 10.5h17" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconDriftDown() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px]" stroke="currentColor" strokeWidth="1.75">
+      <path d="M3 3v18h18" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 14l4 4 4-10 4 4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconTrendUp() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-[18px] w-[18px]" stroke="currentColor" strokeWidth="1.75">
+      <path d="M3 3v18h18" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 10l4-4 4 10 4-4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconChevronRight() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0 text-muted" stroke="currentColor" strokeWidth="1.75">
+      <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function EmptyObserverIllustration() {
+  return (
+    <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-2xl bg-[var(--surface-container-high)]/70 text-muted">
+      <svg viewBox="0 0 48 48" fill="none" className="h-16 w-16" aria-hidden>
+        <rect x="11" y="9" width="22" height="28" rx="2" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M16 17h16M16 23h12M16 29h14" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" opacity={0.35} />
+        <circle cx="33" cy="31" r="8" fill="var(--surface-container-lowest)" stroke="currentColor" strokeWidth="1.25" />
+        <path d="M30 31h6M33 28v6" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
+}
 
 function windowBounds(windowDays: number): { currentStart: Date; currentEnd: Date } {
   const now = new Date();
@@ -174,6 +263,8 @@ export default async function TeacherProfilePage({
 
   const asObservee = filterVisibleObs(asObserveeRaw as any[]);
   const asObserver = filterVisibleObs(asObserverRaw as any[]);
+  const asObserveePreview = asObservee.slice(0, 4);
+  const asObserverPreview = asObserver.slice(0, 4);
 
   const classKey = (r: { classCode: string; subject: string; yearGroup: string }) =>
     `${r.yearGroup}\u0000${r.subject}\u0000${r.classCode}`;
@@ -202,131 +293,205 @@ export default async function TeacherProfilePage({
         ? "← Back to Explorer teachers"
         : "← Back to teacher priorities";
 
+  const historyHref = `/observe/history?teacherId=${teacherId}&window=${windowDays}`;
+  const profileHref = buildWindowHref(teacherId, windowDays, refSource);
+  const fullProfileAnchor = `${profileHref}#teacher-full-signal-profile`;
+
   return (
-    <div className="space-y-6">
-      <Link href={backHref} className="link-muted-accent text-sm">
+    <div className="space-y-8 pb-10">
+      <Link href={backHref} className="link-muted-accent inline-flex text-sm font-medium">
         {backLabel}
       </Link>
 
-      <div className="space-y-2">
+      <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <H1>{profile.teacherName}</H1>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_PILL[profile.status]}`}>
+          <H1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">{profile.teacherName}</H1>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${STATUS_PILL[profile.status]}`}
+          >
             {STATUS_LABELS[profile.status]}
           </span>
         </div>
         {departmentNames.length > 0 && (
-          <BodyText className="text-muted">{departmentNames.join(", ")}</BodyText>
+          <BodyText className="text-[0.9375rem] text-muted">{departmentNames.join(", ")}</BodyText>
         )}
-        <MetaText>
-          Coverage: {profile.teacherCoverage} observation{profile.teacherCoverage !== 1 ? "s" : ""} in last{" "}
-          {windowDays} days
-          {profile.lastObservationAt
-            ? ` · Last observed ${formatShortDate(new Date(profile.lastObservationAt))}`
-            : ""}
-          {" · "}Updated {computedAt}
-        </MetaText>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <MetaText className="mr-1">Window:</MetaText>
-        <div className="segmented-toggle">
-          {WINDOW_OPTIONS.map((w) => (
-            <Link
-              key={w}
-              href={buildWindowHref(teacherId, w, refSource)}
-              className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}
-            >
-              {w} days
-            </Link>
-          ))}
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.8125rem] leading-relaxed text-muted">
+          <span className="inline-flex items-center gap-1.5">
+            <IconCalendarSmall />
+            <span>
+              <span className="font-medium text-text">Coverage:</span> {profile.teacherCoverage} observation
+              {profile.teacherCoverage !== 1 ? "s" : ""} in last {windowDays} days
+            </span>
+          </span>
+          {profile.lastObservationAt && (
+            <>
+              <span className="text-border" aria-hidden>
+                ·
+              </span>
+              <span>Last observed {formatShortDate(new Date(profile.lastObservationAt))}</span>
+            </>
+          )}
+          <span className="text-border" aria-hidden>
+            ·
+          </span>
+          <span>Updated {computedAt}</span>
         </div>
-      </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="overflow-hidden p-0">
-          <div className="border-b border-border px-4 py-3">
-            <H2>Observed (observee)</H2>
-            <MetaText>Observations where this teacher was observed in the window.</MetaText>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="text-[0.8125rem] font-medium text-muted">Window:</span>
+          <div className="inline-flex flex-wrap gap-2">
+            {WINDOW_OPTIONS.map((w) => (
+              <Link
+                key={w}
+                href={buildWindowHref(teacherId, w, refSource)}
+                className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold calm-transition ${
+                  w === windowDays
+                    ? "bg-[var(--surface-container-high)] text-text shadow-sm"
+                    : "bg-[var(--surface-container-low)] text-muted hover:bg-[var(--surface-container)] hover:text-text"
+                }`}
+              >
+                {w} days
+              </Link>
+            ))}
           </div>
-          <div className="max-h-[22rem] overflow-y-auto">
+        </div>
+      </header>
+
+      <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
+        {/* Observed (observee) */}
+        <section className={OBS_CARD_SHELL}>
+          <div className="flex gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
+            <IconCircle>
+              <IconObservee />
+            </IconCircle>
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-text">Observed (observee)</h2>
+              <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">
+                Observations where this teacher was observed in the window.
+              </p>
+            </div>
+          </div>
+          <div className="max-h-[24rem] overflow-y-auto">
             {asObservee.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-muted">No observations in this window.</p>
+              <p className="px-5 py-8 text-center text-sm text-muted">No observations in this window.</p>
             ) : (
-              <ul className="divide-y divide-border">
-                {asObservee.map((obs: any) => (
-                  <li key={obs.id} className="px-4 py-3">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text">{formatShortDate(new Date(obs.observedAt))}</p>
-                        <p className="text-xs text-muted">
+              <ul className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_10%,transparent)]">
+                {asObserveePreview.map((obs: any) => (
+                  <li key={obs.id}>
+                    <Link
+                      href={`/observe/${obs.id}`}
+                      className="group flex items-start gap-3 px-5 py-4 calm-transition hover:bg-[var(--surface-container-low)]/80"
+                    >
+                      <div className="mt-0.5">
+                        <IconCalendarSmall />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-text">{formatShortDate(new Date(obs.observedAt))}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-muted">
                           Observer: {obs.observer?.fullName ?? "—"} · {obs.subject}
                           {obs.yearGroup ? ` · ${formatYearGroup(obs.yearGroup)}` : ""}
                           {obs.classCode ? ` · ${obs.classCode}` : ""}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-muted">{formatPhaseLabel(obs.phase)}</p>
+                        <p className="mt-1 text-[0.6875rem] font-medium uppercase tracking-wide text-muted">
+                          {formatPhaseLabel(obs.phase)}
+                        </p>
                       </div>
-                      <Link
-                        href={`/observe/${obs.id}`}
-                        className="shrink-0 text-xs font-medium text-accent hover:underline"
-                      >
-                        Open
-                      </Link>
-                    </div>
+                      <span className="inline-flex shrink-0 items-center gap-2">
+                        <span className="rounded-md bg-[color-mix(in_srgb,var(--scale-strong-bar)_18%,var(--surface-container-lowest))] px-2.5 py-1 text-[0.6875rem] font-semibold text-scale-strong-text calm-transition group-hover:bg-[color-mix(in_srgb,var(--scale-strong-bar)_28%,var(--surface-container-lowest))]">
+                          Open
+                        </span>
+                        <IconChevronRight />
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
             )}
           </div>
-        </Card>
+          {asObservee.length > 0 && (
+            <div className="border-t border-[color-mix(in_srgb,var(--outline-variant)_10%,transparent)] px-5 py-3 text-center">
+              <Link
+                href={historyHref}
+                className="text-[0.8125rem] font-semibold text-accent hover:underline"
+              >
+                View all observations
+                <span aria-hidden> →</span>
+              </Link>
+            </div>
+          )}
+        </section>
 
-        <Card className="overflow-hidden p-0">
-          <div className="border-b border-border px-4 py-3">
-            <H2>Observations conducted (observer)</H2>
-            <MetaText>Lessons this teacher observed for others in the window.</MetaText>
+        {/* Observations conducted */}
+        <section className={OBS_CARD_SHELL}>
+          <div className="flex gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
+            <IconCircle>
+              <IconObserverPeople />
+            </IconCircle>
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-text">Observations conducted (observer)</h2>
+              <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">
+                Lessons this teacher observed for others in the window.
+              </p>
+            </div>
           </div>
-          <div className="max-h-[22rem] overflow-y-auto">
+          <div className="max-h-[24rem] overflow-y-auto">
             {asObserver.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-muted">No observations conducted in this window.</p>
+              <div className="flex flex-col items-center px-5 py-10 text-center">
+                <EmptyObserverIllustration />
+                <p className="mt-5 text-sm font-semibold text-text">No observations conducted in this window</p>
+                <p className="mt-1 max-w-[16rem] text-xs leading-relaxed text-muted">
+                  When this teacher observes others, they&apos;ll appear here.
+                </p>
+              </div>
             ) : (
-              <ul className="divide-y divide-border">
-                {asObserver.map((obs: any) => (
-                  <li key={obs.id} className="px-4 py-3">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text">{formatShortDate(new Date(obs.observedAt))}</p>
-                        <p className="text-xs text-muted">
+              <ul className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_10%,transparent)]">
+                {asObserverPreview.map((obs: any) => (
+                  <li key={obs.id}>
+                    <Link
+                      href={`/observe/${obs.id}`}
+                      className="group flex items-start gap-3 px-5 py-4 calm-transition hover:bg-[var(--surface-container-low)]/80"
+                    >
+                      <div className="mt-0.5">
+                        <IconCalendarSmall />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-text">{formatShortDate(new Date(obs.observedAt))}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-muted">
                           Observee: {obs.observedTeacher?.fullName ?? "—"} · {obs.subject}
                           {obs.yearGroup ? ` · ${formatYearGroup(obs.yearGroup)}` : ""}
                           {obs.classCode ? ` · ${obs.classCode}` : ""}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-muted">{formatPhaseLabel(obs.phase)}</p>
+                        <p className="mt-1 text-[0.6875rem] font-medium uppercase tracking-wide text-muted">
+                          {formatPhaseLabel(obs.phase)}
+                        </p>
                       </div>
-                      <Link
-                        href={`/observe/${obs.id}`}
-                        className="shrink-0 text-xs font-medium text-accent hover:underline"
-                      >
-                        Open
-                      </Link>
-                    </div>
+                      <span className="inline-flex shrink-0 items-center gap-2">
+                        <span className="rounded-md bg-[color-mix(in_srgb,var(--scale-strong-bar)_18%,var(--surface-container-lowest))] px-2.5 py-1 text-[0.6875rem] font-semibold text-scale-strong-text calm-transition group-hover:bg-[color-mix(in_srgb,var(--scale-strong-bar)_28%,var(--surface-container-lowest))]">
+                          Open
+                        </span>
+                        <IconChevronRight />
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
             )}
           </div>
-        </Card>
+        </section>
       </div>
 
       {assignedClasses.length > 0 && (
-        <Card className="overflow-hidden p-0">
-          <div className="border-b border-border px-4 py-3">
-            <H2>Assigned classes (timetable)</H2>
-            <MetaText>Distinct classes linked to this teacher from timetable import.</MetaText>
+        <section className={OBS_CARD_SHELL}>
+          <div className="border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
+            <h2 className="text-base font-semibold text-text">Assigned classes (timetable)</h2>
+            <p className="mt-0.5 text-[0.8125rem] text-muted">
+              Distinct classes linked to this teacher from timetable import.
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="table-head-row">
+                <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_10%,transparent)] bg-[var(--surface-container-low)]/50 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted">
                   <th className="px-5 py-3">Year</th>
                   <th className="px-4 py-3">Subject</th>
                   <th className="px-4 py-3">Class</th>
@@ -334,7 +499,10 @@ export default async function TeacherProfilePage({
               </thead>
               <tbody>
                 {assignedClasses.map((c) => (
-                  <tr key={`${c.yearGroup}-${c.subject}-${c.classCode}`} className="table-row">
+                  <tr
+                    key={`${c.yearGroup}-${c.subject}-${c.classCode}`}
+                    className="border-b border-[color-mix(in_srgb,var(--outline-variant)_08%,transparent)] last:border-0"
+                  >
                     <td className="px-5 py-3 text-muted">{formatYearGroup(c.yearGroup)}</td>
                     <td className="px-4 py-3 font-medium text-text">{c.subject}</td>
                     <td className="px-4 py-3 text-muted">{c.classCode}</td>
@@ -343,24 +511,32 @@ export default async function TeacherProfilePage({
               </tbody>
             </table>
           </div>
-        </Card>
+        </section>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="overflow-hidden p-0">
-          <div className="border-b border-border px-4 py-3">
-            <H3>Drift on signals</H3>
-            <MetaText>
-              Weakening beyond the school drift threshold (Δ &lt; −{driftThreshold.toFixed(2)}).
-            </MetaText>
+      <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
+        {/* Drift on signals */}
+        <section className={OBS_CARD_SHELL}>
+          <div className="flex gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
+            <IconCircle className="bg-[color-mix(in_srgb,var(--risk-urgent-text)_10%,var(--surface-container-high))] text-risk-urgent-text">
+              <IconDriftDown />
+            </IconCircle>
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-text">Drift on signals</h2>
+              <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">
+                Weakening beyond the school drift threshold (Δ &lt; −{driftThreshold.toFixed(2)}).
+              </p>
+            </div>
           </div>
           {drifting.length === 0 ? (
-            <p className="px-4 py-5 text-sm text-muted">No signals crossed the drift threshold in this window.</p>
+            <p className="px-5 py-8 text-center text-sm text-muted">
+              No signals crossed the drift threshold in this window.
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="table-head-row">
+                  <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_10%,transparent)] bg-[var(--surface-container-low)]/50 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted">
                     <th className="px-5 py-3">Signal</th>
                     <th className="px-4 py-3 text-right">Current</th>
                     <th className="px-4 py-3 text-right">Previous</th>
@@ -368,8 +544,11 @@ export default async function TeacherProfilePage({
                   </tr>
                 </thead>
                 <tbody>
-                  {drifting.map((sig) => (
-                    <tr key={sig.signalKey} className="table-row table-row-highlight">
+                  {drifting.slice(0, 2).map((sig) => (
+                    <tr
+                      key={sig.signalKey}
+                      className="border-b border-[color-mix(in_srgb,var(--outline-variant)_08%,transparent)] last:border-0"
+                    >
                       <td className="px-5 py-3 font-medium text-text">{sig.label}</td>
                       <td className="px-4 py-3 text-right tabular-nums text-muted">
                         {sig.currentMean !== null ? sig.currentMean.toFixed(2) : "—"}
@@ -377,7 +556,7 @@ export default async function TeacherProfilePage({
                       <td className="px-4 py-3 text-right tabular-nums text-muted">
                         {sig.prevMean !== null ? sig.prevMean.toFixed(2) : "—"}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums font-medium text-scale-some-text">
+                      <td className="px-4 py-3 text-right tabular-nums font-semibold text-[#DC2626]">
                         {sig.delta !== null ? sig.delta.toFixed(2) : "—"}
                       </td>
                     </tr>
@@ -386,22 +565,38 @@ export default async function TeacherProfilePage({
               </table>
             </div>
           )}
-        </Card>
+          {drifting.length > 0 && (
+            <div className="border-t border-[color-mix(in_srgb,var(--outline-variant)_10%,transparent)] px-5 py-3 text-center">
+              <Link href={fullProfileAnchor} className="text-[0.8125rem] font-semibold text-accent hover:underline">
+                View all drifting signals
+                <span aria-hidden> →</span>
+              </Link>
+            </div>
+          )}
+        </section>
 
-        <Card className="overflow-hidden p-0">
-          <div className="border-b border-border px-4 py-3">
-            <H3>Success on signals</H3>
-            <MetaText>
-              Meaningful improvement (Δ &gt; +{driftThreshold.toFixed(2)}), same threshold as drift.
-            </MetaText>
+        {/* Success on signals */}
+        <section className={OBS_CARD_SHELL}>
+          <div className="flex gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
+            <IconCircle className="bg-[color-mix(in_srgb,var(--scale-strong-text)_12%,var(--surface-container-high))] text-scale-strong-text">
+              <IconTrendUp />
+            </IconCircle>
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-text">Success on signals</h2>
+              <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">
+                Meaningful improvement (Δ &gt; +{driftThreshold.toFixed(2)}), same threshold as drift.
+              </p>
+            </div>
           </div>
           {improving.length === 0 ? (
-            <p className="px-4 py-5 text-sm text-muted">No signals showed this level of improvement in the window.</p>
+            <p className="px-5 py-8 text-center text-sm text-muted">
+              No signals showed this level of improvement in the window.
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="table-head-row">
+                  <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_10%,transparent)] bg-[var(--surface-container-low)]/50 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted">
                     <th className="px-5 py-3">Signal</th>
                     <th className="px-4 py-3 text-right">Current</th>
                     <th className="px-4 py-3 text-right">Previous</th>
@@ -409,8 +604,11 @@ export default async function TeacherProfilePage({
                   </tr>
                 </thead>
                 <tbody>
-                  {improving.map((sig) => (
-                    <tr key={sig.signalKey} className="table-row">
+                  {improving.slice(0, 2).map((sig) => (
+                    <tr
+                      key={sig.signalKey}
+                      className="border-b border-[color-mix(in_srgb,var(--outline-variant)_08%,transparent)] last:border-0"
+                    >
                       <td className="px-5 py-3 font-medium text-text">{sig.label}</td>
                       <td className="px-4 py-3 text-right tabular-nums text-muted">
                         {sig.currentMean !== null ? sig.currentMean.toFixed(2) : "—"}
@@ -418,7 +616,7 @@ export default async function TeacherProfilePage({
                       <td className="px-4 py-3 text-right tabular-nums text-muted">
                         {sig.prevMean !== null ? sig.prevMean.toFixed(2) : "—"}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums font-medium text-scale-strong-text">
+                      <td className="px-4 py-3 text-right tabular-nums font-semibold text-[#15803D]">
                         {sig.delta !== null ? `+${sig.delta.toFixed(2)}` : "—"}
                       </td>
                     </tr>
@@ -427,71 +625,83 @@ export default async function TeacherProfilePage({
               </table>
             </div>
           )}
-        </Card>
+          {improving.length > 0 && (
+            <div className="border-t border-[color-mix(in_srgb,var(--outline-variant)_10%,transparent)] px-5 py-3 text-center">
+              <Link href={fullProfileAnchor} className="text-[0.8125rem] font-semibold text-accent hover:underline">
+                View all improving signals
+                <span aria-hidden> →</span>
+              </Link>
+            </div>
+          )}
+        </section>
       </div>
 
-      <Card className="overflow-hidden p-0">
-        <div className="border-b border-border px-4 py-3">
-          <H2>Full signal profile</H2>
-          <MetaText>
+      <section id="teacher-full-signal-profile" className={`${OBS_CARD_SHELL} scroll-mt-20`}>
+        <div className="border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
+          <h2 className="text-base font-semibold text-text">Full signal profile</h2>
+          <p className="mt-0.5 text-[0.8125rem] text-muted">
             {profile.status === "LOW_COVERAGE"
               ? "Insufficient observations for drift analysis."
               : `Instructional drift score (IDS): ${profile.normalizedIDS.toFixed(1)} · Sorted by change (weakest first)`}
-          </MetaText>
+          </p>
         </div>
-        <div className="table-shell border-0 rounded-none shadow-none">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="table-head-row">
-                  <th className="px-5 py-3.5">Signal</th>
-                  <th className="px-4 py-3.5 text-right">Current</th>
-                  <th className="px-4 py-3.5 text-right">Previous</th>
-                  <th className="px-4 py-3.5 text-right">Δ</th>
-                  <th className="px-4 py-3.5 text-right">Coverage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {profile.signals.map((sig) => {
-                  const isDriver = sig.driftContribution > 0;
-                  return (
-                    <tr
-                      key={sig.signalKey}
-                      className={`table-row calm-transition ${isDriver ? "table-row-highlight" : ""}`}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_10%,transparent)] bg-[var(--surface-container-low)]/50 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted">
+                <th className="px-5 py-3.5">Signal</th>
+                <th className="px-4 py-3.5 text-right">Current</th>
+                <th className="px-4 py-3.5 text-right">Previous</th>
+                <th className="px-4 py-3.5 text-right">Δ</th>
+                <th className="px-4 py-3.5 text-right">Coverage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {profile.signals.map((sig) => {
+                const isDriver = sig.driftContribution > 0;
+                return (
+                  <tr
+                    key={sig.signalKey}
+                    className={`border-b border-[color-mix(in_srgb,var(--outline-variant)_06%,transparent)] last:border-0 calm-transition ${
+                      isDriver ? "bg-[color-mix(in_srgb,var(--risk-urgent-bg)_55%,transparent)]" : ""
+                    }`}
+                  >
+                    <td className="px-5 py-3.5 font-medium text-text">{sig.label}</td>
+                    <td className="px-4 py-3.5 text-right tabular-nums text-muted">
+                      {sig.currentMean !== null ? sig.currentMean.toFixed(2) : "—"}
+                    </td>
+                    <td className="px-4 py-3.5 text-right tabular-nums text-muted">
+                      {sig.prevMean !== null ? sig.prevMean.toFixed(2) : "—"}
+                    </td>
+                    <td
+                      className={`px-4 py-3.5 text-right tabular-nums font-medium ${
+                        sig.delta === null
+                          ? "text-muted"
+                          : sig.delta < 0
+                            ? "text-[#DC2626]"
+                            : sig.delta > 0
+                              ? "text-[#15803D]"
+                              : "text-muted"
+                      }`}
                     >
-                      <td className="px-5 py-4 font-medium text-text">{sig.label}</td>
-                      <td className="px-4 py-4 text-right tabular-nums text-muted">
-                        {sig.currentMean !== null ? sig.currentMean.toFixed(2) : "—"}
-                      </td>
-                      <td className="px-4 py-4 text-right tabular-nums text-muted">
-                        {sig.prevMean !== null ? sig.prevMean.toFixed(2) : "—"}
-                      </td>
-                      <td
-                        className={`px-4 py-4 text-right tabular-nums font-medium ${
-                          sig.delta === null
-                            ? "text-muted"
-                            : sig.delta < 0
-                              ? "text-scale-some-text"
-                              : sig.delta > 0
-                                ? "text-scale-strong-text"
-                                : "text-muted"
-                        }`}
-                      >
-                        {sig.delta !== null ? `${sig.delta > 0 ? "+" : ""}${sig.delta.toFixed(2)}` : "—"}
-                      </td>
-                      <td className="px-4 py-4 text-right text-muted">{sig.coverageCount}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      {sig.delta !== null ? `${sig.delta > 0 ? "+" : ""}${sig.delta.toFixed(2)}` : "—"}
+                    </td>
+                    <td className="px-4 py-3.5 text-right text-muted">{sig.coverageCount}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      </Card>
+      </section>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Link href={`/observe/history?teacherId=${teacherId}&window=${windowDays}`} passHref>
-          <Button variant="secondary">Full observation history</Button>
+      <div className="flex flex-wrap justify-center gap-4 pt-2">
+        <Link
+          href={historyHref}
+          className="text-[0.8125rem] font-semibold text-muted hover:text-text hover:underline"
+        >
+          Full observation history
+          <span aria-hidden> →</span>
         </Link>
       </div>
     </div>
