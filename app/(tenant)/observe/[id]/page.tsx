@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -10,11 +9,20 @@ import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolTyp
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { ClearDraftOnSuccess } from "../components/ClearDraftOnSuccess";
 import { PrintExportButtons } from "../components/PrintExportButtons";
-
+import {
+  OBS_REVIEW_MUTED,
+  OBS_REVIEW_TEXT,
+  ObservationReviewBackLink,
+  ObservationReviewSectionHeader,
+  ObservationReviewSessionCard,
+  ObservationReviewSignalRow,
+  ObservationReviewTeacherCard,
+} from "../components/observationReviewUi";
 
 function initials(name: string) {
   return name
     .split(" ")
+    .filter(Boolean)
     .slice(0, 2)
     .map((n) => n[0])
     .join("")
@@ -23,23 +31,6 @@ function initials(name: string) {
 
 function formatRole(role: string) {
   return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function SectionHeader({
-  icon,
-  children,
-}: {
-  icon: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <div className="mb-4 flex items-center gap-2">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-scale-some-light text-scale-some-text [&_svg]:h-4 [&_svg]:w-4">
-        {icon}
-      </span>
-      <h2 className="text-[0.9375rem] font-semibold tracking-tight text-text">{children}</h2>
-    </div>
-  );
 }
 
 export default async function ObservationDetailPage({ params }: { params: { id: string } }) {
@@ -133,33 +124,71 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
       ? "First observation on record"
       : `${priorObservationCount} prior observation${priorObservationCount === 1 ? "" : "s"}`;
 
+  const capIcon: ReactNode = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 12v5c3 3 9 3 12 0v-5" />
+    </svg>
+  );
+  const calendarIcon: ReactNode = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  );
+  const userIcon: ReactNode = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+  const bookIcon: ReactNode = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+  );
+  const clockIcon: ReactNode = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  );
+  const checkIcon: ReactNode = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+
+  const focusIcon = (
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+      <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
+        <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <path
+          d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+
   return (
-    <div className="relative -mx-4 min-h-0 bg-background px-4 pb-14 pt-1 sm:-mx-6 sm:px-6">
+    <div className="relative -mx-4 min-h-0 bg-[#F9FAFB] px-4 pb-14 pt-1 sm:-mx-6 sm:px-6">
       <ClearDraftOnSuccess draftKey={draftKey} />
 
       <div className="mx-auto max-w-6xl">
-        <Link
-          href="/observe/history"
-          className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text print:hidden"
-        >
-          <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
-            <path
-              d="M10 3.5 5.5 8l4.5 4.5"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Observation history
-        </Link>
+        <ObservationReviewBackLink href="/observe/history">Observation history</ObservationReviewBackLink>
 
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-6">
+        <div className="mt-4 flex flex-wrap items-start justify-between gap-6">
           <div className="min-w-0">
-            <h1 className="text-[1.625rem] font-bold leading-tight text-text">
+            <h1 className={`text-pretty text-[1.625rem] font-bold leading-tight tracking-tight sm:text-[1.75rem] ${OBS_REVIEW_TEXT}`}>
               Observation Review — {dateLabel}
             </h1>
-            <p className="mt-1.5 max-w-2xl text-[0.875rem] leading-relaxed text-muted">
+            <p className={`mt-2 max-w-2xl text-[0.875rem] leading-relaxed ${OBS_REVIEW_MUTED}`}>
               Final summative report for this observation session
               {observation.subject ? ` · ${observation.subject}` : ""}
               {observation.yearGroup ? ` · Year ${observation.yearGroup}` : ""}
@@ -168,58 +197,43 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
           <PrintExportButtons />
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.86fr)_minmax(280px,1fr)]">
-          {/* Main column */}
+        <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px] xl:gap-12">
           <div className="min-w-0 space-y-10">
             <section>
-              <SectionHeader
+              <ObservationReviewSectionHeader
                 icon={
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                     <path d="M3 3v18h18" strokeLinecap="round" />
                     <path d="M7 16l4-4 4 4 6-6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 }
-              >
-                Signal Summary
-              </SectionHeader>
+                title="Signal Summary"
+              />
 
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {positiveSignals.map((signal) => {
                   const override = (labelMap as any)[signal.key];
                   const displayName = override?.displayName || signal.displayNameDefault;
-                  return (
-                    <div key={signal.key} className="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-status-approved-light text-status-approved-text">
-                        <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5">
-                          <path d="M3 8l3.5 3.5L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </span>
-                      <span className="text-[0.8125rem] font-medium text-text">{displayName}</span>
-                    </div>
-                  );
+                  return <ObservationReviewSignalRow key={signal.key}>{displayName}</ObservationReviewSignalRow>;
                 })}
                 {positiveSignals.length === 0 && (
-                  <p className="text-[0.8125rem] text-muted italic">No signals rated consistent or strong in this session.</p>
+                  <p className={`text-[0.875rem] italic ${OBS_REVIEW_MUTED}`}>
+                    No signals rated consistent or strong in this session.
+                  </p>
                 )}
               </div>
 
               {focusSignals.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="mb-3 text-[0.875rem] font-semibold text-text">What I need to focus on</h3>
-                  <div className="space-y-2">
+                <div className="mt-8">
+                  <h3 className={`mb-4 text-[0.9375rem] font-semibold ${OBS_REVIEW_TEXT}`}>What I need to focus on</h3>
+                  <div className="space-y-2.5">
                     {focusSignals.map((signal) => {
                       const override = (labelMap as any)[signal.key];
                       const displayName = override?.displayName || signal.displayNameDefault;
                       return (
-                        <div key={signal.key} className="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3">
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-scale-some-light text-scale-some-text">
-                            <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5">
-                              <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </span>
-                          <span className="text-[0.8125rem] font-medium text-text">{displayName}</span>
-                        </div>
+                        <ObservationReviewSignalRow key={signal.key} icon={focusIcon}>
+                          {displayName}
+                        </ObservationReviewSignalRow>
                       );
                     })}
                   </div>
@@ -229,7 +243,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
 
             {observation.contextNote && (
               <section>
-                <SectionHeader
+                <ObservationReviewSectionHeader
                   icon={
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                       <path
@@ -239,159 +253,66 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                       />
                     </svg>
                   }
-                >
-                  Concluding Reflections
-                </SectionHeader>
+                  title="Concluding Reflections"
+                />
 
-                <div className="overflow-hidden rounded-2xl border border-border/30 bg-surface-container-lowest shadow-ambient">
-                  <div className="border-l-4 border-tertiary-container px-6 py-6 sm:px-8 sm:py-7">
-                    <blockquote className="text-[0.9375rem] font-medium leading-relaxed text-text italic">
+                <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-sm">
+                  <div className="border-l-4 border-amber-400 px-6 py-6 sm:px-8 sm:py-7">
+                    <blockquote className={`text-[0.9375rem] font-medium leading-relaxed italic ${OBS_REVIEW_TEXT}`}>
                       &ldquo;{observation.contextNote}&rdquo;
                     </blockquote>
                   </div>
 
-                  <div className="flex flex-col gap-4 border-t border-border/20 px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-8">
+                  <div className="flex flex-col gap-4 border-t border-[#F3F4F6] px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-8">
                     <div className="flex items-center gap-3">
                       <div
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-container text-[0.6875rem] font-bold text-on-primary"
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E5E7EB] text-[0.6875rem] font-bold ${OBS_REVIEW_TEXT}`}
                         aria-hidden
                       >
                         {initials(observerName)}
                       </div>
                       <div>
-                        <p className="text-[0.8125rem] font-semibold text-text">{observerName}</p>
-                        <p className="text-[0.75rem] text-muted">Observed &amp; Authenticated</p>
+                        <p className={`text-[0.8125rem] font-semibold ${OBS_REVIEW_TEXT}`}>{observerName}</p>
+                        <p className={`text-[0.75rem] ${OBS_REVIEW_MUTED}`}>Observed &amp; authenticated</p>
                       </div>
                     </div>
-                    <p className="text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">{dateTimeLabel}</p>
+                    <p className={`text-[0.6875rem] font-semibold uppercase tracking-wider ${OBS_REVIEW_MUTED}`}>{dateTimeLabel}</p>
                   </div>
                 </div>
               </section>
             )}
           </div>
 
-          {/* Sidebar */}
-          <aside className="min-w-0 space-y-6">
-            <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-ambient ring-1 ring-border/25">
-              <div
-                className="relative px-5 pb-8 pt-6 text-on-primary"
-                style={{
-                  backgroundColor: "var(--primary-container)",
-                  backgroundImage:
-                    "linear-gradient(135deg, rgba(255,255,255,0.07) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.07) 75%, transparent 75%, transparent)",
-                  backgroundSize: "20px 20px",
-                }}
-              >
-                <div className="relative flex flex-col items-center text-center">
-                  <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-xl bg-on-primary/15 text-lg font-bold text-on-primary ring-2 ring-on-primary/25">
-                    {initials(teacherName)}
-                  </div>
-                  <h3 className="mt-4 text-[1.125rem] font-semibold leading-snug text-on-primary">
-                    {teacherName}
-                  </h3>
-                  <p className="mt-1 text-[0.8125rem] text-on-primary/85">{subtitleLine}</p>
-                </div>
+          <aside className="min-w-0 space-y-8">
+            <ObservationReviewTeacherCard
+              initials={initials(teacherName)}
+              name={teacherName}
+              roleUppercase="Teacher"
+              rows={[
+                { icon: capIcon, label: "Role", value: roleLabel },
+                { icon: calendarIcon, label: "Prior observations", value: tenureLabel },
+                { icon: userIcon, label: "Focus", value: "Teaching & learning focus" },
+              ]}
+            />
 
-                <ul className="relative mt-6 space-y-3 border-t border-on-primary/20 pt-5 text-left text-[0.8125rem] text-on-primary/90">
-                  <li className="flex gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-on-primary/10">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                        <path d="M6 12v5c3 3 9 3 12 0v-5" />
-                      </svg>
+            <ObservationReviewSessionCard
+              rows={[
+                { label: "Class", value: classLine || "—", icon: bookIcon },
+                { label: "Duration", value: "—", icon: clockIcon },
+                { label: "Observer", value: observerName, icon: userIcon },
+                {
+                  label: "Status",
+                  accent: true,
+                  icon: checkIcon,
+                  value: (
+                    <span className="flex items-center gap-2 font-bold uppercase tracking-wide">
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-current" aria-hidden />
+                      Completed
                     </span>
-                    <span className="pt-1 leading-snug">{roleLabel}</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-on-primary/10">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" />
-                        <path d="M16 2v4M8 2v4M3 10h18" />
-                      </svg>
-                    </span>
-                    <span className="pt-1 leading-snug">{tenureLabel}</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-on-primary/10">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="8" r="6" />
-                        <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
-                      </svg>
-                    </span>
-                    <span className="pt-1 leading-snug">Teaching &amp; learning focus</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted">Session Context</p>
-              <div className="space-y-0 overflow-hidden rounded-2xl border border-border/25 bg-surface-container-lowest shadow-ambient">
-                {[
-                  {
-                    label: "Class",
-                    value: classLine || "—",
-                    icon: (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    label: "Duration",
-                    value: "—",
-                    icon: (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 6v6l4 2" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    label: "Observer",
-                    value: observerName,
-                    icon: (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    label: "Status",
-                    value: "Completed",
-                    accent: true,
-                    icon: (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
-                      </svg>
-                    ),
-                  },
-                ].map((row, i, arr) => (
-                  <div
-                    key={row.label}
-                    className={`flex items-start gap-3 px-4 py-4 ${i < arr.length - 1 ? "border-b border-border/20" : ""}`}
-                  >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant">
-                      {row.icon}
-                    </span>
-                    <div className="min-w-0 pt-0.5">
-                      <p className="text-[0.625rem] font-semibold uppercase tracking-wider text-muted">{row.label}</p>
-                      {row.accent ? (
-                        <p className="mt-1 flex items-center gap-2 text-[0.875rem] font-bold uppercase tracking-wide text-[var(--status-denied-text)]">
-                          <span className="h-2 w-2 rounded-full bg-[var(--status-denied-text)]" aria-hidden />
-                          {row.value}
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-[0.875rem] font-semibold text-text">{row.value}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  ),
+                },
+              ]}
+            />
           </aside>
         </div>
       </div>
