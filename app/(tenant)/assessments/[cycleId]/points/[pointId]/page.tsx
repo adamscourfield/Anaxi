@@ -146,29 +146,24 @@ type MetricsData = {
 
 type PastoralStudent = {
   studentId: string; name: string; ppFlag: boolean; sendFlag: boolean;
-  yearGroup: string; meanScore: number | null; attendancePct: number | null;
-  latenessCount: number | null; detentionsCount: number | null;
-  internalExclusionsCount: number | null; suspensionsCount: number | null;
-  onCallsCount: number | null; positivePointsTotal: number | null;
-  negativePointsTotal: number | null; hasSnapshot: boolean;
-};
-
-type PastoralBand = {
-  label: string; order: number; count: number; withSnapshot: number;
-  meanAttendancePct: number | null; meanLatenessCount: number | null;
-  meanDetentionsCount: number | null; meanInternalExclusionsCount: number | null;
-  meanSuspensionsCount: number | null; meanOnCallsCount: number | null;
-  students: PastoralStudent[];
+  yearGroup: string; normalisedScore: number | null; displayScore: string;
+  attendancePct: number | null; latenessCount: number | null;
+  detentionsCount: number | null; internalExclusionsCount: number | null;
+  suspensionsCount: number | null; onCallsCount: number | null;
+  positivePointsTotal: number | null; negativePointsTotal: number | null;
+  hasSnapshot: boolean;
 };
 
 type PastoralData = {
   dominantFormat: string; totalStudents: number; withSnapshot: number;
-  yearMeans: {
+  cohortMeans: {
     attendancePct: number | null; latenessCount: number | null;
     detentionsCount: number | null; internalExclusionsCount: number | null;
     suspensionsCount: number | null; onCallsCount: number | null;
+    positivePointsTotal: number | null;
+    below90Count: number; below90Pct: number;
   };
-  bands: PastoralBand[];
+  students: PastoralStudent[];
 };
 
 // ─── Teaching types ───────────────────────────────────────────────────────────
@@ -404,7 +399,7 @@ export default function ResultPointPage() {
   const [teachingData, setTeachingData] = useState<TeachingData | null>(null);
   const [pastoralLoading, setPastoralLoading] = useState(false);
   const [teachingLoading, setTeachingLoading] = useState(false);
-  const [pastoralModal, setPastoralModal] = useState<{ band: string; students: PastoralStudent[] } | null>(null);
+  const [pastoralModal, setPastoralModal] = useState<{ label: string; students: PastoralStudent[] } | null>(null);
   const [teachingModal, setTeachingModal] = useState<{ subject: string; teacherName: string; students: TeachingStudent[] } | null>(null);
 
   useEffect(() => {
@@ -1199,7 +1194,7 @@ export default function ResultPointPage() {
             <PastoralTab
               data={pastoralData}
               loading={pastoralLoading}
-              onOpenModal={(band, students) => setPastoralModal({ band, students })}
+              onOpenModal={(label, students) => setPastoralModal({ label, students })}
             />
           )}
 
@@ -1366,20 +1361,160 @@ export default function ResultPointPage() {
 
 // ─── Pastoral Tab ─────────────────────────────────────────────────────────────
 
-function attendanceCls(pct: number | null, yearMean: number | null): string {
-  if (pct === null) return "text-[var(--on-surface-muted)]";
-  if (yearMean === null) return "text-[var(--on-surface)]";
-  if (pct >= yearMean + 2) return "text-[var(--success)] font-bold";
-  if (pct <= yearMean - 5) return "text-[var(--error)] font-bold";
-  return "text-[var(--on-surface)]";
+function pqMean(students: PastoralStudent[], key: keyof PastoralStudent): number | null {
+  const vals = students.map((s) => s[key]).filter((v): v is number => typeof v === "number");
+  if (!vals.length) return null;
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
 }
 
-function detentionCls(val: number | null, yearMean: number | null): string {
-  if (val === null) return "text-[var(--on-surface-muted)]";
-  if (yearMean === null) return "text-[var(--on-surface)]";
-  if (val <= yearMean * 0.7) return "text-[var(--success)] font-bold";
-  if (val >= yearMean * 1.5) return "text-[var(--error)] font-bold";
-  return "text-[var(--on-surface)]";
+type QuartileDef = { label: string; short: string; students: PastoralStudent[] };
+
+function QuartileChart({
+  metric,
+  label,
+  formatter,
+  quartiles,
+  onBarClick,
+}: {
+  metric: keyof PastoralStudent;
+  label: string;
+  formatter: (v: number) => string;
+  quartiles: QuartileDef[];
+  onBarClick: (q: QuartileDef) => void;
+}) {
+  const values = quartiles.map((q) => pqMean(q.students, metric));
+  const nonNull = values.filter((v): v is number => v !== null);
+  const maxVal = nonNull.length ? Math.max(...nonNull) : 1;
+  const barColours = [
+    "bg-[var(--success)]/90",
+    "bg-[color-mix(in_srgb,var(--success)_55%,var(--warning)_45%)]/90",
+    "bg-[var(--warning)]/90",
+    "bg-[var(--error)]/90",
+  ];
+  return (
+    <div className="rounded-xl bg-[var(--surface-container-low)] p-4">
+      <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{label}</p>
+      <div className="flex items-end gap-1.5" style={{ height: "7rem" }}>
+        {quartiles.map((q, i) => {
+          const val = values[i];
+          const h = val !== null && maxVal > 0 ? Math.max(Math.round((val / maxVal) * 100), 4) : 0;
+          return (
+            <button
+              key={q.label}
+              type="button"
+              disabled={!q.students.length}
+              onClick={() => q.students.length > 0 && onBarClick(q)}
+              className="flex flex-1 flex-col items-center gap-1 group"
+            >
+              <span className="text-[9px] font-semibold tabular-nums text-[var(--on-surface)]">
+                {val !== null ? formatter(val) : "—"}
+              </span>
+              <div className="flex w-full items-end" style={{ height: "72px" }}>
+                <div
+                  className={`w-full rounded-t calm-transition group-hover:opacity-75 ${barColours[i]}`}
+                  style={{ height: `${h}%` }}
+                />
+              </div>
+              <span className="text-[9px] font-medium text-[var(--on-surface-muted)]">{q.short}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PastoralScatter({
+  students,
+  xKey,
+  xLabel,
+  yLabel,
+  onDotClick,
+}: {
+  students: PastoralStudent[];
+  xKey: "attendancePct" | "detentionsCount" | "latenessCount";
+  xLabel: string;
+  yLabel: string;
+  onDotClick: (s: PastoralStudent) => void;
+}) {
+  const dots = students.filter((s) => s.normalisedScore !== null && s[xKey] !== null);
+  if (!dots.length) {
+    return (
+      <div className="flex h-52 items-center justify-center text-xs text-[var(--on-surface-muted)]">
+        No data available
+      </div>
+    );
+  }
+
+  const xVals = dots.map((s) => s[xKey] as number);
+  const xRawMin = Math.min(...xVals), xRawMax = Math.max(...xVals);
+  const pad = (xRawMax - xRawMin) * 0.1 || 5;
+  const xMin = Math.max(0, xRawMin - pad), xMax = xRawMax + pad;
+
+  const W = 400, H = 260;
+  const PL = 44, PR = 16, PT = 12, PB = 36;
+  const plotW = W - PL - PR, plotH = H - PT - PB;
+
+  const xS = (v: number) => PL + ((v - xMin) / (xMax - xMin)) * plotW;
+  const yS = (v: number) => PT + plotH - v * plotH;
+
+  const dotFill = (s: PastoralStudent) => {
+    if (s.ppFlag && s.sendFlag) return "var(--accent)";
+    if (s.ppFlag) return "var(--warning)";
+    if (s.sendFlag) return "var(--info)";
+    return "var(--on-surface-muted)";
+  };
+
+  const yTicks = [0, 0.25, 0.5, 0.75, 1];
+  const xTickCount = 5;
+  const xStep = (xMax - xMin) / xTickCount;
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
+      {yTicks.map((v) => (
+        <line key={v} x1={PL} x2={W - PR} y1={yS(v)} y2={yS(v)}
+          stroke="var(--outline-variant)" strokeWidth={0.5} strokeOpacity={0.6} strokeDasharray="3 4" />
+      ))}
+      <line x1={PL} x2={PL} y1={PT} y2={PT + plotH} stroke="var(--outline-variant)" strokeWidth={1} />
+      <line x1={PL} x2={W - PR} y1={PT + plotH} y2={PT + plotH} stroke="var(--outline-variant)" strokeWidth={1} />
+      {yTicks.map((v) => (
+        <text key={v} x={PL - 6} y={yS(v) + 3.5} textAnchor="end" fontSize={8} fill="var(--on-surface-muted)">
+          {Math.round(v * 100)}
+        </text>
+      ))}
+      {Array.from({ length: xTickCount + 1 }).map((_, i) => {
+        const v = xMin + i * xStep;
+        const x = xS(v);
+        return (
+          <g key={i}>
+            <line x1={x} x2={x} y1={PT + plotH} y2={PT + plotH + 3} stroke="var(--outline-variant)" strokeWidth={0.8} />
+            <text x={x} y={PT + plotH + 14} textAnchor="middle" fontSize={8} fill="var(--on-surface-muted)">
+              {xKey === "attendancePct" ? `${Math.round(v)}%` : Math.round(v)}
+            </text>
+          </g>
+        );
+      })}
+      <text x={W / 2} y={H - 1} textAnchor="middle" fontSize={9} fill="var(--on-surface-muted)">{xLabel}</text>
+      <text x={10} y={H / 2} textAnchor="middle" fontSize={9} fill="var(--on-surface-muted)"
+        transform={`rotate(-90 10 ${H / 2})`}>{yLabel}</text>
+      {dots.map((s) => (
+        <circle
+          key={s.studentId}
+          cx={xS(s[xKey] as number)}
+          cy={yS(s.normalisedScore as number)}
+          r={4.5}
+          fill={dotFill(s)}
+          fillOpacity={0.72}
+          stroke="var(--surface)"
+          strokeWidth={1}
+          className="cursor-pointer"
+          onClick={() => onDotClick(s)}
+        >
+          <title>{s.name} — {xLabel}: {xKey === "attendancePct" ? `${s[xKey]}%` : s[xKey]} | Score: {s.displayScore}</title>
+        </circle>
+      ))}
+    </svg>
+  );
 }
 
 function PastoralTab({
@@ -1389,8 +1524,13 @@ function PastoralTab({
 }: {
   data: PastoralData | null;
   loading: boolean;
-  onOpenModal: (band: string, students: PastoralStudent[]) => void;
+  onOpenModal: (label: string, students: PastoralStudent[]) => void;
 }) {
+  const [sortKey, setSortKey] = useState<string>("normalisedScore");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [filterPP, setFilterPP] = useState(false);
+  const [filterSEND, setFilterSEND] = useState(false);
+
   if (loading) {
     return (
       <div className="py-16 text-center text-sm text-[var(--on-surface-muted)]">
@@ -1406,124 +1546,245 @@ function PastoralTab({
     );
   }
 
-  const { bands, yearMeans, totalStudents, withSnapshot } = data;
-  const maxCount = Math.max(...bands.map((b) => b.count), 1);
-  const ym = yearMeans;
+  const { cohortMeans: cm, students, totalStudents, withSnapshot } = data;
 
-  const bandBarColour = (order: number) => {
-    const colours = [
-      "bg-[var(--error)]/80",
-      "bg-[var(--warning)]/80",
-      "bg-[color-mix(in_srgb,var(--success)_60%,var(--warning)_40%)]/80",
-      "bg-[var(--success)]/80",
-    ];
-    return colours[order] ?? "bg-[var(--surface-container-high)]";
+  // ── Quartile boundaries (students pre-sorted desc by normalisedScore from API) ──
+  const withScores = students.filter((s) => s.normalisedScore !== null);
+  const n = withScores.length;
+  const qLen = Math.floor(n / 4);
+  const rawQuartiles: QuartileDef[] = [
+    { label: "Q4 — Top 25%", short: "Q4", students: withScores.slice(0, qLen || 1) },
+    { label: "Q3 — Upper Mid", short: "Q3", students: withScores.slice(qLen, qLen * 2) },
+    { label: "Q2 — Lower Mid", short: "Q2", students: withScores.slice(qLen * 2, qLen * 3) },
+    { label: "Q1 — Bottom 25%", short: "Q1", students: withScores.slice(qLen * 3) },
+  ];
+  const quartiles = rawQuartiles.filter((q) => q.students.length > 0);
+
+  // ── Table sort/filter ──
+  const toggle = (key: string) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir(key === "normalisedScore" ? "desc" : "asc"); }
   };
+  const filtered = students.filter((s) => (!filterPP || s.ppFlag) && (!filterSEND || s.sendFlag));
+  const sorted = [...filtered].sort((a, b) => {
+    const av = a[sortKey as keyof PastoralStudent] as number | null;
+    const bv = b[sortKey as keyof PastoralStudent] as number | null;
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return sortDir === "asc" ? av - bv : bv - av;
+  });
+
+  const sortTh = (col: string, label: string) => (
+    <th
+      key={col}
+      className="cursor-pointer select-none px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
+      onClick={() => toggle(col)}
+    >
+      {label}{sortKey === col ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
+    </th>
+  );
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-[var(--on-surface-muted)]">
-        Behaviour snapshots matched for{" "}
-        <span className="font-semibold text-[var(--on-surface)]">{withSnapshot}</span> of{" "}
-        <span className="font-semibold text-[var(--on-surface)]">{totalStudents}</span> students.
-        Each metric is the group mean using the snapshot closest to the assessment date.
-      </p>
 
-      {/* Grade band visual bars */}
-      <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient">
-        <h2 className="mb-4 text-xl font-bold text-[var(--on-surface)]">Students by Attainment Band</h2>
-        <div className="space-y-3">
-          {[...bands].sort((a, b) => b.order - a.order).map((band) => {
-            const widthPct = Math.round((band.count / maxCount) * 100);
-            return (
-              <button
-                key={band.label}
-                type="button"
-                onClick={() => band.count > 0 && onOpenModal(band.label, band.students)}
-                disabled={band.count === 0}
-                className="group w-full text-left focus:outline-none"
-              >
-                <div className="mb-1 flex items-baseline justify-between">
-                  <span className="text-sm font-semibold text-[var(--on-surface)]">{band.label}</span>
-                  <span className="text-xs text-[var(--on-surface-muted)]">
-                    {band.count} students
-                    {band.count > 0 && <span className="ml-1 text-[var(--accent)] opacity-0 group-hover:opacity-100 calm-transition"> — view list</span>}
-                  </span>
-                </div>
-                <div className="h-8 overflow-hidden rounded-lg bg-[var(--surface-container-low)]">
-                  <div
-                    className={`h-full rounded-lg ${bandBarColour(band.order)} calm-transition group-hover:opacity-80`}
-                    style={{ width: `${widthPct}%`, minWidth: band.count > 0 ? "2rem" : 0 }}
-                  />
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      {/* ── KPI Summary Cards ── */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {[
+          {
+            label: "Avg Attendance",
+            value: cm.attendancePct !== null ? `${cm.attendancePct}%` : "—",
+            sub: `${withSnapshot} of ${totalStudents} with data`,
+            warn: cm.attendancePct !== null && cm.attendancePct < 92,
+          },
+          {
+            label: "Below 90%",
+            value: String(cm.below90Count),
+            sub: `${cm.below90Pct}% of cohort`,
+            warn: cm.below90Pct > 15,
+          },
+          {
+            label: "Avg Detentions",
+            value: cm.detentionsCount !== null ? String(cm.detentionsCount) : "—",
+            sub: "per student",
+            warn: false,
+          },
+          {
+            label: "Avg On-calls",
+            value: cm.onCallsCount !== null ? String(cm.onCallsCount) : "—",
+            sub: "reroutings",
+            warn: false,
+          },
+          {
+            label: "Avg DTAs",
+            value: cm.positivePointsTotal !== null ? String(cm.positivePointsTotal) : "—",
+            sub: "positive points",
+            warn: false,
+          },
+        ].map((k) => (
+          <div
+            key={k.label}
+            className={`rounded-xl p-4 shadow-ambient ${k.warn ? "bg-[color-mix(in_srgb,var(--error)_8%,var(--surface-container-lowest))]" : "bg-[var(--surface-container-lowest)]"}`}
+          >
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{k.label}</p>
+            <p className={`mt-1 text-2xl font-black tabular-nums ${k.warn ? "text-[var(--error)]" : "text-[var(--on-surface)]"}`}>
+              {k.value}
+            </p>
+            <p className="mt-0.5 text-[10px] text-[var(--on-surface-muted)]">{k.sub}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Pastoral metrics comparison table */}
-      <div className="rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient overflow-hidden">
-        <div className="p-6 pb-4">
-          <h2 className="text-xl font-bold text-[var(--on-surface)]">Pastoral Metrics by Attainment Band</h2>
-          <p className="mt-1 text-sm text-[var(--on-surface-muted)]">Group means — click any band row to see individual students</p>
+      {/* ── Behaviour by Quartile Charts ── */}
+      {quartiles.length >= 2 && (
+        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
+          <h2 className="mb-1 text-xl font-bold text-[var(--on-surface)]">Behaviour by Attainment Quartile</h2>
+          <p className="mb-4 text-[13px] text-[var(--on-surface-muted)]">
+            Mean per quartile — Q4 = highest attainment, Q1 = lowest. Click any bar to see students.
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <QuartileChart
+              metric="attendancePct"
+              label="Attendance %"
+              formatter={(v) => `${v.toFixed(1)}%`}
+              quartiles={quartiles}
+              onBarClick={(q) => onOpenModal(q.label, q.students)}
+            />
+            <QuartileChart
+              metric="detentionsCount"
+              label="Detentions"
+              formatter={(v) => v.toFixed(1)}
+              quartiles={quartiles}
+              onBarClick={(q) => onOpenModal(q.label, q.students)}
+            />
+            <QuartileChart
+              metric="onCallsCount"
+              label="On-calls"
+              formatter={(v) => v.toFixed(1)}
+              quartiles={quartiles}
+              onBarClick={(q) => onOpenModal(q.label, q.students)}
+            />
+            <QuartileChart
+              metric="latenessCount"
+              label="Lateness"
+              formatter={(v) => v.toFixed(1)}
+              quartiles={quartiles}
+              onBarClick={(q) => onOpenModal(q.label, q.students)}
+            />
+          </div>
         </div>
-        <div className="overflow-x-auto">
+      )}
+
+      {/* ── Scatter Plots ── */}
+      {withSnapshot > 0 && (
+        <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
+          <h2 className="mb-1 text-xl font-bold text-[var(--on-surface)]">Attainment vs Behaviour</h2>
+          <p className="mb-4 text-[13px] text-[var(--on-surface-muted)]">
+            Each dot is one student.{" "}
+            <span className="font-semibold" style={{ color: "var(--warning)" }}>●</span> PP{" "}
+            <span className="font-semibold" style={{ color: "var(--info)" }}>●</span> SEND{" "}
+            <span className="font-semibold" style={{ color: "var(--accent)" }}>●</span> PP+SEND{" "}
+            <span className="font-semibold text-[var(--on-surface-muted)]">●</span> Other.
+            Click a dot to view the student.
+          </p>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">
+                Attendance vs Score
+              </p>
+              <PastoralScatter
+                students={students}
+                xKey="attendancePct"
+                xLabel="Attendance %"
+                yLabel="Score"
+                onDotClick={(s) => onOpenModal(s.name, [s])}
+              />
+            </div>
+            <div>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">
+                Detentions vs Score
+              </p>
+              <PastoralScatter
+                students={students}
+                xKey="detentionsCount"
+                xLabel="Detentions"
+                yLabel="Score"
+                onDotClick={(s) => onOpenModal(s.name, [s])}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Student Breakdown Table ── */}
+      <div className="rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-5 pb-0">
+          <h2 className="text-xl font-bold text-[var(--on-surface)]">Student Breakdown</h2>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFilterPP((v) => !v)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold calm-transition ${filterPP ? "bg-[var(--warning)] text-white" : "bg-[var(--surface-container-low)] text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"}`}
+            >
+              PP
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterSEND((v) => !v)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold calm-transition ${filterSEND ? "bg-[var(--info)] text-white" : "bg-[var(--surface-container-low)] text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"}`}
+            >
+              SEND
+            </button>
+            <span className="text-xs text-[var(--on-surface-muted)]">{filtered.length} students</span>
+          </div>
+        </div>
+        <div className="overflow-x-auto mt-4">
           <table className="w-full text-sm">
             <thead>
-              <tr className="table-head-row text-left border-t border-[var(--outline-variant)]/20">
-                <th className="px-5 py-3 font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">BAND</th>
-                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">STUDENTS</th>
-                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">ATTENDANCE</th>
-                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">LATES</th>
-                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">DETENTIONS</th>
-                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">EXCLUSIONS</th>
-                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">ON CALLS</th>
+              <tr className="border-y border-[var(--outline-variant)]/20 bg-[var(--surface-container-low)]">
+                <th className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">Student</th>
+                {sortTh("normalisedScore", "Score")}
+                {sortTh("attendancePct", "Attend %")}
+                {sortTh("latenessCount", "Lates")}
+                {sortTh("detentionsCount", "Detent.")}
+                {sortTh("internalExclusionsCount", "Excl.")}
+                {sortTh("onCallsCount", "On-calls")}
+                {sortTh("positivePointsTotal", "DTAs")}
               </tr>
             </thead>
             <tbody>
-              <tr className="bg-[var(--surface-container-low)] border-b border-[var(--outline-variant)]/20">
-                <td className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">YEAR MEAN</td>
-                <td className="px-4 py-2.5 text-right text-[var(--on-surface-muted)] tabular-nums">—</td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{ym.attendancePct !== null ? `${ym.attendancePct}%` : "—"}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{ym.latenessCount ?? "—"}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{ym.detentionsCount ?? "—"}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{ym.internalExclusionsCount ?? "—"}</td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{ym.onCallsCount ?? "—"}</td>
-              </tr>
-              {[...bands].sort((a, b) => b.order - a.order).map((band) => (
-                <tr
-                  key={band.label}
-                  className="table-row calm-transition cursor-pointer hover:bg-[var(--surface-container-low)]"
-                  onClick={() => band.count > 0 && onOpenModal(band.label, band.students)}
-                >
-                  <td className="px-5 py-3 font-semibold text-[var(--on-surface)]">{band.label}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">{band.count}</td>
-                  <td className={`px-4 py-3 text-right tabular-nums ${attendanceCls(band.meanAttendancePct, ym.attendancePct)}`}>
-                    {band.meanAttendancePct !== null ? `${band.meanAttendancePct}%` : "—"}
+              {sorted.map((st) => (
+                <tr key={st.studentId} className="table-row calm-transition border-b border-[var(--outline-variant)]/10 last:border-0">
+                  <td className="px-5 py-2.5">
+                    <Link href={`/students/${st.studentId}`} className="font-medium hover:text-[var(--accent)] calm-transition">
+                      {st.name}
+                    </Link>
+                    <div className="flex gap-1 mt-0.5">
+                      {st.ppFlag && <span className={ppInlineBadgeClass}>PP</span>}
+                      {st.sendFlag && <span className={sendInlineBadgeClass}>SEN</span>}
+                    </div>
                   </td>
-                  <td className={`px-4 py-3 text-right tabular-nums ${detentionCls(band.meanLatenessCount, ym.latenessCount)}`}>
-                    {band.meanLatenessCount ?? "—"}
+                  <td className="px-4 py-2.5 text-right font-semibold tabular-nums text-[var(--on-surface)]">
+                    {st.displayScore}
                   </td>
-                  <td className={`px-4 py-3 text-right tabular-nums ${detentionCls(band.meanDetentionsCount, ym.detentionsCount)}`}>
-                    {band.meanDetentionsCount ?? "—"}
+                  <td className={`px-4 py-2.5 text-right tabular-nums ${st.attendancePct !== null && st.attendancePct < 90 ? "font-bold text-[var(--error)]" : st.attendancePct !== null && st.attendancePct >= 96 ? "text-[var(--success)]" : "text-[var(--on-surface)]"}`}>
+                    {st.attendancePct !== null ? `${st.attendancePct}%` : "—"}
                   </td>
-                  <td className={`px-4 py-3 text-right tabular-nums ${detentionCls(band.meanInternalExclusionsCount, ym.internalExclusionsCount)}`}>
-                    {band.meanInternalExclusionsCount ?? "—"}
-                  </td>
-                  <td className={`px-4 py-3 text-right tabular-nums ${detentionCls(band.meanOnCallsCount, ym.onCallsCount)}`}>
-                    {band.meanOnCallsCount ?? "—"}
-                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{st.latenessCount ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{st.detentionsCount ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{st.internalExclusionsCount ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{st.onCallsCount ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{st.positivePointsTotal ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="border-t border-[var(--outline-variant)]/20 px-5 py-3">
-          <p className="text-[0.8125rem] text-[var(--on-surface-muted)]">
-            Green = better than year mean · Red = notably worse · Counts are term-to-date from nearest snapshot
-          </p>
-        </div>
+        {filtered.length === 0 && (
+          <div className="py-8 text-center text-sm text-[var(--on-surface-muted)]">
+            No students match the current filter.
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1535,7 +1796,7 @@ function PastoralModal({
   modal,
   onClose,
 }: {
-  modal: { band: string; students: PastoralStudent[] };
+  modal: { label: string; students: PastoralStudent[] };
   onClose: () => void;
 }) {
   const sorted = [...modal.students].sort((a, b) => {
@@ -1562,8 +1823,10 @@ function PastoralModal({
         >
           <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
             <div>
-              <h2 className="text-lg font-bold">Band {modal.band} — Pastoral Detail</h2>
-              <p className="text-xs text-[var(--on-surface-muted)] mt-0.5">Sorted by attendance (lowest first)</p>
+              <h2 className="text-lg font-bold">{modal.label}</h2>
+              <p className="text-xs text-[var(--on-surface-muted)] mt-0.5">
+                {sorted.length} student{sorted.length !== 1 ? "s" : ""} · sorted by attendance (lowest first)
+              </p>
             </div>
             <button
               type="button"
@@ -1581,6 +1844,7 @@ function PastoralModal({
               <thead className="sticky top-0 z-10 bg-[var(--surface-container-low)] border-b border-[var(--outline-variant)]/20">
                 <tr>
                   <th className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">STUDENT</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">SCORE</th>
                   <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">ATTENDANCE</th>
                   <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">LATES</th>
                   <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">DETENTIONS</th>
@@ -1600,6 +1864,9 @@ function PastoralModal({
                         {st.sendFlag && <span className={sendInlineBadgeClass}>SEN</span>}
                         {!st.hasSnapshot && <span className="text-[10px] text-[var(--on-surface-muted)] italic">no snapshot</span>}
                       </div>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-[var(--on-surface)]">
+                      {st.displayScore}
                     </td>
                     <td className={`px-4 py-3 text-right tabular-nums ${st.attendancePct !== null && st.attendancePct < 90 ? "text-[var(--error)] font-bold" : "text-[var(--on-surface)]"}`}>
                       {st.attendancePct !== null ? `${st.attendancePct}%` : "—"}
