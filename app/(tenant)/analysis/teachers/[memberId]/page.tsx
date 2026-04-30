@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { computeTeacherSignalProfile, RiskStatus } from "@/modules/analysis/teacherRisk";
 import { canViewTeacherAnalysis } from "@/modules/authz";
 
-const WINDOW_OPTIONS = [7, 21, 28] as const;
+const WINDOW_OPTIONS = [7, 21, 28, 90] as const;
 
 const STATUS_LABELS: Record<RiskStatus, string> = {
   SIGNIFICANT_DRIFT: "Significant drift",

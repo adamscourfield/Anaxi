@@ -21,11 +21,15 @@ import { TopDriverLinks } from "./TopDriverLinks";
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 
-function meanToBgColor(mean: number): string {
-  if (mean >= 3.5) return "bg-scale-strong-bar";
-  if (mean >= 2.5) return "bg-scale-some-bar";
-  if (mean >= 1.5) return "bg-risk-priority-bg";
-  return "bg-scale-limited-bar";
+/** Signal heatmap segments — amber ladder (design: yellow bars, pale = weaker / empty). */
+function meanToHeatmapBar(mean: number | null | undefined): string {
+  if (mean == null) {
+    return "bg-[color-mix(in_srgb,var(--surface-container-high)_78%,var(--scale-some-light)_22%)]";
+  }
+  if (mean >= 3.5) return "bg-[color-mix(in_srgb,var(--scale-some-bar)_92%,#fff_8%)]";
+  if (mean >= 2.5) return "bg-[color-mix(in_srgb,var(--scale-some-bar)_72%,#fff_28%)]";
+  if (mean >= 1.5) return "bg-[color-mix(in_srgb,var(--scale-some-bar)_48%,#fff_52%)]";
+  return "bg-[color-mix(in_srgb,var(--scale-some-bar)_22%,var(--surface-container-high)_78%)]";
 }
 
 const STATUS_LABELS: Record<RiskStatus, string> = {
@@ -42,26 +46,11 @@ const STATUS_VARIANT: Record<RiskStatus, PillVariant> = {
   LOW_COVERAGE: "neutral",
 };
 
-const VALID_WINDOWS = [7, 21, 28] as const;
+const VALID_WINDOWS = [7, 21, 28, 90] as const;
 type WindowDays = (typeof VALID_WINDOWS)[number];
 
 /** Teachers per page */
 const ITEMS_PER_PAGE = 20;
-
-function formatTeacherRole(role: string): string {
-  const map: Record<string, string> = {
-    SUPER_ADMIN: "Super Admin",
-    ADMIN: "Admin",
-    SLT: "Senior Leader",
-    HOD: "Head of Dept",
-    LEADER: "Leader",
-    TEACHER: "Teacher",
-    HR: "HR",
-    ON_CALL: "On Call",
-  };
-  return map[role] ?? role;
-}
-
 
 /** Format drift score with sign and trend arrow */
 function formatDrift(value: number): { text: string; arrow: string; color: string } {
@@ -124,7 +113,7 @@ export default async function ExplorerTeachersPage({
   const signalLabelMap: Record<string, string> = Object.fromEntries(
     signalDefs.map((s) => [s.key, s.displayNameDefault]),
   );
-  const heatmapKeys = signalKeys.slice(0, 6);
+  const heatmapKeys = signalKeys.slice(0, 7);
 
   // ─── Parse search params ────────────────────────────────────────────────────
   const rawWindow = Number(
@@ -279,29 +268,26 @@ export default async function ExplorerTeachersPage({
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 pb-10">
       <ExplorerBackLink />
 
       {/* ── Page header ────────────────────────────────────────────────────── */}
-      <PageHeader variant="ledger"
+      <PageHeader
+        variant="ledger"
         eyebrow="Explorer"
         title="Teachers"
         subtitle="Observation coverage, signal means, and drift — switch window and pivot vs priorities."
         actions={
           canExport ? (
             <form action="/api/explorer/export" method="POST">
-              <input
-                type="hidden"
-                name="view"
-                value={mode === "pivot" ? "INSTRUCTION_TEACHERS_PIVOT" : "TEACHER_PRIORITIES"}
-              />
+              <input type="hidden" name="view" value="INSTRUCTION_TEACHERS_PIVOT" />
               <input type="hidden" name="windowDays" value={String(windowDays)} />
               {departmentId && <input type="hidden" name="departmentId" value={departmentId} />}
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary shadow-[var(--shadow-btn)] calm-transition hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-lg bg-[var(--on-surface)] px-5 py-2.5 text-sm font-semibold text-[var(--surface-container-lowest)] shadow-[0_1px_2px_rgba(15,23,42,0.08)] calm-transition hover:opacity-90 motion-safe:hover:-translate-y-px active:scale-[0.98]"
               >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
                   <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
                   <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" strokeLinejoin="round" />
@@ -313,70 +299,86 @@ export default async function ExplorerTeachersPage({
         }
       />
 
-      {/* ── Controls bar ────────────────────────────────────────────────────── */}
-      <div className="filter-panel">
-      <div className="filter-bar">
-        {/* Window selector */}
-        <div className="filter-period-toggle">
-          {VALID_WINDOWS.map((w) => (
-            <Link
-              key={w}
-              href={buildUrl({ windowDays: String(w), page: "1" })}
-              className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
-            >
-              {w}D
-            </Link>
-          ))}
-        </div>
+      {/* ── Controls bar (Explorer Teachers spec) ──────────────────────────── */}
+      <div className="filter-panel rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] shadow-[var(--shadow-ambient)]">
+        <div className="flex flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:items-end">
+            <div className="space-y-2">
+              <span className="filter-field-label">Time window</span>
+              <div className="filter-period-toggle w-fit max-w-full">
+                {VALID_WINDOWS.map((w) => (
+                  <Link
+                    key={w}
+                    href={buildUrl({ windowDays: String(w), page: "1" })}
+                    className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
+                  >
+                    {w}D
+                  </Link>
+                ))}
+              </div>
+            </div>
 
-        {/* Mode toggle */}
-        <div className="filter-period-toggle">
-          <Link
-            href={buildUrl({ mode: "pivot", page: "1" })}
-            className={`filter-period-btn ${mode === "pivot" ? "filter-period-btn-active" : ""}`}
-          >
-            Performance view
-          </Link>
-          <Link
-            href={buildUrl({ mode: "priorities", page: "1" })}
-            className={`filter-period-btn ${mode === "priorities" ? "filter-period-btn-active" : ""}`}
-          >
-            Priority view
-          </Link>
-        </div>
+            <div className="space-y-2">
+              <span className="filter-field-label">View</span>
+              <div className="filter-period-toggle w-fit max-w-full">
+                <Link
+                  href={buildUrl({ mode: "pivot", page: "1" })}
+                  className={`filter-period-btn ${mode === "pivot" ? "filter-period-btn-active" : ""}`}
+                >
+                  Performance view
+                </Link>
+                <Link
+                  href={buildUrl({ mode: "priorities", page: "1" })}
+                  className={`filter-period-btn ${mode === "priorities" ? "filter-period-btn-active" : ""}`}
+                >
+                  Priority view
+                </Link>
+              </div>
+            </div>
 
-        {/* Department filter */}
-        <form className="flex items-center gap-2" method="GET" action="/explorer/teachers">
-          <input type="hidden" name="windowDays" value={String(windowDays)} />
-          <input type="hidden" name="mode" value={mode} />
-          <input type="hidden" name="sort" value={sort} />
-          <input type="hidden" name="dir" value={dir} />
-          <input type="hidden" name="page" value="1" />
-          <select
-            name="departmentId"
-            defaultValue={departmentId ?? ""}
-            className="field field-filter-trigger min-w-[160px] !py-1.5 !text-[0.8125rem]"
-          >
-            <option value="">All Departments</option>
-            {scopedDepartments.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="btn-filter-primary btn-filter-primary--compact">
-            Apply
-          </button>
-          {departmentId && (
-            <Link
-              href={buildUrl({ departmentId: "", page: "1" })}
-              className="btn-filter-secondary btn-filter-secondary--compact"
-            >
-              Clear
-            </Link>
-          )}
-        </form>
-      </div>
+            <form className="space-y-2" method="GET" action="/explorer/teachers">
+              <span className="filter-field-label">Department</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <input type="hidden" name="windowDays" value={String(windowDays)} />
+                <input type="hidden" name="mode" value={mode} />
+                <input type="hidden" name="sort" value={sort} />
+                <input type="hidden" name="dir" value={dir} />
+                <input type="hidden" name="page" value="1" />
+                <div className="relative min-w-[min(100%,220px)] flex-1 sm:min-w-[200px] sm:flex-none">
+                  <span className="pointer-events-none absolute left-3 top-1/2 z-[1] -translate-y-1/2 text-[var(--on-surface-variant)]" aria-hidden>
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <select
+                    name="departmentId"
+                    defaultValue={departmentId ?? ""}
+                    className="field field-filter-trigger w-full !py-2 !pl-10 !pr-9 !text-[0.8125rem] font-medium"
+                    aria-label="Department"
+                  >
+                    <option value="">All Departments</option>
+                    {scopedDepartments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="submit"
+                  className="btn-filter-primary btn-filter-primary--compact inline-flex items-center justify-center gap-2 rounded-lg"
+                >
+                  <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Apply
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
 
       {/* ── Performance view (pivot) ────────────────────────────────────────── */}
@@ -401,24 +403,38 @@ export default async function ExplorerTeachersPage({
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="table-head-row">
-                      <th className="px-5 py-3.5">
-                        <Link href={sortUrl("name")} className="calm-transition hover:text-text">
+                      <th className="px-5 py-4">
+                        <Link href={sortUrl("name")} className="calm-transition hover:text-[var(--text)]">
                           Teacher{sortIndicator("name")}
                         </Link>
                       </th>
-                      <th className="px-4 py-3.5">Department</th>
-                      <th className="px-4 py-3.5 text-center">
-                        <Link href={sortUrl("coverage")} className="calm-transition hover:text-text">
+                      <th className="px-4 py-4">Department</th>
+                      <th className="px-4 py-4 text-center">
+                        <Link href={sortUrl("coverage")} className="calm-transition hover:text-[var(--text)]">
                           Coverage{sortIndicator("coverage")}
                         </Link>
                       </th>
-                      <th className="px-4 py-3.5">Status</th>
-                      <th className="px-4 py-3.5 text-center">
-                        <Link href={sortUrl("drift")} className="calm-transition hover:text-text">
-                          Drift Score{sortIndicator("drift")}
-                        </Link>
+                      <th className="px-4 py-4">Status</th>
+                      <th className="px-4 py-4 text-center">
+                        <div className="inline-flex items-center justify-center gap-1.5">
+                          <Link href={sortUrl("drift")} className="calm-transition hover:text-[var(--text)]">
+                            Drift Score{sortIndicator("drift")}
+                          </Link>
+                          <span
+                            className="inline-flex shrink-0 cursor-help text-[var(--on-surface-variant)]"
+                            title="Instructional drift score (IDS) for the selected window, normalized across observations."
+                          >
+                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+                            </svg>
+                            <span className="sr-only">
+                              Instructional drift score for the selected window, normalized across observations.
+                            </span>
+                          </span>
+                        </div>
                       </th>
-                      <th className="px-4 py-3.5">Signal Heatmap</th>
+                      <th className="min-w-[11rem] px-4 py-4">Signal heatmap</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -430,57 +446,59 @@ export default async function ExplorerTeachersPage({
                           className="group table-row calm-transition"
                         >
                           {/* Teacher */}
-                          <td className="whitespace-nowrap px-5 py-4">
+                          <td className="whitespace-nowrap px-5 py-5">
                             <Link
                               href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
-                              className="flex items-center gap-3 calm-transition group-hover:text-accent"
+                              className="flex items-center gap-3.5 calm-transition group-hover:text-accent"
                             >
                               <Avatar name={row.teacherName} size="md" />
                               <div className="min-w-0">
-                                <p className="truncate font-semibold text-text">{row.teacherName}</p>
-                                <p className="truncate text-xs text-muted">{formatTeacherRole(row.teacherRole)}</p>
+                                <p className="truncate font-semibold text-[var(--text)]">{row.teacherName}</p>
+                                <p className="truncate text-xs text-muted">Teacher</p>
                               </div>
                             </Link>
                           </td>
 
                           {/* Department */}
-                          <td className="whitespace-nowrap px-4 py-4 text-muted">
+                          <td className="whitespace-nowrap px-4 py-5 text-muted">
                             {row.departmentNames.join(", ") || "—"}
                           </td>
 
                           {/* Coverage (zero-padded) */}
-                          <td className="whitespace-nowrap px-4 py-4 text-center font-semibold tabular-nums text-text">
+                          <td className="whitespace-nowrap px-4 py-5 text-center font-semibold tabular-nums text-[var(--text)]">
                             {zeroPad(row.teacherCoverage)}
                           </td>
 
                           {/* Status */}
-                          <td className="whitespace-nowrap px-4 py-4">
+                          <td className="whitespace-nowrap px-4 py-5">
                             <StatusPill variant={STATUS_VARIANT[row.status]} size="sm">
                               {STATUS_LABELS[row.status]}
                             </StatusPill>
                           </td>
 
                           {/* Drift Score */}
-                          <td className="whitespace-nowrap px-4 py-4 text-center">
+                          <td className="whitespace-nowrap px-4 py-5 text-center">
                             <span className={`inline-flex items-center gap-1 font-semibold tabular-nums ${drift.color}`}>
                               {drift.text}
-                              <span className="text-xs">{drift.arrow}</span>
+                              <span className="text-xs" aria-hidden>
+                                {drift.arrow}
+                              </span>
                             </span>
                           </td>
 
                           {/* Signal Heatmap */}
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-1">
+                          <td className="px-4 py-5">
+                            <div className="flex max-w-[14rem] items-center gap-1.5">
                               {heatmapKeys.map((key) => {
                                 const cell = row.signalData[key];
                                 const mean = cell?.currentMean;
-                                const bg = mean != null ? meanToBgColor(mean) : "bg-surface-container-high";
+                                const barClass = meanToHeatmapBar(mean);
                                 const label = signalLabelMap[key] ?? key;
                                 return (
                                   <div
                                     key={key}
-                                    className={`h-6 w-6 rounded-sm ${bg}`}
-                                    title={`${label}: ${mean != null ? mean.toFixed(2) : "N/A"}`}
+                                    className={`h-5 min-w-0 flex-1 rounded-md ${barClass}`}
+                                    title={`${label}: ${mean != null ? mean.toFixed(2) : "No data"}`}
                                   />
                                 );
                               })}
@@ -519,25 +537,39 @@ export default async function ExplorerTeachersPage({
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="table-head-row">
-                      <th className="px-5 py-3.5">
-                        <Link href={sortUrl("name")} className="calm-transition hover:text-text">
+                      <th className="px-5 py-4">
+                        <Link href={sortUrl("name")} className="calm-transition hover:text-[var(--text)]">
                           Teacher{sortIndicator("name")}
                         </Link>
                       </th>
-                      <th className="px-4 py-3.5">Department</th>
-                      <th className="px-4 py-3.5 text-center">
-                        <Link href={sortUrl("coverage")} className="calm-transition hover:text-text">
+                      <th className="px-4 py-4">Department</th>
+                      <th className="px-4 py-4 text-center">
+                        <Link href={sortUrl("coverage")} className="calm-transition hover:text-[var(--text)]">
                           Coverage{sortIndicator("coverage")}
                         </Link>
                       </th>
-                      <th className="px-4 py-3.5">Status</th>
-                      <th className="px-4 py-3.5 text-center">
-                        <Link href={sortUrl("drift")} className="calm-transition hover:text-text">
-                          Drift Score{sortIndicator("drift")}
-                        </Link>
+                      <th className="px-4 py-4">Status</th>
+                      <th className="px-4 py-4 text-center">
+                        <div className="inline-flex items-center justify-center gap-1.5">
+                          <Link href={sortUrl("drift")} className="calm-transition hover:text-[var(--text)]">
+                            Drift Score{sortIndicator("drift")}
+                          </Link>
+                          <span
+                            className="inline-flex shrink-0 cursor-help text-[var(--on-surface-variant)]"
+                            title="Instructional drift score (IDS) for the selected window, normalized across observations."
+                          >
+                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+                            </svg>
+                            <span className="sr-only">
+                              Instructional drift score for the selected window, normalized across observations.
+                            </span>
+                          </span>
+                        </div>
                       </th>
-                      <th className="px-4 py-3.5">Top Drivers</th>
-                      <th className="px-4 py-3.5 text-right">Last Observed</th>
+                      <th className="px-4 py-4">Top drivers</th>
+                      <th className="px-4 py-4 text-right">Last observed</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -549,43 +581,45 @@ export default async function ExplorerTeachersPage({
                           href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
                           className="group table-row calm-transition cursor-pointer"
                         >
-                          <td className="whitespace-nowrap px-5 py-4">
+                          <td className="whitespace-nowrap px-5 py-5">
                             <Link
                               href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
-                              className="flex items-center gap-3 calm-transition group-hover:text-accent"
+                              className="flex items-center gap-3.5 calm-transition group-hover:text-accent"
                             >
                               <Avatar name={row.teacherName} size="md" />
                               <div className="min-w-0">
-                                <p className="truncate font-semibold text-text">{row.teacherName}</p>
-                                <p className="truncate text-xs text-muted">{formatTeacherRole(row.teacherRole)}</p>
+                                <p className="truncate font-semibold text-[var(--text)]">{row.teacherName}</p>
+                                <p className="truncate text-xs text-muted">Teacher</p>
                               </div>
                             </Link>
                           </td>
-                          <td className="whitespace-nowrap px-4 py-4 text-muted">
+                          <td className="whitespace-nowrap px-4 py-5 text-muted">
                             {row.departmentNames.join(", ") || "—"}
                           </td>
-                          <td className="whitespace-nowrap px-4 py-4 text-center font-semibold tabular-nums text-text">
+                          <td className="whitespace-nowrap px-4 py-5 text-center font-semibold tabular-nums text-[var(--text)]">
                             {zeroPad(row.teacherCoverage)}
                           </td>
-                          <td className="whitespace-nowrap px-4 py-4">
+                          <td className="whitespace-nowrap px-4 py-5">
                             <StatusPill variant={STATUS_VARIANT[row.status]} size="sm">
                               {STATUS_LABELS[row.status]}
                             </StatusPill>
                           </td>
-                          <td className="whitespace-nowrap px-4 py-4 text-center">
+                          <td className="whitespace-nowrap px-4 py-5 text-center">
                             <span className={`inline-flex items-center gap-1 font-semibold tabular-nums ${drift.color}`}>
                               {drift.text}
-                              <span className="text-xs">{drift.arrow}</span>
+                              <span className="text-xs" aria-hidden>
+                                {drift.arrow}
+                              </span>
                             </span>
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-4 py-5">
                             <TopDriverLinks
                               drivers={row.topDrivers}
                               labelByKey={signalLabelMap}
                               windowDays={windowDays}
                             />
                           </td>
-                          <td className="whitespace-nowrap px-4 py-4 text-right text-muted">
+                          <td className="whitespace-nowrap px-4 py-5 text-right text-muted">
                             {row.lastObservationAt
                               ? new Date(row.lastObservationAt).toLocaleDateString("en-GB", {
                                   day: "numeric",
