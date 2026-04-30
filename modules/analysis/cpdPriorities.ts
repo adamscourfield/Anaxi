@@ -59,15 +59,17 @@ export type AffectedTeacherRow = {
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
-function windowBounds(windowDays: number): {
+function windowBounds(
+  windowDays: number,
+  referenceEnd?: Date,
+): {
   currentStart: Date;
   currentEnd: Date;
   prevStart: Date;
   prevEnd: Date;
 } {
-  const now = new Date();
-  const currentEnd = now;
-  const currentStart = new Date(now.getTime() - windowDays * MS_PER_DAY);
+  const currentEnd = referenceEnd ?? new Date();
+  const currentStart = new Date(currentEnd.getTime() - windowDays * MS_PER_DAY);
   const prevEnd = currentStart;
   const prevStart = new Date(currentStart.getTime() - windowDays * MS_PER_DAY);
   return { currentStart, currentEnd, prevStart, prevEnd };
@@ -114,7 +116,8 @@ function getSignalLabel(signalKey: string, labelMap: Map<string, string>): strin
 export async function computeCpdPriorities(
   tenantId: string,
   windowDays: number,
-  filters?: OptionalFilters
+  filters?: OptionalFilters,
+  options?: { referenceEnd?: Date },
 ): Promise<CpdPriorityRow[]> {
   const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId } });
   const minCoverage: number = settings?.minObservationCount ?? DEFAULT_MIN_COVERAGE;
@@ -123,7 +126,7 @@ export async function computeCpdPriorities(
   const signalDefs = getSignalDefinitionsForSchoolType(schoolType);
   const allSignalKeys = signalDefs.map((s) => s.key);
 
-  const { currentStart, currentEnd, prevStart } = windowBounds(windowDays);
+  const { currentStart, currentEnd, prevStart } = windowBounds(windowDays, options?.referenceEnd);
 
   // If filtering by department, find teacher IDs in that department
   let departmentTeacherIds: string[] | undefined;
