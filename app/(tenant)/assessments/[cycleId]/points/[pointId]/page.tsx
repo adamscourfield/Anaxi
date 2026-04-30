@@ -1386,10 +1386,10 @@ function QuartileChart({
   const nonNull = values.filter((v): v is number => v !== null);
   const maxVal = nonNull.length ? Math.max(...nonNull) : 1;
   const barColours = [
-    "bg-[var(--success)]/90",
-    "bg-[color-mix(in_srgb,var(--success)_55%,var(--warning)_45%)]/90",
-    "bg-[var(--warning)]/90",
-    "bg-[var(--error)]/90",
+    "bg-scale-strong",
+    "bg-scale-consistent",
+    "bg-scale-some",
+    "bg-scale-limited",
   ];
   return (
     <div className="rounded-xl bg-[var(--surface-container-low)] p-4">
