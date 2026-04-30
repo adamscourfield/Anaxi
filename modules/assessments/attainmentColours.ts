@@ -47,10 +47,10 @@ export function pctScoreBadgeClass(score: number): string {
   return "bg-scale-limited text-white";
 }
 
-/** Stacked distribution: high / low / mid bands */
+/** Stacked distribution: high / low / mid bands (bar = light fill + dark text for in-bar labels) */
 export function pctBandBarStyle(from: number, to: number): { bar: string; swatch: string } {
-  if (from >= 70) return { bar: "bg-scale-strong text-white", swatch: "bg-scale-strong" };
-  if (to <= 40) return { bar: "bg-scale-limited text-white", swatch: "bg-scale-limited" };
+  if (from >= 70) return { bar: "bg-scale-strong-light text-scale-strong-text", swatch: "bg-scale-strong" };
+  if (to <= 40) return { bar: "bg-scale-limited-light text-scale-limited-text", swatch: "bg-scale-limited" };
   return { bar: "bg-scale-consistent-light text-scale-consistent-text", swatch: "bg-scale-consistent-light" };
 }
 
@@ -63,21 +63,21 @@ export function gradeDistributionBarStyle(
     if (!Number.isFinite(n)) {
       return { bar: "bg-surface-container-high text-[var(--on-surface-variant)]", swatch: "bg-surface-container-high" };
     }
-    // Per-grade fills so every band (including 1 and 2) reads distinctly in stacked bars.
-    if (n === 9) return { bar: "bg-scale-strong text-white", swatch: "bg-scale-strong" };
-    if (n === 8) return { bar: "bg-scale-strong text-white", swatch: "bg-scale-strong" };
-    if (n === 7) return { bar: "bg-scale-consistent text-white", swatch: "bg-scale-consistent" };
-    if (n === 6) return { bar: "bg-[var(--info)] text-white", swatch: "bg-[var(--info)]" };
-    if (n === 5) return { bar: "bg-cat-violet-text text-white", swatch: "bg-cat-violet-text" };
-    if (n === 4) return { bar: "bg-scale-some text-white", swatch: "bg-scale-some" };
-    if (n === 3) return { bar: "bg-[var(--warning)] text-[var(--warning-text)]", swatch: "bg-[var(--warning)]" };
-    if (n === 2) return { bar: "bg-scale-limited text-white", swatch: "bg-scale-limited" };
-    if (n === 1) return { bar: "bg-[var(--error)] text-white", swatch: "bg-[var(--error)]" };
+    // Per-grade: light bar backgrounds + token text so labels are always readable in narrow segments.
+    if (n === 9) return { bar: "bg-scale-strong-light text-scale-strong-text", swatch: "bg-scale-strong" };
+    if (n === 8) return { bar: "bg-scale-strong-light text-scale-strong-text", swatch: "bg-scale-strong" };
+    if (n === 7) return { bar: "bg-scale-consistent-bg text-scale-consistent-text", swatch: "bg-scale-consistent" };
+    if (n === 6) return { bar: "bg-blue-8 text-[var(--info)]", swatch: "bg-[var(--info)]" };
+    if (n === 5) return { bar: "bg-cat-violet-bg text-cat-violet-text", swatch: "bg-cat-violet-text" };
+    if (n === 4) return { bar: "bg-scale-some-light text-scale-some-text", swatch: "bg-scale-some" };
+    if (n === 3) return { bar: "bg-status-pending-light text-status-pending-text", swatch: "bg-[var(--warning)]" };
+    if (n === 2) return { bar: "bg-scale-limited-light text-scale-limited-text", swatch: "bg-scale-limited" };
+    if (n === 1) return { bar: "bg-status-denied-light text-status-denied-text", swatch: "bg-[var(--error)]" };
     return { bar: "bg-surface-container-high text-[var(--on-surface-variant)]", swatch: "bg-surface-container-high" };
   }
   const g = grade.toUpperCase();
-  if (g === "A*" || g === "A") return { bar: "bg-scale-strong text-white", swatch: "bg-scale-strong" };
-  if (g === "U" || g === "E") return { bar: "bg-scale-limited text-white", swatch: "bg-scale-limited" };
+  if (g === "A*" || g === "A") return { bar: "bg-scale-strong-light text-scale-strong-text", swatch: "bg-scale-strong" };
+  if (g === "U" || g === "E") return { bar: "bg-scale-limited-light text-scale-limited-text", swatch: "bg-scale-limited" };
   return { bar: "bg-scale-consistent-light text-scale-consistent-text", swatch: "bg-scale-consistent-light" };
 }
 
