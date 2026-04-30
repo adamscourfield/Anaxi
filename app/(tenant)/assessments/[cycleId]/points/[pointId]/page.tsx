@@ -171,12 +171,22 @@ type PastoralData = {
 type TeachingStudent = {
   studentId: string; name: string; ppFlag: boolean; sendFlag: boolean;
   score: number | null; displayScore: string;
+  attendancePct: number | null; latenessCount: number | null;
+  detentionsCount: number | null; onCallsCount: number | null;
+  positivePointsTotal: number | null; hasSnapshot: boolean;
 };
 
 type TeachingClass = {
   teacherId: string; teacherName: string; teacherEmail: string;
   count: number; mean: number | null; meanDisplay: string | null;
-  vsYearMean: number | null; observationCount: number;
+  vsYearMean: number | null;
+  ppCount: number; ppMean: number | null; ppMeanDisplay: string | null;
+  nonPpMean: number | null; nonPpMeanDisplay: string | null; ppGap: number | null;
+  sendCount: number; sendMean: number | null; sendMeanDisplay: string | null;
+  nonSendMean: number | null; sendGap: number | null;
+  meanAttendancePct: number | null; meanDetentionsCount: number | null;
+  meanOnCallsCount: number | null; below90Count: number;
+  observationCount: number;
   topSignals: Array<{ key: string; positiveCount: number; concernCount: number; totalCount: number }>;
   students: TeachingStudent[];
 };
@@ -1888,6 +1898,8 @@ function PastoralModal({
 
 // ─── Teaching Tab ─────────────────────────────────────────────────────────────
 
+type ClassRow = TeachingClass & { subject: string; gradeFormat: string; yearMeanDisplay: string | null };
+
 function TeachingTab({
   data,
   loading,
@@ -1897,7 +1909,7 @@ function TeachingTab({
   loading: boolean;
   onOpenModal: (subject: string, teacherName: string, students: TeachingStudent[]) => void;
 }) {
-  const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
+  const [tableSort, setTableSort] = useState<{ col: string; dir: "asc" | "desc" }>({ col: "vsYearMean", dir: "desc" });
 
   if (loading) {
     return (
@@ -1923,93 +1935,222 @@ function TeachingTab({
     );
   }
 
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-[var(--on-surface-muted)]">
-        Class mean vs year mean for each subject. Click a class to see individual student results.
-      </p>
+  // Flat list of all classes across subjects for the summary table
+  const allClasses: ClassRow[] = data.subjects.flatMap((subj) =>
+    subj.classes.map((cls) => ({
+      ...cls,
+      subject: subj.subject,
+      gradeFormat: subj.gradeFormat,
+      yearMeanDisplay: subj.yearMeanDisplay,
+    }))
+  );
 
+  const toggleSort = (col: string) => {
+    setTableSort((prev) =>
+      prev.col === col
+        ? { col, dir: prev.dir === "asc" ? "desc" : "asc" }
+        : { col, dir: col === "teacherName" || col === "subject" ? "asc" : "desc" }
+    );
+  };
+
+  const sortedClasses = [...allClasses].sort((a, b) => {
+    const { col, dir } = tableSort;
+    const av = a[col as keyof ClassRow] as number | string | null;
+    const bv = b[col as keyof ClassRow] as number | string | null;
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    const cmp = typeof av === "string" ? av.localeCompare(bv as string) : (av as number) - (bv as number);
+    return dir === "asc" ? cmp : -cmp;
+  });
+
+  const tH = (col: string, label: string, right = true) => (
+    <th
+      key={col}
+      onClick={() => toggleSort(col)}
+      className={`cursor-pointer select-none px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap ${right ? "text-right" : "text-left"}`}
+    >
+      {label}{tableSort.col === col ? (tableSort.dir === "desc" ? " ↓" : " ↑") : ""}
+    </th>
+  );
+
+  const ppGapCls = (gap: number | null) => {
+    if (gap === null) return "text-[var(--on-surface-muted)]";
+    if (gap <= 3) return "text-[var(--success)] font-bold";
+    if (gap <= 8) return "text-[var(--warning-text)] font-semibold";
+    return "text-[var(--error)] font-bold";
+  };
+
+  const attendCls = (pct: number | null) => {
+    if (pct === null) return "text-[var(--on-surface-muted)]";
+    if (pct >= 96) return "text-[var(--success)]";
+    if (pct < 90) return "text-[var(--error)] font-bold";
+    return "text-[var(--on-surface)]";
+  };
+
+  return (
+    <div className="space-y-6">
+
+      {/* ── Cross-subject class summary table ── */}
+      <div className="rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient overflow-hidden">
+        <div className="p-5 pb-0">
+          <h2 className="text-xl font-bold text-[var(--on-surface)]">All Classes</h2>
+          <p className="mt-0.5 text-[13px] text-[var(--on-surface-muted)]">
+            Sortable across all subjects. Click a row to see individual students.
+          </p>
+        </div>
+        <div className="overflow-x-auto mt-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-y border-[var(--outline-variant)]/20 bg-[var(--surface-container-low)]">
+                {tH("teacherName", "Teacher", false)}
+                {tH("subject", "Subject", false)}
+                {tH("count", "Students")}
+                {tH("meanDisplay", "Mean")}
+                {tH("vsYearMean", "vs Year")}
+                {tH("meanAttendancePct", "Attend %")}
+                {tH("meanDetentionsCount", "Detent.")}
+                {tH("ppGap", "PP Gap")}
+                {tH("observationCount", "Obs.")}
+              </tr>
+            </thead>
+            <tbody>
+              {sortedClasses.map((cls) => {
+                const isAbove = (cls.vsYearMean ?? 0) >= 0;
+                return (
+                  <tr
+                    key={`${cls.subject}-${cls.teacherId}`}
+                    className="table-row calm-transition border-b border-[var(--outline-variant)]/10 last:border-0 cursor-pointer hover:bg-[var(--surface-container-low)]"
+                    onClick={() => onOpenModal(cls.subject, cls.teacherName, cls.students)}
+                  >
+                    <td className="px-4 py-3 font-medium text-[var(--on-surface)]">{cls.teacherName}</td>
+                    <td className="px-4 py-3 text-[var(--on-surface-muted)]">{cls.subject}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">{cls.count}</td>
+                    <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--on-surface)]">{cls.meanDisplay ?? "—"}</td>
+                    <td className={`px-4 py-3 text-right font-semibold tabular-nums ${isAbove ? "text-[var(--success)]" : "text-[var(--error)]"}`}>
+                      {cls.vsYearMean !== null ? `${isAbove ? "+" : ""}${cls.vsYearMean}` : "—"}
+                    </td>
+                    <td className={`px-4 py-3 text-right tabular-nums ${attendCls(cls.meanAttendancePct)}`}>
+                      {cls.meanAttendancePct !== null ? `${cls.meanAttendancePct}%` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">
+                      {cls.meanDetentionsCount ?? "—"}
+                    </td>
+                    <td className={`px-4 py-3 text-right tabular-nums ${ppGapCls(cls.ppGap)}`}>
+                      {cls.ppGap !== null ? (cls.ppCount > 0 ? `${cls.ppGap > 0 ? "+" : ""}${cls.ppGap}` : "—") : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">
+                      {cls.observationCount > 0 ? cls.observationCount : "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="border-t border-[var(--outline-variant)]/20 px-5 py-3">
+          <p className="text-[11px] text-[var(--on-surface-muted)]">
+            PP Gap = non-PP mean minus PP mean (positive = gap exists). Click any row to drill into students.
+          </p>
+        </div>
+      </div>
+
+      {/* ── Per-subject accordion ── */}
       {data.subjects.map((subj) => {
         if (!subj.classes.length) return null;
-        const isExpanded = expandedSubject === subj.subject;
         const yearMeanVal = subj.yearMean;
 
         return (
           <div key={subj.subject} className="rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setExpandedSubject(isExpanded ? null : subj.subject)}
-              className="flex w-full items-center justify-between p-5 text-left hover:bg-[var(--surface-container-low)] calm-transition"
-            >
-              <div className="flex items-center gap-3">
-                <SubjectIcon subject={subj.subject} />
-                <div>
-                  <p className="font-bold text-[var(--on-surface)]">{subj.subject}</p>
-                  <p className="text-xs text-[var(--on-surface-muted)]">
-                    {subj.classes.length} class{subj.classes.length !== 1 ? "es" : ""} · {subj.presentCount} students · year mean {subj.yearMeanDisplay ?? "—"}
-                  </p>
-                </div>
+            <div className="flex items-center gap-3 border-b border-[var(--outline-variant)]/20 p-5">
+              <SubjectIcon subject={subj.subject} />
+              <div>
+                <p className="font-bold text-[var(--on-surface)]">{subj.subject}</p>
+                <p className="text-xs text-[var(--on-surface-muted)]">
+                  {subj.classes.length} class{subj.classes.length !== 1 ? "es" : ""} · {subj.presentCount} students · year mean {subj.yearMeanDisplay ?? "—"}
+                </p>
               </div>
-              <svg
-                className={`h-5 w-5 shrink-0 text-[var(--on-surface-muted)] calm-transition ${isExpanded ? "rotate-180" : ""}`}
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
+            </div>
 
-            {isExpanded && (
-              <div className="border-t border-[var(--outline-variant)]/20">
-                <div className="px-5 pt-4 pb-4 space-y-4">
-                  {subj.classes.map((cls) => {
-                    const isAbove = (cls.vsYearMean ?? 0) >= 0;
-                    const barWidthPct = yearMeanVal !== null && cls.mean !== null
-                      ? Math.min(100, Math.max(4, (cls.mean / Math.max(yearMeanVal * 1.5, 0.01)) * 100))
-                      : 50;
+            <div className="divide-y divide-[var(--outline-variant)]/10">
+              {subj.classes.map((cls) => {
+                const isAbove = (cls.vsYearMean ?? 0) >= 0;
+                const barWidthPct = yearMeanVal !== null && cls.mean !== null
+                  ? Math.min(100, Math.max(4, (cls.mean / Math.max(yearMeanVal * 1.5, 0.01)) * 100))
+                  : 50;
 
-                    return (
-                      <div key={cls.teacherId} className="space-y-1.5">
-                        <div className="flex items-baseline justify-between">
-                          <button
-                            type="button"
-                            onClick={() => onOpenModal(subj.subject, cls.teacherName, cls.students)}
-                            className="text-sm font-semibold text-[var(--on-surface)] hover:text-[var(--accent)] calm-transition text-left"
-                          >
-                            {cls.teacherName}
-                            <span className="ml-1.5 text-xs text-[var(--on-surface-muted)] font-normal">({cls.count} students)</span>
-                          </button>
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-sm font-bold tabular-nums text-[var(--on-surface)]">{cls.meanDisplay ?? "—"}</span>
-                            {cls.vsYearMean !== null && (
-                              <span className={`text-[11px] font-semibold tabular-nums ${isAbove ? "text-[var(--success)]" : "text-[var(--error)]"}`}>
-                                {isAbove ? "+" : ""}{cls.vsYearMean}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="h-3 overflow-hidden rounded-full bg-[var(--surface-container-low)]">
-                          <div
-                            className={`h-full rounded-full calm-transition ${isAbove ? barPositiveClass : barNegativeClass}`}
-                            style={{ width: `${barWidthPct}%` }}
-                          />
-                        </div>
-                        {cls.observationCount > 0 && (
-                          <p className="text-[10px] text-[var(--on-surface-muted)]">
-                            {cls.observationCount} observation{cls.observationCount !== 1 ? "s" : ""} this year
-                          </p>
+                return (
+                  <div key={cls.teacherId} className="p-5">
+                    {/* Teacher header row */}
+                    <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => onOpenModal(subj.subject, cls.teacherName, cls.students)}
+                        className="text-sm font-semibold text-[var(--on-surface)] hover:text-[var(--accent)] calm-transition text-left"
+                      >
+                        {cls.teacherName}
+                        <span className="ml-1.5 text-xs text-[var(--on-surface-muted)] font-normal">
+                          ({cls.count} students)
+                        </span>
+                      </button>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold tabular-nums text-[var(--on-surface)]">
+                          {cls.meanDisplay ?? "—"}
+                        </span>
+                        {cls.vsYearMean !== null && (
+                          <span className={`text-[11px] font-semibold tabular-nums ${isAbove ? "text-[var(--success)]" : "text-[var(--error)]"}`}>
+                            {isAbove ? "+" : ""}{cls.vsYearMean}
+                          </span>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
 
-                {subj.unassigned.length > 0 && (
-                  <div className="border-t border-[var(--outline-variant)]/10 px-5 py-3">
-                    <p className="text-[11px] text-[var(--on-surface-muted)]">
-                      {subj.unassigned.length} student{subj.unassigned.length !== 1 ? "s" : ""} without a teaching group assignment
-                    </p>
+                    {/* Attainment bar */}
+                    <div className="mb-3 h-2.5 overflow-hidden rounded-full bg-[var(--surface-container-low)]">
+                      <div
+                        className={`h-full rounded-full calm-transition ${isAbove ? barPositiveClass : barNegativeClass}`}
+                        style={{ width: `${barWidthPct}%` }}
+                      />
+                    </div>
+
+                    {/* KPI nuggets */}
+                    <div className="flex flex-wrap gap-2">
+                      {cls.meanAttendancePct !== null && (
+                        <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold tabular-nums ${cls.meanAttendancePct < 90 ? "bg-[var(--error-container)] text-[var(--on-error-container)]" : "bg-[var(--surface-container-low)] text-[var(--on-surface-muted)]"}`}>
+                          Attend {cls.meanAttendancePct}%{cls.below90Count > 0 ? ` · ${cls.below90Count} <90%` : ""}
+                        </span>
+                      )}
+                      {cls.ppCount > 0 && cls.ppGap !== null && (
+                        <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold tabular-nums ${cls.ppGap > 8 ? "bg-[var(--error-container)] text-[var(--on-error-container)]" : cls.ppGap > 3 ? "bg-[var(--surface-container-low)] text-[var(--warning-text)]" : "bg-[var(--surface-container-low)] text-[var(--success)]"}`}>
+                          PP gap {cls.ppGap > 0 ? "+" : ""}{cls.ppGap}
+                        </span>
+                      )}
+                      {cls.ppCount > 0 && cls.ppMeanDisplay && (
+                        <span className="rounded-md px-2 py-0.5 text-[11px] text-[var(--on-surface-muted)] bg-[var(--surface-container-low)]">
+                          PP {cls.ppMeanDisplay} · non-PP {cls.nonPpMeanDisplay ?? "—"}
+                        </span>
+                      )}
+                      {cls.meanDetentionsCount !== null && cls.meanDetentionsCount > 0 && (
+                        <span className="rounded-md px-2 py-0.5 text-[11px] text-[var(--on-surface-muted)] bg-[var(--surface-container-low)]">
+                          {cls.meanDetentionsCount} avg detentions
+                        </span>
+                      )}
+                      {cls.observationCount > 0 && (
+                        <span className="rounded-md px-2 py-0.5 text-[11px] text-[var(--on-surface-muted)] bg-[var(--surface-container-low)]">
+                          {cls.observationCount} obs this year
+                        </span>
+                      )}
+                    </div>
                   </div>
-                )}
+                );
+              })}
+            </div>
+
+            {subj.unassigned.length > 0 && (
+              <div className="border-t border-[var(--outline-variant)]/10 px-5 py-3">
+                <p className="text-[11px] text-[var(--on-surface-muted)]">
+                  {subj.unassigned.length} student{subj.unassigned.length !== 1 ? "s" : ""} without a teaching group assignment
+                </p>
               </div>
             )}
           </div>
@@ -2040,7 +2181,7 @@ function TeachingModal({
       />
       <div className="relative z-10 flex min-h-full items-center justify-center p-4 sm:p-6 pointer-events-none">
         <div
-          className="pointer-events-auto my-8 flex w-full max-w-2xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
+          className="pointer-events-auto my-8 flex w-full max-w-3xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
           role="dialog"
           aria-modal="true"
           onClick={(e) => e.stopPropagation()}
@@ -2048,7 +2189,9 @@ function TeachingModal({
           <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
             <div>
               <h2 className="text-lg font-bold">{modal.teacherName} — {modal.subject}</h2>
-              <p className="text-xs text-[var(--on-surface-muted)] mt-0.5">Sorted by score (highest first)</p>
+              <p className="text-xs text-[var(--on-surface-muted)] mt-0.5">
+                {sorted.length} students · sorted by score (highest first)
+              </p>
             </div>
             <button
               type="button"
@@ -2068,6 +2211,9 @@ function TeachingModal({
                   <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)] w-8">#</th>
                   <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">STUDENT</th>
                   <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">SCORE</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">ATTEND %</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">DETENT.</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">ON CALLS</th>
                 </tr>
               </thead>
               <tbody>
@@ -2085,6 +2231,15 @@ function TeachingModal({
                     </td>
                     <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--on-surface)]">
                       {st.displayScore}
+                    </td>
+                    <td className={`px-4 py-3 text-right tabular-nums ${st.attendancePct !== null && st.attendancePct < 90 ? "font-bold text-[var(--error)]" : st.attendancePct !== null && st.attendancePct >= 96 ? "text-[var(--success)]" : "text-[var(--on-surface)]"}`}>
+                      {st.attendancePct !== null ? `${st.attendancePct}%` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">
+                      {st.detentionsCount ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">
+                      {st.onCallsCount ?? "—"}
                     </td>
                   </tr>
                 ))}
