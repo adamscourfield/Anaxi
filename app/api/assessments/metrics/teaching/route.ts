@@ -3,8 +3,7 @@
  *
  * Teaching Group Analysis for a result point.
  * Joins AssessmentResults → StudentSubjectTeacher to identify class groupings,
- * computes per-class mean vs year mean, PP/SEND attainment gaps, and
- * pastoral averages (attendance, detentions) from the nearest StudentSnapshot.
+ * computes per-class mean vs year mean, and optionally surfaces observation signals.
  *
  * Query params:
  *   pointId — required
@@ -16,7 +15,11 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { GradeFormat } from "@prisma/client";
 
-/** Convert a normalised score (0–1) to a display label. */
+const A_LEVEL_SCORE: Record<string, number> = {
+  "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1,
+};
+
+/** Convert a normalised score (0–1) to a display percentage or grade string. */
 function displayScore(score: number, format: GradeFormat): string {
   if (format === "GCSE") return (score * 9).toFixed(1);
   if (format === "A_LEVEL") {
@@ -32,13 +35,7 @@ function displayScore(score: number, format: GradeFormat): string {
   return `${Math.round(score * 100)}%`;
 }
 
-/** Scale a normalised delta to the grade format's natural unit. */
-function scaleVsYear(delta: number, format: GradeFormat): number {
-  const factor = format === "GCSE" ? 9 : format === "A_LEVEL" ? 7 : 100;
-  return Math.round(delta * factor * 10) / 10;
-}
-
-function avg(vals: number[]): number | null {
+function mean(vals: number[]): number | null {
   if (!vals.length) return null;
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
@@ -46,33 +43,6 @@ function avg(vals: number[]): number | null {
 function round1(v: number | null): number | null {
   return v !== null ? Math.round(v * 10) / 10 : null;
 }
-
-// ─── Snapshot helpers ─────────────────────────────────────────────────────────
-
-type SnapRow = {
-  studentId: string;
-  snapshotDate: Date;
-  attendancePct: unknown;
-  latenessCount: number;
-  detentionsCount: number;
-  internalExclusionsCount: number;
-  suspensionsCount: number;
-  onCallsCount: number;
-  positivePointsTotal: number;
-  negativePointsTotal: number;
-};
-
-function closestSnapshot(snaps: SnapRow[], target: Date): SnapRow | null {
-  if (!snaps.length) return null;
-  return snaps.reduce((best, s) =>
-    Math.abs(s.snapshotDate.getTime() - target.getTime()) <
-    Math.abs(best.snapshotDate.getTime() - target.getTime())
-      ? s
-      : best
-  );
-}
-
-// ─── Route ────────────────────────────────────────────────────────────────────
 
 export async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
@@ -126,31 +96,43 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "No assessments found for this point" }, { status: 404 });
   }
 
-  // ── 3. Load StudentSubjectTeacher assignments ────────────────────────────
+  // ── 3. Load StudentSubjectTeacher for all students + subjects at this point ──
   const studentIds = [...new Set(assessments.flatMap((a) => a.results.map((r) => r.studentId)))];
   const subjectNames = [...new Set(assessments.map((a) => a.subject))];
 
+  // Find subjects by name in this tenant
   const subjectRecords = await prisma.subject.findMany({
     where: { tenantId: user.tenantId, name: { in: subjectNames } },
     select: { id: true, name: true },
   });
   const subjectIdByName = new Map(subjectRecords.map((s) => [s.name, s.id]));
 
+  // Load teaching assignments effective around the assessedAt date
   const assignments = await prisma.studentSubjectTeacher.findMany({
     where: {
       tenantId: user.tenantId,
       studentId: { in: studentIds },
       effectiveFrom: { lte: assessedAt },
-      OR: [{ effectiveTo: null }, { effectiveTo: { gte: assessedAt } }],
+      OR: [
+        { effectiveTo: null },
+        { effectiveTo: { gte: assessedAt } },
+      ],
     },
     select: {
       studentId: true,
       subjectId: true,
       teacherId: true,
-      teacher: { select: { id: true, fullName: true, email: true } },
+      teacher: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+        },
+      },
     },
   });
 
+  // Map: studentId → subjectId → teacherId
   const studentSubjectTeacher = new Map<string, Map<string, string>>();
   const teacherInfoMap = new Map<string, { id: string; fullName: string; email: string }>();
 
@@ -168,18 +150,13 @@ export async function GET(req: Request) {
     }
   }
 
-  // ── 4. Load observation signals ──────────────────────────────────────────
+  // ── 4. Load observation signals for teachers in this year ────────────────
+  // Get the academic year range based on assessedAt (Sep–Aug)
   const assessedYear = assessedAt.getMonth() >= 8 ? assessedAt.getFullYear() : assessedAt.getFullYear() - 1;
   const yearStart = new Date(`${assessedYear}-09-01`);
   const yearEnd = new Date(`${assessedYear + 1}-08-31T23:59:59`);
-  const teacherIds = [...teacherInfoMap.keys()];
 
-  type SignalSummary = {
-    key: string;
-    positiveCount: number;
-    concernCount: number;
-    totalCount: number;
-  };
+  const teacherIds = [...teacherInfoMap.keys()];
 
   type ObsRow = {
     observedTeacherId: string;
@@ -189,7 +166,7 @@ export async function GET(req: Request) {
 
   let observations: ObsRow[] = [];
   if (teacherIds.length > 0) {
-    observations = await prisma.observation.findMany({
+    const rawObs = await prisma.observation.findMany({
       where: {
         tenantId: user.tenantId,
         observedTeacherId: { in: teacherIds },
@@ -198,13 +175,24 @@ export async function GET(req: Request) {
       select: {
         observedTeacherId: true,
         subject: true,
-        signals: { select: { signalKey: true, valueKey: true, notObserved: true } },
+        signals: {
+          select: { signalKey: true, valueKey: true, notObserved: true },
+        },
       },
     });
+    observations = rawObs;
   }
 
+  // Aggregate: teacherId → subject → signal strengths
+  // For each signal key, count positive (valueKey = "STRONG" or "GOOD") vs concern ("CONCERN"/"WEAK")
+  type SignalSummary = {
+    key: string;
+    positiveCount: number;
+    concernCount: number;
+    totalCount: number;
+  };
+
   const teacherSubjectSignals = new Map<string, Map<string, Map<string, SignalSummary>>>();
-  const teacherSubjectObsCount = new Map<string, Map<string, number>>();
 
   for (const obs of observations) {
     const tid = obs.observedTeacherId;
@@ -225,35 +213,16 @@ export async function GET(req: Request) {
       if (v === "STRONG" || v === "GOOD" || v === "POSITIVE") entry.positiveCount++;
       else if (v === "CONCERN" || v === "WEAK" || v === "NEGATIVE") entry.concernCount++;
     }
+  }
 
+  // Count total observations per teacher per subject
+  const teacherSubjectObsCount = new Map<string, Map<string, number>>();
+  for (const obs of observations) {
+    const tid = obs.observedTeacherId;
+    const subj = obs.subject;
     if (!teacherSubjectObsCount.has(tid)) teacherSubjectObsCount.set(tid, new Map());
     const m = teacherSubjectObsCount.get(tid)!;
     m.set(subj, (m.get(subj) ?? 0) + 1);
-  }
-
-  // ── 4b. Load snapshots for all students ──────────────────────────────────
-  const allSnapshots = await prisma.studentSnapshot.findMany({
-    where: { tenantId: user.tenantId, studentId: { in: studentIds } },
-    select: {
-      studentId: true,
-      snapshotDate: true,
-      attendancePct: true,
-      latenessCount: true,
-      detentionsCount: true,
-      internalExclusionsCount: true,
-      suspensionsCount: true,
-      onCallsCount: true,
-      positivePointsTotal: true,
-      negativePointsTotal: true,
-    },
-    orderBy: { snapshotDate: "asc" },
-  });
-
-  const snapsByStudent = new Map<string, SnapRow[]>();
-  for (const s of allSnapshots) {
-    const arr = snapsByStudent.get(s.studentId) ?? [];
-    arr.push(s as SnapRow);
-    snapsByStudent.set(s.studentId, arr);
   }
 
   // ── 5. Build per-subject, per-class statistics ────────────────────────────
@@ -264,13 +233,6 @@ export async function GET(req: Request) {
     sendFlag: boolean;
     score: number | null;
     displayScore: string;
-    // pastoral
-    attendancePct: number | null;
-    latenessCount: number | null;
-    detentionsCount: number | null;
-    onCallsCount: number | null;
-    positivePointsTotal: number | null;
-    hasSnapshot: boolean;
   };
 
   type ClassStat = {
@@ -281,25 +243,6 @@ export async function GET(req: Request) {
     mean: number | null;
     meanDisplay: string | null;
     vsYearMean: number | null;
-    // PP gap (scaled to grade unit, positive = PP below non-PP)
-    ppCount: number;
-    ppMean: number | null;
-    ppMeanDisplay: string | null;
-    nonPpMean: number | null;
-    nonPpMeanDisplay: string | null;
-    ppGap: number | null;
-    // SEND gap
-    sendCount: number;
-    sendMean: number | null;
-    sendMeanDisplay: string | null;
-    nonSendMean: number | null;
-    sendGap: number | null;
-    // pastoral
-    meanAttendancePct: number | null;
-    meanDetentionsCount: number | null;
-    meanOnCallsCount: number | null;
-    below90Count: number;
-    // observations
     observationCount: number;
     topSignals: SignalSummary[];
     students: StudentRow[];
@@ -320,11 +263,13 @@ export async function GET(req: Request) {
   for (const asmt of assessments) {
     const subjectId = subjectIdByName.get(asmt.subject);
 
+    // Compute year mean
     const allScores = asmt.results
       .map((r) => r.normalizedScore)
       .filter((s): s is number => s !== null);
-    const yearMeanVal = avg(allScores);
+    const yearMeanVal = mean(allScores);
 
+    // Group by teacher
     const teacherStudents = new Map<string, StudentRow[]>();
     const unassigned: StudentRow[] = [];
 
@@ -332,8 +277,6 @@ export async function GET(req: Request) {
       const teacherId = subjectId
         ? (studentSubjectTeacher.get(r.studentId)?.get(subjectId) ?? null)
         : null;
-
-      const snap = closestSnapshot(snapsByStudent.get(r.studentId) ?? [], assessedAt);
 
       const sRow: StudentRow = {
         studentId: r.studentId,
@@ -344,12 +287,6 @@ export async function GET(req: Request) {
         displayScore: r.normalizedScore !== null
           ? displayScore(r.normalizedScore, asmt.gradeFormat)
           : r.rawValue,
-        attendancePct: snap ? Math.round(Number(snap.attendancePct) * 10) / 10 : null,
-        latenessCount: snap?.latenessCount ?? null,
-        detentionsCount: snap?.detentionsCount ?? null,
-        onCallsCount: snap?.onCallsCount ?? null,
-        positivePointsTotal: snap?.positivePointsTotal ?? null,
-        hasSnapshot: snap !== null,
       };
 
       if (teacherId) {
@@ -364,44 +301,23 @@ export async function GET(req: Request) {
     const classes: ClassStat[] = [];
     for (const [teacherId, students] of teacherStudents) {
       const teacher = teacherInfoMap.get(teacherId);
-      const teacherName = teacher ? teacher.fullName || teacher.email : "Unknown Teacher";
+      const teacherName = teacher
+        ? teacher.fullName || teacher.email
+        : "Unknown Teacher";
 
-      // Attainment
       const scores = students.map((s) => s.score).filter((s): s is number => s !== null);
-      const classMean = avg(scores);
-      const vsYear = classMean !== null && yearMeanVal !== null ? classMean - yearMeanVal : null;
+      const classMean = mean(scores);
+      const vsYear = classMean !== null && yearMeanVal !== null
+        ? classMean - yearMeanVal
+        : null;
 
-      // PP gap
-      const ppStudents = students.filter((s) => s.ppFlag);
-      const nonPpStudents = students.filter((s) => !s.ppFlag);
-      const ppScores = ppStudents.map((s) => s.score).filter((s): s is number => s !== null);
-      const nonPpScores = nonPpStudents.map((s) => s.score).filter((s): s is number => s !== null);
-      const ppMeanVal = avg(ppScores);
-      const nonPpMeanVal = avg(nonPpScores);
-      const ppGapNorm = ppMeanVal !== null && nonPpMeanVal !== null ? nonPpMeanVal - ppMeanVal : null;
-
-      // SEND gap
-      const sendStudents = students.filter((s) => s.sendFlag);
-      const nonSendStudents = students.filter((s) => !s.sendFlag);
-      const sendScores = sendStudents.map((s) => s.score).filter((s): s is number => s !== null);
-      const nonSendScores = nonSendStudents.map((s) => s.score).filter((s): s is number => s !== null);
-      const sendMeanVal = avg(sendScores);
-      const nonSendMeanVal = avg(nonSendScores);
-      const sendGapNorm = sendMeanVal !== null && nonSendMeanVal !== null ? nonSendMeanVal - sendMeanVal : null;
-
-      // Pastoral
-      const snapped = students.filter((s) => s.hasSnapshot);
-      const attendVals = snapped.map((s) => s.attendancePct).filter((v): v is number => v !== null);
-      const detVals = snapped.map((s) => s.detentionsCount).filter((v): v is number => v !== null);
-      const onCallVals = snapped.map((s) => s.onCallsCount).filter((v): v is number => v !== null);
-      const below90Count = attendVals.filter((v) => v < 90).length;
-
-      // Observations
+      // Get obs signals for this teacher in this subject
       const sigMap = teacherSubjectSignals.get(teacherId)?.get(asmt.subject) ?? new Map();
       const topSignals = [...sigMap.values()]
         .filter((s) => s.totalCount >= 2)
         .sort((a, b) => b.totalCount - a.totalCount)
         .slice(0, 5);
+
       const obsCount = teacherSubjectObsCount.get(teacherId)?.get(asmt.subject) ?? 0;
 
       classes.push({
@@ -411,32 +327,14 @@ export async function GET(req: Request) {
         count: students.length,
         mean: classMean,
         meanDisplay: classMean !== null ? displayScore(classMean, asmt.gradeFormat) : null,
-        vsYearMean: vsYear !== null ? scaleVsYear(vsYear, asmt.gradeFormat) : null,
-        // PP
-        ppCount: ppStudents.length,
-        ppMean: ppMeanVal,
-        ppMeanDisplay: ppMeanVal !== null ? displayScore(ppMeanVal, asmt.gradeFormat) : null,
-        nonPpMean: nonPpMeanVal,
-        nonPpMeanDisplay: nonPpMeanVal !== null ? displayScore(nonPpMeanVal, asmt.gradeFormat) : null,
-        ppGap: ppGapNorm !== null ? scaleVsYear(ppGapNorm, asmt.gradeFormat) : null,
-        // SEND
-        sendCount: sendStudents.length,
-        sendMean: sendMeanVal,
-        sendMeanDisplay: sendMeanVal !== null ? displayScore(sendMeanVal, asmt.gradeFormat) : null,
-        nonSendMean: nonSendMeanVal,
-        sendGap: sendGapNorm !== null ? scaleVsYear(sendGapNorm, asmt.gradeFormat) : null,
-        // Pastoral
-        meanAttendancePct: round1(avg(attendVals)),
-        meanDetentionsCount: round1(avg(detVals)),
-        meanOnCallsCount: round1(avg(onCallVals)),
-        below90Count,
-        // Observations
+        vsYearMean: vsYear !== null ? Math.round(vsYear * (asmt.gradeFormat === "GCSE" ? 9 : asmt.gradeFormat === "A_LEVEL" ? 7 : 100) * 10) / 10 : null,
         observationCount: obsCount,
         topSignals,
         students: students.sort((a, b) => (b.score ?? 0) - (a.score ?? 0)),
       });
     }
 
+    // Sort classes by mean descending (best first)
     classes.sort((a, b) => (b.mean ?? 0) - (a.mean ?? 0));
 
     subjectStats.push({
