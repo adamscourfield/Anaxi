@@ -1274,6 +1274,34 @@ textarea:focus-visible {
   border-radius: var(--radius-md);
 }
 
+/* Priorities (/analytics) — spec alignment with dashboard mock */
+.anx-priorities-page {
+  background: color-mix(in srgb, var(--surface-container) 35%, var(--surface-container-lowest));
+  margin-inline: calc(-1 * var(--tenant-content-pad-x, 1rem));
+  padding-inline: var(--tenant-content-pad-x, 1rem);
+  padding-block: 0.5rem 2rem;
+}
+
+.anx-priorities-definitions summary {
+  list-style: none;
+}
+
+.anx-priorities-definitions summary::-webkit-details-marker {
+  display: none;
+}
+
+.anx-priorities-sort-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.anx-priorities-sort-link:hover {
+  color: var(--on-surface);
+}
+
 /* ── Divider: Subtle ────────────────────────────────────────────── */
 /* Ghost divider using outline-variant at 30% opacity. Use instead   */
 /* of hardcoded rgba() values for horizontal divider lines.          */
