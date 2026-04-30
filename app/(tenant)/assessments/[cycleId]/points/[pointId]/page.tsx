@@ -142,6 +142,59 @@ type MetricsData = {
   aLevelSummary: ALevelSummary | null;
 };
 
+// ─── Pastoral types ───────────────────────────────────────────────────────────
+
+type PastoralStudent = {
+  studentId: string; name: string; ppFlag: boolean; sendFlag: boolean;
+  yearGroup: string; meanScore: number | null; attendancePct: number | null;
+  latenessCount: number | null; detentionsCount: number | null;
+  internalExclusionsCount: number | null; suspensionsCount: number | null;
+  onCallsCount: number | null; positivePointsTotal: number | null;
+  negativePointsTotal: number | null; hasSnapshot: boolean;
+};
+
+type PastoralBand = {
+  label: string; order: number; count: number; withSnapshot: number;
+  meanAttendancePct: number | null; meanLatenessCount: number | null;
+  meanDetentionsCount: number | null; meanInternalExclusionsCount: number | null;
+  meanSuspensionsCount: number | null; meanOnCallsCount: number | null;
+  students: PastoralStudent[];
+};
+
+type PastoralData = {
+  dominantFormat: string; totalStudents: number; withSnapshot: number;
+  yearMeans: {
+    attendancePct: number | null; latenessCount: number | null;
+    detentionsCount: number | null; internalExclusionsCount: number | null;
+    suspensionsCount: number | null; onCallsCount: number | null;
+  };
+  bands: PastoralBand[];
+};
+
+// ─── Teaching types ───────────────────────────────────────────────────────────
+
+type TeachingStudent = {
+  studentId: string; name: string; ppFlag: boolean; sendFlag: boolean;
+  score: number | null; displayScore: string;
+};
+
+type TeachingClass = {
+  teacherId: string; teacherName: string; teacherEmail: string;
+  count: number; mean: number | null; meanDisplay: string | null;
+  vsYearMean: number | null; observationCount: number;
+  topSignals: Array<{ key: string; positiveCount: number; concernCount: number; totalCount: number }>;
+  students: TeachingStudent[];
+};
+
+type TeachingSubject = {
+  subject: string; gradeFormat: string;
+  yearMean: number | null; yearMeanDisplay: string | null;
+  presentCount: number; classes: TeachingClass[];
+  unassigned: TeachingStudent[];
+};
+
+type TeachingData = { subjects: TeachingSubject[] };
+
 // ─── KPI Icon Components ──────────────────────────────────────────────────────
 
 function IconUsersKpi() {
@@ -346,6 +399,13 @@ export default function ResultPointPage() {
   const [expandedPctSubject, setExpandedPctSubject] = useState<string | null>(null);
   const [gcseGapView, setGcseGapView] = useState<"pp" | "send">("pp");
   const [gapView, setGapView] = useState<"pp" | "send">("pp");
+  const [activeTab, setActiveTab] = useState<"attainment" | "pastoral" | "teaching">("attainment");
+  const [pastoralData, setPastoralData] = useState<PastoralData | null>(null);
+  const [teachingData, setTeachingData] = useState<TeachingData | null>(null);
+  const [pastoralLoading, setPastoralLoading] = useState(false);
+  const [teachingLoading, setTeachingLoading] = useState(false);
+  const [pastoralModal, setPastoralModal] = useState<{ band: string; students: PastoralStudent[] } | null>(null);
+  const [teachingModal, setTeachingModal] = useState<{ subject: string; teacherName: string; students: TeachingStudent[] } | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -370,6 +430,25 @@ export default function ResultPointPage() {
     }
     load();
   }, [pointId]);
+
+  // Lazy-load pastoral / teaching data on tab switch
+  useEffect(() => {
+    if (activeTab === "pastoral" && !pastoralData && !pastoralLoading) {
+      setPastoralLoading(true);
+      fetch(`/api/assessments/metrics/pastoral?pointId=${pointId}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => { if (d) setPastoralData(d); })
+        .finally(() => setPastoralLoading(false));
+    }
+    if (activeTab === "teaching" && !teachingData && !teachingLoading) {
+      setTeachingLoading(true);
+      fetch(`/api/assessments/metrics/teaching?pointId=${pointId}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => { if (d) setTeachingData(d); })
+        .finally(() => setTeachingLoading(false));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, pointId]);
 
   const isGcse = metrics?.dominantFormat === "GCSE";
   const isALevel = metrics?.dominantFormat === "A_LEVEL";
@@ -475,6 +554,34 @@ export default function ResultPointPage() {
             <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Grade Entries" value={metrics.totalEntries.toLocaleString()} context="Across all subjects" icon={<IconClipboardKpi />} iconTileClassName={kpiIconCircleBlue} />
             <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Subjects" value={metrics.subjects.length} context="Reporting departments" icon={<IconBookOpenKpi />} iconTileClassName={kpiIconCircleGreen} />
           </div>
+
+          {/* Tab navigation */}
+          <div className="flex gap-1 border-b border-[var(--outline-variant)]/30">
+            {(["attainment", "pastoral", "teaching"] as const).map((tab) => {
+              const labels: Record<typeof tab, string> = {
+                attainment: "Attainment",
+                pastoral: "Pastoral",
+                teaching: "Teaching Group Analysis",
+              };
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px calm-transition whitespace-nowrap ${
+                    activeTab === tab
+                      ? "border-[var(--accent)] text-[var(--accent)]"
+                      : "border-transparent text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] hover:border-[var(--outline-variant)]"
+                  }`}
+                >
+                  {labels[tab]}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── ATTAINMENT TAB ──────────────────────────────────────────────── */}
+          {activeTab === "attainment" && (<>
 
           {/* GCSE Basics */}
           {isGcse && metrics.gcseBasics && (
@@ -1085,6 +1192,26 @@ export default function ResultPointPage() {
             </>
           )}
 
+          </>)} {/* end attainment tab */}
+
+          {/* ── PASTORAL TAB ────────────────────────────────────────────────── */}
+          {activeTab === "pastoral" && (
+            <PastoralTab
+              data={pastoralData}
+              loading={pastoralLoading}
+              onOpenModal={(band, students) => setPastoralModal({ band, students })}
+            />
+          )}
+
+          {/* ── TEACHING TAB ────────────────────────────────────────────────── */}
+          {activeTab === "teaching" && (
+            <TeachingTab
+              data={teachingData}
+              loading={teachingLoading}
+              onOpenModal={(subject, teacherName, students) => setTeachingModal({ subject, teacherName, students })}
+            />
+          )}
+
         </>
       )}
 
@@ -1223,6 +1350,482 @@ export default function ResultPointPage() {
           </div>
         </div>
       )}
+
+      {/* Pastoral drill-down modal */}
+      {pastoralModal && (
+        <PastoralModal modal={pastoralModal} onClose={() => setPastoralModal(null)} />
+      )}
+
+      {/* Teaching drill-down modal */}
+      {teachingModal && (
+        <TeachingModal modal={teachingModal} onClose={() => setTeachingModal(null)} />
+      )}
+    </div>
+  );
+}
+
+// ─── Pastoral Tab ─────────────────────────────────────────────────────────────
+
+function attendanceCls(pct: number | null, yearMean: number | null): string {
+  if (pct === null) return "text-[var(--on-surface-muted)]";
+  if (yearMean === null) return "text-[var(--on-surface)]";
+  if (pct >= yearMean + 2) return "text-[var(--success)] font-bold";
+  if (pct <= yearMean - 5) return "text-[var(--error)] font-bold";
+  return "text-[var(--on-surface)]";
+}
+
+function detentionCls(val: number | null, yearMean: number | null): string {
+  if (val === null) return "text-[var(--on-surface-muted)]";
+  if (yearMean === null) return "text-[var(--on-surface)]";
+  if (val <= yearMean * 0.7) return "text-[var(--success)] font-bold";
+  if (val >= yearMean * 1.5) return "text-[var(--error)] font-bold";
+  return "text-[var(--on-surface)]";
+}
+
+function PastoralTab({
+  data,
+  loading,
+  onOpenModal,
+}: {
+  data: PastoralData | null;
+  loading: boolean;
+  onOpenModal: (band: string, students: PastoralStudent[]) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="py-16 text-center text-sm text-[var(--on-surface-muted)]">
+        Loading pastoral data…
+      </div>
+    );
+  }
+  if (!data) {
+    return (
+      <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
+        No pastoral snapshot data available for this result point.
+      </div>
+    );
+  }
+
+  const { bands, yearMeans, totalStudents, withSnapshot } = data;
+  const maxCount = Math.max(...bands.map((b) => b.count), 1);
+  const ym = yearMeans;
+
+  const bandBarColour = (order: number) => {
+    const colours = [
+      "bg-[var(--error)]/80",
+      "bg-[var(--warning)]/80",
+      "bg-[color-mix(in_srgb,var(--success)_60%,var(--warning)_40%)]/80",
+      "bg-[var(--success)]/80",
+    ];
+    return colours[order] ?? "bg-[var(--surface-container-high)]";
+  };
+
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-[var(--on-surface-muted)]">
+        Behaviour snapshots matched for{" "}
+        <span className="font-semibold text-[var(--on-surface)]">{withSnapshot}</span> of{" "}
+        <span className="font-semibold text-[var(--on-surface)]">{totalStudents}</span> students.
+        Each metric is the group mean using the snapshot closest to the assessment date.
+      </p>
+
+      {/* Grade band visual bars */}
+      <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-6 shadow-ambient">
+        <h2 className="mb-4 text-xl font-bold text-[var(--on-surface)]">Students by Attainment Band</h2>
+        <div className="space-y-3">
+          {[...bands].sort((a, b) => b.order - a.order).map((band) => {
+            const widthPct = Math.round((band.count / maxCount) * 100);
+            return (
+              <button
+                key={band.label}
+                type="button"
+                onClick={() => band.count > 0 && onOpenModal(band.label, band.students)}
+                disabled={band.count === 0}
+                className="group w-full text-left focus:outline-none"
+              >
+                <div className="mb-1 flex items-baseline justify-between">
+                  <span className="text-sm font-semibold text-[var(--on-surface)]">{band.label}</span>
+                  <span className="text-xs text-[var(--on-surface-muted)]">
+                    {band.count} students
+                    {band.count > 0 && <span className="ml-1 text-[var(--accent)] opacity-0 group-hover:opacity-100 calm-transition"> — view list</span>}
+                  </span>
+                </div>
+                <div className="h-8 overflow-hidden rounded-lg bg-[var(--surface-container-low)]">
+                  <div
+                    className={`h-full rounded-lg ${bandBarColour(band.order)} calm-transition group-hover:opacity-80`}
+                    style={{ width: `${widthPct}%`, minWidth: band.count > 0 ? "2rem" : 0 }}
+                  />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Pastoral metrics comparison table */}
+      <div className="rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient overflow-hidden">
+        <div className="p-6 pb-4">
+          <h2 className="text-xl font-bold text-[var(--on-surface)]">Pastoral Metrics by Attainment Band</h2>
+          <p className="mt-1 text-sm text-[var(--on-surface-muted)]">Group means — click any band row to see individual students</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="table-head-row text-left border-t border-[var(--outline-variant)]/20">
+                <th className="px-5 py-3 font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">BAND</th>
+                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">STUDENTS</th>
+                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">ATTENDANCE</th>
+                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">LATES</th>
+                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">DETENTIONS</th>
+                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">EXCLUSIONS</th>
+                <th className="px-4 py-3 text-right font-bold uppercase tracking-wide text-[var(--on-surface-muted)] text-[11px]">ON CALLS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="bg-[var(--surface-container-low)] border-b border-[var(--outline-variant)]/20">
+                <td className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">YEAR MEAN</td>
+                <td className="px-4 py-2.5 text-right text-[var(--on-surface-muted)] tabular-nums">—</td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{ym.attendancePct !== null ? `${ym.attendancePct}%` : "—"}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{ym.latenessCount ?? "—"}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{ym.detentionsCount ?? "—"}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{ym.internalExclusionsCount ?? "—"}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums text-[var(--on-surface-muted)]">{ym.onCallsCount ?? "—"}</td>
+              </tr>
+              {[...bands].sort((a, b) => b.order - a.order).map((band) => (
+                <tr
+                  key={band.label}
+                  className="table-row calm-transition cursor-pointer hover:bg-[var(--surface-container-low)]"
+                  onClick={() => band.count > 0 && onOpenModal(band.label, band.students)}
+                >
+                  <td className="px-5 py-3 font-semibold text-[var(--on-surface)]">{band.label}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">{band.count}</td>
+                  <td className={`px-4 py-3 text-right tabular-nums ${attendanceCls(band.meanAttendancePct, ym.attendancePct)}`}>
+                    {band.meanAttendancePct !== null ? `${band.meanAttendancePct}%` : "—"}
+                  </td>
+                  <td className={`px-4 py-3 text-right tabular-nums ${detentionCls(band.meanLatenessCount, ym.latenessCount)}`}>
+                    {band.meanLatenessCount ?? "—"}
+                  </td>
+                  <td className={`px-4 py-3 text-right tabular-nums ${detentionCls(band.meanDetentionsCount, ym.detentionsCount)}`}>
+                    {band.meanDetentionsCount ?? "—"}
+                  </td>
+                  <td className={`px-4 py-3 text-right tabular-nums ${detentionCls(band.meanInternalExclusionsCount, ym.internalExclusionsCount)}`}>
+                    {band.meanInternalExclusionsCount ?? "—"}
+                  </td>
+                  <td className={`px-4 py-3 text-right tabular-nums ${detentionCls(band.meanOnCallsCount, ym.onCallsCount)}`}>
+                    {band.meanOnCallsCount ?? "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="border-t border-[var(--outline-variant)]/20 px-5 py-3">
+          <p className="text-[0.8125rem] text-[var(--on-surface-muted)]">
+            Green = better than year mean · Red = notably worse · Counts are term-to-date from nearest snapshot
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Pastoral Modal ───────────────────────────────────────────────────────────
+
+function PastoralModal({
+  modal,
+  onClose,
+}: {
+  modal: { band: string; students: PastoralStudent[] };
+  onClose: () => void;
+}) {
+  const sorted = [...modal.students].sort((a, b) => {
+    if (a.attendancePct !== null && b.attendancePct !== null) return a.attendancePct - b.attendancePct;
+    if (a.attendancePct === null && b.attendancePct !== null) return 1;
+    if (a.attendancePct !== null && b.attendancePct === null) return -1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <button
+        type="button"
+        className="fixed inset-0 z-0 bg-[var(--overlay)] backdrop-blur-[1px] animate-in fade-in duration-200"
+        aria-label="Close dialog"
+        onClick={onClose}
+      />
+      <div className="relative z-10 flex min-h-full items-center justify-center p-4 sm:p-6 pointer-events-none">
+        <div
+          className="pointer-events-auto my-8 flex w-full max-w-3xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
+            <div>
+              <h2 className="text-lg font-bold">Band {modal.band} — Pastoral Detail</h2>
+              <p className="text-xs text-[var(--on-surface-muted)] mt-0.5">Sorted by attendance (lowest first)</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
+              aria-label="Close dialog"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-[var(--surface-container-low)] border-b border-[var(--outline-variant)]/20">
+                <tr>
+                  <th className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">STUDENT</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">ATTENDANCE</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">LATES</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">DETENTIONS</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">EXCL.</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">ON CALLS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((st) => (
+                  <tr key={st.studentId} className="table-row calm-transition border-b border-[var(--outline-variant)]/10 last:border-0">
+                    <td className="px-5 py-3">
+                      <Link href={`/students/${st.studentId}`} className="font-medium hover:text-[var(--accent)] calm-transition">
+                        {st.name}
+                      </Link>
+                      <div className="flex gap-1 mt-0.5">
+                        {st.ppFlag && <span className={ppInlineBadgeClass}>PP</span>}
+                        {st.sendFlag && <span className={sendInlineBadgeClass}>SEN</span>}
+                        {!st.hasSnapshot && <span className="text-[10px] text-[var(--on-surface-muted)] italic">no snapshot</span>}
+                      </div>
+                    </td>
+                    <td className={`px-4 py-3 text-right tabular-nums ${st.attendancePct !== null && st.attendancePct < 90 ? "text-[var(--error)] font-bold" : "text-[var(--on-surface)]"}`}>
+                      {st.attendancePct !== null ? `${st.attendancePct}%` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">{st.latenessCount ?? "—"}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">{st.detentionsCount ?? "—"}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">{st.internalExclusionsCount ?? "—"}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">{st.onCallsCount ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Teaching Tab ─────────────────────────────────────────────────────────────
+
+function TeachingTab({
+  data,
+  loading,
+  onOpenModal,
+}: {
+  data: TeachingData | null;
+  loading: boolean;
+  onOpenModal: (subject: string, teacherName: string, students: TeachingStudent[]) => void;
+}) {
+  const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
+
+  if (loading) {
+    return (
+      <div className="py-16 text-center text-sm text-[var(--on-surface-muted)]">
+        Loading teaching group data…
+      </div>
+    );
+  }
+  if (!data || !data.subjects.length) {
+    return (
+      <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
+        No teaching group data available. Assign students to teachers in the Teaching section to see class-level analysis.
+      </div>
+    );
+  }
+
+  const hasAnyClasses = data.subjects.some((s) => s.classes.length > 0);
+  if (!hasAnyClasses) {
+    return (
+      <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
+        Student–teacher assignments not found for this assessment period. Once teaching groups are configured, class-level analysis will appear here.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-[var(--on-surface-muted)]">
+        Class mean vs year mean for each subject. Click a class to see individual student results.
+      </p>
+
+      {data.subjects.map((subj) => {
+        if (!subj.classes.length) return null;
+        const isExpanded = expandedSubject === subj.subject;
+        const yearMeanVal = subj.yearMean;
+
+        return (
+          <div key={subj.subject} className="rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setExpandedSubject(isExpanded ? null : subj.subject)}
+              className="flex w-full items-center justify-between p-5 text-left hover:bg-[var(--surface-container-low)] calm-transition"
+            >
+              <div className="flex items-center gap-3">
+                <SubjectIcon subject={subj.subject} />
+                <div>
+                  <p className="font-bold text-[var(--on-surface)]">{subj.subject}</p>
+                  <p className="text-xs text-[var(--on-surface-muted)]">
+                    {subj.classes.length} class{subj.classes.length !== 1 ? "es" : ""} · {subj.presentCount} students · year mean {subj.yearMeanDisplay ?? "—"}
+                  </p>
+                </div>
+              </div>
+              <svg
+                className={`h-5 w-5 shrink-0 text-[var(--on-surface-muted)] calm-transition ${isExpanded ? "rotate-180" : ""}`}
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+
+            {isExpanded && (
+              <div className="border-t border-[var(--outline-variant)]/20">
+                <div className="px-5 pt-4 pb-4 space-y-4">
+                  {subj.classes.map((cls) => {
+                    const isAbove = (cls.vsYearMean ?? 0) >= 0;
+                    const barWidthPct = yearMeanVal !== null && cls.mean !== null
+                      ? Math.min(100, Math.max(4, (cls.mean / Math.max(yearMeanVal * 1.5, 0.01)) * 100))
+                      : 50;
+
+                    return (
+                      <div key={cls.teacherId} className="space-y-1.5">
+                        <div className="flex items-baseline justify-between">
+                          <button
+                            type="button"
+                            onClick={() => onOpenModal(subj.subject, cls.teacherName, cls.students)}
+                            className="text-sm font-semibold text-[var(--on-surface)] hover:text-[var(--accent)] calm-transition text-left"
+                          >
+                            {cls.teacherName}
+                            <span className="ml-1.5 text-xs text-[var(--on-surface-muted)] font-normal">({cls.count} students)</span>
+                          </button>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-sm font-bold tabular-nums text-[var(--on-surface)]">{cls.meanDisplay ?? "—"}</span>
+                            {cls.vsYearMean !== null && (
+                              <span className={`text-[11px] font-semibold tabular-nums ${isAbove ? "text-[var(--success)]" : "text-[var(--error)]"}`}>
+                                {isAbove ? "+" : ""}{cls.vsYearMean}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="h-3 overflow-hidden rounded-full bg-[var(--surface-container-low)]">
+                          <div
+                            className={`h-full rounded-full calm-transition ${isAbove ? barPositiveClass : barNegativeClass}`}
+                            style={{ width: `${barWidthPct}%` }}
+                          />
+                        </div>
+                        {cls.observationCount > 0 && (
+                          <p className="text-[10px] text-[var(--on-surface-muted)]">
+                            {cls.observationCount} observation{cls.observationCount !== 1 ? "s" : ""} this year
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {subj.unassigned.length > 0 && (
+                  <div className="border-t border-[var(--outline-variant)]/10 px-5 py-3">
+                    <p className="text-[11px] text-[var(--on-surface-muted)]">
+                      {subj.unassigned.length} student{subj.unassigned.length !== 1 ? "s" : ""} without a teaching group assignment
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Teaching Modal ───────────────────────────────────────────────────────────
+
+function TeachingModal({
+  modal,
+  onClose,
+}: {
+  modal: { subject: string; teacherName: string; students: TeachingStudent[] };
+  onClose: () => void;
+}) {
+  const sorted = [...modal.students].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <button
+        type="button"
+        className="fixed inset-0 z-0 bg-[var(--overlay)] backdrop-blur-[1px] animate-in fade-in duration-200"
+        aria-label="Close dialog"
+        onClick={onClose}
+      />
+      <div className="relative z-10 flex min-h-full items-center justify-center p-4 sm:p-6 pointer-events-none">
+        <div
+          className="pointer-events-auto my-8 flex w-full max-w-2xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
+            <div>
+              <h2 className="text-lg font-bold">{modal.teacherName} — {modal.subject}</h2>
+              <p className="text-xs text-[var(--on-surface-muted)] mt-0.5">Sorted by score (highest first)</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
+              aria-label="Close dialog"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-[var(--surface-container-low)] border-b border-[var(--outline-variant)]/20">
+                <tr>
+                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)] w-8">#</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">STUDENT</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">SCORE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((st, i) => (
+                  <tr key={st.studentId} className="table-row calm-transition border-b border-[var(--outline-variant)]/10 last:border-0">
+                    <td className="px-4 py-3 text-[var(--on-surface-muted)] text-xs tabular-nums">{i + 1}</td>
+                    <td className="px-4 py-3">
+                      <Link href={`/students/${st.studentId}`} className="font-medium hover:text-[var(--accent)] calm-transition">
+                        {st.name}
+                      </Link>
+                      <div className="flex gap-1 mt-0.5">
+                        {st.ppFlag && <span className={ppInlineBadgeClass}>PP</span>}
+                        {st.sendFlag && <span className={sendInlineBadgeClass}>SEN</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold tabular-nums text-[var(--on-surface)]">
+                      {st.displayScore}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
