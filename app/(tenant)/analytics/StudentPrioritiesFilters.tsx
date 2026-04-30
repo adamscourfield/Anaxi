@@ -14,6 +14,8 @@ const BAND_OPTIONS: { value: RiskBand; label: string }[] = [
 interface StudentPrioritiesFiltersProps {
   yearGroups: string[];
   windowDays: number;
+  /** Preserve table sort when applying filters */
+  tableSort?: { sort: string; dir: string };
   defaults: {
     yearGroup: string;
     send: string;
@@ -28,13 +30,14 @@ interface StudentPrioritiesFiltersProps {
 export function StudentPrioritiesFilters({
   yearGroups,
   windowDays,
+  tableSort,
   defaults,
   hasFilters,
 }: StudentPrioritiesFiltersProps) {
   const triggerWhite = "field-filter-trigger";
 
   return (
-    <div className="filter-panel">
+    <div className="anx-elevated-card rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-4 shadow-[var(--shadow-ambient)] md:px-5 md:py-5">
       <form
         method="get"
         action="/analytics"
@@ -42,6 +45,8 @@ export function StudentPrioritiesFilters({
       >
         <input type="hidden" name="tab" value="students" />
         <input type="hidden" name="window" value={String(windowDays)} />
+        {tableSort?.sort ? <input type="hidden" name="sort" value={tableSort.sort} /> : null}
+        {tableSort?.dir ? <input type="hidden" name="dir" value={tableSort.dir} /> : null}
 
         <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
@@ -138,7 +143,7 @@ export function StudentPrioritiesFilters({
 
         <div className="filter-actions">
           <button type="submit" className="btn-filter-primary">
-            Apply Filters
+            Apply filters
           </button>
           {hasFilters && (
             <Link href={`/analytics?tab=students&window=${windowDays}`} className="btn-filter-secondary">
