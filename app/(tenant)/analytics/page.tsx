@@ -5,10 +5,8 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@/lib/types";
-import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
-import { H2, MetaText } from "@/components/ui/typography";
 import { StudentPrioritiesFilters } from "./StudentPrioritiesFilters";
 import { PrioritiesExportButton } from "./PrioritiesExportButton";
 import { computeTeacherRiskIndex, RiskStatus } from "@/modules/analysis/teacherRisk";
@@ -60,14 +58,20 @@ function avatarTintClass(seed: string): string {
   return AVATAR_TINTS[h % AVATAR_TINTS.length]!;
 }
 
-function PrioritiesMetaBar({ items }: { items: { icon: ReactNode; label: string }[] }) {
+function PrioritiesMetaBar({
+  items,
+  className = "",
+}: {
+  items: { icon: ReactNode; label: string }[];
+  className?: string;
+}) {
   return (
-    <div className="flex flex-wrap items-center gap-x-1 text-xs text-muted">
+    <div className={`anx-priorities-meta-bar ${className}`.trim()}>
       {items.map((item, i) => (
         <Fragment key={i}>
-          {i > 0 ? <span className="px-1 text-muted/50" aria-hidden>·</span> : null}
+          {i > 0 ? <span className="px-2 text-[#d1d5db]" aria-hidden>·</span> : null}
           <span className="inline-flex items-center gap-1.5">
-            <span className="text-muted/80 [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0" aria-hidden>
+            <span className="shrink-0 [&>svg]:h-3.5 [&>svg]:w-3.5" aria-hidden>
               {item.icon}
             </span>
             <span>{item.label}</span>
@@ -172,7 +176,7 @@ const BAND_PILL: Record<RiskBand, string> = {
 };
 
 const CONFIDENCE_PILL: Record<Confidence, string> = {
-  HIGH: "bg-divider text-muted",
+  HIGH: "bg-[#f3f4f6] text-[#4b5563]",
   LOW: "bg-risk-priority-bg text-risk-priority-text",
 };
 
@@ -198,7 +202,7 @@ function TabBar({
   preserveParams?: Record<string, string>;
 }) {
   return (
-    <div className="segmented-toggle">
+    <div className="filter-period-toggle w-fit max-w-full bg-[#F3F4F6]">
       {TABS.map((tab) => {
         const params = new URLSearchParams();
         params.set("tab", tab);
@@ -212,7 +216,7 @@ function TabBar({
           <Link
             key={tab}
             href={`/analytics?${params.toString()}`}
-            className={`segmented-toggle-btn inline-flex items-center gap-2 ${tab === activeTab ? "segmented-toggle-btn-active" : ""}`}
+            className={`filter-period-btn inline-flex items-center gap-2 ${tab === activeTab ? "filter-period-btn-active" : ""}`}
           >
             {TAB_ICONS[tab]}
             {TAB_LABELS[tab]}
@@ -233,9 +237,9 @@ function WindowSelector({
   extraParams?: Record<string, string | undefined>;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <MetaText className="mr-1">Window:</MetaText>
-      <div className="segmented-toggle">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+      <span className="text-[0.8125rem] font-medium text-[#374151]">Window:</span>
+      <div className="filter-period-toggle w-fit max-w-full bg-[#F3F4F6]">
         {WINDOW_OPTIONS.map((w) => {
           const params = new URLSearchParams();
           params.set("tab", activeTab);
@@ -249,7 +253,7 @@ function WindowSelector({
             <Link
               key={w}
               href={`/analytics?${params.toString()}`}
-              className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}
+              className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
             >
               {w} days
             </Link>
@@ -350,22 +354,22 @@ async function TeachersTab({
     <div className="space-y-5">
       <PrioritiesMetaBar
         items={[
-          { icon: ICON_CALENDAR, label: `Window: Last ${windowDays} days` },
+          { icon: ICON_CALENDAR, label: `Window: last ${windowDays} days` },
           { icon: ICON_CHART, label: "Based on observations" },
           { icon: ICON_CLOCK, label: `Updated ${computedAt}` },
         ]}
       />
 
-      <details className="anx-priorities-definitions anx-elevated-card rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-3 shadow-[var(--shadow-ambient)]">
-        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-text">
-          <span className="text-muted" aria-hidden>
+      <details className="anx-priorities-definitions anx-priorities-definitions-card">
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-[#111827]">
+          <span className="text-[#9ca3af]" aria-hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
               <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
           Metric definitions
         </summary>
-        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[#6B7280]">
           <li><strong>Coverage</strong>: Number of observations in the selected window.</li>
           <li><strong>Drift status</strong>: Whether recent signals are stable or declining.</li>
           <li><strong>Drift score</strong>: Normalized decline score (higher means greater drift).</li>
@@ -373,7 +377,7 @@ async function TeachersTab({
         </ul>
       </details>
 
-      <Card className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] p-0 shadow-[var(--shadow-ambient)]">
+      <div className="anx-priorities-table-card">
         {rows.length === 0 ? (
           <DataTableEmpty
             title="No observation data in this window"
@@ -385,101 +389,100 @@ async function TeachersTab({
             }
           />
         ) : (
-          <div className="table-shell border-0 rounded-none shadow-none">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="table-head-row">
-                    <th className="px-5 py-3.5">
-                      <Link href={teacherSortHref("teacher")} className="anx-priorities-sort-link">
-                        Teacher
-                        {ICON_SORT}
-                      </Link>
-                    </th>
-                    <th className="px-4 py-3.5">Department(s)</th>
-                    <th className="px-4 py-3.5">Coverage</th>
-                    <th className="px-4 py-3.5">
-                      <span className="inline-flex items-center gap-1">
-                        Drift status
-                        <span
-                          className="inline-flex"
-                          title="Whether recent signals are stable or declining vs the prior window."
-                        >
-                          {ICON_INFO}
-                        </span>
+          <div className="anx-priorities-table-wrap">
+            <table className="anx-priorities-table">
+              <thead>
+                <tr>
+                  <th>
+                    <Link href={teacherSortHref("teacher")} className="anx-priorities-sort-link">
+                      Teacher
+                      {ICON_SORT}
+                    </Link>
+                  </th>
+                  <th>Department(s)</th>
+                  <th>Coverage</th>
+                  <th>
+                    <span className="inline-flex items-center gap-1">
+                      Drift status
+                      <span
+                        className="inline-flex"
+                        title="Whether recent signals are stable or declining vs the prior window."
+                      >
+                        {ICON_INFO}
                       </span>
-                    </th>
-                    <th className="px-4 py-3.5 text-right">
-                      <Link href={teacherSortHref("score")} className="anx-priorities-sort-link justify-end">
-                        Drift score
-                        {ICON_SORT}
-                      </Link>
-                    </th>
-                    <th className="px-4 py-3.5">Last observed</th>
-                    <th className="w-10 px-2 py-3.5" aria-hidden />
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.teacherMembershipId} className="table-row calm-transition">
-                      <td className="px-5 py-4">
-                        <Link
-                          href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
-                          className="link-subtle flex min-w-0 items-center gap-3"
+                    </span>
+                  </th>
+                  <th className="text-right">
+                    <Link href={teacherSortHref("score")} className="anx-priorities-sort-link justify-end">
+                      Drift score
+                      {ICON_SORT}
+                    </Link>
+                  </th>
+                  <th>Last observed</th>
+                  <th className="w-10" aria-hidden />
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.teacherMembershipId}>
+                    <td>
+                      <Link
+                        href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
+                        className="flex min-w-0 items-center gap-3"
+                      >
+                        <span
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTintClass(row.teacherMembershipId)}`}
                         >
-                          <span
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTintClass(row.teacherMembershipId)}`}
-                          >
-                            {teacherInitials(row.teacherName)}
-                          </span>
-                          <span className="min-w-0 truncate font-semibold text-text">
-                            {row.teacherName}
-                          </span>
-                        </Link>
-                      </td>
-                      <td className="px-4 py-4 text-muted">
-                        {row.departmentNames.length > 0 ? row.departmentNames.join(", ") : "—"}
-                      </td>
-                      <td className="px-4 py-4 text-muted">
-                        {row.teacherCoverage} observation{row.teacherCoverage !== 1 ? "s" : ""}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_PILL[row.status]}`}>
-                          {STATUS_LABELS[row.status]}
+                          {teacherInitials(row.teacherName)}
                         </span>
-                      </td>
-                      <td className="px-4 py-4 text-right tabular-nums text-muted">
-                        {row.status === "LOW_COVERAGE" ? "—" : row.normalizedIDS.toFixed(1)}
-                      </td>
-                      <td className="px-4 py-4 text-muted">
-                        {row.lastObservationAt
-                          ? new Date(row.lastObservationAt).toLocaleDateString("en-GB", {
-                              day: "numeric",
-                              month: "short",
-                            })
-                          : "—"}
-                      </td>
-                      <td className="px-2 py-4 text-right" aria-hidden>
-                        <Link
-                          href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
-                          className="inline-flex text-muted/50 calm-transition hover:text-muted"
-                          tabIndex={-1}
-                        >
-                          {ICON_CHEVRON_RIGHT}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <span className="min-w-0 truncate font-semibold text-[#111827] underline decoration-[color-mix(in_srgb,#111827_35%,transparent)] underline-offset-2 hover:decoration-[#111827]">
+                          {row.teacherName}
+                        </span>
+                      </Link>
+                    </td>
+                    <td className="text-[#6B7280]">
+                      {row.departmentNames.length > 0 ? row.departmentNames.join(", ") : "—"}
+                    </td>
+                    <td className="text-[#6B7280]">
+                      {row.teacherCoverage} observation{row.teacherCoverage !== 1 ? "s" : ""}
+                    </td>
+                    <td>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_PILL[row.status]}`}>
+                        {STATUS_LABELS[row.status]}
+                      </span>
+                    </td>
+                    <td className="text-right tabular-nums text-[#6B7280]">
+                      {row.status === "LOW_COVERAGE" ? "—" : row.normalizedIDS.toFixed(1)}
+                    </td>
+                    <td className="text-[#6B7280]">
+                      {row.lastObservationAt
+                        ? new Date(row.lastObservationAt).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                          })
+                        : "—"}
+                    </td>
+                    <td className="text-right" aria-hidden>
+                      <Link
+                        href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
+                        className="inline-flex text-[#9ca3af] calm-transition hover:text-[#6b7280]"
+                        tabIndex={-1}
+                      >
+                        {ICON_CHEVRON_RIGHT}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </Card>
+      </div>
 
-      <MetaText>
-        Min. coverage threshold: {settings?.minObservationCount ?? 6} observations · Drift threshold: {settings?.driftDeltaThreshold ?? 0.35}
-      </MetaText>
+      <p className="text-[0.8125rem] text-[#6B7280]">
+        Min. coverage threshold: {settings?.minObservationCount ?? 6} observations · Drift threshold:{" "}
+        {settings?.driftDeltaThreshold ?? 0.35}
+      </p>
     </div>
   );
 }
@@ -553,15 +556,15 @@ async function CpdTab({
         ]}
       />
 
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3">
         {departmentOptions.length > 0 && (
-          <div className="flex items-center gap-2">
-            <MetaText className="mr-1">Department:</MetaText>
-            <div className="segmented-toggle">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <span className="text-[0.8125rem] font-medium text-[#374151]">Department:</span>
+            <div className="filter-period-toggle w-fit max-w-full bg-[#F3F4F6]">
               {!isHod && (
                 <Link
                   href={`/analytics?tab=cpd&window=${windowDays}`}
-                  className={`segmented-toggle-btn ${!departmentId ? "segmented-toggle-btn-active" : ""}`}
+                  className={`filter-period-btn ${!departmentId ? "filter-period-btn-active" : ""}`}
                 >
                   All
                 </Link>
@@ -575,7 +578,7 @@ async function CpdTab({
                   <Link
                     key={dept.id}
                     href={`/analytics?${params.toString()}`}
-                    className={`segmented-toggle-btn ${departmentId === dept.id ? "segmented-toggle-btn-active" : ""}`}
+                    className={`filter-period-btn ${departmentId === dept.id ? "filter-period-btn-active" : ""}`}
                   >
                     {dept.name}
                   </Link>
@@ -586,16 +589,16 @@ async function CpdTab({
         )}
       </div>
 
-      <details className="anx-priorities-definitions anx-elevated-card rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-3 shadow-[var(--shadow-ambient)]">
-        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-text">
-          <span className="text-muted" aria-hidden>
+      <details className="anx-priorities-definitions anx-priorities-definitions-card">
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-[#111827]">
+          <span className="text-[#9ca3af]" aria-hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
               <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
           Metric definitions
         </summary>
-        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[#6B7280]">
           <li><strong>Drift rate</strong>: Percentage of covered teachers showing weakening for a signal.</li>
           <li><strong>Avg negative delta</strong>: Mean size of decline where decline is present.</li>
           <li><strong>Teachers covered</strong>: Number of teachers with sufficient observations in window.</li>
@@ -603,10 +606,12 @@ async function CpdTab({
         </ul>
       </details>
 
-      <Card className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] p-0 shadow-[var(--shadow-ambient)]">
-        <div className="border-b border-border bg-[var(--surface-container-low)] px-5 py-4">
-          <H2>Areas for focus</H2>
-          <MetaText>Signals showing the most widespread weakening in the selected window.</MetaText>
+      <div className="anx-priorities-table-card">
+        <div className="anx-priorities-table-card__header">
+          <h2>Areas for focus</h2>
+          <p className="anx-priorities-table-card__meta">
+            Signals showing the most widespread weakening in the selected window.
+          </p>
         </div>
         {rows.length === 0 ? (
           <DataTableEmpty
@@ -619,84 +624,82 @@ async function CpdTab({
             }
           />
         ) : (
-          <div className="table-shell border-0 rounded-none shadow-none">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="table-head-row">
-                    <th className="px-5 py-3.5">Signal</th>
-                    <th className="px-4 py-3.5 text-right">Drift rate (%)</th>
-                    <th className="px-4 py-3.5 text-right">Avg negative delta</th>
-                    <th className="px-4 py-3.5 text-right">Teachers covered</th>
-                    <th className="px-4 py-3.5 text-right">Improving rate (%)</th>
-                    <th className="w-10 px-2 py-3.5" aria-hidden />
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => {
-                    const params = new URLSearchParams();
-                    params.set("window", String(windowDays));
-                    if (departmentId) params.set("department", departmentId);
-                    return (
-                      <tr key={row.signalKey} className="table-row calm-transition">
-                        <td className="px-5 py-4 font-medium text-text">
-                          <Link
-                            href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
-                            className="link-subtle"
-                          >
-                            {row.label}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-4 text-right tabular-nums text-muted">
-                          {row.teachersCovered === 0
-                            ? "—"
-                            : `${Math.round(row.driftRate * 100)}%`}
-                        </td>
-                        <td className="px-4 py-4 text-right tabular-nums text-muted">
-                          {row.avgNegativeDelta !== null
-                            ? row.avgNegativeDelta.toFixed(2)
-                            : "—"}
-                        </td>
-                        <td className="px-4 py-4 text-right tabular-nums text-muted">
-                          {row.teachersCovered}
-                        </td>
-                        <td className="px-4 py-4 text-right tabular-nums text-muted">
-                          {row.teachersCovered === 0
-                            ? "—"
-                            : `${Math.round(row.improvingRate * 100)}%`}
-                        </td>
-                        <td className="px-2 py-4 text-right" aria-hidden>
-                          <Link
-                            href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
-                            className="inline-flex text-muted/50 calm-transition hover:text-muted"
-                            tabIndex={-1}
-                          >
-                            {ICON_CHEVRON_RIGHT}
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+          <div className="anx-priorities-table-wrap">
+            <table className="anx-priorities-table">
+              <thead>
+                <tr>
+                  <th>Signal</th>
+                  <th className="text-right">Drift rate (%)</th>
+                  <th className="text-right">Avg negative delta</th>
+                  <th className="text-right">Teachers covered</th>
+                  <th className="text-right">Improving rate (%)</th>
+                  <th className="w-10" aria-hidden />
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  const params = new URLSearchParams();
+                  params.set("window", String(windowDays));
+                  if (departmentId) params.set("department", departmentId);
+                  return (
+                    <tr key={row.signalKey}>
+                      <td>
+                        <Link
+                          href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
+                          className="font-medium text-[#111827] underline decoration-[color-mix(in_srgb,#111827_35%,transparent)] underline-offset-2 hover:decoration-[#111827]"
+                        >
+                          {row.label}
+                        </Link>
+                      </td>
+                      <td className="text-right tabular-nums text-[#6B7280]">
+                        {row.teachersCovered === 0
+                          ? "—"
+                          : `${Math.round(row.driftRate * 100)}%`}
+                      </td>
+                      <td className="text-right tabular-nums text-[#6B7280]">
+                        {row.avgNegativeDelta !== null
+                          ? row.avgNegativeDelta.toFixed(2)
+                          : "—"}
+                      </td>
+                      <td className="text-right tabular-nums text-[#6B7280]">
+                        {row.teachersCovered}
+                      </td>
+                      <td className="text-right tabular-nums text-[#6B7280]">
+                        {row.teachersCovered === 0
+                          ? "—"
+                          : `${Math.round(row.improvingRate * 100)}%`}
+                      </td>
+                      <td className="text-right" aria-hidden>
+                        <Link
+                          href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
+                          className="inline-flex text-[#9ca3af] calm-transition hover:text-[#6b7280]"
+                          tabIndex={-1}
+                        >
+                          {ICON_CHEVRON_RIGHT}
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
-      </Card>
+      </div>
 
       {rows.length > 0 && (
-        <MetaText>
+        <p className="text-[0.8125rem] text-[#6B7280]">
           Based on teachers with at least {minCoverage} observations in the selected window.
-        </MetaText>
+        </p>
       )}
 
       {topImproving.length > 0 && (
         <div className="space-y-3">
           <div className="space-y-0.5">
-            <H2>Positive momentum</H2>
-            <MetaText>
+            <h2 className="text-lg font-bold text-[#111827]">Positive momentum</h2>
+            <p className="text-[0.8125rem] text-[#6B7280]">
               Signals showing the strongest improvement in the last {windowDays} days.
-            </MetaText>
+            </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {topImproving.map((row) => {
@@ -707,19 +710,21 @@ async function CpdTab({
                 <Link
                   key={row.signalKey}
                   href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
-                  className="block rounded-lg border border-border bg-surface p-4 shadow-ambient hover:border-accentHover calm-transition transition duration-200 ease-calm"
+                  className="block rounded-xl border border-[color-mix(in_srgb,#e5e7eb_90%,transparent)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] calm-transition hover:border-[#d1d5db]"
                 >
-                  <p className="text-sm font-medium text-text">{row.label}</p>
+                  <p className="text-sm font-semibold text-[#111827] underline decoration-[color-mix(in_srgb,#111827_35%,transparent)] underline-offset-2">
+                    {row.label}
+                  </p>
                   <div className="mt-2 space-y-0.5">
-                    <MetaText>
+                    <p className="text-[0.8125rem] text-[#6B7280]">
                       {Math.round(row.improvingRate * 100)}% of teachers improving
-                    </MetaText>
+                    </p>
                     {row.avgPositiveDelta !== null && (
-                      <MetaText>
+                      <p className="text-[0.8125rem] text-[#6B7280]">
                         Avg delta: +{row.avgPositiveDelta.toFixed(2)}
-                      </MetaText>
+                      </p>
                     )}
-                    <MetaText>{row.teachersCovered} teachers covered</MetaText>
+                    <p className="text-[0.8125rem] text-[#6B7280]">{row.teachersCovered} teachers covered</p>
                   </div>
                 </Link>
               );
@@ -859,16 +864,16 @@ async function StudentsTab({
         hasFilters={hasStudentFilters}
       />
 
-      <details className="anx-priorities-definitions anx-elevated-card rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-3 shadow-[var(--shadow-ambient)]">
-        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-text">
-          <span className="text-muted" aria-hidden>
+      <details className="anx-priorities-definitions anx-priorities-definitions-card">
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-[#111827]">
+          <span className="text-[#9ca3af]" aria-hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
               <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
           Metric definitions
         </summary>
-        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[#6B7280]">
           <li><strong>Band</strong>: Overall risk priority based on recent trend signals.</li>
           <li><strong>Score</strong>: Composite risk score used to sort support priorities.</li>
           <li><strong>Detentions / On calls</strong>: Change from baseline window (positive means increase).</li>
@@ -876,7 +881,7 @@ async function StudentsTab({
         </ul>
       </details>
 
-      <Card className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] p-0 shadow-[var(--shadow-ambient)]">
+      <div className="anx-priorities-table-card">
         {rows.length === 0 ? (
           <DataTableEmpty
             title={hasStudentFilters ? "No students match these filters" : "No student snapshot data"}
@@ -897,150 +902,143 @@ async function StudentsTab({
             }
           />
         ) : (
-          <div className="table-shell border-0 rounded-none shadow-none">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="table-head-row">
-                    <th className="sticky left-0 z-20 bg-[var(--surface-container-low)] px-4 py-3.5 shadow-[inset_-1px_0_0_var(--surface-container)]">
-                      <Link href={studentSortHref("student")} className="anx-priorities-sort-link">
-                        Student
-                        {ICON_SORT}
-                      </Link>
-                    </th>
-                    <th className="px-4 py-3.5">Year</th>
-                    <th className="px-4 py-3.5">Band</th>
-                    <th className="px-4 py-3.5 text-right">
-                      <Link href={studentSortHref("score")} className="anx-priorities-sort-link justify-end">
-                        Score
-                        {ICON_SORT}
-                      </Link>
-                    </th>
-                    <th className="px-4 py-3.5">
-                      <span className="inline-flex items-center gap-1">
-                        Key drivers
-                        <span className="inline-flex" title="Top contributing metrics from the latest snapshot window.">
-                          {ICON_INFO}
-                        </span>
+          <div className="anx-priorities-table-wrap">
+            <table className="anx-priorities-table min-w-[960px]">
+              <thead>
+                <tr>
+                  <th className="sticky left-0 z-20 bg-[#fafafa] shadow-[inset_-1px_0_0_#f3f4f6]">
+                    <Link href={studentSortHref("student")} className="anx-priorities-sort-link">
+                      Student
+                      {ICON_SORT}
+                    </Link>
+                  </th>
+                  <th>Year</th>
+                  <th>Band</th>
+                  <th className="text-right">
+                    <Link href={studentSortHref("score")} className="anx-priorities-sort-link justify-end">
+                      Score
+                      {ICON_SORT}
+                    </Link>
+                  </th>
+                  <th>
+                    <span className="inline-flex items-center gap-1">
+                      Key drivers
+                      <span className="inline-flex" title="Top contributing metrics from the latest snapshot window.">
+                        {ICON_INFO}
                       </span>
-                    </th>
-                    <th className="px-4 py-3.5 text-right">Attendance (%)</th>
-                    <th className="px-4 py-3.5 text-right">Detentions Δ</th>
-                    <th className="px-4 py-3.5 text-right">On calls Δ</th>
-                    <th className="px-4 py-3.5">Flags</th>
-                    <th className="px-4 py-3.5">Confidence</th>
-                    <th className="w-10 px-2 py-3.5" aria-hidden />
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.studentId} className="table-row calm-transition">
-                      <td className="sticky-first-column px-5 py-4 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.06)]">
-                        <Link
-                          href={`/analysis/students/${row.studentId}?window=${windowDays}`}
-                          className="link-subtle flex min-w-0 items-center gap-3 font-semibold text-text"
-                        >
-                          <span
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTintClass(row.studentId)}`}
-                          >
-                            {teacherInitials(row.studentName)}
-                          </span>
-                          <span className="min-w-0 truncate">
-                            {row.onWatchlist ? "★ " : ""}
-                            {row.studentName}
-                          </span>
-                        </Link>
-                      </td>
-                      <td className="px-4 py-4 text-muted">{row.yearGroup ?? "—"}</td>
-                      <td className="px-4 py-4">
+                    </span>
+                  </th>
+                  <th className="text-right">Attendance (%)</th>
+                  <th className="text-right">Detentions Δ</th>
+                  <th className="text-right">On calls Δ</th>
+                  <th>Flags</th>
+                  <th>Confidence</th>
+                  <th className="w-10" aria-hidden />
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.studentId}>
+                    <td className="sticky left-0 z-10 bg-white shadow-[inset_-1px_0_0_#f3f4f6]">
+                      <Link
+                        href={`/analysis/students/${row.studentId}?window=${windowDays}`}
+                        className="group flex min-w-0 items-center gap-3"
+                      >
                         <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${BAND_PILL[row.band]}`}
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTintClass(row.studentId)}`}
                         >
-                          {BAND_LABELS[row.band]}
+                          {teacherInitials(row.studentName)}
                         </span>
-                      </td>
-                      <td className="px-4 py-4 text-right tabular-nums text-muted">{row.riskScore}</td>
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {row.drivers.map((d) => (
-                            <span
-                              key={d.metric}
-                              className="rounded-full bg-scale-some-light px-2 py-0.5 text-xs text-scale-some-text"
-                            >
-                              {d.label}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-right tabular-nums text-muted">
-                        {row.attendancePct !== null ? `${row.attendancePct.toFixed(1)}%` : "—"}
-                        {row.attendanceDelta !== null && (
-                          <span
-                            className={`ml-1 text-xs ${
-                              row.attendanceDelta < 0 ? "text-scale-limited-text" : "text-scale-strong-text"
-                            }`}
-                          >
-                            ({row.attendanceDelta > 0 ? "+" : ""}
-                            {row.attendanceDelta.toFixed(1)})
+                        <span className="min-w-0 truncate font-semibold text-[#111827] underline decoration-[color-mix(in_srgb,#111827_35%,transparent)] underline-offset-2 group-hover:decoration-[#111827]">
+                          {row.onWatchlist ? "★ " : ""}
+                          {row.studentName}
+                        </span>
+                      </Link>
+                    </td>
+                    <td className="text-[#6B7280]">{row.yearGroup ?? "—"}</td>
+                    <td>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${BAND_PILL[row.band]}`}>
+                        {BAND_LABELS[row.band]}
+                      </span>
+                    </td>
+                    <td className="text-right tabular-nums text-[#6B7280]">{row.riskScore}</td>
+                    <td>
+                      <div className="flex flex-wrap gap-1">
+                        {row.drivers.map((d) => (
+                          <span key={d.metric} className="anx-priorities-driver-pill">
+                            {d.label}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="text-right tabular-nums text-[#6B7280]">
+                      {row.attendancePct !== null ? `${row.attendancePct.toFixed(1)}%` : "—"}
+                      {row.attendanceDelta !== null && (
+                        <span
+                          className={`ml-1 text-xs font-medium ${
+                            row.attendanceDelta < 0 ? "text-[#dc2626]" : "text-[#059669]"
+                          }`}
+                        >
+                          ({row.attendanceDelta > 0 ? "+" : ""}
+                          {row.attendanceDelta.toFixed(1)})
+                        </span>
+                      )}
+                    </td>
+                    <td className="text-right tabular-nums text-[#6B7280]">
+                      {row.detentionsDelta !== null
+                        ? row.detentionsDelta > 0
+                          ? `+${row.detentionsDelta}`
+                          : String(row.detentionsDelta)
+                        : "—"}
+                    </td>
+                    <td className="text-right tabular-nums text-[#6B7280]">
+                      {row.onCallsDelta !== null
+                        ? row.onCallsDelta > 0
+                          ? `+${row.onCallsDelta}`
+                          : String(row.onCallsDelta)
+                        : "—"}
+                    </td>
+                    <td>
+                      <div className="flex flex-wrap gap-1">
+                        {row.sendFlag && (
+                          <span className="rounded-full bg-[#f3e8ff] px-2 py-0.5 text-xs font-medium text-[#6b21a8]">
+                            SEND
                           </span>
                         )}
-                      </td>
-                      <td className="px-4 py-4 text-right tabular-nums text-muted">
-                        {row.detentionsDelta !== null
-                          ? row.detentionsDelta > 0
-                            ? `+${row.detentionsDelta}`
-                            : String(row.detentionsDelta)
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-4 text-right tabular-nums text-muted">
-                        {row.onCallsDelta !== null
-                          ? row.onCallsDelta > 0
-                            ? `+${row.onCallsDelta}`
-                            : String(row.onCallsDelta)
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex gap-1">
-                          {row.sendFlag && (
-                            <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
-                              SEND
-                            </span>
-                          )}
-                          {row.ppFlag && (
-                            <span className="rounded-full bg-cat-violet-bg px-2 py-0.5 text-xs text-cat-violet-text">
-                              PP
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[row.confidence]}`}
-                        >
-                          {row.confidence === "HIGH" ? "High" : "Low"}
-                        </span>
-                      </td>
-                      <td className="px-2 py-4 text-right" aria-hidden>
-                        <Link
-                          href={`/analysis/students/${row.studentId}?window=${windowDays}`}
-                          className="inline-flex text-muted/50 calm-transition hover:text-muted"
-                          tabIndex={-1}
-                        >
-                          {ICON_CHEVRON_RIGHT}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        {row.ppFlag && (
+                          <span className="rounded-full bg-[#f3e8ff] px-2 py-0.5 text-xs font-medium text-[#6b21a8]">
+                            PP
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[row.confidence]}`}
+                      >
+                        {row.confidence === "HIGH" ? "High" : "Low"}
+                      </span>
+                    </td>
+                    <td className="text-right" aria-hidden>
+                      <Link
+                        href={`/analysis/students/${row.studentId}?window=${windowDays}`}
+                        className="inline-flex text-[#9ca3af] calm-transition hover:text-[#6b7280]"
+                        tabIndex={-1}
+                      >
+                        {ICON_CHEVRON_RIGHT}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </Card>
+      </div>
 
-      <MetaText>
+      <p className="text-[0.8125rem] text-[#6B7280]">
         {rows.length} student{rows.length !== 1 ? "s" : ""} shown · Window: last {windowDays} days
-      </MetaText>
+      </p>
     </div>
   );
 }
@@ -1156,36 +1154,42 @@ export default async function AnalyticsPage({
           : {};
 
   return (
-    <div className="anx-priorities-page anx-reports-page space-y-6 pb-10">
-      <PageHeader
-        variant="ledger"
-        eyebrow="ANALYSIS"
-        title="Priorities"
-        subtitle="Teacher coverage, CPD drift, and student pastoral bands — driven by the tab and time window below."
-        meta={<MetaText>Same URL controls apply across all three tabs.</MetaText>}
-        actions={
-          <PrioritiesExportButton
-            userId={user.id}
-            userRole={user.role}
-            hodDepartmentIds={hodDepartmentIds}
-            coacheeUserIds={coacheeUserIds}
-            activeTab={activeTab}
-            windowDays={windowDays}
-            departmentId={cpdExportDepartmentId}
-          />
-        }
-      />
+    <div className="anx-priorities-page anx-reports-page">
+      <div className="anx-priorities-inner space-y-8">
+        <PageHeader
+          variant="ledger"
+          className="!mb-0 border-0 !pb-0"
+          eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-[#6B7280]"
+          eyebrow="Analysis"
+          titleClassName="text-[1.75rem] font-bold tracking-tight text-[#111827] md:text-[2rem]"
+          subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-[#374151]"
+          title="Priorities"
+          subtitle="Teacher coverage, CPD drift, and student pastoral bands — driven by the tab and time window below."
+          meta={<p className="text-[0.8125rem] text-[#6B7280]">Same URL controls apply across all three tabs.</p>}
+          actions={
+            <PrioritiesExportButton
+              userId={user.id}
+              userRole={user.role}
+              hodDepartmentIds={hodDepartmentIds}
+              coacheeUserIds={coacheeUserIds}
+              activeTab={activeTab}
+              windowDays={windowDays}
+              departmentId={cpdExportDepartmentId}
+            />
+          }
+        />
 
-      <div className="filter-panel flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <TabBar activeTab={activeTab} windowDays={windowDays} preserveParams={tabPreserveParams} />
-        <WindowSelector windowDays={windowDays} activeTab={activeTab} extraParams={windowExtraParams} />
+        <div className="anx-priorities-toolbar">
+          <TabBar activeTab={activeTab} windowDays={windowDays} preserveParams={tabPreserveParams} />
+          <WindowSelector windowDays={windowDays} activeTab={activeTab} extraParams={windowExtraParams} />
+        </div>
+
+        {activeTab === "teachers" && (
+          <TeachersTab user={user} windowDays={windowDays} searchParams={sp} />
+        )}
+        {activeTab === "cpd" && <CpdTab user={user} windowDays={windowDays} searchParams={sp} />}
+        {activeTab === "students" && <StudentsTab user={user} windowDays={windowDays} searchParams={sp} />}
       </div>
-
-      {activeTab === "teachers" && (
-        <TeachersTab user={user} windowDays={windowDays} searchParams={sp} />
-      )}
-      {activeTab === "cpd" && <CpdTab user={user} windowDays={windowDays} searchParams={sp} />}
-      {activeTab === "students" && <StudentsTab user={user} windowDays={windowDays} searchParams={sp} />}
     </div>
   );
 }
