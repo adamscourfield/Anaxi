@@ -1422,12 +1422,205 @@ textarea:focus-visible {
   border-radius: var(--radius-md);
 }
 
-/* Priorities (/analytics) — spec alignment with dashboard mock */
+/* Priorities (/analytics) — dashboard mock: light canvas, pill toolbars, white cards */
 .anx-priorities-page {
-  background: color-mix(in srgb, var(--surface-container) 35%, var(--surface-container-lowest));
+  background: #f9fafb;
   margin-inline: calc(-1 * var(--tenant-content-pad-x, 1rem));
   padding-inline: var(--tenant-content-pad-x, 1rem);
-  padding-block: 0.5rem 2rem;
+  padding-block: 0.75rem 2.5rem;
+}
+
+.anx-priorities-inner {
+  max-width: 87.5rem; /* 1400px */
+  margin-inline: auto;
+}
+
+.anx-priorities-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, #e5e7eb 90%, transparent);
+  background: var(--surface-container-lowest);
+  padding: 1rem 1.125rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+@media (min-width: 1024px) {
+  .anx-priorities-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 1rem 1.25rem;
+  }
+}
+
+.anx-priorities-toolbar .filter-period-toggle {
+  border-radius: 9999px;
+  padding: 4px;
+  gap: 3px;
+  background: #f3f4f6;
+}
+
+.anx-priorities-toolbar .filter-period-btn {
+  border-radius: 9999px;
+}
+
+.anx-priorities-meta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #6b7280;
+}
+
+.anx-priorities-meta-bar svg {
+  color: #9ca3af;
+}
+
+.anx-priorities-definitions-card {
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, #e5e7eb 90%, transparent);
+  background: var(--surface-container-lowest);
+  padding: 0.875rem 1.25rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.anx-priorities-table-card {
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, #e5e7eb 90%, transparent);
+  background: var(--surface-container-lowest);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.anx-priorities-table-card__header {
+  border-bottom: 1px solid #f3f4f6;
+  background: #fafafa;
+  padding: 1rem 1.25rem 1.125rem;
+}
+
+.anx-priorities-table-card__header h2 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.anx-priorities-table-card__header .anx-priorities-table-card__meta {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.anx-priorities-table-wrap {
+  overflow-x: auto;
+}
+
+.anx-priorities-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.8125rem;
+}
+
+.anx-priorities-table thead tr {
+  background: #fafafa;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.anx-priorities-table thead th {
+  padding: 0.875rem 1rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.anx-priorities-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  background: #fff;
+  transition: background-color 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.anx-priorities-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.anx-priorities-table tbody tr:hover td.sticky {
+  background: #fafafa;
+}
+
+.anx-priorities-table tbody td {
+  padding: 1rem 1rem;
+  vertical-align: middle;
+}
+
+.anx-priorities-table tbody td:first-child {
+  padding-left: 1.25rem;
+}
+
+.anx-priorities-table tbody td:last-child {
+  padding-right: 1.25rem;
+}
+
+.anx-priorities-student-filters {
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, #e5e7eb 90%, transparent);
+  background: var(--surface-container-lowest);
+  padding: 1.25rem 1.25rem 1.125rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.anx-priorities-student-filters .field,
+.anx-priorities-student-filters [data-radix-collection-item],
+.anx-priorities-student-filters button[role="combobox"] {
+  border-color: #e5e7eb !important;
+  border-radius: 0.625rem !important;
+}
+
+.btn-priorities-apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 0.625rem;
+  background: #111827;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    opacity 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+.btn-priorities-apply:hover {
+  opacity: 0.92;
+}
+
+.btn-priorities-apply:active {
+  transform: scale(0.98);
+}
+
+.anx-priorities-driver-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  background: #fff7ed;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #c2410c;
 }
 
 .anx-priorities-definitions summary {
