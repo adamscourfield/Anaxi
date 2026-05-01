@@ -170,10 +170,10 @@ export default async function InstructionTeachersPage({
         subtitle="Observation coverage, signal strength, and drift — open a teacher for observations, signal detail, and classes."
       />
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] p-4 shadow-[var(--shadow-ambient)] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="space-y-2">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Time window</span>
-          <div className="filter-period-toggle w-fit max-w-full">
+      <div className="flex flex-col gap-5 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] p-5 shadow-[var(--shadow-ambient)] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-6 md:p-6">
+        <div className="space-y-2.5">
+          <span className="filter-field-label">Time window</span>
+          <div className="filter-period-toggle filter-period-toggle--comfortable w-fit max-w-full">
             {VALID_WINDOWS.map((w) => (
               <Link
                 key={w}

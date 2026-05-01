@@ -303,9 +303,9 @@ export default async function ExplorerTeachersPage({
       <div className="filter-panel rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] shadow-[var(--shadow-ambient)]">
         <div className="flex flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between">
           <div className="flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:items-end">
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <span className="filter-field-label">Time window</span>
-              <div className="filter-period-toggle w-fit max-w-full">
+              <div className="filter-period-toggle filter-period-toggle--comfortable w-fit max-w-full">
                 {VALID_WINDOWS.map((w) => (
                   <Link
                     key={w}
