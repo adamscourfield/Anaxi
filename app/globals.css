@@ -733,6 +733,16 @@ textarea:focus-visible {
   gap: 2px;
 }
 
+/* Slightly roomier segment control (e.g. teachers time window) */
+.filter-period-toggle--comfortable {
+  padding: 4px;
+  gap: 4px;
+}
+
+.filter-period-toggle--comfortable .filter-period-btn {
+  padding: 8px 18px;
+}
+
 .filter-period-btn {
   border-radius: 8px;
   padding: 6px 14px;

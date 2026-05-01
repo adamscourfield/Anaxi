@@ -29,16 +29,6 @@ const STATUS_VARIANT: Record<RiskStatus, PillVariant> = {
   LOW_COVERAGE: "neutral",
 };
 
-function meanToHeatmapBar(mean: number | null | undefined): string {
-  if (mean == null) {
-    return "bg-[color-mix(in_srgb,var(--surface-container-high)_78%,var(--scale-some-light)_22%)]";
-  }
-  if (mean >= 3.5) return "bg-[color-mix(in_srgb,var(--scale-some-bar)_92%,#fff_8%)]";
-  if (mean >= 2.5) return "bg-[color-mix(in_srgb,var(--scale-some-bar)_72%,#fff_28%)]";
-  if (mean >= 1.5) return "bg-[color-mix(in_srgb,var(--scale-some-bar)_48%,#fff_52%)]";
-  return "bg-[color-mix(in_srgb,var(--scale-some-bar)_22%,var(--surface-container-high)_78%)]";
-}
-
 function formatDrift(value: number): { text: string; arrow: string; color: string } {
   const abs = Math.abs(value);
   const formatted = abs.toFixed(1);
@@ -222,7 +212,14 @@ export default async function InstructionTeachersPage({
                   <th className="px-4 py-4 text-center">Coverage</th>
                   <th className="px-4 py-4">Status</th>
                   <th className="px-4 py-4 text-center">Drift score</th>
-                  <th className="min-w-[11rem] px-4 py-4">Signal heatmap</th>
+                  <th className="min-w-[11rem] px-4 py-4">
+                    <span className="inline-flex flex-col gap-0.5">
+                      <span>Signal heatmap</span>
+                      <span className="text-[0.625rem] font-normal normal-case tracking-normal text-muted">
+                        Higher mean = stronger (1–4)
+                      </span>
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -266,13 +263,13 @@ export default async function InstructionTeachersPage({
                           {heatmapKeys.map((key) => {
                             const cell = row.signalData[key];
                             const mean = cell?.currentMean;
-                            const barClass = meanToHeatmapBar(mean);
+                            const barClass = meanToHeatmapBarClass(mean);
                             const label = signalLabelMap[key] ?? key;
                             return (
                               <div
                                 key={key}
                                 className={`h-5 min-w-0 flex-1 rounded-md ${barClass}`}
-                                title={`${label}: ${mean != null ? mean.toFixed(2) : "No data"}`}
+                                title={signalHeatmapCellTitle(label, mean)}
                               />
                             );
                           })}
