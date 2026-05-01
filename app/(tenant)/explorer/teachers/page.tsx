@@ -17,6 +17,7 @@ import {
   type TeacherPivotRow,
   type TeacherRiskRow,
 } from "@/modules/analysis/teacherRisk";
+import { TeachersFilterToolbar } from "@/components/teachers/TeachersFilterToolbar";
 import { TopDriverLinks } from "./TopDriverLinks";
 import { meanToHeatmapBarClass, signalHeatmapCellTitle } from "@/lib/analysis/signalHeatmap";
 
@@ -289,87 +290,17 @@ export default async function ExplorerTeachersPage({
         }
       />
 
-      {/* ── Controls bar (Explorer Teachers spec) ──────────────────────────── */}
-      <div className="filter-panel rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] shadow-[var(--shadow-ambient)]">
-        <div className="flex flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between">
-          <div className="flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:items-end">
-            <div className="space-y-2.5">
-              <span className="filter-field-label">Time window</span>
-              <div className="filter-period-toggle filter-period-toggle--comfortable w-fit max-w-full">
-                {VALID_WINDOWS.map((w) => (
-                  <Link
-                    key={w}
-                    href={buildUrl({ windowDays: String(w), page: "1" })}
-                    className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
-                  >
-                    {w}D
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <span className="filter-field-label">View</span>
-              <div className="filter-period-toggle w-fit max-w-full">
-                <Link
-                  href={buildUrl({ mode: "pivot", page: "1" })}
-                  className={`filter-period-btn ${mode === "pivot" ? "filter-period-btn-active" : ""}`}
-                >
-                  Performance view
-                </Link>
-                <Link
-                  href={buildUrl({ mode: "priorities", page: "1" })}
-                  className={`filter-period-btn ${mode === "priorities" ? "filter-period-btn-active" : ""}`}
-                >
-                  Priority view
-                </Link>
-              </div>
-            </div>
-
-            <form className="space-y-2" method="GET" action="/explorer/teachers">
-              <span className="filter-field-label">Department</span>
-              <div className="flex flex-wrap items-center gap-2">
-                <input type="hidden" name="windowDays" value={String(windowDays)} />
-                <input type="hidden" name="mode" value={mode} />
-                <input type="hidden" name="sort" value={sort} />
-                <input type="hidden" name="dir" value={dir} />
-                <input type="hidden" name="page" value="1" />
-                <div className="relative min-w-[min(100%,220px)] flex-1 sm:min-w-[200px] sm:flex-none">
-                  <span className="pointer-events-none absolute left-3 top-1/2 z-[1] -translate-y-1/2 text-[var(--on-surface-variant)]" aria-hidden>
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-                      <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                  <select
-                    name="departmentId"
-                    defaultValue={departmentId ?? ""}
-                    className="field field-filter-trigger w-full !py-2 !pl-10 !pr-9 !text-[0.8125rem] font-medium"
-                    aria-label="Department"
-                  >
-                    <option value="">All Departments</option>
-                    {scopedDepartments.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  type="submit"
-                  className="btn-filter-primary btn-filter-primary--compact inline-flex items-center justify-center gap-2 rounded-lg"
-                >
-                  <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Apply
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+      {/* ── Controls bar (matches teachers table filter design) ───────────── */}
+      <TeachersFilterToolbar
+        variant="explorer"
+        windowDays={windowDays}
+        mode={mode}
+        sort={sort}
+        dir={dir}
+        departmentId={departmentId}
+        scopedDepartments={scopedDepartments}
+        buildUrl={buildUrl}
+      />
 
       {/* ── Performance view (pivot) ────────────────────────────────────────── */}
       {mode === "pivot" && (
