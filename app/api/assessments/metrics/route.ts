@@ -86,7 +86,15 @@ export async function GET(req: Request) {
   });
 
   if (assessments.length === 0) {
-    return NextResponse.json({ subjects: [], gcseBasics: null, aLevelSummary: null });
+    return NextResponse.json({
+      subjects: [],
+      gcseBasics: null,
+      aLevelSummary: null,
+      dominantFormat: null,
+      totalStudents: 0,
+      totalEntries: 0,
+      dataIntegrityPct: null,
+    });
   }
 
   // Dominant format
@@ -275,10 +283,17 @@ export async function GET(req: Request) {
     }
   }
 
+  const allResultsFlat = assessments.flatMap((a) => a.results);
+  const integrityTotal = allResultsFlat.length;
+  const integrityValid = allResultsFlat.filter((r) => r.isValid).length;
+  const dataIntegrityPct =
+    integrityTotal === 0 ? null : Math.round((integrityValid / integrityTotal) * 1000) / 10;
+
   return NextResponse.json({
     dominantFormat,
     totalStudents: new Set(assessments.flatMap((a) => a.results.map((r) => r.studentId))).size,
     totalEntries: assessments.reduce((s, a) => s + a.results.length, 0),
+    dataIntegrityPct,
     subjects: subjectMeasures,
     gcseBasics,
     aLevelSummary,

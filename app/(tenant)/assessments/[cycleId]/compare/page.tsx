@@ -16,6 +16,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import Link from "next/link";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
 import type { PointType, ResultStatus } from "@prisma/client";
 import {
   finalPointChipClass,
@@ -290,7 +291,7 @@ export default function ComparisonPage() {
     .slice(0, 10);
 
   return (
-    <div className="anx-reports-page w-full space-y-8 pb-16">
+    <AttainmentPageShell>
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -683,6 +684,6 @@ export default function ComparisonPage() {
           </div>
         </>
       )}
-    </div>
+    </AttainmentPageShell>
   );
 }

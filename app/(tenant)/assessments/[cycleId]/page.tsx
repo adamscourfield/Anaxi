@@ -4,10 +4,10 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MetaText } from "@/components/ui/typography";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
 import { Card } from "@/components/ui/card";
 import type { PointType, ResultStatus, QualificationType } from "@prisma/client";
 import { pointTypePillClasses, resultStatusPillClasses } from "@/modules/assessments/attainmentColours";
@@ -150,6 +150,8 @@ const kpiWellViolet =
   "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
 const kpiWellBlue =
   "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
+const kpiWellAmber =
+  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
 
 function CycleOverviewTile({
   icon,
@@ -157,21 +159,47 @@ function CycleOverviewTile({
   label,
   value,
   footer,
+  decorative,
 }: {
   icon: ReactNode;
   wellClass: string;
   label: string;
   value: string | number;
   footer?: ReactNode;
+  /** Soft wavy line in tile background (reference dashboard) */
+  decorative?: "wave-violet" | "wave-blue" | "bars" | "ring";
 }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-black/[0.06] bg-surface-container-lowest px-5 pb-6 pt-7 text-center shadow-[0_1px_2px_rgba(15,23,42,0.06),0_4px_12px_rgba(15,23,42,0.04)]">
-      <span className={wellClass} aria-hidden>
+    <div
+      className="relative flex flex-col items-center overflow-hidden rounded-2xl border border-[color-mix(in_srgb,#e5e7eb_90%,transparent)] bg-white px-5 pb-6 pt-7 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-8px_rgba(15,23,42,0.06)]"
+    >
+      {decorative === "bars" ? (
+        <span className="pointer-events-none absolute bottom-3 right-3 flex h-8 items-end gap-0.5 opacity-30" aria-hidden>
+          {[40, 65, 35, 80, 50].map((h, i) => (
+            <span key={i} className="w-1 rounded-sm bg-violet-500" style={{ height: `${h}%` }} />
+          ))}
+        </span>
+      ) : null}
+      {decorative === "ring" ? (
+        <span
+          className="pointer-events-none absolute right-4 top-1/2 h-14 w-14 -translate-y-1/2 rounded-full border-2 border-dashed border-emerald-200 bg-emerald-50/80 text-emerald-600"
+          aria-hidden
+        >
+          <span className="flex h-full w-full items-center justify-center">
+            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" />
+            </svg>
+          </span>
+        </span>
+      ) : null}
+      <span className={`relative z-[1] ${wellClass}`} aria-hidden>
         {icon}
       </span>
-      <p className="mt-5 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted">{label}</p>
-      <p className="mt-2 text-[2rem] font-bold leading-none tracking-[-0.03em] text-text tabular-nums">{value}</p>
-      {footer != null ? <div className="mt-2.5 text-[0.8125rem] leading-snug text-muted">{footer}</div> : null}
+      <p className="relative z-[1] mt-5 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-[#6B7280]">{label}</p>
+      <p className="relative z-[1] mt-2 text-[2rem] font-bold leading-none tracking-[-0.03em] text-[#111827] tabular-nums">{value}</p>
+      {footer != null ? (
+        <div className="relative z-[1] mt-2.5 text-[0.8125rem] leading-snug text-[#6B7280]">{footer}</div>
+      ) : null}
     </div>
   );
 }
@@ -181,6 +209,12 @@ const btnSolidDark =
 
 const btnMutedOutline =
   "inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs font-semibold text-zinc-800 shadow-none calm-transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/30 focus-visible:ring-offset-2";
+
+function sumPointEntries(point: {
+  assessments: Array<{ entryCount: number }>;
+}): number {
+  return point.assessments.reduce((s, a) => s + a.entryCount, 0);
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -220,6 +254,26 @@ export default async function CycleDetailPage({
 
   if (!cycle) notFound();
 
+  const pointIds = cycle.points.map((p) => p.id);
+  const [integrityTotal, integrityValid] =
+    pointIds.length === 0
+      ? [0, 0]
+      : await Promise.all([
+          prisma.assessmentResult.count({
+            where: { tenantId: user.tenantId, assessment: { pointId: { in: pointIds } } },
+          }),
+          prisma.assessmentResult.count({
+            where: {
+              tenantId: user.tenantId,
+              isValid: true,
+              assessment: { pointId: { in: pointIds } },
+            },
+          }),
+        ]);
+  const integrityPct =
+    integrityTotal === 0 ? null : Math.round((integrityValid / integrityTotal) * 1000) / 10;
+  const integrityDisplay = integrityPct !== null ? `${integrityPct.toFixed(1)}%` : "—";
+
   const totalEntries = cycle.points.reduce(
     (s, p) => s + p.assessments.reduce((ss, a) => ss + a.entryCount, 0),
     0
@@ -228,8 +282,28 @@ export default async function CycleDetailPage({
     cycle.points.flatMap((p) => p.assessments.map((a) => a.subject))
   ).size;
 
+  const sortedPoints = [...cycle.points].sort(
+    (a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0),
+  );
+  let priorTotalEntries = 0;
+  if (sortedPoints.length >= 2) {
+    priorTotalEntries = sumPointEntries(sortedPoints[sortedPoints.length - 2]!);
+  }
+  const entriesTrendPct =
+    priorTotalEntries > 0
+      ? Math.round(((totalEntries - priorTotalEntries) / priorTotalEntries) * 100)
+      : totalEntries > 0
+        ? 100
+        : 0;
+  const entriesTrendLabel =
+    priorTotalEntries > 0
+      ? `${entriesTrendPct >= 0 ? "↗" : "↘"} ${entriesTrendPct >= 0 ? "+" : ""}${entriesTrendPct}% vs prior point`
+      : sortedPoints.length < 2
+        ? "Add a prior point to see trend"
+        : "First data in cycle";
+
   return (
-    <div className="anx-reports-page w-full space-y-10 pb-16">
+    <AttainmentPageShell>
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -239,7 +313,11 @@ export default async function CycleDetailPage({
 
       <PageHeader
         variant="ledger"
+        className="!mb-0 border-0 !pb-0"
+        eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-violet-600"
         eyebrow="Attainment cycle"
+        titleClassName="text-[1.75rem] font-bold tracking-tight text-[#111827] md:text-[2rem]"
+        subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-[#374151]"
         title={cycle.label}
         subtitle={
           cycle.cohortLabel
@@ -247,20 +325,39 @@ export default async function CycleDetailPage({
             : cycle.academicYear
         }
         meta={
-          <MetaText>
-            {QUAL_LABELS[cycle.qualificationType]} · {cycle.points.length} result point
-            {cycle.points.length !== 1 ? "s" : ""}
-          </MetaText>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.8125rem] text-[#6B7280]">
+            <span className="inline-flex items-center gap-1.5">
+              <IconCalendar className="h-4 w-4 shrink-0 text-[#9ca3af]" />
+              {cycle.cohortLabel ?? "Cohort"} · {cycle.academicYear}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <IconBarChart className="h-4 w-4 shrink-0 text-[#9ca3af]" />
+              {QUAL_LABELS[cycle.qualificationType]} · {cycle.points.length} result point
+              {cycle.points.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+        }
+        actions={
+          <Link
+            href={`/assessments/${cycle.id}/points/new`}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-[0.625rem] bg-[#111827] px-5 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.08)] calm-transition hover:opacity-95"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            </svg>
+            Add point
+          </Link>
         }
       />
 
-      {/* Overview — centered columns: icon, label, large value (matches reference) */}
+      {/* Overview KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <CycleOverviewTile
           wellClass={kpiWellViolet}
           icon={<IconTarget />}
           label="Result points"
           value={cycle.points.length}
+          decorative="wave-violet"
         />
         <CycleOverviewTile
           wellClass={kpiWellBlue}
@@ -268,28 +365,41 @@ export default async function CycleDetailPage({
           label="Total subjects"
           value={totalSubjects}
           footer="Across all departments"
+          decorative="wave-blue"
         />
         <CycleOverviewTile
           wellClass={kpiWellViolet}
           icon={<IconTrend />}
           label="Entries recorded"
           value={totalEntries.toLocaleString()}
-          footer={<span className="font-semibold text-status-approved-text">↗ +12% from Y10</span>}
+          footer={
+            <span className={entriesTrendPct >= 0 ? "font-semibold text-emerald-600" : "font-semibold text-red-600"}>
+              {entriesTrendLabel}
+            </span>
+          }
+          decorative="bars"
         />
         <CycleOverviewTile
-          wellClass={kpiWellBlue}
+          wellClass={kpiWellAmber}
           icon={<IconShieldCheck />}
           label="Data integrity"
-          value="99.7%"
-          footer="Verified by Registry"
+          value={integrityDisplay}
+          footer="Share of rows marked present in uploads"
+          decorative="ring"
         />
       </div>
 
       <section className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-lg font-bold tracking-tight text-text">Result Points</h2>
-          <Link href={`/assessments/${cycle.id}/points/new`} className={btnSolidDark}>
-            + Add point
+          <h2 className="text-lg font-bold tracking-tight text-[#111827]">Result Points</h2>
+          <Link
+            href={`/assessments/${cycle.id}/points/new`}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-[0.625rem] border border-[#e5e7eb] bg-white px-4 text-sm font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#f9fafb]"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            </svg>
+            Add point
           </Link>
         </div>
 
@@ -321,11 +431,11 @@ export default async function CycleDetailPage({
             return (
               <article
                 key={point.id}
-                className="flex gap-6 rounded-2xl border border-black/[0.06] bg-surface-container-lowest p-7 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_8px_28px_rgba(15,23,42,0.07)] sm:gap-8 sm:p-9"
+                className="flex gap-6 rounded-2xl border border-[color-mix(in_srgb,#e5e7eb_90%,transparent)] bg-white p-7 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_40px_-12px_rgba(15,23,42,0.08)] sm:gap-8 sm:p-9"
               >
                 <div className="hidden shrink-0 sm:flex sm:items-start sm:pt-1">
                   <span
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-100 text-lg font-bold tabular-nums text-zinc-400"
+                    className="flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-lg font-bold tabular-nums text-violet-500"
                     aria-label={`Result point ${ordinal}`}
                   >
                     {ordinal}
@@ -350,16 +460,16 @@ export default async function CycleDetailPage({
                       <div>
                         <div className="flex items-start gap-3 sm:hidden">
                           <span
-                            className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm font-bold tabular-nums text-zinc-400"
+                            className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold tabular-nums text-violet-500"
                             aria-hidden
                           >
                             {ordinal}
                           </span>
-                          <h3 className="min-w-0 text-2xl font-bold leading-tight tracking-tight text-text">
+                          <h3 className="min-w-0 text-2xl font-bold leading-tight tracking-tight text-[#111827]">
                             {point.label}
                           </h3>
                         </div>
-                        <h3 className="hidden text-[1.65rem] font-bold leading-tight tracking-[-0.03em] text-text sm:block sm:text-[1.75rem]">
+                        <h3 className="hidden text-[1.65rem] font-bold leading-tight tracking-[-0.03em] text-[#111827] sm:block sm:text-[1.75rem]">
                           {point.label}
                         </h3>
                         {assessedDateLabel ? (
@@ -371,7 +481,7 @@ export default async function CycleDetailPage({
                       </div>
                     </div>
 
-                    <div className="flex flex-shrink-0 flex-wrap gap-2.5 lg:justify-end">
+                    <div className="flex flex-shrink-0 flex-wrap items-center gap-2.5 lg:justify-end">
                       {point.resultStatus !== "LOCKED" ? (
                         <Link href={`/assessments/${cycle.id}/points/${point.id}/upload`} className={btnSolidDark}>
                           <IconUploadCloud />
@@ -384,38 +494,59 @@ export default async function CycleDetailPage({
                           View analysis
                         </Link>
                       ) : null}
+                      {hasData ? (
+                        <Link
+                          href={`/assessments/${cycle.id}/points/${point.id}`}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] calm-transition hover:bg-[#fafafa] hover:text-[#111827]"
+                          aria-label={`Open ${point.label}`}
+                        >
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                            <circle cx="5" cy="12" r="1.5" />
+                            <circle cx="12" cy="12" r="1.5" />
+                            <circle cx="19" cy="12" r="1.5" />
+                          </svg>
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
 
                   {hasData ? (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
-                        <div className="flex items-center gap-2 text-zinc-500">
+                    <div className="rounded-xl bg-[#f3f4f6] px-4 py-3 sm:px-5">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:divide-x sm:divide-[#e5e7eb]">
+                      <div className="flex items-center gap-3 sm:pr-4">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
                           <IconBook className="h-4 w-4 shrink-0" />
-                          <span className="text-[0.625rem] font-semibold uppercase tracking-[0.08em]">Subjects</span>
+                        </span>
+                        <div>
+                          <p className="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#6b7280]">Subjects</p>
+                          <p className="mt-0.5 text-xl font-bold tabular-nums tracking-tight text-[#111827]">
+                            {point.assessments.length}
+                          </p>
                         </div>
-                        <p className="mt-2.5 text-xl font-bold tabular-nums tracking-tight text-text">
-                          {point.assessments.length}
-                        </p>
                       </div>
-                      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
-                        <div className="flex items-center gap-2 text-zinc-500">
+                      <div className="flex items-center gap-3 sm:px-4">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600">
                           <IconDocument className="h-4 w-4 shrink-0" />
-                          <span className="text-[0.625rem] font-semibold uppercase tracking-[0.08em]">Entries</span>
+                        </span>
+                        <div>
+                          <p className="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#6b7280]">Entries</p>
+                          <p className="mt-0.5 text-xl font-bold tabular-nums tracking-tight text-[#111827]">
+                            {entries.toLocaleString()}
+                          </p>
                         </div>
-                        <p className="mt-2.5 text-xl font-bold tabular-nums tracking-tight text-text">
-                          {entries.toLocaleString()}
-                        </p>
                       </div>
-                      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
-                        <div className="flex items-center gap-2 text-zinc-500">
+                      <div className="flex items-center gap-3 sm:pl-4">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
                           <IconUsers className="h-4 w-4 shrink-0" />
-                          <span className="text-[0.625rem] font-semibold uppercase tracking-[0.08em]">Students</span>
+                        </span>
+                        <div>
+                          <p className="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#6b7280]">Students</p>
+                          <p className="mt-0.5 text-xl font-bold tabular-nums tracking-tight text-[#111827]">
+                            {matched.toLocaleString()}
+                          </p>
                         </div>
-                        <p className="mt-2.5 text-xl font-bold tabular-nums tracking-tight text-text">
-                          {matched.toLocaleString()}
-                        </p>
                       </div>
+                    </div>
                     </div>
                   ) : null}
 
@@ -430,8 +561,8 @@ export default async function CycleDetailPage({
                         </span>
                       ))}
                       {point.assessments.length > 8 ? (
-                        <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3.5 py-1.5 text-[11px] font-semibold text-zinc-500">
-                          +{point.assessments.length - 8} MORE
+                        <span className="rounded-full border border-[#e5e7eb] bg-[#fafafa] px-3.5 py-1.5 text-[11px] font-semibold text-[#374151]">
+                          +{point.assessments.length - 8} more
                         </span>
                       ) : null}
                     </div>
@@ -442,6 +573,6 @@ export default async function CycleDetailPage({
           })}
         </div>
       </section>
-    </div>
+    </AttainmentPageShell>
   );
 }
