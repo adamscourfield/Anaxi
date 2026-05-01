@@ -10,6 +10,7 @@ import { computeTeacherPivot, type RiskStatus } from "@/modules/analysis/teacher
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill, type PillVariant } from "@/components/ui/status-pill";
 import { Avatar } from "@/components/ui/avatar";
+import { TeachersFilterToolbar } from "@/components/teachers/TeachersFilterToolbar";
 
 const VALID_WINDOWS = [7, 21, 28, 90] as const;
 type WindowDays = (typeof VALID_WINDOWS)[number];
@@ -115,6 +116,19 @@ export default async function InstructionTeachersPage({
     ? (rawWindow as WindowDays)
     : 21;
 
+  const departmentId =
+    typeof searchParams?.departmentId === "string" ? searchParams.departmentId : undefined;
+
+  const departments: { id: string; name: string }[] = await (prisma as any).department.findMany({
+    where: { tenantId: user.tenantId },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+  const isHod = user.role === "HOD";
+  const scopedDepartments = isHod
+    ? departments.filter((d) => hodDepartmentIds.includes(d.id))
+    : departments;
+
   const teacherFilter = await resolvePivotTeacherFilter({
     tenantId: user.tenantId,
     role: user.role,
@@ -142,7 +156,15 @@ export default async function InstructionTeachersPage({
 
   const { rows: pivotRows } = await computeTeacherPivot(user.tenantId, windowDays, pivotFilter);
 
-  const visibleRows = pivotRows.filter((r) =>
+  let pivotRowsForTable = pivotRows;
+  if (departmentId) {
+    const dept = departments.find((d) => d.id === departmentId);
+    if (dept) {
+      pivotRowsForTable = pivotRowsForTable.filter((r) => r.departmentNames.includes(dept.name));
+    }
+  }
+
+  const visibleRows = pivotRowsForTable.filter((r) =>
     canViewTeacherAnalysis(viewerContext, {
       teacherUserId: r.teacherMembershipId,
       teacherDepartmentIds: teacherDeptIds.get(r.teacherMembershipId) ?? [],
@@ -170,25 +192,15 @@ export default async function InstructionTeachersPage({
         subtitle="Observation coverage, signal strength, and drift — open a teacher for observations, signal detail, and classes."
       />
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] p-4 shadow-[var(--shadow-ambient)] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="space-y-2">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Time window</span>
-          <div className="filter-period-toggle w-fit max-w-full">
-            {VALID_WINDOWS.map((w) => (
-              <Link
-                key={w}
-                href={`/instruction/teachers?windowDays=${w}`}
-                className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
-              >
-                {w}D
-              </Link>
-            ))}
-          </div>
-        </div>
-        <p className="text-[0.8125rem] text-muted">
-          Same data as Explorer teachers, with a full profile for each teacher including observations and timetable classes.
-        </p>
-      </div>
+      <TeachersFilterToolbar
+        variant="instruction"
+        windowDays={windowDays}
+        departmentId={departmentId}
+        scopedDepartments={scopedDepartments}
+      />
+      <p className="text-[0.8125rem] text-muted">
+        Same data as Explorer teachers, with a full profile for each teacher including observations and timetable classes.
+      </p>
 
       {visibleRows.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
