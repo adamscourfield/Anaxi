@@ -17,6 +17,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import Link from "next/link";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
 import type { GradeFormat, PointType, ResultStatus } from "@prisma/client";
 import { aLevelLetterCellClass, gcseNumericCellClass } from "@/lib/assessments/chartColours";
 import {
@@ -138,6 +139,7 @@ type MetricsData = {
   dominantFormat: GradeFormat;
   totalStudents: number;
   totalEntries: number;
+  dataIntegrityPct?: number | null;
   subjects: SubjectMeasure[];
   gcseBasics: GcseBasics | null;
   aLevelSummary: ALevelSummary | null;
@@ -223,9 +225,19 @@ function IconBookOpenKpi() {
   );
 }
 
+function IconShieldKpi() {
+  return (
+    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
+
 const kpiIconCircleViolet = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]";
 const kpiIconCircleBlue = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]";
 const kpiIconCircleGreen = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]";
+const kpiIconCircleAmber = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600";
 
 function SubjectIcon({ subject }: { subject: string }) {
   const s = subject.toLowerCase();
@@ -470,7 +482,7 @@ export default function ResultPointPage() {
 
   // Build meta badges for PageHeader
   const metaBadges = point ? (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex flex-wrap items-center gap-2">
       <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
         {POINT_TYPE_LABELS[point.pointType]}
       </span>
@@ -490,22 +502,34 @@ export default function ResultPointPage() {
       {point.resultStatus !== "LOCKED" && (
         <Link
           href={`/assessments/${cycleId}/points/${pointId}/upload`}
-          className="rounded-lg border border-[var(--outline-variant)] px-3 py-1.5 text-sm text-[var(--on-surface)] calm-transition hover:bg-[var(--surface-container-low)]"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-[0.625rem] border border-[#e5e7eb] bg-white px-4 text-sm font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#f9fafb]"
         >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path
+              d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v9m-4-4 4-4 4 4" />
+          </svg>
           Upload results
         </Link>
       )}
       <Link
         href={`/assessments/${cycleId}/compare?from=${pointId}`}
-        className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white calm-transition hover:opacity-90"
+        className="inline-flex h-10 items-center justify-center gap-2 rounded-[0.625rem] bg-[#111827] px-4 text-sm font-semibold text-white shadow-sm calm-transition hover:opacity-95"
       >
-        Compare →
+        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18 8V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v10M8 16l4-4 4 4" />
+        </svg>
+        Compare
       </Link>
     </>
   ) : null;
 
   return (
-    <div className="anx-reports-page w-full space-y-8">
+    <AttainmentPageShell>
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -515,8 +539,13 @@ export default function ResultPointPage() {
       />
 
       {/* Page Header */}
-      <PageHeader variant="ledger"
+      <PageHeader
+        variant="ledger"
+        className="!mb-0 border-0 !pb-0"
+        eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-[#6B7280]"
         eyebrow="Result point"
+        titleClassName="text-[1.75rem] font-bold tracking-tight text-[#111827] md:text-[2rem]"
+        subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-[#374151]"
         title={point?.label ?? "Result point"}
         subtitle="Analysis for all uploaded subjects at this snapshot."
         meta={metaBadges}
@@ -547,14 +576,24 @@ export default function ResultPointPage() {
       {metrics && metrics.totalEntries > 0 && (
         <>
           {/* Summary stats */}
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Students Assessed" value={metrics.totalStudents} context="Enrolled total" icon={<IconUsersKpi />} iconTileClassName={kpiIconCircleViolet} />
             <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Grade Entries" value={metrics.totalEntries.toLocaleString()} context="Across all subjects" icon={<IconClipboardKpi />} iconTileClassName={kpiIconCircleBlue} />
             <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Subjects" value={metrics.subjects.length} context="Reporting departments" icon={<IconBookOpenKpi />} iconTileClassName={kpiIconCircleGreen} />
+            <StatCard
+              layout="kpi"
+              tone="glass"
+              accentPlacement="none"
+              label="Data integrity"
+              value={metrics.dataIntegrityPct != null ? `${metrics.dataIntegrityPct.toFixed(1)}%` : "—"}
+              context="Validated rows in uploads"
+              icon={<IconShieldKpi />}
+              iconTileClassName={kpiIconCircleAmber}
+            />
           </div>
 
           {/* Tab navigation */}
-          <div className="flex gap-1 border-b border-[var(--outline-variant)]/30">
+          <div className="anx-attainment-tabs" role="tablist">
             {(["attainment", "pastoral", "teaching"] as const).map((tab) => {
               const labels: Record<typeof tab, string> = {
                 attainment: "Attainment",
@@ -565,12 +604,9 @@ export default function ResultPointPage() {
                 <button
                   key={tab}
                   type="button"
+                  role="tab"
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2.5 text-sm border-b-[3px] -mb-px calm-transition whitespace-nowrap ${
-                    activeTab === tab
-                      ? "border-[var(--on-surface)] font-bold text-[var(--on-surface)]"
-                      : "border-transparent font-semibold text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] hover:border-[var(--outline-variant)]"
-                  }`}
+                  className={`anx-attainment-tab ${activeTab === tab ? "anx-attainment-tab--active" : ""}`}
                 >
                   {labels[tab]}
                 </button>
@@ -1362,7 +1398,7 @@ export default function ResultPointPage() {
       {teachingModal && (
         <TeachingModal modal={teachingModal} onClose={() => setTeachingModal(null)} />
       )}
-    </div>
+    </AttainmentPageShell>
   );
 }
 
