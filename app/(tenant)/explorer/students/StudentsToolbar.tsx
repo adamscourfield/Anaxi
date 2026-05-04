@@ -48,11 +48,12 @@ export function StudentsToolbar({
           </span>
           <div className="relative">
             <svg
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+              className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
+              aria-hidden
             >
               <circle cx="11" cy="11" r="7" />
               <path d="m17 17 4 4" strokeLinecap="round" />
@@ -62,7 +63,7 @@ export function StudentsToolbar({
               name="studentSearch"
               defaultValue={defaultSearch}
               placeholder="Search students…"
-              className={`field w-full py-2.5 pl-10 pr-4 ${triggerWhite}`}
+              className={`field w-full !py-2.5 !pl-[2.875rem] pr-4 ${triggerWhite}`}
             />
           </div>
         </label>
