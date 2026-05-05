@@ -729,7 +729,7 @@ export function LiveMeetingView({
             onChange={(e) => canEdit && handleNotesChange(e.target.value)}
             readOnly={!canEdit}
             rows={18}
-            className="w-full resize-none rounded-xl border-0 bg-transparent p-0 font-sans text-sm leading-relaxed placeholder:text-[#9CA3AF] focus:outline-none focus:ring-0"
+            className="w-full resize-none rounded-none border-0 bg-transparent px-1.5 py-1 font-sans text-sm leading-relaxed placeholder:text-[#9CA3AF] focus:outline-none focus:ring-0"
             style={{ color: SLATE_900 }}
             placeholder={`${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} - INTRODUCTION\n\nStart taking meeting minutes here...`}
           />
