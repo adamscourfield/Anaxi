@@ -137,13 +137,13 @@ function AvatarStack({ attendees }: { attendees: Attendee[] }) {
           <div
             key={a.id}
             title={a.user.fullName}
-            className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface-container-lowest text-[11px] font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
+            className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-background text-[11px] font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
           >
             {getInitials(a.user.fullName)}
           </div>
         ))}
         {overflow > 0 && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface-container-lowest bg-[var(--surface-container-high)] text-[11px] font-semibold text-muted">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-[var(--surface-container-high)] text-[11px] font-semibold text-muted">
             +{overflow}
           </div>
         )}
@@ -575,7 +575,7 @@ export function LiveMeetingView({
         : "READY";
 
   return (
-    <div className="space-y-6 bg-[color-mix(in_srgb,var(--surface-container-low)_50%,transparent)] pb-8 pt-1">
+    <div className="space-y-6 pb-8 pt-1">
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div>
         <div className="mb-2 flex flex-wrap items-center gap-3">
@@ -664,7 +664,7 @@ export function LiveMeetingView({
       {/* ── Two-Column Layout ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         {/* ── Left: Live Minutes ───────────────────────────────────── */}
-        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-6 shadow-[0_2px_16px_rgba(15,23,42,0.06)]">
+        <div className="rounded-2xl border border-border/50 bg-background p-6 shadow-[0_2px_16px_rgba(15,23,42,0.06)]">
           {/* Minutes Header */}
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -713,7 +713,7 @@ export function LiveMeetingView({
         <div className="space-y-5">
           {/* ── New Action Item Card ────────────────────────────────── */}
           {canAddActions && !isEnded && (
-            <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-ambient">
+            <div className="rounded-2xl border border-border/50 bg-background p-5 shadow-ambient">
               <div className="mb-4 flex items-center gap-2">
                 <svg className="h-5 w-5 text-scale-strong-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
@@ -784,7 +784,7 @@ export function LiveMeetingView({
           )}
 
           {/* ── Action Items ─────────────────────────────────────── */}
-          <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-ambient">
+          <div className="rounded-2xl border border-border/50 bg-background p-5 shadow-ambient">
             <h3 className="mb-4 text-base font-bold text-text">
               Action Items
               {totalActions > 0 && (

@@ -101,7 +101,7 @@ export function LeaveCalendarGrid({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border/50 bg-surface-container-lowest shadow-ambient">
+      <div className="overflow-hidden rounded-xl border border-border/50 bg-background shadow-ambient">
         <div className="grid grid-cols-7 border-b border-border/50 bg-surface-container-low">
           {WEEKDAYS.map((wd) => (
             <div
@@ -192,7 +192,7 @@ export function LeaveCalendarGrid({
               <div
                 key={key}
                 className={`group relative min-h-[112px] border-b border-r border-border/30 p-1.5 last:border-r-0 ${
-                  isWeekend ? "bg-surface-container-low" : "bg-surface-container-lowest"
+                  isWeekend ? "bg-surface-container-low" : "bg-background"
                 } ${isToday ? "ring-1 ring-inset ring-[var(--primary-container)]/15" : ""}`}
               >
                 <div className="mb-1 flex items-start justify-between gap-1">

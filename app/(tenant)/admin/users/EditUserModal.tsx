@@ -207,7 +207,7 @@ function TeacherSearch({
       <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted" />
       <input
         type="text"
-        className="field w-full rounded-xl border-border/40 bg-surface-container-lowest py-2.5 pl-10 pr-3 text-[0.8125rem] shadow-none placeholder:text-muted/70 disabled:cursor-not-allowed disabled:opacity-60"
+        className="field w-full rounded-xl border-border/40 bg-background py-2.5 pl-10 pr-3 text-[0.8125rem] shadow-none placeholder:text-muted/70 disabled:cursor-not-allowed disabled:opacity-60"
         placeholder={placeholder}
         value={query}
         disabled={disabled}
@@ -218,7 +218,7 @@ function TeacherSearch({
         onFocus={() => setOpen(true)}
       />
       {open && query.trim() !== "" && (
-        <div className="absolute left-0 right-0 top-full z-[60] mt-1 max-h-[180px] overflow-y-auto rounded-xl border border-border/35 bg-surface-container-lowest py-1 shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-[60] mt-1 max-h-[180px] overflow-y-auto rounded-xl border border-border/35 bg-background py-1 shadow-lg">
           {filtered.length === 0 ? (
             <p className="px-4 py-3 text-[0.8125rem] text-muted">No teachers found</p>
           ) : (
@@ -257,7 +257,7 @@ function ScopedRow({
   return (
     <li className="flex items-center justify-between gap-3 border-b border-border/20 py-3.5 last:border-b-0">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--surface-container-low)_80%,transparent)] text-muted">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-muted">
           {icon}
         </span>
         <span className="text-[0.8125rem] font-medium text-text">{label}</span>
@@ -372,7 +372,7 @@ export function EditUserModal({
       role="presentation"
     >
       <div
-        className="flex max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[440px] flex-col overflow-hidden rounded-2xl border border-border/35 bg-surface-container-lowest shadow-xl"
+        className="flex max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[440px] flex-col overflow-hidden rounded-2xl border border-border/35 bg-background shadow-xl"
         role="dialog"
         aria-labelledby="edit-user-title"
         aria-modal="true"
@@ -425,7 +425,7 @@ export function EditUserModal({
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 disabled={readOnly}
-                className="field w-full appearance-none rounded-xl border-border/40 bg-surface-container-lowest py-2.5 pl-11 pr-10 text-[0.8125rem] font-medium text-text disabled:cursor-not-allowed disabled:opacity-60"
+                className="field w-full appearance-none rounded-xl border-border/40 bg-background py-2.5 pl-11 pr-10 text-[0.8125rem] font-medium text-text disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label={`Institutional role, ${roleLabel}`}
               >
                 {ROLE_OPTIONS.map((r) => (

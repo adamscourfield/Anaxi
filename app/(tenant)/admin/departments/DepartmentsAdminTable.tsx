@@ -30,10 +30,10 @@ type Props = {
 };
 
 const DEPT_CARD =
-  "overflow-hidden rounded-2xl border border-border/35 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+  "overflow-hidden rounded-2xl border border-border/35 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
 
 const ICON_ACTION =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/45 bg-surface-container-lowest text-muted calm-transition hover:border-border hover:bg-surface-container-low hover:text-text";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/45 bg-background text-muted calm-transition hover:border-border hover:bg-surface-container-low hover:text-text";
 
 function PersonGlyph({ className }: { className?: string }) {
   return (
@@ -104,7 +104,7 @@ export function DepartmentsAdminTable({
                 <button
                   type="button"
                   onClick={() => toggleExpand(dept.id)}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/45 bg-surface-container-lowest text-muted calm-transition hover:border-border hover:bg-surface-container-low hover:text-text"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/45 bg-background text-muted calm-transition hover:border-border hover:bg-surface-container-low hover:text-text"
                   title={isExpanded ? "Collapse" : "Expand"}
                   aria-expanded={isExpanded}
                 >
@@ -180,7 +180,7 @@ export function DepartmentsAdminTable({
               {isExpanded ? (
                 <div className="border-t border-border/25 px-5 pb-6 pt-5 sm:px-6">
                   <p className="text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">Head of department</p>
-                  <div className="mt-3 rounded-xl bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] px-4 py-3.5">
+                  <div className="mt-3 rounded-xl bg-background px-4 py-3.5">
                     {hod ? (
                       <div className="flex items-center gap-3">
                         <Avatar name={hod.user?.fullName ?? "?"} size="md" />
@@ -201,7 +201,7 @@ export function DepartmentsAdminTable({
                   <div className="mt-3 overflow-x-auto rounded-xl border border-border/30">
                     <table className="w-full min-w-[320px] border-collapse text-left">
                       <thead>
-                        <tr className="border-b border-border/25 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)]">
+                        <tr className="border-b border-border/25 bg-transparent">
                           <th className="px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">Staff member</th>
                           <th className="px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">Role</th>
                           <th className="w-[1%] whitespace-nowrap px-4 py-3 text-right text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">
@@ -292,7 +292,7 @@ export function DepartmentsAdminTable({
                       <button
                         type="button"
                         onClick={() => setAddingMemberDeptId(null)}
-                        className="rounded-xl border border-border/40 bg-surface-container-lowest px-4 py-2 text-[0.8125rem] font-semibold text-muted calm-transition hover:bg-surface-container-low hover:text-text"
+                        className="rounded-xl border border-border/40 bg-background px-4 py-2 text-[0.8125rem] font-semibold text-muted calm-transition hover:bg-surface-container-low hover:text-text"
                       >
                         Cancel
                       </button>
@@ -315,7 +315,7 @@ export function DepartmentsAdminTable({
           onClick={(e) => e.target === e.currentTarget && setEditingDept(null)}
           role="presentation"
         >
-          <div className="w-full max-w-sm rounded-2xl border border-border/40 bg-surface-container-lowest p-6 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="dept-rename-title">
+          <div className="w-full max-w-sm rounded-2xl border border-border/40 bg-background p-6 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="dept-rename-title">
             <h2 id="dept-rename-title" className="mb-4 text-lg font-bold text-text">
               Rename department
             </h2>

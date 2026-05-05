@@ -257,7 +257,7 @@ function CoachingPairFilterForm({
   const base = new URLSearchParams(historyFilterQueryString);
   base.delete("coachingCoach");
   base.delete("coachingCoachee");
-  const triggerWhite = "!bg-surface-container-lowest rounded-[10px]";
+  const triggerWhite = "!bg-background rounded-[10px]";
 
   /** Defer submit so FormSelect's hidden input reflects the new value (state updates are async). */
   const submitForm = useCallback(() => {
@@ -527,10 +527,10 @@ export function ObservationHistoryAnalysis({
   const hasTimeline = timelineWeeks.length > 0;
 
   const analysisCardClass =
-    "rounded-[14px] border border-border/25 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+    "rounded-[14px] border border-border/25 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
 
   const segmentBase =
-    "relative flex min-h-[2.5rem] flex-1 items-center justify-center px-3 py-2 text-center text-[0.8125rem] font-semibold calm-transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)]";
+    "relative flex min-h-[2.5rem] flex-1 items-center justify-center px-3 py-2 text-center text-[0.8125rem] font-semibold calm-transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
   return (
     <section className="space-y-5" onMouseLeave={hideTip}>
@@ -601,7 +601,7 @@ export function ObservationHistoryAnalysis({
               </p>
             </div>
             <div
-              className="mt-5 flex w-full overflow-hidden rounded-xl border border-border/45 bg-surface-container-lowest"
+              className="mt-5 flex w-full overflow-hidden rounded-xl border border-border/45 bg-background"
               role="group"
               aria-label="Chart time window"
             >
@@ -615,7 +615,7 @@ export function ObservationHistoryAnalysis({
                     className={`${segmentBase} ${!isLast ? "border-r border-border/40" : ""} ${
                       active
                         ? "text-white"
-                        : "bg-surface-container-lowest text-text hover:bg-surface-container-low"
+                        : "bg-background text-text hover:bg-surface-container-low"
                     }`}
                     style={active ? { backgroundColor: CHART_VIOLET } : undefined}
                     aria-current={active ? "true" : undefined}

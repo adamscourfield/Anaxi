@@ -26,12 +26,12 @@ export function BehaviourAnalysisFilters({
   buildClearHref,
 }: Props) {
   const triggerField =
-    "!rounded-xl !border !border-border/35 !bg-[var(--surface-container-lowest)] !shadow-none !min-h-[2.75rem]";
+    "!rounded-xl !border !border-border/35 !bg-background !shadow-none !min-h-[2.75rem]";
 
   return (
     <div
       id={id}
-      className="relative z-30 scroll-mt-24 rounded-xl border border-border/30 bg-surface-container-lowest p-5 shadow-[0_2px_16px_rgba(15,23,42,0.05)] md:p-6"
+      className="relative z-30 scroll-mt-24 rounded-xl border border-border/30 bg-background p-5 shadow-[0_2px_16px_rgba(15,23,42,0.05)] md:p-6"
     >
       <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Filters</p>
       <form
@@ -74,7 +74,7 @@ export function BehaviourAnalysisFilters({
           />
         </label>
 
-        <label className="flex min-w-0 items-center gap-2.5 rounded-xl border border-border/35 bg-[var(--surface-container-lowest)] px-3.5 py-2.5 lg:flex-none">
+        <label className="flex min-w-0 items-center gap-2.5 rounded-xl border border-border/35 bg-background px-3.5 py-2.5 lg:flex-none">
           <input
             type="checkbox"
             name="pp"
@@ -85,7 +85,7 @@ export function BehaviourAnalysisFilters({
           <span className="text-[0.8125rem] font-medium text-[var(--on-surface)]">PP</span>
         </label>
 
-        <label className="flex min-w-0 items-center gap-2.5 rounded-xl border border-border/35 bg-[var(--surface-container-lowest)] px-3.5 py-2.5 lg:flex-none">
+        <label className="flex min-w-0 items-center gap-2.5 rounded-xl border border-border/35 bg-background px-3.5 py-2.5 lg:flex-none">
           <input
             type="checkbox"
             name="send"
@@ -109,7 +109,7 @@ export function BehaviourAnalysisFilters({
           {hasActiveFilters && (
             <Link
               href={buildClearHref}
-              className="inline-flex w-full items-center justify-center rounded-xl border border-border/40 bg-[var(--surface-container-lowest)] px-4 py-2.5 text-center text-[0.8125rem] font-medium text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text sm:min-w-[100px] lg:w-auto"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-border/40 bg-background px-4 py-2.5 text-center text-[0.8125rem] font-medium text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text sm:min-w-[100px] lg:w-auto"
             >
               Clear
             </Link>

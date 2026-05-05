@@ -154,7 +154,7 @@ function InfoCell({
 
 function NotesBlock({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-border/35 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] px-4 py-4 sm:px-5">
+    <div className="rounded-xl border border-border/35 bg-background px-4 py-4 sm:px-5">
       <div className="flex gap-3">
         <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgba(124,105,239,0.12)]">
           <DocGlyph className="h-5 w-5" />
@@ -203,7 +203,7 @@ export default async function LeaveDetailPage({
         : "/leave";
 
   const surfaceCard =
-    "rounded-2xl border border-border/35 bg-surface-container-lowest shadow-[0_2px_20px_rgba(15,23,42,0.06)]";
+    "rounded-2xl border border-border/35 bg-background shadow-[0_2px_20px_rgba(15,23,42,0.06)]";
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-8 pt-1">
@@ -235,7 +235,7 @@ export default async function LeaveDetailPage({
             </span>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-border/40 bg-[color-mix(in_srgb,var(--surface-container-low)_45%,transparent)]">
+          <div className="overflow-hidden rounded-xl border border-border/40 bg-background">
             <div className="grid grid-cols-1 sm:grid-cols-2">
               <InfoCell
                 icon={<CalendarGlyph className="h-5 w-5" />}

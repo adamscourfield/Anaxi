@@ -22,7 +22,7 @@ export function BehaviourAnalysisCollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/30 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.05)]">
+    <div className="overflow-hidden rounded-xl border border-border/30 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.05)]">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
