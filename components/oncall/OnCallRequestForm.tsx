@@ -9,7 +9,7 @@ import { toast } from "@/components/toast-provider";
 interface Student {
   id: string;
   fullName: string;
-  upn: string;
+  upn: string | null;
   yearGroup?: string | null;
 }
 
@@ -48,10 +48,13 @@ export function OnCallRequestForm({
   }, []);
 
   const filtered = query.length > 0
-    ? students.filter((s) =>
-        s.fullName.toLowerCase().includes(query.toLowerCase()) ||
-        s.upn.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 8)
+    ? students.filter((s) => {
+        const q = query.toLowerCase();
+        return (
+          s.fullName.toLowerCase().includes(q) ||
+          (s.upn != null && s.upn !== "" && s.upn.toLowerCase().includes(q))
+        );
+      }).slice(0, 8)
     : [];
 
   async function handleSubmit(e: React.FormEvent) {
@@ -211,7 +214,7 @@ export function OnCallRequestForm({
                       >
                         {s.fullName}{" "}
                         <span className="text-muted">
-                          ({s.upn}{s.yearGroup ? ` · ${s.yearGroup}` : ""})
+                          ({s.upn ?? "—"}{s.yearGroup ? ` · ${s.yearGroup}` : ""})
                         </span>
                       </button>
                     </li>
