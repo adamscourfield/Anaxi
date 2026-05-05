@@ -1,12 +1,44 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Avatar } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
-import { SectionHeader } from "@/components/ui/section-header";
+
+const CARD =
+  "overflow-hidden rounded-2xl border border-border/35 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+
+const LABEL = "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
+
+const ICON_WELL =
+  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,105,239,0.14)] text-[#7C69EF] [&_svg]:shrink-0";
+
+const FIELD = "field w-full min-h-[2.75rem] rounded-xl border-border/40 bg-surface-container-lowest px-3.5 text-sm text-text";
+
+function PlusIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+function FunnelIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+    </svg>
+  );
+}
+
+function SearchIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="11" cy="11" r="8" />
+      <path d="M21 21l-4.3-4.3" />
+    </svg>
+  );
+}
 
 export default async function AdminCoachingPage({
   searchParams,
@@ -57,7 +89,6 @@ export default async function AdminCoachingPage({
 
   const assignmentList = assignments as any[];
 
-  // Filter by search params
   const filterCoach = searchParams?.coach?.toLowerCase() ?? "";
   const filterCoachee = searchParams?.coachee?.toLowerCase() ?? "";
   const filtered = assignmentList.filter((a) => {
@@ -69,185 +100,204 @@ export default async function AdminCoachingPage({
     );
   });
 
+  const hasFilters = Boolean(filterCoach || filterCoachee);
+
   return (
-    <div className="space-y-6">
-      <PageHeader variant="ledger"
+    <div className="space-y-6 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] pb-8">
+      <PageHeader
+        variant="ledger"
         title="Coaching Assignments"
         subtitle="Manage coach-to-coachee pairs across your institution."
       />
 
-      {/* ── Add Assignment ───────────────────────────────────────────── */}
-      <Card>
-        <SectionHeader
-          title="New assignment"
-          subtitle="Select a coach and a coachee to create a new coaching pair."
-        />
-        <form action={addAssignment} className="mt-4 flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[180px]">
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.06em] text-muted">
-              Coach
-            </label>
-            <select
-              name="coachUserId"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/30"
-              required
-            >
-              <option value="">Select coach…</option>
-              {(allUsers as any[]).map((u: any) => (
-                <option key={u.id} value={u.id}>{u.fullName}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1 min-w-[180px]">
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.06em] text-muted">
-              Coachee
-            </label>
-            <select
-              name="coacheeUserId"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/30"
-              required
-            >
-              <option value="">Select coachee…</option>
-              {(allUsers as any[]).map((u: any) => (
-                <option key={u.id} value={u.id}>{u.fullName}</option>
-              ))}
-            </select>
-          </div>
-          <div className="pb-0.5">
-            <Button type="submit" className="gap-2">
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M10 4v12M4 10h12" />
-              </svg>
-              Add Assignment
-            </Button>
-          </div>
-        </form>
-      </Card>
-
-      {/* ── Filters + Table ──────────────────────────────────────────── */}
-      {assignmentList.length === 0 ? (
-        <EmptyState title="No coaching assignments yet" description="Create your first coach/coachee pair using the form above." />
-      ) : (
-        <div className="space-y-3">
-          {/* Filter bar */}
-          <div className="filter-panel">
-          <form className="filter-bar items-end" method="get">
-            <label className="flex min-w-[200px] max-w-xs flex-1 flex-col gap-1.5">
-              <span className="filter-field-label">Coach</span>
-              <div className="relative">
-                <svg
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="8.5" cy="8.5" r="4.5" />
-                  <path d="M14 14l3 3" />
-                </svg>
-                <input
-                  name="coach"
-                  defaultValue={searchParams?.coach ?? ""}
-                  placeholder="Filter by coach…"
-                  className="field field-filter-trigger w-full py-2.5 pl-9 pr-3 text-sm"
-                />
-              </div>
-            </label>
-            <label className="flex min-w-[200px] max-w-xs flex-1 flex-col gap-1.5">
-              <span className="filter-field-label">Coachee</span>
-              <div className="relative">
-                <svg
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="8.5" cy="8.5" r="4.5" />
-                  <path d="M14 14l3 3" />
-                </svg>
-                <input
-                  name="coachee"
-                  defaultValue={searchParams?.coachee ?? ""}
-                  placeholder="Filter by coachee…"
-                  className="field field-filter-trigger w-full py-2.5 pl-9 pr-3 text-sm"
-                />
-              </div>
-            </label>
-            <div className="filter-actions filter-actions--inline !ml-0 w-full sm:w-auto lg:ml-0">
-              <button type="submit" className="btn-filter-primary btn-filter-primary--compact">
-                Filter
-              </button>
-              {(filterCoach || filterCoachee) && (
-                <a href="/admin/coaching" className="btn-filter-secondary btn-filter-secondary--compact text-center no-underline">
-                  Clear
-                </a>
-              )}
-            </div>
-          </form>
-          </div>
-
-          {/* Table */}
-          <div className="table-shell">
-            <div className="table-head-row grid grid-cols-[1fr_1fr_100px] items-center px-6 py-3">
-              <span>Coach</span>
-              <span>Coachee</span>
-              <span className="text-center">Actions</span>
-            </div>
-
-            {filtered.length === 0 ? (
-              <div className="px-6 py-8 text-center text-sm text-muted">
-                No assignments match your filters.
-              </div>
-            ) : (
-              filtered.map((a: any) => (
-                <div
-                  key={`${a.coachUserId}-${a.coacheeUserId}`}
-                  className="table-row grid grid-cols-[1fr_1fr_100px] items-center px-6 py-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar name={a.coach?.fullName ?? "?"} size="md" />
-                    <span className="text-sm font-medium text-text">{a.coach?.fullName}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Avatar name={a.coachee?.fullName ?? "?"} size="md" />
-                    <span className="text-sm text-text">{a.coachee?.fullName}</span>
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <form action={removeAssignment}>
-                      <input type="hidden" name="coachUserId" value={a.coachUserId} />
-                      <input type="hidden" name="coacheeUserId" value={a.coacheeUserId} />
-                      <button
-                        type="submit"
-                        className="rounded-md p-1.5 text-muted calm-transition hover:bg-error/10 hover:text-error"
-                        title="Remove assignment"
-                      >
-                        <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 6h12M8 6V4h4v2M6 6v10a1 1 0 001 1h6a1 1 0 001-1V6" />
-                        </svg>
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              ))
-            )}
-
-            <div className="flex items-center justify-between border-t border-[var(--surface-container-low)] px-6 py-3">
-              <p className="text-sm text-muted">
-                Showing{" "}
-                <span className="font-semibold text-text">{filtered.length}</span>
-                {filtered.length !== assignmentList.length && (
-                  <> of <span className="font-semibold text-text">{assignmentList.length}</span></>
-                )}{" "}
-                assignment{assignmentList.length !== 1 ? "s" : ""}
+      {/* New assignment */}
+      <div className={CARD}>
+        <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
+          <div className="flex gap-3 sm:gap-4">
+            <span className={ICON_WELL} aria-hidden>
+              <PlusIcon className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold tracking-tight text-text">New assignment</h2>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+                Select a coach and a coachee to create a new coaching pair.
               </p>
             </div>
           </div>
         </div>
+        <form action={addAssignment} className="flex flex-col gap-4 px-5 py-6 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-4 sm:gap-y-4 sm:px-7 sm:pb-7">
+          <label className="min-w-0 flex-1 sm:min-w-[200px]">
+            <span className={LABEL}>Coach</span>
+            <select name="coachUserId" className={FIELD} required defaultValue="">
+              <option value="">Select coach...</option>
+              {(allUsers as any[]).map((u: any) => (
+                <option key={u.id} value={u.id}>
+                  {u.fullName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="min-w-0 flex-1 sm:min-w-[200px]">
+            <span className={LABEL}>Coachee</span>
+            <select name="coacheeUserId" className={FIELD} required defaultValue="">
+              <option value="">Select coachee...</option>
+              {(allUsers as any[]).map((u: any) => (
+                <option key={u.id} value={u.id}>
+                  {u.fullName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="submit"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 sm:w-auto dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Add Assignment
+          </button>
+        </form>
+      </div>
+
+      {assignmentList.length === 0 ? (
+        <EmptyState title="No coaching assignments yet" description="Create your first coach/coachee pair using the form above." />
+      ) : (
+        <>
+          {/* Filters */}
+          <div className={CARD}>
+            <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
+              <div className="flex gap-3 sm:gap-4">
+                <span className={ICON_WELL} aria-hidden>
+                  <FunnelIcon className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold tracking-tight text-text">Filters</h2>
+                  <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">Search assignments by coach or coachee.</p>
+                </div>
+              </div>
+            </div>
+            <form method="get" className="flex flex-col gap-4 px-5 py-6 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-4 sm:gap-y-4 sm:px-7 sm:pb-7">
+              <label className="min-w-0 flex-1 sm:min-w-[200px]">
+                <span className={LABEL}>Coach</span>
+                <div className="relative">
+                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <input
+                    name="coach"
+                    defaultValue={searchParams?.coach ?? ""}
+                    placeholder="Filter by coach..."
+                    className={`${FIELD} pl-10`}
+                  />
+                </div>
+              </label>
+              <label className="min-w-0 flex-1 sm:min-w-[200px]">
+                <span className={LABEL}>Coachee</span>
+                <div className="relative">
+                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <input
+                    name="coachee"
+                    defaultValue={searchParams?.coachee ?? ""}
+                    placeholder="Filter by coachee..."
+                    className={`${FIELD} pl-10`}
+                  />
+                </div>
+              </label>
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                <button
+                  type="submit"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border/45 bg-[color-mix(in_srgb,var(--surface-container-low)_75%,transparent)] px-5 py-2.5 text-sm font-semibold text-text shadow-sm calm-transition hover:bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] sm:flex-initial"
+                >
+                  <FunnelIcon className="h-4 w-4 shrink-0 text-muted" />
+                  Apply filters
+                </button>
+                {hasFilters ? (
+                  <a
+                    href="/admin/coaching"
+                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-transparent px-4 py-2.5 text-sm font-semibold text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:flex-initial"
+                  >
+                    Clear
+                  </a>
+                ) : null}
+              </div>
+            </form>
+          </div>
+
+          {/* Assignments table */}
+          <div className={CARD}>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[520px] border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-border/25 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)]">
+                    <th className="px-5 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted sm:px-7">Coach</th>
+                    <th className="w-[3rem] px-1 py-3.5 text-center sm:w-14" aria-hidden />
+                    <th className="px-5 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted sm:px-7">Coachee</th>
+                    <th className="w-[1%] whitespace-nowrap px-5 py-3.5 text-right text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted sm:px-7">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-5 py-12 text-center text-[0.8125rem] text-muted sm:px-7">
+                        No assignments match your filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((a: any) => (
+                      <tr key={`${a.coachUserId}-${a.coacheeUserId}`} className="border-b border-border/20 last:border-b-0">
+                        <td className="px-5 py-4 align-middle sm:px-7">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Avatar name={a.coach?.fullName ?? "?"} size="md" />
+                            <span className="truncate text-[0.8125rem] font-semibold text-text">{a.coach?.fullName}</span>
+                          </div>
+                        </td>
+                        <td className="px-1 py-4 text-center align-middle text-muted">
+                          <span className="text-lg font-normal tabular-nums" aria-hidden>
+                            →
+                          </span>
+                          <span className="sr-only">to</span>
+                        </td>
+                        <td className="px-5 py-4 align-middle sm:px-7">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Avatar name={a.coachee?.fullName ?? "?"} size="md" />
+                            <span className="truncate text-[0.8125rem] font-medium text-text">{a.coachee?.fullName}</span>
+                          </div>
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-right align-middle sm:px-7">
+                          <form action={removeAssignment} className="inline">
+                            <input type="hidden" name="coachUserId" value={a.coachUserId} />
+                            <input type="hidden" name="coacheeUserId" value={a.coacheeUserId} />
+                            <button
+                              type="submit"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/45 bg-surface-container-lowest text-muted calm-transition hover:border-error/35 hover:bg-error/10 hover:text-error"
+                              title="Remove assignment"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6" />
+                              </svg>
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="border-t border-border/20 px-5 py-3.5 sm:px-7">
+              <p className="text-[0.8125rem] text-muted">
+                Showing{" "}
+                <span className="font-semibold text-text">{filtered.length}</span>
+                {filtered.length !== assignmentList.length ? (
+                  <>
+                    {" "}
+                    of <span className="font-semibold text-text">{assignmentList.length}</span>
+                  </>
+                ) : null}{" "}
+                assignment{assignmentList.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
