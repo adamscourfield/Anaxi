@@ -3,11 +3,12 @@ import type { ReactNode } from "react";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
+import { requireFeature } from "@/lib/guards";
 import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { SectionHeader } from "@/components/ui/section-header";
+import { ObservationSignalLabelsSection } from "./observation-signal-labels/ObservationSignalLabelsSection";
 
 const ACCENT_TAG = "#7C69EF";
 
@@ -167,12 +168,27 @@ export default async function AdminLanguagePage() {
   async function saveSignalLabels(formData: FormData) {
     "use server";
     const admin = await requireAdminUser();
+    await requireFeature(admin.tenantId, "OBSERVATIONS");
     for (const signal of getAllSignalDefinitionsForTenantLabels()) {
       const displayName = String(formData.get(`display_${signal.key}`) || signal.displayNameDefault).trim();
       const description = String(formData.get(`description_${signal.key}`) || "");
       await upsertTenantSignalLabel(admin.tenantId, signal.key, displayName || signal.displayNameDefault, description);
     }
     revalidatePath("/admin/language");
+    revalidatePath("/admin/signals");
+    revalidatePath("/observe/new");
+    revalidatePath("/observe/history");
+  }
+
+  async function resetAllSignals(_formData: FormData) {
+    "use server";
+    const admin = await requireAdminUser();
+    await requireFeature(admin.tenantId, "OBSERVATIONS");
+    for (const signal of getAllSignalDefinitionsForTenantLabels()) {
+      await upsertTenantSignalLabel(admin.tenantId, signal.key, signal.displayNameDefault, null);
+    }
+    revalidatePath("/admin/language");
+    revalidatePath("/admin/signals");
     revalidatePath("/observe/new");
     revalidatePath("/observe/history");
   }
@@ -180,11 +196,15 @@ export default async function AdminLanguagePage() {
   async function resetSignal(formData: FormData) {
     "use server";
     const admin = await requireAdminUser();
+    await requireFeature(admin.tenantId, "OBSERVATIONS");
     const key = String(formData.get("signalKey") || "");
     const signal = getAllSignalDefinitionsForTenantLabels().find((s) => s.key === key);
     if (!signal) return;
     await upsertTenantSignalLabel(admin.tenantId, signal.key, signal.displayNameDefault, null);
     revalidatePath("/admin/language");
+    revalidatePath("/admin/signals");
+    revalidatePath("/observe/new");
+    revalidatePath("/observe/history");
   }
 
   return (
@@ -327,76 +347,17 @@ export default async function AdminLanguagePage() {
       </TerminologyCard>
 
       {/* ── Observation Signal Labels ─────────────────────────────────── */}
-      {observationsEnabled && (
-        <TerminologyCard className="overflow-hidden">
-          <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
-            <SectionHeader
-              title="Observation signal labels"
-              subtitle="Adjust display names and descriptions used in observation screens."
-            />
-          </div>
-          <form action={saveSignalLabels} className="space-y-4 px-5 pb-6 pt-2 sm:px-7 sm:pb-7">
-            <div className="overflow-x-auto rounded-xl border border-border/25">
-              <div className="table-shell border-0 shadow-none">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="table-head-row text-left">
-                      <th className="px-5 py-3.5">Signal</th>
-                      <th className="px-4 py-3.5">Default name</th>
-                      <th className="px-4 py-3.5">Display name</th>
-                      <th className="px-4 py-3.5">Description</th>
-                      <th className="px-4 py-3.5 text-center">Reset</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {signalCatalog.map((signal) => {
-                      const override = signalLabels[signal.key];
-                      return (
-                        <tr className="table-row align-top" key={signal.key}>
-                          <td className="px-5 py-3 font-mono text-xs text-muted">{signal.key}</td>
-                          <td className="px-4 py-3 text-sm text-muted">{signal.displayNameDefault}</td>
-                          <td className="px-4 py-3">
-                            <input
-                              name={`display_${signal.key}`}
-                              defaultValue={override?.displayName || signal.displayNameDefault}
-                              minLength={2}
-                              maxLength={80}
-                              required
-                              className="field w-full"
-                            />
-                          </td>
-                          <td className="px-4 py-3">
-                            <textarea
-                              name={`description_${signal.key}`}
-                              defaultValue={override?.description ?? signal.descriptionDefault}
-                              maxLength={240}
-                              rows={2}
-                              className="field w-full resize-y"
-                            />
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <Button
-                              formAction={resetSignal}
-                              name="signalKey"
-                              value={signal.key}
-                              type="submit"
-                              variant="ghost"
-                              className="px-2 py-1 text-xs"
-                            >
-                              Reset
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <Button type="submit">Save signal labels</Button>
-          </form>
-        </TerminologyCard>
-      )}
+      {observationsEnabled ? (
+        <ObservationSignalLabelsSection
+          signalCatalog={signalCatalog}
+          labels={signalLabels}
+          saveAll={saveSignalLabels}
+          resetOne={resetSignal}
+          resetAll={resetAllSignals}
+          showFooterSave
+          footerSaveLabel="Save signal labels"
+        />
+      ) : null}
     </div>
   );
 }
