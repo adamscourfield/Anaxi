@@ -10,9 +10,16 @@ const STATUS_VARIANT: Record<OnCallStatus, PillVariant> = {
   CANCELLED: "neutral",
 };
 
-export function OnCallStatusBadge({ status }: { status: OnCallStatus }) {
+export function OnCallStatusBadge({
+  status,
+  className = "",
+}: {
+  status: OnCallStatus;
+  /** Extra classes merged onto the pill (e.g. design-system overrides). */
+  className?: string;
+}) {
   return (
-    <StatusPill variant={STATUS_VARIANT[status] ?? "neutral"} size="sm">
+    <StatusPill variant={STATUS_VARIANT[status] ?? "neutral"} size="sm" className={className}>
       {STATUS_LABELS[status]}
     </StatusPill>
   );
