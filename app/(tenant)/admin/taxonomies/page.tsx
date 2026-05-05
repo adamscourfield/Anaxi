@@ -82,7 +82,8 @@ const TAB_LABELS: Record<Tab, string> = Object.fromEntries(
 
 export default async function AdminTaxonomiesPage({ searchParams }: { searchParams?: { tab?: string } }) {
   const user = await requireAdminUser();
-  const tab = (TABS.includes((searchParams?.tab as Tab) || "loa-reasons") ? (searchParams?.tab as Tab) : "loa-reasons") as Tab;
+  const requested = (searchParams?.tab ?? "loa-reasons") as Tab;
+  const tab = (TABS.includes(requested) ? requested : "loa-reasons") as Tab;
 
   const [loaReasons, onCallReasons, locations, recipients, staff, loaAuthorisers, loaApprovalScopes] = await Promise.all([
     prisma.loaReason.findMany({ where: { tenantId: user.tenantId }, orderBy: [{ sortOrder: "asc" }, { label: "asc" }] }),
