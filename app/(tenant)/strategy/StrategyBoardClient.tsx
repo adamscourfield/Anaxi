@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect, useId, useRef } from "react";
+import { useState, useTransition, useEffect, useId, useRef, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -68,6 +69,8 @@ function StaffSearchInput({
 }) {
   const [query, setQuery] = useState(defaultValue);
   const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   const filtered = query.trim()
     ? staffList.filter((s) =>
@@ -75,13 +78,70 @@ function StaffSearchInput({
       ).slice(0, 8)
     : staffList.slice(0, 8);
 
+  useLayoutEffect(() => {
+    if (!open || !wrapRef.current) {
+      setMenuPos(null);
+      return;
+    }
+    const el = wrapRef.current;
+    const r = el.getBoundingClientRect();
+    setMenuPos({ top: r.bottom + 4, left: r.left, width: r.width });
+    function sync() {
+      if (!wrapRef.current) return;
+      const b = wrapRef.current.getBoundingClientRect();
+      setMenuPos({ top: b.bottom + 4, left: b.left, width: b.width });
+    }
+    window.addEventListener("scroll", sync, true);
+    window.addEventListener("resize", sync);
+    return () => {
+      window.removeEventListener("scroll", sync, true);
+      window.removeEventListener("resize", sync);
+    };
+  }, [open, query]);
+
+  const menu =
+    open &&
+    filtered.length > 0 &&
+    menuPos &&
+    typeof document !== "undefined" ? (
+      createPortal(
+        <ul
+          className="fixed z-[200] max-h-[200px] overflow-y-auto rounded-xl border border-border/70 bg-surface-container-lowest shadow-lg"
+          style={{
+            top: menuPos.top,
+            left: menuPos.left,
+            width: menuPos.width,
+          }}
+        >
+          {filtered.map((s) => (
+            <li key={s.id}>
+              <button
+                type="button"
+                className="calm-transition w-full cursor-pointer px-3 py-2.5 text-left text-sm text-text hover:bg-divider/50"
+                onMouseDown={() => {
+                  setQuery(s.fullName);
+                  setOpen(false);
+                }}
+              >
+                {s.fullName}
+              </button>
+            </li>
+          ))}
+        </ul>,
+        document.body,
+      )
+    ) : null;
+
   return (
-    <div className="relative">
+    <div className="relative" ref={wrapRef}>
       <input type="hidden" name="owner" value={query} />
       <input
         type="text"
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         placeholder="Search staff member..."
@@ -89,21 +149,7 @@ function StaffSearchInput({
         className="field"
         autoComplete="off"
       />
-      {open && filtered.length > 0 && (
-        <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[200px] overflow-y-auto rounded-xl border border-border/70 bg-surface-container-lowest shadow-md">
-          {filtered.map((s) => (
-            <li key={s.id}>
-              <button
-                type="button"
-                className="calm-transition w-full cursor-pointer px-3 py-2.5 text-left text-sm text-text hover:bg-divider/50"
-                onMouseDown={() => { setQuery(s.fullName); setOpen(false); }}
-              >
-                {s.fullName}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {menu}
     </div>
   );
 }
@@ -120,12 +166,19 @@ function AreaModal({
   staffList: { id: string; fullName: string }[];
 }) {
   const [pending, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false);
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<Element | null>(null);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     previouslyFocused.current = document.activeElement;
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const t = window.setTimeout(() => {
       const first = panelRef.current?.querySelector<HTMLElement>("input, textarea, select, button");
@@ -133,11 +186,11 @@ function AreaModal({
     }, 0);
     return () => {
       clearTimeout(t);
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevOverflow;
       const prev = previouslyFocused.current;
       if (prev instanceof HTMLElement) requestAnimationFrame(() => prev.focus());
     };
-  }, []);
+  }, [mounted]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -160,131 +213,135 @@ function AreaModal({
     });
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="presentation">
+  if (!mounted || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain"
+      role="presentation"
+    >
       <button
         type="button"
-        className="absolute inset-0 bg-[var(--overlay)] calm-transition"
+        className="fixed inset-0 bg-black/50 backdrop-blur-[2px] calm-transition dark:bg-black/60"
         aria-label="Dismiss dialog"
         tabIndex={-1}
         onClick={onClose}
       />
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl bg-surface-container-lowest shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200 outline-none"
-        tabIndex={-1}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-2">
-          <h2 id={titleId} className="text-[1.125rem] font-bold tracking-tight text-text">
-            {area ? "Edit Strategy" : "Propose New Strategy"}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="calm-transition rounded-md p-1.5 text-muted hover:bg-bg hover:text-text"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Body */}
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-5 px-6 pt-4 pb-2">
-            {/* Strategic Area Name */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                Strategic Area Name
-              </label>
-              <input
-                name="title"
-                required
-                defaultValue={area?.title ?? ""}
-                placeholder="e.g., KS3 Literacy Intervention"
-                maxLength={80}
-                className="field"
-              />
-            </div>
-
-            {/* Target Metric + Priority Level */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                  Target Metric
-                </label>
-                <input
-                  name="category"
-                  defaultValue={area?.category ?? ""}
-                  placeholder="e.g., 97.5% or Gold Standard"
-                  maxLength={30}
-                  className="field"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                  Priority Level
-                </label>
-                <select name="priority" defaultValue={area?.priority ?? "high"} className="field">
-                  <option value="critical">Critical Priority</option>
-                  <option value="high">High Priority</option>
-                  <option value="medium">Medium Priority</option>
-                  <option value="low">Low Priority</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Lead Person */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                Lead Person
-              </label>
-              <StaffSearchInput
-                staffList={staffList}
-                defaultValue={area?.owner ?? ""}
-              />
-            </div>
-
-            {/* Strategic Description */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                Strategic Description
-              </label>
-              <textarea
-                name="description"
-                defaultValue={area?.description ?? ""}
-                placeholder="Outline the primary objectives and key performance indicators..."
-                rows={4}
-                className="field resize-none"
-              />
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-6 py-5">
+      <div className="relative mx-auto flex min-h-full w-full justify-center px-4 pb-10 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6 sm:pb-12 sm:pt-10">
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          className="relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/40 bg-surface-container-lowest shadow-2xl outline-none animate-in fade-in zoom-in-95 duration-200 max-h-[min(90vh,calc(100dvh-2.5rem))] my-auto"
+          tabIndex={-1}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/25 px-6 pb-4 pt-5 sm:px-7 sm:pb-4 sm:pt-6">
+            <h2 id={titleId} className="pr-2 text-[1.125rem] font-bold leading-snug tracking-tight text-text sm:text-xl">
+              {area ? "Edit Strategy" : "Propose New Strategy"}
+            </h2>
             <button
               type="button"
               onClick={onClose}
-              className="calm-transition rounded-lg px-5 py-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.04em] text-muted hover:text-text"
+              className="calm-transition -mr-1 -mt-0.5 shrink-0 rounded-lg p-2 text-muted hover:bg-surface-container-low hover:text-text"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={pending}
-              className="calm-transition rounded-lg bg-accent px-5 py-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.04em] text-on-primary hover:bg-accentHover disabled:opacity-60"
-            >
-              {pending ? "Saving…" : area ? "Save Changes" : "Submit Proposal"}
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
-        </form>
+
+          <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5 sm:px-7">
+              {/* Strategic Area Name */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
+                  Strategic Area Name
+                </label>
+                <input
+                  name="title"
+                  required
+                  defaultValue={area?.title ?? ""}
+                  placeholder="e.g., KS3 Literacy Intervention"
+                  maxLength={80}
+                  className="field"
+                />
+              </div>
+
+              {/* Target Metric + Priority Level */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
+                    Target Metric
+                  </label>
+                  <input
+                    name="category"
+                    defaultValue={area?.category ?? ""}
+                    placeholder="e.g., 97.5% or Gold Standard"
+                    maxLength={30}
+                    className="field"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
+                    Priority Level
+                  </label>
+                  <select name="priority" defaultValue={area?.priority ?? "high"} className="field">
+                    <option value="critical">Critical Priority</option>
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Lead Person */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
+                  Lead Person
+                </label>
+                <StaffSearchInput staffList={staffList} defaultValue={area?.owner ?? ""} />
+              </div>
+
+              {/* Strategic Description */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
+                  Strategic Description
+                </label>
+                <textarea
+                  name="description"
+                  defaultValue={area?.description ?? ""}
+                  placeholder="Outline the primary objectives and key performance indicators..."
+                  rows={4}
+                  className="field min-h-[100px] resize-y"
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-border/25 bg-surface-container-lowest px-6 py-4 sm:px-7">
+              <button
+                type="button"
+                onClick={onClose}
+                className="calm-transition rounded-lg px-5 py-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.04em] text-muted hover:text-text"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={pending}
+                className="calm-transition rounded-xl bg-neutral-950 px-6 py-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.04em] text-white shadow-sm hover:bg-neutral-900 disabled:opacity-60 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+              >
+                {pending ? "Saving…" : area ? "Save Changes" : "Submit Proposal"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
