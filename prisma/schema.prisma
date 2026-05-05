@@ -128,12 +128,13 @@ model TenantSignalLabel {
 }
 
 model LoaReason {
-  id       String       @id @default(cuid())
-  tenantId String
-  label    String
-  active   Boolean      @default(true)
-  requests LOARequest[]
-  tenant   Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id        String       @id @default(cuid())
+  tenantId  String
+  label     String
+  active    Boolean      @default(true)
+  sortOrder Int          @default(0)
+  requests  LOARequest[]
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, label])
 }
@@ -180,28 +181,34 @@ model LOARequest {
 }
 
 model OnCallReason {
-  id       String @id @default(cuid())
-  tenantId String
-  label    String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id        String @id @default(cuid())
+  tenantId  String
+  label     String
+  active    Boolean @default(true)
+  sortOrder Int    @default(0)
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, label])
 }
 
 model OnCallLocation {
-  id       String @id @default(cuid())
-  tenantId String
-  label    String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id        String @id @default(cuid())
+  tenantId  String
+  label     String
+  active    Boolean @default(true)
+  sortOrder Int    @default(0)
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, label])
 }
 
 model OnCallRecipient {
-  id       String @id @default(cuid())
-  tenantId String
-  email    String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id        String @id @default(cuid())
+  tenantId  String
+  email     String
+  active    Boolean @default(true)
+  sortOrder Int    @default(0)
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, email])
 }
