@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { FormWithSuccessToast, FormSuccessToast } from "@/components/form-success-toast";
 
 const PLATFORM_CARD =
-  "rounded-2xl border border-border/35 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+  "rounded-2xl border border-border/35 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
 
 const FIELD_SHELL = "field w-full rounded-xl border-border/40 bg-surface-container-lowest";
 
@@ -293,9 +293,9 @@ export function AdminSettingsForms({
             </div>
           </div>
 
-          <details className="group max-w-3xl rounded-xl border border-border/40 bg-surface-container-lowest">
+          <details className="group max-w-3xl rounded-xl border border-border/40 bg-background">
             <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 calm-transition hover:bg-surface-container-low/40 [&::-webkit-details-marker]:hidden">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--surface-container-low)_70%,transparent)] text-muted">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-muted">
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M4 21v-7M4 10V8a2 2 0 012-2h6a2 2 0 012 2v2M4 21h16M8 21v-9M12 21v-5M16 21v-3M20 10v11" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M7 8h1M11 8h1M15 8h1" strokeLinecap="round" />

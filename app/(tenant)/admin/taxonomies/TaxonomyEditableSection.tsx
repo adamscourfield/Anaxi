@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 export type TaxonomyRow = { id: string; value: string; active: boolean };
 
 const CARD =
-  "overflow-hidden rounded-2xl border border-border/35 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+  "overflow-hidden rounded-2xl border border-border/35 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
 
 const FIELD = "field min-h-[2.5rem] w-full min-w-0 flex-1 rounded-xl border-border/40 bg-surface-container-lowest px-3.5 text-sm text-text";
 
@@ -152,7 +152,7 @@ export function TaxonomyEditableSection({
             {activeCount} active
           </span>
           {inactiveCount > 0 ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--surface-container-low)_90%,transparent)] px-2.5 py-1 text-[0.6875rem] font-semibold text-muted">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-background px-2.5 py-1 text-[0.6875rem] font-semibold text-muted">
               <span className="h-1.5 w-1.5 rounded-full bg-muted/70" />
               {inactiveCount} inactive
             </span>
@@ -171,7 +171,7 @@ export function TaxonomyEditableSection({
           <div className="overflow-x-auto rounded-xl border border-border/30">
             <table className="w-full min-w-[640px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-border/25 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)]">
+                <tr className="border-b border-border/25 bg-transparent">
                   <th className="w-10 px-2 py-3 sm:w-12" aria-hidden />
                   <th className="px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">{valueColumnHeader}</th>
                   <th className="w-[120px] px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">Status</th>
@@ -210,7 +210,7 @@ export function TaxonomyEditableSection({
                           className={`inline-flex rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold ${
                             row.active
                               ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
-                              : "bg-[color-mix(in_srgb,var(--surface-container-low)_85%,transparent)] text-muted"
+                              : "bg-background text-muted"
                           }`}
                         >
                           {row.active ? "Active" : "Inactive"}
@@ -221,7 +221,7 @@ export function TaxonomyEditableSection({
                           <button
                             type="submit"
                             form={formId}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-border/45 bg-surface-container-lowest px-3 py-2 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-border/45 bg-background px-3 py-2 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
                           >
                             <SaveDiskIcon className="h-4 w-4 shrink-0 text-muted" />
                             Save
@@ -234,7 +234,7 @@ export function TaxonomyEditableSection({
                               type="submit"
                               className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[0.8125rem] font-semibold calm-transition ${
                                 row.active
-                                  ? "border-border/45 bg-surface-container-lowest text-muted hover:bg-surface-container-low"
+                                  ? "border-border/45 bg-background text-muted hover:bg-surface-container-low"
                                   : "border-emerald-300/80 bg-emerald-50/90 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/35 dark:text-emerald-200 dark:hover:bg-emerald-950/55"
                               }`}
                             >
@@ -249,7 +249,7 @@ export function TaxonomyEditableSection({
                                 e.stopPropagation();
                                 setMenuOpenId((id) => (id === row.id ? null : row.id));
                               }}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/45 bg-surface-container-lowest text-muted calm-transition hover:bg-surface-container-low hover:text-text"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/45 bg-background text-muted calm-transition hover:bg-surface-container-low hover:text-text"
                               aria-expanded={menuOpenId === row.id}
                               aria-haspopup="menu"
                               title="More actions"
@@ -259,7 +259,7 @@ export function TaxonomyEditableSection({
                             {menuOpenId === row.id ? (
                               <div
                                 ref={menuRef}
-                                className="absolute right-0 top-full z-20 mt-1 min-w-[10rem] rounded-xl border border-border/40 bg-surface-container-lowest py-1 shadow-lg"
+                                className="absolute right-0 top-full z-20 mt-1 min-w-[10rem] rounded-xl border border-border/40 bg-background py-1 shadow-lg"
                                 role="menu"
                               >
                                 <form action={deleteItem}>
@@ -287,7 +287,7 @@ export function TaxonomyEditableSection({
           </div>
         )}
 
-        <div className="mt-6 rounded-xl bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] p-5 sm:p-6">
+        <div className="mt-6 rounded-xl bg-background p-5 sm:p-6">
           <h3 className="text-[0.9375rem] font-bold text-text">Add {addItemNoun}</h3>
           <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
             New entries are active by default. You can deactivate them anytime without deleting history.

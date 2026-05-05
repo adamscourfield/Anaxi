@@ -59,8 +59,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         aria-selected={active}
         className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[0.8125rem] font-semibold calm-transition sm:px-5 sm:py-3 ${
           active
-            ? "border border-border/45 bg-surface-container-lowest text-text shadow-sm"
-            : "border border-transparent bg-[color-mix(in_srgb,var(--surface-container-low)_85%,transparent)] text-text hover:bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)]"
+            ? "border border-border/45 bg-background text-text shadow-sm"
+            : "border border-transparent bg-transparent text-text hover:bg-surface-container-low/40"
         }`}
       >
         <span className="shrink-0 text-muted [&_svg]:block" aria-hidden>
@@ -87,11 +87,11 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
   );
 
   return (
-    <div className="space-y-8 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] pb-8">
+    <div className="space-y-8 pb-8">
       <div className="space-y-6 border-b border-border/25 pb-6">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 rounded-xl border border-border/40 bg-surface-container-lowest px-3.5 py-2 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
+          className="inline-flex items-center gap-2 rounded-xl border border-border/40 bg-background px-3.5 py-2 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
         >
           <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden>
             <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />

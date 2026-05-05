@@ -334,7 +334,7 @@ export function UserDirectoryTable({
                           <button
                             type="button"
                             onClick={() => setEditingUser(u)}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-surface-container-lowest px-3.5 py-2 text-sm font-semibold text-text shadow-sm calm-transition hover:border-border hover:bg-surface-container-low"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background px-3.5 py-2 text-sm font-semibold text-text shadow-sm calm-transition hover:border-border hover:bg-surface-container-low"
                           >
                             <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 text-muted" stroke="currentColor" strokeWidth="1.5" aria-hidden>
                               <path d="M13.586 3.586a2 2 0 112.828 2.828l-9.07 9.07-3.87.968.968-3.87 9.144-9.143z" strokeLinecap="round" strokeLinejoin="round" />

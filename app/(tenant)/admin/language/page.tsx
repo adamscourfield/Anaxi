@@ -108,7 +108,7 @@ function TagIcon({ className }: { className?: string }) {
 function TerminologyCard({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-2xl border border-border/35 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)] ${className}`}
+      className={`rounded-2xl border border-border/35 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)] ${className}`}
     >
       {children}
     </div>
@@ -261,7 +261,7 @@ export default async function AdminLanguagePage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] text-left text-sm">
               <thead>
-                <tr className="border-b border-border/25 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)]">
+                <tr className="border-b border-border/25 bg-transparent">
                   <th className="px-5 py-3.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted sm:px-7">
                     Event type
                   </th>

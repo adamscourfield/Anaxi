@@ -153,10 +153,10 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
   }
 
   const surfaceCard =
-    "rounded-xl border border-border/30 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+    "rounded-xl border border-border/30 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
 
   return (
-    <div className="w-full min-w-0 space-y-6 bg-[color-mix(in_srgb,var(--surface-container-low)_50%,transparent)] pb-8 pt-1">
+    <div className="w-full min-w-0 space-y-6 pb-8 pt-1">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 gap-3 sm:gap-4">
           <div
@@ -194,7 +194,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
 
         <Link
           href="/on-call"
-          className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-border/40 bg-surface-container-lowest px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low lg:self-auto"
+          className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-border/40 bg-background px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low lg:self-auto"
         >
           <svg className="h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path d="M4 4h16v16H4z" strokeLinecap="round" strokeLinejoin="round" />

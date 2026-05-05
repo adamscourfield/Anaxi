@@ -121,7 +121,7 @@ export default async function AdminDepartmentsPage() {
   }));
 
   return (
-    <div className="space-y-8 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] pb-8">
+    <div className="space-y-8 pb-8">
       <PageHeader
         variant="ledger"
         eyebrow={
@@ -139,7 +139,7 @@ export default async function AdminDepartmentsPage() {
           <>
             <Link
               href="/api/admin/departments/export"
-              className="inline-flex items-center gap-2 rounded-xl border border-border/40 bg-surface-container-lowest px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
+              className="inline-flex items-center gap-2 rounded-xl border border-border/40 bg-background px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
             >
               <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M10 3v14M6 13l4 4 4-4" />

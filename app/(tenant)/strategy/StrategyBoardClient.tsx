@@ -106,7 +106,7 @@ function StaffSearchInput({
     typeof document !== "undefined" ? (
       createPortal(
         <ul
-          className="fixed z-[200] max-h-[200px] overflow-y-auto rounded-xl border border-border/70 bg-surface-container-lowest shadow-lg"
+          className="fixed z-[200] max-h-[200px] overflow-y-auto rounded-xl border border-border/70 bg-background shadow-lg"
           style={{
             top: menuPos.top,
             left: menuPos.left,
@@ -233,7 +233,7 @@ function AreaModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/40 bg-surface-container-lowest shadow-2xl outline-none animate-in fade-in zoom-in-95 duration-200 max-h-[min(90vh,calc(100dvh-2.5rem))] my-auto"
+          className="relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/40 bg-background shadow-2xl outline-none animate-in fade-in zoom-in-95 duration-200 max-h-[min(90vh,calc(100dvh-2.5rem))] my-auto"
           tabIndex={-1}
           onClick={(e) => e.stopPropagation()}
         >
@@ -321,7 +321,7 @@ function AreaModal({
             </div>
 
             {/* Footer */}
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-border/25 bg-surface-container-lowest px-6 py-4 sm:px-7">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-border/25 bg-background px-6 py-4 sm:px-7">
               <button
                 type="button"
                 onClick={onClose}
@@ -391,7 +391,7 @@ function ActionMenu({
         </svg>
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-xl border border-border/70 bg-surface-container-lowest shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="absolute right-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-xl border border-border/70 bg-background shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
           <button
             type="button"
             className="calm-transition flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-text hover:bg-surface-container-low"
@@ -543,7 +543,7 @@ function StrategyTile({
 
   return (
     <div
-      className={`flex flex-col rounded-2xl border border-border/30 bg-surface-container-lowest p-5 shadow-ambient calm-transition motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-lg ${
+      className={`flex flex-col rounded-2xl border border-border/30 bg-background p-5 shadow-ambient calm-transition motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-lg ${
         area.completed ? "opacity-50" : ""
       }`}
     >
@@ -662,7 +662,7 @@ export function StrategyBoardClient({ areas, canManage, staffList }: Props) {
             }`}
           >
             <span
-              className={`absolute top-0.5 h-3 w-3 rounded-full bg-surface-container-lowest shadow transition-transform duration-200 ${
+              className={`absolute top-0.5 h-3 w-3 rounded-full bg-background shadow transition-transform duration-200 ${
                 showCompleted ? "translate-x-[14px]" : "translate-x-0.5"
               }`}
             />

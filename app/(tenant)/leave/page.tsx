@@ -348,7 +348,7 @@ export default async function LeavePage({
           requestHrefForId={(id) => `/leave/${id}`}
         />
       ) : !hasAnyListRows ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface-container-lowest py-16">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-background py-16">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface-container-low">
             <svg
               className="h-6 w-6 text-muted"

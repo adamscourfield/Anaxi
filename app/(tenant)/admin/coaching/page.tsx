@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Avatar } from "@/components/ui/avatar";
 
 const CARD =
-  "overflow-hidden rounded-2xl border border-border/35 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+  "overflow-hidden rounded-2xl border border-border/35 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
 
 const LABEL = "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
 
@@ -103,7 +103,7 @@ export default async function AdminCoachingPage({
   const hasFilters = Boolean(filterCoach || filterCoachee);
 
   return (
-    <div className="space-y-6 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] pb-8">
+    <div className="space-y-6 pb-8">
       <PageHeader
         variant="ledger"
         title="Coaching Assignments"
@@ -203,7 +203,7 @@ export default async function AdminCoachingPage({
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                 <button
                   type="submit"
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border/45 bg-[color-mix(in_srgb,var(--surface-container-low)_75%,transparent)] px-5 py-2.5 text-sm font-semibold text-text shadow-sm calm-transition hover:bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] sm:flex-initial"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border/45 bg-background px-5 py-2.5 text-sm font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low/40 sm:flex-initial"
                 >
                   <FunnelIcon className="h-4 w-4 shrink-0 text-muted" />
                   Apply filters
@@ -225,7 +225,7 @@ export default async function AdminCoachingPage({
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-border/25 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)]">
+                  <tr className="border-b border-border/25 bg-transparent">
                     <th className="px-5 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted sm:px-7">Coach</th>
                     <th className="w-[3rem] px-1 py-3.5 text-center sm:w-14" aria-hidden />
                     <th className="px-5 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted sm:px-7">Coachee</th>
@@ -268,7 +268,7 @@ export default async function AdminCoachingPage({
                             <input type="hidden" name="coacheeUserId" value={a.coacheeUserId} />
                             <button
                               type="submit"
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/45 bg-surface-container-lowest text-muted calm-transition hover:border-error/35 hover:bg-error/10 hover:text-error"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/45 bg-background text-muted calm-transition hover:border-error/35 hover:bg-error/10 hover:text-error"
                               title="Remove assignment"
                             >
                               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

@@ -359,7 +359,7 @@ export default async function AnalysisPage({
   const suspensionStudentCount = result.suspensionIncidents.length;
 
   return (
-    <div className="anx-reports-page space-y-8 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] pb-10 pt-1">
+    <div className="anx-reports-page space-y-8 pb-10 pt-1">
       <ExplorerBackLink />
 
       <PageHeader
@@ -403,7 +403,7 @@ export default async function AnalysisPage({
                 {yearGroupFilter ? <input type="hidden" name="yearGroup" value={yearGroupFilter} /> : null}
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl border border-border/45 bg-surface-container-lowest px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border/45 bg-background px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
                 >
                   <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
@@ -428,7 +428,7 @@ export default async function AnalysisPage({
       />
 
       {/* KPI row */}
-      <div className="rounded-xl border border-border/30 bg-surface-container-lowest p-5 shadow-[0_2px_16px_rgba(15,23,42,0.05)] sm:p-6">
+      <div className="rounded-xl border border-border/30 bg-background p-5 shadow-[0_2px_16px_rgba(15,23,42,0.05)] sm:p-6">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <div className="flex gap-3 sm:gap-4">
             <KpiIconWell bgClass="bg-[rgba(124,105,239,0.14)] text-[#7C69EF]">
@@ -508,7 +508,7 @@ export default async function AnalysisPage({
                 return (
                   <div
                     key={s.key}
-                    className="flex items-center gap-3 rounded-xl border border-border/25 bg-surface-container-lowest px-4 py-3.5 shadow-sm"
+                    className="flex items-center gap-3 rounded-xl border border-border/25 bg-background px-4 py-3.5 shadow-sm"
                   >
                     {vis ? (
                       <StatCircleIcon bg={vis.circleBg} stroke={vis.circleStroke}>
@@ -548,7 +548,7 @@ export default async function AnalysisPage({
       />
 
       {/* Live on-call + requesters */}
-      <div className="overflow-hidden rounded-xl border border-border/30 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.05)]">
+      <div className="overflow-hidden rounded-xl border border-border/30 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.05)]">
         {sectionHeader(
           `${onCallPlural} · live`,
           "Requests in this window. Charts use school hours 8am–3pm. Use bars to open details.",
@@ -591,7 +591,7 @@ export default async function AnalysisPage({
                         {topTeachers.map((row, i) => (
                           <tr
                             key={row.teacherId}
-                            className={`calm-transition ${i % 2 === 1 ? "bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)]" : ""}`}
+                            className="calm-transition"
                           >
                             <td className="px-5 py-3.5">
                               <div className="flex items-center gap-2.5">
@@ -655,7 +655,7 @@ export default async function AnalysisPage({
                     {result.suspensionIncidents.map((row, i) => (
                       <tr
                         key={`${row.studentId}-${row.snapshotDate.toISOString()}`}
-                        className={`calm-transition ${i % 2 === 1 ? "bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)]" : ""}`}
+                        className="calm-transition"
                       >
                         <td className="px-5 py-3.5">
                           <div className="flex min-w-0 items-center gap-2.5">
@@ -746,7 +746,7 @@ export default async function AnalysisPage({
                     {result.highPriorityStudents.map((student, i) => (
                       <tr
                         key={student.studentId}
-                        className={`calm-transition ${i % 2 === 1 ? "bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)]" : ""}`}
+                        className="calm-transition"
                       >
                         <td className="px-5 py-3.5">
                           <div className="flex min-w-0 items-center gap-2.5">
