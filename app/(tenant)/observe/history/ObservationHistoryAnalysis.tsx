@@ -83,7 +83,19 @@ function ChartTooltip({ state }: { state: TooltipState }) {
       }}
       role="tooltip"
     >
-      <span className="whitespace-pre-wrap text-text">{state.text}</span>
+      <div className="whitespace-pre-wrap">
+        {state.text.split("\n").map((line, i) =>
+          i === 0 ? (
+            <p key={i} className="font-bold text-[#111827]">
+              {line}
+            </p>
+          ) : (
+            <p key={i} className="mt-0.5 text-[#6B7280]">
+              {line}
+            </p>
+          ),
+        )}
+      </div>
     </div>,
     document.body,
   );
@@ -94,6 +106,8 @@ const TIMELINE_PAD = { L: 36, R: 8, T: 12, B: 28, W: 640, H: 160 };
 
 const CHART_VIOLET = "#7C5CFF";
 const CHART_VIOLET_LIGHT = "#C4B5FF";
+/** Bar fill: medium violet → lighter violet (matches mock horizontal gradient). */
+const ROLE_BAR_GRADIENT = `linear-gradient(90deg, ${CHART_VIOLET} 0%, #9B7BFF 52%, ${CHART_VIOLET_LIGHT} 100%)`;
 
 function CalendarOutlineIcon({
   className,
@@ -119,12 +133,11 @@ function CalendarOutlineIcon({
 
 function InfoCircleIcon({ title: ariaLabel }: { title: string }) {
   return (
-    <span
-      className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#D1D5DB] text-[0.625rem] font-semibold leading-none text-[#6B7280]"
-      title={ariaLabel}
-      aria-label={ariaLabel}
-    >
-      i
+    <span className="inline-flex shrink-0 text-[#9CA3AF]" title={ariaLabel} aria-label={ariaLabel}>
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+      </svg>
     </span>
   );
 }
@@ -646,7 +659,7 @@ export function ObservationHistoryAnalysis({
         <div className={`${analysisCardClass} flex flex-col p-5 md:p-6`}>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-text">
+              <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[#6B7280]">
                 Observations by observer role
               </h3>
               <InfoCircleIcon title="Counts reflect observers in your current table filters and the chart window above." />
@@ -657,50 +670,48 @@ export function ObservationHistoryAnalysis({
             <p className="mt-4 text-sm text-muted">No observations in the current filter.</p>
           ) : (
             <>
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-5 space-y-3.5">
                 {roleCounts.map((row, rank) => {
                   const isLead = rank === 0;
-                  const barBg = isLead
-                    ? CHART_VIOLET
-                    : `linear-gradient(90deg, ${CHART_VIOLET} 0%, ${CHART_VIOLET_LIGHT} 100%)`;
+                  const pct = barWidthPct(row.count, maxRole);
+                  const barBg = row.count > 0 ? ROLE_BAR_GRADIENT : "transparent";
                   return (
-                  <li key={row.role}>
-                    <button
-                      type="button"
-                      className="flex w-full cursor-default items-center gap-3 rounded-lg py-0.5 text-left text-sm calm-transition hover:bg-[rgba(124,92,255,0.06)]"
-                      onMouseEnter={(e) =>
-                        showTip(
-                          e,
-                          `${row.label}\n${row.count.toLocaleString()} observation${row.count === 1 ? "" : "s"}`,
-                        )
-                      }
-                      onMouseMove={moveTip}
-                      onMouseLeave={hideTip}
-                    >
-                      <span className="w-[7.5rem] shrink-0 truncate font-semibold text-text" title={row.label}>
-                        {row.label}
-                      </span>
-                      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                    <li key={row.role}>
+                      <button
+                        type="button"
+                        className="grid w-full cursor-default grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)_3.25rem] items-center gap-x-3 rounded-lg py-0.5 text-left text-sm calm-transition hover:bg-[rgba(124,92,255,0.06)] sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_3.5rem]"
+                        onMouseEnter={(e) =>
+                          showTip(
+                            e,
+                            `${row.label}\n${row.count.toLocaleString()} observation${row.count === 1 ? "" : "s"}`,
+                          )
+                        }
+                        onMouseMove={moveTip}
+                        onMouseLeave={hideTip}
+                      >
+                        <span className="min-w-0 truncate font-semibold text-[#111827]" title={row.label}>
+                          {row.label}
+                        </span>
                         <div className={barTrack}>
                           <span
-                            className="pointer-events-none absolute inset-y-0 left-0 rounded-full"
+                            className="pointer-events-none absolute inset-y-0 left-0 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]"
                             style={{
-                              width: `${barWidthPct(row.count, maxRole)}%`,
+                              width: `${pct}%`,
+                              minWidth: row.count > 0 ? "0.5rem" : 0,
                               background: barBg,
                             }}
                           />
                         </div>
                         <span
-                          className={`min-w-[2.75rem] shrink-0 text-right text-[0.8125rem] font-semibold tabular-nums ${
+                          className={`text-right text-[0.8125rem] font-semibold tabular-nums ${
                             isLead ? "" : "text-[#6B7280]"
                           }`}
                           style={isLead ? { color: CHART_VIOLET } : undefined}
                         >
                           {row.count.toLocaleString()}
                         </span>
-                      </div>
-                    </button>
-                  </li>
+                      </button>
+                    </li>
                   );
                 })}
               </ul>
