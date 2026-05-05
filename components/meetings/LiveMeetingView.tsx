@@ -5,10 +5,18 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
-import { H1, MetaText } from "@/components/ui/typography";
+import { MetaText } from "@/components/ui/typography";
 import { toast } from "@/components/toast-provider";
 
-/* ── Types ─────────────────────────────────────────────────────────────── */
+/* ── Live meeting surface tokens (match product mock — do not change page background) ── */
+const NAVY = "#0f172a";
+const VIOLET_ICON = "#7C5CFF";
+const SLATE_900 = "#111827";
+const SLATE_600 = "#6B7280";
+const SLATE_400 = "#9CA3AF";
+const BORDER = "#E5E7EB";
+const MEETING_CARD =
+  "rounded-xl bg-[var(--surface-container-lowest)] p-5 sm:p-6 shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
 
 interface Attendee {
   id: string;
@@ -56,6 +64,14 @@ function getInitials(name: string): string {
 function getFirstName(name: string): string {
   const parts = name.split(" ");
   return parts[0] + (parts.length > 1 ? " " + parts[1][0] + "." : "");
+}
+
+function isDueToday(dueDate: Date | string): boolean {
+  const d = new Date(dueDate);
+  d.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d.getTime() === today.getTime();
 }
 
 function isOverdue(dueDate: Date | string): boolean {
@@ -132,23 +148,25 @@ function AvatarStack({ attendees }: { attendees: Attendee[] }) {
 
   return (
     <div className="flex items-center">
-      <div className="flex -space-x-2">
+          <div className="flex -space-x-2">
         {shown.map((a, i) => (
           <div
             key={a.id}
             title={a.user.fullName}
-            className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-background text-[11px] font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
+            className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--surface-container-lowest)] text-[11px] font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
           >
             {getInitials(a.user.fullName)}
           </div>
         ))}
         {overflow > 0 && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-[var(--surface-container-high)] text-[11px] font-semibold text-muted">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--surface-container-lowest)] bg-[#F3F4F6] text-[11px] font-semibold text-[#6B7280]">
             +{overflow}
           </div>
         )}
       </div>
-      <span className="ml-3 text-sm text-muted">{attendees.length} Attendees Present</span>
+      <span className="ml-3 text-sm" style={{ color: SLATE_600 }}>
+        {attendees.length} Attendees Present
+      </span>
     </div>
   );
 }
@@ -252,7 +270,8 @@ function FormattingToolbar({
       <button
         type="button"
         onClick={() => insertFormatting("**", "**", "bold text")}
-        className="rounded-md p-1.5 text-muted hover:bg-[var(--surface-container)] hover:text-text calm-transition"
+        className="rounded-md p-1.5 calm-transition hover:bg-[#F3F4F6]"
+        style={{ color: SLATE_400 }}
         title="Bold"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -263,7 +282,8 @@ function FormattingToolbar({
       <button
         type="button"
         onClick={() => insertFormatting("*", "*", "italic text")}
-        className="rounded-md p-1.5 text-muted hover:bg-[var(--surface-container)] hover:text-text calm-transition"
+        className="rounded-md p-1.5 calm-transition hover:bg-[#F3F4F6]"
+        style={{ color: SLATE_400 }}
         title="Italic"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -275,7 +295,8 @@ function FormattingToolbar({
       <button
         type="button"
         onClick={insertList}
-        className="rounded-md p-1.5 text-muted hover:bg-[var(--surface-container)] hover:text-text calm-transition"
+        className="rounded-md p-1.5 calm-transition hover:bg-[#F3F4F6]"
+        style={{ color: SLATE_400 }}
         title="Bullet List"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -290,7 +311,8 @@ function FormattingToolbar({
       <button
         type="button"
         onClick={insertLink}
-        className="rounded-md p-1.5 text-muted hover:bg-[var(--surface-container)] hover:text-text calm-transition"
+        className="rounded-md p-1.5 calm-transition hover:bg-[#F3F4F6]"
+        style={{ color: SLATE_400 }}
         title="Insert Link"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -580,31 +602,34 @@ export function LiveMeetingView({
       <div>
         <div className="mb-2 flex flex-wrap items-center gap-3">
           {hasStarted && !isEnded && (
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-scale-strong-text">
-              <span className="inline-block h-2 w-2 rounded-full bg-scale-strong" />
-              IN PROGRESS
+            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: "#15803d" }}>
+              <span className="inline-block h-2 w-2 rounded-full bg-[#22c55e]" />
+              In progress
             </span>
           )}
           {!hasStarted && !isEnded && (status === "CONFIRMED" || status === "PENDING") && (
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-muted">
-              <span className="inline-block h-2 w-2 rounded-full bg-muted" />
-              NOT STARTED
+            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: SLATE_600 }}>
+              <span className="inline-block h-2 w-2 rounded-full bg-[#D1D5DB]" />
+              Not started
             </span>
           )}
           {isEnded && (
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-muted">
-              <span className="inline-block h-2 w-2 rounded-full bg-muted" />
-              ENDED
+            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: SLATE_600 }}>
+              <span className="inline-block h-2 w-2 rounded-full bg-[#D1D5DB]" />
+              Ended
             </span>
           )}
         </div>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
-            <H1>{title}</H1>
+            <h1 className="text-[1.65rem] font-bold leading-tight tracking-[-0.02em] sm:text-[1.875rem]" style={{ color: SLATE_900 }}>
+              {title}
+            </h1>
             <div className="flex flex-wrap items-center gap-4">
               <span
-                className="flex items-center gap-2 font-mono text-sm tabular-nums text-muted"
+                className="flex items-center gap-2 font-mono text-sm tabular-nums"
+                style={{ color: SLATE_600 }}
                 title={
                   isEnded
                     ? "Session duration (logged)"
@@ -613,7 +638,7 @@ export function LiveMeetingView({
                       : "Timer starts when you start the meeting"
                 }
               >
-                <svg className="h-4 w-4 shrink-0 text-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden style={{ color: SLATE_400 }}>
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 7v5l3 3" strokeLinecap="round" />
                 </svg>
@@ -627,7 +652,8 @@ export function LiveMeetingView({
             {canStartMeeting && !isEnded && !hasStarted && (
               <Button
                 type="button"
-                className="rounded-xl bg-neutral-950 px-5 py-2.5 text-[0.8125rem] font-semibold text-white hover:bg-neutral-900 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+                className="rounded-xl px-5 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm hover:opacity-95"
+                style={{ backgroundColor: NAVY }}
                 disabled={startingMeeting}
                 onClick={() => void handleStartMeeting()}
               >
@@ -640,7 +666,8 @@ export function LiveMeetingView({
             <button
               type="button"
               onClick={handleSaveDraft}
-              className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-text calm-transition hover:bg-[var(--surface-container-low)]"
+              className="inline-flex items-center gap-2 rounded-xl border bg-[var(--surface-container-lowest)] px-4 py-2.5 text-sm font-semibold shadow-sm calm-transition hover:bg-[#F9FAFB]"
+              style={{ borderColor: BORDER, color: SLATE_900 }}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
@@ -650,7 +677,11 @@ export function LiveMeetingView({
               Save Draft
             </button>
             {!isEnded && (
-              <Button variant="danger" className="rounded-xl px-5 py-2.5 text-[0.8125rem]" onClick={() => setEndMeetingOpen(true)}>
+              <Button
+                variant="danger"
+                className="rounded-xl border-0 bg-[#E85D4C] px-5 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm hover:bg-[#D64D3E] hover:opacity-100"
+                onClick={() => setEndMeetingOpen(true)}
+              >
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                   <rect x="7" y="7" width="10" height="10" rx="1" />
                 </svg>
@@ -662,20 +693,24 @@ export function LiveMeetingView({
       </div>
 
       {/* ── Two-Column Layout ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_340px] lg:gap-6">
         {/* ── Left: Live Minutes ───────────────────────────────────── */}
-        <div className="rounded-2xl border border-border/50 bg-background p-6 shadow-[0_2px_16px_rgba(15,23,42,0.06)]">
+        <div className={MEETING_CARD}>
           {/* Minutes Header */}
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <svg className="h-5 w-5 shrink-0" style={{ color: "#7C69EF" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <polyline points="10 9 9 9 8 9" />
-              </svg>
-              <h2 className="text-lg font-bold text-text">Live Minutes</h2>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: "rgba(124, 92, 255, 0.12)", color: VIOLET_ICON }}>
+                <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
+              </span>
+              <h2 className="text-lg font-bold" style={{ color: SLATE_900 }}>
+                Live Minutes
+              </h2>
             </div>
             {canEdit && (
               <FormattingToolbar
@@ -694,18 +729,19 @@ export function LiveMeetingView({
             onChange={(e) => canEdit && handleNotesChange(e.target.value)}
             readOnly={!canEdit}
             rows={18}
-            className="w-full resize-none rounded-xl border-0 bg-transparent p-0 font-sans text-sm leading-relaxed text-text placeholder:text-muted/60 focus:outline-none focus:ring-0"
+            className="w-full resize-none rounded-xl border-0 bg-transparent p-0 font-sans text-sm leading-relaxed placeholder:text-[#9CA3AF] focus:outline-none focus:ring-0"
+            style={{ color: SLATE_900 }}
             placeholder={`${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} - INTRODUCTION\n\nStart taking meeting minutes here...`}
           />
 
           {/* Footer */}
-          <div className="mt-4 flex items-center justify-between border-t border-border/30 pt-3">
-            <MetaText className="uppercase tracking-wider">
+          <div className="mt-4 flex items-center justify-between border-t pt-3" style={{ borderColor: BORDER }}>
+            <span className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: SLATE_400 }}>
               {saveStatusLabel}
-            </MetaText>
-            <MetaText className="uppercase tracking-wider">
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: SLATE_400 }}>
               Characters: {notes.length}
-            </MetaText>
+            </span>
           </div>
         </div>
 
@@ -713,13 +749,17 @@ export function LiveMeetingView({
         <div className="space-y-5">
           {/* ── New Action Item Card ────────────────────────────────── */}
           {canAddActions && !isEnded && (
-            <div className="rounded-2xl border border-border/50 bg-background p-5 shadow-ambient">
+            <div className={MEETING_CARD}>
               <div className="mb-4 flex items-center gap-2">
-                <svg className="h-5 w-5 text-scale-strong-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                  <polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
-                <h3 className="text-base font-bold text-text">New Action Item</h3>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DCFCE7] text-[#15803d]">
+                  <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                </span>
+                <h3 className="text-base font-bold" style={{ color: SLATE_900 }}>
+                  New Action Item
+                </h3>
               </div>
 
               {formError && (
@@ -730,7 +770,7 @@ export function LiveMeetingView({
 
               <form onSubmit={handleAddAction} className="space-y-3">
                 <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em]" style={{ color: SLATE_600 }}>
                     Task Description
                   </label>
                   <input
@@ -738,19 +778,21 @@ export function LiveMeetingView({
                     value={taskDesc}
                     onChange={(e) => setTaskDesc(e.target.value)}
                     placeholder="e.g., Update Science lab schedule"
-                    className="field"
+                    className="w-full rounded-xl border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(15,23,42,0.08)]"
+                    style={{ borderColor: BORDER, color: SLATE_900 }}
                     required
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted">
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em]" style={{ color: SLATE_600 }}>
                       Assign To
                     </label>
                     <select
                       value={assignToId}
                       onChange={(e) => setAssignToId(e.target.value)}
-                      className="field"
+                      className="w-full rounded-xl border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(15,23,42,0.08)]"
+                      style={{ borderColor: BORDER, color: SLATE_900 }}
                     >
                       {attendees.map((a) => (
                         <option key={a.userId} value={a.userId}>
@@ -760,14 +802,15 @@ export function LiveMeetingView({
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted">
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em]" style={{ color: SLATE_600 }}>
                       Due Date
                     </label>
                     <input
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="field"
+                      className="w-full rounded-xl border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(15,23,42,0.08)]"
+                      style={{ borderColor: BORDER, color: SLATE_900 }}
                     />
                   </div>
                 </div>
@@ -775,66 +818,72 @@ export function LiveMeetingView({
                   type="submit"
                   variant="danger"
                   disabled={submitting}
-                  className="w-full rounded-xl text-sm"
+                  className="w-full rounded-xl border-0 bg-[#E85D4C] py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#D64D3E] hover:opacity-100 disabled:opacity-40"
                 >
-                  {submitting ? "ADDING..." : "ADD ACTION ITEM"}
+                  {submitting ? "Adding…" : "Add Action Item"}
                 </Button>
               </form>
             </div>
           )}
 
           {/* ── Action Items ─────────────────────────────────────── */}
-          <div className="rounded-2xl border border-border/50 bg-background p-5 shadow-ambient">
-            <h3 className="mb-4 text-base font-bold text-text">
+          <div className={MEETING_CARD}>
+            <h3 className="mb-4 text-base font-bold" style={{ color: SLATE_900 }}>
               Action Items
               {totalActions > 0 && (
-                <span className="ml-2 rounded-full bg-[var(--surface-container)] px-2 py-0.5 text-xs font-semibold text-muted">
+                <span
+                  className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold"
+                  style={{ backgroundColor: "#F3F4F6", color: SLATE_600 }}
+                >
                   {totalActions}
                 </span>
               )}
             </h3>
             {localActions.length === 0 ? (
-              <p className="text-sm text-muted">No action items yet. Add one above.</p>
+              <p className="text-sm" style={{ color: SLATE_600 }}>
+                No action items yet. Add one above.
+              </p>
             ) : (
-              <div className="space-y-4">
+              <div className="divide-y" style={{ borderColor: BORDER }}>
                 {localActions.map((action) => {
                   const overdue = action.status === "OPEN" && action.dueDate && isOverdue(action.dueDate);
+                  const dueToday =
+                    action.status === "OPEN" && action.dueDate && isDueToday(action.dueDate) && !overdue;
                   return (
-                    <div key={action.id} className="flex items-start gap-3">
+                    <div key={action.id} className="flex items-start gap-3 py-4 first:pt-0 last:pb-0">
                       {/* Status circle */}
                       <div className="mt-0.5 flex-shrink-0">
                         {action.status === "DONE" ? (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-scale-strong">
-                            <svg className="h-2.5 w-2.5 text-on-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#22c55e]">
+                            <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                               <polyline points="20 6 9 17 4 12" />
                             </svg>
                           </div>
                         ) : overdue ? (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-error text-on-primary">
-                            <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                              <line x1="12" y1="8" x2="12" y2="12" />
-                              <line x1="12" y1="16" x2="12.01" y2="16" />
-                            </svg>
+                          <div className="relative flex h-5 w-5 items-center justify-center rounded-full bg-[#DC2626]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-white" aria-hidden />
                           </div>
                         ) : (
-                          <div className="h-5 w-5 rounded-full border-[1.5px] border-border" />
+                          <div className="h-5 w-5 rounded-full border-2" style={{ borderColor: "#D1D5DB" }} />
                         )}
                       </div>
                       {/* Task content */}
                       <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-medium leading-snug ${action.status === "DONE" ? "text-muted line-through" : "text-text"}`}>
+                        <p
+                          className={`text-sm font-medium leading-snug ${action.status === "DONE" ? "text-[#9CA3AF] line-through" : ""}`}
+                          style={action.status === "DONE" ? undefined : { color: SLATE_900 }}
+                        >
                           {action.description}
                         </p>
-                        <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <span className="rounded bg-[var(--surface-container)] px-1.5 py-0.5 text-[10px] font-semibold text-muted">
-                            {getFirstName(action.owner.fullName)}
-                          </span>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]" style={{ color: SLATE_600 }}>
+                          <span className="font-semibold">{getFirstName(action.owner.fullName)}</span>
                           {action.dueDate && (
-                            <span
-                              className={`text-[11px] font-semibold ${overdue ? "text-error" : "text-muted"}`}
-                            >
-                              {formatDueDate(action.dueDate)}
-                            </span>
+                            <>
+                              <span aria-hidden>·</span>
+                              <span className={dueToday || overdue ? "font-semibold text-[#DC2626]" : "font-medium"}>
+                                {formatDueDate(action.dueDate)}
+                              </span>
+                            </>
                           )}
                         </div>
                       </div>
@@ -846,20 +895,16 @@ export function LiveMeetingView({
           </div>
 
           {/* ── Efficiency Index ────────────────────────────────────── */}
-          <div className="rounded-2xl bg-[var(--primary-container)] p-5 text-on-primary">
+          <div className="rounded-xl p-5 text-white shadow-[0_4px_24px_rgba(15,23,42,0.12)] sm:p-6" style={{ backgroundColor: NAVY }}>
             <div className="mb-2 flex items-center gap-2">
-              <svg className="h-5 w-5 text-on-primary/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="h-5 w-5 shrink-0 text-[#60A5FA]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
                 <polyline points="17 6 23 6 23 12" />
               </svg>
-              <h3 className="text-lg font-bold text-on-primary">Efficiency Index</h3>
+              <h3 className="text-lg font-bold text-white">Efficiency Index</h3>
             </div>
-            <p className="text-sm font-semibold leading-snug text-on-primary">
-              {efficiencyMessage}
-            </p>
-            <p className="mt-1 text-sm leading-relaxed text-on-primary/70">
-              {efficiencyDetail}
-            </p>
+            <p className="text-sm font-semibold leading-snug text-white">{efficiencyMessage}</p>
+            <p className="mt-1 text-sm leading-relaxed text-white/75">{efficiencyDetail}</p>
           </div>
         </div>
       </div>
