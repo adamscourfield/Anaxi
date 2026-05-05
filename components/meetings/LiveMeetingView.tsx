@@ -32,13 +32,13 @@ interface LiveMeetingViewProps {
   status: string;
   startDateTime: string;
   startedAt: string | null;
+  endedAt: string | null;
   attendees: Attendee[];
   initialNotes: string;
   actions: Action[];
   canEdit: boolean;
   canStartMeeting: boolean;
   canAddActions: boolean;
-  currentUserId: string;
   avgActionsForType?: number;
 }
 
@@ -77,10 +77,12 @@ function formatDueDate(dueDate: Date | string): string {
 
 /* ── Timer Hook ──────────────────────────────────────────────────────── */
 
-function useElapsedTimer(startDateTime: string | null) {
+function useElapsedTimer(startDateTime: string | null, endDateTime: string | null) {
   const [elapsed, setElapsed] = useState(() => {
     if (!startDateTime) return 0;
-    const diff = Date.now() - new Date(startDateTime).getTime();
+    const startMs = new Date(startDateTime).getTime();
+    const endMs = endDateTime ? new Date(endDateTime).getTime() : Date.now();
+    const diff = endMs - startMs;
     return Math.max(0, Math.floor(diff / 1000));
   });
 
@@ -89,14 +91,22 @@ function useElapsedTimer(startDateTime: string | null) {
       setElapsed(0);
       return;
     }
+    const startMs = new Date(startDateTime).getTime();
+
+    if (endDateTime) {
+      const endMs = new Date(endDateTime).getTime();
+      setElapsed(Math.max(0, Math.floor((endMs - startMs) / 1000)));
+      return;
+    }
+
     const tick = () => {
-      const diff = Date.now() - new Date(startDateTime).getTime();
+      const diff = Date.now() - startMs;
       setElapsed(Math.max(0, Math.floor(diff / 1000)));
     };
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [startDateTime]);
+  }, [startDateTime, endDateTime]);
 
   const hrs = String(Math.floor(elapsed / 3600)).padStart(2, "0");
   const mins = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
@@ -116,7 +126,7 @@ const AVATAR_COLORS = [
 ];
 
 function AvatarStack({ attendees }: { attendees: Attendee[] }) {
-  const maxShow = 3;
+  const maxShow = 4;
   const shown = attendees.slice(0, maxShow);
   const overflow = attendees.length - maxShow;
 
@@ -301,18 +311,19 @@ export function LiveMeetingView({
   status,
   startDateTime,
   startedAt: initialStartedAt,
+  endedAt: initialEndedAt,
   attendees,
   initialNotes,
   actions: initialActions,
   canEdit,
   canStartMeeting,
   canAddActions,
-  currentUserId,
   avgActionsForType = 0,
 }: LiveMeetingViewProps) {
   const router = useRouter();
   const timerAnchor = initialStartedAt;
-  const { formatted: timer, seconds: elapsedSeconds } = useElapsedTimer(timerAnchor);
+  const timerEnd = initialEndedAt;
+  const { formatted: timer, seconds: elapsedSeconds } = useElapsedTimer(timerAnchor, timerEnd);
   const [notes, setNotes] = useState(initialNotes);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [startingMeeting, setStartingMeeting] = useState(false);
@@ -427,7 +438,7 @@ export function LiveMeetingView({
       const res = await fetch(`/api/meetings/${meetingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "CANCELLED", endDateTime: now }),
+        body: JSON.stringify({ endedAt: now }),
       });
       if (!res.ok) {
         let message = "Could not end the meeting.";
@@ -512,9 +523,8 @@ export function LiveMeetingView({
     }
   }
 
-  const isEnded = status === "CANCELLED";
+  const isEnded = initialEndedAt != null || status === "CANCELLED";
   const hasStarted = initialStartedAt != null;
-  const isInProgress = !isEnded && (hasStarted || status === "CONFIRMED" || status === "PENDING");
   const openActions = localActions.filter((a) => a.status === "OPEN");
   const totalActions = localActions.length;
 
@@ -565,13 +575,10 @@ export function LiveMeetingView({
         : "READY";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-[color-mix(in_srgb,var(--surface-container-low)_50%,transparent)] pb-8 pt-1">
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div>
-        <div className="flex flex-wrap items-center gap-3 mb-2">
-          <span className="rounded-md bg-[var(--primary-container)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-on-primary">
-            Anaxi Core
-          </span>
+        <div className="mb-2 flex flex-wrap items-center gap-3">
           {hasStarted && !isEnded && (
             <span className="flex items-center gap-1.5 text-sm font-semibold text-scale-strong-text">
               <span className="inline-block h-2 w-2 rounded-full bg-scale-strong" />
@@ -597,11 +604,18 @@ export function LiveMeetingView({
             <H1>{title}</H1>
             <div className="flex flex-wrap items-center gap-4">
               <span
-                className="flex items-center gap-1.5 font-mono text-sm text-muted"
-                title={hasStarted ? "Elapsed since start" : "Timer starts when you start the meeting"}
+                className="flex items-center gap-2 font-mono text-sm tabular-nums text-muted"
+                title={
+                  isEnded
+                    ? "Session duration (logged)"
+                    : hasStarted
+                      ? "Elapsed since start"
+                      : "Timer starts when you start the meeting"
+                }
               >
-                <svg className="h-3.5 w-3.5 text-text" viewBox="0 0 16 16" fill="currentColor">
-                  <circle cx="8" cy="8" r="6" />
+                <svg className="h-4 w-4 shrink-0 text-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 3" strokeLinecap="round" />
                 </svg>
                 {timer}
               </span>
@@ -613,10 +627,13 @@ export function LiveMeetingView({
             {canStartMeeting && !isEnded && !hasStarted && (
               <Button
                 type="button"
-                className="rounded-xl px-5"
+                className="rounded-xl bg-neutral-950 px-5 py-2.5 text-[0.8125rem] font-semibold text-white hover:bg-neutral-900 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
                 disabled={startingMeeting}
                 onClick={() => void handleStartMeeting()}
               >
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M8 5v14l11-7z" />
+                </svg>
                 {startingMeeting ? "Starting..." : "Start meeting"}
               </Button>
             )}
@@ -633,7 +650,10 @@ export function LiveMeetingView({
               Save Draft
             </button>
             {!isEnded && (
-              <Button variant="danger" className="rounded-xl px-5" onClick={() => setEndMeetingOpen(true)}>
+              <Button variant="danger" className="rounded-xl px-5 py-2.5 text-[0.8125rem]" onClick={() => setEndMeetingOpen(true)}>
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <rect x="7" y="7" width="10" height="10" rx="1" />
+                </svg>
                 End Meeting
               </Button>
             )}
@@ -644,11 +664,11 @@ export function LiveMeetingView({
       {/* ── Two-Column Layout ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         {/* ── Left: Live Minutes ───────────────────────────────────── */}
-        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-6 shadow-ambient">
+        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-6 shadow-[0_2px_16px_rgba(15,23,42,0.06)]">
           {/* Minutes Header */}
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <svg className="h-5 w-5 text-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="h-5 w-5 shrink-0" style={{ color: "#7C69EF" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
                 <line x1="16" y1="13" x2="8" y2="13" />

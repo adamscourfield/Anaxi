@@ -3,7 +3,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { listMeetings, getMeetingStats } from "@/modules/meetings/service";
-import { MEETING_TYPE_LABELS } from "@/modules/meetings/types";
+import { MEETING_TYPE_LABELS, meetingSessionStatusLabel } from "@/modules/meetings/types";
 import { StatusPill } from "@/components/ui/status-pill";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -164,8 +164,15 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
                   const start = new Date(m.startDateTime);
                   const end = new Date(m.endDateTime);
                   const typeLabel = MEETING_TYPE_LABELS[m.type] ?? m.type;
-                  const statusLabel = m.status === "CONFIRMED" ? "Confirmed" : m.status === "CANCELLED" ? "Cancelled" : "Pending";
-                  const statusVariant = m.status === "CONFIRMED" ? "success" : m.status === "CANCELLED" ? "error" : "warning";
+                  const statusLabel = meetingSessionStatusLabel(m.status, m.endedAt);
+                  const statusVariant =
+                    m.status === "CANCELLED"
+                      ? "error"
+                      : m.endedAt
+                        ? "success"
+                        : m.status === "CONFIRMED"
+                          ? "success"
+                          : "warning";
 
                   return (
                     <tr key={m.id} className="table-row calm-transition">
