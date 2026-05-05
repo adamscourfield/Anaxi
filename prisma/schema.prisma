@@ -585,6 +585,7 @@ model Meeting {
   startDateTime   DateTime
   endDateTime     DateTime
   startedAt       DateTime?
+  endedAt         DateTime?
   location        String?
   notes           String?
   createdByUserId String

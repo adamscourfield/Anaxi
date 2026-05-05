@@ -20,6 +20,8 @@ export interface UpdateMeetingInput {
   attendeeIds?: string[];
   status?: "PENDING" | "CONFIRMED" | "CANCELLED";
   startedAt?: Date | null;
+  /** Actual clock-out when the live session ends (duration = endedAt - startedAt). */
+  endedAt?: Date | null;
 }
 
 export interface MeetingAttendeeDetail {
@@ -37,6 +39,7 @@ export interface MeetingDetail {
   startDateTime: Date;
   endDateTime: Date;
   startedAt?: Date | null;
+  endedAt?: Date | null;
   location?: string | null;
   notes?: string | null;
   createdByUserId: string;
@@ -55,6 +58,12 @@ export const MEETING_STATUS_LABELS: Record<string, string> = {
   CONFIRMED: "Confirmed",
   CANCELLED: "Cancelled",
 };
+
+/** Display label when the live session has a logged end time (status stays CONFIRMED in DB). */
+export function meetingSessionStatusLabel(status: string, endedAt?: Date | string | null): string {
+  if (endedAt) return "Completed";
+  return MEETING_STATUS_LABELS[status] ?? status;
+}
 
 export const MEETING_TYPE_LABELS: Record<string, string> = {
   LINE_MANAGEMENT: "Line Management",

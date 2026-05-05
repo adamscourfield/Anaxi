@@ -226,6 +226,36 @@ describe("updateMeeting", () => {
       updateMeeting("tenant_1", "meeting_1", "user_1", { startedAt: now }),
     ).rejects.toThrow("cannot start a cancelled meeting");
   });
+
+  it("sets endedAt and syncs endDateTime after session started", async () => {
+    const started = new Date("2026-01-15T09:00:00Z");
+    const ended = new Date("2026-01-15T09:45:00Z");
+    (prisma as any).meeting.findFirst.mockResolvedValue(
+      mockMeeting({ startedAt: started, status: "CONFIRMED", endedAt: null }),
+    );
+    await updateMeeting("tenant_1", "meeting_1", "user_1", { endedAt: ended });
+    const updateCall = (prisma as any).meeting.update.mock.calls[0][0];
+    expect(updateCall.data.endedAt).toEqual(ended);
+    expect(updateCall.data.endDateTime).toEqual(ended);
+  });
+
+  it("throws when ending before start", async () => {
+    const started = new Date("2026-01-15T10:00:00Z");
+    const ended = new Date("2026-01-15T09:00:00Z");
+    (prisma as any).meeting.findFirst.mockResolvedValue(
+      mockMeeting({ startedAt: started, status: "CONFIRMED", endedAt: null }),
+    );
+    await expect(
+      updateMeeting("tenant_1", "meeting_1", "user_1", { endedAt: ended }),
+    ).rejects.toThrow("endedAt must be after startedAt");
+  });
+
+  it("throws when ending meeting that never started", async () => {
+    (prisma as any).meeting.findFirst.mockResolvedValue(mockMeeting({ startedAt: null }));
+    await expect(
+      updateMeeting("tenant_1", "meeting_1", "user_1", { endedAt: later }),
+    ).rejects.toThrow("cannot end meeting before it has been started");
+  });
 });
 
 describe("deleteMeeting", () => {

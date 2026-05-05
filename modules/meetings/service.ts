@@ -86,10 +86,38 @@ export async function updateMeeting(
     if (existing.status === "CANCELLED") {
       throw new Error("cannot start a cancelled meeting");
     }
+    if (existing.endedAt != null) {
+      throw new Error("cannot start a meeting that has already ended");
+    }
     if (existing.startedAt != null && input.startedAt != null) {
       throw new Error("meeting already started");
     }
     data.startedAt = input.startedAt;
+  }
+
+  if (input.endedAt !== undefined) {
+    if (input.endedAt === null) {
+      throw new Error("endedAt cannot be cleared");
+    }
+    if (existing.status === "CANCELLED") {
+      throw new Error("cannot end a cancelled meeting");
+    }
+    if (existing.startedAt == null) {
+      throw new Error("cannot end meeting before it has been started");
+    }
+    if (existing.endedAt != null) {
+      throw new Error("meeting already ended");
+    }
+    const endMs = input.endedAt.getTime();
+    const startMs = new Date(existing.startedAt).getTime();
+    if (endMs < startMs) {
+      throw new Error("endedAt must be after startedAt");
+    }
+    data.endedAt = input.endedAt;
+    data.endDateTime = input.endedAt;
+    if (existing.status === "PENDING") {
+      data.status = "CONFIRMED";
+    }
   }
 
   return (prisma as any).meeting.update({

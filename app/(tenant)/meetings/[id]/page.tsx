@@ -36,7 +36,7 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
       where: {
         tenantId: user.tenantId,
         type: meeting.type,
-        status: "CANCELLED",
+        endedAt: { not: null },
         id: { not: meeting.id },
       },
       select: {
@@ -72,13 +72,15 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
         startedAt={
           meeting.startedAt ? new Date(meeting.startedAt).toISOString() : null
         }
+        endedAt={
+          meeting.endedAt ? new Date(meeting.endedAt).toISOString() : null
+        }
         attendees={meeting.attendees}
         initialNotes={meeting.notes ?? ""}
         actions={meeting.actions ?? []}
         canEdit={canEdit}
         canStartMeeting={isCreator}
         canAddActions={canAddActions}
-        currentUserId={user.id}
         avgActionsForType={avgActionsForType}
       />
     </div>

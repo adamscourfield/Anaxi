@@ -25,6 +25,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       .map((a: any) => `  - ${a.description} (Owner: ${a.owner.fullName}, Due: ${a.dueDate ? new Date(a.dueDate).toLocaleDateString("en-GB") : "N/A"}, Status: ${a.status})`)
       .join("\n");
 
+    const durationLine =
+      meeting.startedAt && meeting.endedAt
+        ? `Session duration: ${Math.round(
+            (new Date(meeting.endedAt).getTime() - new Date(meeting.startedAt).getTime()) / 60000,
+          )} minutes (started ${new Date(meeting.startedAt).toLocaleString("en-GB")}, ended ${new Date(meeting.endedAt).toLocaleString("en-GB")})`
+        : meeting.startedAt
+          ? `Live session started: ${new Date(meeting.startedAt).toLocaleString("en-GB")}`
+          : null;
+
     const content = [
       `MEETING MINUTES`,
       `===============`,
@@ -33,6 +42,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       `Date: ${dateStr} at ${timeStr}`,
       `Type: ${meeting.type}`,
       `Status: ${meeting.status}`,
+      durationLine,
       meeting.location ? `Location: ${meeting.location}` : null,
       `Attendees: ${attendeeNames}`,
       ``,
