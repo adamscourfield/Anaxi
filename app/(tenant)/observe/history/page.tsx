@@ -380,7 +380,7 @@ export default async function ObservationHistoryPage({
 
       {/* ── Results ─────────────────────────────────────────────────────── */}
       {obsList.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
+        <div className="obs-history-elevated-card flex flex-col items-center justify-center border border-dashed border-[#E5E7EB] py-16">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
             <svg className="h-6 w-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
               <circle cx="11" cy="11" r="6.5" /><path d="m16.5 16.5 3 3" strokeLinecap="round" />
@@ -390,7 +390,7 @@ export default async function ObservationHistoryPage({
           <p className="mt-1 text-[0.8125rem] text-muted">Try widening your filters.</p>
         </div>
       ) : (
-        <div className="table-shell">
+        <div className="obs-history-table-shell table-shell">
           {/* Desktop table (≥ md) */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
