@@ -17,7 +17,7 @@ const LEAVE_TABS: Tab[] = ["loa-reasons", "loa-authorisers"];
 const ON_CALL_TABS: Tab[] = ["on-call-reasons", "on-call-locations", "on-call-recipients"];
 
 const NAV_CARD =
-  "overflow-hidden rounded-2xl border border-border/35 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+  "overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
 
 const ICON_WELL_BASE =
   "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border [&_svg]:shrink-0";
@@ -285,22 +285,22 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
         scroll={false}
         className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 calm-transition ${
           active
-            ? "border-[rgba(59,130,246,0.4)] bg-[rgba(59,130,246,0.09)] shadow-sm dark:border-blue-500/35 dark:bg-blue-950/25"
-            : "border-transparent hover:bg-surface-container-low/40"
+            ? "border-[#3B82F6] bg-[#EFF6FF] shadow-sm"
+            : "border-transparent hover:bg-[#F9FAFB]"
         }`}
       >
         <span
           className={`${ICON_WELL_BASE} ${
             active
-              ? "border-[rgba(59,130,246,0.45)] bg-[rgba(124,105,239,0.12)] text-[#5b4ddb] dark:border-blue-500/40 dark:bg-blue-950/40 dark:text-blue-300"
-              : "border-border/35 bg-[rgba(124,105,239,0.12)] text-[#7C69EF]"
+              ? "border-[#93C5FD] bg-[#DBEAFE] text-[#1D4ED8]"
+              : "border-[#E5E7EB] bg-[#F3F4F6] text-[#6B7280]"
           }`}
         >
           {meta.icon}
         </span>
         <span className="min-w-0 flex-1">
-          <span className={`block text-[0.9375rem] font-bold ${active ? "text-text" : "text-text"}`}>{meta.label}</span>
-          <span className="mt-0.5 block text-[0.75rem] text-muted">Manage…</span>
+          <span className={`block text-[0.9375rem] font-bold ${active ? "text-[#111827]" : "text-[#111827]"}`}>{meta.label}</span>
+          <span className="mt-0.5 block text-[0.75rem] text-[#6B7280]">Manage…</span>
         </span>
       </Link>
     );
@@ -331,15 +331,15 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
   }));
 
   const AUTH_CARD =
-    "overflow-hidden rounded-2xl border border-border/35 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+    "overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
 
   return (
     <div className="space-y-6 pb-8">
       <Link
         href="/admin"
-        className="inline-flex items-center gap-2 rounded-xl border border-border/40 bg-background px-3.5 py-2 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
+        className="inline-flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3.5 py-2 text-[0.8125rem] font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#F9FAFB]"
       >
-        <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0 text-muted" aria-hidden>
+        <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0 text-[#6B7280]" aria-hidden>
           <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         Back to Admin
@@ -348,13 +348,15 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
       <PageHeader
         variant="ledger"
         title="Taxonomies"
+        titleClassName="!text-[#111827]"
+        subtitleClassName="anx-page-subtitle !text-[#6B7280]"
         subtitle="Configure leave reasons, on-call options, and who can approve leave. Changes apply to new requests; existing records keep their labels."
         actions={
           <Link
             href="/admin/leave-approvals"
-            className="inline-flex items-center gap-2 rounded-xl border border-border/40 bg-background px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#F9FAFB]"
           >
-            <svg className="h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <svg className="h-4 w-4 shrink-0 text-[#6B7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M4 21v-7M4 10V8a2 2 0 012-2h6a2 2 0 012 2v2M4 21h16M8 21v-9M12 21v-5M16 21v-3M20 10v11" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M7 8h1M11 8h1M15 8h1" strokeLinecap="round" />
             </svg>
@@ -363,14 +365,14 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
         }
       />
 
-      <div className="flex gap-3 rounded-2xl border border-sky-200/80 bg-sky-50/90 p-4 text-[0.8125rem] leading-relaxed text-muted dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-100/85">
-        <svg viewBox="0 0 24 24" fill="none" className="mt-0.5 h-5 w-5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden>
+      <div className="flex gap-3 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-4 text-[0.8125rem] leading-relaxed text-[#111827]">
+        <svg viewBox="0 0 24 24" fill="none" className="mt-0.5 h-5 w-5 shrink-0 text-[#2563EB]" aria-hidden>
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
           <path d="M12 16v-5M12 8h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
         <p className="min-w-0">
           For group-based leave approval, use{" "}
-          <a className="font-semibold text-sky-800 underline decoration-sky-300 underline-offset-2 hover:text-sky-900 dark:text-sky-300 dark:decoration-sky-700" href="/admin/leave-approvals">
+          <a className="font-semibold text-[#2563EB] underline decoration-[#93C5FD] underline-offset-2 hover:text-[#1D4ED8]" href="/admin/leave-approvals">
             Leave approval rules
           </a>
           . Here you manage dropdown values, notification emails, and per-person LOA authorisers.
@@ -381,14 +383,14 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className={NAV_CARD}>
-          <p className="border-b border-border/15 px-5 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">Leave of absence</p>
-          <nav className="flex flex-col p-2" aria-label="Leave taxonomy sections">
+          <p className="border-b border-[#E5E7EB] px-5 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Leave of absence</p>
+          <nav className="flex flex-col divide-y divide-[#E5E7EB] p-2" aria-label="Leave taxonomy sections">
             {LEAVE_TABS.map((t) => tabTileLink(t))}
           </nav>
         </div>
         <div className={NAV_CARD}>
-          <p className="border-b border-border/15 px-5 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">On call</p>
-          <nav className="flex flex-col p-2" aria-label="On-call taxonomy sections">
+          <p className="border-b border-[#E5E7EB] px-5 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280]">On call</p>
+          <nav className="flex flex-col divide-y divide-[#E5E7EB] p-2" aria-label="On-call taxonomy sections">
             {ON_CALL_TABS.map((t) => tabTileLink(t))}
           </nav>
         </div>
@@ -465,9 +467,9 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
       {tab === "loa-authorisers" ? (
         <div className="space-y-6">
           <div className={AUTH_CARD}>
-            <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
-              <h2 className="text-lg font-bold tracking-tight text-text">Global authorisers</h2>
-              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+            <div className="border-b border-[#E5E7EB] px-5 py-5 sm:px-7 sm:py-6">
+              <h2 className="text-lg font-bold tracking-tight text-[#111827]">Global authorisers</h2>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">
                 Can approve or deny leave for any staff member. Use this for senior leaders or HR.
               </p>
             </div>
@@ -475,17 +477,17 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
               {(loaAuthorisers as any[]).map((row) => (
                 <div
                   key={row.id}
-                  className="flex flex-col gap-3 rounded-xl border border-border/25 bg-background px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <Avatar name={row.user?.fullName ?? "?"} size="md" />
                     <div className="min-w-0">
-                      <p className="font-semibold text-text">{row.user?.fullName}</p>
-                      <p className="truncate text-xs text-muted">{row.user?.email}</p>
+                      <p className="font-semibold text-[#111827]">{row.user?.fullName}</p>
+                      <p className="truncate text-xs text-[#6B7280]">{row.user?.email}</p>
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ECFDF5] px-2.5 py-1 text-xs font-semibold text-[#166534]">
                       <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3">
                         <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
                         <path d="M5 8.5l2 2 4-4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -494,7 +496,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                     </span>
                     <form action={removeAuthoriser}>
                       <input type="hidden" name="id" value={row.id} />
-                      <Button variant="ghost" type="submit" className="py-2 text-xs text-muted hover:text-error">
+                      <Button variant="ghost" type="submit" className="py-2 text-xs text-[#6B7280] hover:text-red-600">
                         Remove
                       </Button>
                     </form>
@@ -510,9 +512,9 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
               ) : null}
             </div>
 
-            <div className="mx-5 mb-6 rounded-xl bg-background p-5 sm:mx-7">
-              <h3 className="text-[0.9375rem] font-bold text-text">Add global authoriser</h3>
-              <p className="mt-1 text-[0.8125rem] text-muted">Staff already listed as scoped-only approvers are excluded until you remove that role.</p>
+            <div className="mx-5 mb-6 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-5 sm:mx-7">
+              <h3 className="text-[0.9375rem] font-bold text-[#111827]">Add global authoriser</h3>
+              <p className="mt-1 text-[0.8125rem] text-[#6B7280]">Staff already listed as scoped-only approvers are excluded until you remove that role.</p>
               <form action={addItem} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                 <input type="hidden" name="type" value="loa_authoriser" />
                 <div className="min-w-0 flex-1">
@@ -520,7 +522,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                   <select
                     id="global-auth-staff"
                     name="value"
-                    className="field mt-1 min-h-[2.75rem] w-full rounded-xl border-border/40 bg-surface-container-lowest text-sm"
+                    className="mt-1 min-h-[2.75rem] w-full rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 text-sm text-[#111827] outline-none transition focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]"
                     required
                   >
                     <option value="">Choose someone…</option>
@@ -541,31 +543,31 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
           </div>
 
           <div className={AUTH_CARD}>
-            <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
-              <h2 className="text-lg font-bold tracking-tight text-text">Scoped authorisers</h2>
-              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+            <div className="border-b border-[#E5E7EB] px-5 py-5 sm:px-7 sm:py-6">
+              <h2 className="text-lg font-bold tracking-tight text-[#111827]">Scoped authorisers</h2>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">
                 Each person here only sees leave requests from the colleagues you attach. Good for line managers.
               </p>
             </div>
 
             <div className="space-y-4 px-5 pb-6 pt-4 sm:px-7">
               {Array.from(scopesByApprover.entries()).map(([approverId, { approver, targets }]) => (
-                <div key={approverId} className="overflow-hidden rounded-xl border border-border/25 bg-background">
-                  <div className="flex flex-col gap-3 border-b border-border/20 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                <div key={approverId} className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)]">
+                  <div className="flex flex-col gap-3 border-b border-[#E5E7EB] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
                       <Avatar name={approver?.fullName ?? "?"} size="md" />
                       <div className="min-w-0">
-                        <p className="font-semibold text-text">{approver?.fullName}</p>
-                        <p className="truncate text-xs text-muted">{approver?.email}</p>
+                        <p className="font-semibold text-[#111827]">{approver?.fullName}</p>
+                        <p className="truncate text-xs text-[#6B7280]">{approver?.email}</p>
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFFBEB] px-2.5 py-1 text-xs font-semibold text-[#92400E]">
                         {targets.length} {targets.length === 1 ? "person" : "people"}
                       </span>
                       <form action={removeScopedAuthoriser}>
                         <input type="hidden" name="approverId" value={approverId} />
-                        <Button variant="ghost" type="submit" className="py-2 text-xs text-muted hover:text-error">
+                        <Button variant="ghost" type="submit" className="py-2 text-xs text-[#6B7280] hover:text-red-600">
                           Remove all
                         </Button>
                       </form>
@@ -573,17 +575,17 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                   </div>
 
                   <div className="px-4 py-4">
-                    <p className="mb-2 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted">Can authorise leave for</p>
+                    <p className="mb-2 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Can authorise leave for</p>
                     <div className="flex flex-wrap gap-2">
                       {targets.map((scope: any) => (
                         <form key={scope.id} action={removeScopedTarget} className="contents">
                           <input type="hidden" name="id" value={scope.id} />
                           <button
                             type="submit"
-                            className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/30 bg-background px-3 py-1.5 text-xs font-medium text-text shadow-sm calm-transition hover:border-error/30 hover:bg-error/5 hover:text-error"
+                            className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 py-1.5 text-xs font-medium text-[#111827] shadow-sm calm-transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                           >
                             <span className="truncate">{scope.targetUser?.fullName}</span>
-                            <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3 shrink-0 text-muted/50 group-hover:text-error" aria-hidden>
+                            <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3 shrink-0 text-[#9CA3AF] group-hover:text-red-600" aria-hidden>
                               <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                             </svg>
                           </button>
@@ -598,7 +600,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                         <select
                           id={`scoped-add-${approverId}`}
                           name="targetUserId"
-                          className="field mt-1 min-h-[2.75rem] w-full rounded-xl border-border/40 bg-surface-container-lowest text-sm"
+                          className="mt-1 min-h-[2.75rem] w-full rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 text-sm text-[#111827] outline-none transition focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]"
                           required
                         >
                           <option value="">Select staff…</option>
@@ -628,9 +630,9 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
               ) : null}
             </div>
 
-            <div className="mx-5 mb-6 rounded-xl bg-background p-5 sm:mx-7">
-              <h3 className="text-[0.9375rem] font-bold text-text">New scoped authoriser</h3>
-              <p className="mt-1 text-[0.8125rem] text-muted">
+            <div className="mx-5 mb-6 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-5 sm:mx-7">
+              <h3 className="text-[0.9375rem] font-bold text-[#111827]">New scoped authoriser</h3>
+              <p className="mt-1 text-[0.8125rem] text-[#6B7280]">
                 Pick who approves, then who they cover. After saving, open their card to attach more people.
               </p>
               <form action={addScopedAuthoriser} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
@@ -639,7 +641,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                   <select
                     id="scoped-new-approver"
                     name="approverId"
-                    className="field mt-1 min-h-[2.75rem] w-full rounded-xl border-border/40 bg-surface-container-lowest text-sm"
+                    className="mt-1 min-h-[2.75rem] w-full rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 text-sm text-[#111827] outline-none transition focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]"
                     required
                   >
                     <option value="">Choose…</option>
@@ -657,7 +659,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                   <select
                     id="scoped-new-target"
                     name="targetUserId"
-                    className="field mt-1 min-h-[2.75rem] w-full rounded-xl border-border/40 bg-surface-container-lowest text-sm"
+                    className="mt-1 min-h-[2.75rem] w-full rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 text-sm text-[#111827] outline-none transition focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]"
                     required
                   >
                     <option value="">Choose…</option>
