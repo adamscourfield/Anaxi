@@ -6,6 +6,7 @@ import { FormSelect } from "@/components/ui/form-select";
 const VALID_WINDOWS = [7, 21, 28] as const;
 
 type Props = {
+  id?: string;
   yearGroups: string[];
   defaults: {
     windowDays: number;
@@ -18,25 +19,34 @@ type Props = {
 };
 
 export function BehaviourAnalysisFilters({
+  id,
   yearGroups,
   defaults,
   hasActiveFilters,
   buildClearHref,
 }: Props) {
-  const triggerField = "!rounded-xl !border !border-border/35 !bg-[var(--surface-container-lowest)] !shadow-none";
+  const triggerField =
+    "!rounded-xl !border !border-border/35 !bg-[var(--surface-container-lowest)] !shadow-none !min-h-[2.75rem]";
 
   return (
-    <div className="relative z-30 rounded-2xl glass-card p-5 md:p-6">
-      <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
-        Filters
-      </p>
+    <div
+      id={id}
+      className="relative z-30 scroll-mt-24 rounded-xl border border-border/30 bg-surface-container-lowest p-5 shadow-[0_2px_16px_rgba(15,23,42,0.05)] md:p-6"
+    >
+      <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Filters</p>
       <form
         method="get"
         action="/explorer/analysis"
         className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4"
       >
-        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[120px]">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Window</span>
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
+          <span className="flex items-center gap-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+            <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
+            </svg>
+            Window
+          </span>
           <FormSelect
             name="windowDays"
             defaultValue={String(defaults.windowDays)}
@@ -46,8 +56,15 @@ export function BehaviourAnalysisFilters({
           />
         </label>
 
-        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Year group</span>
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[160px]">
+          <span className="flex items-center gap-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+            <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" />
+            </svg>
+            Year group
+          </span>
           <FormSelect
             name="yearGroup"
             defaultValue={defaults.yearGroup}
@@ -82,8 +99,11 @@ export function BehaviourAnalysisFilters({
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:ml-auto lg:w-auto lg:flex-none">
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary shadow-[var(--shadow-btn)] calm-transition hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px active:scale-[0.98] sm:min-w-[140px] lg:w-auto lg:min-w-[160px]"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 active:scale-[0.98] dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100 sm:min-w-[140px] lg:w-auto lg:min-w-[168px]"
           >
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M4 21v-7M4 10v-3M4 3v3M10 21v-9M10 8V3M16 21v-5M16 12V3M22 21v-9M22 10V3" strokeLinecap="round" />
+            </svg>
             Apply filters
           </button>
           {hasActiveFilters && (
