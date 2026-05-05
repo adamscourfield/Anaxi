@@ -190,25 +190,6 @@ export default async function ExplorerTeachersPage({
     }
   }
 
-  /** Pivot signal means for heatmap cells in Priority view (risk rows omit signalData). */
-  let pivotSignalByTeacherId = new Map<string, TeacherPivotRow["signalData"]>();
-  if (mode === "priorities") {
-    const { rows: pivotForHeatmap } = await computeTeacherPivot(user.tenantId, windowDays);
-    let heatRows = pivotForHeatmap;
-    if (isHod && hodDepartmentIds.length > 0) {
-      const hodDeptNameSet = new Set(scopedDepartments.map((d) => d.name));
-      heatRows = heatRows.filter((r) => r.departmentNames.some((dn) => hodDeptNameSet.has(dn)));
-    }
-    if (departmentId) {
-      const dept = departments.find((d) => d.id === departmentId);
-      if (dept) {
-        heatRows = heatRows.filter((r) => r.departmentNames.includes(dept.name));
-      }
-    }
-    pivotSignalByTeacherId = new Map(heatRows.map((r) => [r.teacherMembershipId, r.signalData]));
-  }
-
-  // ─── Sorting (pivot mode) ──────────────────────────────────────────────────
   if (mode === "pivot") {
     const multiplier = dir === "asc" ? 1 : -1;
     pivotRows.sort((a, b) => {
