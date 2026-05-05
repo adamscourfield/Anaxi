@@ -1,31 +1,119 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
 
+const ACCENT_TAG = "#7C69EF";
+
 const BEHAVIOUR_FIELDS = [
-  { key: "positivePointsLabel", label: "Positive points label", default: "Positive Points" },
-  { key: "detentionLabel", label: "Detention label", default: "Detention" },
-  { key: "internalExclusionLabel", label: "Internal exclusion label", default: "Internal Exclusion" },
-  { key: "suspensionLabel", label: "Suspension label", default: "Suspension" },
-  { key: "onCallLabel", label: "On call label", default: "On Call" },
+  { key: "positivePointsLabel", heading: "Positive points label", default: "Positive Points" },
+  { key: "detentionLabel", heading: "Detention label", default: "Detention" },
+  { key: "internalExclusionLabel", heading: "Internal exclusion label", default: "Internal Exclusion" },
+  { key: "suspensionLabel", heading: "Suspension label", default: "Suspension" },
+  { key: "onCallLabel", heading: "On call label", default: "On Call" },
 ] as const;
 
-const VOCAB_KEYS = ["positive_points", "detentions", "internal_exclusions", "on_calls", "suspensions"];
+const VOCAB_KEYS = ["positive_points", "detentions", "internal_exclusions", "on_calls", "suspensions"] as const;
 
-const VOCAB_LABELS: Record<string, string> = {
-  positive_points: "Positive points",
-  detentions: "Detentions",
-  internal_exclusions: "Internal exclusions",
-  on_calls: "On calls",
-  suspensions: "Suspensions",
-};
+const VOCAB_ROWS: {
+  key: (typeof VOCAB_KEYS)[number];
+  title: string;
+  singularPlaceholder: string;
+  pluralPlaceholder: string;
+  iconWell: string;
+  icon: ReactNode;
+}[] = [
+  {
+    key: "positive_points",
+    title: "Positive points",
+    singularPlaceholder: "Positive Point",
+    pluralPlaceholder: "Positive Points",
+    iconWell: "bg-[rgba(124,105,239,0.14)] text-[#7C69EF]",
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6-4.6-6 4.6 2.3-7-6-4.6h7.6z" />
+      </svg>
+    ),
+  },
+  {
+    key: "detentions",
+    title: "Detentions",
+    singularPlaceholder: "Detention",
+    pluralPlaceholder: "Detentions",
+    iconWell: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400",
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    key: "internal_exclusions",
+    title: "Internal exclusions",
+    singularPlaceholder: "Internal Exclusion",
+    pluralPlaceholder: "Internal Exclusions",
+    iconWell: "bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400",
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+        <path d="M6 12h12" />
+      </svg>
+    ),
+  },
+  {
+    key: "suspensions",
+    title: "Suspensions",
+    singularPlaceholder: "Suspension",
+    pluralPlaceholder: "Suspensions",
+    iconWell: "bg-pink-100 text-pink-700 dark:bg-pink-950/50 dark:text-pink-400",
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        <rect x="8" y="5" width="3.5" height="14" rx="1" />
+        <rect x="13.5" y="5" width="3.5" height="14" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    key: "on_calls",
+    title: "On calls",
+    singularPlaceholder: "On Call",
+    pluralPlaceholder: "On Calls",
+    iconWell: "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-400",
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <path
+          d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+];
+
+function TagIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke={ACCENT_TAG} strokeWidth="2" aria-hidden>
+      <path d="M12 2H2v10l9.29 9.29a1 1 0 001.41 0l6.59-6.59a1 1 0 000-1.41L12 2z" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="7.5" cy="7.5" r="1.5" fill={ACCENT_TAG} stroke="none" />
+    </svg>
+  );
+}
+
+function TerminologyCard({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <div
+      className={`rounded-2xl border border-border/35 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)] ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default async function AdminLanguagePage() {
   const user = await requireAdminUser();
@@ -100,89 +188,156 @@ export default async function AdminLanguagePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <Link href="/admin" className="link-accent text-xs">← Back to Admin</Link>
+    <div className="space-y-8 pb-8">
+      <Link href="/admin" className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text">
+        <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden>
+          <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Back to Admin
+      </Link>
       <PageHeader variant="ledger"
         title="Terminology"
         subtitle="Configure all language, vocabulary, and signal wording used across the product."
       />
 
       {/* ── Behaviour Labels ─────────────────────────────────────────── */}
-      <Card>
-        <SectionHeader
-          title="Behaviour labels"
-          subtitle="Override labels used across behaviour and leave workflows."
-        />
-        <form action={saveBehaviourLabels} className="mt-4 grid max-w-3xl gap-4 sm:grid-cols-2">
-          {BEHAVIOUR_FIELDS.map((field) => (
-            <div key={field.key}>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.06em] text-muted">
-                {field.label}
-              </label>
-              <input
-                name={field.key}
-                defaultValue={settings?.[field.key] ?? field.default}
-                placeholder={field.default}
-                className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-              />
-            </div>
-          ))}
-          <div className="sm:col-span-2 pt-1">
-            <Button type="submit">Save behaviour labels</Button>
+      <TerminologyCard>
+        <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
+          <h2 className="text-lg font-bold tracking-tight text-text">Behaviour labels</h2>
+          <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+            Override labels used across behaviour and leave workflows.
+          </p>
+        </div>
+        <form action={saveBehaviourLabels} className="px-5 py-6 sm:px-7 sm:pb-7">
+          <div className="grid gap-6 sm:grid-cols-2">
+            {BEHAVIOUR_FIELDS.map((field) => (
+              <div key={field.key} className="flex gap-3 sm:gap-4">
+                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgba(124,105,239,0.14)]">
+                  <TagIcon className="h-[18px] w-[18px]" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <label
+                    htmlFor={`beh-${field.key}`}
+                    className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted"
+                  >
+                    {field.heading.replace(/\s+label$/i, "").trim()} label
+                  </label>
+                  <input
+                    id={`beh-${field.key}`}
+                    name={field.key}
+                    defaultValue={settings?.[field.key] ?? field.default}
+                    placeholder={field.default}
+                    className="field w-full"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+            >
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="17 21 17 13 7 13 7 21" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="7 3 7 8 15 8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Save behaviour labels
+            </button>
           </div>
         </form>
-      </Card>
+      </TerminologyCard>
 
       {/* ── Vocabulary ───────────────────────────────────────────────── */}
-      <Card>
-        <SectionHeader
-          title="Vocabulary"
-          subtitle="Set singular and plural labels for behaviour event nouns shown across views."
-        />
-        <form action={saveVocab} className="mt-4 space-y-3">
-          <div className="grid grid-cols-[1fr_1fr_1fr] gap-3 max-w-3xl text-xs font-semibold uppercase tracking-[0.06em] text-muted pb-1">
-            <span>Event type</span>
-            <span>Singular</span>
-            <span>Plural</span>
+      <TerminologyCard className="overflow-hidden">
+        <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
+          <h2 className="text-lg font-bold tracking-tight text-text">Vocabulary</h2>
+          <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+            Set singular and plural labels for behaviour event nouns shown across views.
+          </p>
+        </div>
+        <form action={saveVocab}>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-border/25 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)]">
+                  <th className="px-5 py-3.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted sm:px-7">
+                    Event type
+                  </th>
+                  <th className="px-4 py-3.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                    Singular
+                  </th>
+                  <th className="px-4 py-3.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted sm:pr-7">
+                    Plural
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {VOCAB_ROWS.map((row) => {
+                  const v = vocabByKey.get(row.key);
+                  return (
+                    <tr key={row.key} className="border-b border-border/15 last:border-b-0 calm-transition hover:bg-surface-container-low/40">
+                      <td className="px-5 py-4 sm:px-7">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${row.iconWell}`}
+                          >
+                            {row.icon}
+                          </span>
+                          <span className="font-semibold text-text">{row.title}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 align-middle">
+                        <input
+                          name={`${row.key}_singular`}
+                          defaultValue={v?.labelSingular || ""}
+                          placeholder={row.singularPlaceholder}
+                          className="field w-full min-w-[8rem]"
+                        />
+                      </td>
+                      <td className="px-4 py-4 align-middle sm:pr-7">
+                        <input
+                          name={`${row.key}_plural`}
+                          defaultValue={v?.labelPlural || ""}
+                          placeholder={row.pluralPlaceholder}
+                          className="field w-full min-w-[8rem]"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          {VOCAB_KEYS.map((key) => {
-            const row = vocabByKey.get(key);
-            return (
-              <div key={key} className="grid max-w-3xl gap-3 grid-cols-[1fr_1fr_1fr] items-center rounded-lg border border-border/60 bg-bg/30 px-3 py-2.5">
-                <span className="text-sm font-medium text-text">{VOCAB_LABELS[key] ?? key}</span>
-                <input
-                  name={`${key}_singular`}
-                  defaultValue={row?.labelSingular || ""}
-                  placeholder="Singular"
-                  className="rounded-lg border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-                />
-                <input
-                  name={`${key}_plural`}
-                  defaultValue={row?.labelPlural || ""}
-                  placeholder="Plural"
-                  className="rounded-lg border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-                />
-              </div>
-            );
-          })}
-          <div className="pt-1">
-            <Button type="submit">Save vocabulary</Button>
+          <div className="border-t border-border/20 px-5 py-5 sm:px-7">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+            >
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="17 21 17 13 7 13 7 21" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="7 3 7 8 15 8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Save vocabulary
+            </button>
           </div>
         </form>
-      </Card>
+      </TerminologyCard>
 
       {/* ── Observation Signal Labels ─────────────────────────────────── */}
       {observationsEnabled && (
-        <Card className="overflow-hidden p-0">
-          <div className="p-5 pb-3">
+        <TerminologyCard className="overflow-hidden">
+          <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
             <SectionHeader
               title="Observation signal labels"
               subtitle="Adjust display names and descriptions used in observation screens."
             />
           </div>
-          <form action={saveSignalLabels} className="space-y-3 px-5 pb-5">
-            <div className="overflow-x-auto">
-              <div className="table-shell">
+          <form action={saveSignalLabels} className="space-y-4 px-5 pb-6 pt-2 sm:px-7 sm:pb-7">
+            <div className="overflow-x-auto rounded-xl border border-border/25">
+              <div className="table-shell border-0 shadow-none">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="table-head-row text-left">
@@ -207,7 +362,7 @@ export default async function AdminLanguagePage() {
                               minLength={2}
                               maxLength={80}
                               required
-                              className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                              className="field w-full"
                             />
                           </td>
                           <td className="px-4 py-3">
@@ -216,7 +371,7 @@ export default async function AdminLanguagePage() {
                               defaultValue={override?.description ?? signal.descriptionDefault}
                               maxLength={240}
                               rows={2}
-                              className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                              className="field w-full resize-y"
                             />
                           </td>
                           <td className="px-4 py-3 text-center">
@@ -238,11 +393,9 @@ export default async function AdminLanguagePage() {
                 </table>
               </div>
             </div>
-            <div className="pt-1">
-              <Button type="submit">Save signal labels</Button>
-            </div>
+            <Button type="submit">Save signal labels</Button>
           </form>
-        </Card>
+        </TerminologyCard>
       )}
     </div>
   );
