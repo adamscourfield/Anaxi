@@ -3,12 +3,18 @@
 import type { ReactNode } from "react";
 import { FormWithSuccessToast, FormSuccessToast } from "@/components/form-success-toast";
 
+/** Platform settings — match product mock (soft cards, #E5E7EB fields, navy primary) */
 const PLATFORM_CARD =
-  "rounded-2xl border border-border/35 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+  "rounded-2xl bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
 
-const FIELD_SHELL = "field w-full rounded-xl border-border/40 bg-surface-container-lowest";
+const FIELD_SHELL =
+  "w-full rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm text-[#111827] outline-none transition focus:border-[#CBD5E1] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]";
 
-const LABEL_UPPER = "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
+const LABEL_UPPER =
+  "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]";
+
+const ICON_WELL_SCHOOL =
+  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E0E7FF] text-[#4F46E5] shadow-sm [&_svg]:shrink-0";
 
 type Tab = "school" | "modules";
 
@@ -222,19 +228,16 @@ export function AdminSettingsForms({
   if (tab === "school") {
     return (
       <div className={`overflow-hidden ${PLATFORM_CARD}`}>
-        <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
+        <div className="border-b border-[#E5E7EB] px-6 py-6 sm:px-8 sm:py-7">
           <div className="flex gap-3 sm:gap-4">
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,105,239,0.88)] text-white shadow-sm [&_svg]:shrink-0"
-              aria-hidden
-            >
+            <span className={ICON_WELL_SCHOOL} aria-hidden>
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M4 21h16M6 21V10l6-4 6 4v11M10 21v-6h4v6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
             <div className="min-w-0">
-              <h2 className="text-lg font-bold tracking-tight text-text">School details</h2>
-              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+              <h2 className="text-lg font-bold tracking-tight text-[#111827]">School details</h2>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">
                 Set the school name, timezone, and default insight window.
               </p>
             </div>
@@ -243,7 +246,7 @@ export function AdminSettingsForms({
         <FormWithSuccessToast
           action={saveSettings}
           successMessage="Settings saved"
-          className="space-y-5 px-5 py-6 sm:space-y-6 sm:px-7 sm:pb-7"
+          className="space-y-5 px-6 py-7 sm:space-y-6 sm:px-8 sm:pb-8"
         >
           <div className="grid max-w-3xl gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2">
@@ -293,17 +296,17 @@ export function AdminSettingsForms({
             </div>
           </div>
 
-          <details className="group max-w-3xl rounded-xl border border-border/40 bg-background">
-            <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 calm-transition hover:bg-surface-container-low/40 [&::-webkit-details-marker]:hidden">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-muted">
+          <details className="group max-w-3xl rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)]">
+            <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 calm-transition hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F3F4F6] text-[#6B7280]">
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M4 21v-7M4 10V8a2 2 0 012-2h6a2 2 0 012 2v2M4 21h16M8 21v-9M12 21v-5M16 21v-3M20 10v11" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M7 8h1M11 8h1M15 8h1" strokeLinecap="round" />
                 </svg>
               </span>
-              <span className="min-w-0 flex-1 text-[0.9375rem] font-bold text-text">Advanced thresholds</span>
+              <span className="min-w-0 flex-1 text-[0.9375rem] font-bold text-[#111827]">Advanced thresholds</span>
               <svg
-                className="h-5 w-5 shrink-0 text-muted calm-transition group-open:rotate-180"
+                className="h-5 w-5 shrink-0 text-[#9CA3AF] calm-transition group-open:rotate-180"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -313,7 +316,7 @@ export function AdminSettingsForms({
                 <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </summary>
-            <div className="border-t border-border/25 px-4 py-5">
+            <div className="border-t border-[#E5E7EB] px-4 py-5">
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <label className={LABEL_UPPER} htmlFor="platform-drift">
@@ -360,7 +363,7 @@ export function AdminSettingsForms({
           <div className="pt-1">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0f172a] px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[#1e293b]"
             >
               <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" strokeLinecap="round" strokeLinejoin="round" />
@@ -378,12 +381,9 @@ export function AdminSettingsForms({
   if (tab === "modules") {
     return (
       <div className={`overflow-hidden ${PLATFORM_CARD}`}>
-        <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
+        <div className="border-b border-[#E5E7EB] px-6 py-6 sm:px-8 sm:py-7">
           <div className="flex gap-3 sm:gap-4">
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,105,239,0.88)] text-white shadow-sm [&_svg]:shrink-0"
-              aria-hidden
-            >
+            <span className={ICON_WELL_SCHOOL} aria-hidden>
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path
                   d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.998.998 0 01-1.023.242 3 3 0 01-2.54-.298 3 3 0 01-2.54.298 1 1 0 01-1.023-.242L9.44 11.06a1 1 0 01-.242 1.023 3 3 0 01-.298 2.54 3 3 0 01.298 2.54 1 1 0 01.242 1.023l-1.611 1.611c-.47.47-1.087.706-1.704.706s-1.233-.235-1.704-.706l-1.568-1.568a1.019 1.019 0 01-.289-.878 3 3 0 01.298-2.54 3 3 0 01-.298-2.54 1 1 0 01.289-.878l1.568-1.568c.47-.47 1.087-.706 1.704-.706s1.233.235 1.704.706l1.611 1.611a1 1 0 011.023.242 3 3 0 012.54-.298 3 3 0 012.54.298 1 1 0 011.023-.242l1.611-1.611c.47-.47 1.087-.706 1.704-.706s1.233.235 1.704.706l1.568 1.568c.23.23.338.556.289.878a3 3 0 01-.298 2.54 3 3 0 01.298 2.54z"
@@ -393,14 +393,14 @@ export function AdminSettingsForms({
               </svg>
             </span>
             <div className="min-w-0">
-              <h2 className="text-lg font-bold tracking-tight text-text">Modules</h2>
-              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+              <h2 className="text-lg font-bold tracking-tight text-[#111827]">Modules</h2>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">
                 Control which features are available across your school.
               </p>
             </div>
           </div>
         </div>
-        <div className="grid auto-rows-fr gap-4 p-5 sm:grid-cols-2 sm:p-7 lg:grid-cols-3">
+        <div className="grid auto-rows-fr gap-4 p-6 sm:grid-cols-2 sm:p-8 lg:grid-cols-3">
           {features.map((feature) => {
             const friendlyName = FEATURE_FRIENDLY_NAMES[feature.key] ?? feature.key;
             const { well, icon } = featureVisual(feature.key);
