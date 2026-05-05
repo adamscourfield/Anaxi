@@ -241,40 +241,28 @@ export default async function LeaveDetailPage({
                 icon={<CalendarGlyph className="h-5 w-5" />}
                 label="Start"
                 value={fmt(startDate)}
-                className="border-b border-border/25 sm:border-r sm:border-b"
+                className="border-b border-border/25 sm:border-r sm:border-b-0"
               />
               <InfoCell
                 icon={<CalendarGlyph className="h-5 w-5" />}
                 label="End"
                 value={fmt(endDate)}
-                className="border-b border-border/25 sm:border-b"
+                className="border-b border-border/25 sm:border-b-0"
               />
               <InfoCell
                 icon={<ClockGlyph className="h-5 w-5" />}
                 label="Duration"
                 value={`${days} school day${days !== 1 ? "s" : ""}`}
-                className="border-b border-border/25 sm:border-r sm:border-b-0"
+                className="border-b border-border/25 sm:border-r sm:border-t sm:border-border/25 sm:border-b-0"
               />
               <InfoCell
                 icon={<BookmarkGlyph className="h-5 w-5" />}
                 label="Reason"
                 value={request.reason?.label ?? "—"}
-                className="sm:border-b-0"
+                className="sm:border-t sm:border-border/25 sm:border-b-0"
               />
             </div>
           </div>
-
-          {/* Fix duration cell borders on sm: second row */}
-          <style jsx>{`
-            @media (min-width: 640px) {
-              div :global(.grid > div:nth-child(3)) {
-                border-top: 1px solid color-mix(in srgb, var(--border) 25%, transparent);
-              }
-              div :global(.grid > div:nth-child(4)) {
-                border-top: 1px solid color-mix(in srgb, var(--border) 25%, transparent);
-              }
-            }
-          `}</style>
 
           <div className="mt-5 space-y-4">
             {request.reasonText ? (
