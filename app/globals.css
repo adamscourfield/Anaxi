@@ -598,6 +598,43 @@ textarea:focus-visible {
   }
 }
 
+/* Elevated dashboard cards — opt-in (white face, no border, soft lift; keeps page background) */
+.anx-elevated-card {
+  border-radius: 14px;
+  background: var(--surface-container-lowest);
+  border: none;
+  box-shadow:
+    0 4px 24px rgba(15, 23, 42, 0.06),
+    0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.anx-elevated-card--table.table-shell {
+  background: var(--surface-container-lowest);
+  border: none;
+  box-shadow:
+    0 4px 24px rgba(15, 23, 42, 0.06),
+    0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.anx-elevated-card--table.table-shell thead .table-head-row th {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.anx-elevated-card--table.table-shell tbody .table-row,
+.anx-elevated-card--table.table-shell tbody tr.table-row {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.anx-elevated-card--table.table-shell tbody .table-row:last-child,
+.anx-elevated-card--table.table-shell tbody tr.table-row:last-child {
+  border-bottom: 0;
+}
+
+.anx-elevated-card--table.table-shell tbody .table-row:hover,
+.anx-elevated-card--table.table-shell tbody tr.table-row:hover {
+  background: rgba(124, 92, 255, 0.04);
+}
+
 /* Uppercase micro-label for filter fields — use with filter toolbars */
 .filter-field-label {
   font-size: 0.6875rem;

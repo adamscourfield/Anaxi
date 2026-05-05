@@ -22,7 +22,7 @@ export function BehaviourAnalysisCollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/30 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.05)]">
+    <div className="anx-elevated-card overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -48,7 +48,7 @@ export function BehaviourAnalysisCollapsibleSection({
           </svg>
         </span>
       </button>
-      {open ? <div className="border-t border-border/25">{children}</div> : null}
+      {open ? <div className="border-t border-[rgba(15,23,42,0.06)]">{children}</div> : null}
     </div>
   );
 }
