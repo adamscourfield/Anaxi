@@ -6,14 +6,16 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Avatar } from "@/components/ui/avatar";
 
 const CARD =
-  "overflow-hidden rounded-2xl border border-border/35 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+  "overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
 
-const LABEL = "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
+const LABEL =
+  "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]";
 
 const ICON_WELL =
-  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,105,239,0.14)] text-[#7C69EF] [&_svg]:shrink-0";
+  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EEF2FF] text-[#4F46E5] [&_svg]:shrink-0";
 
-const FIELD = "field w-full min-h-[2.75rem] rounded-xl border-border/40 bg-surface-container-lowest px-3.5 text-sm text-text";
+const FIELD =
+  "w-full min-h-[2.75rem] rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3.5 text-sm text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#CBD5E1] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]";
 
 function PlusIcon({ className }: { className?: string }) {
   return (
@@ -107,25 +109,27 @@ export default async function AdminCoachingPage({
       <PageHeader
         variant="ledger"
         title="Coaching Assignments"
+        titleClassName="!text-[#111827]"
+        subtitleClassName="anx-page-subtitle !text-[#6B7280]"
         subtitle="Manage coach-to-coachee pairs across your institution."
       />
 
       {/* New assignment */}
       <div className={CARD}>
-        <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
+        <div className="border-b border-[#E5E7EB] px-6 py-6 sm:px-8 sm:py-7">
           <div className="flex gap-3 sm:gap-4">
             <span className={ICON_WELL} aria-hidden>
               <PlusIcon className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <h2 className="text-lg font-bold tracking-tight text-text">New assignment</h2>
-              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+              <h2 className="text-lg font-bold tracking-tight text-[#111827]">New assignment</h2>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">
                 Select a coach and a coachee to create a new coaching pair.
               </p>
             </div>
           </div>
         </div>
-        <form action={addAssignment} className="flex flex-col gap-4 px-5 py-6 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-4 sm:gap-y-4 sm:px-7 sm:pb-7">
+        <form action={addAssignment} className="flex flex-col gap-4 px-6 py-7 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-4 sm:gap-y-4 sm:px-8 sm:pb-8">
           <label className="min-w-0 flex-1 sm:min-w-[200px]">
             <span className={LABEL}>Coach</span>
             <select name="coachUserId" className={FIELD} required defaultValue="">
@@ -150,7 +154,7 @@ export default async function AdminCoachingPage({
           </label>
           <button
             type="submit"
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 sm:w-auto dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#111827] px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[#1e293b] sm:w-auto"
           >
             <PlusIcon className="h-4 w-4" />
             Add Assignment
@@ -164,22 +168,22 @@ export default async function AdminCoachingPage({
         <>
           {/* Filters */}
           <div className={CARD}>
-            <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
+            <div className="border-b border-[#E5E7EB] px-6 py-6 sm:px-8 sm:py-7">
               <div className="flex gap-3 sm:gap-4">
                 <span className={ICON_WELL} aria-hidden>
                   <FunnelIcon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold tracking-tight text-text">Filters</h2>
-                  <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">Search assignments by coach or coachee.</p>
+                  <h2 className="text-lg font-bold tracking-tight text-[#111827]">Filters</h2>
+                  <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">Search assignments by coach or coachee.</p>
                 </div>
               </div>
             </div>
-            <form method="get" className="flex flex-col gap-4 px-5 py-6 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-4 sm:gap-y-4 sm:px-7 sm:pb-7">
+            <form method="get" className="flex flex-col gap-4 px-6 py-7 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-4 sm:gap-y-4 sm:px-8 sm:pb-8">
               <label className="min-w-0 flex-1 sm:min-w-[200px]">
                 <span className={LABEL}>Coach</span>
                 <div className="relative">
-                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
                   <input
                     name="coach"
                     defaultValue={searchParams?.coach ?? ""}
@@ -191,7 +195,7 @@ export default async function AdminCoachingPage({
               <label className="min-w-0 flex-1 sm:min-w-[200px]">
                 <span className={LABEL}>Coachee</span>
                 <div className="relative">
-                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
                   <input
                     name="coachee"
                     defaultValue={searchParams?.coachee ?? ""}
@@ -203,15 +207,15 @@ export default async function AdminCoachingPage({
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                 <button
                   type="submit"
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-border/45 bg-background px-5 py-2.5 text-sm font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low/40 sm:flex-initial"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F3F4F6] px-5 py-2.5 text-sm font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#E5E7EB]/80 sm:flex-initial"
                 >
-                  <FunnelIcon className="h-4 w-4 shrink-0 text-muted" />
+                  <FunnelIcon className="h-4 w-4 shrink-0 text-[#6B7280]" />
                   Apply filters
                 </button>
                 {hasFilters ? (
                   <a
                     href="/admin/coaching"
-                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-transparent px-4 py-2.5 text-sm font-semibold text-muted calm-transition hover:bg-surface-container-low hover:text-text sm:flex-initial"
+                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-transparent px-4 py-2.5 text-sm font-semibold text-[#6B7280] calm-transition hover:bg-[#F9FAFB] hover:text-[#111827] sm:flex-initial"
                   >
                     Clear
                   </a>
@@ -225,11 +229,11 @@ export default async function AdminCoachingPage({
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-border/25 bg-transparent">
-                    <th className="px-5 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted sm:px-7">Coach</th>
+                  <tr className="border-b border-[#E5E7EB] bg-transparent">
+                    <th className="px-6 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280] sm:px-8">Coach</th>
                     <th className="w-[3rem] px-1 py-3.5 text-center sm:w-14" aria-hidden />
-                    <th className="px-5 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted sm:px-7">Coachee</th>
-                    <th className="w-[1%] whitespace-nowrap px-5 py-3.5 text-right text-[0.625rem] font-bold uppercase tracking-[0.1em] text-muted sm:px-7">
+                    <th className="px-6 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280] sm:px-8">Coachee</th>
+                    <th className="w-[1%] whitespace-nowrap px-6 py-3.5 text-right text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280] sm:px-8">
                       Actions
                     </th>
                   </tr>
@@ -237,38 +241,38 @@ export default async function AdminCoachingPage({
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-5 py-12 text-center text-[0.8125rem] text-muted sm:px-7">
+                      <td colSpan={4} className="px-6 py-12 text-center text-[0.8125rem] text-[#6B7280] sm:px-8">
                         No assignments match your filters.
                       </td>
                     </tr>
                   ) : (
                     filtered.map((a: any) => (
-                      <tr key={`${a.coachUserId}-${a.coacheeUserId}`} className="border-b border-border/20 last:border-b-0">
-                        <td className="px-5 py-4 align-middle sm:px-7">
+                      <tr key={`${a.coachUserId}-${a.coacheeUserId}`} className="border-b border-[#E5E7EB] last:border-b-0">
+                        <td className="px-6 py-5 align-middle sm:px-8">
                           <div className="flex min-w-0 items-center gap-3">
                             <Avatar name={a.coach?.fullName ?? "?"} size="md" />
-                            <span className="truncate text-[0.8125rem] font-semibold text-text">{a.coach?.fullName}</span>
+                            <span className="truncate text-[0.8125rem] font-semibold text-[#111827]">{a.coach?.fullName}</span>
                           </div>
                         </td>
-                        <td className="px-1 py-4 text-center align-middle text-muted">
+                        <td className="px-1 py-5 text-center align-middle text-[#9CA3AF]">
                           <span className="text-lg font-normal tabular-nums" aria-hidden>
                             →
                           </span>
                           <span className="sr-only">to</span>
                         </td>
-                        <td className="px-5 py-4 align-middle sm:px-7">
+                        <td className="px-6 py-5 align-middle sm:px-8">
                           <div className="flex min-w-0 items-center gap-3">
                             <Avatar name={a.coachee?.fullName ?? "?"} size="md" />
-                            <span className="truncate text-[0.8125rem] font-medium text-text">{a.coachee?.fullName}</span>
+                            <span className="truncate text-[0.8125rem] font-medium text-[#111827]">{a.coachee?.fullName}</span>
                           </div>
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-right align-middle sm:px-7">
+                        <td className="whitespace-nowrap px-6 py-5 text-right align-middle sm:px-8">
                           <form action={removeAssignment} className="inline">
                             <input type="hidden" name="coachUserId" value={a.coachUserId} />
                             <input type="hidden" name="coacheeUserId" value={a.coacheeUserId} />
                             <button
                               type="submit"
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/45 bg-background text-muted calm-transition hover:border-error/35 hover:bg-error/10 hover:text-error"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#E5E7EB] bg-[var(--surface-container-lowest)] text-[#6B7280] calm-transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                               title="Remove assignment"
                             >
                               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -283,14 +287,14 @@ export default async function AdminCoachingPage({
                 </tbody>
               </table>
             </div>
-            <div className="border-t border-border/20 px-5 py-3.5 sm:px-7">
-              <p className="text-[0.8125rem] text-muted">
+            <div className="border-t border-[#E5E7EB] px-6 py-3.5 sm:px-8">
+              <p className="text-[0.8125rem] text-[#6B7280]">
                 Showing{" "}
-                <span className="font-semibold text-text">{filtered.length}</span>
+                <span className="font-semibold text-[#111827]">{filtered.length}</span>
                 {filtered.length !== assignmentList.length ? (
                   <>
                     {" "}
-                    of <span className="font-semibold text-text">{assignmentList.length}</span>
+                    of <span className="font-semibold text-[#111827]">{assignmentList.length}</span>
                   </>
                 ) : null}{" "}
                 assignment{assignmentList.length !== 1 ? "s" : ""}
