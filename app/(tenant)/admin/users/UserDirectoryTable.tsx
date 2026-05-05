@@ -200,13 +200,13 @@ export function UserDirectoryTable({
           <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[200px]">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Search</span>
             <div className="relative">
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted" />
+              <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted" />
               <input
                 type="text"
                 value={draftSearch}
                 onChange={(e) => setDraftSearch(e.target.value)}
                 placeholder="Name, email, or role…"
-                className={`field w-full py-2.5 pl-10 pr-3 text-[0.875rem] ${triggerWhite}`}
+                className={`field w-full py-2.5 !pl-[3rem] pr-3 text-[0.875rem] ${triggerWhite}`}
               />
             </div>
           </label>

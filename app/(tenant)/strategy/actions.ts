@@ -27,13 +27,16 @@ export async function createStrategyArea(formData: FormData) {
   const title = formData.get("title") as string;
   if (!title?.trim()) throw new Error("Title is required");
 
+  const rawDescription = ((formData.get("description") as string) ?? "").trim();
+  const description = rawDescription ? rawDescription.slice(0, 1000) : null;
+
   await (prisma as any).strategyArea.create({
     data: {
       tenantId:    user.tenantId,
       createdById: user.id,
       title:       title.trim(),
       category:    ((formData.get("category") as string) ?? "").trim() || null,
-      description: ((formData.get("description") as string) ?? "").trim() || null,
+      description,
       priority:    (formData.get("priority") as Priority) ?? "medium",
       owner:       ((formData.get("owner") as string) ?? "").trim() || null,
     },
@@ -55,12 +58,15 @@ export async function updateStrategyArea(id: string, formData: FormData) {
   const title = formData.get("title") as string;
   if (!title?.trim()) throw new Error("Title is required");
 
+  const rawDescription = ((formData.get("description") as string) ?? "").trim();
+  const description = rawDescription ? rawDescription.slice(0, 1000) : null;
+
   await (prisma as any).strategyArea.update({
     where: { id },
     data: {
       title:       title.trim(),
       category:    ((formData.get("category") as string) ?? "").trim() || null,
-      description: ((formData.get("description") as string) ?? "").trim() || null,
+      description,
       priority:    (formData.get("priority") as Priority) ?? existing.priority,
       owner:       ((formData.get("owner") as string) ?? "").trim() || null,
     },
