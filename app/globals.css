@@ -56,7 +56,8 @@
   --on-surface-variant:     #45464d;
   --on-background:          #191c1e;
   --outline:                #76777d;
-  --outline-variant:        #c6c6cd;
+  /* Softer default borders / dividers (Tailwind `border-border` maps here). */
+  --outline-variant:        #e2e5ea;
 
   /* ── Error ──────────────────────────────────────────────────────── */
   --error:                  #ba1a1a;

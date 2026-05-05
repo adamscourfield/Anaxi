@@ -1,348 +1,278 @@
 import type { ReactNode } from "react";
 
-const STROKE = { stroke: "currentColor", fill: "none" as const, strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+/** Single-weight stroke icons — uniform 18×18, no filled shapes, no PRIMARY/secondary stacks. */
+const S = {
+  className: "h-[18px] w-[18px] shrink-0",
+  stroke: "currentColor" as const,
+  fill: "none" as const,
+  strokeWidth: 1.75,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
 
-function TwoPeopleIcon() {
+function Icon({ children }: { children: ReactNode }) {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+    <svg viewBox="0 0 24 24" aria-hidden className={S.className} fill={S.fill} stroke={S.stroke} strokeWidth={S.strokeWidth} strokeLinecap={S.strokeLinecap} strokeLinejoin={S.strokeLinejoin}>
+      {children}
     </svg>
   );
 }
 
-function StarIcon() {
+function UserIcon() {
   return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
-      <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6-4.6-6 4.6 2.3-7-6-4.6h7.6z" fill="currentColor" />
-    </svg>
-  );
-}
-
-function BarChartIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M4 20V10M12 20V4M20 20v-6" />
-    </svg>
-  );
-}
-
-function TargetIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="12" cy="12" r="5" />
-      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function DoorIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <rect x="5" y="2" width="14" height="20" rx="1" />
-      <path d="M15 12h.01" strokeWidth="2.5" />
-    </svg>
-  );
-}
-
-function FlagIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M4 22V4a1 1 0 011-1h12l-2 4 2 4H5" />
-    </svg>
-  );
-}
-
-function BagIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M6 8h12l-1 12H7L6 8z" />
-      <path d="M9 8V6a3 3 0 016 0v2" />
-    </svg>
-  );
-}
-
-function BookmarkIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M6 3h12v18l-6-4-6 4V3z" />
-    </svg>
-  );
-}
-
-function BookOpenIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-      <path d="M4 4.5A2.5 2.5 0 016.5 7H20" />
-      <path d="M6.5 7H20v10H6.5A2.5 2.5 0 014 14.5v-7A2.5 2.5 0 016.5 5" />
-    </svg>
-  );
-}
-
-function MessageIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-    </svg>
-  );
-}
-
-function LightbulbIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M9 18h6M10 22h4M12 2a6 6 0 00-3 11.1V16h6v-2.9A6 6 0 0012 2z" />
-    </svg>
-  );
-}
-
-function LayersIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-    </svg>
-  );
-}
-
-function TrendingUpIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M23 6l-9.5 9.5-5-5L1 18" />
-      <path d="M17 6h6v6" />
-    </svg>
-  );
-}
-
-function RefreshCycleIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M23 4v6h-6M1 20v-6h6" />
-      <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
-    </svg>
-  );
-}
-
-function ActivityIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-    </svg>
-  );
-}
-
-function AlertCircleIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 8v4M12 16h.01" />
-    </svg>
+    <Icon>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </Icon>
   );
 }
 
 function UsersIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+    <Icon>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-    </svg>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </Icon>
+  );
+}
+
+function BarsIcon() {
+  return (
+    <Icon>
+      <path d="M4 18V10M12 18V6M20 18v-8" />
+    </Icon>
+  );
+}
+
+function DoorIcon() {
+  return (
+    <Icon>
+      <path d="M7 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+      <path d="M14 12h.01" strokeWidth={2.25} />
+    </Icon>
+  );
+}
+
+function BookmarkIcon() {
+  return (
+    <Icon>
+      <path d="M7 4h10v16l-5-3.5L7 20V4z" />
+    </Icon>
+  );
+}
+
+function BagIcon() {
+  return (
+    <Icon>
+      <path d="M8 8V6a4 4 0 0 1 8 0v2" />
+      <path d="M6 8h12l-1 12H7L6 8z" />
+    </Icon>
+  );
+}
+
+function BulbIcon() {
+  return (
+    <Icon>
+      <path d="M9 18h6M10 21h4" />
+      <path d="M12 3a5 5 0 0 0-2 9.5V15h4v-2.5A5 5 0 0 0 12 3z" />
+    </Icon>
+  );
+}
+
+function LayersIcon() {
+  return (
+    <Icon>
+      <path d="M12 4 4 8l8 4 8-4-8-4z" />
+      <path d="M4 12l8 4 8-4M4 16l8 4 8-4" />
+    </Icon>
+  );
+}
+
+function BookIcon() {
+  return (
+    <Icon>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </Icon>
+  );
+}
+
+function MessageIcon() {
+  return (
+    <Icon>
+      <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </Icon>
+  );
+}
+
+function TrendIcon() {
+  return (
+    <Icon>
+      <path d="M23 6 13.5 15.5 9 11 1 19" />
+      <path d="M17 6h6v6" />
+    </Icon>
+  );
+}
+
+function RefreshIcon() {
+  return (
+    <Icon>
+      <path d="M23 4v6h-6M1 20v-6h6" />
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+    </Icon>
+  );
+}
+
+function PulseIcon() {
+  return (
+    <Icon>
+      <path d="M22 12h-4l-2.5 8L9 4 6.5 12H2" />
+    </Icon>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <Icon>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 8v4M12 16h.01" />
+    </Icon>
   );
 }
 
 function ClipboardIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
-      <rect x="8" y="2" width="8" height="4" rx="1" />
-    </svg>
+    <Icon>
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <path d="M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z" />
+    </Icon>
   );
 }
 
 function UserCheckIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+    <Icon>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
-      <path d="M19 8l2 2 4-4" />
-    </svg>
+      <path d="m19 8 2 2 3-3" />
+    </Icon>
   );
 }
 
 function MoveIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l3-3-3-3M19 9l3 3-3 3M2 12h20M12 2v20" />
-    </svg>
+    <Icon>
+      <path d="M5 9 2 12l3 3M9 5l3-3 3 3M15 19l3-3-3-3M19 9l3 3-3 3M2 12h20M12 2v20" />
+    </Icon>
   );
 }
 
-function VolumeXIcon() {
+function VolumeOffIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" />
-    </svg>
+    <Icon>
+      <path d="M11 5 6 9H2v6h4l5 4V5z" />
+      <path d="m22 9-6 6M16 9l6 6" />
+    </Icon>
   );
 }
 
-function MonitorIcon() {
+function ScreenIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <rect x="2" y="3" width="20" height="14" rx="2" />
-      <path d="M8 21h8M12 17v4" />
-    </svg>
+    <Icon>
+      <rect x="3" y="4" width="18" height="12" rx="2" />
+      <path d="M8 20h8M12 16v4" />
+    </Icon>
   );
 }
 
 function CheckSquareIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M9 11l3 3L22 4" />
-      <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-    </svg>
+    <Icon>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M9 11 12 14 22 4" />
+    </Icon>
   );
 }
 
-function ZapIcon() {
+function BoltIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" />
-    </svg>
+    <Icon>
+      <path d="M13 2 3 14h7l-1 8 11-12h-7l1-8z" />
+    </Icon>
   );
 }
 
 function MicIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M12 14a4 4 0 004-4V5a4 4 0 00-8 0v5a4 4 0 004 4z" />
-      <path d="M19 10v1a7 7 0 01-14 0v-1M12 19v3M8 22h8" />
-    </svg>
+    <Icon>
+      <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z" />
+      <path d="M19 10v1a7 7 0 0 1-14 0v-1M12 19v2M9 22h6" />
+    </Icon>
   );
 }
 
-function SparklesIcon() {
+function GridIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden {...STROKE}>
-      <path d="M9 12l-1.5 4.5L3 18l4.5 1.5L9 24l1.5-4.5L15 18l-4.5-1.5L9 12zM16 4l-1 3-3 1 3 1 1 3 1-3 3-1-3-1-1-3z" />
-    </svg>
+    <Icon>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </Icon>
   );
 }
 
 const ICON_BY_BASE: Record<string, () => ReactNode> = {
-  BEHAVIOUR_CLIMATE: () => <TwoPeopleIcon />,
-  PACE_MOMENTUM: () => <BarChartIcon />,
+  BEHAVIOUR_CLIMATE: () => <UserIcon />,
+  PACE_MOMENTUM: () => <BarsIcon />,
   ENTRY_ROUTINE: () => <DoorIcon />,
   RETRIEVAL_TASK_QUALITY: () => <BagIcon />,
   RETRIEVAL_CHECK: () => <BookmarkIcon />,
-  EXPLANATION_CLARITY: () => <LightbulbIcon />,
+  EXPLANATION_CLARITY: () => <BulbIcon />,
   MODELLING_EXPLICITNESS: () => <LayersIcon />,
   MODELLING_ON_DEMAND: () => <LayersIcon />,
-  VOCABULARY_PRECISION: () => <BookOpenIcon />,
+  VOCABULARY_PRECISION: () => <BookIcon />,
   DIRECTED_QUESTIONING: () => <MessageIcon />,
-  STRETCH_IN_ROOM: () => <TrendingUpIcon />,
-  CFU_CYCLES: () => <RefreshCycleIcon />,
-  RESPONSIVE_ADJUSTMENT: () => <ActivityIcon />,
-  ERROR_CORRECTION_PRECISION: () => <AlertCircleIcon />,
-  ERROR_CORRECTION_DEPTH: () => <AlertCircleIcon />,
+  STRETCH_IN_ROOM: () => <TrendIcon />,
+  CFU_CYCLES: () => <RefreshIcon />,
+  RESPONSIVE_ADJUSTMENT: () => <PulseIcon />,
+  ERROR_CORRECTION_PRECISION: () => <AlertIcon />,
+  ERROR_CORRECTION_DEPTH: () => <AlertIcon />,
   PARTICIPATION_EQUITY_GP: () => <UsersIcon />,
   PARTICIPATION_EQUITY: () => <UsersIcon />,
   TASK_CLARITY: () => <ClipboardIcon />,
   INDEPENDENT_ACCOUNTABILITY_IP: () => <UserCheckIcon />,
   INDEPENDENT_ACCOUNTABILITY: () => <UserCheckIcon />,
   CIRCULATION_FEEDBACK: () => <MoveIcon />,
-  STRETCH_DEPLOYMENT_IP: () => <TrendingUpIcon />,
-  STRETCH_DEPLOYMENT: () => <TrendingUpIcon />,
-  SILENCE_AND_FOCUS: () => <VolumeXIcon />,
-  PRESENTATION_STANDARD: () => <MonitorIcon />,
+  STRETCH_DEPLOYMENT_IP: () => <TrendIcon />,
+  STRETCH_DEPLOYMENT: () => <TrendIcon />,
+  SILENCE_AND_FOCUS: () => <VolumeOffIcon />,
+  PRESENTATION_STANDARD: () => <ScreenIcon />,
   WORK_COMPLETION: () => <CheckSquareIcon />,
-  SUSTAINED_EFFORT: () => <ZapIcon />,
+  SUSTAINED_EFFORT: () => <BoltIcon />,
   TASK_APPROPRIATENESS: () => <ClipboardIcon />,
-  VOLUME_OF_WORK: () => <BarChartIcon />,
+  VOLUME_OF_WORK: () => <BarsIcon />,
   COLD_CALL_DENSITY: () => <MessageIcon />,
-  LANGUAGE_PRECISION: () => <BookOpenIcon />,
-  LIVE_ADJUSTMENT: () => <ActivityIcon />,
+  LANGUAGE_PRECISION: () => <BookIcon />,
+  LIVE_ADJUSTMENT: () => <PulseIcon />,
   RETRIEVAL_PRESENCE: () => <BookmarkIcon />,
-  PHONICS_VOCABULARY_PRECISION: () => <BookOpenIcon />,
+  PHONICS_VOCABULARY_PRECISION: () => <BookIcon />,
   ORACY_GUIDED: () => <MicIcon />,
   ORACY_INDEPENDENT: () => <MicIcon />,
 };
 
-function iconForKey(signalKey: string): ReactNode {
-  const isPrimary = signalKey.startsWith("PRIMARY_");
-  const base = isPrimary ? signalKey.slice("PRIMARY_".length) : signalKey;
-  const main = (ICON_BY_BASE[base] ?? (() => <SparklesIcon />))();
-
-  if (!isPrimary) {
-    return main;
-  }
-
-  if (base === "PACE_MOMENTUM") {
-    return (
-      <span className="inline-flex items-center gap-1.5" aria-hidden>
-        <span className="text-[#7C69EF] dark:text-violet-400">
-          <TargetIcon />
-        </span>
-        <span className="text-[#7C69EF]/90 dark:text-violet-400/90">
-          <StarIcon />
-        </span>
-      </span>
-    );
-  }
-  if (base === "ENTRY_ROUTINE") {
-    return (
-      <span className="inline-flex items-center gap-1.5" aria-hidden>
-        <span className="text-[#7C69EF] dark:text-violet-400">
-          <FlagIcon />
-        </span>
-        <span className="text-[#7C69EF]/90 dark:text-violet-400/90">
-          <StarIcon />
-        </span>
-      </span>
-    );
-  }
-  if (base === "RETRIEVAL_TASK_QUALITY") {
-    return (
-      <span className="inline-flex items-center gap-1.5" aria-hidden>
-        <span className="text-[#7C69EF] dark:text-violet-400">
-          <BookmarkIcon />
-        </span>
-        <span className="text-[#7C69EF]/90 dark:text-violet-400/90">
-          <StarIcon />
-        </span>
-      </span>
-    );
-  }
-
-  const match = base.match(/^(BEHAVIOUR_CLIMATE|RETRIEVAL_CHECK)$/);
-  if (match) {
-    const pair: Record<string, ReactNode> = {
-      BEHAVIOUR_CLIMATE: <TwoPeopleIcon />,
-      RETRIEVAL_CHECK: <BookmarkIcon />,
-    };
-    return (
-      <span className="inline-flex items-center gap-1.5">
-        <span className="text-[#7C69EF] dark:text-violet-400" aria-hidden>
-          {pair[match[1]]}
-        </span>
-        <span className="text-[#7C69EF]/90 dark:text-violet-400/90" aria-hidden>
-          <StarIcon />
-        </span>
-      </span>
-    );
-  }
-
-  return (
-    <span className="inline-flex items-center gap-1" title="Primary signal">
-      <span className="text-[#7C69EF] dark:text-violet-400">{main}</span>
-      <span className="text-[#7C69EF]/85 dark:text-violet-400/85">
-        <StarIcon />
-      </span>
-    </span>
-  );
+function baseKeyFromCatalogKey(signalKey: string): string {
+  return signalKey.startsWith("PRIMARY_") ? signalKey.slice("PRIMARY_".length) : signalKey;
 }
 
-/** Distinct purple-tinted icon per catalog row; primary curriculum pairs use star + base motif where relevant. */
+/** One minimal line icon per row; primary curriculum keys use the same icon as their base (no star stack). */
 export function SignalKeyIcon({ signalKey }: { signalKey: string }) {
-  return <span className="inline-flex shrink-0 items-center justify-center">{iconForKey(signalKey)}</span>;
+  const base = baseKeyFromCatalogKey(signalKey);
+  const node = (ICON_BY_BASE[base] ?? (() => <GridIcon />))();
+  return (
+    <span className="inline-flex shrink-0 items-center justify-center text-[#7C5CFF] dark:text-violet-400" aria-hidden>
+      {node}
+    </span>
+  );
 }
