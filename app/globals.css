@@ -635,6 +635,70 @@ textarea:focus-visible {
   background: rgba(124, 92, 255, 0.04);
 }
 
+/* Behaviour analysis — collapsible sections (mock: 16px cards, zebra tables, grey header strip) */
+.anx-behaviour-section-card {
+  border-radius: 16px;
+  background: var(--surface-container-lowest);
+  border: none;
+  box-shadow:
+    0 4px 24px rgba(15, 23, 42, 0.06),
+    0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.anx-behaviour-data-table-wrap {
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.anx-behaviour-data-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.anx-behaviour-data-table-wrap thead tr {
+  background: #f3f4f6;
+}
+
+.anx-behaviour-data-table-wrap thead th {
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.anx-behaviour-data-table-wrap tbody tr {
+  border: none;
+}
+
+.anx-behaviour-data-table-wrap tbody tr:nth-child(odd) {
+  background: #ffffff;
+}
+
+.anx-behaviour-data-table-wrap tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.anx-behaviour-data-table-wrap tbody tr:hover {
+  background: #f3f4f6;
+}
+
+.anx-behaviour-data-table-wrap tbody td {
+  border: none;
+  vertical-align: middle;
+  padding: 0.875rem 1rem;
+}
+
+.anx-behaviour-data-table-wrap thead tr th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.anx-behaviour-data-table-wrap thead tr th:last-child {
+  border-top-right-radius: 12px;
+}
+
 /* Uppercase micro-label for filter fields — use with filter toolbars */
 .filter-field-label {
   font-size: 0.6875rem;

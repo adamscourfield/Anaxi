@@ -629,55 +629,55 @@ export default async function AnalysisPage({
         title={suspensionPlural}
         subtitle={`Students with at least one suspension on their latest snapshot (${summary.totalSuspensions.toLocaleString()} total on those records).`}
         countPill={
-          <span className="inline-flex items-center rounded-full bg-[rgba(124,92,255,0.14)] px-2.5 py-1 text-[11px] font-semibold text-[#5b4bd6] ring-1 ring-inset ring-[rgba(124,92,255,0.25)]">
+          <span className="inline-flex items-center rounded-full bg-[#F3E8FF] px-2.5 py-1 text-[11px] font-semibold text-[#6B21A8]">
             {suspensionStudentCount} student{suspensionStudentCount === 1 ? "" : "s"}
           </span>
         }
         icon={
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(124,92,255,0.18)] text-[#7C5CFF]">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3E8FF] text-[#6B21A8]">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden>
               <path d="M6 12h12" />
             </svg>
           </span>
         }
       >
         {result.suspensionIncidents.length === 0 ? (
-          <div className="px-5 py-10 text-center sm:px-6">
-            <p className="text-sm text-muted">No suspensions on the latest snapshot for this cohort.</p>
+          <div className="px-6 py-10 text-center">
+            <p className="text-sm text-[#666666]">No suspensions on the latest snapshot for this cohort.</p>
           </div>
         ) : (
-          <div className="p-4 sm:p-5 sm:pt-4">
-            <div className="anx-elevated-card--table table-shell overflow-hidden rounded-xl">
+          <div className="px-6 pb-6 pt-2">
+            <div className="anx-behaviour-data-table-wrap">
               <p className="sr-only" id="explorer-analysis-suspensions-scroll-hint">
                 This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
               </p>
               <div className="overflow-x-auto" aria-describedby="explorer-analysis-suspensions-scroll-hint">
-                <table className="w-full min-w-[480px] text-sm">
+                <table className="min-w-[480px] text-sm">
                   <thead>
-                    <tr className="table-head-row text-left">
-                      <th className="px-5 py-3">Student</th>
-                      <th className="px-4 py-3">Year</th>
-                      <th className="px-4 py-3 text-right">Count</th>
-                      <th className="px-4 py-3">Snapshot</th>
+                    <tr>
+                      <th className="text-left">Student</th>
+                      <th className="text-left">Year</th>
+                      <th className="text-right">Count</th>
+                      <th className="text-left">Snapshot</th>
                     </tr>
                   </thead>
                   <tbody>
                     {result.suspensionIncidents.map((row) => (
-                      <tr
-                        key={`${row.studentId}-${row.snapshotDate.toISOString()}`}
-                        className="table-row calm-transition"
-                      >
-                        <td className="px-5 py-3.5">
+                      <tr key={`${row.studentId}-${row.snapshotDate.toISOString()}`}>
+                        <td>
                           <div className="flex min-w-0 items-center gap-2.5">
                             <Avatar name={row.studentName} size="sm" />
-                            <Link href={`/students/${row.studentId}`} className="truncate underline decoration-border/60 underline-offset-2 calm-transition hover:text-accent hover:decoration-accent">
+                            <Link
+                              href={`/students/${row.studentId}`}
+                              className="truncate font-medium text-[#333333] underline decoration-[#d1d5db] underline-offset-2 calm-transition hover:text-[#111827] hover:decoration-[#9ca3af]"
+                            >
                               {row.studentName}
                             </Link>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 text-muted">{row.yearGroup ?? "—"}</td>
-                        <td className="px-4 py-3.5 text-right tabular-nums text-muted">{row.suspensionsCount}</td>
-                        <td className="px-4 py-3.5 tabular-nums text-muted">{fmtSnapshotDate(row.snapshotDate)}</td>
+                        <td className="text-[#666666]">{row.yearGroup ?? "—"}</td>
+                        <td className="text-right tabular-nums text-[#666666]">{row.suspensionsCount}</td>
+                        <td className="tabular-nums text-[#666666]">{fmtSnapshotDate(row.snapshotDate)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -694,19 +694,22 @@ export default async function AnalysisPage({
         subtitle={
           <>
             Urgent and priority bands from the pastoral risk model (aligned with{" "}
-            <Link href="/explorer/students" className="text-muted underline decoration-border/50 underline-offset-2 calm-transition hover:text-text">
+            <Link
+              href="/explorer/students"
+              className="text-[#666666] underline decoration-[#d1d5db] underline-offset-2 calm-transition hover:text-[#333333]"
+            >
               Explorer
             </Link>{" "}
             → Students).
           </>
         }
         countPill={
-          <span className="inline-flex items-center rounded-full bg-[rgba(245,158,11,0.18)] px-2.5 py-1 text-[11px] font-semibold text-[#c2410c] ring-1 ring-inset ring-[rgba(245,158,11,0.35)]">
+          <span className="inline-flex items-center rounded-full bg-[#FFF7ED] px-2.5 py-1 text-[11px] font-semibold text-[#9A3412]">
             {result.highPriorityStudents.length} student{result.highPriorityStudents.length === 1 ? "" : "s"}
           </span>
         }
         icon={
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(245,158,11,0.2)] text-[#ea580c]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FFF7ED] text-[#9A3412]">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
               <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6-4.6-6 4.6 2.3-7-6-4.6h7.6z" />
             </svg>
@@ -714,94 +717,107 @@ export default async function AnalysisPage({
         }
       >
         {result.highPriorityStudents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-5 py-14 sm:px-6">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
-              <svg className="h-6 w-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+          <div className="flex flex-col items-center justify-center px-6 py-14">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF7ED]">
+              <svg className="h-6 w-6 text-[#9A3412]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <circle cx="11" cy="11" r="6.5" />
                 <path d="m16.5 16.5 3 3" strokeLinecap="round" />
               </svg>
             </div>
-            <p className="text-[0.875rem] font-semibold text-text">No students in urgent or priority bands</p>
-            <p className="mt-1 max-w-sm text-center text-[0.8125rem] text-muted">
+            <p className="text-[0.875rem] font-semibold text-[#333333]">No students in urgent or priority bands</p>
+            <p className="mt-1 max-w-sm text-center text-[0.8125rem] text-[#666666]">
               Widen filters or check back after the next data import.
             </p>
           </div>
         ) : (
-          <div className="p-4 sm:p-5 sm:pt-4">
-            <div className="anx-elevated-card--table table-shell overflow-hidden rounded-xl">
+          <div className="px-6 pb-6 pt-2">
+            <div className="anx-behaviour-data-table-wrap">
               <p className="sr-only" id="explorer-analysis-high-priority-scroll-hint">
                 This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
               </p>
               <div className="overflow-x-auto" aria-describedby="explorer-analysis-high-priority-scroll-hint">
-                <table className="w-full min-w-[720px] text-sm">
+                <table className="min-w-[720px] text-sm">
                   <thead>
-                    <tr className="table-head-row text-left">
-                      <th className="px-5 py-3">Student</th>
-                      <th className="px-4 py-3">Band</th>
-                      <th className="px-4 py-3">Year</th>
-                      <th className="px-4 py-3">Flags</th>
-                      <th className="px-4 py-3 text-right">Attendance</th>
-                      <th className="px-4 py-3 text-right">{detentionPlural}</th>
-                      <th className="px-4 py-3 text-right">{internalExclusionPlural}</th>
-                      <th className="px-4 py-3 text-right">{onCallPlural}</th>
+                    <tr>
+                      <th className="text-left">Student</th>
+                      <th className="text-left">Band</th>
+                      <th className="text-left">Year</th>
+                      <th className="text-left">Flags</th>
+                      <th className="text-right">Attendance</th>
+                      <th className="text-right">{detentionPlural}</th>
+                      <th className="text-right">{internalExclusionPlural}</th>
+                      <th className="text-right">{onCallPlural}</th>
                       {summary.hasPositivePoints ? (
-                        <th className="px-4 py-3 text-right">{labels.positivePoints}</th>
+                        <th className="text-right">{labels.positivePoints}</th>
                       ) : null}
                       {summary.hasNegativePoints ? (
-                        <th className="px-4 py-3 text-right">{labels.negativePoints}</th>
+                        <th className="text-right">{labels.negativePoints}</th>
                       ) : null}
                     </tr>
                   </thead>
                   <tbody>
                     {result.highPriorityStudents.map((student) => (
-                      <tr
-                        key={student.studentId}
-                        className="table-row calm-transition"
-                      >
-                        <td className="px-5 py-3.5">
+                      <tr key={student.studentId}>
+                        <td>
                           <div className="flex min-w-0 items-center gap-2.5">
                             <Avatar name={student.studentName} size="sm" />
                             <Link
                               href={`/analysis/students/${student.studentId}?window=${windowDays}`}
-                              className="truncate underline decoration-border/60 underline-offset-2 calm-transition hover:text-accent hover:decoration-accent"
+                              className="truncate font-medium text-[#333333] underline decoration-[#d1d5db] underline-offset-2 calm-transition hover:text-[#111827] hover:decoration-[#9ca3af]"
                             >
                               {student.studentName}
                             </Link>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5">
-                          <StatusPill variant={student.band === "URGENT" ? "error" : "warning"} size="sm">
+                        <td>
+                          <StatusPill
+                            variant={student.band === "URGENT" ? "error" : "warning"}
+                            size="sm"
+                            className={
+                              student.band === "URGENT"
+                                ? "!bg-[#FEF2F2] !text-[#991B1B] !ring-1 !ring-inset !ring-[#FECACA]"
+                                : "!bg-[#FFF7ED] !text-[#9A3412] !ring-1 !ring-inset !ring-[#FED7AA]"
+                            }
+                          >
                             {student.band === "URGENT" ? "Urgent" : "Priority"}
                           </StatusPill>
                         </td>
-                        <td className="px-4 py-3.5 text-muted">{student.yearGroup ?? "—"}</td>
-                        <td className="px-4 py-3.5">
+                        <td className="text-[#666666]">{student.yearGroup ?? "—"}</td>
+                        <td>
                           <div className="flex flex-wrap gap-1.5">
                             {student.ppFlag ? (
-                              <StatusPill variant="info" size="sm">
+                              <StatusPill
+                                variant="info"
+                                size="sm"
+                                className="!bg-[#F3E8FF] !text-[#6B21A8] !ring-1 !ring-inset !ring-[#E9D5FF]"
+                              >
                                 PP
                               </StatusPill>
                             ) : null}
                             {student.sendFlag ? (
-                              <StatusPill variant="warning" size="sm">
+                              <StatusPill
+                                variant="warning"
+                                size="sm"
+                                className="!bg-[#FFF7ED] !text-[#9A3412] !ring-1 !ring-inset !ring-[#FED7AA]"
+                              >
                                 SEND
                               </StatusPill>
                             ) : null}
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 text-right tabular-nums text-muted">
+                        <td className="text-right tabular-nums text-[#666666]">
                           {student.attendancePct !== null ? `${student.attendancePct.toFixed(1)}%` : "—"}
                         </td>
-                        <td className="px-4 py-3.5 text-right tabular-nums text-muted">{student.detentionsCount}</td>
-                        <td className="px-4 py-3.5 text-right tabular-nums text-muted">{student.internalExclusionsCount}</td>
-                        <td className="px-4 py-3.5 text-right tabular-nums text-muted">{student.onCallsCount}</td>
+                        <td className="text-right tabular-nums text-[#666666]">{student.detentionsCount}</td>
+                        <td className="text-right tabular-nums text-[#666666]">{student.internalExclusionsCount}</td>
+                        <td className="text-right tabular-nums text-[#666666]">{student.onCallsCount}</td>
                         {summary.hasPositivePoints ? (
-                          <td className="px-4 py-3.5 text-right text-sm font-bold tabular-nums text-[var(--scale-strong-text)]">
+                          <td className="text-right text-sm font-bold tabular-nums text-[#166534]">
                             {student.positivePointsTotal}
                           </td>
                         ) : null}
                         {summary.hasNegativePoints ? (
-                          <td className="px-4 py-3.5 text-right tabular-nums text-muted">{student.negativePointsTotal}</td>
+                          <td className="text-right tabular-nums text-[#666666]">{student.negativePointsTotal}</td>
                         ) : null}
                       </tr>
                     ))}
