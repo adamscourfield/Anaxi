@@ -42,7 +42,7 @@ export function HistoryFilters({
   const triggerWhite = "field-filter-trigger";
 
   return (
-    <div className="filter-panel">
+    <div className="filter-panel obs-history-filter-panel">
       <form
         method="get"
         action="/observe/history"
