@@ -107,6 +107,28 @@ function SectionIconBox({ children }: { children: React.ReactNode }) {
   );
 }
 
+function CalendarOutlineIcon({
+  className,
+  stroke = CHART_VIOLET,
+}: {
+  className?: string;
+  stroke?: string;
+}) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={stroke}
+      strokeWidth="2"
+      aria-hidden
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function InfoCircleIcon({ title: ariaLabel }: { title: string }) {
   return (
     <span
@@ -505,65 +527,114 @@ export function ObservationHistoryAnalysis({
   const hasTimeline = timelineWeeks.length > 0;
 
   const analysisCardClass =
-    "rounded-[14px] border border-border/30 bg-surface-container-lowest shadow-ambient";
+    "rounded-[14px] border border-border/25 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+
+  const segmentBase =
+    "relative flex min-h-[2.5rem] flex-1 items-center justify-center px-3 py-2 text-center text-[0.8125rem] font-semibold calm-transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)]";
 
   return (
     <section className="space-y-5" onMouseLeave={hideTip}>
       <ChartTooltip state={tip} />
 
-      <div className={`${analysisCardClass} px-5 py-5 md:px-6`}>
-        <div className="flex items-start gap-3">
-          <SectionIconBox>
-            <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="M4 19V5" strokeLinecap="round" />
-              <path d="M4 14h4l3-8 4 12 3-6h6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </SectionIconBox>
-          <div className="min-w-0 flex-1">
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Analysis</p>
-            <p className="mt-1 text-[0.8125rem] text-muted">
+      <div className={`${analysisCardClass} overflow-hidden p-5 md:p-6`}>
+        <div className="flex flex-col gap-8 md:flex-row md:items-stretch md:gap-0">
+          {/* Analysis copy + quick presets */}
+          <div className="min-w-0 flex-1 md:pr-8">
+            <p
+              className="text-[0.6875rem] font-bold uppercase tracking-[0.1em]"
+              style={{ color: CHART_VIOLET }}
+            >
+              Analysis
+            </p>
+            <p className="mt-2 max-w-xl text-[0.8125rem] leading-relaxed text-muted">
               Charts use the same filters as the table. When you set table date filters, the chart window is the overlap
               with the range you pick below (UK academic year: 1 Sep – 31 Aug). Weeks start on Monday.
             </p>
-            <p className="mt-2 text-[0.8125rem] text-muted">
-              <span>Current window: </span>
-              <span className="font-semibold" style={{ color: CHART_VIOLET }}>
-                {rangeLabel}
+            <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] text-muted">
+              <Link
+                href={analysisHref("week", historyFilterQueryString)}
+                className="inline-flex items-center gap-1.5 calm-transition hover:text-text"
+              >
+                <CalendarOutlineIcon className="h-3.5 w-3.5 shrink-0" stroke="currentColor" />
+                Last week (7 days)
+              </Link>
+              <span className="select-none text-muted/50" aria-hidden>
+                ·
               </span>
-            </p>
-            {emptyIntersection ? (
-              <p className="mt-2 rounded-lg border border-scale-some/30 bg-scale-some-light/80 px-3 py-2 text-[0.8125rem] text-text">
-                {chartFellBackToTableDates
-                  ? "The chart range you picked does not overlap your table date filters, so the charts below use your table date range instead. Widen the table dates or choose another chart range."
-                  : "No overlap between this chart range and your table date filters — widen dates or pick another range."}
-              </p>
-            ) : null}
+              <Link
+                href={analysisHref("month", historyFilterQueryString)}
+                className="inline-flex items-center gap-1.5 calm-transition hover:text-text"
+              >
+                <CalendarOutlineIcon className="h-3.5 w-3.5 shrink-0" stroke="currentColor" />
+                Last month (30 days)
+              </Link>
+              <span className="select-none text-muted/50" aria-hidden>
+                ·
+              </span>
+              <Link
+                href={analysisHref("26w", historyFilterQueryString)}
+                className="inline-flex items-center gap-1.5 calm-transition hover:text-text"
+              >
+                <CalendarOutlineIcon className="h-3.5 w-3.5 shrink-0" stroke="currentColor" />
+                Academic year ~26 weeks
+              </Link>
+            </div>
+          </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              {OBSERVATION_ANALYSIS_PRESETS.map((preset) => {
+          <div
+            className="hidden shrink-0 self-stretch w-px bg-border/35 md:block"
+            aria-hidden
+          />
+
+          {/* Current window + segmented control */}
+          <div className="min-w-0 flex-1 md:pl-8">
+            <p className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-muted">
+              Current window
+            </p>
+            <div className="mt-3 flex items-start gap-2.5">
+              <CalendarOutlineIcon className="mt-0.5 h-6 w-6 shrink-0" />
+              <p
+                className="text-[0.9375rem] font-bold leading-snug"
+                style={{ color: CHART_VIOLET }}
+              >
+                {rangeLabel}
+              </p>
+            </div>
+            <div
+              className="mt-5 flex w-full overflow-hidden rounded-xl border border-border/45 bg-surface-container-lowest"
+              role="group"
+              aria-label="Chart time window"
+            >
+              {OBSERVATION_ANALYSIS_PRESETS.map((preset, idx) => {
                 const active = analysisPreset === preset;
+                const isLast = idx === OBSERVATION_ANALYSIS_PRESETS.length - 1;
                 return (
                   <Link
                     key={preset}
                     href={analysisHref(preset, historyFilterQueryString)}
-                    className={`inline-flex items-center rounded-full px-3.5 py-1.5 text-[0.75rem] font-semibold calm-transition ${
+                    className={`${segmentBase} ${!isLast ? "border-r border-border/40" : ""} ${
                       active
-                        ? "text-white shadow-sm"
-                        : "border border-border/40 bg-surface-container-lowest text-muted hover:border-border hover:text-text"
+                        ? "text-white"
+                        : "bg-surface-container-lowest text-text hover:bg-surface-container-low"
                     }`}
                     style={active ? { backgroundColor: CHART_VIOLET } : undefined}
+                    aria-current={active ? "true" : undefined}
                   >
                     {PRESET_META[preset].short}
                   </Link>
                 );
               })}
             </div>
-            <p className="mt-2 text-[0.6875rem] text-muted">
-              {PRESET_META.week.label} (7 days) · {PRESET_META.month.label} (30 days) ·{" "}
-              {PRESET_META.academic_year.label} · {PRESET_META["26w"].label}
-            </p>
           </div>
         </div>
+
+        {emptyIntersection ? (
+          <p className="mt-6 rounded-lg border border-scale-some/30 bg-scale-some-light/80 px-3 py-2 text-[0.8125rem] text-text md:mt-8">
+            {chartFellBackToTableDates
+              ? "The chart range you picked does not overlap your table date filters, so the charts below use your table date range instead. Widen the table dates or choose another chart range."
+              : "No overlap between this chart range and your table date filters — widen dates or pick another range."}
+          </p>
+        ) : null}
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,0.38fr)_minmax(0,1fr)] lg:items-stretch">

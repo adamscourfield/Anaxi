@@ -336,7 +336,7 @@ export default async function ObservationHistoryPage({
           user.role !== "TEACHER" ? (
             <Link
               href="/observe/new"
-              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[0.875rem] font-semibold text-on-primary calm-transition anx-card-elevated hover:bg-accentHover"
+              className="inline-flex items-center gap-2 rounded-full bg-neutral-950 px-5 py-2.5 text-[0.875rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" clipRule="evenodd" />
