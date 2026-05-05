@@ -215,6 +215,7 @@ export default async function InstructionTeachersPage({
     }
   }
 
+  function filterByVisibility<T extends { teacherMembershipId: string }>(rows: T[]): T[] {
     return rows.filter((r) =>
       canViewTeacherAnalysis(viewerContext, {
         teacherUserId: r.teacherMembershipId,
@@ -609,12 +610,16 @@ export default async function InstructionTeachersPage({
                 </span>
               )}
 
-              {pageNumbers.map((p, idx) =>
-                p === "ellipsis" ? (
-                  <span key={`ellipsis-${idx}`} className="px-1 text-sm text-muted">
-                    …
-                  </span>
-                ) : (
+              {pageNumbers.map((p, idx) => {
+                if (p === "ellipsis") {
+                  return (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-sm text-muted">
+                      …
+                    </span>
+                  );
+                }
+
+                return (
                   <Link
                     key={p}
                     href={pageUrl(p)}
@@ -626,8 +631,8 @@ export default async function InstructionTeachersPage({
                   >
                     {p}
                   </Link>
-                ),
-              )}
+                );
+              })}
 
               {currentPage < totalPages ? (
                 <Link

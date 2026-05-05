@@ -8,7 +8,7 @@ import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/g
 import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { ObservationSignalLabelsSection } from "./observation-signal-labels/ObservationSignalLabelsSection";
+import { ObservationSignalLabelsSection } from "../observation-signal-labels/ObservationSignalLabelsSection";
 
 const ACCENT_TAG = "#7C69EF";
 
