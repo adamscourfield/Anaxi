@@ -215,6 +215,24 @@ export default async function InstructionTeachersPage({
     }
   }
 
+  /** Pivot signal means for heatmap cells in Priority view (risk rows do not carry signalData). */
+  let pivotSignalByTeacherId = new Map<string, TeacherPivotRow["signalData"]>();
+  if (mode === "priorities") {
+    const { rows: pivotForHeatmap } = await computeTeacherPivot(user.tenantId, windowDays, pivotFilter);
+    let heatRows = pivotForHeatmap;
+    if (isHod && hodDepartmentIds.length > 0) {
+      const hodDeptNameSet = new Set(scopedDepartments.map((d) => d.name));
+      heatRows = heatRows.filter((r) => r.departmentNames.some((dn) => hodDeptNameSet.has(dn)));
+    }
+    if (departmentId) {
+      const dept = departments.find((d) => d.id === departmentId);
+      if (dept) {
+        heatRows = heatRows.filter((r) => r.departmentNames.includes(dept.name));
+      }
+    }
+    pivotSignalByTeacherId = new Map(heatRows.map((r) => [r.teacherMembershipId, r.signalData]));
+  }
+
   function filterByVisibility<T extends { teacherMembershipId: string }>(rows: T[]): T[] {
     return rows.filter((r) =>
       canViewTeacherAnalysis(viewerContext, {
@@ -386,7 +404,7 @@ export default async function InstructionTeachersPage({
                           </span>
                         </div>
                       </th>
-                      <th className="min-w-[11rem] px-4 py-4">
+                      <th className="min-w-[13.5rem] px-4 py-4">
                         <span className="inline-flex flex-col gap-0.5">
                           <span>Signal heatmap</span>
                           <span className="text-[0.625rem] font-normal normal-case tracking-normal text-muted">
@@ -432,8 +450,8 @@ export default async function InstructionTeachersPage({
                               </span>
                             </span>
                           </td>
-                          <td className="px-4 py-5">
-                            <div className="flex max-w-[14rem] items-center gap-1.5">
+                          <td className="min-w-[11rem] px-4 py-5">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               {heatmapKeys.map((key) => {
                                 const cell = row.signalData[key];
                                 const mean = cell?.currentMean;
@@ -442,7 +460,7 @@ export default async function InstructionTeachersPage({
                                 return (
                                   <div
                                     key={key}
-                                    className={`h-5 min-w-0 flex-1 rounded-md ${barClass}`}
+                                    className={`h-5 w-5 shrink-0 rounded-md ${barClass}`}
                                     title={signalHeatmapCellTitle(label, mean)}
                                   />
                                 );
@@ -516,6 +534,14 @@ export default async function InstructionTeachersPage({
                           </span>
                         </div>
                       </th>
+                      <th className="min-w-[13.5rem] px-4 py-4">
+                        <span className="inline-flex flex-col gap-0.5">
+                          <span>Signal heatmap</span>
+                          <span className="text-[0.625rem] font-normal normal-case tracking-normal text-muted">
+                            Higher mean = stronger (1–4)
+                          </span>
+                        </span>
+                      </th>
                       <th className="px-4 py-4">Top drivers</th>
                       <th className="px-4 py-4 text-right">Last observed</th>
                     </tr>
@@ -523,6 +549,7 @@ export default async function InstructionTeachersPage({
                   <tbody>
                     {pagedRiskRows.map((row) => {
                       const drift = formatDrift(row.normalizedIDS);
+                      const signalDataForHeat = pivotSignalByTeacherId.get(row.teacherMembershipId);
                       return (
                         <ClickableRow
                           key={row.teacherMembershipId}
@@ -559,6 +586,23 @@ export default async function InstructionTeachersPage({
                                 {drift.arrow}
                               </span>
                             </span>
+                          </td>
+                          <td className="min-w-[11rem] px-4 py-5">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {heatmapKeys.map((key) => {
+                                const cell = signalDataForHeat?.[key];
+                                const mean = cell?.currentMean;
+                                const barClass = meanToHeatmapBarClass(mean);
+                                const label = signalLabelMap[key] ?? key;
+                                return (
+                                  <div
+                                    key={key}
+                                    className={`h-5 w-5 shrink-0 rounded-md ${barClass}`}
+                                    title={signalHeatmapCellTitle(label, mean)}
+                                  />
+                                );
+                              })}
+                            </div>
                           </td>
                           <td className="px-4 py-5">
                             <TopDriverLinks
