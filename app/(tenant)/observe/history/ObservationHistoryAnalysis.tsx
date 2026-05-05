@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { ObservationAnalysisPreset } from "@/modules/observations/observationHistoryAnalysisRange";
 import { OBSERVATION_ANALYSIS_PRESETS } from "@/modules/observations/observationHistoryAnalysisRange";
 import { FormSelect } from "@/components/ui/form-select";
@@ -68,7 +69,10 @@ function ChartTooltip({ state }: { state: TooltipState }) {
 
   if (!state) return null;
 
-  return (
+  /** Portal keeps `position:fixed` aligned with viewport coordinates from mouse events (avoids offset when a transformed ancestor creates a containing block). */
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       ref={ref}
       className="pointer-events-none fixed z-[100] max-w-[min(280px,calc(100vw-1.5rem))] rounded-lg border border-border/40 bg-surface-container-lowest/95 px-3 py-2 text-[0.8125rem] shadow-lg backdrop-blur-sm"
@@ -80,7 +84,8 @@ function ChartTooltip({ state }: { state: TooltipState }) {
       role="tooltip"
     >
       <span className="whitespace-pre-wrap text-text">{state.text}</span>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
