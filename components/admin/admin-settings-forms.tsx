@@ -2,7 +2,13 @@
 
 import type { ReactNode } from "react";
 import { FormWithSuccessToast, FormSuccessToast } from "@/components/form-success-toast";
-import { Button } from "@/components/ui/button";
+
+const PLATFORM_CARD =
+  "rounded-2xl border border-border/35 bg-surface-container-lowest shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+
+const FIELD_SHELL = "field w-full rounded-xl border-border/40 bg-surface-container-lowest";
+
+const LABEL_UPPER = "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
 
 type Tab = "school" | "modules";
 
@@ -215,32 +221,52 @@ export function AdminSettingsForms({
 
   if (tab === "school") {
     return (
-      <div className="overflow-hidden rounded-2xl anx-elevated-card p-6 sm:p-8">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">School details</h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted">Set the school name, timezone, and default insight window.</p>
+      <div className={`overflow-hidden ${PLATFORM_CARD}`}>
+        <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
+          <div className="flex gap-3 sm:gap-4">
+            <span
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,105,239,0.88)] text-white shadow-sm [&_svg]:shrink-0"
+              aria-hidden
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 21h16M6 21V10l6-4 6 4v11M10 21v-6h4v6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold tracking-tight text-text">School details</h2>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+                Set the school name, timezone, and default insight window.
+              </p>
+            </div>
+          </div>
         </div>
         <FormWithSuccessToast
           action={saveSettings}
           successMessage="Settings saved"
-          className="space-y-4"
+          className="space-y-5 px-5 py-6 sm:space-y-6 sm:px-7 sm:pb-7"
         >
-          <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
+          <div className="grid max-w-3xl gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="anx-label-micro">School name</label>
+              <label className={LABEL_UPPER} htmlFor="platform-school-name">
+                School name
+              </label>
               <input
+                id="platform-school-name"
                 name="schoolName"
                 defaultValue={settings?.schoolName ?? ""}
                 placeholder="My School"
-                className="field rounded-xl border-border/60 bg-[var(--surface-container-low)]/80"
+                className={FIELD_SHELL}
               />
             </div>
             <div>
-              <label className="anx-label-micro">Timezone</label>
+              <label className={LABEL_UPPER} htmlFor="platform-timezone">
+                Timezone
+              </label>
               <select
+                id="platform-timezone"
                 name="timezone"
                 defaultValue={settings?.timezone ?? "Europe/London"}
-                className="field rounded-xl border-border/60 bg-[var(--surface-container-low)]/80"
+                className={FIELD_SHELL}
               >
                 <option value="Europe/London">Europe/London</option>
                 <option value="Europe/Dublin">Europe/Dublin</option>
@@ -251,11 +277,14 @@ export function AdminSettingsForms({
               </select>
             </div>
             <div>
-              <label className="anx-label-micro">Default insight window</label>
+              <label className={LABEL_UPPER} htmlFor="platform-insight-window">
+                Default insight window
+              </label>
               <select
+                id="platform-insight-window"
                 name="defaultInsightWindowDays"
                 defaultValue={String(settings?.defaultInsightWindowDays ?? 21)}
-                className="field rounded-xl border-border/60 bg-[var(--surface-container-low)]/80"
+                className={FIELD_SHELL}
               >
                 <option value="7">7 days</option>
                 <option value="21">21 days</option>
@@ -264,44 +293,83 @@ export function AdminSettingsForms({
             </div>
           </div>
 
-          <details className="rounded-xl border border-border/60 bg-[var(--surface-container-low)]/50 p-4">
-            <summary className="cursor-pointer text-sm font-semibold text-text">Advanced thresholds</summary>
-            <div className="mt-4 grid max-w-2xl gap-4 sm:grid-cols-3">
-              <div>
-                <label className="anx-label-micro">Drift delta</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="driftDeltaThreshold"
-                  defaultValue={settings?.driftDeltaThreshold ?? 0.15}
-                  className="field rounded-xl border-border/60 bg-[var(--surface-container-lowest)]"
-                />
-              </div>
-              <div>
-                <label className="anx-label-micro">Min observations</label>
-                <input
-                  type="number"
-                  name="minObservationCount"
-                  defaultValue={settings?.minObservationCount ?? 3}
-                  className="field rounded-xl border-border/60 bg-[var(--surface-container-lowest)]"
-                />
-              </div>
-              <div>
-                <label className="anx-label-micro">Behaviour spike %</label>
-                <input
-                  type="number"
-                  step="1"
-                  name="behaviourSpikePercent"
-                  defaultValue={settings?.behaviourSpikePercent ?? 50}
-                  className="field rounded-xl border-border/60 bg-[var(--surface-container-lowest)]"
-                />
+          <details className="group max-w-3xl rounded-xl border border-border/40 bg-surface-container-lowest">
+            <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 calm-transition hover:bg-surface-container-low/40 [&::-webkit-details-marker]:hidden">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--surface-container-low)_70%,transparent)] text-muted">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M4 21v-7M4 10V8a2 2 0 012-2h6a2 2 0 012 2v2M4 21h16M8 21v-9M12 21v-5M16 21v-3M20 10v11" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M7 8h1M11 8h1M15 8h1" strokeLinecap="round" />
+                </svg>
+              </span>
+              <span className="min-w-0 flex-1 text-[0.9375rem] font-bold text-text">Advanced thresholds</span>
+              <svg
+                className="h-5 w-5 shrink-0 text-muted calm-transition group-open:rotate-180"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden
+              >
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </summary>
+            <div className="border-t border-border/25 px-4 py-5">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label className={LABEL_UPPER} htmlFor="platform-drift">
+                    Drift delta
+                  </label>
+                  <input
+                    id="platform-drift"
+                    type="number"
+                    step="0.01"
+                    name="driftDeltaThreshold"
+                    defaultValue={settings?.driftDeltaThreshold ?? 0.15}
+                    className={FIELD_SHELL}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL_UPPER} htmlFor="platform-min-obs">
+                    Min observations
+                  </label>
+                  <input
+                    id="platform-min-obs"
+                    type="number"
+                    name="minObservationCount"
+                    defaultValue={settings?.minObservationCount ?? 3}
+                    className={FIELD_SHELL}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL_UPPER} htmlFor="platform-spike">
+                    Behaviour spike %
+                  </label>
+                  <input
+                    id="platform-spike"
+                    type="number"
+                    step="1"
+                    name="behaviourSpikePercent"
+                    defaultValue={settings?.behaviourSpikePercent ?? 50}
+                    className={FIELD_SHELL}
+                  />
+                </div>
               </div>
             </div>
           </details>
 
-          <Button type="submit" className="rounded-full px-6">
-            Save settings
-          </Button>
+          <div className="pt-1">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+            >
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="17 21 17 13 7 13 7 21" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="7 3 7 8 15 8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Save settings
+            </button>
+          </div>
         </FormWithSuccessToast>
       </div>
     );
@@ -309,12 +377,30 @@ export function AdminSettingsForms({
 
   if (tab === "modules") {
     return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Modules</h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted">Control which features are available across your school.</p>
+      <div className={`overflow-hidden ${PLATFORM_CARD}`}>
+        <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
+          <div className="flex gap-3 sm:gap-4">
+            <span
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,105,239,0.88)] text-white shadow-sm [&_svg]:shrink-0"
+              aria-hidden
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                <path
+                  d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.998.998 0 01-1.023.242 3 3 0 01-2.54-.298 3 3 0 01-2.54.298 1 1 0 01-1.023-.242L9.44 11.06a1 1 0 01-.242 1.023 3 3 0 01-.298 2.54 3 3 0 01.298 2.54 1 1 0 01.242 1.023l-1.611 1.611c-.47.47-1.087.706-1.704.706s-1.233-.235-1.704-.706l-1.568-1.568a1.019 1.019 0 01-.289-.878 3 3 0 01.298-2.54 3 3 0 01-.298-2.54 1 1 0 01.289-.878l1.568-1.568c.47-.47 1.087-.706 1.704-.706s1.233.235 1.704.706l1.611 1.611a1 1 0 011.023.242 3 3 0 012.54-.298 3 3 0 012.54.298 1 1 0 011.023-.242l1.611-1.611c.47-.47 1.087-.706 1.704-.706s1.233.235 1.704.706l1.568 1.568c.23.23.338.556.289.878a3 3 0 01-.298 2.54 3 3 0 01.298 2.54z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold tracking-tight text-text">Modules</h2>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+                Control which features are available across your school.
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid auto-rows-fr gap-4 p-5 sm:grid-cols-2 sm:p-7 lg:grid-cols-3">
           {features.map((feature) => {
             const friendlyName = FEATURE_FRIENDLY_NAMES[feature.key] ?? feature.key;
             const { well, icon } = featureVisual(feature.key);
