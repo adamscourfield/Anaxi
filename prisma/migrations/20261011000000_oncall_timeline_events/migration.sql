@@ -27,22 +27,22 @@ ALTER TABLE "OnCallTimelineEvent" ADD CONSTRAINT "OnCallTimelineEvent_requestId_
 
 ALTER TABLE "OnCallTimelineEvent" ADD CONSTRAINT "OnCallTimelineEvent_tenantId_actorUserId_fkey" FOREIGN KEY ("tenantId", "actorUserId") REFERENCES "User"("tenantId", "id") ON DELETE SET NULL ON UPDATE CASCADE;
 
--- Backfill from existing OnCallRequest rows
+-- Backfill from existing OnCallRequest rows (deterministic ids from row keys)
 INSERT INTO "OnCallTimelineEvent" ("id", "tenantId", "requestId", "type", "actorUserId", "createdAt")
-SELECT gen_random_uuid()::text, "tenantId", "id", 'CREATED'::"OnCallTimelineEventType", "requesterUserId", "createdAt"
+SELECT md5("id" || ':CREATED'), "tenantId", "id", 'CREATED'::"OnCallTimelineEventType", "requesterUserId", "createdAt"
 FROM "OnCallRequest";
 
 INSERT INTO "OnCallTimelineEvent" ("id", "tenantId", "requestId", "type", "actorUserId", "createdAt")
-SELECT gen_random_uuid()::text, "tenantId", "id", 'ACKNOWLEDGED'::"OnCallTimelineEventType", "responderUserId", "acknowledgedAt"
+SELECT md5("id" || ':ACKNOWLEDGED'), "tenantId", "id", 'ACKNOWLEDGED'::"OnCallTimelineEventType", "responderUserId", "acknowledgedAt"
 FROM "OnCallRequest"
 WHERE "acknowledgedAt" IS NOT NULL;
 
 INSERT INTO "OnCallTimelineEvent" ("id", "tenantId", "requestId", "type", "actorUserId", "createdAt")
-SELECT gen_random_uuid()::text, "tenantId", "id", 'RESOLVED'::"OnCallTimelineEventType", "responderUserId", "resolvedAt"
+SELECT md5("id" || ':RESOLVED'), "tenantId", "id", 'RESOLVED'::"OnCallTimelineEventType", "responderUserId", "resolvedAt"
 FROM "OnCallRequest"
 WHERE "resolvedAt" IS NOT NULL;
 
 INSERT INTO "OnCallTimelineEvent" ("id", "tenantId", "requestId", "type", "actorUserId", "createdAt")
-SELECT gen_random_uuid()::text, "tenantId", "id", 'CANCELLED'::"OnCallTimelineEventType", "requesterUserId", "updatedAt"
+SELECT md5("id" || ':CANCELLED'), "tenantId", "id", 'CANCELLED'::"OnCallTimelineEventType", "requesterUserId", "updatedAt"
 FROM "OnCallRequest"
 WHERE "status" = 'CANCELLED';
