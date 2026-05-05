@@ -495,6 +495,14 @@ export default async function ExplorerTeachersPage({
                           </span>
                         </div>
                       </th>
+                      <th className="min-w-[13.5rem] px-4 py-4">
+                        <span className="inline-flex flex-col gap-0.5">
+                          <span>Signal heatmap</span>
+                          <span className="text-[0.625rem] font-normal normal-case tracking-normal text-muted">
+                            Higher mean = stronger (1–4)
+                          </span>
+                        </span>
+                      </th>
                       <th className="px-4 py-4">Top drivers</th>
                       <th className="px-4 py-4 text-right">Last observed</th>
                     </tr>
@@ -502,6 +510,7 @@ export default async function ExplorerTeachersPage({
                   <tbody>
                     {pagedRiskRows.map((row) => {
                       const drift = formatDrift(row.normalizedIDS);
+                      const signalDataForHeat = pivotSignalByTeacherId.get(row.teacherMembershipId);
                       return (
                         <ClickableRow
                           key={row.teacherMembershipId}
@@ -538,6 +547,23 @@ export default async function ExplorerTeachersPage({
                                 {drift.arrow}
                               </span>
                             </span>
+                          </td>
+                          <td className="min-w-[11rem] px-4 py-5">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {heatmapKeys.map((key) => {
+                                const cell = signalDataForHeat?.[key];
+                                const mean = cell?.currentMean;
+                                const barClass = meanToHeatmapBarClass(mean);
+                                const label = signalLabelMap[key] ?? key;
+                                return (
+                                  <div
+                                    key={key}
+                                    className={`h-5 w-5 shrink-0 rounded-md ${barClass}`}
+                                    title={signalHeatmapCellTitle(label, mean)}
+                                  />
+                                );
+                              })}
+                            </div>
                           </td>
                           <td className="px-4 py-5">
                             <TopDriverLinks
