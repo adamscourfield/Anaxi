@@ -241,13 +241,13 @@ export default async function LeaveDetailPage({
                 icon={<CalendarGlyph className="h-5 w-5" />}
                 label="Start"
                 value={fmt(startDate)}
-                className="border-b border-border/25 sm:border-r sm:border-b"
+                className="border-b border-border/25 sm:border-r sm:border-b-0"
               />
               <InfoCell
                 icon={<CalendarGlyph className="h-5 w-5" />}
                 label="End"
                 value={fmt(endDate)}
-                className="border-b border-border/25 sm:border-b"
+                className="border-b border-border/25 sm:border-b-0"
               />
               <InfoCell
                 icon={<ClockGlyph className="h-5 w-5" />}
