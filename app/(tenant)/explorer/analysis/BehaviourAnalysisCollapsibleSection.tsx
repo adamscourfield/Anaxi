@@ -22,22 +22,24 @@ export function BehaviourAnalysisCollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/30 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.05)]">
+    <div className="anx-behaviour-section-card overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-start gap-3 px-5 py-4 text-left calm-transition hover:bg-surface-container-low/60 sm:gap-4 sm:px-6 sm:py-5"
+        className="flex w-full items-start gap-3 px-6 py-5 text-left calm-transition hover:bg-[#f9fafb] sm:gap-4"
         aria-expanded={open}
       >
         <span className="mt-0.5 shrink-0">{icon}</span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-text">{title}</h2>
-          <div className="mt-1 max-w-3xl text-[0.8125rem] leading-relaxed text-muted">{subtitle}</div>
+          <h2 className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-[#333333]">{title}</h2>
+          <div className="mt-1 max-w-3xl text-[0.8125rem] font-normal leading-relaxed text-[#666666]">
+            {subtitle}
+          </div>
         </div>
-        <span className="flex shrink-0 items-center gap-2">
+        <span className="flex shrink-0 items-center gap-2.5">
           {countPill}
           <svg
-            className={`h-5 w-5 shrink-0 text-muted calm-transition ${open ? "-rotate-180" : ""}`}
+            className={`h-5 w-5 shrink-0 text-[#9ca3af] calm-transition ${open ? "-rotate-180" : ""}`}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -48,7 +50,7 @@ export function BehaviourAnalysisCollapsibleSection({
           </svg>
         </span>
       </button>
-      {open ? <div className="border-t border-border/25">{children}</div> : null}
+      {open ? children : null}
     </div>
   );
 }

@@ -601,8 +601,8 @@ textarea:focus-visible {
   }
 }
 
-/* Observation History — ledger cards (match product mock: white, no border, soft lift) */
-.obs-history-elevated-card {
+/* Elevated dashboard cards — opt-in (white face, no border, soft lift; keeps page background) */
+.anx-elevated-card {
   border-radius: 14px;
   background: var(--surface-container-lowest);
   border: none;
@@ -611,7 +611,7 @@ textarea:focus-visible {
     0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
-.obs-history-filter-panel.filter-panel {
+.anx-elevated-card--table.table-shell {
   background: var(--surface-container-lowest);
   border: none;
   box-shadow:
@@ -619,28 +619,87 @@ textarea:focus-visible {
     0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
-.obs-history-table-shell.table-shell {
-  background: var(--surface-container-lowest);
-  border: none;
-  box-shadow:
-    0 4px 24px rgba(15, 23, 42, 0.06),
-    0 1px 3px rgba(15, 23, 42, 0.04);
-}
-
-.obs-history-table-shell.table-shell thead .table-head-row th {
+.anx-elevated-card--table.table-shell thead .table-head-row th {
   border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.obs-history-table-shell.table-shell .table-row {
-  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+.anx-elevated-card--table.table-shell tbody .table-row,
+.anx-elevated-card--table.table-shell tbody tr.table-row {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.obs-history-table-shell.table-shell .table-row:hover {
+.anx-elevated-card--table.table-shell tbody .table-row:last-child,
+.anx-elevated-card--table.table-shell tbody tr.table-row:last-child {
+  border-bottom: 0;
+}
+
+.anx-elevated-card--table.table-shell tbody .table-row:hover,
+.anx-elevated-card--table.table-shell tbody tr.table-row:hover {
   background: rgba(124, 92, 255, 0.04);
 }
 
-.obs-history-table-shell.table-shell .table-row:last-child {
-  border-bottom: 0;
+/* Behaviour analysis — collapsible sections (mock: 16px cards, zebra tables, grey header strip) */
+.anx-behaviour-section-card {
+  border-radius: 16px;
+  background: var(--surface-container-lowest);
+  border: none;
+  box-shadow:
+    0 4px 24px rgba(15, 23, 42, 0.06),
+    0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.anx-behaviour-data-table-wrap {
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.anx-behaviour-data-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.anx-behaviour-data-table-wrap thead tr {
+  background: #f3f4f6;
+}
+
+.anx-behaviour-data-table-wrap thead th {
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.anx-behaviour-data-table-wrap tbody tr {
+  border: none;
+}
+
+.anx-behaviour-data-table-wrap tbody tr:nth-child(odd) {
+  background: #ffffff;
+}
+
+.anx-behaviour-data-table-wrap tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.anx-behaviour-data-table-wrap tbody tr:hover {
+  background: #f3f4f6;
+}
+
+.anx-behaviour-data-table-wrap tbody td {
+  border: none;
+  vertical-align: middle;
+  padding: 0.875rem 1rem;
+}
+
+.anx-behaviour-data-table-wrap thead tr th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.anx-behaviour-data-table-wrap thead tr th:last-child {
+  border-top-right-radius: 12px;
 }
 
 /* Uppercase micro-label for filter fields — use with filter toolbars */

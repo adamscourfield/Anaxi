@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type OnCallDetail = {
@@ -39,6 +39,25 @@ function hourLabel(hour: number): string {
 function barWidthPct(count: number, max: number): number {
   if (max === 0) return 0;
   return Math.round((count / max) * 100);
+}
+
+const CHART_VIOLET_DEEP = "#5B3FD9";
+const CHART_VIOLET = "#7C5CFF";
+const CHART_VIOLET_LIGHT = "#C4B5FF";
+const CHART_VIOLET_TRACK = "#F3F4F6";
+
+function reasonBarStyle(reason: string, pct: number): CSSProperties {
+  const r = reason.toLowerCase();
+  if (r === "uncategorised" || r === "uncategorized") {
+    return {
+      width: `${pct}%`,
+      background: `linear-gradient(90deg, ${CHART_VIOLET_LIGHT} 0%, ${CHART_VIOLET} 55%, ${CHART_VIOLET_DEEP} 100%)`,
+    };
+  }
+  return {
+    width: `${pct}%`,
+    background: `linear-gradient(90deg, ${CHART_VIOLET_DEEP} 0%, ${CHART_VIOLET} 45%, ${CHART_VIOLET_LIGHT} 100%)`,
+  };
 }
 
 type ModalProps = {
@@ -131,60 +150,62 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
   const hasAnyHour = onCallByHour.some((r) => r.count > 0);
   const hasAnyReason = onCallByReason.some((r) => r.count > 0);
 
-  /** Soft tint (not solid --primary black) so counts stay readable outside the bar. */
-  const barTrack =
-    "relative h-7 min-w-0 flex-1 overflow-hidden rounded-xl bg-[var(--surface-container-high)] calm-transition";
-  const barFillClass =
-    "pointer-events-none absolute inset-y-0 left-0 rounded-xl border-r border-[rgba(99,102,241,0.28)] bg-[rgba(99,102,241,0.22)]";
+  const chartMaxH = 140;
 
   return (
     <>
       <div className="space-y-10 p-6 sm:p-8">
         <div>
-          <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
+          <h3 className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text">
             By time of day
           </h3>
-          <p className="mb-5 text-[0.8125rem] text-muted">8am–3pm · tap a bar for request details</p>
+          <p className="mb-5 text-[0.8125rem] text-[#6B7280]">8am–3pm · tap a bar for request details</p>
           {!hasAnyHour ? (
-            <p className="text-sm text-muted">No on-call requests between 8am and 3pm in this window.</p>
+            <p className="text-sm text-[#6B7280]">No on-call requests between 8am and 3pm in this window.</p>
           ) : (
-            <div className="flex flex-col gap-2.5">
-              {onCallByHour.map((row) => (
-                <div key={row.hour} className="flex items-center gap-2 sm:gap-3">
-                  <span className="w-[3.25rem] shrink-0 text-right text-[11px] font-semibold tabular-nums text-[var(--on-surface-variant)]">
-                    {hourLabel(row.hour)}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={row.count === 0}
-                    onClick={() => row.count > 0 && openHour(row.hour)}
-                    className={`${barTrack} enabled:cursor-pointer enabled:ring-1 enabled:ring-inset enabled:ring-border/30 enabled:hover:bg-[var(--surface-container)] enabled:active:scale-[0.998] disabled:cursor-default disabled:opacity-55`}
-                    aria-label={`${row.count} on-call requests at ${hourLabel(row.hour)}`}
-                  >
-                    {row.count > 0 && (
-                      <span
-                        className={barFillClass}
-                        style={{ width: `${barWidthPct(row.count, maxHour)}%` }}
-                      />
-                    )}
-                  </button>
-                  <span className="w-8 shrink-0 text-right text-[11px] font-bold tabular-nums text-text">
-                    {row.count}
-                  </span>
-                </div>
-              ))}
+            <div className="flex items-end justify-between gap-1.5 sm:gap-2" style={{ minHeight: chartMaxH + 28 }}>
+              {onCallByHour.map((row) => {
+                const pct = barWidthPct(row.count, maxHour);
+                const h = row.count > 0 ? Math.max(8, Math.round((pct / 100) * chartMaxH)) : 0;
+                return (
+                  <div key={row.hour} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={row.count === 0}
+                      onClick={() => row.count > 0 && openHour(row.hour)}
+                      className="relative flex w-full max-w-[2.25rem] flex-1 items-end justify-center rounded-t-lg sm:max-w-[2.5rem] enabled:cursor-pointer enabled:hover:opacity-95 enabled:active:scale-[0.98] disabled:cursor-default disabled:opacity-50"
+                      style={{
+                        height: chartMaxH,
+                        backgroundColor: CHART_VIOLET_TRACK,
+                      }}
+                      aria-label={`${row.count} on-call requests at ${hourLabel(row.hour)}`}
+                    >
+                      {row.count > 0 ? (
+                        <span
+                          className="w-full rounded-t-lg"
+                          style={{
+                            height: h,
+                            background: `linear-gradient(180deg, ${CHART_VIOLET_DEEP} 0%, ${CHART_VIOLET} 40%, ${CHART_VIOLET_LIGHT} 100%)`,
+                          }}
+                        />
+                      ) : null}
+                    </button>
+                    <span className="text-[10px] font-semibold tabular-nums text-[#6B7280]">{hourLabel(row.hour)}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
 
         {onCallByReason.length > 0 && (
-          <div className="border-t border-[var(--divider-subtle)] pt-10">
-            <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
+          <div className="border-t border-[rgba(15,23,42,0.06)] pt-10">
+            <h3 className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text">
               By reason
             </h3>
-            <p className="mb-5 text-[0.8125rem] text-muted">Tap a bar to see matching requests</p>
+            <p className="mb-5 text-[0.8125rem] text-[#6B7280]">Tap a bar to see matching requests</p>
             {!hasAnyReason ? (
-              <p className="text-sm text-muted">No categorised reasons in this window.</p>
+              <p className="text-sm text-[#6B7280]">No categorised reasons in this window.</p>
             ) : (
               <div className="flex flex-col gap-2.5">
                 {onCallByReason.map((row) => (
@@ -199,13 +220,14 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
                       type="button"
                       disabled={row.count === 0}
                       onClick={() => row.count > 0 && openReason(row.reason)}
-                      className={`${barTrack} w-full max-w-[min(100%,280px)] shrink-0 sm:max-w-[340px] enabled:cursor-pointer enabled:ring-1 enabled:ring-inset enabled:ring-border/30 enabled:hover:bg-[var(--surface-container)] enabled:active:scale-[0.998] disabled:cursor-default disabled:opacity-55`}
+                      className="relative h-7 w-full max-w-[min(100%,340px)] min-w-0 flex-1 shrink-0 overflow-hidden rounded-full enabled:cursor-pointer enabled:hover:opacity-95 enabled:active:scale-[0.998] disabled:cursor-default disabled:opacity-55"
+                      style={{ backgroundColor: CHART_VIOLET_TRACK }}
                       aria-label={`${row.count} on-call requests for ${row.reason}`}
                     >
                       {row.count > 0 && (
                         <span
-                          className={barFillClass}
-                          style={{ width: `${barWidthPct(row.count, maxReason)}%` }}
+                          className="pointer-events-none absolute inset-y-0 left-0 rounded-full"
+                          style={reasonBarStyle(row.reason, barWidthPct(row.count, maxReason))}
                         />
                       )}
                     </button>
