@@ -75,7 +75,7 @@ function ChartTooltip({ state }: { state: TooltipState }) {
   return createPortal(
     <div
       ref={ref}
-      className="pointer-events-none fixed z-[100] max-w-[min(280px,calc(100vw-1.5rem))] rounded-lg border border-border/40 bg-surface-container-lowest/95 px-3 py-2 text-[0.8125rem] shadow-lg backdrop-blur-sm"
+      className="pointer-events-none fixed z-[100] max-w-[min(280px,calc(100vw-1.5rem))] rounded-xl bg-[var(--surface-container-lowest)] px-3.5 py-2.5 text-[0.8125rem] text-text shadow-[0_8px_30px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06)]"
       style={{
         left: pos?.left ?? state.x + TOOLTIP_GAP,
         top: pos?.top ?? state.y + TOOLTIP_GAP,
@@ -92,20 +92,8 @@ function ChartTooltip({ state }: { state: TooltipState }) {
 /** Plot area inside the timeline SVG (must match line chart geometry). */
 const TIMELINE_PAD = { L: 36, R: 8, T: 12, B: 28, W: 640, H: 160 };
 
-const CHART_VIOLET = "#7C69EF";
-const CHART_VIOLET_SOFT = "rgba(124, 105, 239, 0.14)";
-const CHART_VIOLET_TINT = "rgba(124, 105, 239, 0.12)";
-
-function SectionIconBox({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-[color:var(--info)]"
-      style={{ backgroundColor: CHART_VIOLET_TINT }}
-    >
-      {children}
-    </div>
-  );
-}
+const CHART_VIOLET = "#7C5CFF";
+const CHART_VIOLET_LIGHT = "#C4B5FF";
 
 function CalendarOutlineIcon({
   className,
@@ -132,12 +120,24 @@ function CalendarOutlineIcon({
 function InfoCircleIcon({ title: ariaLabel }: { title: string }) {
   return (
     <span
-      className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border/50 text-[0.625rem] font-semibold leading-none text-muted"
+      className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#D1D5DB] text-[0.625rem] font-semibold leading-none text-[#6B7280]"
       title={ariaLabel}
       aria-label={ariaLabel}
     >
       i
     </span>
+  );
+}
+
+function ChevronDownMini({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+      <path
+        fillRule="evenodd"
+        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+        clipRule="evenodd"
+      />
+    </svg>
   );
 }
 
@@ -477,6 +477,13 @@ export function ObservationHistoryAnalysis({
       const p = pts[idx];
       if (!p) return;
 
+      const weekStart = new Date(p.weekKey + "T12:00:00");
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      const fmt = (d: Date) =>
+        `${d.getDate()} ${d.toLocaleDateString("en-GB", { month: "short" })} ${d.getFullYear()}`;
+      const rangeLine = `${fmt(weekStart)} – ${fmt(weekEnd)}`;
+
       setTimelineSnapIdx(idx);
 
       targetCrosshairXRef.current = local.x;
@@ -490,7 +497,7 @@ export function ObservationHistoryAnalysis({
       setTip({
         x: e.clientX,
         y: e.clientY,
-        text: `Week of ${p.label}\n${p.count.toLocaleString()} observation${p.count === 1 ? "" : "s"}`,
+        text: `${rangeLine}\n${p.count.toLocaleString()} observation${p.count === 1 ? "" : "s"}`,
       });
     },
     [linePoints.points, cancelTimelineRaf, scheduleTimelineSmoothing],
@@ -521,16 +528,15 @@ export function ObservationHistoryAnalysis({
   }, [linePoints, timelineSnapIdx, timelineGuide]);
 
   const barTrack =
-    "relative h-8 min-w-0 w-full overflow-hidden rounded-full bg-[var(--surface-container-high)] calm-transition";
+    "relative h-8 min-w-0 w-full overflow-hidden rounded-full bg-[#F3F4F6] calm-transition";
 
   const hasRoles = roleCounts.some((r) => r.count > 0);
   const hasTimeline = timelineWeeks.length > 0;
 
-  const analysisCardClass =
-    "rounded-[14px] border border-border/25 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)]";
+  const analysisCardClass = "obs-history-elevated-card";
 
   const segmentBase =
-    "relative flex min-h-[2.5rem] flex-1 items-center justify-center px-3 py-2 text-center text-[0.8125rem] font-semibold calm-transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+    "relative flex min-h-[2.5rem] flex-1 items-center justify-center rounded-lg px-3 py-2 text-center text-[0.8125rem] font-semibold calm-transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
   return (
     <section className="space-y-5" onMouseLeave={hideTip}>
@@ -572,7 +578,7 @@ export function ObservationHistoryAnalysis({
                 ·
               </span>
               <Link
-                href={analysisHref("26w", historyFilterQueryString)}
+                href={analysisHref("academic_year", historyFilterQueryString)}
                 className="inline-flex items-center gap-1.5 calm-transition hover:text-text"
               >
                 <CalendarOutlineIcon className="h-3.5 w-3.5 shrink-0" stroke="currentColor" />
@@ -601,21 +607,20 @@ export function ObservationHistoryAnalysis({
               </p>
             </div>
             <div
-              className="mt-5 flex w-full overflow-hidden rounded-xl border border-border/45 bg-background"
+              className="mt-5 flex w-full gap-1 rounded-xl bg-[#F3F4F6] p-1"
               role="group"
               aria-label="Chart time window"
             >
-              {OBSERVATION_ANALYSIS_PRESETS.map((preset, idx) => {
+              {OBSERVATION_ANALYSIS_PRESETS.map((preset) => {
                 const active = analysisPreset === preset;
-                const isLast = idx === OBSERVATION_ANALYSIS_PRESETS.length - 1;
                 return (
                   <Link
                     key={preset}
                     href={analysisHref(preset, historyFilterQueryString)}
-                    className={`${segmentBase} ${!isLast ? "border-r border-border/40" : ""} ${
+                    className={`${segmentBase} ${
                       active
-                        ? "text-white"
-                        : "bg-background text-text hover:bg-surface-container-low"
+                        ? "text-white shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
+                        : "text-[#6B7280] hover:bg-white/80 hover:text-text"
                     }`}
                     style={active ? { backgroundColor: CHART_VIOLET } : undefined}
                     aria-current={active ? "true" : undefined}
@@ -639,34 +644,30 @@ export function ObservationHistoryAnalysis({
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,0.38fr)_minmax(0,1fr)] lg:items-stretch">
         <div className={`${analysisCardClass} flex flex-col p-5 md:p-6`}>
-          <div className="flex items-start gap-3">
-            <SectionIconBox>
-              <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" />
-              </svg>
-            </SectionIconBox>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-                  Observations by observer role
-                </h3>
-                <InfoCircleIcon title="Counts reflect observers in your current table filters and the chart window above." />
-              </div>
-              <p className="mt-1 text-[0.8125rem] text-muted">Hover a bar for the exact count.</p>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-text">
+                Observations by observer role
+              </h3>
+              <InfoCircleIcon title="Counts reflect observers in your current table filters and the chart window above." />
             </div>
+            <p className="mt-1 text-[0.8125rem] text-[#6B7280]">Hover a bar for the exact count.</p>
           </div>
           {!hasRoles ? (
             <p className="mt-4 text-sm text-muted">No observations in the current filter.</p>
           ) : (
             <>
               <ul className="mt-4 space-y-3">
-                {roleCounts.map((row) => (
+                {roleCounts.map((row, rank) => {
+                  const isLead = rank === 0;
+                  const barBg = isLead
+                    ? CHART_VIOLET
+                    : `linear-gradient(90deg, ${CHART_VIOLET} 0%, ${CHART_VIOLET_LIGHT} 100%)`;
+                  return (
                   <li key={row.role}>
                     <button
                       type="button"
-                      className="flex w-full cursor-default items-center gap-3 rounded-lg py-0.5 text-left text-sm calm-transition hover:bg-[rgba(124,105,239,0.06)]"
+                      className="flex w-full cursor-default items-center gap-3 rounded-lg py-0.5 text-left text-sm calm-transition hover:bg-[rgba(124,92,255,0.06)]"
                       onMouseEnter={(e) =>
                         showTip(
                           e,
@@ -685,22 +686,25 @@ export function ObservationHistoryAnalysis({
                             className="pointer-events-none absolute inset-y-0 left-0 rounded-full"
                             style={{
                               width: `${barWidthPct(row.count, maxRole)}%`,
-                              background: `linear-gradient(90deg, ${CHART_VIOLET} 0%, ${CHART_VIOLET_SOFT} 88%, transparent 100%)`,
+                              background: barBg,
                             }}
                           />
                         </div>
                         <span
-                          className="min-w-[2.75rem] shrink-0 text-right text-[0.8125rem] font-semibold tabular-nums"
-                          style={{ color: CHART_VIOLET }}
+                          className={`min-w-[2.75rem] shrink-0 text-right text-[0.8125rem] font-semibold tabular-nums ${
+                            isLead ? "" : "text-[#6B7280]"
+                          }`}
+                          style={isLead ? { color: CHART_VIOLET } : undefined}
                         >
                           {row.count.toLocaleString()}
                         </span>
                       </div>
                     </button>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
-              <p className="mt-auto pt-5 text-[0.6875rem] text-muted">
+              <p className="mt-auto pt-5 text-[0.6875rem] text-[#6B7280]">
                 <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ backgroundColor: CHART_VIOLET }} />{" "}
                 Total observations
               </p>
@@ -709,23 +713,24 @@ export function ObservationHistoryAnalysis({
         </div>
 
         <div className={`${analysisCardClass} flex flex-col p-5 md:p-6`}>
-          <div className="flex items-start gap-3">
-            <SectionIconBox>
-              <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M4 19V5" strokeLinecap="round" />
-                <path d="M4 14h4l3-8 4 12 3-6h6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </SectionIconBox>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-text">
                   Observations over time
                 </h3>
                 <InfoCircleIcon title="Weekly counts within the chart window; move the pointer along the line to inspect each week." />
               </div>
-              <p className="mt-1 text-[0.8125rem] text-muted">
+              <p className="mt-1 text-[0.8125rem] text-[#6B7280]">
                 Move along the chart: the guide glides along the line and the tooltip stays by your cursor.
               </p>
+            </div>
+            <div
+              className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 py-2 text-[0.75rem] font-semibold text-text shadow-sm"
+              role="presentation"
+            >
+              <span className="truncate">Total observations</span>
+              <ChevronDownMini className="h-3.5 w-3.5 shrink-0 text-[#9CA3AF]" />
             </div>
           </div>
           {!hasTimeline ? (
@@ -734,7 +739,7 @@ export function ObservationHistoryAnalysis({
             (() => {
               const { padL, padT, plotW, plotH, pts, snapIdx, segmentD, hoverX } = timelineSvgPlot;
               return (
-                <div className="mt-4 w-full flex-1 overflow-x-auto rounded-[12px] border border-border/25 bg-gradient-to-b from-[rgba(124,105,239,0.06)] to-transparent p-4">
+                <div className="mt-4 w-full flex-1 overflow-x-auto rounded-[14px] bg-gradient-to-b from-[rgba(124,92,255,0.08)] to-transparent p-4">
                   <svg
                     viewBox={`0 0 ${linePoints.w} ${linePoints.h}`}
                     className="h-48 w-full min-w-[280px] cursor-crosshair calm-transition"
@@ -746,21 +751,10 @@ export function ObservationHistoryAnalysis({
                   >
                     <defs>
                       <linearGradient id={`${chartSvgId}-fill`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={CHART_VIOLET} stopOpacity="0.35" />
-                        <stop offset="50%" stopColor={CHART_VIOLET} stopOpacity="0.12" />
+                        <stop offset="0%" stopColor={CHART_VIOLET} stopOpacity="0.22" />
+                        <stop offset="55%" stopColor={CHART_VIOLET} stopOpacity="0.08" />
                         <stop offset="100%" stopColor={CHART_VIOLET} stopOpacity="0" />
                       </linearGradient>
-                      <linearGradient id={`${chartSvgId}-stroke`} x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor={CHART_VIOLET} />
-                        <stop offset="100%" stopColor="#B8A9F5" />
-                      </linearGradient>
-                      <filter id={`${chartSvgId}-glow`} x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="1.2" result="blur" />
-                        <feMerge>
-                          <feMergeNode in="blur" />
-                          <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                      </filter>
                     </defs>
                     <rect
                       x={padL}
@@ -768,8 +762,8 @@ export function ObservationHistoryAnalysis({
                       width={plotW}
                       height={plotH}
                       rx="10"
-                      fill="var(--surface-container-lowest)"
-                      opacity="0.65"
+                      fill="#FFFFFF"
+                      opacity="0.55"
                       className="pointer-events-none"
                     />
                     {[0, 0.25, 0.5, 0.75, 1].map((t) => {
@@ -782,7 +776,7 @@ export function ObservationHistoryAnalysis({
                             y={y + 4}
                             textAnchor="end"
                             className="pointer-events-none select-none"
-                            fill="var(--on-surface-variant)"
+                            fill="#9CA3AF"
                             fontSize="10"
                           >
                             {tickValue}
@@ -792,8 +786,8 @@ export function ObservationHistoryAnalysis({
                             x2={padL + plotW}
                             y1={y}
                             y2={y}
-                            stroke="var(--border)"
-                            strokeOpacity={t === 1 ? 0.35 : 0.2}
+                            stroke="#E5E7EB"
+                            strokeOpacity={t === 1 ? 0.9 : 1}
                             strokeWidth="1"
                             strokeDasharray={t === 1 ? undefined : "4 6"}
                             className="pointer-events-none"
@@ -801,6 +795,28 @@ export function ObservationHistoryAnalysis({
                         </g>
                       );
                     })}
+                    {(() => {
+                      const n = pts.length;
+                      if (n === 0) return null;
+                      const maxXLabels = 8;
+                      const step = n <= maxXLabels ? 1 : Math.ceil(n / maxXLabels);
+                      return pts.map((p, i) => {
+                        if (i !== n - 1 && i % step !== 0) return null;
+                        return (
+                          <text
+                            key={`x-${p.weekKey}`}
+                            x={p.x}
+                            y={linePoints.h - 6}
+                            textAnchor="middle"
+                            className="pointer-events-none select-none"
+                            fill="#9CA3AF"
+                            fontSize="10"
+                          >
+                            {p.label}
+                          </text>
+                        );
+                      });
+                    })()}
                     <path
                       d={linePoints.fillD}
                       fill={`url(#${chartSvgId}-fill)`}
@@ -809,11 +825,10 @@ export function ObservationHistoryAnalysis({
                     <path
                       d={linePoints.d}
                       fill="none"
-                      stroke={`url(#${chartSvgId}-stroke)`}
+                      stroke={CHART_VIOLET}
                       strokeWidth="2.5"
                       strokeLinejoin="round"
                       strokeLinecap="round"
-                      filter={`url(#${chartSvgId}-glow)`}
                       className="pointer-events-none calm-transition"
                       strokeOpacity={snapIdx !== null ? 0.22 : 1}
                     />
@@ -821,7 +836,7 @@ export function ObservationHistoryAnalysis({
                       <path
                         d={segmentD}
                         fill="none"
-                        stroke={`url(#${chartSvgId}-stroke)`}
+                        stroke={CHART_VIOLET}
                         strokeWidth="3"
                         strokeLinejoin="round"
                         strokeLinecap="round"
@@ -850,7 +865,7 @@ export function ObservationHistoryAnalysis({
                             cx={p.x}
                             cy={p.y}
                             r={active ? 7.5 : 5}
-                            fill="var(--surface-container-lowest)"
+                            fill="#FFFFFF"
                             stroke={CHART_VIOLET}
                             strokeWidth={active ? 2.75 : 2}
                             opacity={dim ? 0.3 : 1}
@@ -877,7 +892,7 @@ export function ObservationHistoryAnalysis({
                       style={{ touchAction: "none" }}
                     />
                   </svg>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.6875rem] text-muted">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.6875rem] text-[#6B7280]">
                     <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke={CHART_VIOLET} strokeWidth="2" aria-hidden>
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                       <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
@@ -890,8 +905,15 @@ export function ObservationHistoryAnalysis({
                         ))
                       : (
                         <span>
-                          {timelineWeeks[0]?.label} … {timelineWeeks[timelineWeeks.length - 1]?.label}{" "}
-                          <span className="font-semibold" style={{ color: CHART_VIOLET }}>
+                          <span className="tabular-nums text-text">{timelineWeeks[0]?.label}</span>
+                          {" "}
+                          <span className="text-[#9CA3AF]">–</span>
+                          {" "}
+                          <span className="tabular-nums text-text">
+                            {timelineWeeks[timelineWeeks.length - 1]?.label}
+                          </span>
+                          {" "}
+                          <span className="font-bold tabular-nums" style={{ color: CHART_VIOLET }}>
                             {timelineWeeks.reduce((s, w) => s + w.count, 0).toLocaleString()}
                           </span>{" "}
                           total in window
@@ -907,10 +929,10 @@ export function ObservationHistoryAnalysis({
 
       {showCoachingSection ? (
         <div className={`${analysisCardClass} p-5 md:p-6`}>
-            <h3 className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+            <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-text">
               Coaching pairs — weekly coverage
             </h3>
-            <p className="mt-1 max-w-3xl text-[0.8125rem] text-muted">
+            <p className="mt-1 max-w-3xl text-[0.8125rem] text-[#6B7280]">
               Green weeks had at least one observation with this coach observing this coachee. Hover for the observation
               date; click to open details.
             </p>
@@ -930,7 +952,7 @@ export function ObservationHistoryAnalysis({
                   : "No coaching assignments in this school."}
               </p>
             ) : (
-              <div className="table-shell mt-4">
+              <div className="obs-history-table-shell table-shell mt-4">
                 <div className="hidden overflow-x-auto md:block">
                   <table className="w-full min-w-[640px] text-left text-sm">
                     <thead>
