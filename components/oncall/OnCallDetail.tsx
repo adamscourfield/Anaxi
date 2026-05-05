@@ -26,7 +26,7 @@ interface OnCallDetailRequest {
   status: "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED";
   requestType: "BEHAVIOUR" | "FIRST_AID";
   isEmergency?: boolean;
-  student: { fullName: string; upn: string; yearGroup?: string | null };
+  student: { fullName: string; upn: string | null; yearGroup?: string | null };
   location: string;
   behaviourReasonCategory?: string | null;
   notes?: string | null;
@@ -217,7 +217,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
                   </svg>
                 }
                 label="Student"
-                value={`${request.student.fullName} (${request.student.upn})`}
+                value={`${request.student.fullName} (${request.student.upn ?? "—"})`}
               />
               <DetailLine
                 icon={

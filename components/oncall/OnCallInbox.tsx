@@ -34,13 +34,14 @@ interface OnCallInboxProps {
 }
 
 function getInitials(name: string): string {
-  return name
+  const initials = name
     .split(" ")
     .map((w) => w[0])
     .filter(Boolean)
     .slice(0, 2)
     .join("")
     .toUpperCase();
+  return initials || "?";
 }
 
 function timeAgo(dateVal: Date | string): string {

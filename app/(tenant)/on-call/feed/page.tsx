@@ -3,6 +3,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { getTenantVocab } from "@/lib/vocab";
+import { REQUEST_TYPE_LABELS } from "@/modules/oncall/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -10,7 +11,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PillVariant, StatusPill } from "@/components/ui/status-pill";
 
 const FEED_STATUS_PILL: Record<string, PillVariant> = {
-  SENT: "warning",
+  OPEN: "error",
   ACKNOWLEDGED: "neutral",
   RESOLVED: "success",
   CANCELLED: "error",
@@ -68,7 +69,7 @@ export default async function OnCallFeedPage({ searchParams }: { searchParams: R
               className="field field-filter-trigger min-w-0 !py-2.5 !text-sm"
             >
               <option value="">All statuses</option>
-              <option value="SENT">SENT</option>
+              <option value="OPEN">OPEN</option>
               <option value="ACKNOWLEDGED">ACKNOWLEDGED</option>
               <option value="RESOLVED">RESOLVED</option>
               <option value="CANCELLED">CANCELLED</option>
@@ -131,7 +132,7 @@ export default async function OnCallFeedPage({ searchParams }: { searchParams: R
                     <td className="px-4 py-3.5">
                       {r.student?.fullName} ({r.student?.yearGroup || "-"})
                     </td>
-                    <td className="px-4 py-3.5 text-center">{r.category}</td>
+                    <td className="px-4 py-3.5 text-center">{REQUEST_TYPE_LABELS[r.requestType as keyof typeof REQUEST_TYPE_LABELS] ?? r.requestType}</td>
                     <td className="px-4 py-3.5">{r.location || "-"}</td>
                     <td className="px-4 py-3.5">{r.behaviourReasonCategory || "-"}</td>
                     <td className="px-4 py-3.5 text-center">
