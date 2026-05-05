@@ -2,7 +2,6 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { DepartmentsAdminTable } from "./DepartmentsAdminTable";
@@ -122,32 +121,47 @@ export default async function AdminDepartmentsPage() {
   }));
 
   return (
-    <div className="space-y-8">
-      <PageHeader variant="ledger"
-        eyebrow={<>Administration&ensp;›&ensp;Academic Departments</>}
+    <div className="space-y-8 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] pb-8">
+      <PageHeader
+        variant="ledger"
+        eyebrow={
+          <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <span>Administration</span>
+            <span className="text-muted/45" aria-hidden>
+              &gt;
+            </span>
+            <span>Academic Departments</span>
+          </span>
+        }
         title="Academic Departments"
         subtitle="Structure your school: departments, heads of department, and staff assignments for the current year."
         actions={
           <>
-            <Link href="/api/admin/departments/export" className="anx-btn-pill-ghost calm-transition">
-              <svg className="anx-icon-inline" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <Link
+              href="/api/admin/departments/export"
+              className="inline-flex items-center gap-2 rounded-xl border border-border/40 bg-surface-container-lowest px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
+            >
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M10 3v14M6 13l4 4 4-4" />
               </svg>
               Export ledger
             </Link>
-            <form action={createDepartment} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <form action={createDepartment} className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
               <input
                 name="name"
                 placeholder="New department name"
-                className="h-10 w-full min-w-[12rem] rounded-full border border-border/60 bg-surface-container-lowest/90 px-4 text-sm text-text shadow-inner placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-52"
+                className="field min-h-[2.75rem] w-full min-w-0 flex-1 rounded-xl border-border/40 bg-surface-container-lowest px-4 text-sm text-text placeholder:text-muted sm:min-w-[12rem] sm:max-w-[220px]"
                 required
               />
-              <Button type="submit" className="h-10 min-h-0 shrink-0 gap-2 rounded-full px-5 py-0">
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+              <button
+                type="submit"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+              >
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden>
                   <path d="M10 4v12M4 10h12" />
                 </svg>
                 Add department
-              </Button>
+              </button>
             </form>
           </>
         }
