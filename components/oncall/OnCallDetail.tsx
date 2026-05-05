@@ -387,14 +387,6 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
               ) : null}
             </div>
           ) : null}
-
-          <Link
-            href="/on-call"
-            className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium calm-transition hover:opacity-80"
-            style={{ color: SLATE_600 }}
-          >
-            <span aria-hidden>&larr;</span> Back to inbox
-          </Link>
         </div>
 
         <aside className={`${surfaceCard} flex min-h-0 flex-col p-5 sm:p-6`}>
@@ -439,6 +431,14 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
           </div>
         </aside>
       </div>
+
+      <Link
+        href="/on-call"
+        className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium calm-transition hover:opacity-80"
+        style={{ color: SLATE_600 }}
+      >
+        <span aria-hidden>&larr;</span> Back to inbox
+      </Link>
     </div>
   );
 }
