@@ -35,6 +35,7 @@ model Tenant {
   onCallReasons        OnCallReason[]
   onCallRecipients     OnCallRecipient[]
   onCallRequests       OnCallRequest[]
+  onCallTimelineEvents OnCallTimelineEvent[]
   adminInvites         SchoolAdminInvite[]
   strategyAreas        StrategyArea[]
   strategyNotes        StrategyNote[]
@@ -80,6 +81,7 @@ model User {
   observationsAsObserver        Observation[]              @relation("ObserverUser")
   onCallRequestsCreated         OnCallRequest[]            @relation("OnCallRequester")
   onCallRequestsResponded       OnCallRequest[]            @relation("OnCallResponder")
+  onCallTimelineEvents          OnCallTimelineEvent[]
   passwordResetTokens           PasswordResetToken[]
   sentAdminInvites              SchoolAdminInvite[]        @relation("AdminInviteSender")
   subjectTeachings              StudentSubjectTeacher[]    @relation("SubjectTeacher")
@@ -369,12 +371,29 @@ model OnCallRequest {
   requester               User              @relation("OnCallRequester", fields: [tenantId, requesterUserId], references: [tenantId, id])
   responder               User?             @relation("OnCallResponder", fields: [tenantId, responderUserId], references: [tenantId, id], onDelete: SetNull)
   student                 Student           @relation(fields: [tenantId, studentId], references: [tenantId, id])
+  timelineEvents          OnCallTimelineEvent[]
 
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([tenantId, createdAt])
   @@index([tenantId, status, createdAt])
   @@index([requesterUserId, status])
+}
+
+model OnCallTimelineEvent {
+  id           String                  @id @default(cuid())
+  tenantId     String
+  requestId    String
+  type         OnCallTimelineEventType
+  actorUserId  String?
+  createdAt    DateTime                @default(now())
+  tenant       Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  request      OnCallRequest           @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor        User?                   @relation(fields: [tenantId, actorUserId], references: [tenantId, id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([requestId])
+  @@index([tenantId, requestId, createdAt])
 }
 
 model Insight {
@@ -946,6 +965,13 @@ enum OnCallRequestType {
 
 enum OnCallStatus {
   OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  CANCELLED
+}
+
+enum OnCallTimelineEventType {
+  CREATED
   ACKNOWLEDGED
   RESOLVED
   CANCELLED

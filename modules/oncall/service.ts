@@ -2,10 +2,18 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { OnCallRequestInput, AcknowledgeOnCallInput, ResolveOnCallInput } from "./types";
 
+const TIMELINE_ORDERED = {
+  orderBy: { createdAt: "asc" as const },
+  include: {
+    actor: { select: { id: true, fullName: true } },
+  },
+};
+
 const REQUEST_INCLUDE = {
   requester: { select: { id: true, fullName: true, email: true } },
   student: { select: { id: true, fullName: true, upn: true, yearGroup: true } },
   responder: { select: { id: true, fullName: true } },
+  timelineEvents: TIMELINE_ORDERED,
 };
 
 export async function createOnCallRequest(
@@ -24,19 +32,32 @@ export async function createOnCallRequest(
   });
   if (!student) throw new Error("student not found");
 
-  const created = await (prisma as any).onCallRequest.create({
-    data: {
-      tenantId,
-      requesterUserId,
-      studentId: input.studentId,
-      requestType: input.requestType,
-      isEmergency: Boolean(input.isEmergency),
-      location: input.location,
-      behaviourReasonCategory: input.behaviourReasonCategory ?? null,
-      notes: input.notes ?? null,
-      status: "OPEN",
-    },
-    include: REQUEST_INCLUDE,
+  const created = await (prisma as any).$transaction(async (tx: any) => {
+    const row = await tx.onCallRequest.create({
+      data: {
+        tenantId,
+        requesterUserId,
+        studentId: input.studentId,
+        requestType: input.requestType,
+        isEmergency: Boolean(input.isEmergency),
+        location: input.location,
+        behaviourReasonCategory: input.behaviourReasonCategory ?? null,
+        notes: input.notes ?? null,
+        status: "OPEN",
+      },
+    });
+    await tx.onCallTimelineEvent.create({
+      data: {
+        tenantId,
+        requestId: row.id,
+        type: "CREATED",
+        actorUserId: requesterUserId,
+      },
+    });
+    return tx.onCallRequest.findFirst({
+      where: { id: row.id, tenantId },
+      include: REQUEST_INCLUDE,
+    });
   });
 
   logger.info("oncall.created", { tenantId, requestId: created.id, requesterUserId });
@@ -54,22 +75,35 @@ export async function acknowledgeOnCallRequest(
   });
   if (!existing) throw new Error("request not found");
 
-  const updated = await (prisma as any).onCallRequest.updateMany({
-    where: { id: requestId, tenantId, status: "OPEN" },
-    data: {
-      status: "ACKNOWLEDGED",
-      responderUserId: responderId,
-      acknowledgedAt: new Date(),
-    },
-  });
+  const next = await (prisma as any).$transaction(async (tx: any) => {
+    const updated = await tx.onCallRequest.updateMany({
+      where: { id: requestId, tenantId, status: "OPEN" },
+      data: {
+        status: "ACKNOWLEDGED",
+        responderUserId: responderId,
+        acknowledgedAt: new Date(),
+      },
+    });
 
-  if (updated.count !== 1) throw new Error("request is not OPEN");
+    if (updated.count !== 1) throw new Error("request is not OPEN");
+
+    await tx.onCallTimelineEvent.create({
+      data: {
+        tenantId,
+        requestId,
+        type: "ACKNOWLEDGED",
+        actorUserId: responderId,
+      },
+    });
+
+    return tx.onCallRequest.findFirst({
+      where: { id: requestId, tenantId },
+      include: REQUEST_INCLUDE,
+    });
+  });
 
   logger.info("oncall.acknowledged", { tenantId, requestId, responderId });
-  return (prisma as any).onCallRequest.findFirst({
-    where: { id: requestId, tenantId },
-    include: REQUEST_INCLUDE,
-  });
+  return next;
 }
 
 export async function resolveOnCallRequest(
@@ -84,25 +118,40 @@ export async function resolveOnCallRequest(
   });
   if (!existing) throw new Error("request not found");
 
-  const updated = await (prisma as any).onCallRequest.updateMany({
-    where: { id: requestId, tenantId, status: { in: ["OPEN", "ACKNOWLEDGED"] } },
-    data: {
-      status: "RESOLVED",
-      responderUserId: existing.responderUserId ?? responderId,
-      resolvedAt: new Date(),
-    },
-  });
+  const responderForEvent = existing.responderUserId ?? responderId;
 
-  if (updated.count !== 1) {
-    if (existing.status === "RESOLVED") throw new Error("request already resolved");
-    throw new Error("request is cancelled");
-  }
+  const next = await (prisma as any).$transaction(async (tx: any) => {
+    const updated = await tx.onCallRequest.updateMany({
+      where: { id: requestId, tenantId, status: { in: ["OPEN", "ACKNOWLEDGED"] } },
+      data: {
+        status: "RESOLVED",
+        responderUserId: responderForEvent,
+        resolvedAt: new Date(),
+      },
+    });
+
+    if (updated.count !== 1) {
+      if (existing.status === "RESOLVED") throw new Error("request already resolved");
+      throw new Error("request is cancelled");
+    }
+
+    await tx.onCallTimelineEvent.create({
+      data: {
+        tenantId,
+        requestId,
+        type: "RESOLVED",
+        actorUserId: responderForEvent,
+      },
+    });
+
+    return tx.onCallRequest.findFirst({
+      where: { id: requestId, tenantId },
+      include: REQUEST_INCLUDE,
+    });
+  });
 
   logger.info("oncall.resolved", { tenantId, requestId, responderId });
-  return (prisma as any).onCallRequest.findFirst({
-    where: { id: requestId, tenantId },
-    include: REQUEST_INCLUDE,
-  });
+  return next;
 }
 
 export async function cancelOnCallRequest(
@@ -117,17 +166,30 @@ export async function cancelOnCallRequest(
   if (!existing) throw new Error("request not found");
   if (existing.requesterUserId !== userId) throw new Error("only the requester can cancel");
 
-  const updated = await (prisma as any).onCallRequest.updateMany({
-    where: { id: requestId, tenantId, requesterUserId: userId, status: "OPEN" },
-    data: { status: "CANCELLED" },
+  const next = await (prisma as any).$transaction(async (tx: any) => {
+    const updated = await tx.onCallRequest.updateMany({
+      where: { id: requestId, tenantId, requesterUserId: userId, status: "OPEN" },
+      data: { status: "CANCELLED" },
+    });
+    if (updated.count !== 1) throw new Error("only OPEN requests can be cancelled");
+
+    await tx.onCallTimelineEvent.create({
+      data: {
+        tenantId,
+        requestId,
+        type: "CANCELLED",
+        actorUserId: userId,
+      },
+    });
+
+    return tx.onCallRequest.findFirst({
+      where: { id: requestId, tenantId },
+      include: REQUEST_INCLUDE,
+    });
   });
-  if (updated.count !== 1) throw new Error("only OPEN requests can be cancelled");
 
   logger.info("oncall.cancelled", { tenantId, requestId, userId });
-  return (prisma as any).onCallRequest.findFirst({
-    where: { id: requestId, tenantId },
-    include: REQUEST_INCLUDE,
-  });
+  return next;
 }
 
 export async function getOpenRequests(tenantId: string) {
