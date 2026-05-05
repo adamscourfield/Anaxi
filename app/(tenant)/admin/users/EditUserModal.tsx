@@ -1,6 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState, useMemo, useRef, useEffect, useTransition } from "react";
+import { createPortal } from "react-dom";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,11 +31,23 @@ export type EditUserModalProps = {
   readOnly?: boolean;
 };
 
-// ─── Inline icons ─────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function initialsFromName(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+}
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
 
 function CloseIcon() {
   return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
@@ -51,8 +65,59 @@ function SearchIcon({ className }: { className?: string }) {
 
 function ChevronDownIcon() {
   return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 text-muted">
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 text-muted" aria-hidden>
       <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function RoleBadgeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="14" y="3" width="7" height="9" rx="1" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 7h3M16 10h2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PhoneIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path
+        d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CalendarIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <rect x="3" y="4" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function WalletIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M21 12V7H5a2 2 0 010-4h14v4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 5v14a2 2 0 002 2h16v-5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18 12a2 2 0 100 4h4v-4h-4z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PersonIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -75,12 +140,12 @@ function Toggle({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className={`relative inline-flex h-[26px] w-[46px] shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)] ${
+      className={`relative inline-flex h-[26px] w-[46px] shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950 ${
         disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-      } ${checked ? "bg-[var(--primary)]" : "bg-surface-container-high"}`}
+      } ${checked ? "bg-[var(--primary)]" : "bg-[color-mix(in_srgb,var(--surface-container-high)_95%,var(--outline-variant))]"}`}
     >
       <span
-        className={`inline-block h-[20px] w-[20px] rounded-full bg-[var(--surface-container-lowest)] anx-card-elevated transition-transform duration-200 ${
+        className={`inline-block h-[20px] w-[20px] rounded-full bg-white shadow-sm transition-transform duration-200 dark:bg-neutral-100 ${
           checked ? "translate-x-[23px]" : "translate-x-[3px]"
         }`}
       />
@@ -142,7 +207,7 @@ function TeacherSearch({
       <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted" />
       <input
         type="text"
-        className="field w-full !rounded-xl !border-black/[0.06] !bg-[var(--surface-container-highest)] !py-2.5 pl-10 pr-3 text-[0.8125rem] shadow-none disabled:cursor-not-allowed disabled:opacity-60"
+        className="field w-full rounded-xl border-border/40 bg-surface-container-lowest py-2.5 pl-10 pr-3 text-[0.8125rem] shadow-none placeholder:text-muted/70 disabled:cursor-not-allowed disabled:opacity-60"
         placeholder={placeholder}
         value={query}
         disabled={disabled}
@@ -153,7 +218,7 @@ function TeacherSearch({
         onFocus={() => setOpen(true)}
       />
       {open && query.trim() !== "" && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[180px] overflow-y-auto rounded-xl border border-black/[0.08] bg-[var(--surface-container-lowest)] py-1 shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-[60] mt-1 max-h-[180px] overflow-y-auto rounded-xl border border-border/35 bg-surface-container-lowest py-1 shadow-lg">
           {filtered.length === 0 ? (
             <p className="px-4 py-3 text-[0.8125rem] text-muted">No teachers found</p>
           ) : (
@@ -161,7 +226,7 @@ function TeacherSearch({
               <button
                 key={t.id}
                 type="button"
-                className="flex w-full items-center px-4 py-2.5 text-left text-[0.8125rem] text-text calm-transition hover:bg-[var(--surface-container-low)]"
+                className="flex w-full items-center px-4 py-2.5 text-left text-[0.8125rem] text-text calm-transition hover:bg-surface-container-low"
                 onClick={() => {
                   onAdd(t.id);
                   setQuery("");
@@ -178,6 +243,69 @@ function TeacherSearch({
   );
 }
 
+const SECTION_LABEL = "mb-2 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
+
+function ScopedRow({
+  icon,
+  label,
+  toggle,
+}: {
+  icon: ReactNode;
+  label: string;
+  toggle: ReactNode;
+}) {
+  return (
+    <li className="flex items-center justify-between gap-3 border-b border-border/20 py-3.5 last:border-b-0">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--surface-container-low)_80%,transparent)] text-muted">
+          {icon}
+        </span>
+        <span className="text-[0.8125rem] font-medium text-text">{label}</span>
+      </div>
+      {toggle}
+    </li>
+  );
+}
+
+function SelectedChips({
+  ids,
+  teacherById,
+  readOnly,
+  onRemove,
+}: {
+  ids: Set<string>;
+  teacherById: Map<string, TeacherOption>;
+  readOnly: boolean;
+  onRemove: (id: string) => void;
+}) {
+  if (ids.size === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {Array.from(ids).map((tid) => {
+        const teacher = teacherById.get(tid);
+        if (!teacher) return null;
+        return (
+          <span
+            key={tid}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/35 bg-surface-container-low px-2.5 py-1 text-[11px] font-medium text-text"
+          >
+            {teacher.fullName}
+            <button
+              type="button"
+              className="text-muted hover:text-text disabled:pointer-events-none disabled:opacity-40"
+              aria-label={`Remove ${teacher.fullName}`}
+              disabled={readOnly}
+              onClick={() => onRemove(tid)}
+            >
+              ×
+            </button>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
 export function EditUserModal({
@@ -189,23 +317,20 @@ export function EditUserModal({
   readOnly = false,
 }: EditUserModalProps) {
   const [pending, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false);
 
-  // Local state
   const [role, setRole] = useState(user.role);
   const [onCallRequests, setOnCallRequests] = useState(user.receivesOnCallEmails);
   const [leaveOfAbsence, setLeaveOfAbsence] = useState(user.canApproveAllLoa || scopedLoaTargetIds.length > 0);
-  // UI-only toggles (no backend fields yet — shown per design spec)
   const [budgetaryApproval, setBudgetaryApproval] = useState(false);
   const [teacherObservations, setTeacherObservations] = useState(false);
 
-  // Teacher observation scoping (UI-only — no backend fields yet)
   const [obsAllTeachers, setObsAllTeachers] = useState(false);
   const [obsTeacherIds, setObsTeacherIds] = useState<Set<string>>(new Set());
 
   const [loaAllTeachers, setLoaAllTeachers] = useState(user.canApproveAllLoa);
   const [loaTeacherIds, setLoaTeacherIds] = useState<Set<string>>(new Set(scopedLoaTargetIds));
 
-  // Pre-compute teacher lookup for O(1) access
   const teacherById = useMemo(() => {
     const map = new Map<string, TeacherOption>();
     for (const t of allTeachers) map.set(t.id, t);
@@ -213,6 +338,10 @@ export function EditUserModal({
   }, [allTeachers]);
 
   const roleSelectRef = useRef<HTMLSelectElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const t = window.setTimeout(() => roleSelectRef.current?.focus({ preventScroll: true }), 0);
@@ -234,54 +363,70 @@ export function EditUserModal({
     });
   }
 
-  return (
+  const roleLabel = ROLE_OPTIONS.find((r) => r.value === role)?.label ?? role;
+
+  const modal = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay)] p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="presentation"
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-[440px] flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface-container-lowest shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200"
+        className="flex max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[440px] flex-col overflow-hidden rounded-2xl border border-border/35 bg-surface-container-lowest shadow-xl"
         role="dialog"
         aria-labelledby="edit-user-title"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-[var(--surface-container)] px-6 py-5">
-          <div className="min-w-0">
-            <h2 id="edit-user-title" className="text-[1.0625rem] font-semibold tracking-tight text-text">
-              {user.fullName}
-            </h2>
-            <p className="mt-1 truncate text-[0.8125rem] text-muted">{user.email}</p>
-            {readOnly ? (
-              <p className="mt-2 text-[0.8125rem] leading-snug text-muted">
-                Platform super admins can only be edited by another platform super admin.
-              </p>
-            ) : null}
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 px-6 pb-5 pt-6">
+          <div className="flex min-w-0 flex-1 gap-4">
+            <span
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[rgba(124,105,239,0.35)] text-lg font-bold text-white shadow-sm ring-1 ring-[rgba(124,105,239,0.2)]"
+              aria-hidden
+            >
+              {initialsFromName(user.fullName)}
+            </span>
+            <div className="min-w-0 pt-0.5">
+              <h2 id="edit-user-title" className="truncate text-lg font-bold tracking-tight text-text">
+                {user.fullName}
+              </h2>
+              <p className="mt-0.5 truncate text-[0.8125rem] text-muted">{user.email}</p>
+              {readOnly ? (
+                <p className="mt-2 text-[0.8125rem] leading-snug text-muted">
+                  Platform super admins can only be edited by another platform super admin.
+                </p>
+              ) : null}
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="calm-transition shrink-0 rounded-xl p-2 text-muted hover:bg-[var(--surface-container-low)] hover:text-text"
+            className="calm-transition shrink-0 rounded-lg p-2 text-muted hover:bg-surface-container-low hover:text-text"
             aria-label="Close"
           >
             <CloseIcon />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="space-y-1.5">
-            <label htmlFor="edit-user-role" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+        <div className="flex-1 overflow-y-auto px-6 pb-2">
+          {/* Institutional role */}
+          <div>
+            <label htmlFor="edit-user-role" className={SECTION_LABEL}>
               Institutional role
             </label>
             <div className="relative">
+              <span className="pointer-events-none absolute left-3.5 top-1/2 z-[1] -translate-y-1/2 text-muted">
+                <RoleBadgeIcon className="h-5 w-5" />
+              </span>
               <select
                 ref={roleSelectRef}
                 id="edit-user-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 disabled={readOnly}
-                className="field w-full appearance-none !rounded-xl !border-black/[0.06] !bg-[var(--surface-container-highest)] pr-10 text-[0.8125rem] disabled:cursor-not-allowed disabled:opacity-60"
+                className="field w-full appearance-none rounded-xl border-border/40 bg-surface-container-lowest py-2.5 pl-11 pr-10 text-[0.8125rem] font-medium text-text disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label={`Institutional role, ${roleLabel}`}
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -295,49 +440,70 @@ export function EditUserModal({
             </div>
           </div>
 
+          {/* Scoped approvals */}
           <div className="mt-8">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Scoped approvals</h3>
-            <ul className="mt-3 divide-y divide-[var(--surface-container)] border-y border-[var(--surface-container)]">
-              <li className="flex items-center justify-between py-3.5">
-                <span className="text-[0.8125rem] text-text">On-call requests</span>
-                <Toggle checked={onCallRequests} onChange={setOnCallRequests} disabled={readOnly} />
-              </li>
-              <li className="flex items-center justify-between py-3.5">
-                <span className="text-[0.8125rem] text-text">Leave of absence</span>
-                <Toggle checked={leaveOfAbsence} onChange={setLeaveOfAbsence} disabled={readOnly} />
-              </li>
-              <li className="flex items-center justify-between py-3.5">
-                <span className="text-[0.8125rem] text-text">Budgetary approval</span>
-                <Toggle checked={budgetaryApproval} onChange={setBudgetaryApproval} disabled={readOnly} />
-              </li>
-              <li className="flex items-center justify-between py-3.5">
-                <span className="text-[0.8125rem] text-text">Teacher observations</span>
-                <Toggle checked={teacherObservations} onChange={setTeacherObservations} disabled={readOnly} />
-              </li>
+            <h3 className={SECTION_LABEL}>Scoped approvals</h3>
+            <ul className="rounded-xl border border-border/25 px-3">
+              <ScopedRow
+                icon={<PhoneIcon className="h-[18px] w-[18px]" />}
+                label="On-call requests"
+                toggle={<Toggle checked={onCallRequests} onChange={setOnCallRequests} disabled={readOnly} />}
+              />
+              <ScopedRow
+                icon={<CalendarIcon className="h-[18px] w-[18px]" />}
+                label="Leave of absence"
+                toggle={<Toggle checked={leaveOfAbsence} onChange={setLeaveOfAbsence} disabled={readOnly} />}
+              />
+              <ScopedRow
+                icon={<WalletIcon className="h-[18px] w-[18px]" />}
+                label="Budgetary approval"
+                toggle={<Toggle checked={budgetaryApproval} onChange={setBudgetaryApproval} disabled={readOnly} />}
+              />
+              <ScopedRow
+                icon={<PersonIcon className="h-[18px] w-[18px]" />}
+                label="Teacher observations"
+                toggle={<Toggle checked={teacherObservations} onChange={setTeacherObservations} disabled={readOnly} />}
+              />
             </ul>
           </div>
 
+          {/* Teacher observation scoping */}
           <div className="mt-8 space-y-3">
-            <h3 className="text-[0.8125rem] font-semibold text-text">Teacher observation scoping</h3>
+            <h3 className={SECTION_LABEL}>Teacher observation scoping</h3>
             <div className="flex items-center justify-between">
-              <span className="text-[0.8125rem] text-muted">All teachers</span>
+              <span className="text-[0.8125rem] font-medium text-text">All teachers</span>
               <Toggle checked={obsAllTeachers} onChange={setObsAllTeachers} disabled={readOnly} />
             </div>
-            {!obsAllTeachers && (
-              <TeacherSearch
-                allTeachers={allTeachers}
-                selectedIds={obsTeacherIds}
-                onAdd={(id) => setObsTeacherIds((prev) => new Set(prev).add(id))}
-                placeholder="Add teachers by name…"
-                disabled={readOnly}
-              />
-            )}
+            {!obsAllTeachers ? (
+              <>
+                <TeacherSearch
+                  allTeachers={allTeachers}
+                  selectedIds={obsTeacherIds}
+                  onAdd={(id) => setObsTeacherIds((prev) => new Set(prev).add(id))}
+                  placeholder="Add teachers by name..."
+                  disabled={readOnly}
+                />
+                <SelectedChips
+                  ids={obsTeacherIds}
+                  teacherById={teacherById}
+                  readOnly={readOnly}
+                  onRemove={(tid) =>
+                    setObsTeacherIds((prev) => {
+                      const next = new Set(prev);
+                      next.delete(tid);
+                      return next;
+                    })
+                  }
+                />
+              </>
+            ) : null}
           </div>
 
-          <div className="mt-8 space-y-3">
-            <h3 className="text-[0.8125rem] font-semibold text-text">Leave approval scoping</h3>
+          {/* Leave approval scoping */}
+          <div className="mt-8 space-y-3 pb-4">
+            <h3 className={SECTION_LABEL}>Leave approval scoping</h3>
             <div className="flex items-center justify-between">
-              <span className="text-[0.8125rem] text-muted">All teachers</span>
+              <span className="text-[0.8125rem] font-medium text-text">All teachers</span>
               <Toggle
                 checked={loaAllTeachers}
                 onChange={(v) => {
@@ -347,57 +513,38 @@ export function EditUserModal({
                 disabled={readOnly}
               />
             </div>
-            {!loaAllTeachers && (
+            {!loaAllTeachers ? (
               <>
                 <TeacherSearch
                   allTeachers={allTeachers}
                   selectedIds={loaTeacherIds}
                   onAdd={(id) => setLoaTeacherIds((prev) => new Set(prev).add(id))}
-                  placeholder="Add teachers by name…"
+                  placeholder="Add teachers by name..."
                   disabled={readOnly}
                 />
-                {loaTeacherIds.size > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(loaTeacherIds).map((tid) => {
-                      const teacher = teacherById.get(tid);
-                      if (!teacher) return null;
-                      return (
-                        <span
-                          key={tid}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-[var(--surface-container-low)] px-2.5 py-1 text-[11px] font-medium text-text"
-                        >
-                          {teacher.fullName}
-                          <button
-                            type="button"
-                            className="text-muted hover:text-text disabled:pointer-events-none disabled:opacity-40"
-                            aria-label={`Remove ${teacher.fullName}`}
-                            disabled={readOnly}
-                            onClick={() =>
-                              setLoaTeacherIds((prev) => {
-                                const next = new Set(prev);
-                                next.delete(tid);
-                                return next;
-                              })
-                            }
-                          >
-                            ×
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
+                <SelectedChips
+                  ids={loaTeacherIds}
+                  teacherById={teacherById}
+                  readOnly={readOnly}
+                  onRemove={(tid) =>
+                    setLoaTeacherIds((prev) => {
+                      const next = new Set(prev);
+                      next.delete(tid);
+                      return next;
+                    })
+                  }
+                />
               </>
-            )}
+            ) : null}
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-[var(--surface-container)] px-6 py-4">
+        <div className="flex items-center justify-between gap-3 border-t border-border/20 px-6 py-4">
           <button
             type="button"
             onClick={onClose}
             disabled={pending}
-            className="rounded-xl px-4 py-2.5 text-[0.8125rem] font-medium text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text disabled:opacity-50"
+            className="rounded-lg px-2 py-2 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text disabled:opacity-50"
           >
             {readOnly ? "Close" : "Cancel"}
           </button>
@@ -406,7 +553,7 @@ export function EditUserModal({
               type="button"
               onClick={handleSave}
               disabled={pending}
-              className="inline-flex items-center justify-center rounded-md bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-5 py-2.5 text-sm font-semibold text-on-primary shadow-[var(--shadow-btn)] calm-transition hover:opacity-95 hover:shadow-[var(--shadow-btn-hover)] motion-safe:hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-xl bg-neutral-950 px-6 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 disabled:opacity-50 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
             >
               {pending ? "Saving…" : "Save changes"}
             </button>
@@ -415,4 +562,7 @@ export function EditUserModal({
       </div>
     </div>
   );
+
+  if (!mounted) return null;
+  return createPortal(modal, document.body);
 }
