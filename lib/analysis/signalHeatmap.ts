@@ -1,21 +1,25 @@
 /**
- * Tailwind arbitrary-value background classes for signal mean heatmap cells.
+ * Tailwind background classes for signal mean heatmap cells.
  * Means are on a ~1–4 observation rubric scale: higher = stronger practice.
+ *
+ * Uses theme tokens from tailwind.config (scale-*-bar) so classes are always
+ * generated; arbitrary-value bg-[color-mix(...)] in this file was not scanned
+ * when `lib/` was omitted from Tailwind `content`, which left cells invisible.
  */
 export function meanToHeatmapBarClass(mean: number | null | undefined): string {
   if (mean == null) {
-    return "bg-[color-mix(in_srgb,var(--surface-container-high)_78%,var(--on-surface)_5%)]";
+    return "bg-surface-container-high";
   }
   if (mean >= 3.5) {
-    return "bg-[color-mix(in_srgb,var(--scale-strong-bar)_90%,#fff_10%)]";
+    return "bg-scale-strong-bar";
   }
   if (mean >= 2.5) {
-    return "bg-[color-mix(in_srgb,var(--scale-consistent-bar)_78%,#fff_22%)]";
+    return "bg-scale-consistent-bar";
   }
   if (mean >= 1.5) {
-    return "bg-[color-mix(in_srgb,var(--scale-some-bar)_72%,#fff_28%)]";
+    return "bg-scale-some-bar";
   }
-  return "bg-[color-mix(in_srgb,var(--scale-limited-bar)_85%,#fff_15%)]";
+  return "bg-scale-limited-bar";
 }
 
 export function signalHeatmapCellTitle(label: string, mean: number | null | undefined): string {
