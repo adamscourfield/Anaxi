@@ -135,6 +135,17 @@ function StaffSearchInput({
   return (
     <div className="relative" ref={wrapRef}>
       <input type="hidden" name="owner" value={query} />
+      <span className="pointer-events-none absolute left-3.5 top-1/2 z-[1] -translate-y-1/2 text-muted" aria-hidden>
+        <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span className="pointer-events-none absolute right-3.5 top-1/2 z-[1] -translate-y-1/2 text-muted" aria-hidden>
+        <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
       <input
         type="text"
         value={query}
@@ -146,7 +157,7 @@ function StaffSearchInput({
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         placeholder="Search staff member..."
         maxLength={40}
-        className="field"
+        className="field w-full rounded-xl border-border/40 bg-surface-container-lowest py-2.5 pl-11 pr-10 text-[0.875rem]"
         autoComplete="off"
       />
       {menu}
@@ -167,13 +178,21 @@ function AreaModal({
 }) {
   const [pending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
+  const [descLen, setDescLen] = useState(() => (area?.description ?? "").length);
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<Element | null>(null);
+  const isNew = area === null;
+
+  const LABEL = "text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setDescLen((area?.description ?? "").length);
+  }, [area]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -203,6 +222,8 @@ function AreaModal({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const p = String(fd.get("priority") ?? "").trim();
+    if (!p) fd.set("priority", "high");
     startTransition(async () => {
       if (area) {
         await updateStrategyArea(area.id, fd);
@@ -214,6 +235,8 @@ function AreaModal({
   }
 
   if (!mounted || typeof document === "undefined") return null;
+
+  const submitLabel = pending ? "Saving…" : area ? "Save Changes" : "Submit proposal";
 
   return createPortal(
     <div
@@ -233,108 +256,175 @@ function AreaModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/40 bg-surface-container-lowest shadow-2xl outline-none animate-in fade-in zoom-in-95 duration-200 max-h-[min(90vh,calc(100dvh-2.5rem))] my-auto"
+          className="relative z-10 my-auto flex max-h-[min(90vh,calc(100dvh-2.5rem))] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/35 bg-surface-container-lowest shadow-2xl outline-none animate-in fade-in zoom-in-95 duration-200"
           tabIndex={-1}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border/25 px-6 pb-4 pt-5 sm:px-7 sm:pb-4 sm:pt-6">
-            <h2 id={titleId} className="pr-2 text-[1.125rem] font-bold leading-snug tracking-tight text-text sm:text-xl">
-              {area ? "Edit Strategy" : "Propose New Strategy"}
-            </h2>
+          <div className="flex shrink-0 items-start gap-4 border-b border-border/20 px-6 pb-5 pt-6 sm:px-7">
+            <span
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[rgba(124,105,239,0.92)] text-white shadow-sm ring-1 ring-[rgba(124,105,239,0.25)]"
+              aria-hidden
+            >
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 19v-5M10 19V9M16 19v-3M22 19V5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <h2 id={titleId} className="text-xl font-bold leading-tight tracking-tight text-text">
+                {area ? "Edit Strategy" : "Propose New Strategy"}
+              </h2>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
+                {isNew ? "Add a new strategic initiative for your school." : "Update this strategic initiative."}
+              </p>
+            </div>
             <button
               type="button"
               onClick={onClose}
-              className="calm-transition -mr-1 -mt-0.5 shrink-0 rounded-lg p-2 text-muted hover:bg-surface-container-low hover:text-text"
+              className="calm-transition -mr-1 -mt-1 shrink-0 rounded-lg p-2 text-muted hover:bg-surface-container-low hover:text-text"
+              aria-label="Close"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5 sm:px-7">
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-6 sm:px-7">
               {/* Strategic Area Name */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                  Strategic Area Name
+              <div className="flex flex-col gap-2">
+                <label htmlFor={`strategy-title-${titleId}`} className={LABEL}>
+                  Strategic area name
                 </label>
-                <input
-                  name="title"
-                  required
-                  defaultValue={area?.title ?? ""}
-                  placeholder="e.g., KS3 Literacy Intervention"
-                  maxLength={80}
-                  className="field"
-                />
+                <div className="relative rounded-xl border border-[rgba(124,105,239,0.45)] bg-surface-container-lowest shadow-sm focus-within:ring-2 focus-within:ring-[rgba(124,105,239,0.25)]">
+                  <span className="pointer-events-none absolute left-3.5 top-1/2 z-[1] -translate-y-1/2 text-[#7C69EF]" aria-hidden>
+                    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="12" cy="12" r="5" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                    </svg>
+                  </span>
+                  <input
+                    id={`strategy-title-${titleId}`}
+                    name="title"
+                    required
+                    defaultValue={area?.title ?? ""}
+                    placeholder="e.g., KS3 Literacy Intervention"
+                    maxLength={80}
+                    className="field w-full rounded-xl border-0 bg-transparent py-2.5 pl-11 pr-3 text-[0.875rem] shadow-none focus-visible:ring-0"
+                  />
+                </div>
               </div>
 
               {/* Target Metric + Priority Level */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                    Target Metric
+                <div className="flex flex-col gap-2">
+                  <label htmlFor={`strategy-metric-${titleId}`} className={LABEL}>
+                    Target metric
                   </label>
-                  <input
-                    name="category"
-                    defaultValue={area?.category ?? ""}
-                    placeholder="e.g., 97.5% or Gold Standard"
-                    maxLength={30}
-                    className="field"
-                  />
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3.5 top-1/2 z-[1] -translate-y-1/2 text-muted" aria-hidden>
+                      <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 20V10M12 20V4M20 20v-6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <input
+                      id={`strategy-metric-${titleId}`}
+                      name="category"
+                      defaultValue={area?.category ?? ""}
+                      placeholder="e.g., 97.5% or Gold Standard"
+                      maxLength={30}
+                      className="field w-full rounded-xl border-border/40 bg-surface-container-lowest py-2.5 pl-11 pr-3 text-[0.875rem]"
+                    />
+                  </div>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                    Priority Level
+                <div className="flex flex-col gap-2">
+                  <label htmlFor={`strategy-priority-${titleId}`} className={LABEL}>
+                    Priority level
                   </label>
-                  <select name="priority" defaultValue={area?.priority ?? "high"} className="field">
-                    <option value="critical">Critical Priority</option>
-                    <option value="high">High Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="low">Low Priority</option>
-                  </select>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3.5 top-1/2 z-[1] -translate-y-1/2 text-muted" aria-hidden>
+                      <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 22V4a1 1 0 011-1h12l-2 4 2 4H5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <span className="pointer-events-none absolute right-3.5 top-1/2 z-[1] -translate-y-1/2 text-muted" aria-hidden>
+                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+                        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <select
+                      id={`strategy-priority-${titleId}`}
+                      name="priority"
+                      defaultValue={area?.priority ?? ""}
+                      required={!isNew}
+                      className="field w-full appearance-none rounded-xl border-border/40 bg-surface-container-lowest py-2.5 pl-11 pr-10 text-[0.875rem]"
+                    >
+                      {isNew ? <option value="">Select priority level</option> : null}
+                      <option value="critical">Critical Priority</option>
+                      <option value="high">High Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="low">Low Priority</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               {/* Lead Person */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                  Lead Person
-                </label>
+              <div className="flex flex-col gap-2">
+                <span className={LABEL}>Lead person</span>
                 <StaffSearchInput staffList={staffList} defaultValue={area?.owner ?? ""} />
               </div>
 
               {/* Strategic Description */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                  Strategic Description
+              <div className="flex flex-col gap-2">
+                <label htmlFor={`strategy-desc-${titleId}`} className={LABEL}>
+                  Strategic description
                 </label>
-                <textarea
-                  name="description"
-                  defaultValue={area?.description ?? ""}
-                  placeholder="Outline the primary objectives and key performance indicators..."
-                  rows={4}
-                  className="field min-h-[100px] resize-y"
-                />
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3.5 top-3 z-[1] text-muted" aria-hidden>
+                    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <textarea
+                    id={`strategy-desc-${titleId}`}
+                    name="description"
+                    defaultValue={area?.description ?? ""}
+                    placeholder="Outline the primary objectives and key performance indicators..."
+                    rows={5}
+                    maxLength={1000}
+                    onChange={(e) => setDescLen(e.target.value.length)}
+                    className="field min-h-[120px] w-full resize-y rounded-xl border-border/40 bg-surface-container-lowest py-3 pl-11 pr-3 pb-8 text-[0.875rem] leading-relaxed"
+                  />
+                  <span className="pointer-events-none absolute bottom-2 right-3 text-[0.6875rem] tabular-nums text-muted">
+                    {descLen} / 1000
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-border/25 bg-surface-container-lowest px-6 py-4 sm:px-7">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-border/20 bg-surface-container-lowest px-6 py-4 sm:px-7">
               <button
                 type="button"
                 onClick={onClose}
-                className="calm-transition rounded-lg px-5 py-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.04em] text-muted hover:text-text"
+                className="calm-transition rounded-xl border border-border/45 bg-surface-container-lowest px-5 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm hover:bg-surface-container-low"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="calm-transition rounded-xl bg-neutral-950 px-6 py-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.04em] text-white shadow-sm hover:bg-neutral-900 disabled:opacity-60 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-950 px-6 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 disabled:opacity-60 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
               >
-                {pending ? "Saving…" : area ? "Save Changes" : "Submit Proposal"}
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {submitLabel}
               </button>
             </div>
           </form>
@@ -702,6 +792,7 @@ export function StrategyBoardClient({ areas, canManage, staffList }: Props) {
       {/* Modal */}
       {editingArea !== undefined && (
         <AreaModal
+          key={editingArea === null ? "new-strategy" : editingArea.id}
           area={editingArea}
           onClose={() => setEditingArea(undefined)}
           staffList={staffList}
