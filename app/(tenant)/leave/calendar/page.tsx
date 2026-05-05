@@ -5,6 +5,7 @@ import { canManageLoa } from "@/lib/loa";
 import { prisma } from "@/lib/prisma";
 import { StatCard } from "@/components/ui/stat-card";
 import { LeaveCalendarGrid } from "../LeaveCalendarGrid";
+import { fetchLeaveCalendarMonthRequests } from "@/modules/leave/leaveCalendarMonthData";
 
 export default async function LeaveCalendarPage({
   searchParams,
@@ -64,25 +65,12 @@ export default async function LeaveCalendarPage({
       : null;
   const avgResponseStr = avgDays !== null ? `${avgDays.toFixed(1)}d` : "—";
 
-  const calStart = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
-  const calEnd = new Date(
-    calendarDate.getFullYear(),
-    calendarDate.getMonth() + 1,
-    0,
-    23,
-    59,
-    59,
-  );
-  const calendarRequests = (requests as any[]).filter((r) => {
-    const rStart = new Date(r.startDate);
-    const rEnd = new Date(r.endDate);
-    return rStart <= calEnd && rEnd >= calStart;
+  const calendarRequests = await fetchLeaveCalendarMonthRequests({
+    tenantId: user.tenantId,
+    viewerUserId: user.id,
+    manager,
+    monthKey: monthQuery,
   });
-
-  const prevMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1);
-  const nextMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1);
-  const prevMonthParam = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, "0")}`;
-  const nextMonthParam = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, "0")}`;
 
   return (
     <div className="space-y-6">
@@ -200,11 +188,9 @@ export default async function LeaveCalendarPage({
       </div>
 
       <LeaveCalendarGrid
-        monthAnchor={calendarDate}
-        calendarRequests={calendarRequests}
-        prevMonthHref={`/leave/calendar?month=${prevMonthParam}`}
-        nextMonthHref={`/leave/calendar?month=${nextMonthParam}`}
-        requestHrefForId={(id) => `/leave/${id}?from=calendar&month=${monthQuery}`}
+        initialMonthKey={monthQuery}
+        initialRequests={calendarRequests}
+        basePath="calendar"
       />
 
       <div className="flex flex-wrap gap-3">
