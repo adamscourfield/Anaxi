@@ -17,6 +17,7 @@ import { Avatar } from "@/components/ui/avatar";
 import {
   computeBehaviourAnalysis,
   type BehaviourAnalysisSummary,
+  type BehaviourCohortDailyMetricRow,
 } from "@/modules/analysis/behaviourAnalysis";
 import { BehaviourAnalysisFilters } from "./BehaviourAnalysisFilters";
 import { BehaviourAnalysisCollapsibleSection } from "./BehaviourAnalysisCollapsibleSection";
@@ -50,33 +51,22 @@ function fmtSnapshotDate(d: Date): string {
   });
 }
 
-/** Decorative sparkline derived deterministically from totals (no time-series on this page). */
-function sparkSeries(seed: string, peak: number): number[] {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  const n = 12;
-  const out: number[] = [];
-  const mag = Math.max(Math.log10(peak + 10) * 12, 8);
-  for (let i = 0; i < n; i++) {
-    const noise = ((h >> (i % 16)) & 0xff) / 255;
-    const trend = i / (n - 1);
-    out.push(mag * (0.35 + noise * 0.45 + trend * 0.35));
-  }
-  return out;
-}
-
-function MiniSparkline({ color, seed, peak }: { color: string; seed: string; peak: number }) {
-  const vals = sparkSeries(seed, peak);
+/** Sparkline from real daily cohort series; slope reflects net change (up / down / flat). */
+function MiniSparkline({ color, values }: { color: string; values: number[] }) {
   const w = 80;
   const h = 32;
-  const max = Math.max(...vals, 1e-6);
-  const min = Math.min(...vals);
-  const span = max - min || 1;
   const pad = 2;
+  const vals = values.length >= 2 ? values : [0, 0];
+  const max = Math.max(...vals, 0);
+  const min = Math.min(...vals);
+  const span = max - min;
+  const flat = span === 0;
+  const innerH = h - pad * 2;
+  const midY = pad + innerH / 2;
   const d = vals
     .map((v, i) => {
       const x = pad + (i / (vals.length - 1)) * (w - pad * 2);
-      const y = pad + (1 - (v - min) / span) * (h - pad * 2);
+      const y = flat ? midY : pad + (1 - (v - min) / span) * innerH;
       return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
     })
     .join(" ");
@@ -93,12 +83,22 @@ function MiniSparkline({ color, seed, peak }: { color: string; seed: string; pea
   );
 }
 
+const COHORT_SPARK_PICK: Record<
+  "det" | "ie" | "sus" | "pos" | "neg",
+  (row: BehaviourCohortDailyMetricRow) => number
+> = {
+  det: (r) => r.detentions,
+  ie: (r) => r.internalExclusions,
+  sus: (r) => r.suspensions,
+  pos: (r) => r.positivePoints,
+  neg: (r) => r.negativePoints,
+};
 function sectionHeader(title: string, subtitle?: string, titleExtras?: ReactNode) {
   return (
     <div className="px-5 py-4 sm:px-6 sm:py-5">
       <div className="flex flex-wrap items-center gap-2">
         {titleExtras}
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-text">{title}</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">{title}</p>
       </div>
       {subtitle ? (
         <p className="mt-1 max-w-2xl text-[0.8125rem] leading-relaxed text-[#6B7280]">{subtitle}</p>
@@ -512,14 +512,10 @@ export default async function AnalysisPage({
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {secondaryStats.map((s) => {
               const vis = secondaryVisual[s.key];
-              const numeric =
-                typeof s.value === "string" || typeof s.value === "number"
-                  ? Number(String(s.value).replace(/,/g, ""))
-                  : 0;
               return (
                 <div
                   key={s.key}
-                  className="anx-elevated-card flex items-center gap-3 px-4 py-3.5"
+                  className="anx-elevated-card flex items-center gap-3 rounded-2xl px-4 py-3.5"
                 >
                   {vis ? (
                     <StatCircleIcon bg={vis.circleBg} stroke={vis.circleStroke}>
@@ -529,13 +525,16 @@ export default async function AnalysisPage({
                   <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#6B7280]">{s.label}</p>
                     <p
-                      className={`mt-0.5 text-xl font-bold tabular-nums tracking-tight text-text ${s.valueClass ?? ""}`}
+                      className={`mt-0.5 text-xl font-bold tabular-nums tracking-tight text-[#111827] ${s.valueClass ?? ""}`}
                     >
                       {s.value}
                     </p>
                   </div>
-                  {vis ? (
-                    <MiniSparkline color={vis.spark} seed={s.key + String(s.value)} peak={numeric} />
+                  {vis && s.key in COHORT_SPARK_PICK ? (
+                    <MiniSparkline
+                      color={vis.spark}
+                      values={result.cohortDailyMetrics.map(COHORT_SPARK_PICK[s.key as keyof typeof COHORT_SPARK_PICK])}
+                    />
                   ) : null}
                 </div>
               );
@@ -557,11 +556,11 @@ export default async function AnalysisPage({
         buildClearHref={clearHref}
       />
 
-      {/* Live on-call + requesters */}
-      <div className="anx-elevated-card overflow-hidden">
+      {/* Live on-call: charts (left) + frequent requesters (right) */}
+      <div className="anx-elevated-card overflow-hidden rounded-2xl">
         {sectionHeader(
           `${onCallPlural} · live`,
-          "Requests in this window. Charts use school hours 8am–3pm. Use bars to open details.",
+          "Requests in this window. Charts use school hours 8am–3pm. Tap a bar to open details.",
           <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-[#22c55e]" title="Live data" aria-hidden />,
         )}
 
@@ -573,54 +572,59 @@ export default async function AnalysisPage({
             </p>
           </div>
         ) : (
-          <>
-            <div className="border-t border-[rgba(15,23,42,0.06)]">
-              <OnCallBreakdownCharts
-                onCallByHour={result.onCallByHour}
-                onCallByReason={result.onCallByReason}
-                details={result.onCallRequestDetails}
-              />
-            </div>
+          <div className="border-t border-[rgba(15,23,42,0.06)]">
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:divide-x lg:divide-[rgba(15,23,42,0.06)]">
+              <div className="min-w-0">
+                <OnCallBreakdownCharts
+                  onCallByHour={result.onCallByHour}
+                  onCallByReason={result.onCallByReason}
+                  details={result.onCallRequestDetails}
+                  compact
+                />
+              </div>
 
-            <div className="border-t border-[rgba(15,23,42,0.06)] px-5 py-6 sm:px-6">
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Most frequent requesters</p>
-              {topTeachers.length > 0 ? (
-                <div className="anx-elevated-card--table table-shell overflow-hidden rounded-xl">
-                  <p className="sr-only" id="explorer-analysis-oncall-requesters-scroll-hint">
-                    This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
-                  </p>
-                  <div className="overflow-x-auto" aria-describedby="explorer-analysis-oncall-requesters-scroll-hint">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="table-head-row text-left">
-                          <th className="px-5 py-3">Teacher</th>
-                          <th className="px-4 py-3 text-right">Requests</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {topTeachers.map((row) => (
-                          <tr
-                            key={row.teacherId}
-                            className="table-row calm-transition"
-                          >
-                            <td className="px-5 py-3.5">
-                              <div className="flex items-center gap-2.5">
-                                <Avatar name={row.teacherName} size="sm" />
-                                <span className="font-medium text-text">{row.teacherName}</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3.5 text-right tabular-nums text-[#6B7280]">{row.count}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+              <aside className="flex flex-col border-t border-[rgba(15,23,42,0.06)] bg-[rgba(124,92,255,0.02)] p-5 sm:p-6 lg:border-t-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Most frequent requesters</p>
+                <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">
+                  Teachers raising the most on-call requests in this window.
+                </p>
+                <div className="mt-5 flex-1">
+                  {topTeachers.length > 0 ? (
+                    <div className="anx-elevated-card--table table-shell overflow-hidden rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)]">
+                      <p className="sr-only" id="explorer-analysis-oncall-requesters-scroll-hint">
+                        This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
+                      </p>
+                      <div className="overflow-x-auto" aria-describedby="explorer-analysis-oncall-requesters-scroll-hint">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="table-head-row text-left">
+                              <th className="px-5 py-3">Teacher</th>
+                              <th className="px-4 py-3 text-right">Requests</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {topTeachers.map((row) => (
+                              <tr key={row.teacherId} className="table-row calm-transition">
+                                <td className="px-5 py-3.5">
+                                  <div className="flex items-center gap-2.5">
+                                    <Avatar name={row.teacherName} size="sm" />
+                                    <span className="font-medium text-[#111827]">{row.teacherName}</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3.5 text-right tabular-nums text-[#6B7280]">{row.count}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[#6B7280]">No on-call requests for this cohort in the window.</p>
+                  )}
                 </div>
-              ) : (
-                <p className="text-sm text-[#6B7280]">No on-call requests for this cohort in the window.</p>
-              )}
+              </aside>
             </div>
-          </>
+          </div>
         )}
       </div>
 
