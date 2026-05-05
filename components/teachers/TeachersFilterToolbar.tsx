@@ -20,8 +20,12 @@ type ExplorerProps = {
 type InstructionProps = {
   variant: "instruction";
   windowDays: WindowDays;
+  mode: "pivot" | "priorities";
+  sort: string;
+  dir: string;
   departmentId?: string;
   scopedDepartments: DepartmentOption[];
+  buildUrl: (overrides: Record<string, string>) => string;
 };
 
 export type TeachersFilterToolbarProps = ExplorerProps | InstructionProps;
@@ -73,13 +77,6 @@ function SectionHeader({ icon, label }: { icon: ReactNode; label: string }) {
       <span className="teachers-filter-toolbar__label">{label}</span>
     </div>
   );
-}
-
-function instructionTeachersHref(args: { windowDays: number; departmentId?: string }): string {
-  const qs = new URLSearchParams();
-  qs.set("windowDays", String(args.windowDays));
-  if (args.departmentId) qs.set("departmentId", args.departmentId);
-  return `/instruction/teachers?${qs.toString()}`;
 }
 
 export function TeachersFilterToolbar(props: TeachersFilterToolbarProps) {
@@ -153,10 +150,7 @@ export function TeachersFilterToolbar(props: TeachersFilterToolbarProps) {
     );
   }
 
-  const { windowDays, scopedDepartments, departmentId } = props;
-
-  const preservedDeptId =
-    departmentId && scopedDepartments.some((d) => d.id === departmentId) ? departmentId : undefined;
+  const { windowDays, mode, sort, dir, scopedDepartments, departmentId, buildUrl } = props;
 
   return (
     <div className="teachers-filter-toolbar">
@@ -166,7 +160,7 @@ export function TeachersFilterToolbar(props: TeachersFilterToolbarProps) {
           {VALID_WINDOWS.map((w) => (
             <Link
               key={w}
-              href={instructionTeachersHref({ windowDays: w, departmentId: preservedDeptId })}
+              href={buildUrl({ windowDays: String(w), page: "1" })}
               className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
             >
               {w}D
@@ -175,10 +169,32 @@ export function TeachersFilterToolbar(props: TeachersFilterToolbarProps) {
         </div>
       </div>
       <div className="teachers-filter-toolbar__divider" aria-hidden />
+      <div className="teachers-filter-toolbar__section">
+        <SectionHeader icon={<ChartIcon />} label="View" />
+        <div className="filter-period-toggle w-fit max-w-full">
+          <Link
+            href={buildUrl({ mode: "pivot", page: "1" })}
+            className={`filter-period-btn ${mode === "pivot" ? "filter-period-btn-active" : ""}`}
+          >
+            Performance view
+          </Link>
+          <Link
+            href={buildUrl({ mode: "priorities", page: "1" })}
+            className={`filter-period-btn ${mode === "priorities" ? "filter-period-btn-active" : ""}`}
+          >
+            Priority view
+          </Link>
+        </div>
+      </div>
+      <div className="teachers-filter-toolbar__divider" aria-hidden />
       <div className="teachers-filter-toolbar__section sm:flex-[1.15]">
         <SectionHeader icon={<UserIcon />} label="Department" />
         <form className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center" method="GET" action="/instruction/teachers">
           <input type="hidden" name="windowDays" value={String(windowDays)} />
+          <input type="hidden" name="mode" value={mode} />
+          <input type="hidden" name="sort" value={sort} />
+          <input type="hidden" name="dir" value={dir} />
+          <input type="hidden" name="page" value="1" />
           <div className="min-w-0 flex-1">
             <select
               name="departmentId"
