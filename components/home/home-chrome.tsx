@@ -33,7 +33,9 @@ export function HomePageHeader({
           {meta && !metaBelowActions ? <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">{meta}</div> : null}
         </div>
         {actions ? (
-          <div className="flex min-w-0 shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">{actions}</div>
+          <div className="flex w-full min-w-0 shrink-0 flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
+            {actions}
+          </div>
         ) : null}
       </div>
       {meta && metaBelowActions ? (

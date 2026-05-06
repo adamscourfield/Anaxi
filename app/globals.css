@@ -607,6 +607,27 @@ textarea:focus-visible {
   }
 }
 
+/* Institutional Pulse — mobile: fit 7d–28d without horizontal scroll, larger tap targets */
+@media (max-width: 639px) {
+  .home-pulse-window-toggle.segmented-toggle {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    box-sizing: border-box;
+    align-items: stretch;
+  }
+
+  .home-pulse-window-toggle .segmented-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding-inline: 4px;
+    padding-block: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
