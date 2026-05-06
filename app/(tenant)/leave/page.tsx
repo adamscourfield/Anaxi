@@ -10,6 +10,7 @@ import { LeaveTable, type LeaveRow } from "./LeaveTable";
 import { LeaveCalendarGrid } from "./LeaveCalendarGrid";
 import { LeaveCreatedToast } from "@/components/leave/leave-created-toast";
 import { Button } from "@/components/ui/button";
+import { fetchLeaveCalendarMonthRequests } from "@/modules/leave/leaveCalendarMonthData";
 
 /* ── Helpers ────────────────────────────────────────────────────── */
 
@@ -163,26 +164,15 @@ export default async function LeavePage({
 
   const hasAnyListRows = pendingRows.length > 0 || completedRows.length > 0;
 
-  /* Calendar data */
-  const calStart = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
-  const calEnd = new Date(
-    calendarDate.getFullYear(),
-    calendarDate.getMonth() + 1,
-    0,
-    23,
-    59,
-    59,
-  );
-  const calendarRequests = (requests as any[]).filter((r) => {
-    const rStart = new Date(r.startDate);
-    const rEnd = new Date(r.endDate);
-    return rStart <= calEnd && rEnd >= calStart;
-  });
+  const monthQuery = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth() + 1).padStart(2, "0")}`;
 
-  const prevMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1);
-  const nextMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1);
-  const prevMonthParam = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, "0")}`;
-  const nextMonthParam = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, "0")}`;
+  /* Calendar data */
+  const calendarRequests = await fetchLeaveCalendarMonthRequests({
+    tenantId: user.tenantId,
+    viewerUserId: user.id,
+    manager,
+    monthKey: monthQuery,
+  });
 
   const isCalendar = view === "calendar";
 
@@ -341,11 +331,9 @@ export default async function LeavePage({
 
       {isCalendar ? (
         <LeaveCalendarGrid
-          monthAnchor={calendarDate}
-          calendarRequests={calendarRequests}
-          prevMonthHref={`/leave?view=calendar&month=${prevMonthParam}`}
-          nextMonthHref={`/leave?view=calendar&month=${nextMonthParam}`}
-          requestHrefForId={(id) => `/leave/${id}`}
+          initialMonthKey={monthQuery}
+          initialRequests={calendarRequests}
+          basePath="leave"
         />
       ) : !hasAnyListRows ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-background py-16">

@@ -1818,6 +1818,20 @@ textarea:focus-visible {
   --divider-subtle: color-mix(in srgb, var(--outline-variant) 30%, transparent);
 }
 
+/* Leave calendar: subtle cross-fade when swapping months (client fetch). */
+@keyframes loa-cal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loa-cal-month-enter {
+  animation: loa-cal-fade-in 0.22s ease-out;
+}
+
 /* ── Print / PDF export styles ─────────────────────────────────── */
 @media print {
   /* Hide nav, sidebars, and interactive elements */
