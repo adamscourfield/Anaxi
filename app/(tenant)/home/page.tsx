@@ -229,12 +229,16 @@ function AttentionBannerSuccessIcon() {
 
 function WindowSelector({ windowDays }: { windowDays: number }) {
   return (
-    <div className="segmented-toggle home-pulse-window-toggle">
+    <div
+      className="segmented-toggle home-pulse-window-toggle touch-manipulation"
+      role="group"
+      aria-label="Analysis window length"
+    >
       {[7, 14, 21, 28].map((w) => (
         <Link
           key={w}
           href={`/home?window=${w}`}
-          className={`segmented-toggle-btn ${windowDays === w ? "segmented-toggle-btn-active" : ""}`}
+          className={`segmented-toggle-btn touch-manipulation ${windowDays === w ? "segmented-toggle-btn-active" : ""}`}
         >
           {w}d
         </Link>
@@ -267,12 +271,16 @@ function PageTitle({
       subtitle="Coverage, signals, and operational status for your school — tuned to the selected window."
       metaBelowActions
       actions={
-        <>
-          <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch] pb-0.5 sm:pb-0">
+        <div className="flex w-full min-w-0 flex-row items-stretch gap-2 sm:items-center sm:gap-3">
+          <div className="min-w-0 flex-1 sm:flex-initial">
             <WindowSelector windowDays={windowDays} />
           </div>
-          {quickActionItems.length > 0 ? <QuickActionButton items={quickActionItems} /> : null}
-        </>
+          {quickActionItems.length > 0 ? (
+            <div className="flex shrink-0 items-center self-center">
+              <QuickActionButton items={quickActionItems} />
+            </div>
+          ) : null}
+        </div>
       }
       meta={
         <>
