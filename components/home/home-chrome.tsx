@@ -9,12 +9,15 @@ export function HomePageHeader({
   eyebrow,
   actions,
   meta,
+  metaBelowActions,
 }: {
   title: string;
   subtitle?: string;
   eyebrow?: string;
   actions?: ReactNode;
   meta?: ReactNode;
+  /** When true, meta chips render below the title/actions row (full width). */
+  metaBelowActions?: boolean;
 }) {
   return (
     <header className="anx-page-header-shell">
@@ -27,12 +30,17 @@ export function HomePageHeader({
           {subtitle ? (
             <p className="anx-page-subtitle">{subtitle}</p>
           ) : null}
-          {meta ? <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">{meta}</div> : null}
+          {meta && !metaBelowActions ? <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">{meta}</div> : null}
         </div>
         {actions ? (
           <div className="flex min-w-0 shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">{actions}</div>
         ) : null}
       </div>
+      {meta && metaBelowActions ? (
+        <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-[var(--anx-header-rule)] pt-5">
+          {meta}
+        </div>
+      ) : null}
     </header>
   );
 }
@@ -67,22 +75,26 @@ export function HomeSectionHeader({
 export function HomeCardHeading({
   icon,
   iconVariant = "accent",
+  iconTileClassName,
   title,
   subtitle,
   end,
 }: {
   icon?: ReactNode;
   iconVariant?: "accent" | "neutral" | "muted";
+  /** When set, replaces the default icon tile background (e.g. dark navy well). */
+  iconTileClassName?: string;
   title: string;
   subtitle?: string;
   end?: ReactNode;
 }) {
   const tile =
-    iconVariant === "accent"
+    iconTileClassName ??
+    (iconVariant === "accent"
       ? "bg-[var(--tertiary-container)] text-[var(--on-primary)]"
       : iconVariant === "muted"
         ? "bg-[var(--surface-container)] text-muted"
-        : "bg-[var(--surface-container)] text-text";
+        : "bg-[var(--surface-container)] text-text");
 
   return (
     <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">

@@ -177,9 +177,19 @@ function LeaveCalendarIcon({ className }: { className?: string }) {
   );
 }
 
+function formatRelativeShort(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const sec = Math.max(0, Math.round(ms / 1000));
+  if (sec < 120) return `${sec}s ago`;
+  const mins = Math.round(sec / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  return `${hrs}h ago`;
+}
+
 function WindowSelector({ windowDays }: { windowDays: number }) {
   return (
-    <div className="segmented-toggle">
+    <div className="segmented-toggle home-pulse-window-toggle">
       {[7, 14, 21, 28].map((w) => (
         <Link
           key={w}
@@ -205,6 +215,7 @@ function PageTitle({
   const updatedAt = new Date().toLocaleString("en-GB", {
     day: "numeric",
     month: "short",
+    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -214,6 +225,7 @@ function PageTitle({
       eyebrow="Dashboard"
       title="Institutional Pulse"
       subtitle="Coverage, signals, and operational status for your school — tuned to the selected window."
+      metaBelowActions
       actions={
         <>
           <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch] pb-0.5 sm:pb-0">
@@ -275,8 +287,8 @@ function LeadershipAttentionStrip({
   const items = [
     ...(primaryOnCall
       ? [{
-          title: "On-call escalation",
-          detail: `${primaryOnCall.requesterName} • ${Math.round((Date.now() - new Date(primaryOnCall.createdAt).getTime()) / 60000)}m ago`,
+          title: `${openOnCalls.length} on-call escalation${openOnCalls.length === 1 ? "" : "s"}`,
+          detail: `${primaryOnCall.requesterName} • ${formatRelativeShort(primaryOnCall.createdAt)}`,
           href: `/on-call/${primaryOnCall.id}`,
           tone: "critical" as const,
         }]
@@ -316,22 +328,47 @@ function LeadershipAttentionStrip({
         tone: "success" as const,
       }];
 
-  const bandClass = visibleItems.some((item) => item.tone === "critical")
-    ? "border-[color-mix(in_srgb,var(--error)_16%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_58%,var(--surface-container-lowest))]"
+  const hasCritical = visibleItems.some((item) => item.tone === "critical");
+  const bandClass = hasCritical
+    ? "border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[#FEF2F2]"
     : visibleItems.some((item) => item.tone === "warning")
       ? "border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_70%,var(--surface-container-lowest))]"
       : "border-[color-mix(in_srgb,var(--success)_14%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_72%,var(--surface-container-lowest))]";
 
+  const itemDivideX = hasCritical
+    ? "sm:divide-[color-mix(in_srgb,var(--error)_18%,transparent)]"
+    : "sm:divide-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]";
+
   return (
-    <section className={`rounded-2xl border px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] sm:px-5 ${bandClass}`}>
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--error)] text-sm font-bold text-white shadow-sm">
-            !
-          </span>
-          <div className="grid min-w-0 gap-3 md:grid-cols-3">
-            {visibleItems.slice(0, 3).map((item) => (
-              <Link key={`${item.title}-${item.href}`} href={item.href} className="group min-w-0 rounded-xl px-2 py-1 calm-transition hover:bg-white/55">
+    <section className={`rounded-xl border px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)] sm:px-5 sm:py-4 ${bandClass}`}>
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between xl:gap-8">
+        <div className="flex min-w-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-5">
+          <div className="flex shrink-0 items-center gap-3 lg:max-w-[220px] lg:flex-col lg:items-start lg:gap-2">
+            <div className="flex items-center gap-3">
+              <span
+                className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold leading-none text-white shadow-sm ${
+                  hasCritical ? "bg-[var(--error)]" : "bg-[var(--success)]"
+                }`}
+              >
+                {hasCritical ? "!" : "✓"}
+              </span>
+              {hasCritical ? (
+                <p className="text-sm font-bold text-[var(--error)]">Immediate attention</p>
+              ) : (
+                <p className="text-sm font-bold text-[var(--success)]">Operating within range</p>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={`grid min-w-0 flex-1 grid-cols-1 gap-3 divide-y divide-solid sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-y-0 ${itemDivideX} max-sm:divide-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)]`}
+          >
+            {visibleItems.slice(0, 3).map((item, idx) => (
+              <Link
+                key={`${item.title}-${item.href}`}
+                href={item.href}
+                className={`group min-w-0 px-1 py-1 calm-transition sm:px-4 sm:py-0 ${idx === 0 ? "sm:pl-0" : ""} ${idx === 2 ? "sm:pr-0" : ""} rounded-lg hover:bg-white/60`}
+              >
                 <div className="flex min-w-0 items-center gap-2">
                   <span
                     className={`h-2 w-2 shrink-0 rounded-full ${
@@ -340,14 +377,18 @@ function LeadershipAttentionStrip({
                   />
                   <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{item.title}</p>
                 </div>
-                <p className="mt-0.5 truncate pl-4 text-xs text-muted">{item.detail}</p>
+                <p className="mt-1 truncate pl-4 text-xs text-muted">{item.detail}</p>
               </Link>
             ))}
           </div>
         </div>
         <Link
           href={visibleItems[0]?.href ?? "/my-actions"}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white/80 px-4 py-2 text-sm font-semibold text-text shadow-sm ring-1 ring-inset ring-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] calm-transition hover:bg-white"
+          className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm calm-transition ${
+            hasCritical
+              ? "bg-white text-[var(--error)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--error)_35%,transparent)] hover:bg-white"
+              : "bg-white/90 text-text ring-1 ring-inset ring-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] hover:bg-white"
+          }`}
         >
           View all actions
           <span aria-hidden>→</span>
@@ -367,6 +408,7 @@ function LeadershipHome({
   pendingLeaveCount,
   pendingLeaveDetails,
   onCallDetails,
+  onCallStats,
   weekObsCount,
   weekObsTeachers,
   attainmentSummary,
@@ -382,6 +424,7 @@ function LeadershipHome({
   pendingLeaveCount: number;
   pendingLeaveDetails: PendingLeaveDetail[];
   onCallDetails: OnCallDetail[];
+  onCallStats: { resolved: number; active: number; escalation: number };
   weekObsCount: number;
   weekObsTeachers: { id: string; name: string }[];
   attainmentSummary: AttainmentSummary | null;
@@ -419,9 +462,8 @@ function LeadershipHome({
     .sort((a, b) => (bandOrder[a.band] ?? 9) - (bandOrder[b.band] ?? 9));
   const effectiveWatchlistStudents = watchlistStudents ?? derivedWatchlistStudents;
 
-  // On-call: separate open vs resolved
+  // On-call: separate open vs acknowledged (live queue)
   const openOnCalls = onCallDetails.filter((r) => r.status === "OPEN" || r.status === "ACKNOWLEDGED");
-  const resolvedOnCalls = onCallDetails.filter((r) => r.status === "RESOLVED");
 
   const topOnCallRows = onCallDetails.slice(0, 3);
   const firstImmediateSupportIdx = topOnCallRows.findIndex(
@@ -447,10 +489,55 @@ function LeadershipHome({
         >
           <HomeCardHeading
             icon={<IconBell />}
+            iconTileClassName="bg-[#0F172A] text-white shadow-[0_1px_2px_rgba(0,0,0,0.12)] [&_svg]:text-white"
             title="On-call status"
             subtitle="Anaxi core response"
-            end={openOnCalls.length > 0 ? <StatusPill variant="error" size="sm">LIVE RESPONSE</StatusPill> : null}
+            end={
+              <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+                <Link
+                  href="/on-call"
+                  className="text-xs font-semibold text-[var(--primary)] calm-transition hover:opacity-80"
+                >
+                  View all →
+                </Link>
+                {openOnCalls.length > 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-white px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--error)]">
+                    <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" aria-hidden />
+                    Live
+                  </span>
+                ) : null}
+              </div>
+            }
           />
+          {onCallDetails.length > 0 ? (
+            <div className="grid grid-cols-3 gap-0 divide-x divide-[color-mix(in_srgb,var(--outline-variant)_28%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-low)]/85 px-2 py-3 text-center sm:px-4">
+              <div className="flex flex-col items-center gap-1 px-1 sm:items-start">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[var(--success)]" aria-hidden>
+                    <path d="M20 6 9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Resolved
+                </span>
+                <span className="text-lg font-bold tabular-nums tracking-tight text-text">{onCallStats.resolved}</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 px-1 sm:items-start">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted">
+                  <span className="h-2 w-2 rounded-full bg-[#FBBF24]" aria-hidden />
+                  Active
+                </span>
+                <span className="text-lg font-bold tabular-nums tracking-tight text-text">{onCallStats.active}</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 px-1 sm:items-start">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-[var(--error)]" aria-hidden>
+                    <path d="M12 5 4 19h16L12 5Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+                  </svg>
+                  Escalation
+                </span>
+                <span className="text-lg font-bold tabular-nums tracking-tight text-text">{onCallStats.escalation}</span>
+              </div>
+            </div>
+          ) : null}
           {onCallDetails.length === 0 ? (
             <div
               id="immediate-support-needed"
@@ -493,12 +580,9 @@ function LeadershipHome({
                     {(oc.status === "OPEN" || oc.status === "ACKNOWLEDGED") ? (
                       <>
                         <div className="hidden max-w-[140px] flex-col items-end gap-0.5 sm:flex sm:max-w-none">
-                          <span className="text-xs font-semibold text-[var(--error)]">Immediate Support Needed</span>
-                          <span className="text-xs text-muted">
-                            {(() => {
-                              const mins = Math.round((Date.now() - new Date(oc.createdAt).getTime()) / 60000);
-                              return mins < 60 ? `Triggered ${mins}m ago` : `Triggered ${Math.round(mins / 60)}h ago`;
-                            })()}
+                          <span className="text-xs font-semibold text-[var(--error)]">Immediate support needed</span>
+                          <span className="text-xs font-medium text-[var(--error)]">
+                            Triggered {formatRelativeShort(oc.createdAt)}
                           </span>
                         </div>
                         <span className="text-[10px] font-medium text-[var(--error)] sm:hidden">Live</span>
@@ -571,7 +655,7 @@ function LeadershipHome({
         {/* Staff Needing Intervention */}
         <Card className="flex min-h-[280px] flex-col space-y-4 rounded-2xl !p-6">
           <HomeCardHeadingSm
-            icon={<IconBolt className="text-scale-some-text" />}
+            icon={<IconUsersTwo className="text-[var(--primary)]" />}
             title="Staff intervention"
             subtitle={`${interventionStaff.length} staff needing support`}
             end={
@@ -609,14 +693,22 @@ function LeadershipHome({
         <div className="flex w-full min-w-0 flex-col gap-5">
           {/* Attendance box */}
           <Card className="home-hero-glass flex min-h-0 flex-1 flex-col gap-4 rounded-2xl !p-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Attendance</p>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Attendance</p>
+              <Link
+                href={`/analytics?tab=students&window=${windowDays}`}
+                className="shrink-0 text-xs font-semibold text-[var(--primary)] calm-transition hover:opacity-80"
+              >
+                View report
+              </Link>
+            </div>
             <div>
               <p className="mt-0.5 text-[2.5rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums sm:text-[2.625rem]">
                 {attendancePct !== null ? `${attendancePct.toFixed(1)}%` : "—"}
               </p>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--surface-container)_88%,transparent)]">
                 <div
-                  className="home-stat-bar-fill h-full rounded-full bg-[var(--primary)]"
+                  className="home-stat-bar-fill h-full rounded-full bg-[var(--success)]"
                   style={{ width: `${Math.min(attendancePct ?? 0, 100)}%` }}
                 />
               </div>
@@ -633,16 +725,24 @@ function LeadershipHome({
               )}
               {attendancePct !== null && (
                 <p className="mt-2 text-[11px] leading-relaxed text-muted">
-                  School-wide mean across cohorts with attendance data ({windowDays}-day window).
+                  School-wide mean across cohorts ({windowDays}-day window).
                 </p>
               )}
             </div>
           </Card>
 
-          {/* Observations this week box — avoid min-h-0 so flex stretch cannot clip avatars; extra bottom pad clears rounded edge */}
-          <Link href="/explorer/observations" className="flex flex-1 flex-col">
-            <Card className="home-hero-glass home-pressable-card flex min-h-min flex-1 cursor-pointer flex-col gap-4 rounded-2xl !p-6 pb-7">
+          {/* Observations this week */}
+          <Card className="home-hero-glass flex min-h-min flex-1 flex-col gap-4 rounded-2xl !p-6 pb-7">
+            <div className="flex items-start justify-between gap-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Observations this week</p>
+              <Link
+                href="/explorer/observations"
+                className="shrink-0 text-xs font-semibold text-[var(--primary)] calm-transition hover:opacity-80"
+              >
+                View all
+              </Link>
+            </div>
+            <Link href="/explorer/observations" className="home-row-link group block cursor-pointer">
               <div>
                 <p className="mt-0.5 text-[2.5rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums sm:text-[2.625rem]">
                   {weekObsCount}
@@ -658,8 +758,8 @@ function LeadershipHome({
                   )}
                 </div>
               </div>
-            </Card>
-          </Link>
+            </Link>
+          </Card>
         </div>
       </section>
 
@@ -787,90 +887,207 @@ function LeadershipHome({
         </Card>
       )}
 
-      {/* ═══ Hero Section 2: Leave Governance ═══ */}
-      {hasLeaveFeature && (
-        <Card className="flex flex-col gap-5 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
-          <HomeCardHeading
-            icon={<IconUmbrella />}
-            title="Leave governance"
-            subtitle={`Pending administrative approvals for ${leaveGovernanceQuarterLabel()}`}
-            end={
-              <Link href="/leave#pending-requests" className="link-accent shrink-0 text-sm font-semibold">
-                View all →
-              </Link>
-            }
-          />
-
-          {pendingLeaveDetails.length === 0 ? (
-            <HomeEmptyPanel
-              icon={<IconUmbrella className="text-muted" />}
-              title="No pending leave requests"
-              description="When staff submit leave for approval, the newest requests will appear here."
-            />
-          ) : (
-            <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] rounded-[14px] border border-[color-mix(in_srgb,var(--outline-variant)_28%,transparent)] bg-[var(--surface-container-lowest)]">
-              {pendingLeaveDetails.map((leave) => {
-                const reasonUpper = (leave.reasonLabel ?? "Personal").toUpperCase();
-                const isEmergency = reasonUpper.includes("EMERGENCY") || reasonUpper.includes("URGENT");
-                const isCpd = reasonUpper.includes("CPD") || reasonUpper.includes("TRAINING");
-                const pillVariant: PillVariant = isEmergency ? "error" : isCpd ? "accent" : "neutral";
-                const reasonDisplay = leave.reasonLabel?.trim() || (isEmergency ? "Emergency" : isCpd ? "CPD" : "Personal");
-                const rangeLabel = leaveDateRangeLabel(leave.startDate, leave.endDate);
-                return (
-                  <div
-                    key={leave.id}
-                    className={`flex min-w-0 flex-col gap-3 p-4 calm-transition first:rounded-t-[13px] last:rounded-b-[13px] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:py-4 ${
-                      isEmergency ? "bg-[color-mix(in_srgb,var(--pill-error-bg)_40%,transparent)]" : ""
-                    }`}
-                  >
-                    <Link
-                      href={`/leave/${leave.id}`}
-                      className="home-row-link flex min-w-0 flex-1 items-start gap-3 sm:items-center"
-                    >
-                      <Avatar name={leave.requesterName} size="md" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{leave.requesterName}</p>
-                          <StatusPill variant={pillVariant} size="sm">{reasonDisplay}</StatusPill>
-                        </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
-                          <span className="inline-flex items-center gap-1">
-                            <IconCalendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                            {rangeLabel}
-                          </span>
-                          <span className="text-muted/80">Submitted {leaveSubmissionLabel(leave.createdAt)}</span>
-                        </div>
-                        {leave.notes ? (
-                          <p className="mt-1.5 line-clamp-2 text-xs text-muted">&ldquo;{leave.notes}&rdquo;</p>
-                        ) : null}
-                      </div>
-                    </Link>
-                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
-                      {isEmergency ? (
-                        <Button variant="primary" asChild className="min-h-0 rounded-full px-4 py-2 text-xs">
-                          <Link href="/leave#pending-requests">Review in queue</Link>
-                        </Button>
-                      ) : (
-                        <>
-                          <Button variant="ghost" asChild className="min-h-0 rounded-full px-3 py-2 text-xs font-medium text-[var(--pill-error-text)] hover:bg-status-denied-light">
-                            <Link href="/leave#pending-requests" aria-label={`Decline or review leave for ${leave.requesterName}`}>
-                              Decline
-                            </Link>
-                          </Button>
-                          <Button variant="secondary" asChild className="min-h-0 rounded-full border-0 bg-[var(--surface-container-high)] px-4 py-2 text-xs font-semibold text-text shadow-none hover:bg-[var(--surface-container)]">
-                            <Link href="/leave#pending-requests" aria-label={`Approve leave for ${leave.requesterName}`}>
-                              Approve
-                            </Link>
-                          </Button>
-                        </>
-                      )}
-                    </div>
+      {/* ═══ Attainment + Leave (design bottom row) ═══ */}
+      {(attainmentSummary || hasLeaveFeature) && (
+        <section
+          className={`grid min-w-0 gap-5 lg:items-stretch ${
+            attainmentSummary && hasLeaveFeature ? "lg:grid-cols-2" : "lg:grid-cols-1"
+          }`}
+        >
+          {attainmentSummary ? (
+            <Card className="flex h-full min-h-0 flex-col space-y-5 rounded-2xl p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)] sm:p-7">
+              <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3.5">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.06)] [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem]">
+                    <IconChartBar />
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="text-base font-bold tracking-[-0.01em] text-text">Attainment</h2>
+                    <p className="mt-0.5 text-xs text-muted">
+                      {attainmentSummary.latestPointLabel
+                        ? `${attainmentSummary.cycleLabel} • ${attainmentSummary.latestPointLabel}`
+                        : attainmentSummary.cycleLabel}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+                </div>
+                <Link href="/assessments" className="link-muted-accent shrink-0 text-sm font-medium">
+                  View all →
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <StatCard
+                  layout="kpi"
+                  showChevron={false}
+                  label="Subjects assessed"
+                  value={attainmentSummary.subjectCount}
+                  context={`${attainmentSummary.totalResults.toLocaleString()} results recorded`}
+                  tone="glass"
+                  icon={<IconBookOpen />}
+                  iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
+                />
+                <StatCard
+                  layout="kpi"
+                  showChevron={false}
+                  label="Students assessed"
+                  value={attainmentSummary.studentCount}
+                  context={attainmentSummary.latestPointLabel ?? "Latest point"}
+                  tone="glass"
+                  icon={<IconUsersTwo />}
+                  iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
+                />
+                <StatCard
+                  layout="kpi"
+                  showChevron={false}
+                  label="Dual-flagged"
+                  value={attainmentSummary.triangulatedCount}
+                  context={
+                    attainmentSummary.triangulatedCount > 0
+                      ? `${attainmentSummary.urgentCount} urgent • ${attainmentSummary.priorityCount} priority`
+                      : "No students dual-flagged"
+                  }
+                  tone="glass"
+                  icon={<IconFlagOutline />}
+                  iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
+                  href={attainmentSummary.triangulatedCount > 0 ? "/assessments/triangulation" : undefined}
+                />
+              </div>
+
+              {attainmentSummary.topDualFlagged.length > 0 && (
+                <div className="space-y-3 rounded-xl bg-[var(--surface-container-low)] p-4 sm:p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+                      Dual-flagged students — attainment + pastoral risk
+                    </p>
+                    <Link href="/assessments/triangulation" className="link-muted-accent shrink-0 text-xs font-medium">
+                      View all →
+                    </Link>
+                  </div>
+                  <ul className="space-y-1">
+                    {attainmentSummary.topDualFlagged.map((s: DualFlaggedStudent) => (
+                      <li key={s.studentId}>
+                        <Link
+                          href={studentAnalysisHref(s.studentId, windowDays)}
+                          className="home-row-link flex items-center gap-3 rounded-lg px-3 py-3"
+                        >
+                          <Avatar name={s.studentName} size="md" tone="muted" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex min-w-0 flex-wrap items-center gap-2">
+                              <span className="truncate text-sm font-semibold text-text">{s.studentName}</span>
+                              {s.yearGroup ? <span className={yearGroupPillClass}>{s.yearGroup}</span> : null}
+                              {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
+                              {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
+                            </div>
+                            <p className="mt-1 truncate text-[12px] leading-snug text-muted">
+                              Lowest: {s.worstSubject} — {s.worstGrade}
+                              {s.worstNormalizedScore !== null && ` (${Math.round(s.worstNormalizedScore * 100)}%)`}
+                            </p>
+                          </div>
+                          <DualFlaggedRiskBadge band={s.behaviouralBand} />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </Card>
+          ) : null}
+
+          {hasLeaveFeature ? (
+            <Card className="flex h-full min-h-0 flex-col gap-5 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+              <HomeCardHeading
+                icon={<IconUmbrella />}
+                title="Leave governance"
+                subtitle={`Pending administrative approvals for ${leaveGovernanceQuarterLabel()}`}
+                end={
+                  <Link href="/leave#pending-requests" className="link-accent shrink-0 text-sm font-semibold">
+                    View all →
+                  </Link>
+                }
+              />
+
+              {pendingLeaveDetails.length === 0 ? (
+                <HomeEmptyPanel
+                  icon={<IconUmbrella className="text-muted" />}
+                  title="No pending leave requests"
+                  description="When staff submit leave for approval, the newest requests will appear here."
+                />
+              ) : (
+                <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] rounded-[14px] border border-[color-mix(in_srgb,var(--outline-variant)_28%,transparent)] bg-[var(--surface-container-lowest)]">
+                  {pendingLeaveDetails.map((leave) => {
+                    const reasonUpper = (leave.reasonLabel ?? "Personal").toUpperCase();
+                    const isEmergency = reasonUpper.includes("EMERGENCY") || reasonUpper.includes("URGENT");
+                    const isCpd = reasonUpper.includes("CPD") || reasonUpper.includes("TRAINING");
+                    const pillVariant: PillVariant = isEmergency ? "error" : isCpd ? "accent" : "neutral";
+                    const reasonDisplay = leave.reasonLabel?.trim() || (isEmergency ? "Emergency" : isCpd ? "CPD" : "Personal");
+                    const rangeLabel = leaveDateRangeLabel(leave.startDate, leave.endDate);
+                    return (
+                      <div
+                        key={leave.id}
+                        className={`flex min-w-0 flex-col gap-3 p-4 calm-transition first:rounded-t-[13px] last:rounded-b-[13px] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:py-4 ${
+                          isEmergency ? "bg-[color-mix(in_srgb,var(--pill-error-bg)_40%,transparent)]" : ""
+                        }`}
+                      >
+                        <Link
+                          href={`/leave/${leave.id}`}
+                          className="home-row-link flex min-w-0 flex-1 items-start gap-3 sm:items-center"
+                        >
+                          <Avatar name={leave.requesterName} size="md" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex min-w-0 flex-wrap items-center gap-2">
+                              <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{leave.requesterName}</p>
+                              <StatusPill variant={pillVariant} size="sm">{reasonDisplay}</StatusPill>
+                            </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
+                              <span className="inline-flex items-center gap-1">
+                                <IconCalendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                {rangeLabel}
+                              </span>
+                              <span className="text-muted/80">Submitted {leaveSubmissionLabel(leave.createdAt)}</span>
+                            </div>
+                            {leave.notes ? (
+                              <p className="mt-1.5 line-clamp-2 text-xs text-muted">&ldquo;{leave.notes}&rdquo;</p>
+                            ) : null}
+                          </div>
+                        </Link>
+                        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
+                          {isEmergency ? (
+                            <Button variant="primary" asChild className="min-h-0 rounded-full px-4 py-2 text-xs">
+                              <Link href="/leave#pending-requests">Review in queue</Link>
+                            </Button>
+                          ) : (
+                            <>
+                              <Button variant="ghost" asChild className="min-h-0 rounded-full px-3 py-2 text-xs font-medium text-[var(--pill-error-text)] hover:bg-status-denied-light">
+                                <Link href="/leave#pending-requests" aria-label={`Decline or review leave for ${leave.requesterName}`}>
+                                  Decline
+                                </Link>
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                asChild
+                                className="min-h-0 rounded-full border-0 bg-[color-mix(in_srgb,var(--success)_14%,white)] px-4 py-2 text-xs font-semibold text-[#065F46] shadow-none hover:bg-[color-mix(in_srgb,var(--success)_22%,white)]"
+                              >
+                                <Link href="/leave#pending-requests" aria-label={`Approve leave for ${leave.requesterName}`}>
+                                  Approve
+                                </Link>
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <Link
+                href="/leave"
+                className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-[var(--primary)] calm-transition hover:opacity-80"
+              >
+                Go to leave calendar →
+              </Link>
+            </Card>
+          ) : null}
+        </section>
       )}
 
       {/* ═══ Coverage Follow-up ═══ */}
@@ -913,107 +1130,6 @@ function LeadershipHome({
         </Card>
       </section>
 
-      {/* ═══ Attainment Summary ═══ */}
-      {attainmentSummary && (
-        <Card className="space-y-5 rounded-2xl p-6 shadow-ambient sm:p-7">
-          <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3.5">
-              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.06)] [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem]">
-                <IconChartBar />
-              </span>
-              <div className="min-w-0">
-                <h2 className="text-base font-bold tracking-[-0.01em] text-text">Attainment</h2>
-                <p className="mt-0.5 text-xs text-muted">
-                  {attainmentSummary.latestPointLabel
-                    ? `${attainmentSummary.cycleLabel} • ${attainmentSummary.latestPointLabel}`
-                    : attainmentSummary.cycleLabel}
-                </p>
-              </div>
-            </div>
-            <Link href="/assessments" className="link-muted-accent shrink-0 text-sm font-medium">
-              View all →
-            </Link>
-          </div>
-
-          {/* Stat row — KPI tiles with icons */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <StatCard
-              layout="kpi"
-              showChevron={false}
-              label="Subjects assessed"
-              value={attainmentSummary.subjectCount}
-              context={`${attainmentSummary.totalResults.toLocaleString()} results recorded`}
-              tone="glass"
-              icon={<IconBookOpen />}
-              iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
-            />
-            <StatCard
-              layout="kpi"
-              showChevron={false}
-              label="Students assessed"
-              value={attainmentSummary.studentCount}
-              context={attainmentSummary.latestPointLabel ?? "Latest point"}
-              tone="glass"
-              icon={<IconUsersTwo />}
-              iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
-            />
-            <StatCard
-              layout="kpi"
-              showChevron={false}
-              label="Dual-flagged"
-              value={attainmentSummary.triangulatedCount}
-              context={
-                attainmentSummary.triangulatedCount > 0
-                  ? `${attainmentSummary.urgentCount} urgent • ${attainmentSummary.priorityCount} priority`
-                  : "No students dual-flagged"
-              }
-              tone="glass"
-              icon={<IconFlagOutline />}
-              iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
-              href={attainmentSummary.triangulatedCount > 0 ? "/assessments/triangulation" : undefined}
-            />
-          </div>
-
-          {/* Dual-flagged student list */}
-          {attainmentSummary.topDualFlagged.length > 0 && (
-            <div className="space-y-3 rounded-xl bg-[var(--surface-container-low)] p-4 sm:p-5">
-              <div className="flex items-center justify-between gap-3">
-                <p className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-                  Dual-flagged students — attainment + pastoral risk
-                </p>
-                <Link href="/assessments/triangulation" className="link-muted-accent shrink-0 text-xs font-medium">
-                  View all →
-                </Link>
-              </div>
-              <ul className="space-y-1">
-                {attainmentSummary.topDualFlagged.map((s: DualFlaggedStudent) => (
-                  <li key={s.studentId}>
-                    <Link
-                      href={studentAnalysisHref(s.studentId, windowDays)}
-                      className="home-row-link flex items-center gap-3 rounded-lg px-3 py-3"
-                    >
-                      <Avatar name={s.studentName} size="md" tone="muted" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <span className="truncate text-sm font-semibold text-text">{s.studentName}</span>
-                          {s.yearGroup ? <span className={yearGroupPillClass}>{s.yearGroup}</span> : null}
-                          {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
-                          {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
-                        </div>
-                        <p className="mt-1 truncate text-[12px] leading-snug text-muted">
-                          Lowest: {s.worstSubject} — {s.worstGrade}
-                          {s.worstNormalizedScore !== null && ` (${Math.round(s.worstNormalizedScore * 100)}%)`}
-                        </p>
-                      </div>
-                      <DualFlaggedRiskBadge band={s.behaviouralBand} />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </Card>
-      )}
     </div>
   );
 }
@@ -1700,7 +1816,7 @@ export default async function HomePage({
       const hasOnCallFeature = enabledFeatures.has("ON_CALL");
       const hasAssessmentsFeature = enabledFeatures.has("ASSESSMENTS");
       const hasStudentAnalysisFeature = enabledFeatures.has("STUDENT_ANALYSIS");
-      const { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, pendingLeaveDetails, onCallDetails, weekObsCount, weekObsTeachers, attainmentSummary, watchlistStudents } = await hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature });
+      const { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, pendingLeaveDetails, onCallDetails, onCallStats, weekObsCount, weekObsTeachers, attainmentSummary, watchlistStudents } = await hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature });
       return (
         <LeadershipHome
           windowDays={windowDays}
@@ -1712,6 +1828,7 @@ export default async function HomePage({
           pendingLeaveCount={pendingLeaveCount}
           pendingLeaveDetails={pendingLeaveDetails}
           onCallDetails={onCallDetails}
+          onCallStats={onCallStats}
           weekObsCount={weekObsCount}
           weekObsTeachers={weekObsTeachers}
           attainmentSummary={attainmentSummary ?? null}
