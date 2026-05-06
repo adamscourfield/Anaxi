@@ -134,7 +134,7 @@ export function SignalFlowScreen({
           <button
             type="button"
             onClick={() => setHelpOpen(true)}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-container text-muted calm-transition hover:bg-surface-container-high hover:text-text"
+            className="flex h-7 w-7 items-center justify-center rounded-md bg-surface-container text-muted calm-transition hover:bg-surface-container-high hover:text-text"
             aria-label="Signal guide"
           >
             <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4">
@@ -154,7 +154,7 @@ export function SignalFlowScreen({
         {[1, 2, 3].map((stage) => (
           <div
             key={stage}
-            className={`h-1.5 flex-1 rounded-full ${
+            className={`h-1.5 flex-1 rounded-md ${
               stage <= 2 ? "bg-text" : "bg-border/30"
             }`}
           />

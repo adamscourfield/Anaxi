@@ -52,7 +52,7 @@ export function ActionCard({ action, currentUserId, onComplete }: ActionCardProp
           onClick={handleComplete}
           disabled={completing}
           title="Mark as done"
-          className={`calm-transition mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-[1.5px] ${
+          className={`calm-transition mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border-[1.5px] ${
             completing
               ? "border-accent/40 bg-accent/10"
               : overdue
@@ -73,7 +73,7 @@ export function ActionCard({ action, currentUserId, onComplete }: ActionCardProp
         </button>
       ) : (
         <div
-          className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-[1.5px] ${
+          className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border-[1.5px] ${
             isDone
               ? "border-scale-strong-bar bg-scale-strong-bg"
               : isBlocked
@@ -119,7 +119,7 @@ export function ActionCard({ action, currentUserId, onComplete }: ActionCardProp
 
       {/* Blocked badge */}
       {isBlocked && (
-        <span className="mt-0.5 flex-shrink-0 rounded-full border border-scale-some-border bg-scale-some-bg px-2 py-0.5 text-[0.6875rem] font-semibold text-scale-some-text">
+        <span className="mt-0.5 flex-shrink-0 rounded-md border border-scale-some-border bg-scale-some-bg px-2 py-0.5 text-[0.6875rem] font-semibold text-scale-some-text">
           Blocked
         </span>
       )}

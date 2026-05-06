@@ -225,21 +225,21 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
           <div className="flex flex-wrap items-center gap-2" role="list" aria-label="Leave status legend">
             <span
               role="listitem"
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#6B7280]"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#6B7280]"
             >
               <span className="h-2 w-2 shrink-0 rounded-full bg-[#9CA3AF]" aria-hidden />
               Pending
             </span>
             <span
               role="listitem"
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#6B7280]"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#6B7280]"
             >
               <span className="h-2 w-2 shrink-0 rounded-full bg-[#22c55e]" aria-hidden />
               Approved
             </span>
             <span
               role="listitem"
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#6B7280]"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#6B7280]"
             >
               <span className="h-2 w-2 shrink-0 rounded-full bg-[#ef4444]" aria-hidden />
               Declined
@@ -401,7 +401,7 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
                       <div
                         key={block.key}
                         onClick={(e) => e.stopPropagation()}
-                        className="rounded-full bg-[#F3F4F6] px-2 py-1 text-[10px] font-medium leading-snug text-[#4B5563]"
+                        className="rounded-md bg-[#F3F4F6] px-2 py-1 text-[10px] font-medium leading-snug text-[#4B5563]"
                       >
                         {continuationLabel(block.request)}
                       </div>

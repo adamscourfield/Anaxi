@@ -191,9 +191,12 @@ const config: Config = {
         "cat-indigo-text":"var(--cat-indigo-text)",
       },
       borderRadius: {
-        lg: "var(--radius-lg)",
+        sm: "var(--radius-sm)",
         md: "var(--radius-md)",
-        xl: "1.5rem",
+        lg: "var(--radius-lg)",
+        xl: "var(--radius-lg)",
+        "2xl": "var(--radius-lg)",
+        pill: "var(--radius-pill)",
       },
       boxShadow: {
         sm:      "var(--shadow-sm)",

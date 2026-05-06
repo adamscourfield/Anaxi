@@ -64,7 +64,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
         subtitle="Plan agendas, capture actions, and follow up after each session."
         actions={
           hasPermission(user.role, "meetings:create") ? (
-            <Button asChild className="h-10 min-h-0 rounded-full px-6 shadow-md">
+            <Button asChild className="h-10 min-h-0 rounded-md px-6 shadow-md">
               <Link href="/meetings/new" className="gap-2">
                 <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4" aria-hidden>
                   <path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5h-4.5a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z" />
@@ -203,7 +203,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--secondary-container)] text-xs font-semibold text-text">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--secondary-container)] text-xs font-semibold text-text">
                             {getInitials(m.createdBy.fullName)}
                           </div>
                           <span className="text-sm text-text">{m.createdBy.fullName}</span>

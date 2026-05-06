@@ -101,7 +101,7 @@ export function HomeCardHeading({
       <div className="flex min-w-0 items-center gap-3.5">
         {icon ? (
           <span
-            className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.06)] [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem] ${tile}`}
+            className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.06)] [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem] ${tile}`}
           >
             {icon}
           </span>

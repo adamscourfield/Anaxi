@@ -425,7 +425,7 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
                     }`}
                   >
                     {/* Avatar */}
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container)] text-[11px] font-bold text-text">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container)] text-[11px] font-bold text-text">
                       {getInitials(u.fullName)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -437,13 +437,13 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
                     {selected && (
                       <div className="shrink-0">
                         {isCurrentUser ? (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent">
+                          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-accent">
                             <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                               <polyline points="20 6 9 17 4 12" />
                             </svg>
                           </div>
                         ) : (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-error/10 text-error">
+                          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-error/10 text-error">
                             <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M3 3l6 6M9 3l-6 6" strokeLinecap="round" />
                             </svg>
@@ -469,7 +469,7 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
                   {selectedAttendees.map((a) => (
                     <span
                       key={a.id}
-                      className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-surface-container px-2.5 py-1 text-[11px] font-medium text-text"
+                      className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-surface-container px-2.5 py-1 text-[11px] font-medium text-text"
                     >
                       {a.fullName}
                       {a.id !== currentUserId && (
@@ -496,7 +496,7 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
               <h3 className="mb-3 text-sm font-bold text-text">Venue Status</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-2">
-                  <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--scale-consistent-bar)]" />
+                  <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-md bg-[var(--scale-consistent-bar)]" />
                   <div>
                     <p className="text-sm font-semibold text-text">{location} is Available</p>
                     <p className="mt-0.5 text-[12px] text-muted">

@@ -39,7 +39,7 @@ function IconCircle({
 }) {
   return (
     <span
-      className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] ${className}`}
+      className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] ${className}`}
     >
       {children}
     </span>
@@ -308,7 +308,7 @@ export default async function TeacherProfilePage({
         <div className="flex flex-wrap items-center gap-3">
           <H1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">{profile.teacherName}</H1>
           <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${STATUS_PILL[profile.status]}`}
+            className={`rounded-md px-3 py-1 text-xs font-semibold tracking-wide ${STATUS_PILL[profile.status]}`}
           >
             {STATUS_LABELS[profile.status]}
           </span>
@@ -345,7 +345,7 @@ export default async function TeacherProfilePage({
               <Link
                 key={w}
                 href={buildWindowHref(teacherId, w, refSource)}
-                className={`rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold calm-transition ${
+                className={`rounded-md px-3.5 py-1.5 text-[0.8125rem] font-semibold calm-transition ${
                   w === windowDays
                     ? "bg-[var(--surface-container-high)] text-text shadow-sm"
                     : "bg-[var(--surface-container-low)] text-muted hover:bg-[var(--surface-container)] hover:text-text"

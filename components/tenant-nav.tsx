@@ -264,7 +264,7 @@ export function TenantNav({
                           {!collapsed && <span className="truncate text-[13px] leading-tight">{item.label}</span>}
                         </span>
                         {!collapsed && showBadge && (
-                          <span className="ml-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold bg-[var(--surface-container-highest)] text-[var(--on-surface)]">
+                          <span className="ml-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-md px-1.5 text-[10px] font-semibold bg-[var(--surface-container-highest)] text-[var(--on-surface)]">
                             {item.badgeCount}
                           </span>
                         )}
@@ -314,7 +314,7 @@ export function TenantNav({
       {collapsed && !isDrawer && (
         <button
           onClick={() => setCollapsed(false)}
-          className="absolute -right-3.5 top-20 z-40 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] shadow-ambient backdrop-blur-sm calm-transition hover:text-[var(--on-surface)] hover:shadow-md motion-safe:active:scale-95"
+          className="absolute -right-3.5 top-20 z-40 inline-flex h-7 w-7 items-center justify-center rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] shadow-ambient backdrop-blur-sm calm-transition hover:text-[var(--on-surface)] hover:shadow-md motion-safe:active:scale-95"
           type="button"
           title="Expand navigation"
         >

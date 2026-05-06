@@ -147,11 +147,11 @@ function IconUsers({ className = "h-4 w-4" }: { className?: string }) {
 
 /** Pastel icon wells — reference dashboard (soft purple / soft blue circles) */
 const kpiWellViolet =
-  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
+  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
 const kpiWellBlue =
-  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
+  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
 const kpiWellAmber =
-  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
+  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-600 [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
 
 function CycleOverviewTile({
   icon,
@@ -182,7 +182,7 @@ function CycleOverviewTile({
       ) : null}
       {decorative === "ring" ? (
         <span
-          className="pointer-events-none absolute right-4 top-1/2 h-14 w-14 -translate-y-1/2 rounded-full border-2 border-dashed border-emerald-200 bg-emerald-50/80 text-emerald-600"
+          className="pointer-events-none absolute right-4 top-1/2 h-14 w-14 -translate-y-1/2 rounded-md border-2 border-dashed border-emerald-200 bg-emerald-50/80 text-emerald-600"
           aria-hidden
         >
           <span className="flex h-full w-full items-center justify-center">
@@ -435,7 +435,7 @@ export default async function CycleDetailPage({
               >
                 <div className="hidden shrink-0 sm:flex sm:items-start sm:pt-1">
                   <span
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-lg font-bold tabular-nums text-violet-500"
+                    className="flex h-14 w-14 items-center justify-center rounded-md bg-violet-100 text-lg font-bold tabular-nums text-violet-500"
                     aria-label={`Result point ${ordinal}`}
                   >
                     {ordinal}
@@ -460,7 +460,7 @@ export default async function CycleDetailPage({
                       <div>
                         <div className="flex items-start gap-3 sm:hidden">
                           <span
-                            className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold tabular-nums text-violet-500"
+                            className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-violet-100 text-sm font-bold tabular-nums text-violet-500"
                             aria-hidden
                           >
                             {ordinal}
@@ -497,7 +497,7 @@ export default async function CycleDetailPage({
                       {hasData ? (
                         <Link
                           href={`/assessments/${cycle.id}/points/${point.id}`}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e7eb] bg-white text-[#6b7280] calm-transition hover:bg-[#fafafa] hover:text-[#111827]"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#e5e7eb] bg-white text-[#6b7280] calm-transition hover:bg-[#fafafa] hover:text-[#111827]"
                           aria-label={`Open ${point.label}`}
                         >
                           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -555,13 +555,13 @@ export default async function CycleDetailPage({
                       {point.assessments.slice(0, 8).map((a) => (
                         <span
                           key={a.id}
-                          className="rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-[11px] font-semibold text-zinc-900"
+                          className="rounded-md border border-zinc-200 bg-white px-3.5 py-1.5 text-[11px] font-semibold text-zinc-900"
                         >
                           {a.subject}
                         </span>
                       ))}
                       {point.assessments.length > 8 ? (
-                        <span className="rounded-full border border-[#e5e7eb] bg-[#fafafa] px-3.5 py-1.5 text-[11px] font-semibold text-[#374151]">
+                        <span className="rounded-md border border-[#e5e7eb] bg-[#fafafa] px-3.5 py-1.5 text-[11px] font-semibold text-[#374151]">
                           +{point.assessments.length - 8} more
                         </span>
                       ) : null}

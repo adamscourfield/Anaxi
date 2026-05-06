@@ -507,7 +507,7 @@ export default async function SubjectDetailPage({
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
                       <span className="text-lg font-bold tabular-nums text-[var(--on-surface)]">{value}%</span>
                     </div>
-                    <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
+                    <div className="h-3 w-full overflow-hidden rounded-md bg-[var(--surface-container)]">
                       <div className={`${cls} h-full rounded-r-full`} style={{ width: `${value}%` }} />
                     </div>
                   </div>
@@ -530,7 +530,7 @@ export default async function SubjectDetailPage({
                       <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
                       <span className="text-lg font-bold tabular-nums text-[var(--on-surface)]">{value}%</span>
                     </div>
-                    <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
+                    <div className="h-3 w-full overflow-hidden rounded-md bg-[var(--surface-container)]">
                       <div className={`${cls} h-full rounded-r-full`} style={{ width: `${value}%` }} />
                     </div>
                   </div>
@@ -561,7 +561,7 @@ export default async function SubjectDetailPage({
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
                           <span className="text-base font-bold tabular-nums text-[var(--on-surface)]">{val}%</span>
                         </div>
-                        <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
+                        <div className="h-3 w-full overflow-hidden rounded-md bg-[var(--surface-container)]">
                           <div className={`${bar} h-full rounded-r-full`} style={{ width: `${val}%` }} />
                         </div>
                       </div>
@@ -588,7 +588,7 @@ export default async function SubjectDetailPage({
                           <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
                           <span className="text-base font-bold tabular-nums text-[var(--on-surface)]">{val}%</span>
                         </div>
-                        <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
+                        <div className="h-3 w-full overflow-hidden rounded-md bg-[var(--surface-container)]">
                           <div className={`${bar} h-full rounded-r-full`} style={{ width: `${val}%` }} />
                         </div>
                       </div>
@@ -645,7 +645,7 @@ export default async function SubjectDetailPage({
 
                         {/* Rank */}
                         <td className="px-4 py-3 text-center">
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-container)] text-xs font-bold tabular-nums text-[var(--on-surface-muted)]">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--surface-container)] text-xs font-bold tabular-nums text-[var(--on-surface-muted)]">
                             {student.rank}
                           </span>
                         </td>
@@ -653,7 +653,7 @@ export default async function SubjectDetailPage({
                         {/* Name */}
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-xs font-semibold text-on-surface-variant">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-container-low text-xs font-semibold text-on-surface-variant">
                               {getInitials(student.name)}
                             </div>
                             <Link href={`/students/${student.id}${fromParam}`}

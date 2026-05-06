@@ -153,13 +153,13 @@ function AvatarStack({ attendees }: { attendees: Attendee[] }) {
           <div
             key={a.id}
             title={a.user.fullName}
-            className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--surface-container-lowest)] text-[11px] font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
+            className={`flex h-8 w-8 items-center justify-center rounded-md border-2 border-[var(--surface-container-lowest)] text-[11px] font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
           >
             {getInitials(a.user.fullName)}
           </div>
         ))}
         {overflow > 0 && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--surface-container-lowest)] bg-[#F3F4F6] text-[11px] font-semibold text-[#6B7280]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-[var(--surface-container-lowest)] bg-[#F3F4F6] text-[11px] font-semibold text-[#6B7280]">
             +{overflow}
           </div>
         )}
@@ -751,7 +751,7 @@ export function LiveMeetingView({
           {canAddActions && !isEnded && (
             <div className={MEETING_CARD}>
               <div className="mb-4 flex items-center gap-2">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DCFCE7] text-[#15803d]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#DCFCE7] text-[#15803d]">
                   <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
                     <polyline points="22 4 12 14.01 9 11.01" />
@@ -832,7 +832,7 @@ export function LiveMeetingView({
               Action Items
               {totalActions > 0 && (
                 <span
-                  className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold"
+                  className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold"
                   style={{ backgroundColor: "#F3F4F6", color: SLATE_600 }}
                 >
                   {totalActions}
@@ -854,17 +854,17 @@ export function LiveMeetingView({
                       {/* Status circle */}
                       <div className="mt-0.5 flex-shrink-0">
                         {action.status === "DONE" ? (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#22c55e]">
+                          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[#22c55e]">
                             <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                               <polyline points="20 6 9 17 4 12" />
                             </svg>
                           </div>
                         ) : overdue ? (
-                          <div className="relative flex h-5 w-5 items-center justify-center rounded-full bg-[#DC2626]">
+                          <div className="relative flex h-5 w-5 items-center justify-center rounded-md bg-[#DC2626]">
                             <span className="h-1.5 w-1.5 rounded-full bg-white" aria-hidden />
                           </div>
                         ) : (
-                          <div className="h-5 w-5 rounded-full border-2" style={{ borderColor: "#D1D5DB" }} />
+                          <div className="h-5 w-5 rounded-md border-2" style={{ borderColor: "#D1D5DB" }} />
                         )}
                       </div>
                       {/* Task content */}

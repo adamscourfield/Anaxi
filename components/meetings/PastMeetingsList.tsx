@@ -73,7 +73,7 @@ export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
             <div className="flex flex-shrink-0 gap-2">
               <Link
                 href={`/meetings/${m.id}`}
-                className="calm-transition flex h-9 w-9 items-center justify-center rounded-full border border-border/40 bg-surface text-muted hover:bg-divider/60 hover:text-text"
+                className="calm-transition flex h-9 w-9 items-center justify-center rounded-md border border-border/40 bg-surface text-muted hover:bg-divider/60 hover:text-text"
                 title="View meeting"
               >
                 <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
@@ -87,7 +87,7 @@ export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
               </Link>
               <a
                 href={`/api/meetings/${m.id}/download`}
-                className="calm-transition flex h-9 w-9 items-center justify-center rounded-full border border-border/40 bg-surface text-muted hover:bg-divider/60 hover:text-text"
+                className="calm-transition flex h-9 w-9 items-center justify-center rounded-md border border-border/40 bg-surface text-muted hover:bg-divider/60 hover:text-text"
                 title="Download minutes"
                 download
               >

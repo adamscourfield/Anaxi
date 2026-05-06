@@ -126,7 +126,7 @@ export default function ValuePropsSection() {
 
               {/* Accent underline */}
               <div
-                className="mt-auto h-0.5 w-8 rounded-full"
+                className="mt-auto h-0.5 w-8 rounded-md"
                 style={{ background: prop.accent, opacity: 0.4 }}
               />
             </div>

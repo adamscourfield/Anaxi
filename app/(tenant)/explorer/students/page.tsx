@@ -340,7 +340,7 @@ export default async function StudentsPage({
       {/* ── Student table ───────────────────────────────────────── */}
       {rows.length === 0 ? (
         <div className="mt-4 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-accent/10">
             <svg className="h-6 w-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
               <circle cx="11" cy="11" r="6.5" />
               <path d="m16.5 16.5 3 3" strokeLinecap="round" />
@@ -382,7 +382,7 @@ export default async function StudentsPage({
                     {/* Name with initials avatar */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-xs font-semibold text-on-surface-variant">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-container-low text-xs font-semibold text-on-surface-variant">
                           {getInitials(row.studentName)}
                         </div>
                         <span className="font-medium text-text">
@@ -400,12 +400,12 @@ export default async function StudentsPage({
                     <td className="px-4 py-4">
                       <div className="flex gap-1.5">
                         {row.sendFlag && (
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${triangulationSendClass}`}>
+                          <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${triangulationSendClass}`}>
                             SEN
                           </span>
                         )}
                         {row.ppFlag && (
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${triangulationPpClass}`}>
+                          <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${triangulationPpClass}`}>
                             PP
                           </span>
                         )}
@@ -418,7 +418,7 @@ export default async function StudentsPage({
                     {/* Band */}
                     <td className="px-4 py-4">
                       <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${bandPillClass(row.band)}`}
+                        className={`inline-flex items-center rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${bandPillClass(row.band)}`}
                       >
                         {BAND_LABELS[row.band]}
                       </span>
@@ -433,9 +433,9 @@ export default async function StudentsPage({
                             : "—"}
                         </span>
                         {row.attendancePct !== null && (
-                          <div className="h-2 w-20 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--surface-container-high)_85%,transparent)]">
+                          <div className="h-2 w-20 overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--surface-container-high)_85%,transparent)]">
                             <div
-                              className={`home-stat-bar-fill h-full rounded-full ${attendanceBarColor(row.attendancePct)}`}
+                              className={`home-stat-bar-fill h-full rounded-sm ${attendanceBarColor(row.attendancePct)}`}
                               style={{
                                 width: `${Math.min(100, Math.max(0, row.attendancePct))}%`,
                               }}
@@ -550,7 +550,7 @@ export default async function StudentsPage({
         {/* Critical Actions Required */}
         <div className="rounded-2xl glass-card p-5">
           <div className="mb-3 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-scale-limited-light">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-scale-limited-light">
               <span className="h-2 w-2 rounded-full bg-scale-limited-bar" />
             </span>
             <h3 className="text-sm font-semibold text-text">
@@ -568,7 +568,7 @@ export default async function StudentsPage({
         {/* Registry Sync Status */}
         <div className="rounded-2xl glass-card p-5">
           <div className="mb-3 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-scale-consistent-light">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-scale-consistent-light">
               <svg className="h-3 w-3 text-scale-consistent-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M4 4v5h5M20 20v-5h-5" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M20.49 9A9 9 0 005.64 5.64L4 4m16 16l-1.64-1.64A9 9 0 019 20.49" strokeLinecap="round" strokeLinejoin="round" />
@@ -591,7 +591,7 @@ export default async function StudentsPage({
         {/* Performance Target */}
         <div className="rounded-2xl glass-card p-5">
           <div className="mb-3 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cat-violet-bg">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-cat-violet-bg">
               <svg className="h-3 w-3 text-cat-violet-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M3 3v18h18" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M18 9l-5 5-2-2-4 4" strokeLinecap="round" strokeLinejoin="round" />

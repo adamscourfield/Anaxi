@@ -39,7 +39,7 @@ export function ObservationStageLayout({
               Institutional record for quality assurance and staff development.
             </p>
           </div>
-          <div className="flex w-fit shrink-0 items-center gap-2 self-start rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 py-2 shadow-sm sm:self-auto">
+          <div className="flex w-fit shrink-0 items-center gap-2 self-start rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 py-2 shadow-sm sm:self-auto">
             <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--warning)] ring-2 ring-[color-mix(in_srgb,var(--warning)_35%,transparent)]" />
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-text">Draft Session</span>
           </div>
@@ -57,7 +57,7 @@ export function ObservationStageLayout({
             <div key={step.number} className="flex min-w-0 items-center">
               <div className="flex min-w-0 items-center gap-2.5">
                 <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.75rem] font-bold shadow-sm ${
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[0.75rem] font-bold shadow-sm ${
                     isActive
                       ? "bg-[var(--tertiary-container)] text-[var(--on-primary)] ring-1 ring-[color-mix(in_srgb,var(--tertiary-container)_25%,#000)]"
                       : isCompleted
@@ -83,7 +83,7 @@ export function ObservationStageLayout({
               </div>
               {!isLast && (
                 <div
-                  className={`mx-3 h-[2px] w-10 shrink-0 rounded-full sm:mx-4 sm:w-14 ${
+                  className={`mx-3 h-[2px] w-10 shrink-0 rounded-md sm:mx-4 sm:w-14 ${
                     isCompleted ? "bg-primary/35" : "bg-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)]"
                   }`}
                 />
@@ -106,7 +106,7 @@ export function ObservationStageLayout({
               }`}
             >
               <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.75rem] font-bold shadow-sm ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[0.75rem] font-bold shadow-sm ${
                   isActive
                     ? "bg-[var(--tertiary-container)] text-[var(--on-primary)]"
                     : isCompleted

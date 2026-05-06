@@ -33,7 +33,7 @@ const DEPT_CARD =
   "overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
 
 const ICON_ACTION =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E5E7EB] bg-[var(--surface-container-lowest)] text-[#6B7280] calm-transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB] hover:text-[#111827]";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#E5E7EB] bg-[var(--surface-container-lowest)] text-[#6B7280] calm-transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB] hover:text-[#111827]";
 
 function PersonGlyph({ className }: { className?: string }) {
   return (
@@ -144,7 +144,7 @@ export function DepartmentsAdminTable({
                 <button
                   type="button"
                   onClick={() => toggleExpand(dept.id)}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E5E7EB] bg-[var(--surface-container-lowest)] text-[#6B7280] calm-transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB] hover:text-[#111827]"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#E5E7EB] bg-[var(--surface-container-lowest)] text-[#6B7280] calm-transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB] hover:text-[#111827]"
                   title={isExpanded ? "Collapse" : "Expand"}
                   aria-expanded={isExpanded}
                 >

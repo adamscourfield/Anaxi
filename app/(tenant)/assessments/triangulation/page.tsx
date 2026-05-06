@@ -37,7 +37,7 @@ function scoreBar(normalizedScore: number | null) {
     pct < 40 ? "bg-error" : pct < 60 ? "bg-warning" : "bg-success";
   return (
     <div className="flex items-center gap-1.5">
-      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[var(--surface-container)]">
+      <div className="h-1.5 w-16 overflow-hidden rounded-sm bg-[var(--surface-container)]">
         <div className={`h-full ${colour}`} style={{ width: `${pct}%` }} />
       </div>
       <span className="text-[11px] text-[var(--on-surface-muted)]">{pct}%</span>

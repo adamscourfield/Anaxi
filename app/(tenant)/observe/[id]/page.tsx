@@ -162,7 +162,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
   );
 
   const focusIcon = (
-    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-700">
       <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
         <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         <path
@@ -266,7 +266,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                   <div className="flex flex-col gap-4 border-t border-[#F3F4F6] px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-8">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E5E7EB] text-[0.6875rem] font-bold ${OBS_REVIEW_TEXT}`}
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#E5E7EB] text-[0.6875rem] font-bold ${OBS_REVIEW_TEXT}`}
                         aria-hidden
                       >
                         {initials(observerName)}

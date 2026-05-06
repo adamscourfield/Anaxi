@@ -65,7 +65,7 @@ function IconWell({ tone, children }: { tone: "indigo" | "neutral"; children: Re
   const isIndigo = tone === "indigo";
   return (
     <span
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
       style={{
         backgroundColor: isIndigo ? INDIGO_SOFT : NEUTRAL_WELL_BG,
         color: isIndigo ? INDIGO : SLATE_600,
@@ -405,7 +405,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
                 <li key={ev.id} className="relative flex gap-3">
                   <div className="relative z-[1] flex w-8 shrink-0 justify-center pt-1">
                     <span
-                      className="box-border h-3 w-3 shrink-0 rounded-full border-[3px] border-solid border-[#4F46E5] bg-white"
+                      className="box-border h-3 w-3 shrink-0 rounded-md border-[3px] border-solid border-[#4F46E5] bg-white"
                       aria-hidden
                     />
                   </div>

@@ -19,7 +19,7 @@ export default function HeroSection() {
 
       {/* Soft radial glow top-right */}
       <div
-        className="absolute -top-48 -right-48 w-[700px] h-[700px] rounded-full pointer-events-none"
+        className="absolute -top-48 -right-48 w-[700px] h-[700px] rounded-md pointer-events-none"
         style={{
           background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 65%)",
         }}
@@ -89,7 +89,7 @@ export default function HeroSection() {
                 (signal) => (
                   <div
                     key={signal}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md"
                     style={{
                       background: "rgba(255,255,255,0.05)",
                       border: "1px solid rgba(255,255,255,0.10)",

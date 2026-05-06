@@ -291,7 +291,7 @@ export function ObservationContextForm({
               });
               router.push("/observe/new/signals");
             }}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--tertiary-container)] px-7 py-3 text-[0.875rem] font-semibold text-[var(--on-primary)] shadow-[0_2px_8px_rgba(0,0,0,0.12)] calm-transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--tertiary-container)] px-7 py-3 text-[0.875rem] font-semibold text-[var(--on-primary)] shadow-[0_2px_8px_rgba(0,0,0,0.12)] calm-transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next Stage
             <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>

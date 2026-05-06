@@ -114,7 +114,7 @@ export default function NewResultPointPage() {
                       : "border-[var(--outline-variant)] hover:border-[var(--outline-variant)]/60"
                   }`}
                 >
-                  <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${opt.colour}`}>
+                  <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold ${opt.colour}`}>
                     {opt.label}
                   </span>
                   <p className="mt-1 text-[11px] text-[var(--on-surface-muted)]">{opt.description}</p>

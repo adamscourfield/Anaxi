@@ -101,7 +101,7 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-2xs font-semibold ${row.requesterAvatarColor}`}
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-2xs font-semibold ${row.requesterAvatarColor}`}
                           >
                             {row.requesterInitials}
                           </div>

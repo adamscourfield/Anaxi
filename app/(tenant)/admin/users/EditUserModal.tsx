@@ -140,12 +140,12 @@ function Toggle({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className={`relative inline-flex h-[26px] w-[46px] shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950 ${
+      className={`relative inline-flex h-[26px] w-[46px] shrink-0 items-center rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950 ${
         disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
       } ${checked ? "bg-[var(--primary)]" : "bg-[color-mix(in_srgb,var(--surface-container-high)_95%,var(--outline-variant))]"}`}
     >
       <span
-        className={`inline-block h-[20px] w-[20px] rounded-full bg-white shadow-sm transition-transform duration-200 dark:bg-neutral-100 ${
+        className={`inline-block h-[20px] w-[20px] rounded-md bg-white shadow-sm transition-transform duration-200 dark:bg-neutral-100 ${
           checked ? "translate-x-[23px]" : "translate-x-[3px]"
         }`}
       />
@@ -287,7 +287,7 @@ function SelectedChips({
         return (
           <span
             key={tid}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border/35 bg-surface-container-low px-2.5 py-1 text-[11px] font-medium text-text"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border/35 bg-surface-container-low px-2.5 py-1 text-[11px] font-medium text-text"
           >
             {teacher.fullName}
             <button
@@ -382,7 +382,7 @@ export function EditUserModal({
         <div className="flex items-start justify-between gap-4 px-6 pb-5 pt-6">
           <div className="flex min-w-0 flex-1 gap-4">
             <span
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[rgba(124,105,239,0.35)] text-lg font-bold text-white shadow-sm ring-1 ring-[rgba(124,105,239,0.2)]"
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-[rgba(124,105,239,0.35)] text-lg font-bold text-white shadow-sm ring-1 ring-[rgba(124,105,239,0.2)]"
               aria-hidden
             >
               {initialsFromName(user.fullName)}

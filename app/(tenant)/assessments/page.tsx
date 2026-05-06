@@ -138,7 +138,7 @@ export default async function AssessmentsPage() {
       {(activeCycles.length > 0 || archivedCycles.length > 0) && (
         <div className="flex flex-col gap-6 rounded-xl border border-[color-mix(in_srgb,#e5e7eb_90%,transparent)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6">
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-50 text-sky-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-sky-50 text-sky-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l4-4 4 4 6-8" />
@@ -151,7 +151,7 @@ export default async function AssessmentsPage() {
           </div>
           <div className="hidden h-10 w-px shrink-0 bg-[#e5e7eb] sm:block" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
@@ -165,7 +165,7 @@ export default async function AssessmentsPage() {
           </div>
           <div className="hidden h-10 w-px shrink-0 bg-[#e5e7eb] sm:block" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeLinejoin="round" />
                 <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" />
@@ -232,15 +232,15 @@ function CycleCard({ cycle }: {
       <div className="relative z-10 flex items-start justify-between gap-3 p-5 sm:p-6">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${QUAL_COLOURS[cycle.qualificationType]}`}>
+            <span className={`rounded-md px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${QUAL_COLOURS[cycle.qualificationType]}`}>
               {QUAL_LABELS[cycle.qualificationType]}
             </span>
             {cycle.isActive ? (
-              <span className="rounded-full bg-[var(--pill-success-bg)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--pill-success-text)] ring-1 ring-inset ring-[var(--pill-success-ring)]">
+              <span className="rounded-md bg-[var(--pill-success-bg)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--pill-success-text)] ring-1 ring-inset ring-[var(--pill-success-ring)]">
                 Active
               </span>
             ) : (
-              <span className="rounded-full bg-[var(--surface-container-high)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted ring-1 ring-inset ring-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]">
+              <span className="rounded-md bg-[var(--surface-container-high)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted ring-1 ring-inset ring-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]">
                 Archived
               </span>
             )}
@@ -253,7 +253,7 @@ function CycleCard({ cycle }: {
           )}
         </div>
         <span
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--surface-container-low)] text-text shadow-sm calm-transition group-hover:border-text/20 group-hover:bg-[var(--surface-container)]"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--surface-container-low)] text-text shadow-sm calm-transition group-hover:border-text/20 group-hover:bg-[var(--surface-container)]"
           aria-hidden
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -300,7 +300,7 @@ function CycleMetric({
   return (
     <div className="flex flex-col items-center bg-[var(--surface-container-lowest)] px-2 py-4 text-center sm:py-5">
       <span
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-full [&_svg]:h-[18px] [&_svg]:w-[18px] ${well}`}
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-md [&_svg]:h-[18px] [&_svg]:w-[18px] ${well}`}
         aria-hidden
       >
         {icon === "star" && (

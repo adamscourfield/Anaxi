@@ -165,7 +165,7 @@ export function ReviewList({
                   <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <span
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 [&_svg]:h-[18px] [&_svg]:w-[18px]"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-600 [&_svg]:h-[18px] [&_svg]:w-[18px]"
                         aria-hidden
                       >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -178,7 +178,7 @@ export function ReviewList({
                     <button
                       type="button"
                       onClick={() => router.push("/observe/new/signals")}
-                      className={`inline-flex items-center gap-1.5 rounded-full border border-[#D1D5DB] bg-white px-3 py-1.5 text-[0.8125rem] font-medium ${OBS_REVIEW_MUTED} shadow-sm transition-colors hover:border-[#9CA3AF] hover:text-[#111827]`}
+                      className={`inline-flex items-center gap-1.5 rounded-md border border-[#D1D5DB] bg-white px-3 py-1.5 text-[0.8125rem] font-medium ${OBS_REVIEW_MUTED} shadow-sm transition-colors hover:border-[#9CA3AF] hover:text-[#111827]`}
                     >
                       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -197,17 +197,17 @@ export function ReviewList({
                       const isSkipped = state?.notObserved && !state?.valueKey;
 
                       const statusIcon = display ? (
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${display.dot}`}>
+                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${display.dot}`}>
                           <span className="h-2 w-2 rounded-full bg-white/90" aria-hidden />
                         </span>
                       ) : isSkipped ? (
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#9CA3AF] text-white">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#9CA3AF] text-white">
                           <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3" aria-hidden>
                             <path d="M4 8h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                           </svg>
                         </span>
                       ) : (
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[#D1D5DB] bg-[#F3F4F6]" aria-hidden />
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-2 border-dashed border-[#D1D5DB] bg-[#F3F4F6]" aria-hidden />
                       );
 
                       return (
@@ -242,7 +242,7 @@ export function ReviewList({
 
                 <div className="flex items-start gap-3 rounded-[999px] border border-amber-200 bg-amber-50 px-5 py-3.5 text-[0.8125rem] leading-relaxed text-amber-900">
                   <span
-                    className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-200 text-[0.625rem] font-bold text-amber-900"
+                    className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-200 text-[0.625rem] font-bold text-amber-900"
                     aria-hidden
                   >
                     i

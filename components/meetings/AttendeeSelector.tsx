@@ -37,7 +37,7 @@ export function AttendeeSelector({ users, selected, lockedIds = [], onChange }: 
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {selected.map((u) => (
-          <span key={u.id} className="flex items-center gap-1.5 rounded-full border border-border/60 bg-divider/60 px-3 py-1 text-xs font-medium text-text">
+          <span key={u.id} className="flex items-center gap-1.5 rounded-md border border-border/60 bg-divider/60 px-3 py-1 text-xs font-medium text-text">
             {u.fullName}
             {!lockedIds.includes(u.id) && (
               <button type="button" onClick={() => remove(u.id)} className="calm-transition text-muted hover:text-error" aria-label={`Remove ${u.fullName}`}>

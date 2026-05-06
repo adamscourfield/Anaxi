@@ -487,7 +487,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ECFDF5] px-2.5 py-1 text-xs font-semibold text-[#166534]">
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-[#ECFDF5] px-2.5 py-1 text-xs font-semibold text-[#166534]">
                       <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3">
                         <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
                         <path d="M5 8.5l2 2 4-4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -562,7 +562,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFFBEB] px-2.5 py-1 text-xs font-semibold text-[#92400E]">
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-[#FFFBEB] px-2.5 py-1 text-xs font-semibold text-[#92400E]">
                         {targets.length} {targets.length === 1 ? "person" : "people"}
                       </span>
                       <form action={removeScopedAuthoriser}>
@@ -582,7 +582,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
                           <input type="hidden" name="id" value={scope.id} />
                           <button
                             type="submit"
-                            className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 py-1.5 text-xs font-medium text-[#111827] shadow-sm calm-transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                            className="group inline-flex max-w-full items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 py-1.5 text-xs font-medium text-[#111827] shadow-sm calm-transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                           >
                             <span className="truncate">{scope.targetUser?.fullName}</span>
                             <svg viewBox="0 0 12 12" fill="none" className="h-3 w-3 shrink-0 text-[#9CA3AF] group-hover:text-red-600" aria-hidden>

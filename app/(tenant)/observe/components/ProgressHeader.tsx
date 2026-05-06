@@ -62,7 +62,7 @@ export function ProgressHeader({
         {Array.from({ length: total }).map((_, i) => (
           <div
             key={i}
-            className={`h-1 flex-1 rounded-full calm-transition ${
+            className={`h-1 flex-1 rounded-md calm-transition ${
               i < current ? "bg-accent" : "bg-border/50"
             }`}
           />

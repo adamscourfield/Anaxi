@@ -432,7 +432,7 @@ export function AdminSettingsForms({
                   </div>
                   <span className="sr-only">{feature.enabled ? "On" : "Off"} — click to toggle</span>
                   <span
-                    className={`relative mt-0.5 inline-block h-[26px] w-[46px] shrink-0 rounded-full transition-[background-color,box-shadow] duration-200 ${
+                    className={`relative mt-0.5 inline-block h-[26px] w-[46px] shrink-0 rounded-md transition-[background-color,box-shadow] duration-200 ${
                       feature.enabled
                         ? "bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]"
                         : "bg-[var(--surface-container-high)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]"
@@ -440,7 +440,7 @@ export function AdminSettingsForms({
                     aria-hidden
                   >
                     <span
-                      className={`absolute top-[4px] h-[18px] w-[18px] rounded-full shadow-md transition-transform duration-200 ease-out ${
+                      className={`absolute top-[4px] h-[18px] w-[18px] rounded-md shadow-md transition-transform duration-200 ease-out ${
                         feature.enabled
                           ? "translate-x-[22px] bg-[var(--surface-container-lowest)]"
                           : "translate-x-[4px] bg-[var(--surface-container-lowest)]"

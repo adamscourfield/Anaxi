@@ -16,7 +16,7 @@ const ELEVATED_SHELL =
   "overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
 
 const KPI_ICON_WELL =
-  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgba(124,92,255,0.12)] text-[#7C5CFF] [&_svg]:h-[18px] [&_svg]:w-[18px]";
+  "flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[rgba(124,92,255,0.12)] text-[#7C5CFF] [&_svg]:h-[18px] [&_svg]:w-[18px]";
 
 const TH =
   "px-4 py-3.5 text-left text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280] sm:px-5";

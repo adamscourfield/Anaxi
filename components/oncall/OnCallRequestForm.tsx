@@ -125,7 +125,7 @@ export function OnCallRequestForm({
             role="switch"
             aria-checked={isEmergency}
             onClick={() => setIsEmergency((v) => !v)}
-            className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold shadow-sm calm-transition ${
+            className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-md border px-5 py-2.5 text-sm font-semibold shadow-sm calm-transition ${
               isEmergency
                 ? "border-[var(--error)] bg-[color-mix(in_srgb,var(--pill-error-bg)_80%,transparent)] text-[var(--error)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--error)_25%,transparent)]"
                 : "border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] bg-[var(--surface-container-lowest)] text-muted hover:border-text/20 hover:text-text"
@@ -143,7 +143,7 @@ export function OnCallRequestForm({
       <div className="home-hero-glass overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_14px_44px_-14px_rgba(0,0,0,0.08)]">
         {/* Card header */}
         <div className="flex items-start gap-3.5 border-b border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] px-5 py-5 sm:px-7">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M12 2L2 7l10 5 10-5-10-5z" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M2 17l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />
@@ -267,7 +267,7 @@ export function OnCallRequestForm({
                       </p>
                     </div>
                     {/* Radio indicator */}
-                    <div className={`absolute top-3 right-3 h-4 w-4 rounded-full border-2 flex items-center justify-center ${isActive ? "border-text" : "border-border"}`}>
+                    <div className={`absolute top-3 right-3 h-4 w-4 rounded-md border-2 flex items-center justify-center ${isActive ? "border-text" : "border-border"}`}>
                       {isActive && <div className="h-2 w-2 rounded-full bg-text" />}
                     </div>
                   </button>
@@ -353,7 +353,7 @@ export function OnCallRequestForm({
                 This request will alert all available on-call staff members immediately.
               </p>
             </div>
-            <Button type="submit" disabled={submitting} className="w-full gap-2 rounded-full px-7 py-3 text-sm font-semibold shadow-md sm:w-auto">
+            <Button type="submit" disabled={submitting} className="w-full gap-2 rounded-md px-7 py-3 text-sm font-semibold shadow-md sm:w-auto">
               {submitting ? "Submitting..." : "Submit on call request"}
               {!submitting && (
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
@@ -368,7 +368,7 @@ export function OnCallRequestForm({
       {/* ── Bottom stats row ───────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="explorer-kpi-tile flex gap-4 rounded-2xl p-5 sm:p-6">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-low)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_15%,transparent)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_15%,transparent)]">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
               <circle cx="9" cy="7" r="4" />
@@ -402,7 +402,7 @@ export function OnCallRequestForm({
         </div>
 
         <div className="explorer-kpi-tile flex gap-4 rounded-2xl p-5 sm:p-6">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-low)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_15%,transparent)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_15%,transparent)]">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M3 3v18h18" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M18 9l-5 5-2-2-4 4" strokeLinecap="round" strokeLinejoin="round" />

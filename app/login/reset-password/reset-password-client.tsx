@@ -81,7 +81,7 @@ export function ResetPasswordClient() {
             </div>
           ) : state === "success" ? (
             <div className="space-y-4 py-2 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-container-low)]">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-[var(--surface-container-low)]">
                 <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6" aria-hidden>
                   <path
                     d="M3.5 10 7.5 14l9-8"
