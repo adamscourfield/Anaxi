@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Fragment } from "react";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
@@ -187,6 +188,46 @@ function formatRelativeShort(iso: string): string {
   return `${hrs}h ago`;
 }
 
+function AttentionBannerSeparator() {
+  return (
+    <div
+      className="hidden h-9 w-px shrink-0 bg-[#FADADD] sm:block"
+      aria-hidden
+    />
+  );
+}
+
+function AttentionBannerCriticalIcon() {
+  return (
+    <span
+      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#D93025] shadow-sm"
+      aria-hidden
+    >
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+        <path
+          fill="white"
+          d="M12 4 21 20H3L12 4z"
+        />
+        <path
+          fill="#D93025"
+          d="M11 10h2v5h-2v-5zm0 6.5h2V18h-2v-1.5z"
+        />
+      </svg>
+    </span>
+  );
+}
+
+function AttentionBannerSuccessIcon() {
+  return (
+    <span
+      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--success)] text-lg font-bold leading-none text-white shadow-sm"
+      aria-hidden
+    >
+      ✓
+    </span>
+  );
+}
+
 function WindowSelector({ windowDays }: { windowDays: number }) {
   return (
     <div className="segmented-toggle home-pulse-window-toggle">
@@ -271,32 +312,37 @@ function HomeMetaChip({ icon, label }: { icon: ReactNode; label: string }) {
 }
 
 function LeadershipAttentionStrip({
-  openOnCalls,
-  interventionStaff,
+  liveOnCallCount,
+  latestLiveOnCall,
+  interventionCount,
+  interventionDetailLabel,
   attendanceDelta,
   pendingLeaveCount,
   windowDays,
 }: {
-  openOnCalls: OnCallDetail[];
-  interventionStaff: TeacherRiskRow[];
+  liveOnCallCount: number;
+  latestLiveOnCall: OnCallDetail | null;
+  interventionCount: number;
+  interventionDetailLabel: string;
   attendanceDelta: number | null;
   pendingLeaveCount: number;
   windowDays: number;
 }) {
-  const primaryOnCall = openOnCalls[0];
   const items = [
-    ...(primaryOnCall
+    ...(liveOnCallCount > 0
       ? [{
-          title: `${openOnCalls.length} on-call escalation${openOnCalls.length === 1 ? "" : "s"}`,
-          detail: `${primaryOnCall.requesterName} • ${formatRelativeShort(primaryOnCall.createdAt)}`,
-          href: `/on-call/${primaryOnCall.id}`,
+          title: `${liveOnCallCount} on-call escalation${liveOnCallCount === 1 ? "" : "s"}`,
+          detail: latestLiveOnCall
+            ? `${latestLiveOnCall.requesterName} • ${formatRelativeShort(latestLiveOnCall.createdAt)}`
+            : "Open requests in the live queue",
+          href: latestLiveOnCall ? `/on-call/${latestLiveOnCall.id}` : "/on-call",
           tone: "critical" as const,
         }]
       : []),
-    ...(interventionStaff.length > 0
+    ...(interventionCount > 0
       ? [{
-          title: `${interventionStaff.length} teacher${interventionStaff.length === 1 ? "" : "s"} require intervention`,
-          detail: interventionStaff[0]?.status === "SIGNIFICANT_DRIFT" ? "Significant negative drift" : "Emerging support signals",
+          title: `${interventionCount} teacher${interventionCount === 1 ? "" : "s"} require intervention`,
+          detail: interventionDetailLabel,
           href: `/analytics?tab=teachers&window=${windowDays}`,
           tone: "critical" as const,
         }]
@@ -328,66 +374,80 @@ function LeadershipAttentionStrip({
         tone: "success" as const,
       }];
 
+  const displayItems = visibleItems.slice(0, 3);
   const hasCritical = visibleItems.some((item) => item.tone === "critical");
-  const bandClass = hasCritical
-    ? "border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[#FEF2F2]"
-    : visibleItems.some((item) => item.tone === "warning")
-      ? "border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_70%,var(--surface-container-lowest))]"
-      : "border-[color-mix(in_srgb,var(--success)_14%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_72%,var(--surface-container-lowest))]";
+  const hasWarningOnly = !hasCritical && visibleItems.some((item) => item.tone === "warning");
 
-  const itemDivideX = hasCritical
-    ? "sm:divide-[color-mix(in_srgb,var(--error)_18%,transparent)]"
-    : "sm:divide-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]";
+  const shellClass = hasCritical
+    ? "border-[#F5C6C6] bg-[#FFF5F5] shadow-[0_1px_2px_rgba(74,16,16,0.06)]"
+    : hasWarningOnly
+      ? "border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_70%,var(--surface-container-lowest))] shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
+      : "border-[color-mix(in_srgb,var(--success)_14%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_72%,var(--surface-container-lowest))] shadow-[0_1px_3px_rgba(15,23,42,0.06)]";
+
+  const headerTitleClass = hasCritical
+    ? "text-[#4A1010]"
+    : hasWarningOnly
+      ? "text-[var(--warning)]"
+      : "text-[var(--success)]";
+
+  const dotClass = (tone: "critical" | "warning" | "success") =>
+    tone === "critical" ? "bg-[#D93025]" : tone === "warning" ? "bg-[var(--warning)]" : "bg-[var(--success)]";
 
   return (
-    <section className={`rounded-xl border px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)] sm:px-5 sm:py-4 ${bandClass}`}>
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between xl:gap-8">
-        <div className="flex min-w-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-5">
-          <div className="flex shrink-0 items-center gap-3 lg:max-w-[220px] lg:flex-col lg:items-start lg:gap-2">
-            <div className="flex items-center gap-3">
-              <span
-                className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-base font-bold leading-none text-white shadow-sm ${
-                  hasCritical ? "bg-[var(--error)]" : "bg-[var(--success)]"
-                }`}
-              >
-                {hasCritical ? "!" : "✓"}
-              </span>
-              {hasCritical ? (
-                <p className="text-sm font-bold text-[var(--error)]">Immediate attention</p>
-              ) : (
-                <p className="text-sm font-bold text-[var(--success)]">Operating within range</p>
-              )}
-            </div>
-          </div>
+    <section className={`rounded-xl border px-4 py-3.5 sm:px-5 sm:py-4 ${shellClass}`}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-0">
+        <div className="flex shrink-0 items-center gap-3 lg:pr-1">
+          {hasCritical ? <AttentionBannerCriticalIcon /> : <AttentionBannerSuccessIcon />}
+          <p className={`text-sm font-bold tracking-[-0.01em] ${headerTitleClass}`}>
+            {hasCritical ? "Immediate attention" : hasWarningOnly ? "Review recommended" : "Operating within range"}
+          </p>
+        </div>
 
-          <div
-            className={`grid min-w-0 flex-1 grid-cols-1 gap-3 divide-y divide-solid sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-y-0 ${itemDivideX} max-sm:divide-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)]`}
-          >
-            {visibleItems.slice(0, 3).map((item, idx) => (
+        <AttentionBannerSeparator />
+
+        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-0">
+          {displayItems.map((item, idx) => (
+            <Fragment key={`${item.title}-${item.href}`}>
+              {idx > 0 ? (
+                <>
+                  <div className="h-px w-full shrink-0 bg-[#FADADD] sm:hidden" aria-hidden />
+                  <AttentionBannerSeparator />
+                </>
+              ) : null}
               <Link
-                key={`${item.title}-${item.href}`}
                 href={item.href}
-                className={`group min-w-0 px-1 py-1 calm-transition sm:px-4 sm:py-0 ${idx === 0 ? "sm:pl-0" : ""} ${idx === 2 ? "sm:pr-0" : ""} rounded-lg hover:bg-white/60`}
+                className="group min-w-0 flex-1 rounded-lg px-1 py-1 calm-transition sm:px-4 sm:py-0 hover:bg-white/70"
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <span
-                    className={`h-2 w-2 shrink-0 rounded-full ${
-                      item.tone === "critical" ? "bg-[var(--error)]" : item.tone === "warning" ? "bg-[var(--warning)]" : "bg-[var(--success)]"
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass(item.tone)}`} aria-hidden />
+                  <p
+                    className={`truncate text-sm font-semibold tracking-[-0.01em] ${
+                      item.tone === "success" ? "text-text" : "text-[#4A1010]"
                     }`}
-                  />
-                  <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{item.title}</p>
+                  >
+                    {item.title}
+                  </p>
                 </div>
-                <p className="mt-1 truncate pl-4 text-xs text-muted">{item.detail}</p>
+                <p
+                  className={`mt-1 truncate pl-4 text-xs ${
+                    item.tone === "success" ? "text-muted" : "text-[#5F6368]"
+                  }`}
+                >
+                  {item.detail}
+                </p>
               </Link>
-            ))}
-          </div>
+            </Fragment>
+          ))}
         </div>
+
+        <AttentionBannerSeparator />
+
         <Link
-          href={visibleItems[0]?.href ?? "/my-actions"}
-          className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm calm-transition ${
+          href="/my-actions"
+          className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold calm-transition sm:self-center ${
             hasCritical
-              ? "bg-white text-[var(--error)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--error)_35%,transparent)] hover:bg-white"
-              : "bg-white/90 text-text ring-1 ring-inset ring-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] hover:bg-white"
+              ? "border-[#F5C6C6] bg-white text-[#4A1010] hover:bg-white"
+              : "border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-white/95 text-text hover:bg-white"
           }`}
         >
           View all actions
@@ -407,6 +467,7 @@ function LeadershipHome({
   hasLeaveFeature,
   pendingLeaveCount,
   pendingLeaveDetails,
+  liveOnCallBanner,
   onCallDetails,
   onCallStats,
   weekObsCount,
@@ -423,6 +484,7 @@ function LeadershipHome({
   hasLeaveFeature: boolean;
   pendingLeaveCount: number;
   pendingLeaveDetails: PendingLeaveDetail[];
+  liveOnCallBanner: { count: number; latest: OnCallDetail | null };
   onCallDetails: OnCallDetail[];
   onCallStats: { resolved: number; active: number; escalation: number };
   weekObsCount: number;
@@ -451,9 +513,13 @@ function LeadershipHome({
     .slice(0, 3);
 
   // Staff needing intervention (SIGNIFICANT_DRIFT or EMERGING_DRIFT)
-  const interventionStaff = teacherRows
-    .filter((r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT")
-    .slice(0, 3);
+  const allInterventionStaff = teacherRows.filter(
+    (r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT"
+  );
+  const interventionStaff = allInterventionStaff.slice(0, 3);
+  const interventionBannerDetail = allInterventionStaff.some((r) => r.status === "SIGNIFICANT_DRIFT")
+    ? "Significant negative drift"
+    : "Emerging support signals";
 
   // Watchlist students (prefer explicitly-provided watchlist rows, otherwise derive from student rows)
   const bandOrder: Record<string, number> = { URGENT: 0, PRIORITY: 1, WATCH: 2, STABLE: 3 };
@@ -473,8 +539,10 @@ function LeadershipHome({
   return (
     <div className="w-full min-w-0 space-y-8">
       <LeadershipAttentionStrip
-        openOnCalls={openOnCalls}
-        interventionStaff={interventionStaff}
+        liveOnCallCount={liveOnCallBanner.count}
+        latestLiveOnCall={liveOnCallBanner.latest}
+        interventionCount={allInterventionStaff.length}
+        interventionDetailLabel={interventionBannerDetail}
         attendanceDelta={attendanceDelta}
         pendingLeaveCount={pendingLeaveCount}
         windowDays={windowDays}
@@ -657,7 +725,7 @@ function LeadershipHome({
           <HomeCardHeadingSm
             icon={<IconUsersTwo className="text-[var(--primary)]" />}
             title="Staff intervention"
-            subtitle={`${interventionStaff.length} staff needing support`}
+            subtitle={`${allInterventionStaff.length} staff needing support`}
             end={
               <Link href={`/analytics?tab=teachers&window=${windowDays}`} className="link-accent shrink-0 text-xs font-semibold">
                 View all
@@ -1816,7 +1884,7 @@ export default async function HomePage({
       const hasOnCallFeature = enabledFeatures.has("ON_CALL");
       const hasAssessmentsFeature = enabledFeatures.has("ASSESSMENTS");
       const hasStudentAnalysisFeature = enabledFeatures.has("STUDENT_ANALYSIS");
-      const { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, pendingLeaveDetails, onCallDetails, onCallStats, weekObsCount, weekObsTeachers, attainmentSummary, watchlistStudents } = await hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature });
+      const { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, pendingLeaveDetails, liveOnCallBanner, onCallDetails, onCallStats, weekObsCount, weekObsTeachers, attainmentSummary, watchlistStudents } = await hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature });
       return (
         <LeadershipHome
           windowDays={windowDays}
@@ -1827,6 +1895,7 @@ export default async function HomePage({
           hasLeaveFeature={hasLeaveFeature}
           pendingLeaveCount={pendingLeaveCount}
           pendingLeaveDetails={pendingLeaveDetails}
+          liveOnCallBanner={liveOnCallBanner}
           onCallDetails={onCallDetails}
           onCallStats={onCallStats}
           weekObsCount={weekObsCount}

@@ -93,14 +93,34 @@ export async function hydrateLeadershipHomeData({
       )
     : Promise.resolve(0);
 
-  const openOnCallPromise = hasOnCallFeature
+  /** OPEN + ACKNOWLEDGED queue counts + latest row for dashboard banner (not limited to recent history window). */
+  const liveOnCallBannerPromise = hasOnCallFeature
     ? safe(
-        (prisma as any).onCallRequest.count({
-          where: { tenantId: user.tenantId, status: "OPEN" },
-        }),
-        0 as number
+        Promise.all([
+          (prisma as any).onCallRequest.count({
+            where: { tenantId: user.tenantId, status: { in: ["OPEN", "ACKNOWLEDGED"] } },
+          }),
+          (prisma as any).onCallRequest.findFirst({
+            where: { tenantId: user.tenantId, status: { in: ["OPEN", "ACKNOWLEDGED"] } },
+            orderBy: { createdAt: "desc" },
+            include: { requester: { select: { fullName: true } } },
+          }),
+        ]).then(([count, r]: [number, any]) => ({
+          count: count as number,
+          latest: r
+            ? ({
+                id: r.id as string,
+                requesterName: (r.requester?.fullName ?? "Unknown") as string,
+                location: (r.location ?? "") as string,
+                status: r.status as string,
+                createdAt: (r.createdAt as Date).toISOString(),
+                resolvedAt: r.resolvedAt ? (r.resolvedAt as Date).toISOString() : null,
+              } satisfies OnCallDetail)
+            : null,
+        })),
+        { count: 0, latest: null as OnCallDetail | null }
       )
-    : Promise.resolve(0);
+    : Promise.resolve({ count: 0, latest: null as OnCallDetail | null });
 
   const pendingLeaveDetailsPromise: Promise<PendingLeaveDetail[]> = hasLeaveFeature
     ? safe(
@@ -277,7 +297,7 @@ export async function hydrateLeadershipHomeData({
     { count: 0, recentTeachers: [] as { id: string; name: string }[] }
   );
 
-  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, openOnCallCount, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary] = await Promise.all([
+  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary] = await Promise.all([
     safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]),
     safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]),
     safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }),
@@ -285,7 +305,7 @@ export async function hydrateLeadershipHomeData({
       ? safe(computeStudentRiskIndex(user.tenantId, windowDays, user.id), { rows: [] as StudentRiskRow[], computedAt: new Date() })
       : Promise.resolve({ rows: [] as StudentRiskRow[], computedAt: new Date() }),
     pendingLeavePromise,
-    openOnCallPromise,
+    liveOnCallBannerPromise,
     pendingLeaveDetailsPromise,
     onCallDetailsPromise,
     onCallStatsPromise,
@@ -300,7 +320,7 @@ export async function hydrateLeadershipHomeData({
     studentRows: studentResult.rows,
     topImproving: getTopImprovingSignals(cpdRows),
     pendingLeaveCount: pendingLeaveCount as number,
-    openOnCallCount: openOnCallCount as number,
+    liveOnCallBanner: liveOnCallBanner as { count: number; latest: OnCallDetail | null },
     pendingLeaveDetails,
     onCallDetails,
     onCallStats: onCallStats as { resolved: number; active: number; escalation: number },
