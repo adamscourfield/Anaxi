@@ -230,6 +230,48 @@ type Props = {
   coachingCoacheeId: string;
 };
 
+type TimelineSeriesMode = "weekly" | "cumulative" | "moving_avg";
+
+function buildChartTimelineWeeks(
+  weeks: TimelineWeekSerialized[],
+  mode: TimelineSeriesMode,
+): TimelineWeekSerialized[] {
+  if (weeks.length === 0) return [];
+  if (mode === "weekly") return weeks;
+
+  if (mode === "cumulative") {
+    let run = 0;
+    return weeks.map((w) => {
+      run += w.count;
+      return { ...w, count: run };
+    });
+  }
+
+  return weeks.map((w, i) => {
+    const start = Math.max(0, i - 3);
+    const slice = weeks.slice(start, i + 1);
+    const avg = slice.reduce((s, x) => s + x.count, 0) / slice.length;
+    return { ...w, count: Math.round(avg * 10) / 10 };
+  });
+}
+
+function formatChartCount(mode: TimelineSeriesMode, count: number): string {
+  if (mode === "moving_avg") {
+    return count.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+  }
+  return Math.round(count).toLocaleString("en-GB");
+}
+
+function timelineTooltipMetricLine(mode: TimelineSeriesMode, count: number): string {
+  const n = formatChartCount(mode, count);
+  if (mode === "weekly") {
+    const c = Math.round(count);
+    return `${n} observation${c === 1 ? "" : "s"} this week`;
+  }
+  if (mode === "cumulative") return `${n} observations cumulative (through this week)`;
+  return `${n} avg observations/week (4-week window)`;
+}
+
 function barWidthPct(count: number, max: number): number {
   if (max === 0) return 0;
   return Math.round((count / max) * 100);
@@ -338,6 +380,8 @@ export function ObservationHistoryAnalysis({
   const [timelineSnapIdx, setTimelineSnapIdx] = useState<number | null>(null);
   /** Smoothed crosshair position on the line (SVG coords) + path for emphasized segment. */
   const [timelineGuide, setTimelineGuide] = useState<{ x: number; y: number; pathD: string } | null>(null);
+  /** What the “Observations over time” line represents */
+  const [timelineSeriesMode, setTimelineSeriesMode] = useState<TimelineSeriesMode>("weekly");
 
   const smoothCrosshairXRef = useRef<number | null>(null);
   const targetCrosshairXRef = useRef<number | null>(null);
@@ -382,13 +426,24 @@ export function ObservationHistoryAnalysis({
   }, [cancelTimelineRaf]);
 
   const maxRole = useMemo(() => Math.max(...roleCounts.map((r) => r.count), 1), [roleCounts]);
-  const maxTimeline = useMemo(
-    () => Math.max(...timelineWeeks.map((w) => w.count), 1),
+
+  const chartTimelineWeeks = useMemo(
+    () => buildChartTimelineWeeks(timelineWeeks, timelineSeriesMode),
+    [timelineWeeks, timelineSeriesMode],
+  );
+
+  const rawObservationsInWindow = useMemo(
+    () => timelineWeeks.reduce((s, w) => s + w.count, 0),
     [timelineWeeks],
   );
 
+  const maxTimeline = useMemo(() => {
+    const m = Math.max(...chartTimelineWeeks.map((w) => w.count), 0);
+    return m > 0 ? m : 1;
+  }, [chartTimelineWeeks]);
+
   const linePoints = useMemo(() => {
-    const n = timelineWeeks.length;
+    const n = chartTimelineWeeks.length;
     const { W: w, H: h, L: padL, R: padR, T: padT, B: padB } = TIMELINE_PAD;
     if (n === 0) {
       return {
@@ -405,7 +460,7 @@ export function ObservationHistoryAnalysis({
     }
     const innerW = w - padL - padR;
     const innerH = h - padT - padB;
-    const pts = timelineWeeks.map((row, i) => {
+    const pts = chartTimelineWeeks.map((row, i) => {
       const x = padL + (n <= 1 ? innerW / 2 : (i / (n - 1)) * innerW);
       const y = padT + innerH - (row.count / maxTimeline) * innerH;
       return { x, y, label: row.label, count: row.count, weekKey: row.weekKey };
@@ -413,7 +468,7 @@ export function ObservationHistoryAnalysis({
     const lineD = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
     const fillD = `${lineD} L ${pts[pts.length - 1].x.toFixed(1)} ${(padT + innerH).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(padT + innerH).toFixed(1)} Z`;
     return { d: lineD, fillD, points: pts, w, h, padL, padR, padT, padB };
-  }, [timelineWeeks, maxTimeline]);
+  }, [chartTimelineWeeks, maxTimeline]);
 
   const linePointsRef = useRef(linePoints);
   linePointsRef.current = linePoints;
@@ -457,7 +512,8 @@ export function ObservationHistoryAnalysis({
     cancelTimelineRaf();
     setTimelineGuide(null);
     setTimelineSnapIdx(null);
-  }, [linePoints.d, cancelTimelineRaf]);
+    setTip(null);
+  }, [linePoints.d, timelineSeriesMode, cancelTimelineRaf]);
 
   const handleTimelineSvgMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
@@ -510,10 +566,10 @@ export function ObservationHistoryAnalysis({
       setTip({
         x: e.clientX,
         y: e.clientY,
-        text: `${rangeLine}\n${p.count.toLocaleString()} observation${p.count === 1 ? "" : "s"}`,
+        text: `${rangeLine}\n${timelineTooltipMetricLine(timelineSeriesMode, p.count)}`,
       });
     },
-    [linePoints.points, cancelTimelineRaf, scheduleTimelineSmoothing],
+    [linePoints.points, cancelTimelineRaf, scheduleTimelineSmoothing, timelineSeriesMode],
   );
 
   const handleTimelineSvgLeave = useCallback(() => {
@@ -730,18 +786,37 @@ export function ObservationHistoryAnalysis({
                 <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-text">
                   Observations over time
                 </h3>
-                <InfoCircleIcon title="Weekly counts within the chart window; move the pointer along the line to inspect each week." />
+                <InfoCircleIcon
+                  title={
+                    timelineSeriesMode === "weekly"
+                      ? "Weekly counts in the chart window. Use the menu to switch to cumulative total or a 4-week rolling average."
+                      : timelineSeriesMode === "cumulative"
+                        ? "Running total of observations from the start of the window through each week. Switch the menu to compare with per-week counts."
+                        : "Smoothed trend: average weekly observations over this week and the three prior weeks (fewer weeks at the start of the range)."
+                  }
+                />
               </div>
               <p className="mt-1 text-[0.8125rem] text-[#6B7280]">
-                Move along the chart: the guide glides along the line and the tooltip stays by your cursor.
+                {timelineSeriesMode === "weekly"
+                  ? "Move along the chart: the guide follows the line and the tooltip shows counts for that week."
+                  : timelineSeriesMode === "cumulative"
+                    ? "The line shows how total observations build across the selected window."
+                    : "Useful for spotting sustained pace without week-to-week noise."}
               </p>
             </div>
-            <div
-              className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 py-2 text-[0.75rem] font-semibold text-text shadow-sm"
-              role="presentation"
-            >
-              <span className="truncate">Total observations</span>
-              <ChevronDownMini className="h-3.5 w-3.5 shrink-0 text-[#9CA3AF]" />
+            <div className="relative shrink-0 self-start">
+              <select
+                id="obs-history-timeline-series"
+                value={timelineSeriesMode}
+                onChange={(e) => setTimelineSeriesMode(e.target.value as TimelineSeriesMode)}
+                className="h-10 min-w-[11.5rem] max-w-[16rem] appearance-none rounded-lg border border-[#E5E7EB] bg-[var(--surface-container-lowest)] py-2 pl-3 pr-9 text-[0.75rem] font-semibold text-[#111827] shadow-sm outline-none calm-transition hover:border-[#D1D5DB] focus:border-[#CBD5E1] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]"
+                aria-label="Observations over time: series type"
+              >
+                <option value="weekly">Observations per week</option>
+                <option value="cumulative">Cumulative total</option>
+                <option value="moving_avg">4-week rolling average</option>
+              </select>
+              <ChevronDownMini className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#9CA3AF]" />
             </div>
           </div>
           {!hasTimeline ? (
@@ -756,7 +831,13 @@ export function ObservationHistoryAnalysis({
                     className="h-48 w-full min-w-[280px] cursor-crosshair calm-transition"
                     preserveAspectRatio="xMidYMid meet"
                     role="img"
-                    aria-label="Observations per week line chart"
+                    aria-label={
+                      timelineSeriesMode === "weekly"
+                        ? "Observations per week line chart"
+                        : timelineSeriesMode === "cumulative"
+                          ? "Cumulative observations line chart"
+                          : "Four-week rolling average observations line chart"
+                    }
                     onMouseMove={handleTimelineSvgMove}
                     onMouseLeave={handleTimelineSvgLeave}
                   >
@@ -779,7 +860,11 @@ export function ObservationHistoryAnalysis({
                     />
                     {[0, 0.25, 0.5, 0.75, 1].map((t) => {
                       const y = padT + plotH * t;
-                      const tickValue = Math.round(maxTimeline * (1 - t));
+                      const rawTick = maxTimeline * (1 - t);
+                      const tickValue =
+                        timelineSeriesMode === "moving_avg" && maxTimeline < 12
+                          ? Math.round(rawTick * 10) / 10
+                          : Math.round(rawTick);
                       return (
                         <g key={t}>
                           <text
@@ -790,7 +875,9 @@ export function ObservationHistoryAnalysis({
                             fill="#9CA3AF"
                             fontSize="10"
                           >
-                            {tickValue}
+                            {timelineSeriesMode === "moving_avg" && maxTimeline < 12
+                              ? tickValue.toFixed(tickValue % 1 === 0 ? 0 : 1)
+                              : tickValue}
                           </text>
                           <line
                             x1={padL}
@@ -908,26 +995,46 @@ export function ObservationHistoryAnalysis({
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                       <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
                     </svg>
-                    {timelineWeeks.length <= 8
-                      ? timelineWeeks.map((w) => (
+                    {chartTimelineWeeks.length <= 8
+                      ? chartTimelineWeeks.map((w) => (
                           <span key={w.weekKey} className="tabular-nums">
-                            {w.label}: <span className="font-semibold text-text">{w.count}</span>
+                            {w.label}:{" "}
+                            <span className="font-semibold text-text">
+                              {formatChartCount(timelineSeriesMode, w.count)}
+                            </span>
                           </span>
                         ))
                       : (
                         <span>
-                          <span className="tabular-nums text-text">{timelineWeeks[0]?.label}</span>
+                          <span className="tabular-nums text-text">{chartTimelineWeeks[0]?.label}</span>
                           {" "}
                           <span className="text-[#9CA3AF]">–</span>
                           {" "}
                           <span className="tabular-nums text-text">
-                            {timelineWeeks[timelineWeeks.length - 1]?.label}
+                            {chartTimelineWeeks[chartTimelineWeeks.length - 1]?.label}
                           </span>
                           {" "}
                           <span className="font-bold tabular-nums" style={{ color: CHART_VIOLET }}>
-                            {timelineWeeks.reduce((s, w) => s + w.count, 0).toLocaleString()}
+                            {timelineSeriesMode === "weekly"
+                              ? rawObservationsInWindow.toLocaleString()
+                              : formatChartCount(
+                                  timelineSeriesMode,
+                                  chartTimelineWeeks[chartTimelineWeeks.length - 1]?.count ?? 0,
+                                )}
                           </span>{" "}
-                          total in window
+                          {timelineSeriesMode === "weekly"
+                            ? "total in window"
+                            : timelineSeriesMode === "cumulative"
+                              ? "cumulative (end of range)"
+                              : (
+                                <>
+                                  latest 4-wk avg ·{" "}
+                                  <span className="font-semibold text-text">
+                                    {rawObservationsInWindow.toLocaleString()}
+                                  </span>{" "}
+                                  obs. total
+                                </>
+                                )}
                         </span>
                       )}
                   </div>
