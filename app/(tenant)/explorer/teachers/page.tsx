@@ -159,7 +159,12 @@ export default async function ExplorerTeachersPage({
     const result = await computeTeacherPivot(user.tenantId, windowDays);
     pivotRows = result.rows;
   } else {
-    riskRows = await computeTeacherRiskIndex(user.tenantId, windowDays);
+    const [riskResult, pivotResult] = await Promise.all([
+      computeTeacherRiskIndex(user.tenantId, windowDays),
+      computeTeacherPivot(user.tenantId, windowDays),
+    ]);
+    riskRows = riskResult;
+    pivotRows = pivotResult.rows;
   }
 
   // ─── HOD scope filter ───────────────────────────────────────────────────────
@@ -221,6 +226,9 @@ export default async function ExplorerTeachersPage({
 
   const pagedPivotRows = mode === "pivot" ? pivotRows.slice(startIdx, endIdx) : [];
   const pagedRiskRows = mode === "priorities" ? riskRows.slice(startIdx, endIdx) : [];
+  const pivotSignalByTeacherId = new Map(
+    pivotRows.map((row) => [row.teacherMembershipId, row.signalData]),
+  );
 
   const pageNumbers = buildPageNumbers(currentPage, totalPages);
 

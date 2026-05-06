@@ -195,11 +195,20 @@ function WindowSelector({ windowDays }: { windowDays: number }) {
 
 function PageTitle({
   windowDays,
+  minCoverage,
   quickActionItems,
 }: {
   windowDays: number;
+  minCoverage: number;
   quickActionItems: { label: string; href: string; icon: ReactNode }[];
 }) {
+  const updatedAt = new Date().toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
     <HomePageHeader
       eyebrow="Dashboard"
@@ -213,7 +222,138 @@ function PageTitle({
           {quickActionItems.length > 0 ? <QuickActionButton items={quickActionItems} /> : null}
         </>
       }
+      meta={
+        <>
+          <HomeMetaChip icon={<IconCalendar />} label={`Window: last ${windowDays} days`} />
+          <HomeMetaChip
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            }
+            label={`Updated ${updatedAt}`}
+          />
+          <HomeMetaChip
+            icon={
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v4M12 16h.01" strokeLinecap="round" />
+              </svg>
+            }
+            label={`Coverage threshold: ${minCoverage} obs`}
+          />
+        </>
+      }
     />
+  );
+}
+
+function HomeMetaChip({ icon, label }: { icon: ReactNode; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[0.75rem] font-medium text-muted">
+      <span className="text-muted/70 [&_svg]:h-3.5 [&_svg]:w-3.5">{icon}</span>
+      {label}
+    </span>
+  );
+}
+
+function LeadershipAttentionStrip({
+  openOnCalls,
+  interventionStaff,
+  attendanceDelta,
+  pendingLeaveCount,
+  windowDays,
+}: {
+  openOnCalls: OnCallDetail[];
+  interventionStaff: TeacherRiskRow[];
+  attendanceDelta: number | null;
+  pendingLeaveCount: number;
+  windowDays: number;
+}) {
+  const primaryOnCall = openOnCalls[0];
+  const items = [
+    ...(primaryOnCall
+      ? [{
+          title: "On-call escalation",
+          detail: `${primaryOnCall.requesterName} • ${Math.round((Date.now() - new Date(primaryOnCall.createdAt).getTime()) / 60000)}m ago`,
+          href: `/on-call/${primaryOnCall.id}`,
+          tone: "critical" as const,
+        }]
+      : []),
+    ...(interventionStaff.length > 0
+      ? [{
+          title: `${interventionStaff.length} teacher${interventionStaff.length === 1 ? "" : "s"} require intervention`,
+          detail: interventionStaff[0]?.status === "SIGNIFICANT_DRIFT" ? "Significant negative drift" : "Emerging support signals",
+          href: `/analytics?tab=teachers&window=${windowDays}`,
+          tone: "critical" as const,
+        }]
+      : []),
+    ...(attendanceDelta !== null && attendanceDelta < 0
+      ? [{
+          title: "Attendance down",
+          detail: `${attendanceDelta.toFixed(1)}% from last week`,
+          href: `/analytics?tab=students&window=${windowDays}`,
+          tone: "critical" as const,
+        }]
+      : []),
+    ...(pendingLeaveCount > 0
+      ? [{
+          title: `${pendingLeaveCount} leave approval${pendingLeaveCount === 1 ? "" : "s"} pending`,
+          detail: "Cover decisions waiting",
+          href: "/leave#pending-requests",
+          tone: "warning" as const,
+        }]
+      : []),
+  ];
+
+  const visibleItems = items.length > 0
+    ? items
+    : [{
+        title: "No immediate escalations",
+        detail: "Operational signals are currently within expected ranges",
+        href: "/my-actions",
+        tone: "success" as const,
+      }];
+
+  const bandClass = visibleItems.some((item) => item.tone === "critical")
+    ? "border-[color-mix(in_srgb,var(--error)_16%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_58%,var(--surface-container-lowest))]"
+    : visibleItems.some((item) => item.tone === "warning")
+      ? "border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_70%,var(--surface-container-lowest))]"
+      : "border-[color-mix(in_srgb,var(--success)_14%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_72%,var(--surface-container-lowest))]";
+
+  return (
+    <section className={`rounded-2xl border px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] sm:px-5 ${bandClass}`}>
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--error)] text-sm font-bold text-white shadow-sm">
+            !
+          </span>
+          <div className="grid min-w-0 gap-3 md:grid-cols-3">
+            {visibleItems.slice(0, 3).map((item) => (
+              <Link key={`${item.title}-${item.href}`} href={item.href} className="group min-w-0 rounded-xl px-2 py-1 calm-transition hover:bg-white/55">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className={`h-2 w-2 shrink-0 rounded-full ${
+                      item.tone === "critical" ? "bg-[var(--error)]" : item.tone === "warning" ? "bg-[var(--warning)]" : "bg-[var(--success)]"
+                    }`}
+                  />
+                  <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{item.title}</p>
+                </div>
+                <p className="mt-0.5 truncate pl-4 text-xs text-muted">{item.detail}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+        <Link
+          href={visibleItems[0]?.href ?? "/my-actions"}
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white/80 px-4 py-2 text-sm font-semibold text-text shadow-sm ring-1 ring-inset ring-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] calm-transition hover:bg-white"
+        >
+          View all actions
+          <span aria-hidden>→</span>
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -225,7 +365,6 @@ function LeadershipHome({
   studentRows,
   hasLeaveFeature,
   pendingLeaveCount,
-  openOnCallCount,
   pendingLeaveDetails,
   onCallDetails,
   weekObsCount,
@@ -241,7 +380,6 @@ function LeadershipHome({
   studentRows: StudentRiskRow[];
   hasLeaveFeature: boolean;
   pendingLeaveCount: number;
-  openOnCallCount: number;
   pendingLeaveDetails: PendingLeaveDetail[];
   onCallDetails: OnCallDetail[];
   weekObsCount: number;
@@ -252,8 +390,6 @@ function LeadershipHome({
 }) {
   const allDriftingCpd = cpdRows.filter((r) => r.teachersDriftingDown > 0);
   const topCpd = allDriftingCpd.slice(0, 3);
-  const topTeachers = teacherRows.slice(0, 3);
-  const totalObs = teacherRows.reduce((sum, r) => sum + r.teacherCoverage, 0);
 
   // Attendance: compute school-wide average from cohort data
   const cohortWithAttendance = cohortRows.filter((r) => r.attendanceMean !== null);
@@ -294,12 +430,20 @@ function LeadershipHome({
 
   return (
     <div className="w-full min-w-0 space-y-8">
+      <LeadershipAttentionStrip
+        openOnCalls={openOnCalls}
+        interventionStaff={interventionStaff}
+        attendanceDelta={attendanceDelta}
+        pendingLeaveCount={pendingLeaveCount}
+        windowDays={windowDays}
+      />
+
       {/* ═══ Hero Section 1: On-Call Status + Attendance + Observations ═══ */}
-      <section className="flex min-w-0 flex-col gap-5 lg:flex-row lg:items-stretch">
+      <section className="grid min-w-0 gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(320px,1.35fr)_minmax(260px,0.82fr)_minmax(260px,0.82fr)_minmax(220px,0.56fr)] xl:items-stretch">
         {/* On-Call Live Status (main box) */}
         <Card
           id="on-call-status-card"
-          className="scroll-mt-20 flex min-h-0 min-w-0 flex-1 flex-col gap-5 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]"
+          className="scroll-mt-20 flex min-h-0 min-w-0 flex-col gap-5 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]"
         >
           <HomeCardHeading
             icon={<IconBell />}
@@ -381,8 +525,88 @@ function LeadershipHome({
           )}
         </Card>
 
+        {/* CPD Priorities (dark box) */}
+        <Card className="home-cpd-hero flex min-h-[280px] flex-col space-y-4 !p-6 !text-on-primary rounded-2xl">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
+                <IconSparkles />
+              </span>
+              <h2 className="text-base font-bold tracking-[-0.01em]">CPD priorities</h2>
+            </div>
+            <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="text-xs font-semibold text-on-primary/75 calm-transition hover:text-on-primary">
+              View all
+            </Link>
+          </div>
+          {topCpd.length === 0 ? (
+            <p className="text-sm text-on-primary/60">No weakening signals detected in this window.</p>
+          ) : (
+            <>
+              <p className="text-sm text-on-primary/70">
+                {topCpd.length} signal{topCpd.length !== 1 ? "s" : ""} weakening across {teacherRows.length} teachers in the {windowDays}-day window.
+              </p>
+              <div className="space-y-3">
+                {topCpd.map((row) => (
+                  <Link key={row.signalKey} href={`/analysis/cpd/${row.signalKey}?window=${windowDays}`} className="home-row-link-on-dark -mx-2 block rounded-xl p-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{row.label}</span>
+                      <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                      <div
+                        className="home-cpd-bar-fill h-full rounded-full bg-surface-container-lowest/80"
+                        style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }}
+                      />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="mt-auto inline-block shrink-0 text-sm font-semibold text-on-primary/90 underline decoration-white/25 underline-offset-2 calm-transition hover:text-on-primary">
+                View full breakdown →
+              </Link>
+            </>
+          )}
+        </Card>
+
+        {/* Staff Needing Intervention */}
+        <Card className="flex min-h-[280px] flex-col space-y-4 rounded-2xl !p-6">
+          <HomeCardHeadingSm
+            icon={<IconBolt className="text-scale-some-text" />}
+            title="Staff intervention"
+            subtitle={`${interventionStaff.length} staff needing support`}
+            end={
+              <Link href={`/analytics?tab=teachers&window=${windowDays}`} className="link-accent shrink-0 text-xs font-semibold">
+                View all
+              </Link>
+            }
+          />
+          {interventionStaff.length === 0 ? (
+            <MetaText>All staff stable — no intervention needed.</MetaText>
+          ) : (
+            <ul className="space-y-2">
+              {interventionStaff.map((row) => (
+                <li key={row.teacherMembershipId}>
+                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="home-row-link flex items-center justify-between gap-2 p-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Avatar name={row.teacherName} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
+                        <p className="text-[11px] text-muted">{row.departmentNames.join(", ") || "No dept"}</p>
+                      </div>
+                    </div>
+                    <StatusPill variant={RISK_STATUS_PILL[row.status]} size="sm">{RISK_STATUS_LABELS[row.status]}</StatusPill>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link href={`/analytics?tab=teachers&window=${windowDays}`} className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-text calm-transition hover:text-muted">
+            Go to interventions →
+          </Link>
+        </Card>
+
         {/* Right column: Attendance + Observations */}
-        <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[340px]">
+        <div className="flex w-full min-w-0 flex-col gap-5">
           {/* Attendance box */}
           <Card className="home-hero-glass flex min-h-0 flex-1 flex-col gap-4 rounded-2xl !p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Attendance</p>
@@ -649,77 +873,9 @@ function LeadershipHome({
         </Card>
       )}
 
-      {/* ═══ Hero Section 3: Signal Analysis ═══ */}
-      <section className="grid gap-4 lg:grid-cols-12">
-        {/* CPD Priorities (dark box) */}
-        <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary lg:col-span-5 rounded-2xl">
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
-              <IconSparkles />
-            </span>
-            <h2 className="text-base font-bold tracking-[-0.01em]">CPD priorities</h2>
-          </div>
-          {topCpd.length === 0 ? (
-            <p className="text-sm text-on-primary/60">No weakening signals detected in this window.</p>
-          ) : (
-            <>
-              <p className="text-sm text-on-primary/70">
-                {topCpd.length} signal{topCpd.length !== 1 ? "s" : ""} weakening across {teacherRows.length} teachers in the {windowDays}-day window.
-              </p>
-              <div className="space-y-3">
-                {topCpd.map((row) => (
-                  <Link key={row.signalKey} href={`/analysis/cpd/${row.signalKey}?window=${windowDays}`} className="home-row-link-on-dark -mx-2 block rounded-xl p-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{row.label}</span>
-                      <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
-                    </div>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
-                      <div
-                        className="home-cpd-bar-fill h-full rounded-full bg-surface-container-lowest/80"
-                        style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }}
-                      />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="mt-2 inline-block shrink-0 text-sm font-semibold text-on-primary/90 underline decoration-white/25 underline-offset-2 calm-transition hover:text-on-primary">
-                View all →
-              </Link>
-            </>
-          )}
-        </Card>
-
-        {/* Staff Needing Intervention */}
-        <Card className="space-y-4 lg:col-span-4">
-          <HomeCardHeadingSm
-            icon={<IconBolt className="text-scale-some-text" />}
-            title="Staff intervention"
-            subtitle={`${interventionStaff.length} staff needing support`}
-          />
-          {interventionStaff.length === 0 ? (
-            <MetaText>All staff stable — no intervention needed.</MetaText>
-          ) : (
-            <ul className="space-y-2">
-              {interventionStaff.map((row) => (
-                <li key={row.teacherMembershipId}>
-                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="home-row-link flex items-center justify-between gap-2 p-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Avatar name={row.teacherName} />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
-                        <p className="text-[11px] text-muted">{row.departmentNames.join(", ") || "No dept"}</p>
-                      </div>
-                    </div>
-                    <StatusPill variant={RISK_STATUS_PILL[row.status]} size="sm">{RISK_STATUS_LABELS[row.status]}</StatusPill>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Least Observed Teachers */}
-        <Card tone="inset" className="space-y-4 lg:col-span-3">
+      {/* ═══ Coverage Follow-up ═══ */}
+      <section className="grid gap-4">
+        <Card tone="inset" className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold tracking-[-0.01em] text-text">Observation coverage</h2>
@@ -1544,7 +1700,7 @@ export default async function HomePage({
       const hasOnCallFeature = enabledFeatures.has("ON_CALL");
       const hasAssessmentsFeature = enabledFeatures.has("ASSESSMENTS");
       const hasStudentAnalysisFeature = enabledFeatures.has("STUDENT_ANALYSIS");
-      const { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, openOnCallCount, pendingLeaveDetails, onCallDetails, weekObsCount, weekObsTeachers, attainmentSummary, watchlistStudents } = await hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature });
+      const { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, pendingLeaveDetails, onCallDetails, weekObsCount, weekObsTeachers, attainmentSummary, watchlistStudents } = await hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature });
       return (
         <LeadershipHome
           windowDays={windowDays}
@@ -1554,7 +1710,6 @@ export default async function HomePage({
           studentRows={studentRows}
           hasLeaveFeature={hasLeaveFeature}
           pendingLeaveCount={pendingLeaveCount}
-          openOnCallCount={openOnCallCount}
           pendingLeaveDetails={pendingLeaveDetails}
           onCallDetails={onCallDetails}
           weekObsCount={weekObsCount}
@@ -1618,7 +1773,11 @@ export default async function HomePage({
 
   return (
     <div className="w-full min-w-0 space-y-10">
-      <PageTitle windowDays={windowDays} quickActionItems={quickActionItems} />
+      <PageTitle
+        windowDays={windowDays}
+        minCoverage={(settings?.minObservationCount as number | undefined) ?? 6}
+        quickActionItems={quickActionItems}
+      />
       {content}
     </div>
   );

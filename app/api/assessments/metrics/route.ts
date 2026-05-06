@@ -76,6 +76,7 @@ export async function GET(req: Request) {
           rawValue: true,
           normalizedScore: true,
           status: true,
+          isValid: true,
           student: {
             select: { fullName: true, ppFlag: true, sendFlag: true, yearGroup: true },
           },

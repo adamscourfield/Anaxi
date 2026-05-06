@@ -154,7 +154,7 @@ export default async function AdminLanguagePage() {
     revalidatePath("/observe/history");
   }
 
-  async function resetAllSignals(_formData: FormData) {
+  async function resetAllSignals(_formData?: FormData) {
     "use server";
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");

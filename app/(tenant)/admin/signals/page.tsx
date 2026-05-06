@@ -45,7 +45,7 @@ export default async function AdminSignalsPage() {
     revalidatePath("/observe/history");
   }
 
-  async function resetAll(_formData: FormData) {
+  async function resetAll(_formData?: FormData) {
     "use server";
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
