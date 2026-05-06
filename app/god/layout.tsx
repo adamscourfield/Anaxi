@@ -5,7 +5,7 @@ import { GodSchoolSwitcher } from "@/components/god-school-switcher";
 export default function GodLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--surface-bright)", color: "var(--on-surface)" }}>
-      <header className="fixed top-0 w-full z-50 flex items-center justify-between px-6 h-14 border-b border-border/40 glass-surface">
+      <header className="fixed top-0 w-full z-50 flex h-14 items-center justify-between border-b border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--anx-frost-bg)] px-6 shadow-[var(--shadow-header)] backdrop-blur-[14px]">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
             <Image src="/anaxi-logo.png" alt="Anaxi" width={28} height={28} priority className="h-7 w-7 object-contain" />
@@ -48,7 +48,7 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[1400px] px-6 pt-20 pb-8">
+      <main className="anx-workspace-main mx-auto w-full max-w-[1400px] px-6 pt-20 pb-10">
         {children}
       </main>
     </div>

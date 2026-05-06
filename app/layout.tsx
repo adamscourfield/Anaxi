@@ -11,7 +11,7 @@ const inter = Inter({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${inter.className}`}>
-      <body className="bg-[var(--surface-bright)] text-[var(--on-surface)]">
+      <body className="antialiased bg-[var(--surface-bright)] text-[var(--on-surface)]">
           <SessionProvider>{children}</SessionProvider>
         </body>
     </html>

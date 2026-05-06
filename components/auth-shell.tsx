@@ -18,7 +18,7 @@ export function AuthShell({
     );
   }
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--surface-bright)] text-[var(--on-surface)]">
+    <div className="anx-workspace-main flex min-h-screen flex-col text-[var(--on-surface)]">
       {children}
     </div>
   );
@@ -26,7 +26,7 @@ export function AuthShell({
 
 export function AuthNav() {
   return (
-    <nav className="fixed top-0 z-50 flex h-20 w-full items-center px-6 md:px-8 glass-surface">
+    <nav className="fixed top-0 z-50 flex h-20 w-full items-center border-b border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--anx-frost-bg)] px-6 backdrop-blur-[14px] md:px-8">
       <div className="flex items-center gap-3">
         <Image src="/anaxi-logo.png" alt="Anaxi" width={32} height={32} priority className="h-8 w-8 object-contain" />
         <div className="mx-2 h-4 w-px bg-[var(--divider-subtle)]" />
@@ -74,18 +74,19 @@ export function AuthPageHeader({
 export function AuthCard({ children }: { children: ReactNode }) {
   return (
     <div
-      className="rounded-xl p-px shadow-[var(--shadow-float)]"
+      className="rounded-2xl p-px shadow-[var(--shadow-ambient)]"
       style={{
-        background: "rgba(255,255,255,0.80)",
+        background: "rgba(255,255,255,0.82)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
       }}
     >
       <div
-        className="rounded-xl p-8"
+        className="rounded-2xl p-8 sm:p-9"
         style={{
           background: "var(--surface-container-lowest)",
-          border: "1px solid color-mix(in srgb, var(--outline-variant) 10%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--outline-variant) 12%, transparent)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.75)",
         }}
       >
         {children}
