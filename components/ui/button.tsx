@@ -3,7 +3,7 @@ import { ButtonHTMLAttributes, cloneElement, forwardRef, isValidElement, ReactEl
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "tertiary";
 
 const baseClass =
-  "inline-flex items-center justify-center gap-2 rounded-lg px-5 text-sm font-semibold tracking-[0.01em] calm-transition disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
+  "inline-flex items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold tracking-[0.01em] calm-transition disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
 const variantClasses: Record<Variant, string> = {
   // Primary: deep slate gradient (per "Glass & Gradient" rule)

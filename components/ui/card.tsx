@@ -24,7 +24,7 @@ export function Card({
   tone?: CardTone;
 } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`rounded-2xl p-5 sm:p-6 ${toneClasses[tone]} ${className}`} {...props}>
+    <div className={`rounded-lg p-5 sm:p-6 ${toneClasses[tone]} ${className}`} {...props}>
       {children}
     </div>
   );
