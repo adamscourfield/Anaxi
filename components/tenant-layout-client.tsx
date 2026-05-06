@@ -99,7 +99,7 @@ export function TenantLayoutClient({
       ) : null}
 
       <div
-        className="ml-0 flex min-h-screen flex-col calm-transition md:ml-[var(--sidebar-width)]"
+        className="anx-workspace-canvas ml-0 flex min-h-screen flex-col calm-transition md:ml-[var(--sidebar-width)]"
         id="tenant-content"
       >
         <header className="anx-top-bar-frost sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 px-4 sm:px-6 lg:px-10">
