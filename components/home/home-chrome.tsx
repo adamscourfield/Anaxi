@@ -8,11 +8,13 @@ export function HomePageHeader({
   subtitle,
   eyebrow,
   actions,
+  meta,
 }: {
   title: string;
   subtitle?: string;
   eyebrow?: string;
   actions?: ReactNode;
+  meta?: ReactNode;
 }) {
   return (
     <header className="anx-page-header-shell">
@@ -25,6 +27,7 @@ export function HomePageHeader({
           {subtitle ? (
             <p className="anx-page-subtitle">{subtitle}</p>
           ) : null}
+          {meta ? <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">{meta}</div> : null}
         </div>
         {actions ? (
           <div className="flex min-w-0 shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">{actions}</div>
