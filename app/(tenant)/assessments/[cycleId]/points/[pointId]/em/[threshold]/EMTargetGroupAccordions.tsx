@@ -11,7 +11,7 @@ import {
 export type EMStudentRow = {
   id: string;
   name: string;
-  year: number | null;
+  year: string | null;
   sendFlag: boolean;
   ppFlag: boolean;
   eRaw: string | null;
