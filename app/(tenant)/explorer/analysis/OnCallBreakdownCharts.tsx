@@ -111,9 +111,11 @@ type Props = {
   onCallByHour: HourRow[];
   onCallByReason: ReasonRow[];
   details: OnCallDetail[];
+  /** Tighter padding when nested inside a split layout card. */
+  compact?: boolean;
 };
 
-export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }: Props) {
+export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details, compact }: Props) {
   const [modal, setModal] = useState<{ title: string; rows: OnCallDetail[] } | null>(null);
 
   const maxHour = useMemo(
@@ -151,12 +153,15 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
   const hasAnyReason = onCallByReason.some((r) => r.count > 0);
 
   const chartMaxH = 140;
+  const pad = compact ? "p-5 sm:p-6" : "p-6 sm:p-8";
+  const sectionGap = compact ? "space-y-8" : "space-y-10";
+  const reasonTop = compact ? "pt-8" : "pt-10";
 
   return (
     <>
-      <div className="space-y-10 p-6 sm:p-8">
+      <div className={`${sectionGap} ${pad}`}>
         <div>
-          <h3 className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text">
+          <h3 className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">
             By time of day
           </h3>
           <p className="mb-5 text-[0.8125rem] text-[#6B7280]">8am–3pm · tap a bar for request details</p>
@@ -199,8 +204,8 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details }:
         </div>
 
         {onCallByReason.length > 0 && (
-          <div className="border-t border-[rgba(15,23,42,0.06)] pt-10">
-            <h3 className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-text">
+          <div className={`border-t border-[rgba(15,23,42,0.06)] ${reasonTop}`}>
+            <h3 className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">
               By reason
             </h3>
             <p className="mb-5 text-[0.8125rem] text-[#6B7280]">Tap a bar to see matching requests</p>
