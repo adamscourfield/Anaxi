@@ -43,7 +43,6 @@ import {
   IconClipboard,
   IconFlagOutline,
   IconPhone,
-  IconSearch,
   IconSparkles,
   IconStar,
   IconTrendDown,
@@ -506,11 +505,6 @@ function LeadershipHome({
     cohortWithAttendance.length > 0
       ? cohortWithAttendance.reduce((sum, r) => sum + (r.attendanceDelta ?? 0), 0) / cohortWithAttendance.length
       : null;
-
-  // Least observed teachers (sorted ascending by coverage)
-  const leastObserved = [...teacherRows]
-    .sort((a, b) => a.teacherCoverage - b.teacherCoverage)
-    .slice(0, 3);
 
   // Staff needing intervention (SIGNIFICANT_DRIFT or EMERGING_DRIFT)
   const allInterventionStaff = teacherRows.filter(
@@ -1157,46 +1151,6 @@ function LeadershipHome({
           ) : null}
         </section>
       )}
-
-      {/* ═══ Coverage Follow-up ═══ */}
-      <section className="grid gap-4">
-        <Card tone="inset" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold tracking-[-0.01em] text-text">Observation coverage</h2>
-              <p className="text-xs text-muted">Least observed this window</p>
-            </div>
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[var(--surface-container)] text-muted [&_svg]:h-4 [&_svg]:w-4">
-              <IconSearch />
-            </span>
-          </div>
-          {leastObserved.length === 0 ? (
-            <MetaText>No teacher data available.</MetaText>
-          ) : (
-            <ul className="space-y-2">
-              {leastObserved.map((row) => (
-                <li key={row.teacherMembershipId}>
-                  <Link href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`} className="home-row-link flex items-center justify-between gap-2 p-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Avatar name={row.teacherName} />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
-                        <p className="text-[11px] text-muted">{row.departmentNames.join(", ") || "No dept"}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[var(--surface-container)] text-[10px] font-bold text-text">
-                        {row.teacherCoverage}
-                      </span>
-                      <span className="text-[11px] text-muted">obs</span>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </section>
 
     </div>
   );

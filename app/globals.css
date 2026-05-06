@@ -1327,7 +1327,8 @@ textarea:focus-visible {
 }
 
 /* Tenant workspace — layered ambient canvas behind page content */
-.anx-workspace-main {
+.anx-workspace-main,
+.anx-workspace-canvas {
   position: relative;
   isolation: isolate;
   background:
@@ -1341,12 +1342,23 @@ textarea:focus-visible {
     );
 }
 
+.anx-workspace-canvas .anx-workspace-main {
+  background: none;
+}
+
 .anx-top-bar-frost {
   border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent);
   background: var(--anx-frost-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: var(--shadow-header);
+}
+
+.anx-workspace-canvas .anx-top-bar-frost {
+  background: transparent;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: none;
 }
 
 .anx-eyebrow {
