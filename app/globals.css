@@ -119,15 +119,18 @@
   --sidebar-collapsed-width: 72px;
 
   /* ── Shadows — ambient only (floating elements) ─────────────────── */
-  --shadow-ambient:     0 8px 32px 0 rgba(25,28,30,0.04), 0 2px 8px 0 rgba(25,28,30,0.03);
+  --shadow-ambient:     0 14px 44px -12px rgba(15, 23, 42, 0.07), 0 4px 12px -4px rgba(15, 23, 42, 0.04);
   --shadow-sm:          0 1px 2px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.02);
   --shadow-md:          0 8px 32px -4px rgba(25,28,30,0.04), 0 2px 8px -2px rgba(25,28,30,0.03);
   --shadow-lg:          0 16px 48px -8px rgba(25,28,30,0.06), 0 4px 16px -4px rgba(25,28,30,0.04);
   --shadow-xl:          0 24px 64px -12px rgba(25,28,30,0.08), 0 8px 32px -8px rgba(25,28,30,0.05);
   --shadow-float:       0 32px 64px -16px rgba(25,28,30,0.04);
   /* Header chrome: one hairline + soft lift (reduced vs full ambient) */
-  --shadow-header:      0 1px 0 color-mix(in srgb, var(--outline-variant) 45%, transparent),
-                        0 4px 24px -4px rgba(25,28,30,0.05);
+  --shadow-header:      0 1px 0 color-mix(in srgb, var(--outline-variant) 38%, transparent),
+                        0 8px 28px -8px rgba(15, 23, 42, 0.06);
+
+  /* Frosted shell (tenant top bar, overlays) */
+  --anx-frost-bg:       color-mix(in srgb, var(--surface-bright) 76%, transparent);
 
   /* ── Ghost border ────────────────────────────────────────────── */
   --border-ghost:       rgba(198,198,205,0.20);
@@ -613,9 +616,15 @@ textarea:focus-visible {
 .filter-panel {
   width: 100%;
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface-container-low) 85%, var(--surface-container-lowest));
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 22%, transparent);
-  box-shadow: var(--shadow-ambient);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--surface-container-lowest) 88%, var(--surface-container-low)) 0%,
+    color-mix(in srgb, var(--surface-container-low) 92%, var(--surface-container-lowest)) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 18%, transparent);
+  box-shadow:
+    var(--shadow-ambient),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
   padding: 1.25rem 1.25rem;
 }
 
@@ -659,7 +668,7 @@ textarea:focus-visible {
 
 .anx-elevated-card--table.table-shell tbody .table-row:hover,
 .anx-elevated-card--table.table-shell tbody tr.table-row:hover {
-  background: rgba(124, 92, 255, 0.04);
+  background: color-mix(in srgb, var(--surface-container-low) 58%, var(--surface-container-lowest));
 }
 
 /* Behaviour analysis — collapsible sections (mock: 16px cards, zebra tables, grey header strip) */
@@ -1046,8 +1055,10 @@ textarea:focus-visible {
   overflow: hidden;
   border-radius: var(--radius-lg);
   background: var(--surface-container-lowest);
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 18%, transparent);
-  box-shadow: var(--shadow-ambient);
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 16%, transparent);
+  box-shadow:
+    var(--shadow-ambient),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .table-shell thead .table-head-row th {
@@ -1082,22 +1093,28 @@ textarea:focus-visible {
 }
 
 .table-head-row {
-  background: var(--surface-container-low);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-container-low) 92%, var(--surface-container-lowest)) 0%,
+    var(--surface-container-low) 100%
+  );
   color: var(--on-surface-variant);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
 .table-row {
-  border-bottom: 1px solid var(--surface-container-low);
-  transition: background-color 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 14%, transparent);
+  transition: background-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .table-row:last-child { border-bottom: 0; }
 
-.table-row:hover { background: var(--surface-container-low); }
+.table-row:hover {
+  background: color-mix(in srgb, var(--surface-container-low) 58%, var(--surface-container-lowest));
+}
 
 /* Emphasised row (e.g. drift drivers) — stacks with .table-row */
 .table-row-highlight {
@@ -1277,9 +1294,10 @@ textarea:focus-visible {
 
 /* ── Cross-page consistency (institutional polish pass) ───────────── */
 .anx-page-header-shell {
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--anx-header-rule);
-  padding-bottom: 2rem;
+  margin-bottom: 2.25rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 24%, transparent);
+  padding-bottom: 2.25rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .anx-page-title {
@@ -1304,6 +1322,29 @@ textarea:focus-visible {
   .anx-page-subtitle {
     max-width: 42rem;
   }
+}
+
+/* Tenant workspace — layered ambient canvas behind page content */
+.anx-workspace-main {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 120% 95% at 50% -22%, color-mix(in srgb, var(--surface-container-high) 48%, transparent), transparent 55%),
+    radial-gradient(ellipse 85% 60% at 100% 0%, color-mix(in srgb, #c7d2fe 18%, transparent), transparent 58%),
+    linear-gradient(
+      180deg,
+      var(--background) 0%,
+      color-mix(in srgb, var(--surface-container-low) 28%, var(--background)) 52%,
+      var(--background) 100%
+    );
+}
+
+.anx-top-bar-frost {
+  border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent);
+  background: var(--anx-frost-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-header);
 }
 
 .anx-eyebrow {

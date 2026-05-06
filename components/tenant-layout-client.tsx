@@ -102,7 +102,7 @@ export function TenantLayoutClient({
         className="ml-0 flex min-h-screen flex-col calm-transition md:ml-[var(--sidebar-width)]"
         id="tenant-content"
       >
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 bg-[var(--bg)] px-4 sm:px-6 lg:px-10">
+        <header className="anx-top-bar-frost sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 px-4 sm:px-6 lg:px-10">
           <button
             type="button"
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-[var(--on-surface)] calm-transition hover:bg-[var(--surface-container-low)] anx-hover-elevate motion-safe:active:scale-[0.97] md:hidden"
@@ -136,7 +136,7 @@ export function TenantLayoutClient({
             </span>
           </Link>
         </header>
-        <main className="min-w-0 flex-1 bg-background px-4 py-6 sm:px-6 md:px-8 md:py-8 lg:px-10">
+        <main className="anx-workspace-main min-w-0 flex-1 px-4 py-7 sm:px-6 md:px-8 md:py-10 lg:px-10">
           <div
             key={pathname ?? ""}
             className="mx-auto min-w-0 max-w-[1400px] motion-safe:animate-page-enter motion-reduce:animate-none"

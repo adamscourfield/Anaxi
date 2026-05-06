@@ -12,7 +12,8 @@ export function PageHeader({
   actions,
   eyebrow,
   meta,
-  variant = "default",
+  /** Default is ledger (institutional shell) — use across tenant app for consistency. */
+  variant = "ledger",
   className,
   eyebrowClassName,
   titleClassName,

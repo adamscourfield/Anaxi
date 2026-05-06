@@ -62,8 +62,7 @@ export function SchoolSwitcher({
         type="button"
         onClick={() => setOpen(!open)}
         disabled={switching}
-        className="flex min-w-0 max-w-full items-center gap-2 rounded-md px-3 py-1.5 calm-transition hover:bg-[var(--surface-container-low)] anx-hover-elevate disabled:opacity-60 motion-safe:active:scale-[0.99]"
-        style={{ border: "1px solid color-mix(in srgb, var(--outline-variant) 35%, transparent)" }}
+        className="flex min-w-0 max-w-full items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_28%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-lowest)_92%,transparent)] px-3 py-1.5 shadow-sm calm-transition hover:bg-[var(--surface-container-low)] anx-hover-elevate hover:shadow-md disabled:opacity-60 motion-safe:active:scale-[0.99]"
       >
         <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-accentSurface text-[10px] font-bold text-accent">
           {initial}
@@ -77,7 +76,7 @@ export function SchoolSwitcher({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] origin-top rounded-lg border border-border bg-surface-container-lowest py-1 shadow-lg motion-safe:animate-page-enter">
+        <div className="absolute left-0 top-full z-50 mt-1.5 min-w-[220px] origin-top rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-lowest)_96%,transparent)] py-1 shadow-xl backdrop-blur-xl motion-safe:animate-page-enter">
           {tenants.map((t) => (
             <button
               key={t.tenantId}
