@@ -263,7 +263,7 @@ function AreaModal({
           {/* Header */}
           <div className="flex shrink-0 items-start gap-4 border-b border-border/20 px-6 pb-5 pt-6 sm:px-7">
             <span
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[rgba(124,105,239,0.92)] text-white shadow-sm ring-1 ring-[rgba(124,105,239,0.25)]"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[rgba(124,105,239,0.92)] text-white shadow-sm ring-1 ring-[rgba(124,105,239,0.25)]"
               aria-hidden
             >
               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -640,7 +640,7 @@ function StrategyTile({
       {/* Top row: priority badge + menu */}
       <div className="mb-3 flex items-start justify-between gap-2">
         <span
-          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${PRIORITY_CHIP[area.priority]}`}
+          className={`inline-flex items-center rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${PRIORITY_CHIP[area.priority]}`}
         >
           {PRIORITY_LABEL[area.priority]}
         </span>
@@ -717,7 +717,7 @@ function ProposeTile({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="group flex min-h-[180px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/50 bg-transparent text-muted calm-transition hover:border-accent/40 hover:text-accent"
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-current calm-transition group-hover:scale-105">
+      <div className="flex h-10 w-10 items-center justify-center rounded-md border-2 border-current calm-transition group-hover:scale-105">
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
         </svg>
@@ -747,12 +747,12 @@ export function StrategyBoardClient({ areas, canManage, staffList }: Props) {
             onChange={(e) => setShowCompleted(e.target.checked)}
           />
           <span
-            className={`relative inline-block h-4 w-[30px] rounded-full transition-colors duration-200 ${
+            className={`relative inline-block h-4 w-[30px] rounded-md transition-colors duration-200 ${
               showCompleted ? "bg-accent" : "bg-surface-container-high"
             }`}
           >
             <span
-              className={`absolute top-0.5 h-3 w-3 rounded-full bg-background shadow transition-transform duration-200 ${
+              className={`absolute top-0.5 h-3 w-3 rounded-md bg-background shadow transition-transform duration-200 ${
                 showCompleted ? "translate-x-[14px]" : "translate-x-0.5"
               }`}
             />

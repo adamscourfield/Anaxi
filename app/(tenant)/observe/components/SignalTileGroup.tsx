@@ -51,7 +51,7 @@ export function SignalTileGroup({
                 Level {idx + 1}
               </span>
               <div
-                className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                className={`flex h-5 w-5 items-center justify-center rounded-md border-2 ${
                   isSelected
                     ? "border-on-tertiary-container/40 bg-white/10"
                     : "border-border/60 bg-transparent"

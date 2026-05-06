@@ -148,12 +148,12 @@ export function TaxonomyEditableSection({
           <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">{description}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ECFDF5] px-2.5 py-1 text-[0.6875rem] font-semibold text-[#166534]">
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-[#ECFDF5] px-2.5 py-1 text-[0.6875rem] font-semibold text-[#166534]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
             {activeCount} active
           </span>
           {inactiveCount > 0 ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F3F4F6] px-2.5 py-1 text-[0.6875rem] font-semibold text-[#6B7280]">
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-[#F3F4F6] px-2.5 py-1 text-[0.6875rem] font-semibold text-[#6B7280]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#9CA3AF]" />
               {inactiveCount} inactive
             </span>
@@ -208,7 +208,7 @@ export function TaxonomyEditableSection({
                       </td>
                       <td className="px-4 py-4 align-middle">
                         <span
-                          className={`inline-flex rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold ${
+                          className={`inline-flex rounded-md px-2.5 py-1 text-[0.6875rem] font-semibold ${
                             row.active ? "bg-[#ECFDF5] text-[#166534]" : "bg-[#F3F4F6] text-[#6B7280]"
                           }`}
                         >

@@ -230,7 +230,7 @@ export default async function LeavePage({
               </Link>
             </div>
 
-            <Button asChild className="rounded-full px-5 shadow-md">
+            <Button asChild className="rounded-md px-5 shadow-md">
               <Link href="/leave/request" className="gap-2">
                 <svg
                   className="h-4 w-4"
@@ -337,7 +337,7 @@ export default async function LeavePage({
         />
       ) : !hasAnyListRows ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-background py-16">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface-container-low">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-surface-container-low">
             <svg
               className="h-6 w-6 text-muted"
               viewBox="0 0 24 24"

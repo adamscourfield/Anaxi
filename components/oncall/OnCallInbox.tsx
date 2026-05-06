@@ -133,7 +133,7 @@ export function OnCallInbox({
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
             <h2 className="text-lg font-bold tracking-[-0.02em] text-text">Open Requests</h2>
             {openCount > 0 && (
-              <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
+              <span className="inline-flex shrink-0 items-center rounded-md bg-[var(--pill-error-bg)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
                 {openCount} pending
               </span>
             )}
@@ -148,7 +148,7 @@ export function OnCallInbox({
         {/* Alert banner */}
         {openCount >= 1 && (
           <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--error)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_45%,var(--surface-container-lowest))] px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-5 sm:py-4">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" />
@@ -200,7 +200,7 @@ export function OnCallInbox({
                     className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-ambient calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
                   >
                     <div className="flex items-start gap-3">
-                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-high)] text-xs font-semibold text-muted">
+                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-high)] text-xs font-semibold text-muted">
                         {getInitials(r.student.fullName)}
                       </span>
                       <div className="min-w-0 flex-1 space-y-2">
@@ -212,12 +212,12 @@ export function OnCallInbox({
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                           <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] uppercase ${TYPE_BADGE_CLASSES[r.requestType]}`}
+                            className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] uppercase ${TYPE_BADGE_CLASSES[r.requestType]}`}
                           >
                             {REQUEST_TYPE_LABELS[r.requestType]}
                           </span>
                           {r.isEmergency && (
-                            <span className="inline-flex items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
+                            <span className="inline-flex items-center rounded-md bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
                               Emergency
                             </span>
                           )}
@@ -234,7 +234,7 @@ export function OnCallInbox({
                               <Button
                                 type="button"
                                 variant="secondary"
-                                className="min-h-10 flex-1 rounded-full px-4 text-xs font-semibold sm:flex-none"
+                                className="min-h-10 flex-1 rounded-md px-4 text-xs font-semibold sm:flex-none"
                                 disabled={actionPending === `${r.id}-acknowledge`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -247,7 +247,7 @@ export function OnCallInbox({
                             {showResolve && (
                               <Button
                                 type="button"
-                                className="min-h-10 flex-1 rounded-full px-4 text-xs font-semibold sm:flex-none"
+                                className="min-h-10 flex-1 rounded-md px-4 text-xs font-semibold sm:flex-none"
                                 disabled={actionPending === `${r.id}-resolve`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -293,7 +293,7 @@ export function OnCallInbox({
                       >
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-high)] text-xs font-semibold text-muted">
+                            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-high)] text-xs font-semibold text-muted">
                               {getInitials(r.student.fullName)}
                             </span>
                             <span className="font-semibold text-text">
@@ -307,12 +307,12 @@ export function OnCallInbox({
                         <td className="px-4 py-4">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] uppercase ${TYPE_BADGE_CLASSES[r.requestType]}`}
+                              className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] uppercase ${TYPE_BADGE_CLASSES[r.requestType]}`}
                             >
                               {REQUEST_TYPE_LABELS[r.requestType]}
                             </span>
                             {r.isEmergency && (
-                              <span className="inline-flex items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
+                              <span className="inline-flex items-center rounded-md bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[11px] font-semibold tracking-[0.02em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
                                 Emergency
                               </span>
                             )}
@@ -331,7 +331,7 @@ export function OnCallInbox({
                                 <Button
                                   type="button"
                                   variant="secondary"
-                                  className="rounded-full px-4 py-2 text-xs font-semibold"
+                                  className="rounded-md px-4 py-2 text-xs font-semibold"
                                   disabled={actionPending === `${r.id}-acknowledge`}
                                   onClick={() => handleAction(r.id, "acknowledge")}
                                 >
@@ -341,7 +341,7 @@ export function OnCallInbox({
                               {showResolve && (
                                 <Button
                                   type="button"
-                                  className="rounded-full px-4 py-2 text-xs font-semibold"
+                                  className="rounded-md px-4 py-2 text-xs font-semibold"
                                   disabled={actionPending === `${r.id}-resolve`}
                                   onClick={() => handleAction(r.id, "resolve")}
                                 >
@@ -436,7 +436,7 @@ export function OnCallInbox({
                       <span aria-hidden>·</span>
                       <span className="font-mono text-text">{r.resolvedAt ? formatTime(r.resolvedAt) : "—"}</span>
                       {duration > 0 && (
-                        <span className="inline-flex items-center rounded-full bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
+                        <span className="inline-flex items-center rounded-md bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
                           {formatDuration(duration)}
                         </span>
                       )}
@@ -487,7 +487,7 @@ export function OnCallInbox({
                         </td>
                         <td className="px-4 py-4">
                           {duration > 0 && (
-                            <span className="inline-flex items-center rounded-full bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
+                            <span className="inline-flex items-center rounded-md bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
                               {formatDuration(duration)}
                             </span>
                           )}
@@ -541,7 +541,7 @@ export function OnCallInbox({
               {healthLabel}
             </p>
             <span
-              className={`inline-block h-3.5 w-3.5 rounded-full ${
+              className={`inline-block h-3.5 w-3.5 rounded-md ${
                 healthLabel === "STABLE"
                   ? "bg-scale-strong-bar"
                   : healthLabel === "WARNING"

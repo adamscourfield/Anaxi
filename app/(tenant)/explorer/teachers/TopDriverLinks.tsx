@@ -28,7 +28,7 @@ export function TopDriverLinks({ drivers, labelByKey, windowDays }: Props) {
             key={d.signalKey}
             href={`/analysis/cpd/${d.signalKey}?window=${windowDays}`}
             onClick={(e) => e.stopPropagation()}
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium calm-transition hover:opacity-70 ${
+            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium calm-transition hover:opacity-70 ${
               isDrift
                 ? "bg-scale-limited-light text-scale-limited-text"
                 : "bg-scale-strong-light text-scale-strong-text"

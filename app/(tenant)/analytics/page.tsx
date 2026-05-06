@@ -431,7 +431,7 @@ async function TeachersTab({
                         className="flex min-w-0 items-center gap-3"
                       >
                         <span
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTintClass(row.teacherMembershipId)}`}
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-xs font-semibold ${avatarTintClass(row.teacherMembershipId)}`}
                         >
                           {teacherInitials(row.teacherName)}
                         </span>
@@ -447,7 +447,7 @@ async function TeachersTab({
                       {row.teacherCoverage} observation{row.teacherCoverage !== 1 ? "s" : ""}
                     </td>
                     <td>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_PILL[row.status]}`}>
+                      <span className={`rounded-md px-2.5 py-1 text-xs font-medium ${STATUS_PILL[row.status]}`}>
                         {STATUS_LABELS[row.status]}
                       </span>
                     </td>
@@ -945,7 +945,7 @@ async function StudentsTab({
                         className="group flex min-w-0 items-center gap-3"
                       >
                         <span
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTintClass(row.studentId)}`}
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-xs font-semibold ${avatarTintClass(row.studentId)}`}
                         >
                           {teacherInitials(row.studentName)}
                         </span>
@@ -957,7 +957,7 @@ async function StudentsTab({
                     </td>
                     <td className="text-[#6B7280]">{row.yearGroup ?? "—"}</td>
                     <td>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${BAND_PILL[row.band]}`}>
+                      <span className={`rounded-md px-2.5 py-1 text-xs font-medium ${BAND_PILL[row.band]}`}>
                         {BAND_LABELS[row.band]}
                       </span>
                     </td>
@@ -1001,12 +1001,12 @@ async function StudentsTab({
                     <td>
                       <div className="flex flex-wrap gap-1">
                         {row.sendFlag && (
-                          <span className="rounded-full bg-[#f3e8ff] px-2 py-0.5 text-xs font-medium text-[#6b21a8]">
+                          <span className="rounded-md bg-[#f3e8ff] px-2 py-0.5 text-xs font-medium text-[#6b21a8]">
                             SEND
                           </span>
                         )}
                         {row.ppFlag && (
-                          <span className="rounded-full bg-[#f3e8ff] px-2 py-0.5 text-xs font-medium text-[#6b21a8]">
+                          <span className="rounded-md bg-[#f3e8ff] px-2 py-0.5 text-xs font-medium text-[#6b21a8]">
                             PP
                           </span>
                         )}
@@ -1014,7 +1014,7 @@ async function StudentsTab({
                     </td>
                     <td>
                       <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[row.confidence]}`}
+                        className={`rounded-md px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[row.confidence]}`}
                       >
                         {row.confidence === "HIGH" ? "High" : "Low"}
                       </span>

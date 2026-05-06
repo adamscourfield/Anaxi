@@ -169,7 +169,7 @@ export default async function AdminLeaveApprovalsPage() {
 
                   {/* Scope */}
                   <div className="text-center">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium ${
                       group.appliesTo === "ALL_STAFF"
                         ? "bg-[var(--status-approved-light)] text-[var(--status-approved-text)]"
                         : "bg-[var(--status-pending-light)] text-[var(--status-pending-text)]"

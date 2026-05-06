@@ -136,7 +136,7 @@ export function MyActionsGrouped({ grouped: initial, currentUserId }: MyActionsG
       {/* Actions list */}
       {tabActions.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-lowest)_60%,transparent)] py-16">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface-container)] text-text shadow-sm ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)]">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-[var(--surface-container)] text-text shadow-sm ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)]">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>

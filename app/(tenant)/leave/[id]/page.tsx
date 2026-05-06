@@ -257,7 +257,7 @@ export default async function LeaveDetailPage({
               </h1>
             </div>
             <span
-              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold ${statusStyle.badge}`}
+              className={`inline-flex shrink-0 items-center gap-2 rounded-md px-3.5 py-1.5 text-[0.8125rem] font-semibold ${statusStyle.badge}`}
             >
               <span className={statusStyle.iconWrap}>{statusStyle.icon}</span>
               {statusStyle.label}
@@ -340,7 +340,7 @@ export default async function LeaveDetailPage({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <label className="group relative flex cursor-pointer flex-col gap-3 rounded-xl border border-emerald-500 bg-[#ECFDF5] p-4 calm-transition hover:bg-[#D1FAE5] has-[:checked]:ring-2 has-[:checked]:ring-emerald-500/25">
                 <input type="radio" name="decisionType" value="APPROVED_WITH_PAY" defaultChecked className="sr-only peer" />
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-500/50 bg-white text-emerald-600">
+                <span className="flex h-10 w-10 items-center justify-center rounded-md border border-emerald-500/50 bg-white text-emerald-600">
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -350,7 +350,7 @@ export default async function LeaveDetailPage({
 
               <label className="group relative flex cursor-pointer flex-col gap-3 rounded-xl border border-orange-500 bg-[#FFF7ED] p-4 calm-transition hover:bg-[#FFEDD5] has-[:checked]:ring-2 has-[:checked]:ring-orange-500/25">
                 <input type="radio" name="decisionType" value="APPROVED_WITHOUT_PAY" className="sr-only peer" />
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-orange-500/50 bg-white text-orange-600">
+                <span className="flex h-10 w-10 items-center justify-center rounded-md border border-orange-500/50 bg-white text-orange-600">
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -360,7 +360,7 @@ export default async function LeaveDetailPage({
 
               <label className="group relative flex cursor-pointer flex-col gap-3 rounded-xl border border-red-500 bg-[#FEF2F2] p-4 calm-transition hover:bg-[#FEE2E2] has-[:checked]:ring-2 has-[:checked]:ring-red-500/25">
                 <input type="radio" name="decisionType" value="DENIED" className="sr-only peer" />
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-red-500/50 bg-white text-red-600">
+                <span className="flex h-10 w-10 items-center justify-center rounded-md border border-red-500/50 bg-white text-red-600">
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <line x1="18" y1="6" x2="6" y2="18" strokeLinecap="round" />
                     <line x1="6" y1="6" x2="18" y2="18" strokeLinecap="round" />

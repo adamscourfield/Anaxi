@@ -282,7 +282,7 @@ export default async function AdminUsersPage() {
           tone="glass"
           showChevron={false}
           icon={<KpiUsersIcon />}
-          iconTileClassName="rounded-full bg-[rgba(99,102,241,0.12)] text-[#4f46e5]"
+          iconTileClassName="rounded-md bg-[rgba(99,102,241,0.12)] text-[#4f46e5]"
           context={
             <span className="font-medium text-muted">
               {activeCount} active · {inactiveCount} inactive
@@ -296,7 +296,7 @@ export default async function AdminUsersPage() {
           tone="glass"
           showChevron={false}
           icon={<KpiActiveIcon />}
-          iconTileClassName="rounded-full bg-[rgba(16,185,129,0.12)] text-[#059669]"
+          iconTileClassName="rounded-md bg-[rgba(16,185,129,0.12)] text-[#059669]"
           context={<span className="font-medium text-muted">Institutional presence: {activePercent}%</span>}
         />
         <StatCard
@@ -306,7 +306,7 @@ export default async function AdminUsersPage() {
           tone="glass"
           showChevron={false}
           icon={<KpiLeaveIcon />}
-          iconTileClassName="rounded-full bg-[rgba(245,158,11,0.14)] text-[#b45309]"
+          iconTileClassName="rounded-md bg-[rgba(245,158,11,0.14)] text-[#b45309]"
           context={
             inactiveCount > 0 ? (
               <span className="inline-flex items-center gap-1 font-semibold text-error">
@@ -325,7 +325,7 @@ export default async function AdminUsersPage() {
           tone="glass"
           showChevron={false}
           icon={<KpiAdminIcon />}
-          iconTileClassName="rounded-full bg-[rgba(59,130,246,0.12)] text-[#2563eb]"
+          iconTileClassName="rounded-md bg-[rgba(59,130,246,0.12)] text-[#2563eb]"
           context={<span className="font-medium text-muted">Core system access</span>}
         />
       </div>

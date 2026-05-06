@@ -17,7 +17,7 @@ export default function CTASection() {
 
       {/* Soft radial glow bottom-left */}
       <div
-        className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full pointer-events-none"
+        className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-md pointer-events-none"
         style={{
           background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 65%)",
         }}

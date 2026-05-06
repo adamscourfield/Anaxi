@@ -225,13 +225,13 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details, c
                       type="button"
                       disabled={row.count === 0}
                       onClick={() => row.count > 0 && openReason(row.reason)}
-                      className="relative h-7 w-full max-w-[min(100%,340px)] min-w-0 flex-1 shrink-0 overflow-hidden rounded-full enabled:cursor-pointer enabled:hover:opacity-95 enabled:active:scale-[0.998] disabled:cursor-default disabled:opacity-55"
+                      className="relative h-7 w-full max-w-[min(100%,340px)] min-w-0 flex-1 shrink-0 overflow-hidden rounded-md enabled:cursor-pointer enabled:hover:opacity-95 enabled:active:scale-[0.998] disabled:cursor-default disabled:opacity-55"
                       style={{ backgroundColor: CHART_VIOLET_TRACK }}
                       aria-label={`${row.count} on-call requests for ${row.reason}`}
                     >
                       {row.count > 0 && (
                         <span
-                          className="pointer-events-none absolute inset-y-0 left-0 rounded-full"
+                          className="pointer-events-none absolute inset-y-0 left-0 rounded-md"
                           style={reasonBarStyle(row.reason, barWidthPct(row.count, maxReason))}
                         />
                       )}

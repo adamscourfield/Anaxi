@@ -88,13 +88,13 @@ function MetBothIcon({ met }: { met: boolean }) {
   return (
     <div className="inline-flex items-center justify-center">
       {met ? (
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-status-approved-light text-status-approved-text">
+        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-status-approved-light text-status-approved-text">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
         </div>
       ) : (
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-low text-muted">
+        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-surface-container-low text-muted">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -111,7 +111,7 @@ function StudentRows({ rows }: { rows: EMStudentRow[] }) {
         <tr key={row.id} className="group table-row calm-transition">
           <td className="px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-[11px] font-semibold text-on-surface-variant">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-surface-container-low text-[11px] font-semibold text-on-surface-variant">
                 {getInitials(row.name)}
               </div>
               <div className="flex min-w-0 flex-col">
@@ -131,14 +131,14 @@ function StudentRows({ rows }: { rows: EMStudentRow[] }) {
           </td>
           <td className="px-4 py-4 text-center">
             <span
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${gcseGradeBadgeClass(row.eRaw)}`}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-md text-xs font-bold ${gcseGradeBadgeClass(row.eRaw)}`}
             >
               {row.eRaw}
             </span>
           </td>
           <td className="px-4 py-4 text-center">
             <span
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${gcseGradeBadgeClass(row.mRaw)}`}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-md text-xs font-bold ${gcseGradeBadgeClass(row.mRaw)}`}
             >
               {row.mRaw}
             </span>
@@ -235,14 +235,14 @@ export function EMTargetGroupAccordions({ students }: { students: EMStudentRow[]
               </span>
               <div className="flex shrink-0 items-center gap-2">
                 <span
-                  className="inline-flex min-h-[1.75rem] items-center justify-center rounded-full bg-cat-violet-bg px-3 py-1 text-xs font-bold tabular-nums text-cat-violet-text"
+                  className="inline-flex min-h-[1.75rem] items-center justify-center rounded-md bg-cat-violet-bg px-3 py-1 text-xs font-bold tabular-nums text-cat-violet-text"
                   title="Students in section"
                 >
                   {sectionRows.length} students
                 </span>
                 {!isOpen && summaryBadges && metBothInSection > 0 ? (
                   <span
-                    className="hidden sm:inline-flex min-h-[1.75rem] items-center justify-center rounded-full bg-scale-strong px-2.5 py-1 text-xs font-bold text-white tabular-nums"
+                    className="hidden sm:inline-flex min-h-[1.75rem] items-center justify-center rounded-md bg-scale-strong px-2.5 py-1 text-xs font-bold text-white tabular-nums"
                     title="Met both E&M"
                   >
                     {metBothInSection}

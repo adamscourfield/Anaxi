@@ -264,7 +264,7 @@ export default async function CohortsPage({
       {/* ── Cohort pivot table ──────────────────────────────────── */}
       {rows.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-accent/10">
             <svg className="h-6 w-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
               <circle cx="11" cy="11" r="6.5" />
               <path d="m16.5 16.5 3 3" strokeLinecap="round" />

@@ -30,7 +30,7 @@ export function StatusPill({
 }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full font-medium tracking-[0.01em] ${pillClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center rounded-md font-medium tracking-[0.01em] ${pillClasses[variant]} ${sizeClasses[size]} ${className}`}
     >
       {children}
     </span>

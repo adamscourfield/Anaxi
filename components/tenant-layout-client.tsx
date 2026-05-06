@@ -129,7 +129,7 @@ export function TenantLayoutClient({
               </span>
             </div>
             <span
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--on-surface)] text-[11px] font-semibold text-[var(--on-primary)]"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--on-surface)] text-[11px] font-semibold text-[var(--on-primary)]"
               title={userFullName || userEmail || undefined}
             >
               {initials}

@@ -64,7 +64,7 @@ export default async function LeaveRequestPage() {
           </div>
           <Link
             href="/leave"
-            className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-muted shadow-sm calm-transition hover:border-text/15 hover:text-text"
+            className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-muted shadow-sm calm-transition hover:border-text/15 hover:text-text"
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
@@ -190,11 +190,11 @@ export default async function LeaveRequestPage() {
                 variant="secondary"
                 disabled
                 title="Draft saving is not available yet."
-                className="order-2 w-full rounded-full border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] sm:order-1 sm:w-auto"
+                className="order-2 w-full rounded-md border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] sm:order-1 sm:w-auto"
               >
                 Save Draft
               </Button>
-              <Button type="submit" className="order-1 w-full gap-2 rounded-full px-8 py-3 shadow-md sm:order-2 sm:w-auto">
+              <Button type="submit" className="order-1 w-full gap-2 rounded-md px-8 py-3 shadow-md sm:order-2 sm:w-auto">
                 Submit Request
                 <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>
                   <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -209,7 +209,7 @@ export default async function LeaveRequestPage() {
             <h3 className="mb-4 text-base font-bold tracking-[-0.02em] text-text">Institutional Policy</h3>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-low)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                     <circle cx="12" cy="12" r="10" />
                     <path d="M12 6v6l4 2" strokeLinecap="round" />
@@ -220,7 +220,7 @@ export default async function LeaveRequestPage() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--status-approved-light)] text-[var(--status-approved-text)]">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--status-approved-light)] text-[var(--status-approved-text)]">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
                     <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
                     <polyline points="22 4 12 14.01 9 11.01" />
@@ -234,7 +234,7 @@ export default async function LeaveRequestPage() {
           </div>
 
           <div className="explorer-kpi-tile flex gap-4 rounded-2xl p-5 sm:p-6">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)]">
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <rect x="3" y="4" width="18" height="18" rx="2" />
                 <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
@@ -250,9 +250,9 @@ export default async function LeaveRequestPage() {
                     <div key={label} className="flex items-center justify-between border-b border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] pb-3 last:border-0 last:pb-0">
                       <span className="text-[0.875rem] font-semibold text-text">{label}</span>
                       <div className="flex items-center gap-2">
-                        <div className="h-1 w-14 overflow-hidden rounded-full bg-[var(--surface-container-high)]">
+                        <div className="h-1 w-14 overflow-hidden rounded-sm bg-[var(--surface-container-high)]">
                           <div
-                            className="h-full rounded-full bg-[var(--accent)]"
+                            className="h-full rounded-md bg-[var(--accent)]"
                             style={{ width: `${Math.min(100, (days / 20) * 100)}%` }}
                           />
                         </div>
@@ -273,7 +273,7 @@ export default async function LeaveRequestPage() {
               Ensuring educational continuity is our priority. Please ensure your cover notes are detailed.
             </p>
             <div className="mt-4 flex items-center gap-3 border-t border-[color-mix(in_srgb,var(--outline-variant)_20%,transparent)] pt-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--surface-container-lowest)] text-[0.7rem] font-bold text-[var(--accent)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_15%,transparent)]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--surface-container-lowest)] text-[0.7rem] font-bold text-[var(--accent)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_15%,transparent)]">
                 HR
               </div>
               <div>

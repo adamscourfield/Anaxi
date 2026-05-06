@@ -376,20 +376,20 @@ export default async function StudentDetailPage({
               <h1 className="anx-page-title break-words">{student.fullName}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {student.yearGroup ? (
-                  <span className="rounded-full bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                  <span className="rounded-md bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                     Year {student.yearGroup}
                   </span>
                 ) : null}
-                <span className="rounded-full bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                <span className="rounded-md bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                   {statusLabel}
                 </span>
                 {student.sendFlag ? (
-                  <span className="rounded-full bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                  <span className="rounded-md bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                     SEND
                   </span>
                 ) : null}
                 {student.ppFlag ? (
-                  <span className="rounded-full bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                  <span className="rounded-md bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                     PP
                   </span>
                 ) : null}
@@ -404,7 +404,7 @@ export default async function StudentDetailPage({
               <form action={archiveStudentAction}>
                 <input type="hidden" name="studentId" value={student.id} />
                 <input type="hidden" name="returnTo" value={`/students/${student.id}`} />
-                <Button type="submit" variant="secondary" className="rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--secondary-container)] px-5 shadow-sm hover:bg-[var(--surface-container-high)]">
+                <Button type="submit" variant="secondary" className="rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--secondary-container)] px-5 shadow-sm hover:bg-[var(--surface-container-high)]">
                   Archive student
                 </Button>
               </form>
@@ -412,7 +412,7 @@ export default async function StudentDetailPage({
               <form action={unarchiveStudentAction}>
                 <input type="hidden" name="studentId" value={student.id} />
                 <input type="hidden" name="returnTo" value={`/students/${student.id}`} />
-                <Button type="submit" variant="secondary" className="rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--secondary-container)] px-5 shadow-sm hover:bg-[var(--surface-container-high)]">
+                <Button type="submit" variant="secondary" className="rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--secondary-container)] px-5 shadow-sm hover:bg-[var(--surface-container-high)]">
                   Restore student
                 </Button>
               </form>
@@ -430,9 +430,9 @@ export default async function StudentDetailPage({
               <span className="text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{attDisplay}%</span>
               <span className="text-xs font-medium text-muted">{fmtDate(latestSnapshot.snapshotDate)}</span>
             </div>
-            <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-[var(--surface-container-high)]">
+            <div className="mt-3 h-2.5 w-full overflow-hidden rounded-sm bg-[var(--surface-container-high)]">
               <div
-                className={`h-full rounded-full ${attendanceBarColor(attPct)} home-stat-bar-fill`}
+                className={`h-full rounded-sm ${attendanceBarColor(attPct)} home-stat-bar-fill`}
                 style={{ width: `${Math.min(100, Math.max(0, attPct!))}%` }}
               />
             </div>
@@ -467,11 +467,11 @@ export default async function StudentDetailPage({
               </MetaText>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${BAND_PILL[analysisProfile.band]}`}>
+              <span className={`rounded-md px-2.5 py-1 text-xs font-medium ${BAND_PILL[analysisProfile.band]}`}>
                 {BAND_LABELS[analysisProfile.band]}
               </span>
               <span
-                className={`rounded-full px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[analysisProfile.confidence]}`}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium ${CONFIDENCE_PILL[analysisProfile.confidence]}`}
               >
                 Confidence: {analysisProfile.confidence === "HIGH" ? "High" : "Low"}
               </span>
@@ -614,7 +614,7 @@ export default async function StudentDetailPage({
                 await toggleWatchlist(analysisProfile.studentId);
               }}
             >
-              <Button variant={analysisProfile.onWatchlist ? "primary" : "secondary"} type="submit" className="rounded-full px-5">
+              <Button variant={analysisProfile.onWatchlist ? "primary" : "secondary"} type="submit" className="rounded-md px-5">
                 {analysisProfile.onWatchlist ? "★ On watchlist" : "Add to watchlist"}
               </Button>
             </form>
@@ -636,7 +636,7 @@ export default async function StudentDetailPage({
           {groupedTeachers.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-low)]/40 px-6 py-14 text-center">
               <div
-                className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-container-high)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_20%,transparent)]"
+                className="mb-4 flex h-14 w-14 items-center justify-center rounded-md bg-[var(--surface-container-high)] text-muted ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_20%,transparent)]"
                 aria-hidden
               >
                 <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -666,7 +666,7 @@ export default async function StudentDetailPage({
                   "flex items-center gap-4 px-4 py-4 calm-transition hover:bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] sm:px-5";
                 const inner = (
                   <>
-                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${theme.well}`}>
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-sm font-bold ${theme.well}`}>
                       {getInitials(row.fullName)}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -714,7 +714,7 @@ export default async function StudentDetailPage({
             href="/students/import-subject-teachers"
             className="mt-5 flex items-start gap-3 rounded-xl border border-dashed border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-low)]/50 p-4 calm-transition hover:border-[color-mix(in_srgb,var(--outline-variant)_65%,transparent)] hover:bg-[var(--surface-container-low)]/80 sm:p-5"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--surface-container-lowest)] text-muted">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--surface-container-lowest)] text-muted">
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                 <path d="M12 5v14M5 12h14" />
               </svg>

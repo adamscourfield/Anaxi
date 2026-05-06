@@ -31,7 +31,7 @@ export default function DashboardMockup() {
           </span>
         </div>
         <div
-          className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+          className="flex items-center gap-1 px-2 py-0.5 rounded-md"
           style={{ background: "color-mix(in srgb, var(--success) 10%, transparent)" }}
         >
           <div className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
@@ -58,11 +58,11 @@ export default function DashboardMockup() {
           </span>
         </div>
         <div
-          className="w-full h-1.5 rounded-full overflow-hidden"
+          className="w-full h-1.5 rounded-sm overflow-hidden"
           style={{ background: "var(--surface-container)" }}
         >
           <div
-            className="h-full rounded-full"
+            className="h-full rounded-md"
             style={{ width: "94.1%", background: "var(--primary-container)" }}
           />
         </div>
@@ -108,7 +108,7 @@ export default function DashboardMockup() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="w-1 h-3 rounded-full"
+              className="w-1 h-3 rounded-md"
               style={{
                 background: "var(--primary-container)",
                 opacity: i === 1 ? 1 : i === 2 ? 0.45 : 0.2,

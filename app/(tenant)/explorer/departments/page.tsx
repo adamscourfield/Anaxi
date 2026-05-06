@@ -298,15 +298,15 @@ export default async function DepartmentsPage({
         {/* Legend */}
         <div className="flex items-center gap-4 text-[0.75rem] font-medium text-muted">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded-full bg-risk-stable-text" />
+            <span className="inline-block h-3 w-3 rounded-md bg-risk-stable-text" />
             Stable
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded-full bg-scale-some-bar" />
+            <span className="inline-block h-3 w-3 rounded-md bg-scale-some-bar" />
             Moderate
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded-full bg-scale-limited-bar" />
+            <span className="inline-block h-3 w-3 rounded-md bg-scale-limited-bar" />
             Critical
           </span>
         </div>
@@ -316,7 +316,7 @@ export default async function DepartmentsPage({
       {/* ── Table ──────────────────────────────────────────────── */}
       {sortedRows.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-accent/10">
             <svg className="h-6 w-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
               <circle cx="11" cy="11" r="6.5" />
               <path d="m16.5 16.5 3 3" strokeLinecap="round" />
@@ -346,9 +346,9 @@ export default async function DepartmentsPage({
               </span>
             </div>
             {/* Progress bar */}
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-surface-container-high">
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-sm bg-surface-container-high">
               <div
-                className="h-full rounded-full bg-primary"
+                className="h-full rounded-md bg-primary"
                 style={{ width: `${coveragePct}%` }}
               />
             </div>

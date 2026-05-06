@@ -147,7 +147,7 @@ function StatCircleIcon({
 }) {
   return (
     <span
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
       style={{ backgroundColor: bg, color: stroke }}
     >
       {children}
@@ -633,12 +633,12 @@ export default async function AnalysisPage({
         title={suspensionPlural}
         subtitle={`Students with at least one suspension on their latest snapshot (${summary.totalSuspensions.toLocaleString()} total on those records).`}
         countPill={
-          <span className="inline-flex items-center rounded-full bg-[#F3E8FF] px-2.5 py-1 text-[11px] font-semibold text-[#6B21A8]">
+          <span className="inline-flex items-center rounded-md bg-[#F3E8FF] px-2.5 py-1 text-[11px] font-semibold text-[#6B21A8]">
             {suspensionStudentCount} student{suspensionStudentCount === 1 ? "" : "s"}
           </span>
         }
         icon={
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3E8FF] text-[#6B21A8]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F3E8FF] text-[#6B21A8]">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden>
               <path d="M6 12h12" />
             </svg>
@@ -708,12 +708,12 @@ export default async function AnalysisPage({
           </>
         }
         countPill={
-          <span className="inline-flex items-center rounded-full bg-[#FFF7ED] px-2.5 py-1 text-[11px] font-semibold text-[#9A3412]">
+          <span className="inline-flex items-center rounded-md bg-[#FFF7ED] px-2.5 py-1 text-[11px] font-semibold text-[#9A3412]">
             {result.highPriorityStudents.length} student{result.highPriorityStudents.length === 1 ? "" : "s"}
           </span>
         }
         icon={
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FFF7ED] text-[#9A3412]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#FFF7ED] text-[#9A3412]">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
               <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6-4.6-6 4.6 2.3-7-6-4.6h7.6z" />
             </svg>
@@ -722,7 +722,7 @@ export default async function AnalysisPage({
       >
         {result.highPriorityStudents.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-14">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF7ED]">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-[#FFF7ED]">
               <svg className="h-6 w-6 text-[#9A3412]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <circle cx="11" cy="11" r="6.5" />
                 <path d="m16.5 16.5 3 3" strokeLinecap="round" />

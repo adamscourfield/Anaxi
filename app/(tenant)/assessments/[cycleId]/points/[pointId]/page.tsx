@@ -234,10 +234,10 @@ function IconShieldKpi() {
   );
 }
 
-const kpiIconCircleViolet = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]";
-const kpiIconCircleBlue = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]";
-const kpiIconCircleGreen = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]";
-const kpiIconCircleAmber = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600";
+const kpiIconCircleViolet = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]";
+const kpiIconCircleBlue = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]";
+const kpiIconCircleGreen = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]";
+const kpiIconCircleAmber = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-600";
 
 function SubjectIcon({ subject }: { subject: string }) {
   const s = subject.toLowerCase();
@@ -256,7 +256,7 @@ function SubjectIcon({ subject }: { subject: string }) {
     return (<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></>);
   })();
   return (
-    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container)] text-[var(--on-surface-muted)]">
+    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container)] text-[var(--on-surface-muted)]">
       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>{paths}</svg>
     </span>
   );
@@ -483,10 +483,10 @@ export default function ResultPointPage() {
   // Build meta badges for PageHeader
   const metaBadges = point ? (
     <div className="flex flex-wrap items-center gap-2">
-      <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
+      <span className={`rounded-md px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
         {POINT_TYPE_LABELS[point.pointType]}
       </span>
-      <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${RESULT_STATUS_BADGE[point.resultStatus] ?? "bg-surface-container-high text-on-surface-variant"}`}>
+      <span className={`rounded-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${RESULT_STATUS_BADGE[point.resultStatus] ?? "bg-surface-container-high text-on-surface-variant"}`}>
         {STATUS_LABELS[point.resultStatus]}
       </span>
       {point.isFinalPoint && (
@@ -636,7 +636,7 @@ export default function ResultPointPage() {
                   <div className="mt-3">
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-white">{metrics.gcseBasics.em4}%</span>
                   </div>
-                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-primary-container">
+                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-sm bg-primary-container">
                     <div className={`${emProgressFillClass} rounded-r-full`} style={{ width: `${metrics.gcseBasics.em4}%` }}></div>
                   </div>
                 </Link>
@@ -647,7 +647,7 @@ export default function ResultPointPage() {
                   <div className="mt-3">
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em5}%</span>
                   </div>
-                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-surface-container-low">
+                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-sm bg-surface-container-low">
                     <div className="bg-[var(--primary-container)] h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em5}%` }}></div>
                   </div>
                 </Link>
@@ -658,7 +658,7 @@ export default function ResultPointPage() {
                   <div className="mt-3">
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em7}%</span>
                   </div>
-                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-full bg-surface-container-low">
+                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-sm bg-surface-container-low">
                     <div className="bg-surface-container-high h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em7}%` }}></div>
                   </div>
                 </Link>
@@ -709,7 +709,7 @@ export default function ResultPointPage() {
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary-container)]">{baselineLabel}</span>
                                 <span className="text-xl font-bold leading-none tracking-tight text-text">{baseline}%</span>
                               </div>
-                              <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
+                              <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
                                 <div className="h-full rounded-r-full bg-[var(--primary-container)]" style={{ width: `${baseline}%` }} />
                               </div>
                             </div>
@@ -718,7 +718,7 @@ export default function ResultPointPage() {
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted">{cohortLabel}</span>
                                 <span className="text-xl font-bold leading-none tracking-tight text-muted">{cohort}%</span>
                               </div>
-                              <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
+                              <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
                                 <div className="h-full rounded-r-full bg-surface-container-high" style={{ width: `${cohort}%` }} />
                               </div>
                             </div>
@@ -743,7 +743,7 @@ export default function ResultPointPage() {
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--info)]">{baselineLabel}</span>
                                 <span className="text-xl font-bold leading-none tracking-tight text-text">{baseline}%</span>
                               </div>
-                              <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
+                              <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
                                 <div className="h-full rounded-r-full bg-[var(--info)]" style={{ width: `${baseline}%` }} />
                               </div>
                             </div>
@@ -752,7 +752,7 @@ export default function ResultPointPage() {
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted">{cohortLabel}</span>
                                 <span className="text-xl font-bold leading-none tracking-tight text-muted">{cohort}%</span>
                               </div>
-                              <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-container-low">
+                              <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
                                 <div className="h-full rounded-r-full bg-surface-container-high" style={{ width: `${cohort}%` }} />
                               </div>
                             </div>
@@ -778,8 +778,8 @@ export default function ResultPointPage() {
                   <div key={label} className="rounded-xl bg-[var(--surface-container-low)] p-3">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
                     <p className="mt-0.5 text-2xl font-bold tabular-nums text-[var(--on-surface)]">{val}%</p>
-                    <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[var(--surface-container)]">
-                      <div className={`h-full rounded-full ${cls}`} style={{ width: `${val}%` }} />
+                    <div className="mt-1.5 h-1 overflow-hidden rounded-sm bg-[var(--surface-container)]">
+                      <div className={`h-full rounded-md ${cls}`} style={{ width: `${val}%` }} />
                     </div>
                   </div>
                 ))}
@@ -1835,7 +1835,7 @@ function PastoralTab({
               k.warn ? "ring-1 ring-red-200/80" : ""
             }`}
           >
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${k.iconWrap}`}>
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${k.iconWrap}`}>
               {k.icon}
             </div>
             <div className="min-w-0 flex-1">
@@ -1935,11 +1935,11 @@ function PastoralTab({
         <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-5">
           <h2 className="text-lg font-bold tracking-tight text-[var(--on-surface)] sm:text-xl">Student Breakdown</h2>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="inline-flex rounded-full border border-neutral-200/90 bg-neutral-100/80 p-0.5">
+            <div className="inline-flex rounded-md border border-neutral-200/90 bg-neutral-100/80 p-0.5">
               <button
                 type="button"
                 onClick={() => setFilterPP((v) => !v)}
-                className={`rounded-full px-3 py-1.5 text-xs font-bold calm-transition ${
+                className={`rounded-md px-3 py-1.5 text-xs font-bold calm-transition ${
                   filterPP
                     ? "bg-white text-[var(--on-surface)] shadow-sm"
                     : "text-neutral-600 hover:text-[var(--on-surface)]"
@@ -1950,7 +1950,7 @@ function PastoralTab({
               <button
                 type="button"
                 onClick={() => setFilterSEND((v) => !v)}
-                className={`rounded-full px-3 py-1.5 text-xs font-bold calm-transition ${
+                className={`rounded-md px-3 py-1.5 text-xs font-bold calm-transition ${
                   filterSEND
                     ? "bg-white text-[var(--on-surface)] shadow-sm"
                     : "text-neutral-600 hover:text-[var(--on-surface)]"
@@ -2238,9 +2238,9 @@ function TeachingTab({
                             )}
                           </div>
                         </div>
-                        <div className="h-3 overflow-hidden rounded-full bg-[var(--surface-container-low)]">
+                        <div className="h-3 overflow-hidden rounded-md bg-[var(--surface-container-low)]">
                           <div
-                            className={`h-full rounded-full calm-transition ${isAbove ? barPositiveClass : barNegativeClass}`}
+                            className={`h-full rounded-md calm-transition ${isAbove ? barPositiveClass : barNegativeClass}`}
                             style={{ width: `${barWidthPct}%` }}
                           />
                         </div>

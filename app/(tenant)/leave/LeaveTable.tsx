@@ -37,7 +37,7 @@ function SectionTable({
         <h2 className="text-lg font-bold tracking-[-0.02em] text-text">{title}</h2>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] bg-background px-4 py-2 text-[0.8125rem] font-semibold text-muted shadow-sm calm-transition hover:border-text/15 hover:text-text"
+          className="inline-flex items-center gap-2 rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] bg-background px-4 py-2 text-[0.8125rem] font-semibold text-muted shadow-sm calm-transition hover:border-text/15 hover:text-text"
         >
           <svg
             className="h-3.5 w-3.5 text-muted"
@@ -94,7 +94,7 @@ function SectionTable({
                         <div className="flex items-center gap-3">
                           {row.requesterAvatarColor && (
                             <div
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${row.requesterAvatarColor}`}
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold ${row.requesterAvatarColor}`}
                             >
                               {row.requesterInitials}
                             </div>
@@ -116,7 +116,7 @@ function SectionTable({
                       {mode === "pending" ? (
                         <Link
                           href={`/leave/${row.id}`}
-                          className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-background px-5 py-2 text-sm font-semibold text-text shadow-sm calm-transition hover:border-text/20 hover:bg-[var(--surface-container-low)]"
+                          className="inline-flex rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-background px-5 py-2 text-sm font-semibold text-text shadow-sm calm-transition hover:border-text/20 hover:bg-[var(--surface-container-low)]"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {actionLabel}

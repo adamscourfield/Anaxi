@@ -97,7 +97,7 @@ export function DepartmentsTable({ rows, pageSize = 10 }: Props) {
                       {row.signalDots.map((dot) => (
                         <span
                           key={dot.key}
-                          className={`inline-block h-3.5 w-3.5 rounded-full ${
+                          className={`inline-block h-3.5 w-3.5 rounded-md ${
                             dot.color === "green"
                               ? "bg-severity-medium-dot"
                               : dot.color === "amber"
@@ -115,7 +115,7 @@ export function DepartmentsTable({ rows, pageSize = 10 }: Props) {
                   {/* Status badge */}
                   <td className="px-4 py-4 text-right">
                     <span
-                      className={`inline-flex items-center rounded-full px-3 py-1 text-[0.6875rem] font-semibold ${STATUS_STYLES[row.status] ?? STATUS_STYLES.STABLE}`}
+                      className={`inline-flex items-center rounded-md px-3 py-1 text-[0.6875rem] font-semibold ${STATUS_STYLES[row.status] ?? STATUS_STYLES.STABLE}`}
                     >
                       {row.status}
                     </span>

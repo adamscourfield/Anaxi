@@ -291,7 +291,7 @@ function MetricCard({ metric }: { metric: DashboardMetricDef }) {
   const content = (
     <div className="home-hero-glass home-pressable-card flex h-full min-h-[142px] flex-col justify-between rounded-2xl p-5">
       <div className="flex items-start justify-between gap-3">
-        <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${toneClasses(metric.tone)}`}>
+        <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClasses(metric.tone)}`}>
           {ICONS[metric.iconId]}
         </span>
         {metric.href ? <ChevronRight /> : null}
@@ -335,7 +335,7 @@ function AttentionBand({ items }: { items: DashboardAttentionDef[] }) {
     <section className={`rounded-2xl border px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] sm:px-5 ${bandTone}`}>
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:gap-4">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--error)] text-sm font-bold text-white shadow-sm">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--error)] text-sm font-bold text-white shadow-sm">
             !
           </span>
           <div className="grid min-w-0 gap-3 md:grid-cols-3">

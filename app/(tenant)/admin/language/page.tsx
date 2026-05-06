@@ -22,7 +22,7 @@ const VOCAB_KEYS = ["positive_points", "detentions", "internal_exclusions", "on_
 
 /** Same lavender well + tag glyph as behaviour labels above (terminology admin pattern). */
 const VOCAB_ICON_WELL =
-  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgba(124,92,255,0.12)] text-[#7C5CFF]";
+  "flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[rgba(124,92,255,0.12)] text-[#7C5CFF]";
 
 const VOCAB_ROWS: {
   key: (typeof VOCAB_KEYS)[number];

@@ -332,11 +332,11 @@ export default function ComparisonPage() {
 
         {data && (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${POINT_TYPE_COLOURS[data.fromPoint.pointType]}`}>
+            <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${POINT_TYPE_COLOURS[data.fromPoint.pointType]}`}>
               {POINT_TYPE_LABELS[data.fromPoint.pointType]}
             </span>
             <span className="text-xs text-[var(--on-surface-muted)]">→</span>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${POINT_TYPE_COLOURS[data.toPoint.pointType]}`}>
+            <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${POINT_TYPE_COLOURS[data.toPoint.pointType]}`}>
               {POINT_TYPE_LABELS[data.toPoint.pointType]}
             </span>
             {data.toPoint.isFinalPoint && (
@@ -408,7 +408,7 @@ export default function ComparisonPage() {
               ].map(({ label, value, colour, icon, iconBg }) => (
                 <div key={label} className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconBg}`}>{icon}</span>
+                    <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${iconBg}`}>{icon}</span>
                   </div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
                   <p className={`mt-1 text-2xl font-bold tabular-nums ${colour}`}>{value}</p>
@@ -663,7 +663,7 @@ export default function ComparisonPage() {
             ].map(({ title, students, valueCls, icon, iconBg }) => (
               <div key={title} className="rounded-2xl border border-[var(--outline-variant)]/60 bg-[var(--surface-container-lowest)] p-6 shadow-ambient">
                 <div className="flex items-center gap-3 mb-5">
-                  <span className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${iconBg}`}>{icon}</span>
+                  <span className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md ${iconBg}`}>{icon}</span>
                   <h3 className="text-xl font-bold text-[var(--on-surface)]">{title}</h3>
                 </div>
                 {students.length === 0 ? (
@@ -672,7 +672,7 @@ export default function ComparisonPage() {
                   <div>
                     {students.map((s, i) => (
                       <div key={`${s.studentId}-${s.from}`} className="flex items-center gap-3 border-b border-[var(--outline-variant)]/20 py-2.5 last:border-0">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container)] text-[11px] font-bold tabular-nums text-[var(--on-surface-muted)]">{i + 1}</span>
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container)] text-[11px] font-bold tabular-nums text-[var(--on-surface-muted)]">{i + 1}</span>
                         <Link href={`/students/${s.studentId}`} className="link-to-accent calm-transition min-w-0 flex-1 truncate text-sm font-medium">{s.name}</Link>
                         <span className={`shrink-0 text-sm font-bold tabular-nums ${valueCls}`}>{s.from} → {s.to}</span>
                       </div>

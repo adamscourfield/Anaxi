@@ -42,7 +42,7 @@ export default async function ProfilePage() {
 
       {/* Avatar + name */}
       <Card className="flex items-center gap-5">
-        <span className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-xl font-bold text-on-primary">
+        <span className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-primary text-xl font-bold text-on-primary">
           {(fullUser?.fullName ?? "?")
             .split(" ")
             .filter(Boolean)

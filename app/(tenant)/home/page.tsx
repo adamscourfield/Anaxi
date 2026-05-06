@@ -73,7 +73,7 @@ function DualFlaggedRiskBadge({ band }: { band: string }) {
   }
   if (band === "PRIORITY") {
     return (
-      <span className="inline-flex shrink-0 items-center rounded-full border border-[#FDBA74] bg-[rgba(255,165,0,0.1)] px-2.5 py-1 text-[11px] font-semibold text-[#92400E]">
+      <span className="inline-flex shrink-0 items-center rounded-md border border-[#FDBA74] bg-[rgba(255,165,0,0.1)] px-2.5 py-1 text-[11px] font-semibold text-[#92400E]">
         Priority
       </span>
     );
@@ -346,7 +346,7 @@ function LeadershipAttentionStrip({
           <div className="flex shrink-0 items-center gap-3 lg:max-w-[220px] lg:flex-col lg:items-start lg:gap-2">
             <div className="flex items-center gap-3">
               <span
-                className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold leading-none text-white shadow-sm ${
+                className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-base font-bold leading-none text-white shadow-sm ${
                   hasCritical ? "bg-[var(--error)]" : "bg-[var(--success)]"
                 }`}
               >
@@ -501,7 +501,7 @@ function LeadershipHome({
                   View all →
                 </Link>
                 {openOnCalls.length > 0 ? (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-white px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--error)]">
+                  <span className="inline-flex items-center gap-1 rounded-md border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-white px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--error)]">
                     <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" aria-hidden />
                     Live
                   </span>
@@ -588,7 +588,7 @@ function LeadershipHome({
                         <span className="text-[10px] font-medium text-[var(--error)] sm:hidden">Live</span>
                         <Link
                           href="/on-call"
-                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-medium text-on-primary shadow-sm calm-transition hover:bg-primaryBtnHover sm:h-9 sm:w-9"
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-medium text-on-primary shadow-sm calm-transition hover:bg-primaryBtnHover sm:h-9 sm:w-9"
                           aria-label="Open on-call inbox"
                         >
                           →
@@ -636,9 +636,9 @@ function LeadershipHome({
                       <span className="text-sm font-medium">{row.label}</span>
                       <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
                     </div>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-sm bg-white/20">
                       <div
-                        className="home-cpd-bar-fill h-full rounded-full bg-surface-container-lowest/80"
+                        className="home-cpd-bar-fill h-full rounded-sm bg-surface-container-lowest/80"
                         style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }}
                       />
                     </div>
@@ -706,9 +706,9 @@ function LeadershipHome({
               <p className="mt-0.5 text-[2.5rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums sm:text-[2.625rem]">
                 {attendancePct !== null ? `${attendancePct.toFixed(1)}%` : "—"}
               </p>
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--surface-container)_88%,transparent)]">
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--surface-container)_88%,transparent)]">
                 <div
-                  className="home-stat-bar-fill h-full rounded-full bg-[var(--success)]"
+                  className="home-stat-bar-fill h-full rounded-sm bg-[var(--success)]"
                   style={{ width: `${Math.min(attendancePct ?? 0, 100)}%` }}
                 />
               </div>
@@ -752,7 +752,7 @@ function LeadershipHome({
                     <Avatar key={t.id} name={t.name} size="sm" />
                   ))}
                   {weekObsTeachers.length > 3 && (
-                    <span className="inline-flex h-7 w-auto min-w-[28px] items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-on-primary shadow-sm">
+                    <span className="inline-flex h-7 w-auto min-w-[28px] items-center justify-center rounded-md bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-on-primary shadow-sm">
                       +{weekObsTeachers.length - 3}
                     </span>
                   )}
@@ -833,7 +833,7 @@ function LeadershipHome({
                       {/* Name + band badge */}
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-semibold leading-snug text-text">{s.studentName}</p>
-                        <span className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${bandCfg.badge}`}>
+                        <span className={`mt-0.5 shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold ${bandCfg.badge}`}>
                           {bandCfg.label}
                         </span>
                       </div>
@@ -869,7 +869,7 @@ function LeadershipHome({
                           {s.drivers.slice(0, 3).map((d) => (
                             <span
                               key={d.metric}
-                              className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-medium text-text/70 ring-1 ring-inset ring-black/[0.06]"
+                              className="rounded-md bg-white/70 px-2 py-0.5 text-[10px] font-medium text-text/70 ring-1 ring-inset ring-black/[0.06]"
                             >
                               {d.label}
                             </span>
@@ -898,7 +898,7 @@ function LeadershipHome({
             <Card className="flex h-full min-h-0 flex-col space-y-5 rounded-2xl p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)] sm:p-7">
               <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3.5">
-                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.06)] [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem]">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.06)] [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem]">
                     <IconChartBar />
                   </span>
                   <div className="min-w-0">
@@ -924,7 +924,7 @@ function LeadershipHome({
                   context={`${attainmentSummary.totalResults.toLocaleString()} results recorded`}
                   tone="glass"
                   icon={<IconBookOpen />}
-                  iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
+                  iconTileClassName="rounded-md bg-[var(--surface-container)] text-muted"
                 />
                 <StatCard
                   layout="kpi"
@@ -934,7 +934,7 @@ function LeadershipHome({
                   context={attainmentSummary.latestPointLabel ?? "Latest point"}
                   tone="glass"
                   icon={<IconUsersTwo />}
-                  iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
+                  iconTileClassName="rounded-md bg-[var(--surface-container)] text-muted"
                 />
                 <StatCard
                   layout="kpi"
@@ -948,7 +948,7 @@ function LeadershipHome({
                   }
                   tone="glass"
                   icon={<IconFlagOutline />}
-                  iconTileClassName="rounded-full bg-[var(--surface-container)] text-muted"
+                  iconTileClassName="rounded-md bg-[var(--surface-container)] text-muted"
                   href={attainmentSummary.triangulatedCount > 0 ? "/assessments/triangulation" : undefined}
                 />
               </div>
@@ -1052,12 +1052,12 @@ function LeadershipHome({
                         </Link>
                         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
                           {isEmergency ? (
-                            <Button variant="primary" asChild className="min-h-0 rounded-full px-4 py-2 text-xs">
+                            <Button variant="primary" asChild className="min-h-0 rounded-md px-4 py-2 text-xs">
                               <Link href="/leave#pending-requests">Review in queue</Link>
                             </Button>
                           ) : (
                             <>
-                              <Button variant="ghost" asChild className="min-h-0 rounded-full px-3 py-2 text-xs font-medium text-[var(--pill-error-text)] hover:bg-status-denied-light">
+                              <Button variant="ghost" asChild className="min-h-0 rounded-md px-3 py-2 text-xs font-medium text-[var(--pill-error-text)] hover:bg-status-denied-light">
                                 <Link href="/leave#pending-requests" aria-label={`Decline or review leave for ${leave.requesterName}`}>
                                   Decline
                                 </Link>
@@ -1065,7 +1065,7 @@ function LeadershipHome({
                               <Button
                                 variant="secondary"
                                 asChild
-                                className="min-h-0 rounded-full border-0 bg-[color-mix(in_srgb,var(--success)_14%,white)] px-4 py-2 text-xs font-semibold text-[#065F46] shadow-none hover:bg-[color-mix(in_srgb,var(--success)_22%,white)]"
+                                className="min-h-0 rounded-md border-0 bg-[color-mix(in_srgb,var(--success)_14%,white)] px-4 py-2 text-xs font-semibold text-[#065F46] shadow-none hover:bg-[color-mix(in_srgb,var(--success)_22%,white)]"
                               >
                                 <Link href="/leave#pending-requests" aria-label={`Approve leave for ${leave.requesterName}`}>
                                   Approve
@@ -1098,7 +1098,7 @@ function LeadershipHome({
               <h2 className="text-base font-bold tracking-[-0.01em] text-text">Observation coverage</h2>
               <p className="text-xs text-muted">Least observed this window</p>
             </div>
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-container)] text-muted [&_svg]:h-4 [&_svg]:w-4">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[var(--surface-container)] text-muted [&_svg]:h-4 [&_svg]:w-4">
               <IconSearch />
             </span>
           </div>
@@ -1117,7 +1117,7 @@ function LeadershipHome({
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--surface-container)] text-[10px] font-bold text-text">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-[var(--surface-container)] text-[10px] font-bold text-text">
                         {row.teacherCoverage}
                       </span>
                       <span className="text-[11px] text-muted">obs</span>
@@ -1171,8 +1171,8 @@ function HodHome({
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{deptName} Observations</p>
           <div>
             <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">{deptObsCount}</p>
-            <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--surface-container)]">
-              <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(deptObsCount * 5, 100)}%` }} />
+            <div className="mt-2 h-1.5 w-full rounded-sm bg-[var(--surface-container)]">
+              <div className="h-full rounded-md bg-accent" style={{ width: `${Math.min(deptObsCount * 5, 100)}%` }} />
             </div>
             <p className="mt-2 text-xs text-muted">{deptTeacherRows.length} teacher{deptTeacherRows.length !== 1 ? "s" : ""} · {windowDays}d window</p>
           </div>
@@ -1224,9 +1224,9 @@ function HodHome({
                       <span className="text-sm font-medium">{row.label}</span>
                       <span className="text-sm font-bold">{Math.round(row.driftRate * 100)}%</span>
                     </div>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-sm bg-white/20">
                       <div
-                        className="home-cpd-bar-fill h-full rounded-full bg-surface-container-lowest/80"
+                        className="home-cpd-bar-fill h-full rounded-sm bg-surface-container-lowest/80"
                         style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }}
                       />
                     </div>
@@ -1323,9 +1323,9 @@ function HodHome({
                             {sig.currentMean !== null ? formatSignalRubricMean(sig.currentMean) : "—"}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-status-approved-light">
+                        <div className="h-1.5 w-full overflow-hidden rounded-sm bg-status-approved-light">
                           <div
-                            className="h-full rounded-full bg-scale-strong calm-transition"
+                            className="h-full rounded-md bg-scale-strong calm-transition"
                             style={{
                               width:
                                 sig.currentMean !== null
@@ -1358,9 +1358,9 @@ function HodHome({
                               {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
                             </span>
                           </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-scale-some-light">
+                          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-scale-some-light">
                             <div
-                              className="h-full rounded-full bg-scale-some-bar calm-transition"
+                              className="h-full rounded-md bg-scale-some-bar calm-transition"
                               style={{
                                 width:
                                   sig.delta !== null ? `${signalRubricDeltaBarWidthPct(sig.delta)}%` : "0%",
@@ -1401,9 +1401,9 @@ function HodHome({
               <span className="text-sm text-on-primary/70">{wholeSchoolTop1.teachersCovered} teachers covered</span>
               <span className="text-sm font-bold">{Math.round(wholeSchoolTop1.driftRate * 100)}%</span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+            <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/20">
               <div
-                className="home-cpd-bar-fill h-full rounded-full bg-surface-container-lowest/80"
+                className="home-cpd-bar-fill h-full rounded-sm bg-surface-container-lowest/80"
                 style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
               />
             </div>
@@ -1508,9 +1508,9 @@ function TeacherHome({
                               {sig.currentMean !== null ? formatSignalRubricMean(sig.currentMean) : "—"}
                             </span>
                           </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-status-approved-light">
+                          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-status-approved-light">
                             <div
-                              className="h-full rounded-full bg-scale-strong calm-transition"
+                              className="h-full rounded-md bg-scale-strong calm-transition"
                               style={{
                                 width:
                                   sig.currentMean !== null
@@ -1539,9 +1539,9 @@ function TeacherHome({
                               {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
                             </span>
                           </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-scale-some-light">
+                          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-scale-some-light">
                             <div
-                              className="h-full rounded-full bg-scale-some-bar calm-transition"
+                              className="h-full rounded-md bg-scale-some-bar calm-transition"
                               style={{
                                 width:
                                   sig.delta !== null ? `${signalRubricDeltaBarWidthPct(sig.delta)}%` : "0%",
@@ -1571,8 +1571,8 @@ function TeacherHome({
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations</p>
             <div>
               <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">{obsCount}</p>
-              <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--surface-container)]">
-                <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(obsCount * 10, 100)}%` }} />
+              <div className="mt-2 h-1.5 w-full rounded-sm bg-[var(--surface-container)]">
+                <div className="h-full rounded-md bg-accent" style={{ width: `${Math.min(obsCount * 10, 100)}%` }} />
               </div>
               <p className="mt-2 text-xs text-muted">
                 {obsCount > 0 ? `in the last ${windowDays} days` : "No observations yet"}
@@ -1616,7 +1616,7 @@ function TeacherHome({
               <li key={action.id}>
                 <Link href="/my-actions" className="home-row-link flex items-center justify-between gap-3 p-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-container-low)] text-muted">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
                     </span>
                     <span className="text-sm font-medium text-text truncate">{action.description}</span>
@@ -1700,7 +1700,7 @@ function TeacherHome({
                   {onCallRequests.slice(0, 3).map((req) => (
                     <li key={req.id} className="flex items-center justify-between rounded-xl bg-[var(--surface-container-low)] p-3 calm-transition hover:bg-[var(--surface-container)]">
                       <div className="flex items-center gap-2.5">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface-container)] text-muted [&_svg]:h-3 [&_svg]:w-3">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-[var(--surface-container)] text-muted [&_svg]:h-3 [&_svg]:w-3">
                           <IconBell />
                         </span>
                         <span className="text-sm font-medium text-text">{new Date(req.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
@@ -1738,9 +1738,9 @@ function TeacherHome({
               <span className="text-sm text-on-primary/70">School-wide signal movement</span>
               <span className="text-sm font-bold">{Math.round(wholeSchoolTop1.driftRate * 100)}%</span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+            <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/20">
               <div
-                className="home-cpd-bar-fill h-full rounded-full bg-surface-container-lowest/80"
+                className="home-cpd-bar-fill h-full rounded-sm bg-surface-container-lowest/80"
                 style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
               />
             </div>

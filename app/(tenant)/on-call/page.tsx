@@ -76,7 +76,7 @@ export default async function OnCallHomePage() {
               Download report
             </button>
             <Link href="/on-call/new" className="w-full sm:w-auto">
-              <Button className="h-10 min-h-0 w-full gap-2 rounded-full px-6 shadow-md sm:w-auto">
+              <Button className="h-10 min-h-0 w-full gap-2 rounded-md px-6 shadow-md sm:w-auto">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                   <path d="M12 5v14M5 12h14" />
                 </svg>

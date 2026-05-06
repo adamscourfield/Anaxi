@@ -597,7 +597,7 @@ export function ObservationHistoryAnalysis({
   }, [linePoints, timelineSnapIdx, timelineGuide]);
 
   const barTrack =
-    "relative h-8 min-w-0 w-full overflow-hidden rounded-full bg-[#F3F4F6] calm-transition";
+    "relative h-8 min-w-0 w-full overflow-hidden rounded-md bg-[#F3F4F6] calm-transition";
 
   const hasRoles = roleCounts.some((r) => r.count > 0);
   const hasTimeline = timelineWeeks.length > 0;
@@ -750,7 +750,7 @@ export function ObservationHistoryAnalysis({
                         </span>
                         <div className={barTrack}>
                           <span
-                            className="pointer-events-none absolute inset-y-0 left-0 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]"
+                            className="pointer-events-none absolute inset-y-0 left-0 rounded-md shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]"
                             style={{
                               width: `${pct}%`,
                               minWidth: row.count > 0 ? "0.5rem" : 0,

@@ -19,7 +19,7 @@ function SkeletonRow() {
       <td className="px-4 py-4">
         <div className="space-y-1.5">
           <div className="h-3 w-10 animate-pulse rounded bg-border/50" />
-          <div className="h-1.5 w-24 animate-pulse rounded-full bg-border/40" />
+          <div className="h-1.5 w-24 animate-pulse rounded-md bg-border/40" />
         </div>
       </td>
       <td className="px-4 py-4">

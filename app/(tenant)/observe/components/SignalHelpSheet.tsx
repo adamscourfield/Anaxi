@@ -33,7 +33,7 @@ export function SignalHelpSheet({
       >
         {/* Handle bar (mobile) */}
         <div className="flex justify-center pb-0 pt-3 sm:hidden">
-          <div className="h-1 w-10 rounded-full bg-border" />
+          <div className="h-1 w-10 rounded-md bg-border" />
         </div>
 
         <div className="max-h-[80vh] overflow-y-auto p-6">

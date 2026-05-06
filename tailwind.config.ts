@@ -191,12 +191,12 @@ const config: Config = {
         "cat-indigo-text":"var(--cat-indigo-text)",
       },
       borderRadius: {
-        /* Overrides Tailwind defaults so rounded-* follows design tokens in globals.css */
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",
         lg: "var(--radius-lg)",
         xl: "var(--radius-lg)",
         "2xl": "var(--radius-lg)",
+        pill: "var(--radius-pill)",
       },
       boxShadow: {
         sm:      "var(--shadow-sm)",

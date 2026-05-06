@@ -170,7 +170,7 @@ export function TenantRouteSkeleton({
         <HeaderBlock />
         <div className="flex flex-wrap gap-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-10 w-28 rounded-full bg-[var(--surface-container-low)]" />
+            <div key={i} className="h-10 w-28 rounded-md bg-[var(--surface-container-low)]" />
           ))}
         </div>
         <div className="h-56 rounded-2xl bg-[var(--surface-container-low)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_20%,transparent)]" />

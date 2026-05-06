@@ -46,7 +46,7 @@ export function ObservationReviewSectionHeader({
   return (
     <div className="mb-5 flex items-center gap-3">
       <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 [&_svg]:h-[18px] [&_svg]:w-[18px]"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-600 [&_svg]:h-[18px] [&_svg]:w-[18px]"
         aria-hidden
       >
         {icon}
@@ -68,7 +68,7 @@ export function ObservationReviewSignalRow({
       className={`flex items-center gap-3 rounded-[999px] bg-[#E5E7EB]/90 px-5 py-3.5 ${OBS_REVIEW_TEXT}`}
     >
       {icon ?? (
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-500 text-white">
           <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden>
             <path d="M3 8l3.5 3.5L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -94,7 +94,7 @@ export function ObservationReviewTeacherCard({
     <div className={`overflow-hidden rounded-xl ${OBS_REVIEW_CARD_DARK} shadow-sm`}>
       <div className="px-5 pb-6 pt-7 text-center">
         <div
-          className="mx-auto flex h-[4.25rem] w-[4.25rem] items-center justify-center rounded-full bg-[#374151] text-lg font-bold text-white"
+          className="mx-auto flex h-[4.25rem] w-[4.25rem] items-center justify-center rounded-md bg-[#374151] text-lg font-bold text-white"
           aria-hidden
         >
           {initials}
@@ -110,7 +110,7 @@ export function ObservationReviewTeacherCard({
             key={`${row.label}-${i}`}
             className={`flex gap-3 py-3.5 ${i > 0 ? "border-t border-white/10" : ""}`}
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-[#9CA3AF] [&_svg]:h-[18px] [&_svg]:w-[18px]">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/10 text-[#9CA3AF] [&_svg]:h-[18px] [&_svg]:w-[18px]">
               {row.icon}
             </span>
             <div className="min-w-0 pt-0.5 text-left">
@@ -140,7 +140,7 @@ export function ObservationReviewSessionCard({
             key={`${row.label}-${i}`}
             className={`flex items-start gap-3 px-4 py-4 ${i < rows.length - 1 ? "border-b border-[#F3F4F6]" : ""}`}
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3F4F6] text-[#6B7280] [&_svg]:h-[18px] [&_svg]:w-[18px]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F3F4F6] text-[#6B7280] [&_svg]:h-[18px] [&_svg]:w-[18px]">
               {row.icon}
             </span>
             <div className="min-w-0 pt-0.5">
