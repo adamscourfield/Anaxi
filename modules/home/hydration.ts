@@ -150,6 +150,23 @@ export async function hydrateLeadershipHomeData({
       )
     : Promise.resolve([] as OnCallDetail[]);
 
+  const onCallStatsPromise = hasOnCallFeature
+    ? safe(
+        Promise.all([
+          (prisma as any).onCallRequest.count({
+            where: { tenantId: user.tenantId, status: "RESOLVED" },
+          }),
+          (prisma as any).onCallRequest.count({
+            where: { tenantId: user.tenantId, status: "ACKNOWLEDGED" },
+          }),
+          (prisma as any).onCallRequest.count({
+            where: { tenantId: user.tenantId, status: "OPEN" },
+          }),
+        ]).then(([resolved, active, escalation]) => ({ resolved, active, escalation })),
+        { resolved: 0, active: 0, escalation: 0 }
+      )
+    : Promise.resolve({ resolved: 0, active: 0, escalation: 0 });
+
   const attainmentPromise: Promise<AttainmentSummary | null> = hasAssessmentsFeature
     ? safe(
         (prisma as any).assessmentCycle
@@ -260,7 +277,7 @@ export async function hydrateLeadershipHomeData({
     { count: 0, recentTeachers: [] as { id: string; name: string }[] }
   );
 
-  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, openOnCallCount, pendingLeaveDetails, onCallDetails, weekObs, attainmentSummary] = await Promise.all([
+  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, openOnCallCount, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary] = await Promise.all([
     safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]),
     safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]),
     safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }),
@@ -271,6 +288,7 @@ export async function hydrateLeadershipHomeData({
     openOnCallPromise,
     pendingLeaveDetailsPromise,
     onCallDetailsPromise,
+    onCallStatsPromise,
     weekObsPromise,
     attainmentPromise,
   ]);
@@ -285,6 +303,7 @@ export async function hydrateLeadershipHomeData({
     openOnCallCount: openOnCallCount as number,
     pendingLeaveDetails,
     onCallDetails,
+    onCallStats: onCallStats as { resolved: number; active: number; escalation: number },
     weekObsCount: weekObs.count,
     weekObsTeachers: weekObs.recentTeachers,
     attainmentSummary,

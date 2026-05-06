@@ -36,7 +36,7 @@ export function QuickActionButton({ items }: { items: QuickActionItem[] }) {
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0" aria-hidden>
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
         </svg>
-        Quick Action
+        + Quick Action
       </button>
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-border/80 bg-surface-container-lowest p-1.5 shadow-lg">
