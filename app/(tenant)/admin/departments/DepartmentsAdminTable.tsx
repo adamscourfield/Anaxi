@@ -44,6 +44,46 @@ function PersonGlyph({ className }: { className?: string }) {
   );
 }
 
+/** Mortarboard — reads as academic lead / head of department (not “edit”). */
+function HeadOfDepartmentGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2 10 12 5l10 5-10 5-10-5z" />
+      <path d="M6 12v5c3 3 9 3 12 0v-5" />
+    </svg>
+  );
+}
+
+/** Clear “remove head role” affordance (distinct from delete / edit). */
+function RemoveHeadGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <line x1="19" y1="8" x2="19" y2="14" />
+      <line x1="22" y1="11" x2="16" y2="11" />
+    </svg>
+  );
+}
+
 export function DepartmentsAdminTable({
   departments,
   allUsers,
@@ -239,9 +279,11 @@ export function DepartmentsAdminTable({
                                     className={ICON_ACTION}
                                     title={m.isHeadOfDepartment ? "Remove as head of department" : "Set as head of department"}
                                   >
-                                    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L8 18l-4 1 1-4L16.5 3.5z" />
-                                    </svg>
+                                    {m.isHeadOfDepartment ? (
+                                      <RemoveHeadGlyph className="h-4 w-4" />
+                                    ) : (
+                                      <HeadOfDepartmentGlyph className="h-4 w-4" />
+                                    )}
                                   </button>
                                 </form>
                                 <form action={removeMemberAction} className="inline">
