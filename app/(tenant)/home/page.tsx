@@ -334,7 +334,7 @@ function LeadershipAttentionStrip({
           detail: latestLiveOnCall
             ? `${latestLiveOnCall.requesterName} • ${formatRelativeShort(latestLiveOnCall.createdAt)}`
             : "Open requests in the live queue",
-          href: latestLiveOnCall ? `/on-call/${latestLiveOnCall.id}` : "/on-call",
+          href: "/on-call",
           tone: "critical" as const,
         }]
       : []),
