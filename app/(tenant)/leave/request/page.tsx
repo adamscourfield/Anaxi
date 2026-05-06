@@ -272,15 +272,6 @@ export default async function LeaveRequestPage() {
             <p className="mt-2 text-[0.8125rem] italic leading-relaxed text-[var(--warning-text)]">
               Ensuring educational continuity is our priority. Please ensure your cover notes are detailed.
             </p>
-            <div className="mt-4 flex items-center gap-3 border-t border-[color-mix(in_srgb,var(--outline-variant)_20%,transparent)] pt-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--surface-container-lowest)] text-[0.7rem] font-bold text-[var(--accent)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_15%,transparent)]">
-                HR
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Support contact</p>
-                <p className="text-[0.8125rem] font-medium text-text">hr@stedwards.edu</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
