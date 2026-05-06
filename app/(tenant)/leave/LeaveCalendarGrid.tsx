@@ -121,6 +121,9 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
     setMonthKey(initialMonthKey);
     setRequests(initialRequests);
   }, [initialMonthKey, initialRequests]);
+
+  const monthAnchor = useMemo(() => anchorFromMonthKey(monthKey) ?? new Date(), [monthKey]);
+
   const calStart = useMemo(() => new Date(monthAnchor.getFullYear(), monthAnchor.getMonth(), 1), [monthAnchor]);
   const calEnd = useMemo(
     () =>
