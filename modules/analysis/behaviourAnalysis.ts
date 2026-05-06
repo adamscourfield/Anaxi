@@ -76,8 +76,20 @@ export type OnCallRequestDetail = {
   notes: string | null;
 };
 
+/** Per-calendar-day cohort totals (sum across snapshots on that day) for trend sparklines. */
+export type BehaviourCohortDailyMetricRow = {
+  day: string;
+  detentions: number;
+  internalExclusions: number;
+  suspensions: number;
+  positivePoints: number;
+  negativePoints: number;
+};
+
 export type BehaviourAnalysisResult = {
   summary: BehaviourAnalysisSummary;
+  /** One row per day in the analysis window (zeros when no snapshots). */
+  cohortDailyMetrics: BehaviourCohortDailyMetricRow[];
   onCallByHour: OnCallByHourRow[];
   onCallByTeacher: OnCallByTeacherRow[];
   onCallByReason: OnCallByReasonRow[];
@@ -139,6 +151,87 @@ export function groupByTeacher(
   return Array.from(map.values()).sort((a, b) => b.count - a.count);
 }
 
+function dayKeyUtc(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/** Enumerate each calendar day from `start` through `end` (inclusive, local date). */
+function eachDayInRange(start: Date, end: Date): string[] {
+  const out: string[] = [];
+  const cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  while (cur <= last) {
+    out.push(dayKeyUtc(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+}
+
+/**
+ * Sum snapshot discipline/points fields by calendar day for students matching `studentWhere`.
+ */
+async function computeCohortDailyMetrics(
+  tenantId: string,
+  start: Date,
+  end: Date,
+  studentWhere: Record<string, unknown>,
+): Promise<BehaviourCohortDailyMetricRow[]> {
+  const rows = await (prisma as any).studentSnapshot.findMany({
+    where: {
+      tenantId,
+      snapshotDate: { gte: start, lte: end },
+      student: studentWhere,
+    },
+    select: {
+      snapshotDate: true,
+      detentionsCount: true,
+      internalExclusionsCount: true,
+      suspensionsCount: true,
+      positivePointsTotal: true,
+      negativePointsTotal: true,
+    },
+  });
+
+  type Agg = {
+    detentions: number;
+    internalExclusions: number;
+    suspensions: number;
+    positivePoints: number;
+    negativePoints: number;
+  };
+  const byDay = new Map<string, Agg>();
+
+  for (const r of rows as any[]) {
+    const k = dayKeyUtc(r.snapshotDate as Date);
+    const prev = byDay.get(k) ?? {
+      detentions: 0,
+      internalExclusions: 0,
+      suspensions: 0,
+      positivePoints: 0,
+      negativePoints: 0,
+    };
+    prev.detentions += r.detentionsCount as number;
+    prev.internalExclusions += r.internalExclusionsCount as number;
+    prev.suspensions += r.suspensionsCount as number;
+    prev.positivePoints += r.positivePointsTotal as number;
+    prev.negativePoints += r.negativePointsTotal as number;
+    byDay.set(k, prev);
+  }
+
+  const days = eachDayInRange(start, end);
+  return days.map((day) => {
+    const a = byDay.get(day);
+    return {
+      day,
+      detentions: a?.detentions ?? 0,
+      internalExclusions: a?.internalExclusions ?? 0,
+      suspensions: a?.suspensions ?? 0,
+      positivePoints: a?.positivePoints ?? 0,
+      negativePoints: a?.negativePoints ?? 0,
+    };
+  });
+}
+
 /** Group on-call requests by behaviour reason category. */
 export function groupByReason(
   requests: { behaviourReasonCategory: string | null }[],
@@ -195,6 +288,8 @@ export async function computeBehaviourAnalysis(
 
   // Fetch on-call requests in window for matching students
   const studentIds = (students as any[]).map((s: any) => s.id);
+
+  const cohortDailyMetrics = await computeCohortDailyMetrics(tenantId, start, end, studentWhere);
 
   const onCallRequests =
     hasOnCallFeature && studentIds.length > 0
@@ -334,6 +429,7 @@ export async function computeBehaviourAnalysis(
       totalOnCalls,
       highPriorityCount: highPriorityStudents.length,
     },
+    cohortDailyMetrics,
     onCallByHour,
     onCallByTeacher,
     onCallByReason,
