@@ -81,6 +81,21 @@ describe("sendEmail", () => {
     expect(result.status).toBe("failed");
   });
 
+
+  it("returns failed when Resend error response has no text method", async () => {
+    process.env.RESEND_API_KEY = "test-key";
+
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 502 });
+
+    const result = await sendEmail({
+      to: "user@example.com",
+      subject: "Test",
+      message: "Hello",
+    });
+
+    expect(result.status).toBe("failed");
+  });
+
   it("returns failed when fetch throws a network error", async () => {
     process.env.RESEND_API_KEY = "test-key";
 
