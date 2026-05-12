@@ -331,6 +331,212 @@ export async function hydrateLeadershipHomeData({
   };
 }
 
+/* ── Attainment KPI panel ────────────────────────────────────────── */
+
+export type DashboardAttainmentKPIRow = {
+  label: string;
+  /** Primary displayed number. Delta is shown as "+/-" if delta !== null, else as plain value. */
+  value: number;
+  delta: number | null;
+  /** Ordered series of average normalised scores (0–1) for sparkline rendering. */
+  sparkline: number[];
+};
+
+const KS4_YEAR_GROUPS = ["Year 10", "Year 11", "10", "11"];
+const KS5_YEAR_GROUPS = ["Year 12", "Year 13", "12", "13"];
+
+function matchesYearGroups(yg: string, targets: string[]): boolean {
+  return targets.some((t) => yg === t || yg.includes(t));
+}
+
+/**
+ * Fetches attainment KPI rows for the dashboard Attainment panel.
+ * Returns up to 3 rows: KS4 Progress 8 proxy, KS4 Attainment 8 proxy, KS5 Progress proxy.
+ * Falls back to empty array if no assessment data exists.
+ */
+export async function fetchDashboardAttainmentKPIs(
+  tenantId: string
+): Promise<DashboardAttainmentKPIRow[]> {
+  return safe(
+    (async () => {
+      const cycle = await (prisma as any).assessmentCycle.findFirst({
+        where: { tenantId, isActive: true },
+        include: {
+          points: {
+            orderBy: { ordinal: "asc" },
+            include: {
+              assessments: {
+                select: {
+                  yearGroup: true,
+                  results: { select: { normalizedScore: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!cycle) return [];
+
+      const points: any[] = cycle.points ?? [];
+      if (points.length === 0) return [];
+
+      // For each assessment point, compute avg normalised score by key stage
+      const ks4Series: number[] = [];
+      const ks5Series: number[] = [];
+
+      for (const point of points) {
+        const assessments: any[] = point.assessments ?? [];
+        const ks4Scores: number[] = [];
+        const ks5Scores: number[] = [];
+
+        for (const assessment of assessments) {
+          const yg: string = assessment.yearGroup ?? "";
+          const results: any[] = assessment.results ?? [];
+          const scores = results
+            .filter((r: any) => r.normalizedScore !== null)
+            .map((r: any) => r.normalizedScore as number);
+
+          if (scores.length === 0) continue;
+          const avg = scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
+
+          if (matchesYearGroups(yg, KS4_YEAR_GROUPS)) ks4Scores.push(avg);
+          if (matchesYearGroups(yg, KS5_YEAR_GROUPS)) ks5Scores.push(avg);
+        }
+
+        if (ks4Scores.length > 0) {
+          ks4Series.push(ks4Scores.reduce((a, b) => a + b, 0) / ks4Scores.length);
+        }
+        if (ks5Scores.length > 0) {
+          ks5Series.push(ks5Scores.reduce((a, b) => a + b, 0) / ks5Scores.length);
+        }
+      }
+
+      const rows: DashboardAttainmentKPIRow[] = [];
+
+      // KS4 Progress 8 proxy — expressed as normalised delta (+/-) between first and last point
+      if (ks4Series.length >= 2) {
+        const first = ks4Series[0];
+        const last = ks4Series[ks4Series.length - 1];
+        const progressDelta = parseFloat(((last - first) * 4).toFixed(2)); // scale 0-1 → 0-4 range
+        rows.push({
+          label: "KS4 Progress 8",
+          value: progressDelta,
+          delta: progressDelta,
+          sparkline: ks4Series,
+        });
+      } else if (ks4Series.length === 1) {
+        rows.push({
+          label: "KS4 Progress 8",
+          value: 0,
+          delta: 0,
+          sparkline: ks4Series,
+        });
+      }
+
+      // KS4 Attainment 8 proxy — last point avg mapped to 0-80 Att8 scale
+      if (ks4Series.length > 0) {
+        const lastKs4 = ks4Series[ks4Series.length - 1];
+        const att8 = parseFloat((lastKs4 * 80).toFixed(1));
+        rows.push({
+          label: "KS4 Attainment 8",
+          value: att8,
+          delta: null,
+          sparkline: ks4Series.map((v) => v * 80),
+        });
+      }
+
+      // KS5 Progress proxy
+      if (ks5Series.length >= 2) {
+        const first = ks5Series[0];
+        const last = ks5Series[ks5Series.length - 1];
+        const progressDelta = parseFloat(((last - first) * 4).toFixed(2));
+        rows.push({
+          label: "KS5 Progress",
+          value: progressDelta,
+          delta: progressDelta,
+          sparkline: ks5Series,
+        });
+      } else if (ks5Series.length === 1) {
+        rows.push({
+          label: "KS5 Progress",
+          value: 0,
+          delta: 0,
+          sparkline: ks5Series,
+        });
+      }
+
+      return rows;
+    })(),
+    [] as DashboardAttainmentKPIRow[]
+  );
+}
+
+/* ── Behaviour Heatmap ───────────────────────────────────────────── */
+
+export type BehaviourHeatmapData = {
+  yearGroups: string[];
+  /** Day-of-week labels for the columns (e.g. ["Mon", "Tue", "Wed", "Thu", "Fri"]). */
+  columnLabels: string[];
+  /** matrix[rowIndex][colIndex] = incident count */
+  matrix: number[][];
+};
+
+const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+
+/**
+ * Builds a year-group × weekday behaviour heatmap from on-call request counts.
+ * Only counts Mon–Fri incidents. Year groups are sorted by natural order.
+ */
+export async function fetchBehaviourHeatmapMatrix(
+  tenantId: string,
+  windowDays: number
+): Promise<BehaviourHeatmapData | null> {
+  return safe(
+    (async () => {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - windowDays);
+
+      const requests = await (prisma as any).onCallRequest.findMany({
+        where: { tenantId, createdAt: { gte: startDate } },
+        include: { student: { select: { yearGroup: true } } },
+        orderBy: { createdAt: "asc" },
+      });
+
+      if (!requests || (requests as any[]).length === 0) return null;
+
+      // Accumulate counts: yearGroup → dow (1=Mon … 5=Fri) → count
+      const counts: Record<string, Record<number, number>> = {};
+
+      for (const req of requests as any[]) {
+        const yg: string = req.student?.yearGroup ?? "Unknown";
+        // getDay(): 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+        const dow = new Date(req.createdAt as Date).getDay();
+        if (dow < 1 || dow > 5) continue; // skip weekends
+        if (!counts[yg]) counts[yg] = {};
+        counts[yg][dow] = (counts[yg][dow] ?? 0) + 1;
+      }
+
+      const yearGroups = Object.keys(counts).sort((a, b) => {
+        // Sort by year number extracted from label
+        const numA = parseInt(a.replace(/\D/g, ""), 10);
+        const numB = parseInt(b.replace(/\D/g, ""), 10);
+        return (isNaN(numA) ? 999 : numA) - (isNaN(numB) ? 999 : numB);
+      });
+
+      if (yearGroups.length === 0) return null;
+
+      // Build matrix: rows = yearGroups, cols = Mon(1)…Fri(5)
+      const matrix = yearGroups.map((yg) =>
+        [1, 2, 3, 4, 5].map((dow) => counts[yg]?.[dow] ?? 0)
+      );
+
+      return { yearGroups, columnLabels: DOW_LABELS, matrix };
+    })(),
+    null as BehaviourHeatmapData | null
+  );
+}
+
 export async function hydrateHodHomeData({
   user,
   windowDays,
