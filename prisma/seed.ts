@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { seedProgress8Benchmarks } from "../modules/assessments/progress8";
 import { getSignalDefinitionsForSchoolType } from "../modules/observations/getSignalsBySchoolType";
 import { SIGNAL_DEFINITIONS } from "../modules/observations/signalDefinitions";
 import { PRIMARY_SIGNAL_DEFINITIONS } from "../modules/observations/signalDefinitionsPrimary";
@@ -13,6 +14,8 @@ const FEATURES = [
 ] as const;
 
 async function main() {
+  await seedProgress8Benchmarks(prisma);
+
   const tenant = await prisma.tenant.upsert({
     where: { id: "tenant_demo" },
     update: { name: "Demo School", slug: "demo-school", status: "ACTIVE" },
@@ -194,17 +197,24 @@ async function main() {
   // Ella: STABLE (minimal changes)
 
   const demoStudents = [
-    { upn: "S001", fullName: "Jamie Reynolds", yearGroup: "Y10", sendFlag: true, ppFlag: false },
-    { upn: "S002", fullName: "Priya Sharma", yearGroup: "Y9", sendFlag: false, ppFlag: true },
-    { upn: "S003", fullName: "Lucas Green", yearGroup: "Y8", sendFlag: false, ppFlag: false },
-    { upn: "S004", fullName: "Ella Morgan", yearGroup: "Y10", sendFlag: false, ppFlag: false },
+    { upn: "S001", fullName: "Jamie Reynolds", yearGroup: "Y10", ks2ReadingScaledScore: 97, ks2MathsScaledScore: 95, sendFlag: true, ppFlag: false },
+    { upn: "S002", fullName: "Priya Sharma", yearGroup: "Y9", ks2ReadingScaledScore: 103, ks2MathsScaledScore: 101, sendFlag: false, ppFlag: true },
+    { upn: "S003", fullName: "Lucas Green", yearGroup: "Y8", ks2ReadingScaledScore: 100, ks2MathsScaledScore: 99, sendFlag: false, ppFlag: false },
+    { upn: "S004", fullName: "Ella Morgan", yearGroup: "Y10", ks2ReadingScaledScore: 108, ks2MathsScaledScore: 106, sendFlag: false, ppFlag: false },
   ];
 
   const studentRecords: Record<string, any> = {};
   for (const s of demoStudents) {
     studentRecords[s.upn] = await (prisma as any).student.upsert({
       where: { tenantId_upn: { tenantId: tenant.id, upn: s.upn } },
-      update: { fullName: s.fullName, yearGroup: s.yearGroup, sendFlag: s.sendFlag, ppFlag: s.ppFlag },
+      update: {
+        fullName: s.fullName,
+        yearGroup: s.yearGroup,
+        ks2ReadingScaledScore: s.ks2ReadingScaledScore,
+        ks2MathsScaledScore: s.ks2MathsScaledScore,
+        sendFlag: s.sendFlag,
+        ppFlag: s.ppFlag,
+      },
       create: { tenantId: tenant.id, ...s, status: "ACTIVE" }
     });
   }

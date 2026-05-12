@@ -985,13 +985,22 @@ function LeadershipHome({
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard
                   layout="kpi"
                   showChevron={false}
-                  label="Subjects assessed"
-                  value={attainmentSummary.subjectCount}
-                  context={`${attainmentSummary.totalResults.toLocaleString()} results recorded`}
+                  label="Actual Attainment 8"
+                  value={
+                    attainmentSummary.progress8?.averageActualAttainment8 !== null &&
+                    attainmentSummary.progress8?.averageActualAttainment8 !== undefined
+                      ? attainmentSummary.progress8.averageActualAttainment8.toFixed(1)
+                      : "—"
+                  }
+                  context={
+                    attainmentSummary.progress8?.studentCountWithActual
+                      ? `${attainmentSummary.progress8.studentCountWithActual} students in latest GCSE point`
+                      : `${attainmentSummary.totalResults.toLocaleString()} results recorded`
+                  }
                   tone="glass"
                   icon={<IconBookOpen />}
                   iconTileClassName="rounded-md bg-[var(--surface-container)] text-muted"
@@ -999,11 +1008,39 @@ function LeadershipHome({
                 <StatCard
                   layout="kpi"
                   showChevron={false}
-                  label="Students assessed"
-                  value={attainmentSummary.studentCount}
-                  context={attainmentSummary.latestPointLabel ?? "Latest point"}
+                  label="Expected Attainment 8"
+                  value={
+                    attainmentSummary.progress8?.averageExpectedAttainment8 !== null &&
+                    attainmentSummary.progress8?.averageExpectedAttainment8 !== undefined
+                      ? attainmentSummary.progress8.averageExpectedAttainment8.toFixed(1)
+                      : "—"
+                  }
+                  context={
+                    attainmentSummary.progress8?.studentCountWithExpected
+                      ? `${attainmentSummary.progress8.studentCountWithExpected} students with KS2 scaled scores`
+                      : attainmentSummary.latestPointLabel ?? "Latest point"
+                  }
                   tone="glass"
                   icon={<IconUsersTwo />}
+                  iconTileClassName="rounded-md bg-[var(--surface-container)] text-muted"
+                />
+                <StatCard
+                  layout="kpi"
+                  showChevron={false}
+                  label="Predicted Progress 8"
+                  value={
+                    attainmentSummary.progress8?.averagePredictedProgress8 !== null &&
+                    attainmentSummary.progress8?.averagePredictedProgress8 !== undefined
+                      ? `${attainmentSummary.progress8.averagePredictedProgress8 > 0 ? "+" : ""}${attainmentSummary.progress8.averagePredictedProgress8.toFixed(2)}`
+                      : "—"
+                  }
+                  context={
+                    attainmentSummary.progress8?.studentCountWithPrediction
+                      ? `${attainmentSummary.progress8.studentCountWithPrediction} students with both actual and expected A8`
+                      : "Add KS2 reading and maths scaled scores to enable Progress 8"
+                  }
+                  tone="glass"
+                  icon={<IconTrendUp />}
                   iconTileClassName="rounded-md bg-[var(--surface-container)] text-muted"
                 />
                 <StatCard

@@ -34,7 +34,7 @@ interface OnCallDetailRequest {
   behaviourReasonCategory?: string | null;
   notes?: string | null;
   requester: { fullName: string };
-  responder?: { fullName: string } | null;
+  responder?: { id: string; fullName: string } | null;
   createdAt: Date | string;
   acknowledgedAt?: Date | string | null;
   resolvedAt?: Date | string | null;

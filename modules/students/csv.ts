@@ -16,10 +16,17 @@ export const REQUIRED_FIELDS = [
   "Status"
 ] as const;
 
+export const OPTIONAL_FIELDS = [
+  "KS2ReadingScaledScore",
+  "KS2MathsScaledScore",
+] as const;
+
 export type StudentCsvRecord = {
   upn: string;
   fullName: string;
   yearGroup: string;
+  ks2ReadingScaledScore: number | null;
+  ks2MathsScaledScore: number | null;
   positivePointsTotal: number;
   detentionsCount: number;
   internalExclusionsCount: number;
@@ -51,6 +58,14 @@ export function parseAttendancePct(raw: string): number {
   return Number(n.toFixed(2));
 }
 
+function parseOptionalScaledScore(raw: string): number | null {
+  const value = String(raw || "").trim();
+  if (!value) return null;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 80 || n > 120) return null;
+  return n;
+}
+
 export function parseStudentsCsv(input: string, mapping: Record<string, string>) {
   const rows = parse(input, { columns: true, skip_empty_lines: true, trim: true }) as Record<string, string>[];
   const parsed: StudentCsvRecord[] = [];
@@ -61,13 +76,23 @@ export function parseStudentsCsv(input: string, mapping: Record<string, string>)
 
     const upn = get("UPN").trim();
     const fullName = get("Name").trim();
+    const readingScaledScoreRaw = get("KS2ReadingScaledScore");
+    const mathsScaledScoreRaw = get("KS2MathsScaledScore");
     if (!upn) errors.push({ rowNumber: idx + 1, field: "UPN", message: "UPN is required" });
     if (!fullName) errors.push({ rowNumber: idx + 1, field: "Name", message: "Name is required" });
+    if (readingScaledScoreRaw.trim() && parseOptionalScaledScore(readingScaledScoreRaw) === null) {
+      errors.push({ rowNumber: idx + 1, field: "KS2ReadingScaledScore", message: "KS2ReadingScaledScore must be an integer between 80 and 120" });
+    }
+    if (mathsScaledScoreRaw.trim() && parseOptionalScaledScore(mathsScaledScoreRaw) === null) {
+      errors.push({ rowNumber: idx + 1, field: "KS2MathsScaledScore", message: "KS2MathsScaledScore must be an integer between 80 and 120" });
+    }
 
     parsed.push({
       upn,
       fullName,
       yearGroup: get("YearGroup").trim(),
+      ks2ReadingScaledScore: parseOptionalScaledScore(readingScaledScoreRaw),
+      ks2MathsScaledScore: parseOptionalScaledScore(mathsScaledScoreRaw),
       positivePointsTotal: Number(get("PositivePointsTotal") || 0),
       detentionsCount: Number(get("Detentions") || 0),
       internalExclusionsCount: Number(get("InternalExclusions") || 0),

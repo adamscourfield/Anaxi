@@ -52,6 +52,8 @@ export async function POST(req: Request) {
           upn: row.upn,
           fullName: row.fullName,
           yearGroup: row.yearGroup,
+          ks2ReadingScaledScore: row.ks2ReadingScaledScore,
+          ks2MathsScaledScore: row.ks2MathsScaledScore,
           sendFlag: row.sendFlag,
           ppFlag: row.ppFlag,
           status: row.status
@@ -59,6 +61,8 @@ export async function POST(req: Request) {
         update: {
           fullName: row.fullName,
           yearGroup: row.yearGroup,
+          ks2ReadingScaledScore: row.ks2ReadingScaledScore,
+          ks2MathsScaledScore: row.ks2MathsScaledScore,
           sendFlag: row.sendFlag,
           ppFlag: row.ppFlag,
           status: row.status

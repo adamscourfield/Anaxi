@@ -27,18 +27,36 @@ export async function GET(req: Request) {
 
   const students = await (prisma as any).student.findMany({
     where: { tenantId: user.tenantId, status: "ACTIVE" },
-    select: { upn: true, fullName: true, yearGroup: true, sendFlag: true, ppFlag: true },
+    select: {
+      upn: true,
+      fullName: true,
+      yearGroup: true,
+      ks2ReadingScaledScore: true,
+      ks2MathsScaledScore: true,
+      sendFlag: true,
+      ppFlag: true,
+    },
     orderBy: { fullName: "asc" },
   });
 
   const lines = [
-    "UPN,Name,YearGroup,PositivePointsTotal,Detentions,InternalExclusions,Suspensions,Attendance,Lateness,SEND,PP,Status",
-    ...(students as Array<{ upn: string | null; fullName: string; yearGroup: string | null; sendFlag: boolean; ppFlag: boolean }>)
+    "UPN,Name,YearGroup,KS2ReadingScaledScore,KS2MathsScaledScore,PositivePointsTotal,Detentions,InternalExclusions,Suspensions,Attendance,Lateness,SEND,PP,Status",
+    ...(students as Array<{
+      upn: string | null;
+      fullName: string;
+      yearGroup: string | null;
+      ks2ReadingScaledScore: number | null;
+      ks2MathsScaledScore: number | null;
+      sendFlag: boolean;
+      ppFlag: boolean;
+    }>)
       .map((student) =>
         [
           student.upn ?? "",
           student.fullName,
           student.yearGroup ?? "",
+          student.ks2ReadingScaledScore ?? "",
+          student.ks2MathsScaledScore ?? "",
           "0",
           "0",
           "0",

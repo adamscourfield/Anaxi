@@ -1,0 +1,45 @@
+export type Progress8BenchmarkSeedRow = {
+  ks2AverageScaledScore: number;
+  expectedAttainment8: number;
+  zeroProgress8GradeEquivalent: number;
+};
+
+export const PROGRESS8_BENCHMARKS: Progress8BenchmarkSeedRow[] = [
+  { ks2AverageScaledScore: 84, expectedAttainment8: 16.0, zeroProgress8GradeEquivalent: 1.6 },
+  { ks2AverageScaledScore: 85, expectedAttainment8: 17.2, zeroProgress8GradeEquivalent: 1.72 },
+  { ks2AverageScaledScore: 86, expectedAttainment8: 18.5, zeroProgress8GradeEquivalent: 1.85 },
+  { ks2AverageScaledScore: 87, expectedAttainment8: 19.8, zeroProgress8GradeEquivalent: 1.98 },
+  { ks2AverageScaledScore: 88, expectedAttainment8: 21.2, zeroProgress8GradeEquivalent: 2.12 },
+  { ks2AverageScaledScore: 89, expectedAttainment8: 22.6, zeroProgress8GradeEquivalent: 2.26 },
+  { ks2AverageScaledScore: 90, expectedAttainment8: 24.1, zeroProgress8GradeEquivalent: 2.41 },
+  { ks2AverageScaledScore: 91, expectedAttainment8: 25.7, zeroProgress8GradeEquivalent: 2.57 },
+  { ks2AverageScaledScore: 92, expectedAttainment8: 27.3, zeroProgress8GradeEquivalent: 2.73 },
+  { ks2AverageScaledScore: 93, expectedAttainment8: 29.0, zeroProgress8GradeEquivalent: 2.9 },
+  { ks2AverageScaledScore: 94, expectedAttainment8: 30.8, zeroProgress8GradeEquivalent: 3.08 },
+  { ks2AverageScaledScore: 95, expectedAttainment8: 32.7, zeroProgress8GradeEquivalent: 3.27 },
+  { ks2AverageScaledScore: 96, expectedAttainment8: 34.1, zeroProgress8GradeEquivalent: 3.41 },
+  { ks2AverageScaledScore: 97, expectedAttainment8: 34.8, zeroProgress8GradeEquivalent: 3.48 },
+  { ks2AverageScaledScore: 98, expectedAttainment8: 35.1, zeroProgress8GradeEquivalent: 3.51 },
+  { ks2AverageScaledScore: 99, expectedAttainment8: 35.3, zeroProgress8GradeEquivalent: 3.53 },
+  { ks2AverageScaledScore: 100, expectedAttainment8: 35.47, zeroProgress8GradeEquivalent: 3.55 },
+  { ks2AverageScaledScore: 101, expectedAttainment8: 37.27, zeroProgress8GradeEquivalent: 3.73 },
+  { ks2AverageScaledScore: 102, expectedAttainment8: 38.94, zeroProgress8GradeEquivalent: 3.89 },
+  { ks2AverageScaledScore: 103, expectedAttainment8: 41.03, zeroProgress8GradeEquivalent: 4.1 },
+  { ks2AverageScaledScore: 104, expectedAttainment8: 42.98, zeroProgress8GradeEquivalent: 4.3 },
+  { ks2AverageScaledScore: 105, expectedAttainment8: 45.13, zeroProgress8GradeEquivalent: 4.51 },
+  { ks2AverageScaledScore: 106, expectedAttainment8: 47.46, zeroProgress8GradeEquivalent: 4.75 },
+  { ks2AverageScaledScore: 107, expectedAttainment8: 49.77, zeroProgress8GradeEquivalent: 4.98 },
+  { ks2AverageScaledScore: 108, expectedAttainment8: 52.57, zeroProgress8GradeEquivalent: 5.26 },
+  { ks2AverageScaledScore: 109, expectedAttainment8: 55.3, zeroProgress8GradeEquivalent: 5.53 },
+  { ks2AverageScaledScore: 110, expectedAttainment8: 57.61, zeroProgress8GradeEquivalent: 5.76 },
+  { ks2AverageScaledScore: 111, expectedAttainment8: 60.22, zeroProgress8GradeEquivalent: 6.02 },
+  { ks2AverageScaledScore: 112, expectedAttainment8: 62.87, zeroProgress8GradeEquivalent: 6.29 },
+  { ks2AverageScaledScore: 113, expectedAttainment8: 65.48, zeroProgress8GradeEquivalent: 6.55 },
+  { ks2AverageScaledScore: 114, expectedAttainment8: 68.16, zeroProgress8GradeEquivalent: 6.82 },
+  { ks2AverageScaledScore: 115, expectedAttainment8: 70.61, zeroProgress8GradeEquivalent: 7.06 },
+  { ks2AverageScaledScore: 116, expectedAttainment8: 73.17, zeroProgress8GradeEquivalent: 7.32 },
+  { ks2AverageScaledScore: 117, expectedAttainment8: 75.47, zeroProgress8GradeEquivalent: 7.55 },
+  { ks2AverageScaledScore: 118, expectedAttainment8: 77.28, zeroProgress8GradeEquivalent: 7.73 },
+  { ks2AverageScaledScore: 119, expectedAttainment8: 79.75, zeroProgress8GradeEquivalent: 7.98 },
+  { ks2AverageScaledScore: 120, expectedAttainment8: 82.03, zeroProgress8GradeEquivalent: 8.2 },
+];

@@ -12,6 +12,8 @@ const COLUMN_GUIDE = [
   { field: "UPN", required: true, description: "Unique Pupil Number (8-character code)", example: "A123456789" },
   { field: "Name", required: true, description: "Student full name", example: "Jane Smith" },
   { field: "YearGroup", required: true, description: "Year group label", example: "Year 10" },
+  { field: "KS2ReadingScaledScore", required: false, description: "KS2 reading scaled score (80–120)", example: "100" },
+  { field: "KS2MathsScaledScore", required: false, description: "KS2 maths scaled score (80–120)", example: "101" },
   { field: "Attendance", required: false, description: "Attendance percentage (0–100)", example: "94.5" },
   { field: "Detentions", required: false, description: "Detention count for the period", example: "3" },
   { field: "InternalExclusions", required: false, description: "Internal exclusion count", example: "1" },

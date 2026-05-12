@@ -4,6 +4,8 @@ export interface StudentWithLatestSnapshot {
   upn: string | null
   fullName: string
   yearGroup: string | null
+  ks2ReadingScaledScore: number | null
+  ks2MathsScaledScore: number | null
   sendFlag: boolean
   ppFlag: boolean
   status: 'ACTIVE' | 'ARCHIVED'

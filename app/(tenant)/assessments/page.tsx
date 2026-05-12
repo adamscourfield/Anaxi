@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { Button } from "@/components/ui/button";
 import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
+import { getProgress8DashboardSummary } from "@/modules/assessments/progress8";
 import Link from "next/link";
 import type { QualificationType, PointType } from "@prisma/client";
 import { qualificationTypePillClasses } from "@/modules/assessments/attainmentColours";
@@ -70,6 +71,7 @@ export default async function AssessmentsPage() {
     (s, c) => s + c.points.reduce((ss, p) => ss + p.assessments.reduce((sss, a) => sss + a.entryCount, 0), 0),
     0,
   );
+  const progress8Summary = await getProgress8DashboardSummary(user.tenantId);
 
   return (
     <AttainmentPageShell>
@@ -174,6 +176,23 @@ export default async function AssessmentsPage() {
             <div>
               <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">Total entries</p>
               <p className="mt-0.5 text-xl font-bold tabular-nums text-[#111827]">{totalEntriesAll.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="hidden h-10 w-px shrink-0 bg-[#e5e7eb] sm:block" aria-hidden />
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-rose-50 text-rose-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                <path d="M4 18h16" strokeLinecap="round" />
+                <path d="M7 15l3-3 3 2 4-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">Predicted Progress 8</p>
+              <p className="mt-0.5 text-xl font-bold tabular-nums text-[#111827]">
+                {progress8Summary?.averagePredictedProgress8 !== null && progress8Summary?.averagePredictedProgress8 !== undefined
+                  ? `${progress8Summary.averagePredictedProgress8 > 0 ? "+" : ""}${progress8Summary.averagePredictedProgress8.toFixed(2)}`
+                  : "—"}
+              </p>
             </div>
           </div>
         </div>

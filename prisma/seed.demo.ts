@@ -16,6 +16,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { seedProgress8Benchmarks } from "../modules/assessments/progress8";
 import { getSignalDefinitionsForSchoolType } from "../modules/observations/getSignalsBySchoolType";
 import { SIGNAL_DEFINITIONS } from "../modules/observations/signalDefinitions";
 import { PRIMARY_SIGNAL_DEFINITIONS } from "../modules/observations/signalDefinitionsPrimary";
@@ -257,6 +258,7 @@ function improvingPrevSignals(): ReturnType<typeof makeSignals> {
 
 export async function seedDemo(prisma: PrismaClient, isReset = false) {
   assertSafe();
+  await seedProgress8Benchmarks(prisma);
 
   const label = isReset ? "RESET" : "SEED";
   console.log(`\n🌱  Demo ${label}: Starting — Demo Academy\n`);
@@ -563,6 +565,8 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
           upn,
           fullName: name,
           yearGroup: year,
+          ks2ReadingScaledScore: randInt(84, 120),
+          ks2MathsScaledScore: randInt(84, 120),
           sendFlag: isSEND,
           ppFlag: isPP,
           status: "ACTIVE",
@@ -1233,12 +1237,19 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
     const upn = `D13${String(i + 1).padStart(3, "0")}`;
     const student = await prisma.student.upsert({
       where: { tenantId_upn: { tenantId: tenant.id, upn } },
-      update: { fullName: name, yearGroup: "Y13" },
+      update: {
+        fullName: name,
+        yearGroup: "Y13",
+        ks2ReadingScaledScore: randInt(84, 120),
+        ks2MathsScaledScore: randInt(84, 120),
+      },
       create: {
         tenantId: tenant.id,
         upn,
         fullName: name,
         yearGroup: "Y13",
+        ks2ReadingScaledScore: randInt(84, 120),
+        ks2MathsScaledScore: randInt(84, 120),
         ppFlag: i % 7 === 0,
         sendFlag: i % 12 === 0,
         status: "ACTIVE",
