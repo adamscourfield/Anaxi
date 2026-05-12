@@ -22,11 +22,17 @@ import {
   hydrateLeadershipHomeData,
   hydrateHodHomeData,
   hydrateTeacherHomeData,
+  fetchDashboardAttainmentKPIs,
+  fetchBehaviourHeatmapMatrix,
   PendingLeaveDetail,
   OnCallDetail,
   AttainmentSummary,
   DualFlaggedStudent,
+  DashboardAttainmentKPIRow,
+  BehaviourHeatmapData,
 } from "@/modules/home/hydration";
+import { AttainmentPanel } from "@/components/dashboard/AttainmentPanel";
+import { BehaviourHeatmap } from "@/components/dashboard/BehaviourHeatmap";
 import { QuickActionButton } from "@/components/dashboard/QuickActionButton";
 import { Button } from "@/components/ui/button";
 import {
@@ -482,6 +488,8 @@ function LeadershipHome({
   attainmentSummary,
   hasStudentAnalysisFeature,
   watchlistStudents,
+  attainmentKPIs,
+  behaviourHeatmap,
 }: {
   windowDays: number;
   cpdRows: CpdPriorityRow[];
@@ -499,6 +507,8 @@ function LeadershipHome({
   attainmentSummary: AttainmentSummary | null;
   hasStudentAnalysisFeature?: boolean;
   watchlistStudents?: StudentRiskRow[];
+  attainmentKPIs: DashboardAttainmentKPIRow[];
+  behaviourHeatmap: BehaviourHeatmapData | null;
 }) {
   const allDriftingCpd = cpdRows.filter((r) => r.teachersDriftingDown > 0);
   const topCpd = allDriftingCpd.slice(0, 3);
@@ -1197,6 +1207,32 @@ function LeadershipHome({
         </section>
       )}
 
+      {/* ═══ Attainment Panel + Behaviour Heatmap ═══ */}
+      {(attainmentKPIs.length > 0 || behaviourHeatmap) && (
+        <section className="grid min-w-0 gap-5 lg:grid-cols-2 lg:items-stretch">
+          {attainmentKPIs.length > 0 && (
+            <Card className="rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+              <AttainmentPanel
+                rows={attainmentKPIs}
+                ctaHref="/assessments"
+                ctaLabel="Go to attainment"
+              />
+            </Card>
+          )}
+          {behaviourHeatmap && (
+            <Card className="rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+              <BehaviourHeatmap
+                yearGroups={behaviourHeatmap.yearGroups}
+                columnLabels={behaviourHeatmap.columnLabels}
+                matrix={behaviourHeatmap.matrix}
+                ctaHref="/students"
+                ctaLabel="View full map"
+              />
+            </Card>
+          )}
+        </section>
+      )}
+
     </div>
   );
 }
@@ -1883,7 +1919,17 @@ export default async function HomePage({
       const hasOnCallFeature = enabledFeatures.has("ON_CALL");
       const hasAssessmentsFeature = enabledFeatures.has("ASSESSMENTS");
       const hasStudentAnalysisFeature = enabledFeatures.has("STUDENT_ANALYSIS");
-      const { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, pendingLeaveDetails, liveOnCallBanner, onCallDetails, onCallStats, weekObsCount, weekObsTeachers, attainmentSummary, watchlistStudents } = await hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature });
+
+      const [
+        { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, pendingLeaveDetails, liveOnCallBanner, onCallDetails, onCallStats, weekObsCount, weekObsTeachers, attainmentSummary, watchlistStudents },
+        attainmentKPIs,
+        behaviourHeatmap,
+      ] = await Promise.all([
+        hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature }),
+        hasAssessmentsFeature ? fetchDashboardAttainmentKPIs(user.tenantId) : Promise.resolve([]),
+        hasOnCallFeature ? fetchBehaviourHeatmapMatrix(user.tenantId, windowDays) : Promise.resolve(null),
+      ]);
+
       return (
         <LeadershipHome
           windowDays={windowDays}
@@ -1902,6 +1948,8 @@ export default async function HomePage({
           attainmentSummary={attainmentSummary ?? null}
           hasStudentAnalysisFeature={hasStudentAnalysisFeature}
           watchlistStudents={watchlistStudents}
+          attainmentKPIs={attainmentKPIs}
+          behaviourHeatmap={behaviourHeatmap}
         />
       );
     }
