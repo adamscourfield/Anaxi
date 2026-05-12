@@ -31,7 +31,6 @@ import {
   DashboardAttainmentKPIRow,
   BehaviourHeatmapData,
 } from "@/modules/home/hydration";
-import { AttainmentPanel } from "@/components/dashboard/AttainmentPanel";
 import { BehaviourHeatmap } from "@/components/dashboard/BehaviourHeatmap";
 import { QuickActionButton } from "@/components/dashboard/QuickActionButton";
 import { Button } from "@/components/ui/button";
@@ -133,6 +132,58 @@ function formatSignalRubricDelta(delta: number): string {
 function signalRubricDeltaBarWidthPct(delta: number): number {
   const pct = (Math.abs(delta) / OBS_RUBRIC_SPAN) * 100;
   return Math.round(Math.min(100, pct));
+}
+
+function DashboardSparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return null;
+
+  const width = 72;
+  const height = 22;
+  const pad = 2;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+
+  const points = values
+    .map((value, index) => {
+      const x = pad + (index / (values.length - 1)) * (width - pad * 2);
+      const y = height - pad - ((value - min) / range) * (height - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  const first = points.split(" ")[0]?.split(",") ?? ["0", String(height)];
+  const last = points.split(" ").at(-1)?.split(",") ?? [String(width), String(height)];
+  const area = `M${first[0]},${height} L${points.replace(/(\d+\.?\d*),(\d+\.?\d*)/g, "L$1,$2").slice(1)} L${last[0]},${height} Z`;
+
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden className="shrink-0 overflow-visible">
+      <path d={area} fill="var(--coral)" fillOpacity="0.12" />
+      <polyline
+        points={points}
+        fill="none"
+        stroke="var(--coral)"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <circle cx={last[0]} cy={last[1]} r="2.5" fill="var(--coral)" />
+    </svg>
+  );
+}
+
+function AttainmentMetricValue({ row }: { row: DashboardAttainmentKPIRow }) {
+  if (row.delta === null) {
+    return <span className="tabular-nums text-sm font-semibold text-text">{row.value.toFixed(1)}</span>;
+  }
+
+  const positive = row.delta >= 0;
+  return (
+    <span className={`tabular-nums text-sm font-semibold ${positive ? "text-[var(--success)]" : "text-[var(--error)]"}`}>
+      {positive ? "+" : ""}
+      {row.delta.toFixed(2)}
+    </span>
+  );
 }
 
 function roleVariant(role: UserRole): "leadership" | "hod" | "teacher" {
@@ -967,15 +1018,10 @@ function LeadershipHome({
         </Card>
       )}
 
-      {/* ═══ Attainment + Leave (design bottom row) ═══ */}
-      {(attainmentSummary || hasLeaveFeature) && (
-        <section
-          className={`grid min-w-0 gap-5 lg:items-stretch ${
-            attainmentSummary && hasLeaveFeature ? "lg:grid-cols-2" : "lg:grid-cols-1"
-          }`}
-        >
-          {attainmentSummary ? (
-            <Card className="flex h-full min-h-0 flex-col space-y-5 rounded-2xl p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)] sm:p-7">
+      {/* ═══ Attainment ═══ */}
+      {attainmentSummary ? (
+        <section className="grid min-w-0 gap-5">
+          <Card className="flex h-full min-h-0 flex-col space-y-6 rounded-2xl p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)] sm:p-7">
               <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3.5">
                   <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.06)] [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem]">
@@ -1070,48 +1116,88 @@ function LeadershipHome({
                 />
               </div>
 
-              {attainmentSummary.topDualFlagged.length > 0 && (
-                <div className="space-y-3 rounded-xl bg-[var(--surface-container-low)] p-4 sm:p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-                      Dual-flagged students — attainment + pastoral risk
-                    </p>
-                    <Link href="/assessments/triangulation" className="link-muted-accent shrink-0 text-xs font-medium">
-                      View all →
-                    </Link>
-                  </div>
-                  <ul className="space-y-1">
-                    {attainmentSummary.topDualFlagged.map((s: DualFlaggedStudent) => (
-                      <li key={s.studentId}>
-                        <Link
-                          href={studentAnalysisHref(s.studentId, windowDays)}
-                          className="home-row-link flex items-center gap-3 rounded-lg px-3 py-3"
-                        >
-                          <Avatar name={s.studentName} size="md" tone="muted" />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex min-w-0 flex-wrap items-center gap-2">
-                              <span className="truncate text-sm font-semibold text-text">{s.studentName}</span>
-                              {s.yearGroup ? <span className={yearGroupPillClass}>{s.yearGroup}</span> : null}
-                              {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
-                              {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
+              {(attainmentKPIs.length > 0 || attainmentSummary.topDualFlagged.length > 0) && (
+                <div
+                  className={`grid gap-4 ${
+                    attainmentKPIs.length > 0 && attainmentSummary.topDualFlagged.length > 0
+                      ? "xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.9fr)]"
+                      : "grid-cols-1"
+                  }`}
+                >
+                  {attainmentKPIs.length > 0 ? (
+                    <div className="space-y-3 rounded-xl bg-[var(--surface-container-low)] p-4 sm:p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+                          Attainment trajectory
+                        </p>
+                        <span className="text-[11px] font-medium text-muted">Latest trend lines</span>
+                      </div>
+                      <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]">
+                        {attainmentKPIs.map((row) => (
+                          <div key={row.label} className="flex min-w-0 items-center gap-4 py-4 first:pt-0 last:pb-0">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-text">{row.label}</p>
                             </div>
-                            <p className="mt-1 truncate text-[12px] leading-snug text-muted">
-                              Lowest: {s.worstSubject} — {s.worstGrade}
-                              {s.worstNormalizedScore !== null && ` (${Math.round(s.worstNormalizedScore * 100)}%)`}
-                            </p>
+                            <DashboardSparkline values={row.sparkline} />
+                            <div className="shrink-0 text-right">
+                              <AttainmentMetricValue row={row} />
+                            </div>
                           </div>
-                          <DualFlaggedRiskBadge band={s.behaviouralBand} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {attainmentSummary.topDualFlagged.length > 0 && (
+                    <div className="space-y-3 rounded-xl bg-[var(--surface-container-low)] p-4 sm:p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+                          Dual-flagged students
+                        </p>
+                        <Link href="/assessments/triangulation" className="link-muted-accent shrink-0 text-xs font-medium">
+                          View all →
                         </Link>
-                      </li>
-                    ))}
-                  </ul>
+                      </div>
+                      <p className="text-xs leading-relaxed text-muted">
+                        Attainment concerns overlapping with attendance, behaviour, or safeguarding risk.
+                      </p>
+                      <ul className="space-y-1">
+                        {attainmentSummary.topDualFlagged.map((s: DualFlaggedStudent) => (
+                          <li key={s.studentId}>
+                            <Link
+                              href={studentAnalysisHref(s.studentId, windowDays)}
+                              className="home-row-link flex items-center gap-3 rounded-lg px-3 py-3"
+                            >
+                              <Avatar name={s.studentName} size="md" tone="muted" />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                                  <span className="truncate text-sm font-semibold text-text">{s.studentName}</span>
+                                  {s.yearGroup ? <span className={yearGroupPillClass}>{s.yearGroup}</span> : null}
+                                  {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
+                                  {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
+                                </div>
+                                <p className="mt-1 truncate text-[12px] leading-snug text-muted">
+                                  Lowest: {s.worstSubject} — {s.worstGrade}
+                                  {s.worstNormalizedScore !== null && ` (${Math.round(s.worstNormalizedScore * 100)}%)`}
+                                </p>
+                              </div>
+                              <DualFlaggedRiskBadge band={s.behaviouralBand} />
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
-            </Card>
-          ) : null}
+          </Card>
+        </section>
+      ) : null}
 
-          {hasLeaveFeature ? (
-            <Card className="flex h-full min-h-0 flex-col gap-5 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+      {/* ═══ Leave ═══ */}
+      {hasLeaveFeature ? (
+        <section className="grid min-w-0 gap-5 lg:grid-cols-1 lg:items-stretch">
+          <Card className="flex h-full min-h-0 flex-col gap-5 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
               <HomeCardHeading
                 icon={<IconUmbrella />}
                 title="Leave governance"
@@ -1202,34 +1288,22 @@ function LeadershipHome({
               >
                 Go to leave calendar →
               </Link>
-            </Card>
-          ) : null}
+          </Card>
         </section>
-      )}
+      ) : null}
 
-      {/* ═══ Attainment Panel + Behaviour Heatmap ═══ */}
-      {(attainmentKPIs.length > 0 || behaviourHeatmap) && (
-        <section className="grid min-w-0 gap-5 lg:grid-cols-2 lg:items-stretch">
-          {attainmentKPIs.length > 0 && (
-            <Card className="rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
-              <AttainmentPanel
-                rows={attainmentKPIs}
-                ctaHref="/assessments"
-                ctaLabel="Go to attainment"
-              />
-            </Card>
-          )}
-          {behaviourHeatmap && (
-            <Card className="rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
-              <BehaviourHeatmap
-                yearGroups={behaviourHeatmap.yearGroups}
-                columnLabels={behaviourHeatmap.columnLabels}
-                matrix={behaviourHeatmap.matrix}
-                ctaHref="/students"
-                ctaLabel="View full map"
-              />
-            </Card>
-          )}
+      {/* ═══ Behaviour Heatmap ═══ */}
+      {behaviourHeatmap && (
+        <section className="grid min-w-0 gap-5 lg:grid-cols-1 lg:items-stretch">
+          <Card className="rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+            <BehaviourHeatmap
+              yearGroups={behaviourHeatmap.yearGroups}
+              columnLabels={behaviourHeatmap.columnLabels}
+              matrix={behaviourHeatmap.matrix}
+              ctaHref={`/explorer/analysis?windowDays=${windowDays}#behaviour-heatmap`}
+              ctaLabel="View full map"
+            />
+          </Card>
         </section>
       )}
 

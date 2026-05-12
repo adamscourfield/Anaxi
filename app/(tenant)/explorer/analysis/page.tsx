@@ -14,10 +14,12 @@ import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import { MetaText } from "@/components/ui/typography";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Avatar } from "@/components/ui/avatar";
+import { BehaviourHeatmap } from "@/components/dashboard/BehaviourHeatmap";
 import {
   computeBehaviourAnalysis,
   type BehaviourAnalysisSummary,
   type BehaviourCohortDailyMetricRow,
+  type OnCallRequestDetail,
 } from "@/modules/analysis/behaviourAnalysis";
 import { BehaviourAnalysisFilters } from "./BehaviourAnalysisFilters";
 import { BehaviourAnalysisCollapsibleSection } from "./BehaviourAnalysisCollapsibleSection";
@@ -204,6 +206,45 @@ function buildSecondaryStats(
   return secondaryStats;
 }
 
+function buildBehaviourHeatmapData(
+  details: OnCallRequestDetail[],
+  availableYearGroups: string[],
+  selectedYearGroup?: string,
+): { yearGroups: string[]; columnLabels: string[]; matrix: number[][] } | null {
+  const columnLabels = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  const baseYearGroups = selectedYearGroup
+    ? [selectedYearGroup]
+    : availableYearGroups.length > 0
+      ? availableYearGroups
+      : Array.from(new Set(details.map((detail) => detail.studentYearGroup).filter(Boolean) as string[]));
+
+  if (baseYearGroups.length === 0) return null;
+
+  const indexByYearGroup = new Map(baseYearGroups.map((yearGroup, index) => [yearGroup, index]));
+  const matrix = baseYearGroups.map(() => [0, 0, 0, 0, 0]);
+
+  for (const detail of details) {
+    if (!detail.studentYearGroup) continue;
+    const rowIndex = indexByYearGroup.get(detail.studentYearGroup);
+    if (rowIndex === undefined) continue;
+    const day = new Date(detail.createdAt).getDay();
+    if (day < 1 || day > 5) continue;
+    matrix[rowIndex][day - 1] += 1;
+  }
+
+  const filteredRows = baseYearGroups
+    .map((yearGroup, index) => ({ yearGroup, row: matrix[index] }))
+    .filter(({ row }) => selectedYearGroup || row.some((value) => value > 0));
+
+  if (filteredRows.length === 0) return null;
+
+  return {
+    yearGroups: filteredRows.map(({ yearGroup }) => yearGroup),
+    columnLabels,
+    matrix: filteredRows.map(({ row }) => row),
+  };
+}
+
 /* ─── Page ─────────────────────────────────────────────────────────────────── */
 
 export default async function AnalysisPage({
@@ -312,6 +353,11 @@ export default async function AnalysisPage({
   });
 
   const secondaryStats = buildSecondaryStats(summary, labels, detentionPlural, internalExclusionPlural, suspensionPlural);
+  const behaviourHeatmap = buildBehaviourHeatmapData(
+    result.onCallRequestDetails,
+    yearGroups,
+    yearGroupFilter || undefined,
+  );
 
   const secondaryVisual: Record<
     string,
@@ -555,6 +601,32 @@ export default async function AnalysisPage({
         hasActiveFilters={hasActiveFilters}
         buildClearHref={clearHref}
       />
+
+      <div id="behaviour-heatmap" className="anx-elevated-card overflow-hidden rounded-2xl scroll-mt-24">
+        {sectionHeader(
+          "Behaviour heatmap",
+          "Weekday pattern of on-call incidents by year group for the selected window.",
+        )}
+        <div className="border-t border-[rgba(15,23,42,0.06)] px-5 py-5 sm:px-6 sm:py-6">
+          {!hasOnCallFeature ? (
+            <p className="text-sm leading-relaxed text-[#6B7280]">
+              On-call workflow is not enabled for this school, so the live behaviour heatmap is unavailable.
+            </p>
+          ) : behaviourHeatmap ? (
+            <BehaviourHeatmap
+              yearGroups={behaviourHeatmap.yearGroups}
+              columnLabels={behaviourHeatmap.columnLabels}
+              matrix={behaviourHeatmap.matrix}
+              subtitle="Weekday distribution for the current filters"
+              hideCta
+            />
+          ) : (
+            <p className="text-sm leading-relaxed text-[#6B7280]">
+              No on-call incidents matched the current filters in this window.
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Live on-call: charts (left) + frequent requesters (right) */}
       <div className="anx-elevated-card overflow-hidden rounded-2xl">

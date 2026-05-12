@@ -76,31 +76,39 @@ function Modal({ title, onClose, children }: ModalProps) {
   }, [onClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/25 p-4 backdrop-blur-[2px] sm:items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="oncall-modal-title"
-    >
-      <button type="button" className="absolute inset-0 cursor-default" aria-label="Close" onClick={onClose} />
-      <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-hidden rounded-2xl glass-card shadow-ambient">
-        <div className="flex items-start justify-between gap-3 px-5 py-4">
-          <h2 id="oncall-modal-title" className="pr-2 text-lg font-semibold leading-snug tracking-[-0.01em] text-[var(--on-surface)]">
-            {title}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="shrink-0 rounded-xl p-2 text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
-            aria-label="Close dialog"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-        <div className="max-h-[calc(85vh-5.5rem)] overflow-y-auto border-t border-[var(--divider-subtle)] px-5 py-4">
-          {children}
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="oncall-modal-title">
+      <button
+        type="button"
+        className="absolute inset-0 bg-[rgba(15,23,42,0.18)] backdrop-blur-[6px]"
+        aria-label="Close"
+        onClick={onClose}
+      />
+      <div className="relative flex min-h-full items-center justify-center px-4 py-6 sm:px-6 sm:py-10">
+        <div className="relative z-10 max-h-[min(88vh,820px)] w-full max-w-xl overflow-hidden rounded-[24px] border border-[color-mix(in_srgb,var(--outline-variant)_42%,transparent)] bg-[var(--surface-container-lowest)] shadow-[0_32px_80px_-32px_rgba(15,23,42,0.38),0_16px_36px_-18px_rgba(15,23,42,0.18)]">
+          <div className="flex items-start justify-between gap-3 px-6 py-5 sm:px-7">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Request details</p>
+              <h2
+                id="oncall-modal-title"
+                className="mt-1 pr-2 text-lg font-semibold leading-snug tracking-[-0.01em] text-[var(--on-surface)]"
+              >
+                {title}
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_34%,transparent)] bg-[var(--surface-container-low)] p-2 text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container)] hover:text-[var(--on-surface)]"
+              aria-label="Close dialog"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+          <div className="max-h-[calc(min(88vh,820px)-6rem)] overflow-y-auto border-t border-[var(--divider-subtle)] bg-[color-mix(in_srgb,var(--surface-container-low)_38%,white)] px-6 py-5 sm:px-7">
+            {children}
+          </div>
         </div>
       </div>
     </div>
@@ -256,7 +264,7 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details, c
               {modal.rows.map((r) => (
                 <li
                   key={r.id}
-                  className="anx-card-inset rounded-xl px-4 py-3.5 text-sm"
+                  className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-3.5 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
                 >
                   <p className="font-semibold text-[var(--on-surface)]">{r.studentName}</p>
                   <p className="mt-0.5 text-xs text-muted">

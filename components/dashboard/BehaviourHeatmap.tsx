@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
 export type BehaviourHeatmapProps = {
   /**
@@ -14,8 +17,10 @@ export type BehaviourHeatmapProps = {
    * matrix[yearGroupIndex][columnIndex] = incident count (integer ≥ 0).
    */
   matrix: number[][];
+  subtitle?: string;
   ctaHref?: string;
   ctaLabel?: string;
+  hideCta?: boolean;
 };
 
 /** Map a value in [0, maxVal] to a coral opacity 0–1, clamped to [0.06, 0.88]. */
@@ -35,12 +40,18 @@ export function BehaviourHeatmap({
   yearGroups,
   columnLabels,
   matrix,
+  subtitle = "Disruption incidents by year group",
   ctaHref = "/students",
   ctaLabel = "View full map",
+  hideCta = false,
 }: BehaviourHeatmapProps) {
-  // Find global max for colour scale
-  const allValues = matrix.flatMap((row) => row);
-  const maxVal = Math.max(...allValues, 1);
+  const [activeCell, setActiveCell] = useState<{
+    yearGroup: string;
+    columnLabel: string;
+    value: number;
+  } | null>(null);
+
+  const maxVal = useMemo(() => Math.max(...matrix.flatMap((row) => row), 1), [matrix]);
 
   return (
     <div className="flex h-full flex-col gap-5">
@@ -57,16 +68,24 @@ export function BehaviourHeatmap({
           </span>
           <div className="min-w-0">
             <h2 className="text-base font-bold tracking-[-0.01em] text-text">Behaviour heatmap</h2>
-            <p className="mt-0.5 text-xs text-muted">Disruption incidents by year group</p>
+            <p className="mt-0.5 text-xs text-muted">{subtitle}</p>
           </div>
         </div>
-        <Link
-          href={ctaHref}
-          className="shrink-0 text-xs font-semibold text-muted calm-transition hover:text-text"
-        >
-          View full map →
-        </Link>
+        {!hideCta ? (
+          <Link
+            href={ctaHref}
+            className="shrink-0 text-xs font-semibold text-muted calm-transition hover:text-text"
+          >
+            View full map →
+          </Link>
+        ) : null}
       </div>
+
+      <p className="text-[11px] font-medium text-muted">
+        {activeCell
+          ? `${activeCell.yearGroup} · ${activeCell.columnLabel}: ${activeCell.value} incident${activeCell.value === 1 ? "" : "s"}`
+          : "Hover a cell to inspect a specific day pattern."}
+      </p>
 
       {/* Heatmap grid */}
       <div className="flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -98,12 +117,18 @@ export function BehaviourHeatmap({
                 {(matrix[ri] ?? []).map((val, ci) => {
                   const opacity = coralOpacity(val, maxVal);
                   const textClass = cellTextClass(opacity);
+                  const isActive =
+                    activeCell?.yearGroup === yg && activeCell?.columnLabel === columnLabels[ci];
                   return (
                     <td key={ci} className="p-0.5">
                       <div
-                        className={`flex h-8 min-w-[2rem] items-center justify-center rounded-[5px] text-[11px] font-semibold tabular-nums transition-opacity ${textClass}`}
-                        style={{ background: `rgba(254,159,159,${opacity})` }}
+                        className={`flex h-8 min-w-[2rem] items-center justify-center rounded-[5px] text-[11px] font-semibold tabular-nums transition-all duration-150 ${textClass} ${
+                          isActive ? "scale-[1.04] ring-2 ring-[rgba(61,6,11,0.14)] shadow-[0_6px_18px_rgba(15,23,42,0.08)]" : ""
+                        }`}
+                        style={{ background: `rgba(254,159,159,${Math.min(0.96, opacity + (isActive ? 0.08 : 0))})` }}
                         title={`${yg} — ${columnLabels[ci]}: ${val} incident${val !== 1 ? "s" : ""}`}
+                        onMouseEnter={() => setActiveCell({ yearGroup: yg, columnLabel: columnLabels[ci], value: val })}
+                        onMouseLeave={() => setActiveCell((current) => (current?.yearGroup === yg && current?.columnLabel === columnLabels[ci] ? null : current))}
                       >
                         {val > 0 ? val : ""}
                       </div>
@@ -133,12 +158,14 @@ export function BehaviourHeatmap({
           <span className="text-[10px] font-medium text-muted">High disruption</span>
         </div>
 
-        <Link
-          href={ctaHref}
-          className="shrink-0 text-sm font-semibold text-text calm-transition hover:text-muted"
-        >
-          {ctaLabel} →
-        </Link>
+        {!hideCta ? (
+          <Link
+            href={ctaHref}
+            className="shrink-0 text-sm font-semibold text-text calm-transition hover:text-muted"
+          >
+            {ctaLabel} →
+          </Link>
+        ) : null}
       </div>
     </div>
   );
