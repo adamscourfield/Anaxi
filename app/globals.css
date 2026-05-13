@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Primary screen title: any h1 inside the document <main> uses the display face so
+     new routes inherit it without a utility. Override with h1.font-sans when an h1
+     in main must stay in Inter (rare). */
+  main h1 {
+    font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+  }
+}
+
 :root {
   /* ── Design System: The Modern Academic Ledger ────────────────── */
 
