@@ -48,9 +48,9 @@
   --on-tertiary-fixed-variant: #763133;
 
   /* ── Surface Hierarchy ──────────────────────────────────────────── */
-  --background:             #f7f9fb;
-  --surface:                #f7f9fb;
-  --surface-bright:         #f7f9fb;
+  --background:             #ffffff;
+  --surface:                #ffffff;
+  --surface-bright:         #ffffff;
   --surface-dim:            #d8dadc;
   --surface-container-lowest: #ffffff;
   --surface-container-low:  #f2f4f6;
@@ -141,8 +141,8 @@
   --shadow-float:       none;
   --shadow-header:      none;
 
-  /* Frosted shell (tenant top bar, overlays) */
-  --anx-frost-bg:       color-mix(in srgb, var(--surface-bright) 76%, transparent);
+  /* Shell chrome (tenant top bar, auth nav) — solid white */
+  --anx-frost-bg:       #ffffff;
 
   /* ── Ghost border ────────────────────────────────────────────── */
   --border-ghost:       rgba(198,198,205,0.20);
@@ -318,7 +318,7 @@ html, body {
 
 body {
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
-  background: var(--surface-bright);
+  background: #ffffff;
   background-attachment: fixed;
   color: var(--on-surface);
 }
@@ -1070,9 +1070,9 @@ textarea:focus-visible {
 
 /* ── Toolbar ───────────────────────────────────────────────────── */
 .premium-toolbar {
-  background: rgba(247,249,251,0.80);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: none;
 }
 
@@ -1193,9 +1193,9 @@ textarea:focus-visible {
 
 /* ── Glassmorphism surface ──────────────────────────────────────── */
 .glass-surface {
-  background: rgba(247,249,251,0.80);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* ── Glassmorphism card (floating panels, filter chips, context cards) ── */
@@ -1343,20 +1343,12 @@ textarea:focus-visible {
   }
 }
 
-/* Tenant workspace — layered ambient canvas behind page content */
+/* Tenant workspace — flat white canvas */
 .anx-workspace-main,
 .anx-workspace-canvas {
   position: relative;
   isolation: isolate;
-  background:
-    radial-gradient(ellipse 120% 95% at 50% -22%, color-mix(in srgb, var(--surface-container-high) 48%, transparent), transparent 55%),
-    radial-gradient(ellipse 85% 60% at 100% 0%, color-mix(in srgb, #c7d2fe 18%, transparent), transparent 58%),
-    linear-gradient(
-      180deg,
-      var(--background) 0%,
-      color-mix(in srgb, var(--surface-container-low) 28%, var(--background)) 52%,
-      var(--background) 100%
-    );
+  background: #ffffff;
 }
 
 .anx-workspace-canvas .anx-workspace-main {
@@ -1365,16 +1357,16 @@ textarea:focus-visible {
 
 .anx-top-bar-frost {
   border-bottom: 1px solid hsl(var(--border));
-  background: var(--anx-frost-bg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: none;
 }
 
 .anx-workspace-canvas .anx-top-bar-frost {
-  background: transparent;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: none;
 }
 
@@ -1611,7 +1603,7 @@ textarea:focus-visible {
 
 /* Priorities (/analytics) — dashboard mock: light canvas, pill toolbars, white cards */
 .anx-priorities-page {
-  background: #f9fafb;
+  background: #ffffff;
   margin-inline: calc(-1 * var(--tenant-content-pad-x, 1rem));
   padding-inline: var(--tenant-content-pad-x, 1rem);
   padding-block: 0.75rem 2.5rem;

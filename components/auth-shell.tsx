@@ -26,7 +26,7 @@ export function AuthShell({
 
 export function AuthNav() {
   return (
-    <nav className="fixed top-0 z-50 flex h-20 w-full items-center border-b border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--anx-frost-bg)] px-6 backdrop-blur-[14px] md:px-8">
+    <nav className="fixed top-0 z-50 flex h-20 w-full items-center border-b border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-white px-6 md:px-8">
       <div className="flex items-center gap-3">
         <Image src="/anaxi-logo.png" alt="Anaxi" width={32} height={32} priority className="h-8 w-8 object-contain" />
         <div className="mx-2 h-4 w-px bg-[var(--divider-subtle)]" />
