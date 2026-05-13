@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { GodSchoolSwitcher } from "@/components/god-school-switcher";
+import { PageTransition } from "@/components/page-transition";
 
 export default function GodLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -49,7 +50,7 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="anx-workspace-main mx-auto w-full max-w-[1400px] px-6 pt-20 pb-10">
-        {children}
+        <PageTransition className="min-w-0">{children}</PageTransition>
       </main>
     </div>
   );

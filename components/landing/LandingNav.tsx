@@ -14,7 +14,7 @@ export default function LandingNav() {
             height={32}
             className="h-8 w-8 object-contain"
           />
-          <span className="text-sm font-semibold text-[var(--on-surface)] tracking-tight uppercase tracking-[0.1em]">
+          <span className="font-display text-sm font-semibold uppercase tracking-[0.1em] text-[var(--on-surface)]">
             Anaxi
           </span>
         </Link>

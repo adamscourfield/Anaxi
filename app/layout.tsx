@@ -2,6 +2,7 @@ import "./globals.css";
 import type { CSSProperties } from "react";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { SessionProvider } from "@/components/session-provider";
+import { motionRootCssProperties } from "@/lib/motion/tokens";
 
 const inter = Inter({
   subsets: ["latin"],
