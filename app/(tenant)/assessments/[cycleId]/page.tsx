@@ -511,7 +511,7 @@ export default async function CycleDetailPage({
                   </div>
 
                   {hasData ? (
-                    <div className="rounded-xl bg-[#f3f4f6] px-4 py-3 sm:px-5">
+                    <div className="rounded-xl px-4 py-3 sm:px-5">
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:divide-x sm:divide-[#e5e7eb]">
                       <div className="flex items-center gap-3 sm:pr-4">
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
