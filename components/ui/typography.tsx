@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 
 export function H1({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <h1 className={`text-3xl font-bold leading-tight tracking-[-0.025em] text-text ${className}`}>
+    <h1 className={`font-display text-3xl font-bold leading-tight tracking-[-0.025em] text-text ${className}`}>
       {children}
     </h1>
   );
