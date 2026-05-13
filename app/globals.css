@@ -1290,6 +1290,59 @@ textarea:focus-visible {
   }
 }
 
+/* Explorer hub — flat ledger KPIs + priorities strip (analysis mock) */
+.explorer-hub-kpi-card {
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .group:hover .explorer-hub-kpi-card {
+    border-color: #d1d5db;
+  }
+}
+
+.explorer-hub-kpi-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.explorer-hub-priorities {
+  border-radius: var(--radius-lg);
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #fff;
+  box-shadow: none;
+}
+
+.explorer-hub-priorities-column {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.explorer-hub-behaviour-strip {
+  border-radius: var(--radius-lg);
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.explorer-hub-intelligence-log {
+  border-radius: var(--radius-lg);
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: none;
+  overflow: hidden;
+}
+
 .home-cpd-hero {
   border-radius: var(--radius-lg);
   background: linear-gradient(155deg, #0f172a 0%, #1e293b 42%, #0f172a 100%) !important;

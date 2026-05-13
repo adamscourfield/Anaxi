@@ -53,46 +53,9 @@ function IconObservations() {
   );
 }
 
-/* Watermark icons for Pastoral Pulse section */
-function WatermarkGradCap() {
-  return (
-    <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-32 w-32 text-black/[0.06]" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
-    </svg>
-  );
+function formatLogTime(d: Date): string {
+  return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
-
-function WatermarkDiamond() {
-  return (
-    <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-28 w-28 text-black/[0.06]" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M12 2L2 12l10 10 10-10L12 2zm0 2.83L19.17 12 12 19.17 4.83 12 12 4.83z" />
-      <path d="M12 6.34L6.34 12 12 17.66 17.66 12 12 6.34z" />
-    </svg>
-  );
-}
-
-function WatermarkChartBars() {
-  return (
-    <svg className="absolute right-4 top-1/2 -translate-y-1/2 h-28 w-28 text-black/[0.06]" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M4 19h3v-8H4v8zm5 0h3V5H9v14zm5 0h3v-5h-3v5z" />
-    </svg>
-  );
-}
-
-/* ─── Time-ago helper ──────────────────────────────────────────────────────── */
-function timeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins} mins ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-/* ─── Page ─────────────────────────────────────────────────────────────────── */
 
 export default async function ExplorerPage() {
   const user = await getSessionUserOrThrow();
@@ -198,7 +161,6 @@ export default async function ExplorerPage() {
     .slice(0, 3);
 
   let urgentStudents = 0;
-  let safeStudents = 0;
   let totalStudents = 0;
   let yearGroupCount = 0;
   let academicLoadPct = 0;
@@ -211,7 +173,6 @@ export default async function ExplorerPage() {
       (r) => r.band === "PRIORITY" || r.band === "URGENT",
     ).length;
     totalStudents = studentResult.rows.length;
-    safeStudents = totalStudents - urgentStudents;
     yearGroupCount = cohortResult.rows.length;
 
     // Compute academic load as average attendance across cohorts
@@ -236,48 +197,6 @@ export default async function ExplorerPage() {
       }));
   }
 
-  // ─── Build intelligence log entries ─────────────────────────────────────────
-  type LogEntry = {
-    id: string;
-    icon: "observation" | "signal";
-    title: string;
-    meta: string;
-    tag: string;
-    tagVariant: "academic" | "priority";
-  };
-
-  const logEntries: LogEntry[] = [];
-
-  // Add recent observations
-  for (const obs of recentObservations) {
-    logEntries.push({
-      id: obs.id,
-      icon: "observation",
-      title: `Observation recorded for ${obs.yearGroup} ${obs.subject}`,
-      meta: `${obs.observer.fullName} · ${timeAgo(obs.observedAt)}`,
-      tag: "ACADEMIC",
-      tagVariant: "academic",
-    });
-  }
-
-  // Add behaviour drift signals from drifting teachers
-  const significantDrifters = teacherRiskRows
-    .filter((r) => r.status === "SIGNIFICANT_DRIFT")
-    .slice(0, MAX_DRIFT_LOG_ENTRIES);
-  for (const teacher of significantDrifters) {
-    logEntries.push({
-      id: `drift-${teacher.teacherName}`,
-      icon: "signal",
-      title: `Behaviour drift signal triggered`,
-      meta: `${teacher.departmentNames?.[0] ?? "Unknown dept"}: ${teacher.teacherName} · significant drift`,
-      tag: "PRIORITY",
-      tagVariant: "priority",
-    });
-  }
-
-  // Sort by most recent observation first, then signals
-  const displayedLogs = logEntries.slice(0, MAX_LOG_ENTRIES);
-
   const computedAt = deptResult.computedAt;
   const computedAtStr = computedAt.toLocaleString("en-GB", {
     day: "numeric",
@@ -286,6 +205,58 @@ export default async function ExplorerPage() {
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  // ─── Build intelligence log entries ─────────────────────────────────────────
+  type LogEntry = {
+    id: string;
+    icon: "observation" | "signal";
+    href: string;
+    at: number;
+    timeLabel: string;
+    headlinePrefix: string | null;
+    emphasisText: string | null;
+    plainTitle: string | null;
+    tagLabel: string;
+    tagVariant: "academic" | "priority";
+  };
+
+  const logEntries: LogEntry[] = [];
+
+  for (const obs of recentObservations) {
+    logEntries.push({
+      id: obs.id,
+      icon: "observation",
+      href: `/observe/${obs.id}`,
+      at: obs.observedAt.getTime(),
+      timeLabel: formatLogTime(obs.observedAt),
+      headlinePrefix: "Observation recorded for ",
+      emphasisText: `${obs.yearGroup} ${obs.subject}`,
+      plainTitle: null,
+      tagLabel: "Academic",
+      tagVariant: "academic",
+    });
+  }
+
+  const significantDrifters = teacherRiskRows
+    .filter((r) => r.status === "SIGNIFICANT_DRIFT")
+    .slice(0, MAX_DRIFT_LOG_ENTRIES);
+  for (const teacher of significantDrifters) {
+    logEntries.push({
+      id: `drift-${teacher.teacherMembershipId}`,
+      icon: "signal",
+      href: "/explorer/signals",
+      at: computedAt.getTime(),
+      timeLabel: formatLogTime(computedAt),
+      headlinePrefix: null,
+      emphasisText: null,
+      plainTitle: `Behaviour drift · ${teacher.teacherName}`,
+      tagLabel: "Priority",
+      tagVariant: "priority",
+    });
+  }
+
+  logEntries.sort((a, b) => b.at - a.at);
+  const displayedLogs = logEntries.slice(0, MAX_LOG_ENTRIES);
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -301,7 +272,7 @@ export default async function ExplorerPage() {
               <path strokeLinecap="round" d="M16 3v4M8 3v4M3 11h18" />
             </svg>
             <span>
-              {WINDOW_DAYS}d window · Updated {computedAtStr}
+              {WINDOW_DAYS}d window • Updated {computedAtStr}
             </span>
           </span>
         }
@@ -311,9 +282,9 @@ export default async function ExplorerPage() {
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {/* Teachers */}
         <Link href="/explorer/teachers" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
+          <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between gap-2">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#F3F4F6] text-[#9CA3AF]">
                 <IconTeachers />
               </span>
               <span className="rounded-md bg-[var(--pill-error-bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
@@ -321,13 +292,13 @@ export default async function ExplorerPage() {
               </span>
             </div>
             <div className="mt-4">
-              <p className="text-sm font-semibold text-[var(--on-surface)]">Teachers</p>
+              <p className="explorer-hub-kpi-label">Teachers</p>
               <div className="mt-1 flex items-baseline gap-2">
                 <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{totalTeachers}</span>
                 <span className="text-sm text-[var(--on-surface-variant)]">tracked</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] pt-3">
+            <div className="mt-4 border-t border-[#E5E7EB] pt-3">
               {driftingTeachers > 0 ? (
                 <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--error)]">
                   <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" />
@@ -342,20 +313,20 @@ export default async function ExplorerPage() {
 
         {/* Departments */}
         <Link href="/explorer/departments" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
+          <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#F3F4F6] text-[#9CA3AF]">
                 <IconDepartments />
               </span>
             </div>
             <div className="mt-4">
-              <p className="text-sm font-semibold text-[var(--on-surface)]">Departments</p>
+              <p className="explorer-hub-kpi-label">Departments</p>
               <div className="mt-1 flex items-baseline gap-2">
                 <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{totalDepartments}</span>
                 <span className="text-sm text-[var(--on-surface-variant)]">depts</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] pt-3">
+            <div className="mt-4 border-t border-[#E5E7EB] pt-3">
               <p className="text-[13px] text-[var(--on-surface-variant)]">{totalObsAcrossDepts} total observations</p>
             </div>
           </div>
@@ -363,20 +334,20 @@ export default async function ExplorerPage() {
 
         {/* Signals */}
         <Link href="/explorer/signals" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
+          <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#F3F4F6] text-[#9CA3AF]">
                 <IconSignals />
               </span>
             </div>
             <div className="mt-4">
-              <p className="text-sm font-semibold text-[var(--on-surface)]">Signals</p>
+              <p className="explorer-hub-kpi-label">Signals</p>
               <div className="mt-1 flex items-baseline gap-2">
                 <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{totalSignals}</span>
                 <span className="text-sm text-[var(--on-surface-variant)]">tracked</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] pt-3">
+            <div className="mt-4 border-t border-[#E5E7EB] pt-3">
               {highPrioritySignals > 0 ? (
                 <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--error)]">
                   <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" />
@@ -391,19 +362,19 @@ export default async function ExplorerPage() {
 
         {/* Observations */}
         <Link href="/observe/history" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
+          <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#F3F4F6] text-[#9CA3AF]">
                 <IconObservations />
               </span>
             </div>
             <div className="mt-4">
-              <p className="text-sm font-semibold text-[var(--on-surface)]">Observations</p>
+              <p className="explorer-hub-kpi-label">Observations</p>
               <div className="mt-1 flex items-baseline gap-2">
                 <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{obsCount}</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] pt-3">
+            <div className="mt-4 border-t border-[#E5E7EB] pt-3">
               <p className="text-[13px] text-[var(--on-surface-variant)]">
                 recorded in last <span className="font-semibold text-text">{WINDOW_DAYS}d</span>
               </p>
@@ -412,12 +383,15 @@ export default async function ExplorerPage() {
         </Link>
       </div>
 
-      {/* ── Priorities Card ────────────────────────────────────────────────── */}
+      {/* ── Priorities (dark ledger band) ─────────────────────────────────── */}
       <div>
-        <Link href="/analytics" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-          <div className="home-cpd-hero relative overflow-hidden p-6 pr-14 text-on-primary calm-transition group-hover:opacity-[0.97] sm:p-7 sm:pr-16">
+        <Link
+          href="/analytics"
+          className="group block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]"
+        >
+          <div className="explorer-hub-priorities relative overflow-hidden p-6 pr-14 calm-transition sm:p-7 sm:pr-16">
             <svg
-              className="pointer-events-none absolute right-4 top-4 h-7 w-7 opacity-60 sm:h-8 sm:w-8"
+              className="pointer-events-none absolute right-4 top-4 h-7 w-7 text-white/50 sm:h-8 sm:w-8"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.5}
@@ -428,46 +402,46 @@ export default async function ExplorerPage() {
             </svg>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
               <div className="min-w-0 shrink-0 lg:max-w-[220px]">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] opacity-80">Analysis</p>
-                <p className="mt-1 text-lg font-bold">Priorities</p>
-                <p className="mt-1 text-sm opacity-90">
-                  Teacher drift, CPD signal focus, and student bands — full detail in Analytics.
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Analysis</p>
+                <p className="mt-1 text-lg font-bold text-white">Priorities</p>
+                <p className="mt-1 text-sm leading-snug text-slate-300">
+                  Teacher drift, CPD signal focus, and student bands — full detail in analytics.
                 </p>
               </div>
               <div
                 className={`grid min-w-0 flex-1 gap-4 ${canSeeBehaviour ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
               >
-                <div className="min-w-0 rounded-xl border border-white/15 bg-white/10 px-3 py-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] opacity-90">Teachers</p>
+                <div className="explorer-hub-priorities-column min-w-0 px-3 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Teachers</p>
                   <ul className="mt-2 space-y-2">
                     {topTeacherPriorities.length === 0 ? (
-                      <li className="text-[13px] leading-snug opacity-90">No drift flags in this window.</li>
+                      <li className="text-[13px] leading-snug text-slate-300">No drift flags in this window.</li>
                     ) : (
                       topTeacherPriorities.map((row) => (
                         <li key={row.teacherMembershipId} className="min-w-0">
-                          <p className="truncate text-[13px] font-medium" title={row.teacherName}>
+                          <p className="truncate text-[13px] font-medium text-white" title={row.teacherName}>
                             {row.teacherName}
                           </p>
-                          <p className="text-[11px] opacity-80">{teacherStatusShort[row.status]}</p>
+                          <p className="text-[11px] text-slate-400">{teacherStatusShort[row.status]}</p>
                         </li>
                       ))
                     )}
                   </ul>
                 </div>
-                <div className="min-w-0 rounded-xl border border-white/15 bg-white/10 px-3 py-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] opacity-90">CPD signals</p>
+                <div className="explorer-hub-priorities-column min-w-0 px-3 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">CPD signals</p>
                   <ul className="mt-2 space-y-2">
                     {topCpdPriorities.length === 0 ? (
-                      <li className="text-[13px] leading-snug opacity-90">
+                      <li className="text-[13px] leading-snug text-slate-300">
                         No widespread signal decline in this window.
                       </li>
                     ) : (
                       topCpdPriorities.map((row) => (
                         <li key={row.signalKey} className="min-w-0">
-                          <p className="truncate text-[13px] font-medium" title={row.label}>
+                          <p className="truncate text-[13px] font-medium text-white" title={row.label}>
                             {row.label}
                           </p>
-                          <p className="text-[11px] tabular-nums opacity-80">
+                          <p className="text-[11px] tabular-nums text-slate-400">
                             {Math.round(row.driftRate * 100)}% drifting · {row.teachersCovered} covered
                           </p>
                         </li>
@@ -476,20 +450,20 @@ export default async function ExplorerPage() {
                   </ul>
                 </div>
                 {canSeeBehaviour && (
-                  <div className="min-w-0 rounded-xl border border-white/15 bg-white/10 px-3 py-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] opacity-90">Students</p>
+                  <div className="explorer-hub-priorities-column min-w-0 px-3 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Students</p>
                     <ul className="mt-2 space-y-2">
                       {topStudentPriorities.length === 0 ? (
-                        <li className="text-[13px] leading-snug opacity-90">
+                        <li className="text-[13px] leading-snug text-slate-300">
                           No urgent or priority band in this window.
                         </li>
                       ) : (
                         topStudentPriorities.map((row) => (
                           <li key={row.studentId} className="min-w-0">
-                            <p className="truncate text-[13px] font-medium" title={row.studentName}>
+                            <p className="truncate text-[13px] font-medium text-white" title={row.studentName}>
                               {row.studentName}
                             </p>
-                            <p className="text-[11px] opacity-80">{row.band}</p>
+                            <p className="text-[11px] text-slate-400">{row.band}</p>
                           </li>
                         ))
                       )}
@@ -504,144 +478,117 @@ export default async function ExplorerPage() {
 
       {/* ── Pastoral Pulse: Behaviour & Welfare ────────────────────────────── */}
       {canSeeBehaviour && (
-        <div className="mt-12">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--on-surface-variant)]">
-            Pastoral Pulse
-          </p>
-          <h2 className="mt-1 text-pretty text-[clamp(1.5rem,3vw,1.75rem)] font-bold leading-tight tracking-[-0.03em] text-[var(--on-surface)]">
-            Behaviour &amp; Welfare
-          </h2>
+        <div className="mt-10 space-y-5">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Pastoral pulse</p>
+            <h2 className="mt-1 text-pretty text-[clamp(1.5rem,3vw,1.75rem)] font-bold leading-tight tracking-[-0.03em] text-neutral-950">
+              Behaviour &amp; Welfare
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#64748B]">
+              Real-time overview of student wellbeing and behaviour across the school.
+            </p>
+            <p className="mt-2 inline-flex flex-wrap items-center gap-2 text-[0.8125rem] text-muted">
+              <svg className="h-4 w-4 shrink-0 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+                <rect x="3" y="5" width="18" height="16" rx="2" strokeLinejoin="round" />
+                <path strokeLinecap="round" d="M16 3v4M8 3v4M3 11h18" />
+              </svg>
+              <span>
+                {WINDOW_DAYS}d window • Updated {computedAtStr}
+              </span>
+            </p>
+          </div>
 
-          <div className="mt-6 grid grid-cols-1 items-stretch gap-5 md:grid-cols-3">
-            {/* Students Card */}
-            <Link href="/explorer/students" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition sm:p-7">
-                <WatermarkGradCap />
-                <p className="text-lg font-semibold text-[var(--on-surface)]">Students</p>
-                <div className="mt-3 flex items-baseline gap-3">
-                  <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
-                    {totalStudents}
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">Total Active</p>
-                    <p className="text-[11px] text-[var(--on-surface-variant)]">Managed Enrollment</p>
-                  </div>
+          <div className="explorer-hub-behaviour-strip divide-y divide-[#E5E7EB] md:grid md:grid-cols-4 md:divide-x md:divide-y-0">
+            <Link
+              href="/explorer/students"
+              className="block p-6 calm-transition hover:bg-neutral-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
+            >
+              <p className="text-sm font-semibold text-neutral-950">Students</p>
+              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-neutral-950">{totalStudents}</p>
+              <p className="mt-2 text-xs text-[#64748B]">Total active</p>
+            </Link>
+            <Link
+              href="/explorer/cohorts"
+              className="block p-6 calm-transition hover:bg-neutral-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
+            >
+              <p className="text-sm font-semibold text-neutral-950">Cohorts</p>
+              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-neutral-950">{yearGroupCount}</p>
+              <p className="mt-2 text-xs text-[#64748B]">Year groups</p>
+              <div className="mt-5">
+                <div className="h-2 w-full overflow-hidden rounded-sm bg-[#E5E7EB]">
+                  <div
+                    className="h-full rounded-sm bg-neutral-950"
+                    style={{ width: `${Math.min(100, Math.max(0, academicLoadPct))}%` }}
+                  />
                 </div>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <div className="rounded-xl border border-[color-mix(in_srgb,var(--error)_18%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_45%,var(--surface-container-lowest))] px-4 py-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--pill-error-text)]">Urgent Action</p>
-                    <div className="mt-1 flex items-baseline gap-1.5">
-                      <span className="text-xl font-bold tabular-nums text-[var(--on-surface)]">{urgentStudents}</span>
-                      <span className="text-xs text-[var(--on-surface-variant)]">students</span>
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-[color-mix(in_srgb,var(--success)_20%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_55%,var(--surface-container-lowest))] px-4 py-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--pill-success-text)]">Safe State</p>
-                    <div className="mt-1 flex items-baseline gap-1.5">
-                      <span className="text-xl font-bold tabular-nums text-[var(--on-surface)]">{safeStudents}</span>
-                      <span className="text-xs text-[var(--on-surface-variant)]">students</span>
-                    </div>
-                  </div>
-                </div>
+                <p className="mt-2 text-xs text-[#64748B]">{academicLoadPct}% capacity</p>
               </div>
             </Link>
-
-            {/* Cohorts Card */}
-            <Link href="/explorer/cohorts" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition sm:p-7">
-                <WatermarkDiamond />
-                <p className="text-lg font-semibold text-[var(--on-surface)]">Cohorts</p>
-                <div className="mt-3 flex items-baseline gap-3">
-                  <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
-                    {yearGroupCount}
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">Year Groups</p>
-                    <p className="text-[11px] text-[var(--on-surface-variant)]">Institutional Structure</p>
-                  </div>
-                </div>
-                <div className="mt-8">
-                  <div className="h-2 w-full overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--surface-container-high)_90%,transparent)]">
-                    <div
-                      className="home-stat-bar-fill h-full rounded-sm bg-[var(--on-surface)]"
-                      style={{ width: `${academicLoadPct}%` }}
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Academic Load</p>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">{academicLoadPct}% Capacity</p>
-                  </div>
-                </div>
-              </div>
+            <Link
+              href="/explorer/students"
+              className="block p-6 calm-transition hover:bg-neutral-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
+            >
+              <p className="text-sm font-semibold text-neutral-950">Priority students</p>
+              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-neutral-950">{urgentStudents}</p>
+              <p className="mt-2 text-xs text-[#64748B]">Urgent cases</p>
+              <p className="mt-4 flex items-center gap-2 text-xs text-[#64748B]">
+                <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#D93025]" aria-hidden />
+                Urgent &amp; priority bands
+              </p>
             </Link>
-
-            {/* Behaviour Analysis Card */}
-            <Link href="/explorer/analysis" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition sm:p-7">
-                <WatermarkChartBars />
-                <p className="text-lg font-semibold text-[var(--on-surface)]">Behaviour Analysis</p>
-                <div className="mt-3 flex items-baseline gap-3">
-                  <span className="text-[4.5rem] font-bold leading-none tracking-tight text-[var(--on-surface)]">
-                    {urgentStudents}
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">Urgent Priority</p>
-                    <p className="text-[11px] text-[var(--on-surface-variant)]">Urgent &amp; priority bands</p>
-                  </div>
-                </div>
-                <div className="mt-8">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">Assessment window</p>
-                  <p className="mt-1 text-xs text-[var(--on-surface-variant)]">Pastoral bands over the last {WINDOW_DAYS} days</p>
-                </div>
+            <Link
+              href="/explorer/analysis"
+              className="block p-6 calm-transition hover:bg-neutral-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
+            >
+              <p className="text-sm font-semibold text-neutral-950">Assessment window</p>
+              <div className="mt-3 flex items-baseline gap-1.5">
+                <span className="text-[2.75rem] font-bold leading-none tabular-nums text-neutral-950">{WINDOW_DAYS}</span>
+                <span className="text-sm font-medium text-[#64748B]">days</span>
               </div>
+              <p className="mt-2 text-xs text-[#64748B]">Pastoral bands over the last {WINDOW_DAYS} days</p>
             </Link>
           </div>
         </div>
       )}
 
-      {/* ── Active Intelligence Log ────────────────────────────────────────── */}
+      {/* ── Active intelligence log ────────────────────────────────────────── */}
       {displayedLogs.length > 0 && (
-        <div className="mt-12">
-          <div className="flex items-center justify-between rounded-t-2xl bg-[var(--surface-container)] px-6 py-3.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
-              Active Intelligence Log
-            </p>
+        <div className="explorer-hub-intelligence-log mt-10">
+          <div className="flex items-center justify-between border-b border-[#E5E7EB] px-5 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">Active intelligence log</p>
             <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-[var(--success)]" />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Live Syncing</span>
+              <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-[#22c55e]" aria-hidden />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">Live syncing</span>
             </div>
           </div>
-          <div className="divide-y divide-[var(--surface-container)] overflow-hidden rounded-b-2xl bg-[var(--surface-container-lowest)] shadow-ambient">
+          <div className="divide-y divide-[#E5E7EB]">
             {displayedLogs.map((entry) => (
               <Link
                 key={entry.id}
-                href={entry.icon === "observation" ? `/observe/${entry.id}` : `/explorer/signals`}
-                className="flex items-center gap-4 px-6 py-4 calm-transition hover:bg-[var(--surface-container-low)]"
+                href={entry.href}
+                className="flex min-h-[3.25rem] items-stretch calm-transition hover:bg-[#FAFAFA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_20%,transparent)]"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]">
-                  {entry.icon === "observation" ? (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                    </svg>
-                  ) : (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                    </svg>
-                  )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[var(--on-surface)]">{entry.title}</p>
-                  <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">{entry.meta}</p>
+                <div className="flex w-[3.5rem] shrink-0 items-center justify-center border-r border-[#E5E7EB] text-xs tabular-nums text-[#64748B]">
+                  {entry.timeLabel}
                 </div>
-                <span
-                  className={`shrink-0 rounded-md px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.06em] ${
-                    entry.tagVariant === "priority"
-                      ? "bg-[var(--tertiary-container)] text-[var(--on-tertiary-container)]"
-                      : "border border-[var(--outline-variant)] text-[var(--on-surface-variant)]"
-                  }`}
-                >
-                  {entry.tag}
-                </span>
+                <div className="flex min-w-0 flex-1 items-center px-4 py-3">
+                  <p className="text-sm text-neutral-950">
+                    {entry.plainTitle ? (
+                      <span className="font-medium">{entry.plainTitle}</span>
+                    ) : (
+                      <>
+                        {entry.headlinePrefix}
+                        <span className="font-semibold">{entry.emphasisText}</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-3 pr-4">
+                  <span className="text-xs text-[#64748B]">{entry.tagLabel}</span>
+                  <svg className="h-4 w-4 shrink-0 text-[#9CA3AF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
+                  </svg>
+                </div>
               </Link>
             ))}
           </div>
@@ -649,7 +596,11 @@ export default async function ExplorerPage() {
       )}
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <p className="mt-10 text-[0.75rem] text-muted">
+      <p className="mt-10 flex items-center gap-2 text-[0.75rem] text-muted">
+        <svg className="h-4 w-4 shrink-0 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 15v4M11 11v8M15 7v12M19 13v6" />
+        </svg>
         Explorer · {WINDOW_DAYS}d window · {computedAtStr}
       </p>
     </div>
