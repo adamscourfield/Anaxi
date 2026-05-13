@@ -2,17 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  /* Primary page titles: Space Grotesk everywhere `main` wraps app content. */
-  main h1 {
-    font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
-  }
-  /* Opt out: use class `font-sans` on the h1 when Inter is intentional. */
-  main h1.font-sans {
-    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
-  }
-}
-
 :root {
   /* ── Design System: The Modern Academic Ledger ────────────────── */
 
@@ -2126,4 +2115,34 @@ textarea:focus-visible {
 
 .footer-link:hover {
   color: rgba(255,255,255,0.75) !important;
+}
+
+/* ── Unlayered design-system locks (must beat @tailwind @layer ordering) ───────
+   If these sit inside @layer base/components, layered utilities can win and
+   strip display fonts or radii; unlayered always wins over layered CSS. */
+
+/* Page titles + display utility: Space Grotesk (opt out with .font-sans on h1). */
+.anx-page-title,
+.font-display,
+.font-headline,
+main h1:not(.font-sans) {
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+}
+
+/* Micro-radius: reinforce Tailwind rounded-* → 2px (see tailwind.config.ts). */
+.rounded,
+.rounded-sm,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl {
+  border-radius: 2px;
+}
+
+.rounded-none {
+  border-radius: 0;
+}
+
+.rounded-full {
+  border-radius: 9999px;
 }
