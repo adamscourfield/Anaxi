@@ -1898,6 +1898,71 @@ textarea:focus-visible {
   --divider-subtle: color-mix(in srgb, var(--outline-variant) 30%, transparent);
 }
 
+/* HVQT snap-to-focus (route + panel): opacity, Y travel, blur — former framer-motion choreography. */
+@keyframes hvqt-route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes hvqt-route-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+    filter: blur(4px);
+  }
+}
+
+@keyframes hvqt-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.hvqt-page-surface-enter {
+  animation: hvqt-route-enter var(--motion-duration-panel) var(--motion-ease-hvqt) both;
+}
+
+.hvqt-page-surface-exit {
+  animation: hvqt-route-exit var(--motion-duration-panel) var(--motion-ease-hvqt) both;
+}
+
+.hvqt-motion-surface-route {
+  animation: hvqt-route-enter var(--motion-duration-panel) var(--motion-ease-hvqt) both;
+}
+
+.hvqt-motion-surface-panel {
+  animation: hvqt-panel-enter var(--motion-duration-panel) var(--motion-ease-hvqt) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hvqt-page-surface-enter,
+  .hvqt-page-surface-exit,
+  .hvqt-motion-surface-route,
+  .hvqt-motion-surface-panel {
+    animation: none !important;
+  }
+}
+
 /* Leave calendar: subtle cross-fade when swapping months (client fetch). */
 @keyframes loa-cal-fade-in {
   from {
