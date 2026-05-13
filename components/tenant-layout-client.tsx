@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { TenantNav } from "@/components/tenant-nav";
 import { SchoolSwitcher } from "@/components/school-switcher";
+import { PageTransition } from "@/components/page-transition";
 import { FeatureKey, UserRole } from "@/lib/types";
 
 function MenuIcon({ className }: { className?: string }) {
@@ -66,7 +66,6 @@ export function TenantLayoutClient({
   userEmail,
   userRole,
 }: TenantLayoutClientProps) {
-  const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const navProps = {
@@ -137,12 +136,7 @@ export function TenantLayoutClient({
           </Link>
         </header>
         <main className="anx-workspace-main min-w-0 flex-1 px-4 py-7 sm:px-6 md:px-8 md:py-10 lg:px-10">
-          <div
-            key={pathname ?? ""}
-            className="mx-auto min-w-0 max-w-[1400px] motion-safe:animate-page-enter motion-reduce:animate-none"
-          >
-            {children}
-          </div>
+          <PageTransition className="mx-auto min-w-0 max-w-[1400px]">{children}</PageTransition>
         </main>
       </div>
     </>

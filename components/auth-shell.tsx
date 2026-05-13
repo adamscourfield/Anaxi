@@ -30,7 +30,7 @@ export function AuthNav() {
       <div className="flex items-center gap-3">
         <Image src="/anaxi-logo.png" alt="Anaxi" width={32} height={32} priority className="h-8 w-8 object-contain" />
         <div className="mx-2 h-4 w-px bg-[var(--divider-subtle)]" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+        <span className="font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           Anaxi
         </span>
       </div>
