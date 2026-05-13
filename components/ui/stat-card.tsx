@@ -15,12 +15,12 @@ const accentBarColors: Record<AccentColor, string> = {
 type PanelTone = "default" | "softGrey" | "softBlueGrey" | "softWarm" | "glass";
 
 const panelToneClass: Record<PanelTone, string> = {
-  default: "border border-border/80 bg-surface-container-lowest shadow-ambient",
-  softGrey: "border border-border/55 bg-surface-container-low shadow-none",
-  softBlueGrey: "border border-border/45 bg-surface-container shadow-none",
-  softWarm: "border border-coral/25 bg-coral-10 shadow-none",
+  default: "rounded-sm border border-border bg-surface-container-lowest shadow-none",
+  softGrey: "rounded-sm border border-border/55 bg-surface-container-low shadow-none",
+  softBlueGrey: "rounded-sm border border-border/45 bg-surface-container shadow-none",
+  softWarm: "rounded-sm border border-coral/25 bg-coral-10 shadow-none",
   /** Solid floating KPI tile — matches Explorer / Signals summary cards */
-  glass: "border border-border/80 bg-surface-container-lowest shadow-ambient",
+  glass: "rounded-sm border border-border bg-surface-container-lowest shadow-none",
 };
 
 /** `kpi`: icon row + chevron + stacked label/value/context (My Actions, Explorer-style tiles). */
@@ -33,7 +33,7 @@ function KpiChevron() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1}
       aria-hidden
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="m9 18 6-6-6-6" />
@@ -98,7 +98,7 @@ export function StatCard({
         <div className="flex items-start justify-between gap-2">
           {icon ? (
             <span
-              className={`inline-flex h-10 w-10 shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5 ${iconTileClassName ?? "rounded-xl bg-[var(--surface-container-low)] text-muted"}`}
+              className={`inline-flex h-10 w-10 shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5 ${iconTileClassName ?? "rounded-sm bg-[var(--surface-container-low)] text-muted"}`}
             >
               {icon}
             </span>
@@ -114,7 +114,7 @@ export function StatCard({
     );
 
     const kpiInner = (
-      <div className={`group overflow-hidden rounded-2xl shadow-[var(--anx-elevated-shadow)] ${kpiSurfaceClass}`}>
+      <div className={`group overflow-hidden rounded-sm shadow-none ${kpiSurfaceClass}`}>
         {kpiBody}
       </div>
     );
@@ -123,7 +123,7 @@ export function StatCard({
       return (
         <Link
           href={href}
-          className="home-stat-drill block rounded-2xl outline-none transition-[box-shadow,transform] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]"
+          className="home-stat-drill block rounded-sm outline-none transition-[box-shadow,transform] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]"
         >
           {kpiInner}
         </Link>
@@ -156,7 +156,7 @@ export function StatCard({
     );
 
   const inner = (
-    <div className={`overflow-hidden rounded-xl ${panelToneClass[tone]}`}>
+    <div className={`overflow-hidden rounded-sm ${panelToneClass[tone]}`}>
       {accentPlacement === "left" ? (
         <div className="flex min-h-[5.5rem]">
           <div className={`w-2 shrink-0 self-stretch ${accentBarColors[accent]}`} aria-hidden />
@@ -175,7 +175,7 @@ export function StatCard({
     return (
       <Link
         href={href}
-        className="home-stat-drill block rounded-xl outline-none transition-[box-shadow,transform,background-color] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)]"
+        className="home-stat-drill block rounded-sm outline-none transition-[box-shadow,transform,background-color] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)]"
       >
         {inner}
       </Link>

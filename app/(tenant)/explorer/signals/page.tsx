@@ -70,7 +70,7 @@ function getPriorityLevel(row: CpdPriorityRow): "HIGH" | "MEDIUM" | "LOW" {
 function getPriorityStripeClass(level: "HIGH" | "MEDIUM" | "LOW") {
   if (level === "HIGH") return "border-l-[3px] border-l-[#EF4444]";
   if (level === "MEDIUM") return "border-l-[3px] border-l-[#F59E0B]";
-  return "border-l-[3px] border-l-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)]";
+  return "border-l border-l-border";
 }
 
 function getPriorityPillClass(level: "HIGH" | "MEDIUM" | "LOW") {

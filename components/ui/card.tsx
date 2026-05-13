@@ -2,15 +2,13 @@ import { HTMLAttributes, ReactNode } from "react";
 
 type CardTone = "default" | "subtle" | "inset" | "interactive";
 
-// No-Line Rule: boundaries defined by background color shifts, not borders.
-// Cards use surface-container-lowest (white) on surface-container-low backgrounds.
+// Cards: 1px border + micro-radius; flat (no shadow lift).
 const toneClasses: Record<CardTone, string> = {
-  default:
-    "border border-[color-mix(in_srgb,var(--outline-variant)_11%,transparent)] bg-[var(--surface-container-lowest)] shadow-ambient",
-  subtle:      "bg-[var(--surface-container-low)]",
-  inset:       "bg-[var(--surface-container)]",
+  default: "rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none",
+  subtle: "rounded-sm bg-[var(--surface-container-low)]",
+  inset: "rounded-sm bg-[var(--surface-container)]",
   interactive:
-    "border border-[color-mix(in_srgb,var(--outline-variant)_11%,transparent)] bg-[var(--surface-container-lowest)] shadow-ambient calm-transition hover:bg-[var(--surface-container-low)] hover:shadow-lg motion-safe:hover:-translate-y-px cursor-pointer",
+    "rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none calm-transition hover:bg-[var(--surface-container-low)] cursor-pointer",
 };
 
 export function Card({
@@ -24,7 +22,7 @@ export function Card({
   tone?: CardTone;
 } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`rounded-lg p-5 sm:p-6 ${toneClasses[tone]} ${className}`} {...props}>
+    <div className={`rounded-sm p-5 sm:p-6 ${toneClasses[tone]} ${className}`} {...props}>
       {children}
     </div>
   );
