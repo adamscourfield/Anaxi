@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import {
   canViewExplorer,
@@ -40,11 +39,16 @@ function parseWindow(raw: string | undefined): WindowDays {
   return VALID_WINDOWS.includes(n as WindowDays) ? (n as WindowDays) : 21;
 }
 
-function getInitials(name: string): string {
-  const parts = name.split(" ").filter(Boolean);
-  if (parts.length >= 2)
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return name.substring(0, 2).toUpperCase();
+function getInitials(name: string | null | undefined): string {
+  const n = (name ?? "").trim();
+  if (!n) return "—";
+  const parts = n.split(" ").filter(Boolean);
+  if (parts.length >= 2) {
+    const a = parts[0][0];
+    const b = parts[parts.length - 1][0];
+    if (a && b) return (a + b).toUpperCase();
+  }
+  return n.substring(0, 2).toUpperCase();
 }
 
 function attendanceBarColor(pct: number | null): string {
@@ -85,7 +89,12 @@ export default async function StudentsPage({
 }) {
   const params = await searchParams;
   const user = await getSessionUserOrThrow();
-  await requireFeature(user.tenantId, "ANALYSIS");
+
+  const analysisFeature = await prisma.tenantFeature.findUnique({
+    where: { tenantId_key: { tenantId: user.tenantId, key: "ANALYSIS" } },
+    select: { enabled: true },
+  });
+  if (!analysisFeature?.enabled) notFound();
 
   // ── viewer context ──────────────────────────────────────────────
   const [hodMemberships, coachAssignments] = await Promise.all([
@@ -155,7 +164,7 @@ export default async function StudentsPage({
   }
   if (studentSearch) {
     const q = studentSearch.toLowerCase();
-    rows = rows.filter((r) => r.studentName.toLowerCase().includes(q));
+    rows = rows.filter((r) => (r.studentName ?? "").toLowerCase().includes(q));
   }
   if (bandFilter && BAND_ORDER.includes(bandFilter as RiskBand)) {
     rows = rows.filter((r) => r.band === bandFilter);
