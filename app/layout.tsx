@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { SessionProvider } from "@/components/session-provider";
+import { motionRootCssProperties } from "@/lib/motion/tokens";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -10,7 +11,7 @@ const inter = Inter({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${inter.className}`}>
+    <html lang="en" className={`${inter.variable} ${inter.className}`} style={motionRootCssProperties()}>
       <body className="antialiased bg-[var(--surface-bright)] text-[var(--on-surface)]">
           <SessionProvider>{children}</SessionProvider>
         </body>
