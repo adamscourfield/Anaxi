@@ -83,7 +83,7 @@ function TagIcon({ className }: { className?: string }) {
 function TerminologyCard({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-2xl border border-border/35 bg-background shadow-[0_2px_16px_rgba(15,23,42,0.06)] ${className}`}
+      className={`rounded-sm border border-border/35 bg-background shadow-none ${className}`}
     >
       {children}
     </div>

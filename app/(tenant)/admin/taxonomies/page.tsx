@@ -17,7 +17,7 @@ const LEAVE_TABS: Tab[] = ["loa-reasons", "loa-authorisers"];
 const ON_CALL_TABS: Tab[] = ["on-call-reasons", "on-call-locations", "on-call-recipients"];
 
 const NAV_CARD =
-  "overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
+  "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
 const ICON_WELL_BASE =
   "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border [&_svg]:shrink-0";
@@ -331,7 +331,7 @@ export default async function AdminTaxonomiesPage({ searchParams }: { searchPara
   }));
 
   const AUTH_CARD =
-    "overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
+    "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
   return (
     <div className="space-y-6 pb-8">

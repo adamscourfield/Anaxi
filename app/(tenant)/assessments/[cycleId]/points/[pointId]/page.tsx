@@ -1698,7 +1698,7 @@ function PastoralTab({
   }
   if (!data) {
     return (
-      <div className="rounded-2xl border border-black/[0.06] bg-white p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <div className="rounded-sm border border-border bg-surface-container-lowest p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-none">
         No pastoral snapshot data available for this result point.
       </div>
     );
@@ -1831,7 +1831,7 @@ function PastoralTab({
         ].map((k) => (
           <div
             key={k.label}
-            className={`flex items-start gap-3 rounded-2xl border border-black/[0.04] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${
+            className={`flex items-start gap-3 rounded-sm border border-border bg-surface-container-lowest p-4 shadow-none ${
               k.warn ? "ring-1 ring-red-200/80" : ""
             }`}
           >
@@ -1851,7 +1851,7 @@ function PastoralTab({
 
       {/* ── Behaviour by Quartile Charts ── */}
       {quartiles.length >= 2 && (
-        <div className="rounded-2xl border border-black/[0.06] bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="rounded-sm border border-border bg-surface-container-lowest p-5 sm:p-6 shadow-none">
           <h2 className="mb-1 text-xl font-bold tracking-tight text-[var(--on-surface)]">Behaviour by Attainment Quartile</h2>
           <p className="mb-5 text-[13px] leading-snug text-[var(--on-surface-muted)]">
             Mean per quartile — Q4 = highest attainment, Q1 = lowest. Click any bar to see students.
@@ -1891,7 +1891,7 @@ function PastoralTab({
 
       {/* ── Scatter Plots ── */}
       {withSnapshot > 0 && (
-        <div className="rounded-2xl border border-black/[0.06] bg-white p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="rounded-sm border border-border bg-surface-container-lowest p-5 sm:p-6 shadow-none">
           <h2 className="mb-1 text-xl font-bold tracking-tight text-[var(--on-surface)]">Attainment vs Behaviour</h2>
           <p className="mb-4 text-[13px] leading-snug text-[var(--on-surface-muted)]">
             Each dot is one student.{" "}
@@ -1931,7 +1931,7 @@ function PastoralTab({
       )}
 
       {/* ── Student Breakdown Table ── */}
-      <div className="rounded-2xl border border-black/[0.06] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
+      <div className="rounded-sm border border-border bg-surface-container-lowest shadow-none overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-5">
           <h2 className="text-lg font-bold tracking-tight text-[var(--on-surface)] sm:text-xl">Student Breakdown</h2>
           <div className="flex flex-wrap items-center gap-3">

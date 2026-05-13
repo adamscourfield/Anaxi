@@ -45,7 +45,7 @@ export function ObservationSignalLabelsSection({
   footerSaveLabel = "Save changes",
 }: Props) {
   return (
-    <div className="overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]">
+    <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none">
       <div
         className={`flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-7 sm:py-6 ${ROW_BORDER}`}
       >

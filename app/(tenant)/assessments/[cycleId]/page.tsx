@@ -171,7 +171,7 @@ function CycleOverviewTile({
 }) {
   return (
     <div
-      className="relative flex flex-col items-center overflow-hidden rounded-2xl border border-[color-mix(in_srgb,#e5e7eb_90%,transparent)] bg-white px-5 pb-6 pt-7 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-8px_rgba(15,23,42,0.06)]"
+      className="relative flex flex-col items-center overflow-hidden rounded-sm border border-border bg-surface-container-lowest px-5 pb-6 pt-7 text-center shadow-none"
     >
       {decorative === "bars" ? (
         <span className="pointer-events-none absolute bottom-3 right-3 flex h-8 items-end gap-0.5 opacity-30" aria-hidden>
@@ -340,7 +340,7 @@ export default async function CycleDetailPage({
         actions={
           <Link
             href={`/assessments/${cycle.id}/points/new`}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-[0.625rem] bg-[#111827] px-5 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.08)] calm-transition hover:opacity-95"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-border bg-[var(--on-surface)] px-5 text-sm font-semibold text-[var(--surface-bright)] shadow-none calm-transition hover:opacity-95"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -404,7 +404,7 @@ export default async function CycleDetailPage({
         </div>
 
         {cycle.points.length === 0 && (
-          <Card className="overflow-hidden rounded-2xl border border-black/[0.06] bg-surface-container-lowest p-0 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_8px_24px_rgba(15,23,42,0.06)]">
+          <Card className="overflow-hidden rounded-sm border border-border bg-surface-container-lowest p-0 shadow-none">
             <DataTableEmpty
               title="No result points yet"
               description="Add a baseline, mock, or final results snapshot to start recording grades for this cycle."
@@ -431,7 +431,7 @@ export default async function CycleDetailPage({
             return (
               <article
                 key={point.id}
-                className="flex gap-6 rounded-2xl border border-[color-mix(in_srgb,#e5e7eb_90%,transparent)] bg-white p-7 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_40px_-12px_rgba(15,23,42,0.08)] sm:gap-8 sm:p-9"
+                className="flex gap-6 rounded-sm border border-border bg-surface-container-lowest p-7 shadow-none sm:gap-8 sm:p-9"
               >
                 <div className="hidden shrink-0 sm:flex sm:items-start sm:pt-1">
                   <span

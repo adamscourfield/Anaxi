@@ -172,7 +172,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
   }
 
   const surfaceCard =
-    "rounded-xl bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
+    "rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
   /** Full-height vertical track for timeline markers (mock: line runs top to bottom of card). */
   const TIMELINE_LINE_LEFT = "16px";

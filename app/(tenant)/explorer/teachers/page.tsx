@@ -283,7 +283,7 @@ export default async function ExplorerTeachersPage({
               {departmentId && <input type="hidden" name="departmentId" value={departmentId} />}
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg bg-[var(--on-surface)] px-5 py-2.5 text-sm font-semibold text-[var(--surface-container-lowest)] shadow-[0_1px_2px_rgba(15,23,42,0.08)] calm-transition hover:opacity-90 motion-safe:hover:-translate-y-px active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-lg bg-[var(--on-surface)] px-5 py-2.5 text-sm font-semibold text-[var(--surface-container-lowest)] shadow-none calm-transition hover:opacity-90 active:scale-[0.98]"
               >
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />

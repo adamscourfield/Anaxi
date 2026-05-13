@@ -73,7 +73,7 @@ export default function LandingPage() {
             />
             <Link
               href="/login"
-              className="group relative inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[var(--on-surface)] px-9 text-[13px] font-medium tracking-[-0.015em] text-[var(--surface-bright)] shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.04),0_10px_28px_-6px_rgba(0,0,0,0.18)] outline-none ring-1 ring-black/[0.04] transition-[transform,box-shadow,opacity] duration-200 hover:opacity-[0.94] hover:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_14px_36px_-8px_rgba(0,0,0,0.22)] focus-visible:ring-2 focus-visible:ring-[var(--on-surface)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-bright)] active:scale-[0.985] motion-reduce:transition-none motion-reduce:hover:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.04),0_10px_28px_-6px_rgba(0,0,0,0.18)]"
+              className="group relative inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border bg-[var(--on-surface)] px-9 text-[13px] font-medium tracking-[-0.015em] text-[var(--surface-bright)] shadow-none outline-none transition-[transform,opacity] duration-200 hover:opacity-[0.94] focus-visible:ring-2 focus-visible:ring-[var(--on-surface)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-bright)] active:scale-[0.985] motion-reduce:transition-none"
             >
               Sign in
               <svg

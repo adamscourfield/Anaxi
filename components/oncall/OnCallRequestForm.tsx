@@ -140,10 +140,10 @@ export function OnCallRequestForm({
       </header>
 
       {/* ── Request Details card ───────────────────────────────────── */}
-      <div className="home-hero-glass overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_14px_44px_-14px_rgba(0,0,0,0.08)]">
+      <div className="home-hero-glass overflow-hidden rounded-sm border border-border shadow-none">
         {/* Card header */}
         <div className="flex items-start gap-3.5 border-b border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] px-5 py-5 sm:px-7">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-none">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M12 2L2 7l10 5 10-5-10-5z" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M2 17l10 5 10-5" strokeLinecap="round" strokeLinejoin="round" />

@@ -75,7 +75,7 @@ function ChartTooltip({ state }: { state: TooltipState }) {
   return createPortal(
     <div
       ref={ref}
-      className="pointer-events-none fixed z-[100] max-w-[min(280px,calc(100vw-1.5rem))] rounded-xl bg-[var(--surface-container-lowest)] px-3.5 py-2.5 text-[0.8125rem] text-text shadow-[0_8px_30px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06)]"
+      className="pointer-events-none fixed z-[100] max-w-[min(280px,calc(100vw-1.5rem))] rounded-sm border border-border bg-[var(--surface-container-lowest)] px-3.5 py-2.5 text-[0.8125rem] text-text shadow-none"
       style={{
         left: pos?.left ?? state.x + TOOLTIP_GAP,
         top: pos?.top ?? state.y + TOOLTIP_GAP,
@@ -688,7 +688,7 @@ export function ObservationHistoryAnalysis({
                     href={analysisHref(preset, historyFilterQueryString)}
                     className={`${segmentBase} ${
                       active
-                        ? "text-white shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
+                        ? "text-white shadow-none"
                         : "text-[#6B7280] hover:bg-white/80 hover:text-text"
                     }`}
                     style={active ? { backgroundColor: CHART_VIOLET } : undefined}
@@ -750,7 +750,7 @@ export function ObservationHistoryAnalysis({
                         </span>
                         <div className={barTrack}>
                           <span
-                            className="pointer-events-none absolute inset-y-0 left-0 rounded-md shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]"
+                            className="pointer-events-none absolute inset-y-0 left-0 rounded-sm"
                             style={{
                               width: `${pct}%`,
                               minWidth: row.count > 0 ? "0.5rem" : 0,

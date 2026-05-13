@@ -17,7 +17,7 @@ const BORDER = "#E5E7EB";
 const NAVY = "#0f172a";
 
 const LEAVE_ELEVATED_CARD =
-  "overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
+  "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
 function fmt(date: Date) {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });

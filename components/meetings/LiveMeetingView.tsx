@@ -16,7 +16,7 @@ const SLATE_600 = "#6B7280";
 const SLATE_400 = "#9CA3AF";
 const BORDER = "#E5E7EB";
 const MEETING_CARD =
-  "rounded-xl bg-[var(--surface-container-lowest)] p-5 sm:p-6 shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
+  "rounded-sm border border-border bg-[var(--surface-container-lowest)] p-5 sm:p-6 shadow-none";
 
 interface Attendee {
   id: string;
@@ -895,7 +895,7 @@ export function LiveMeetingView({
           </div>
 
           {/* ── Efficiency Index ────────────────────────────────────── */}
-          <div className="rounded-xl p-5 text-white shadow-[0_4px_24px_rgba(15,23,42,0.12)] sm:p-6" style={{ backgroundColor: NAVY }}>
+          <div className="rounded-sm border border-border p-5 text-white shadow-none sm:p-6" style={{ backgroundColor: NAVY }}>
             <div className="mb-2 flex items-center gap-2">
               <svg className="h-5 w-5 shrink-0 text-[#60A5FA]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />

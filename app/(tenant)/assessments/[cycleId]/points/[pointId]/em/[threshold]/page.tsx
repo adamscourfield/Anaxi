@@ -265,7 +265,7 @@ export default async function EMThresholdPage({
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-5">
-        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none">
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
             English {targetThreshold}+
           </p>
@@ -274,7 +274,7 @@ export default async function EMThresholdPage({
             <span className="font-semibold text-text">{engMeets}</span> students met
           </p>
         </div>
-        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none">
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
             Maths {targetThreshold}+
           </p>
@@ -283,7 +283,7 @@ export default async function EMThresholdPage({
             <span className="font-semibold text-text">{mathsMeets}</span> students met
           </p>
         </div>
-        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none">
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">PP vs Non-PP gap</p>
           <p className="mt-4 text-4xl font-bold leading-none tracking-tight text-text tabular-nums">
             {Math.abs(nonPpPct - ppPct)}pp
@@ -293,7 +293,7 @@ export default async function EMThresholdPage({
             <span className="text-[var(--on-surface-variant)]">(Both E&amp;M)</span>
           </p>
         </div>
-        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none">
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">SEND vs Non-SEND gap</p>
           <p className="mt-4 text-4xl font-bold leading-none tracking-tight text-text tabular-nums">
             {Math.abs(nonSendPct - sendPct)}pp

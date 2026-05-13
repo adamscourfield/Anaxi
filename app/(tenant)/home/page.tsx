@@ -443,19 +443,19 @@ function LeadershipAttentionStrip({
   const hasWarningOnly = !hasCritical && visibleItems.some((item) => item.tone === "warning");
 
   const shellClass = hasCritical
-    ? "border-[#F5C6C6] bg-[#FFF5F5] shadow-[0_1px_2px_rgba(74,16,16,0.06)]"
+    ? "border-[color-mix(in_srgb,var(--error)_32%,transparent)] bg-[color-mix(in_srgb,var(--error)_06%,var(--surface-container-lowest))] shadow-none"
     : hasWarningOnly
-      ? "border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_70%,var(--surface-container-lowest))] shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
-      : "border-[color-mix(in_srgb,var(--success)_14%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_72%,var(--surface-container-lowest))] shadow-[0_1px_3px_rgba(15,23,42,0.06)]";
+      ? "border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_70%,var(--surface-container-lowest))] shadow-none"
+      : "border-[color-mix(in_srgb,var(--success)_14%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_72%,var(--surface-container-lowest))] shadow-none";
 
   const headerTitleClass = hasCritical
-    ? "text-[#4A1010]"
+    ? "text-[var(--error)]"
     : hasWarningOnly
       ? "text-[var(--warning)]"
       : "text-[var(--success)]";
 
   const dotClass = (tone: "critical" | "warning" | "success") =>
-    tone === "critical" ? "bg-[#D93025]" : tone === "warning" ? "bg-[var(--warning)]" : "bg-[var(--success)]";
+    tone === "critical" ? "bg-[var(--error)]" : tone === "warning" ? "bg-[var(--warning)]" : "bg-[var(--success)]";
 
   return (
     <section className={`rounded-xl border px-4 py-3.5 sm:px-5 sm:py-4 ${shellClass}`}>
@@ -474,7 +474,7 @@ function LeadershipAttentionStrip({
             <Fragment key={`${item.title}-${item.href}`}>
               {idx > 0 ? (
                 <>
-                  <div className="h-px w-full shrink-0 bg-[#FADADD] sm:hidden" aria-hidden />
+                  <div className="h-px w-full shrink-0 bg-[color-mix(in_srgb,var(--error)_18%,transparent)] sm:hidden" aria-hidden />
                   <AttentionBannerSeparator />
                 </>
               ) : null}
@@ -486,7 +486,7 @@ function LeadershipAttentionStrip({
                   <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass(item.tone)}`} aria-hidden />
                   <p
                     className={`truncate text-sm font-semibold tracking-[-0.01em] ${
-                      item.tone === "success" ? "text-text" : "text-[#4A1010]"
+                      item.tone === "success" ? "text-text" : "text-[var(--error)]"
                     }`}
                   >
                     {item.title}
@@ -494,7 +494,7 @@ function LeadershipAttentionStrip({
                 </div>
                 <p
                   className={`mt-1 truncate pl-4 text-xs ${
-                    item.tone === "success" ? "text-muted" : "text-[#5F6368]"
+                    item.tone === "success" ? "text-muted" : "text-[var(--on-surface-variant)]"
                   }`}
                 >
                   {item.detail}
@@ -510,8 +510,8 @@ function LeadershipAttentionStrip({
           href="/my-actions"
           className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold calm-transition sm:self-center ${
             hasCritical
-              ? "border-[#F5C6C6] bg-white text-[#4A1010] hover:bg-white"
-              : "border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-white/95 text-text hover:bg-white"
+              ? "border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--error)] hover:bg-[var(--surface-container-low)]"
+              : "border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] text-text hover:bg-[var(--surface-container-low)]"
           }`}
         >
           View all actions
@@ -616,11 +616,11 @@ function LeadershipHome({
         {/* On-Call Live Status (main box) */}
         <Card
           id="on-call-status-card"
-          className="scroll-mt-20 flex min-h-0 min-w-0 flex-col gap-5 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]"
+          className="scroll-mt-20 flex min-h-0 min-w-0 flex-col gap-5 rounded-sm !p-6 shadow-none"
         >
           <HomeCardHeading
             icon={<IconBell />}
-            iconTileClassName="bg-[#0F172A] text-white shadow-[0_1px_2px_rgba(0,0,0,0.12)] [&_svg]:text-white"
+            iconTileClassName="bg-[var(--on-surface)] text-[var(--surface-bright)] shadow-none [&_svg]:text-[var(--surface-bright)]"
             title="On-call status"
             subtitle="Anaxi core response"
             end={
@@ -1021,10 +1021,10 @@ function LeadershipHome({
       {/* ═══ Attainment ═══ */}
       {attainmentSummary ? (
         <section className="grid min-w-0 gap-5">
-          <Card className="flex h-full min-h-0 flex-col space-y-6 rounded-2xl p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)] sm:p-7">
+          <Card className="flex h-full min-h-0 flex-col space-y-6 rounded-sm p-6 shadow-none sm:p-7">
               <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3.5">
-                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.06)] [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem]">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-none [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem]">
                     <IconChartBar />
                   </span>
                   <div className="min-w-0">
@@ -1197,7 +1197,7 @@ function LeadershipHome({
       {/* ═══ Leave ═══ */}
       {hasLeaveFeature ? (
         <section className="grid min-w-0 gap-5 lg:grid-cols-1 lg:items-stretch">
-          <Card className="flex h-full min-h-0 flex-col gap-5 rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+          <Card className="flex h-full min-h-0 flex-col gap-5 rounded-sm !p-6 shadow-none">
               <HomeCardHeading
                 icon={<IconUmbrella />}
                 title="Leave governance"
@@ -1295,7 +1295,7 @@ function LeadershipHome({
       {/* ═══ Behaviour Heatmap ═══ */}
       {behaviourHeatmap && (
         <section className="grid min-w-0 gap-5 lg:grid-cols-1 lg:items-stretch">
-          <Card className="rounded-2xl !p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+          <Card className="rounded-sm !p-6 shadow-none">
             <BehaviourHeatmap
               yearGroups={behaviourHeatmap.yearGroups}
               columnLabels={behaviourHeatmap.columnLabels}

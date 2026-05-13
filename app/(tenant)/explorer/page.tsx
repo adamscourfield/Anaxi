@@ -311,7 +311,7 @@ export default async function ExplorerPage() {
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {/* Teachers */}
         <Link href="/explorer/teachers" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-6">
+          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between gap-2">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
                 <IconTeachers />
@@ -342,7 +342,7 @@ export default async function ExplorerPage() {
 
         {/* Departments */}
         <Link href="/explorer/departments" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-6">
+          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
                 <IconDepartments />
@@ -363,7 +363,7 @@ export default async function ExplorerPage() {
 
         {/* Signals */}
         <Link href="/explorer/signals" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-6">
+          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
                 <IconSignals />
@@ -391,7 +391,7 @@ export default async function ExplorerPage() {
 
         {/* Observations */}
         <Link href="/observe/history" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-6">
+          <div className="explorer-kpi-tile explorer-kpi-hover relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--surface-container)_70%,transparent)] text-[var(--on-surface-variant)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]">
                 <IconObservations />
@@ -515,7 +515,7 @@ export default async function ExplorerPage() {
           <div className="mt-6 grid grid-cols-1 items-stretch gap-5 md:grid-cols-3">
             {/* Students Card */}
             <Link href="/explorer/students" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-7">
+              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition sm:p-7">
                 <WatermarkGradCap />
                 <p className="text-lg font-semibold text-[var(--on-surface)]">Students</p>
                 <div className="mt-3 flex items-baseline gap-3">
@@ -548,7 +548,7 @@ export default async function ExplorerPage() {
 
             {/* Cohorts Card */}
             <Link href="/explorer/cohorts" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-7">
+              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition sm:p-7">
                 <WatermarkDiamond />
                 <p className="text-lg font-semibold text-[var(--on-surface)]">Cohorts</p>
                 <div className="mt-3 flex items-baseline gap-3">
@@ -577,7 +577,7 @@ export default async function ExplorerPage() {
 
             {/* Behaviour Analysis Card */}
             <Link href="/explorer/analysis" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
-              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition group-hover:shadow-[0_20px_48px_-18px_rgba(0,0,0,0.12)] sm:p-7">
+              <div className="explorer-kpi-tile explorer-kpi-hover relative h-full overflow-hidden p-6 calm-transition sm:p-7">
                 <WatermarkChartBars />
                 <p className="text-lg font-semibold text-[var(--on-surface)]">Behaviour Analysis</p>
                 <div className="mt-3 flex items-baseline gap-3">

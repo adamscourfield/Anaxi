@@ -424,7 +424,7 @@ export default async function StudentDetailPage({
       {/* Latest behaviour snapshot */}
       {latestSnapshot && attDisplay !== null ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
+          <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
             <p className="anx-label-micro">Attendance</p>
             <div className="mt-2 flex items-end justify-between gap-3">
               <span className="text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{attDisplay}%</span>
@@ -437,27 +437,27 @@ export default async function StudentDetailPage({
               />
             </div>
           </div>
-          <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
+          <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
             <p className="anx-label-micro">On calls</p>
             <p className="mt-2 text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{latestSnapshot.onCallsCount}</p>
           </div>
-          <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
+          <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
             <p className="anx-label-micro">Detentions</p>
             <p className="mt-2 text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{latestSnapshot.detentionsCount}</p>
           </div>
-          <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
+          <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
             <p className="anx-label-micro">Lateness</p>
             <p className="mt-2 text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{latestSnapshot.latenessCount}</p>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[var(--anx-elevated-shadow)]">
+        <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none">
           <BodyText className="text-muted">No behaviour snapshot imported yet for this student.</BodyText>
         </div>
       )}
 
       {analysisProfile ? (
-        <div className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[var(--anx-elevated-shadow)] sm:p-8">
+        <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] pb-4">
             <div>
               <H2>Pastoral risk (analysis)</H2>
@@ -627,7 +627,7 @@ export default async function StudentDetailPage({
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* Teachers */}
-        <div className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[var(--anx-elevated-shadow)] sm:p-8">
+        <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
           <div className="mb-5">
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Teachers</h2>
             <p className="mt-1 text-sm leading-relaxed text-muted">Current subject assignments</p>
@@ -730,7 +730,7 @@ export default async function StudentDetailPage({
 
         {/* Assessments */}
         {assessmentsFeature?.enabled ? (
-          <div className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] p-6 shadow-[var(--anx-elevated-shadow)] sm:p-8">
+          <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Assessments</h2>

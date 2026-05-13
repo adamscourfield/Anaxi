@@ -13,7 +13,7 @@ import { SignalKeyIcon } from "@/app/(tenant)/admin/observation-signal-labels/Si
 const WINDOW_OPTIONS = [7, 21, 28] as const;
 
 const ELEVATED_SHELL =
-  "overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
+  "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
 const KPI_ICON_WELL =
   "flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[rgba(124,92,255,0.12)] text-[#7C5CFF] [&_svg]:h-[18px] [&_svg]:w-[18px]";

@@ -22,7 +22,7 @@ export function EMTargetGroupToolbar({
   hasFilters,
 }: Props) {
   return (
-    <div className="filter-panel shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="filter-panel shadow-none">
       <form
         method="get"
         action={basePath}

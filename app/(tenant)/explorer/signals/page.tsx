@@ -283,7 +283,7 @@ export default async function SignalsPage({
           subtitle="Instructional signals and drift — filter by department and time window."
         />
 
-        <div className="rounded-xl border border-[color-mix(in_srgb,#E5E7EB_90%,transparent)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] md:p-6">
+        <div className="rounded-sm border border-border bg-surface-container-lowest p-5 shadow-none md:p-6">
           <div className="flex w-full flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-6 lg:gap-y-4">
             <div className="flex min-w-0 flex-col gap-2 lg:flex-none">
               <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">
@@ -568,7 +568,7 @@ export default async function SignalsPage({
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,#E5E7EB_90%,transparent)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none">
             <p className="sr-only" id="explorer-signals-scroll-hint">
               This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
             </p>
@@ -663,7 +663,7 @@ export default async function SignalsPage({
         )}
 
         <div className="grid gap-5 lg:grid-cols-2">
-          <div className="rounded-xl border border-[color-mix(in_srgb,#E5E7EB_90%,transparent)] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="rounded-sm border border-border bg-surface-container-lowest p-6 shadow-none">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-base font-bold text-[#111827]">Overall Drift Trend</h2>
               <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">
@@ -725,7 +725,7 @@ export default async function SignalsPage({
             </div>
           </div>
 
-          <div className="rounded-xl border border-[color-mix(in_srgb,#E5E7EB_90%,transparent)] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="rounded-sm border border-border bg-surface-container-lowest p-6 shadow-none">
             <h2 className="text-base font-bold text-[#111827]">Top Improving Signals</h2>
             <div className="mt-4 space-y-3">
               {improving.length > 0 ? (

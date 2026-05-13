@@ -84,7 +84,7 @@ function Modal({ title, onClose, children }: ModalProps) {
         onClick={onClose}
       />
       <div className="relative flex min-h-full items-center justify-center px-4 py-6 sm:px-6 sm:py-10">
-        <div className="relative z-10 max-h-[min(88vh,820px)] w-full max-w-xl overflow-hidden rounded-[24px] border border-[color-mix(in_srgb,var(--outline-variant)_42%,transparent)] bg-[var(--surface-container-lowest)] shadow-[0_32px_80px_-32px_rgba(15,23,42,0.38),0_16px_36px_-18px_rgba(15,23,42,0.18)]">
+        <div className="relative z-10 max-h-[min(88vh,820px)] w-full max-w-xl overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none">
           <div className="flex items-start justify-between gap-3 px-6 py-5 sm:px-7">
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Request details</p>
@@ -264,7 +264,7 @@ export function OnCallBreakdownCharts({ onCallByHour, onCallByReason, details, c
               {modal.rows.map((r) => (
                 <li
                   key={r.id}
-                  className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-3.5 text-sm shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+                  className="rounded-sm border border-border bg-[var(--surface-container-lowest)] px-4 py-3.5 text-sm shadow-none"
                 >
                   <p className="font-semibold text-[var(--on-surface)]">{r.studentName}</p>
                   <p className="mt-0.5 text-xs text-muted">
