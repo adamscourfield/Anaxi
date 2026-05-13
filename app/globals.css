@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Primary screen title: any h1 inside the document <main> uses the display face so
+     new routes inherit it without a utility. Override with h1.font-sans when an h1
+     in main must stay in Inter (rare). */
+  main h1 {
+    font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+  }
+}
+
 :root {
   /* ── Design System: The Modern Academic Ledger ────────────────── */
 
@@ -312,10 +321,10 @@ body {
   color: var(--on-surface);
 }
 
-/* ── Display headlines (Inter) ──────────────────────────────────── */
+/* ── Display headlines (Space Grotesk) ──────────────────────────── */
 .font-display,
 .font-headline {
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────── */
@@ -364,14 +373,14 @@ select {
   cursor: pointer;
 }
 
-/* ── Transitions ───────────────────────────────────────────────── */
+/* ── Transitions (durations & easing: `lib/motion/tokens.ts`, injected on `<html>`) ─ */
 button, input, select, textarea {
   transition:
-    background-color 200ms cubic-bezier(0.4,0,0.2,1),
-    border-color     200ms cubic-bezier(0.4,0,0.2,1),
-    color            200ms cubic-bezier(0.4,0,0.2,1),
-    box-shadow       200ms cubic-bezier(0.4,0,0.2,1),
-    transform        200ms cubic-bezier(0.4,0,0.2,1);
+    background-color var(--motion-duration-micro) var(--motion-ease-hvqt),
+    border-color     var(--motion-duration-micro) var(--motion-ease-hvqt),
+    color            var(--motion-duration-micro) var(--motion-ease-hvqt),
+    box-shadow       var(--motion-duration-micro) var(--motion-ease-hvqt),
+    transform        var(--motion-duration-micro) var(--motion-ease-hvqt);
 }
 
 /* ── Focus state: primary at 40% opacity (per design spec) ──────── */
@@ -384,9 +393,9 @@ textarea:focus-visible {
 }
 
 .calm-transition {
-  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform, filter;
+  transition-duration: var(--motion-duration-micro);
+  transition-timing-function: var(--motion-ease-hvqt);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -402,8 +411,8 @@ textarea:focus-visible {
   text-decoration-color: color-mix(in srgb, var(--outline-variant) 55%, transparent);
   text-underline-offset: 3px;
   transition:
-    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    color var(--motion-duration-quick) var(--motion-ease-hvqt),
+    text-decoration-color var(--motion-duration-quick) var(--motion-ease-hvqt);
 }
 
 .link-subtle:hover {
@@ -418,8 +427,8 @@ textarea:focus-visible {
   text-decoration-color: color-mix(in srgb, var(--primary) 28%, transparent);
   text-underline-offset: 3px;
   transition:
-    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    color var(--motion-duration-quick) var(--motion-ease-hvqt),
+    text-decoration-color var(--motion-duration-quick) var(--motion-ease-hvqt);
 }
 
 .link-accent:hover {
@@ -434,8 +443,8 @@ textarea:focus-visible {
   text-decoration-color: color-mix(in srgb, var(--outline-variant) 45%, transparent);
   text-underline-offset: 3px;
   transition:
-    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    color var(--motion-duration-quick) var(--motion-ease-hvqt),
+    text-decoration-color var(--motion-duration-quick) var(--motion-ease-hvqt);
 }
 
 .link-muted-accent:hover {
@@ -448,7 +457,7 @@ textarea:focus-visible {
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-color: color-mix(in srgb, currentColor 38%, transparent);
-  transition: text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: text-decoration-color var(--motion-duration-quick) var(--motion-ease-hvqt);
 }
 
 .link-underline:hover {
@@ -462,8 +471,8 @@ textarea:focus-visible {
   text-decoration-color: color-mix(in srgb, var(--outline-variant) 42%, transparent);
   text-underline-offset: 3px;
   transition:
-    color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    text-decoration-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    color var(--motion-duration-quick) var(--motion-ease-hvqt),
+    text-decoration-color var(--motion-duration-quick) var(--motion-ease-hvqt);
 }
 
 .link-to-accent:hover {
@@ -494,9 +503,9 @@ textarea:focus-visible {
     color: var(--on-surface);
     font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
     transition:
-      border-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-      background-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1);
+      border-color var(--motion-duration-quick) var(--motion-ease-hvqt),
+      background-color var(--motion-duration-quick) var(--motion-ease-hvqt),
+      box-shadow var(--motion-duration-quick) var(--motion-ease-hvqt);
   }
 
   .field::placeholder {
@@ -559,10 +568,10 @@ textarea:focus-visible {
   cursor: pointer;
   white-space: nowrap;
   transition:
-    color 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    color var(--motion-duration-emphasis) var(--motion-ease-hvqt),
+    background-color var(--motion-duration-emphasis) var(--motion-ease-hvqt),
+    box-shadow var(--motion-duration-emphasis) var(--motion-ease-hvqt),
+    transform var(--motion-duration-emphasis) var(--motion-ease-hvqt);
 }
 
 .segmented-toggle-btn:hover:not(.segmented-toggle-btn-active) {
@@ -782,8 +791,8 @@ textarea:focus-visible {
   color: var(--on-primary);
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   transition:
-    opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity var(--motion-duration-micro) var(--motion-ease-hvqt),
+    background-color var(--motion-duration-micro) var(--motion-ease-hvqt);
 }
 
 .btn-filter-primary:hover {
@@ -811,9 +820,9 @@ textarea:focus-visible {
   color: var(--on-surface-variant);
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   transition:
-    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    background-color var(--motion-duration-micro) var(--motion-ease-hvqt),
+    color var(--motion-duration-micro) var(--motion-ease-hvqt),
+    border-color var(--motion-duration-micro) var(--motion-ease-hvqt);
 }
 
 .btn-filter-secondary:hover {
@@ -905,7 +914,7 @@ textarea:focus-visible {
   cursor: pointer;
   white-space: nowrap;
   text-decoration: none;
-  transition: all 200ms cubic-bezier(0.4,0,0.2,1);
+  transition: all var(--motion-duration-micro) var(--motion-ease-hvqt);
 }
 
 .filter-period-btn:hover:not(.filter-period-btn-active) {
@@ -1038,8 +1047,8 @@ textarea:focus-visible {
   cursor: pointer;
   white-space: nowrap;
   transition:
-    opacity 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity var(--motion-duration-quick) var(--motion-ease-hvqt),
+    transform var(--motion-duration-quick) var(--motion-ease-hvqt);
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
@@ -1228,8 +1237,8 @@ textarea:focus-visible {
 
 .explorer-kpi-hover {
   transition:
-    transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    transform var(--motion-duration-micro) var(--motion-ease-hvqt),
+    box-shadow var(--motion-duration-micro) var(--motion-ease-hvqt);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1258,10 +1267,10 @@ textarea:focus-visible {
 
 @media (prefers-reduced-motion: no-preference) {
   .home-cpd-bar-fill {
-    transition: width 520ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: width var(--motion-duration-panel) var(--motion-ease-hvqt);
   }
   .home-stat-bar-fill {
-    transition: width 480ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: width var(--motion-duration-panel) var(--motion-ease-hvqt);
   }
 }
 
@@ -1309,6 +1318,7 @@ textarea:focus-visible {
 
 .anx-page-title {
   text-wrap: pretty;
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
   font-size: var(--anx-page-title-size);
   font-weight: 700;
   line-height: 1.1;
@@ -1391,10 +1401,10 @@ textarea:focus-visible {
   color: var(--text);
   box-shadow: none;
   transition:
-    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    border-color var(--motion-duration-micro) var(--motion-ease-hvqt),
+    background-color var(--motion-duration-micro) var(--motion-ease-hvqt),
+    box-shadow var(--motion-duration-micro) var(--motion-ease-hvqt),
+    color var(--motion-duration-micro) var(--motion-ease-hvqt);
 }
 
 .anx-btn-pill-ghost:hover {
@@ -1419,9 +1429,9 @@ textarea:focus-visible {
   color: var(--on-primary);
   box-shadow: none;
   transition:
-    opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity var(--motion-duration-micro) var(--motion-ease-hvqt),
+    box-shadow var(--motion-duration-micro) var(--motion-ease-hvqt),
+    transform var(--motion-duration-micro) var(--motion-ease-hvqt);
 }
 
 .anx-btn-pill-primary:hover {
@@ -1463,9 +1473,9 @@ textarea:focus-visible {
   color: var(--on-surface-variant);
   box-shadow: none;
   transition:
-    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    border-color var(--motion-duration-micro) var(--motion-ease-hvqt),
+    background-color var(--motion-duration-micro) var(--motion-ease-hvqt),
+    color var(--motion-duration-micro) var(--motion-ease-hvqt);
 }
 
 .anx-link-back:hover {
@@ -1479,8 +1489,8 @@ textarea:focus-visible {
 .home-row-link {
   border-radius: 0.75rem;
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: var(--motion-duration-micro);
+  transition-timing-function: var(--motion-ease-hvqt);
 }
 .home-row-link:hover {
   background-color: var(--surface-container-low);
@@ -1490,8 +1500,8 @@ textarea:focus-visible {
 .home-row-link-on-dark {
   border-radius: 0.75rem;
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: var(--motion-duration-micro);
+  transition-timing-function: var(--motion-ease-hvqt);
 }
 .home-row-link-on-dark:hover {
   background-color: color-mix(in srgb, #ffffff 10%, transparent);
@@ -1500,8 +1510,8 @@ textarea:focus-visible {
 /* Whole-card drill-in (observations tile, open actions, etc.) */
 .home-pressable-card {
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: var(--motion-duration-micro);
+  transition-timing-function: var(--motion-ease-hvqt);
 }
 @media (prefers-reduced-motion: no-preference) {
   .home-pressable-card:hover {
@@ -1552,8 +1562,8 @@ textarea:focus-visible {
 /* Horizontal “chip” cards (watchlist): flat hover */
 .home-card-tile {
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: var(--motion-duration-micro);
+  transition-timing-function: var(--motion-ease-hvqt);
 }
 @media (prefers-reduced-motion: no-preference) {
   .home-card-tile:hover {
@@ -1719,7 +1729,7 @@ textarea:focus-visible {
 .anx-priorities-table tbody tr {
   border-bottom: 1px solid #f3f4f6;
   background: #fff;
-  transition: background-color 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color var(--motion-duration-tap) var(--motion-ease-hvqt);
 }
 
 .anx-priorities-table tbody tr:hover {
@@ -1774,8 +1784,8 @@ textarea:focus-visible {
   cursor: pointer;
   white-space: nowrap;
   transition:
-    opacity 180ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity var(--motion-duration-quick) var(--motion-ease-hvqt),
+    transform var(--motion-duration-quick) var(--motion-ease-hvqt);
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
@@ -1847,8 +1857,8 @@ textarea:focus-visible {
   background: transparent;
   cursor: pointer;
   transition:
-    color 160ms ease,
-    border-color 160ms ease;
+    color var(--motion-duration-tap) var(--motion-ease-hvqt),
+    border-color var(--motion-duration-tap) var(--motion-ease-hvqt);
 }
 
 .anx-attainment-tab:hover {

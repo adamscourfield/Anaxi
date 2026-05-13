@@ -40,7 +40,7 @@ export default function LandingPage() {
             className="h-8 w-8 object-contain"
           />
           <div className="mx-2 hidden h-4 w-px bg-[var(--divider-subtle)] sm:block" aria-hidden />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Anaxi</span>
+          <span className="font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Anaxi</span>
         </div>
       </header>
 

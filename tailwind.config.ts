@@ -1,5 +1,13 @@
 import type { Config } from "tailwindcss";
 import colors from "tailwindcss/colors";
+import {
+  MOTION_DURATION_EMPHASIS_VAR,
+  MOTION_DURATION_MICRO_VAR,
+  MOTION_DURATION_PANEL_VAR,
+  MOTION_DURATION_QUICK_VAR,
+  MOTION_DURATION_TAP_VAR,
+  MOTION_EASE_HVQT_VAR,
+} from "./lib/motion/tokens";
 
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
@@ -7,7 +15,9 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['var(--font-space-grotesk)', 'system-ui', '-apple-system', 'sans-serif'],
         serif: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['var(--font-jetbrains-mono)', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       colors: {
         // ── Design System: The Modern Academic Ledger ──────────────
@@ -208,12 +218,18 @@ const config: Config = {
         header:  "var(--shadow-header)",
       },
       transitionTimingFunction: {
-        calm: "cubic-bezier(0,0,0.2,1)",
+        calm: MOTION_EASE_HVQT_VAR,
       },
       transitionDuration: {
         150: "150ms",
-        200: "200ms",
-        220: "220ms",
+        200: MOTION_DURATION_MICRO_VAR,
+        220: MOTION_DURATION_EMPHASIS_VAR,
+        quick: MOTION_DURATION_QUICK_VAR,
+        tap: MOTION_DURATION_TAP_VAR,
+        micro: MOTION_DURATION_MICRO_VAR,
+        emphasis: MOTION_DURATION_EMPHASIS_VAR,
+        panel: MOTION_DURATION_PANEL_VAR,
+        hvqt: MOTION_DURATION_PANEL_VAR,
       },
       fontSize: {
         "2xs": ["0.6875rem", { lineHeight: "1.4" }],

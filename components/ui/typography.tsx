@@ -1,7 +1,11 @@
 import { ReactNode } from "react";
 
 export function H1({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <h1 className={`text-3xl font-bold leading-tight tracking-[-0.025em] text-text ${className}`}>{children}</h1>;
+  return (
+    <h1 className={`text-3xl font-bold leading-tight tracking-[-0.025em] text-text ${className}`}>
+      {children}
+    </h1>
+  );
 }
 
 export function H2({ children, className = "" }: { children: ReactNode; className?: string }) {
