@@ -552,7 +552,7 @@ textarea:focus-visible {
 .segmented-toggle {
   display: inline-flex;
   align-items: center;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius);
   background: color-mix(in srgb, var(--surface-container-high) 92%, var(--surface-container) 8%);
   padding: 4px;
   gap: 2px;
@@ -560,7 +560,7 @@ textarea:focus-visible {
 }
 
 .segmented-toggle-btn {
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius);
   padding: 7px 16px;
   font-size: 0.8125rem;
   font-weight: 500;
@@ -593,7 +593,7 @@ textarea:focus-visible {
   }
 }
 
-/* Institutional Pulse — window selector matches navy pill spec */
+/* Institutional Pulse — window selector (navy active segment) */
 .home-pulse-window-toggle.segmented-toggle {
   background: color-mix(in srgb, var(--surface-container-high) 88%, var(--surface-container) 12%);
 }
@@ -890,7 +890,7 @@ textarea:focus-visible {
 .filter-period-toggle {
   display: inline-flex;
   align-items: center;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--surface-container-high);
   padding: 3px;
   gap: 2px;
@@ -1023,13 +1023,13 @@ textarea:focus-visible {
 }
 
 .teachers-filter-toolbar .filter-period-toggle {
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius);
   padding: 4px;
   gap: 3px;
 }
 
 .teachers-filter-toolbar .filter-period-btn {
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius);
   padding: 0.5rem 1rem;
 }
 
@@ -1637,14 +1637,14 @@ textarea:focus-visible {
 }
 
 .anx-priorities-toolbar .filter-period-toggle {
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius);
   padding: 4px;
   gap: 3px;
   background: #f3f4f6;
 }
 
 .anx-priorities-toolbar .filter-period-btn {
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius);
 }
 
 .anx-priorities-meta-bar {
