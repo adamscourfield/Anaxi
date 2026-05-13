@@ -39,7 +39,7 @@ export default function LandingFooter() {
                 style={{ opacity: 0.85 }}
               />
               <span
-                className="text-sm font-semibold uppercase tracking-[0.1em]"
+                className="font-display text-sm font-semibold uppercase tracking-[0.1em]"
                 style={{ color: "rgba(255,255,255,0.85)" }}
               >
                 Anaxi

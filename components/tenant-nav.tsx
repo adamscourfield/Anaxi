@@ -219,7 +219,9 @@ export function TenantNav({
           </span>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-[13px] font-bold tracking-[0.04em] uppercase text-[var(--on-surface)]">Anaxi</span>
+              <span className="font-display text-[13px] font-bold tracking-[0.04em] uppercase text-[var(--on-surface)]">
+                Anaxi
+              </span>
               <span className="text-[9px] font-semibold tracking-[0.12em] uppercase text-[var(--outline)]">Future Education</span>
             </div>
           )}
