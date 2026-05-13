@@ -43,7 +43,7 @@ export function PageHeader({
   const titleDefault =
     variant === "ledger"
       ? "anx-page-title"
-      : "text-3xl font-bold leading-tight tracking-[-0.03em] text-text";
+      : "font-display text-3xl font-bold leading-tight tracking-[-0.03em] text-text";
   const subtitleDefault =
     variant === "ledger"
       ? "anx-page-subtitle"

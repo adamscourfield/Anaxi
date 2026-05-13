@@ -313,10 +313,10 @@ body {
   color: var(--on-surface);
 }
 
-/* ── Display headlines (Inter) ──────────────────────────────────── */
+/* ── Display headlines (Space Grotesk) ──────────────────────────── */
 .font-display,
 .font-headline {
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────── */
@@ -1325,6 +1325,7 @@ textarea:focus-visible {
 
 .anx-page-title {
   text-wrap: pretty;
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
   font-size: var(--anx-page-title-size);
   font-weight: 700;
   line-height: 1.1;

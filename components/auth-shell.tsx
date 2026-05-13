@@ -30,7 +30,7 @@ export function AuthNav() {
       <div className="flex items-center gap-3">
         <Image src="/anaxi-logo.png" alt="Anaxi" width={32} height={32} priority className="h-8 w-8 object-contain" />
         <div className="mx-2 h-4 w-px bg-[var(--divider-subtle)]" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+        <span className="font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           Anaxi
         </span>
       </div>
@@ -52,8 +52,8 @@ export function AuthPageHeader({
   const alignClass = align === "center" ? "text-center md:text-left" : "text-left";
   const titleClass =
     variant === "light"
-      ? "text-[28px] font-bold leading-tight tracking-[-0.03em] text-text"
-      : "text-[28px] font-bold leading-tight tracking-[-0.03em] text-white";
+      ? "font-display text-[28px] font-bold leading-tight tracking-[-0.03em] text-text"
+      : "font-display text-[28px] font-bold leading-tight tracking-[-0.03em] text-white";
 
   return (
     <div className={`mb-10 space-y-1.5 ${alignClass}`}>
