@@ -3,33 +3,8 @@ import Link from "next/link";
 
 export default function LandingPage() {
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[var(--surface-bright)] text-[var(--on-surface)]">
-      {/* Ambient depth — same token language as in-app glass surfaces */}
-      <div
-        className="pointer-events-none absolute inset-0 -z-10"
-        aria-hidden
-        style={{
-          background: `
-            radial-gradient(ellipse 120% 80% at 50% -30%, color-mix(in srgb, var(--primary-container) 14%, transparent), transparent 55%),
-            radial-gradient(ellipse 70% 50% at 100% 100%, color-mix(in srgb, var(--outline-variant) 12%, transparent), transparent 50%)
-          `,
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.35]"
-        aria-hidden
-        style={{
-          backgroundImage: `repeating-linear-gradient(
-            -12deg,
-            transparent,
-            transparent 56px,
-            color-mix(in srgb, var(--outline-variant) 8%, transparent) 56px,
-            color-mix(in srgb, var(--outline-variant) 8%, transparent) 57px
-          )`,
-        }}
-      />
-
-      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center border-b border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-[var(--surface-bright)] px-4 shadow-header sm:px-6 lg:px-10">
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-white text-[var(--on-surface)]">
+      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center border-b border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-white px-4 shadow-header sm:px-6 lg:px-10">
         <div className="mx-auto flex w-full max-w-[1400px] items-center gap-3">
           <Image
             src="/anaxi-logo.png"

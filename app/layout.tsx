@@ -24,7 +24,7 @@ const jetbrainsMono = JetBrains_Mono({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${inter.className}`} style={motionRootCssProperties()}>
-      <body className="antialiased bg-[var(--surface-bright)] text-[var(--on-surface)]">
+      <body className="antialiased bg-white text-[var(--on-surface)]">
           <SessionProvider>{children}</SessionProvider>
         </body>
     </html>
