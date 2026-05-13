@@ -1,15 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
 import type { ReactNode } from "react";
-import { hvqtTransition, pageSnapFocusVariants, panelSnapFocusVariants } from "@/lib/motion/hvqt";
+import {
+  hvqtMotionSurfacePanelClass,
+  hvqtMotionSurfaceRouteClass,
+} from "@/lib/motion/hvqt";
 
-const presetVariants = {
-  route: pageSnapFocusVariants,
-  panel: panelSnapFocusVariants,
+const presetClass = {
+  route: hvqtMotionSurfaceRouteClass,
+  panel: hvqtMotionSurfacePanelClass,
 } as const;
 
-export type MotionSurfacePreset = keyof typeof presetVariants;
+export type MotionSurfacePreset = keyof typeof presetClass;
 
 type MotionSurfaceProps = {
   children: ReactNode;
@@ -18,20 +20,16 @@ type MotionSurfaceProps = {
   preset?: MotionSurfacePreset;
 };
 
+function mergeClassName(base: string | undefined, extra: string): string {
+  return [base, extra].filter(Boolean).join(" ");
+}
+
 /**
  * Shared HVQT enter state for surfaces. For full route cross-fades with exit,
- * use `PageTransition` (AnimatePresence) instead.
+ * use `PageTransition` instead.
  */
 export function MotionSurface({ children, className, preset = "panel" }: MotionSurfaceProps) {
   return (
-    <motion.div
-      className={className}
-      variants={presetVariants[preset]}
-      initial="initial"
-      animate="animate"
-      transition={hvqtTransition}
-    >
-      {children}
-    </motion.div>
+    <div className={mergeClassName(className, presetClass[preset])}>{children}</div>
   );
 }
