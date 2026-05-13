@@ -86,7 +86,8 @@
   --surface-white:      var(--surface-container-lowest);
   --text:               var(--on-surface);
   --text-muted:         var(--on-surface-variant);
-  --border:             var(--outline-variant);
+  /* HSL channels for `hsl(var(--border))` / Tailwind `border-border` */
+  --border:             220 11% 91%;
   --divider:            var(--surface-container-low);
 
   /* ── Primary action (now deep slate, not indigo) ────────────────── */
@@ -103,33 +104,31 @@
 
   /* ── Institutional UI pass (headers, pills, elevated cards) ─── */
   --anx-header-rule:           color-mix(in srgb, var(--outline-variant) 22%, transparent);
-  --anx-card-border:           color-mix(in srgb, var(--outline-variant) 18%, transparent);
-  --anx-card-border-strong:     color-mix(in srgb, var(--outline-variant) 22%, transparent);
-  --anx-elevated-shadow:        0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 40px -12px rgba(0, 0, 0, 0.08);
-  --anx-elevated-shadow-hover:  0 4px 24px -8px rgba(0, 0, 0, 0.08);
+  --anx-card-border:           hsl(var(--border) / 0.92);
+  --anx-card-border-strong:    hsl(var(--border));
+  --anx-elevated-shadow:       none;
+  --anx-elevated-shadow-hover: none;
   --anx-page-title-size:        clamp(1.75rem, 4vw, 2.25rem);
   --anx-pill-ghost-border:      color-mix(in srgb, var(--outline-variant) 35%, transparent);
 
-  /* ── Layout — corner radii (Tailwind `rounded-*` in tailwind.config) ─ */
-  --radius:             12px;
-  --radius-lg:          12px;
-  --radius-md:          8px;
-  --radius-sm:          6px;
-  /* Pills, segmented controls, horizontal chips — not for avatars / dots (keep rounded-full + equal h·w) */
-  --radius-pill:        var(--radius-md);
+  /* ── Layout — micro-radius (2px / 0.125rem) + full pills ─────────── */
+  --radius:             0.125rem;
+  --radius-lg:          0.125rem;
+  --radius-md:          0.125rem;
+  --radius-sm:          0.125rem;
+  /* True capsules (badges, toggles) — keep fully rounded */
+  --radius-pill:        9999px;
   --sidebar-width:      260px;
   --sidebar-collapsed-width: 72px;
 
-  /* ── Shadows — ambient only (floating elements) ─────────────────── */
-  --shadow-ambient:     0 14px 44px -12px rgba(15, 23, 42, 0.07), 0 4px 12px -4px rgba(15, 23, 42, 0.04);
-  --shadow-sm:          0 1px 2px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.02);
-  --shadow-md:          0 8px 32px -4px rgba(25,28,30,0.04), 0 2px 8px -2px rgba(25,28,30,0.03);
-  --shadow-lg:          0 16px 48px -8px rgba(25,28,30,0.06), 0 4px 16px -4px rgba(25,28,30,0.04);
-  --shadow-xl:          0 24px 64px -12px rgba(25,28,30,0.08), 0 8px 32px -8px rgba(25,28,30,0.05);
-  --shadow-float:       0 32px 64px -16px rgba(25,28,30,0.04);
-  /* Header chrome: one hairline + soft lift (reduced vs full ambient) */
-  --shadow-header:      0 1px 0 color-mix(in srgb, var(--outline-variant) 38%, transparent),
-                        0 8px 28px -8px rgba(15, 23, 42, 0.06);
+  /* ── Shadows — flat precision surfaces (use 1px borders instead) ─── */
+  --shadow-ambient:     none;
+  --shadow-sm:          none;
+  --shadow-md:          none;
+  --shadow-lg:          none;
+  --shadow-xl:          none;
+  --shadow-float:       none;
+  --shadow-header:      none;
 
   /* Frosted shell (tenant top bar, overlays) */
   --anx-frost-bg:       color-mix(in srgb, var(--surface-bright) 76%, transparent);
@@ -142,9 +141,9 @@
   --accent-surface:     var(--surface-container);
   --icon-muted:         var(--on-surface-variant);
 
-  /* ── Button shadows ─────────────────────────────────────────────── */
-  --shadow-btn:         0 4px 16px rgba(0,0,0,0.12);
-  --shadow-btn-hover:   0 8px 24px rgba(0,0,0,0.16);
+  /* ── Button shadows — flat (border + fill carry affordance) ─────── */
+  --shadow-btn:         none;
+  --shadow-btn-hover:   none;
 
   /* ── Button aliases (now using deep slate) ──────────────────────── */
   --primary-btn:        var(--primary);
@@ -285,7 +284,7 @@
 
 /* ── Reset ─────────────────────────────────────────────────────── */
 * {
-  border-color: var(--outline-variant);
+  border-color: hsl(var(--border));
 }
 
 ::selection {
@@ -340,7 +339,7 @@ select,
 textarea {
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(198,198,205,0.20);
+  border: 1px solid hsl(var(--border) / 0.85);
   background: var(--surface-container-highest);
   color: var(--on-surface);
   font-size: 0.875rem;
@@ -476,7 +475,8 @@ textarea:focus-visible {
 .panel {
   border-radius: var(--radius-lg);
   background: var(--surface-container-lowest);
-  box-shadow: var(--shadow-ambient);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
 }
 
 /* ── Field ─────────────────────────────────────────────────────── */
@@ -486,7 +486,7 @@ textarea:focus-visible {
     display: block;
     width: 100%;
     border-radius: var(--radius-md);
-    border: 1px solid rgba(198,198,205,0.20);
+    border: 1px solid hsl(var(--border) / 0.85);
     background: var(--surface-container-highest);
     padding: 0.625rem 0.875rem;
     font-size: 0.875rem;
@@ -545,7 +545,7 @@ textarea:focus-visible {
   background: color-mix(in srgb, var(--surface-container-high) 92%, var(--surface-container) 8%);
   padding: 4px;
   gap: 2px;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 .segmented-toggle-btn {
@@ -573,9 +573,7 @@ textarea:focus-visible {
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   font-weight: 600;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.06),
-    0 4px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -592,9 +590,7 @@ textarea:focus-visible {
 .home-pulse-window-toggle .segmented-toggle-btn-active {
   background: #0f172a;
   color: #fff;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.12),
-    0 4px 14px rgba(15, 23, 42, 0.12);
+  box-shadow: none;
 }
 
 .home-pulse-window-toggle .segmented-toggle-btn-active:hover {
@@ -644,10 +640,8 @@ textarea:focus-visible {
     color-mix(in srgb, var(--surface-container-lowest) 88%, var(--surface-container-low)) 0%,
     color-mix(in srgb, var(--surface-container-low) 92%, var(--surface-container-lowest)) 100%
   );
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 18%, transparent);
-  box-shadow:
-    var(--shadow-ambient),
-    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
   padding: 1.25rem 1.25rem;
 }
 
@@ -657,31 +651,27 @@ textarea:focus-visible {
   }
 }
 
-/* Elevated dashboard cards — opt-in (white face, no border, soft lift; keeps page background) */
+/* Elevated dashboard cards — flat border, no lift */
 .anx-elevated-card {
   border-radius: var(--radius-lg);
   background: var(--surface-container-lowest);
-  border: none;
-  box-shadow:
-    0 4px 24px rgba(15, 23, 42, 0.06),
-    0 1px 3px rgba(15, 23, 42, 0.04);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
 }
 
 .anx-elevated-card--table.table-shell {
   background: var(--surface-container-lowest);
-  border: none;
-  box-shadow:
-    0 4px 24px rgba(15, 23, 42, 0.06),
-    0 1px 3px rgba(15, 23, 42, 0.04);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
 }
 
 .anx-elevated-card--table.table-shell thead .table-head-row th {
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .anx-elevated-card--table.table-shell tbody .table-row,
 .anx-elevated-card--table.table-shell tbody tr.table-row {
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .anx-elevated-card--table.table-shell tbody .table-row:last-child,
@@ -694,19 +684,21 @@ textarea:focus-visible {
   background: color-mix(in srgb, var(--surface-container-low) 58%, var(--surface-container-lowest));
 }
 
+.anx-elevated-card--hover:hover {
+  border-color: hsl(var(--border) / 1);
+}
+
 /* Behaviour analysis — collapsible sections (mock: 16px cards, zebra tables, grey header strip) */
 .anx-behaviour-section-card {
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface-container-lowest);
-  border: none;
-  box-shadow:
-    0 4px 24px rgba(15, 23, 42, 0.06),
-    0 1px 3px rgba(15, 23, 42, 0.04);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
 }
 
 .anx-behaviour-data-table-wrap {
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .anx-behaviour-data-table-wrap table {
@@ -802,7 +794,7 @@ textarea:focus-visible {
 .btn-filter-primary.btn-filter-primary--pill {
   border-radius: var(--radius-pill);
   padding: 0.65rem 1.35rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow: none;
 }
 
 .btn-filter-secondary {
@@ -811,7 +803,7 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 55%, transparent);
+  border: 1px solid hsl(var(--border));
   background: var(--surface-container-lowest);
   padding: 0.625rem 1rem;
   font-size: 0.8125rem;
@@ -904,7 +896,7 @@ textarea:focus-visible {
 }
 
 .filter-period-btn {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 6px 14px;
   font-size: 0.8125rem;
   font-weight: 500;
@@ -924,7 +916,7 @@ textarea:focus-visible {
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  box-shadow: none;
 }
 
 /* Teachers table filter bar (Explorer + Instruction) — segmented row with dividers */
@@ -933,10 +925,10 @@ textarea:focus-visible {
   flex-direction: column;
   width: 100%;
   overflow: hidden;
-  border-radius: 1rem;
+  border-radius: var(--radius-lg);
   background: var(--surface-container-lowest);
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 22%, transparent);
-  box-shadow: var(--shadow-ambient);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
 }
 
 @media (min-width: 640px) {
@@ -1001,7 +993,7 @@ textarea:focus-visible {
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background: var(--surface-container-high);
   color: var(--on-surface-variant);
 }
@@ -1070,7 +1062,7 @@ textarea:focus-visible {
   background: rgba(247,249,251,0.80);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 /* ── Tables ────────────────────────────────────────────────────── */
@@ -1078,14 +1070,12 @@ textarea:focus-visible {
   overflow: hidden;
   border-radius: var(--radius-lg);
   background: var(--surface-container-lowest);
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 16%, transparent);
-  box-shadow:
-    var(--shadow-ambient),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
 }
 
 .table-shell thead .table-head-row th {
-  border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 22%, transparent);
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .table-shell tbody .table-row td {
@@ -1096,7 +1086,7 @@ textarea:focus-visible {
 .table-shell.table-shell--nested {
   border-radius: var(--radius-md);
   box-shadow: none;
-  border-color: color-mix(in srgb, var(--outline-variant) 14%, transparent);
+  border-color: hsl(var(--border));
 }
 
 .table-shell.table-shell--nested thead .table-head-row th {
@@ -1129,7 +1119,7 @@ textarea:focus-visible {
 }
 
 .table-row {
-  border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 14%, transparent);
+  border-bottom: 1px solid hsl(var(--border));
   transition: background-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1205,7 +1195,7 @@ textarea:focus-visible {
   background: color-mix(in srgb, var(--surface-container-lowest) 80%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 20%, transparent);
+  border: 1px solid hsl(var(--border));
 }
 
 /* Dashboard hero tiles: frosted lift over page background */
@@ -1217,11 +1207,8 @@ textarea:focus-visible {
   );
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 16%, transparent);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 14px 44px -14px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 70%, transparent);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
 }
 
 /* CPD / whole-school dark hero: same corner radius language as dashboard cards */
@@ -1235,11 +1222,8 @@ textarea:focus-visible {
   );
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 16%, transparent);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 14px 44px -14px rgba(0, 0, 0, 0.09),
-    inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 65%, transparent);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
 }
 
 .explorer-kpi-hover {
@@ -1250,7 +1234,7 @@ textarea:focus-visible {
 
 @media (prefers-reduced-motion: no-preference) {
   .group:hover .explorer-kpi-hover {
-    transform: translateY(-1px);
+    transform: none;
   }
 }
 
@@ -1264,10 +1248,8 @@ textarea:focus-visible {
   border-radius: var(--radius-lg);
   background: linear-gradient(155deg, #0f172a 0%, #1e293b 42%, #0f172a 100%) !important;
   color: var(--on-primary);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.2),
-    0 22px 56px -20px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  border: 1px solid hsl(var(--border) / 0.35);
+  box-shadow: none;
 }
 
 .home-cpd-hero .home-cpd-bar-fill {
@@ -1298,29 +1280,31 @@ textarea:focus-visible {
 .anx-card {
   border-radius: var(--radius-lg);
   background: var(--surface-container-lowest);
-  box-shadow: var(--shadow-ambient);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
 }
 
 .anx-card-inset {
   border-radius: var(--radius-md);
   background: var(--surface-container-low);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
 }
 
 .anx-card-elevated {
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .anx-hover-elevate:hover {
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 /* ── Cross-page consistency (institutional polish pass) ───────────── */
 .anx-page-header-shell {
   margin-bottom: 2.25rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 24%, transparent);
+  border-bottom: 1px solid hsl(var(--border));
   padding-bottom: 2.25rem;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  box-shadow: none;
 }
 
 .anx-page-title {
@@ -1368,11 +1352,11 @@ textarea:focus-visible {
 }
 
 .anx-top-bar-frost {
-  border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent);
+  border-bottom: 1px solid hsl(var(--border));
   background: var(--anx-frost-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  box-shadow: var(--shadow-header);
+  box-shadow: none;
 }
 
 .anx-workspace-canvas .anx-top-bar-frost {
@@ -1390,17 +1374,6 @@ textarea:focus-visible {
   color: color-mix(in srgb, var(--on-surface-variant) 55%, transparent);
 }
 
-.anx-elevated-card {
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--anx-card-border);
-  background: var(--surface-container-lowest);
-  box-shadow: var(--anx-elevated-shadow);
-}
-
-.anx-elevated-card--hover:hover {
-  box-shadow: var(--anx-elevated-shadow-hover);
-}
-
 /* Ghost pill (toolbar / secondary actions) — fixed min-height for alignment */
 .anx-btn-pill-ghost {
   display: inline-flex;
@@ -1410,13 +1383,13 @@ textarea:focus-visible {
   min-height: 2.5rem;
   padding: 0 1rem;
   border-radius: var(--radius-pill);
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 35%, transparent);
+  border: 1px solid hsl(var(--border));
   background: var(--surface-container-lowest);
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.25;
   color: var(--text);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   transition:
     border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
     background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
@@ -1438,13 +1411,13 @@ textarea:focus-visible {
   min-height: 2.5rem;
   padding: 0 1rem;
   border-radius: var(--radius-pill);
-  border: 0;
+  border: 1px solid hsl(var(--border));
   background: linear-gradient(to bottom right, var(--primary), var(--primary-container));
   font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.25;
   color: var(--on-primary);
-  box-shadow: var(--shadow-btn);
+  box-shadow: none;
   transition:
     opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
@@ -1453,7 +1426,7 @@ textarea:focus-visible {
 
 .anx-btn-pill-primary:hover {
   opacity: 0.95;
-  box-shadow: var(--shadow-btn-hover);
+  box-shadow: none;
 }
 
 .anx-btn-pill-primary .anx-icon-inline {
@@ -1482,13 +1455,13 @@ textarea:focus-visible {
   min-height: 2rem;
   padding: 0 0.875rem;
   border-radius: var(--radius-pill);
-  border: 1px solid color-mix(in srgb, var(--outline-variant) 35%, transparent);
+  border: 1px solid hsl(var(--border));
   background: var(--surface-container-lowest);
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.25;
   color: var(--on-surface-variant);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   transition:
     border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
     background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
@@ -1533,8 +1506,8 @@ textarea:focus-visible {
 @media (prefers-reduced-motion: no-preference) {
   .home-pressable-card:hover {
     background-color: var(--surface-container-low);
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-1px);
+    box-shadow: none;
+    transform: none;
   }
   .home-hero-glass.home-pressable-card:hover {
     background: linear-gradient(
@@ -1542,18 +1515,15 @@ textarea:focus-visible {
       color-mix(in srgb, var(--surface-container-lowest) 88%, transparent) 0%,
       color-mix(in srgb, var(--surface-container-low) 62%, transparent) 100%
     );
-    border-color: color-mix(in srgb, var(--outline-variant) 24%, transparent);
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.05),
-      0 20px 48px -16px rgba(0, 0, 0, 0.12),
-      inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 85%, transparent);
-    transform: translateY(-1px);
+    border-color: hsl(var(--border));
+    box-shadow: none;
+    transform: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-pressable-card:hover {
     background-color: var(--surface-container-low);
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
   }
   .home-hero-glass.home-pressable-card:hover {
     background: linear-gradient(
@@ -1561,28 +1531,25 @@ textarea:focus-visible {
       color-mix(in srgb, var(--surface-container-lowest) 88%, transparent) 0%,
       color-mix(in srgb, var(--surface-container-low) 62%, transparent) 100%
     );
-    border-color: color-mix(in srgb, var(--outline-variant) 24%, transparent);
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.05),
-      0 20px 48px -16px rgba(0, 0, 0, 0.12),
-      inset 0 1px 0 color-mix(in srgb, var(--surface-container-lowest) 85%, transparent);
+    border-color: hsl(var(--border));
+    box-shadow: none;
   }
 }
 
-/* Stat drill-in on dashboard: lift + shadow only (inner panel already has surface). */
+/* Stat drill-in on dashboard: flat hover */
 @media (prefers-reduced-motion: no-preference) {
   .home-stat-drill:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-1px);
+    box-shadow: none;
+    transform: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-stat-drill:hover {
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
   }
 }
 
-/* Horizontal “chip” cards (watchlist): border from outline token, same lift as pressable cards */
+/* Horizontal “chip” cards (watchlist): flat hover */
 .home-card-tile {
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;
   transition-duration: 200ms;
@@ -1590,13 +1557,13 @@ textarea:focus-visible {
 }
 @media (prefers-reduced-motion: no-preference) {
   .home-card-tile:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-1px);
+    box-shadow: none;
+    transform: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-card-tile:hover {
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
   }
 }
 
@@ -1608,7 +1575,7 @@ textarea:focus-visible {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background-color: var(--surface-container);
 }
 .home-icon-tile svg {
@@ -1647,11 +1614,11 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border-radius: 1rem;
-  border: 1px solid color-mix(in srgb, #e5e7eb 90%, transparent);
+  border-radius: var(--radius-lg);
+  border: 1px solid hsl(var(--border));
   background: var(--surface-container-lowest);
   padding: 1rem 1.125rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
 }
 
 @media (min-width: 1024px) {
@@ -1690,19 +1657,19 @@ textarea:focus-visible {
 }
 
 .anx-priorities-definitions-card {
-  border-radius: 1rem;
-  border: 1px solid color-mix(in srgb, #e5e7eb 90%, transparent);
+  border-radius: var(--radius-lg);
+  border: 1px solid hsl(var(--border));
   background: var(--surface-container-lowest);
   padding: 0.875rem 1.25rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
 }
 
 .anx-priorities-table-card {
   overflow: hidden;
-  border-radius: 1rem;
-  border: 1px solid color-mix(in srgb, #e5e7eb 90%, transparent);
+  border-radius: var(--radius-lg);
+  border: 1px solid hsl(var(--border));
   background: var(--surface-container-lowest);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
 }
 
 .anx-priorities-table-card__header {
@@ -1777,18 +1744,18 @@ textarea:focus-visible {
 }
 
 .anx-priorities-student-filters {
-  border-radius: 1rem;
-  border: 1px solid color-mix(in srgb, #e5e7eb 90%, transparent);
+  border-radius: var(--radius-lg);
+  border: 1px solid hsl(var(--border));
   background: var(--surface-container-lowest);
   padding: 1.25rem 1.25rem 1.125rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
 }
 
 .anx-priorities-student-filters .field,
 .anx-priorities-student-filters [data-radix-collection-item],
 .anx-priorities-student-filters button[role="combobox"] {
-  border-color: #e5e7eb !important;
-  border-radius: 0.625rem !important;
+  border-color: hsl(var(--border)) !important;
+  border-radius: var(--radius-md) !important;
 }
 
 .btn-priorities-apply {

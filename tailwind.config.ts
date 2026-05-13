@@ -64,7 +64,7 @@ const config: Config = {
         surface:      "var(--surface-container-lowest)",
         text:         "var(--on-surface)",
         muted:        "var(--on-surface-variant)",
-        border:       "var(--outline-variant)",
+        border:       "hsl(var(--border) / <alpha-value>)",
         divider:      "var(--surface-container-low)",
         accent:       "var(--primary)",
         accentHover:  "var(--accent-hover)",
@@ -228,8 +228,16 @@ const config: Config = {
       },
       keyframes: {
         pageEnter: {
-          "0%": { opacity: "0", transform: "translateY(8px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
+          "0%": {
+            opacity: "0",
+            transform: "translateY(10px)",
+            filter: "blur(4px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)",
+            filter: "blur(0)",
+          },
         },
         pulseSubtle: {
           "0%, 100%": { opacity: "1" },
@@ -237,7 +245,7 @@ const config: Config = {
         },
       },
       animation: {
-        "page-enter": "pageEnter 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "page-enter": "pageEnter 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "pulse-subtle": "pulseSubtle 1.8s ease-in-out infinite",
       },
     }
