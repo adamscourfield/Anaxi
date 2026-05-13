@@ -5,7 +5,7 @@ import { FormWithSuccessToast, FormSuccessToast } from "@/components/form-succes
 
 /** Platform settings — match product mock (soft cards, #E5E7EB fields, navy primary) */
 const PLATFORM_CARD =
-  "rounded-2xl bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
+  "rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
 const FIELD_SHELL =
   "w-full rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm text-[#111827] outline-none transition focus:border-[#CBD5E1] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]";
@@ -14,7 +14,7 @@ const LABEL_UPPER =
   "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]";
 
 const ICON_WELL_SCHOOL =
-  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#E0E7FF] text-[#4F46E5] shadow-sm [&_svg]:shrink-0";
+  "flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-[#E0E7FF] text-[#4F46E5] shadow-none [&_svg]:shrink-0";
 
 type Tab = "school" | "modules";
 
@@ -363,7 +363,7 @@ export function AdminSettingsForms({
           <div className="pt-1">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0f172a] px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[#1e293b]"
+              className="inline-flex items-center gap-2 rounded-sm bg-[var(--on-surface)] px-5 py-2.5 text-sm font-semibold text-[var(--surface-container-lowest)] shadow-none calm-transition hover:bg-[var(--on-surface)]/90"
             >
               <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" strokeLinecap="round" strokeLinejoin="round" />
@@ -413,12 +413,12 @@ export function AdminSettingsForms({
                   type="submit"
                   className={`group flex w-full items-center gap-4 rounded-2xl border p-4 text-left calm-transition sm:p-5 ${
                     feature.enabled
-                      ? "border-[var(--anx-card-border-strong)] bg-[var(--surface-container-lowest)] shadow-[var(--anx-elevated-shadow)] hover:shadow-[var(--anx-elevated-shadow-hover)]"
-                      : "border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] bg-[var(--surface-container-low)]/40 shadow-[var(--anx-elevated-shadow)] hover:border-border hover:bg-[var(--surface-container-low)]/70"
+                      ? "border-[var(--anx-card-border-strong)] bg-[var(--surface-container-lowest)] shadow-none"
+                      : "border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] bg-[var(--surface-container-low)]/40 shadow-none hover:border-border hover:bg-[var(--surface-container-low)]/70"
                   }`}
                 >
                   <span
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl [&_svg]:shrink-0 calm-transition group-hover:shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${well}`}
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-sm [&_svg]:shrink-0 calm-transition ${well}`}
                   >
                     {icon}
                   </span>
@@ -434,13 +434,13 @@ export function AdminSettingsForms({
                   <span
                     className={`relative mt-0.5 inline-block h-[26px] w-[46px] shrink-0 rounded-md transition-[background-color,box-shadow] duration-200 ${
                       feature.enabled
-                        ? "bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]"
+                        ? "bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)]"
                         : "bg-[var(--surface-container-high)] ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]"
                     }`}
                     aria-hidden
                   >
                     <span
-                      className={`absolute top-[4px] h-[18px] w-[18px] rounded-md shadow-md transition-transform duration-200 ease-out ${
+                      className={`absolute top-[4px] h-[18px] w-[18px] rounded-sm shadow-none transition-transform duration-200 ease-out ${
                         feature.enabled
                           ? "translate-x-[22px] bg-[var(--surface-container-lowest)]"
                           : "translate-x-[4px] bg-[var(--surface-container-lowest)]"

@@ -183,7 +183,7 @@ export function SnapshotUploader() {
   const unmappedRequired = ANAXI_FIELDS.filter((f) => !fieldMap[f]);
 
   return (
-    <Card className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] !p-0 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_14px_44px_-14px_rgba(0,0,0,0.08)]">
+    <Card className="overflow-hidden rounded-sm border border-border !p-0 shadow-none">
       <div className="grid grid-cols-1 gap-0 lg:grid-cols-[1fr_min(100%,380px)]">
         {/* Left: Upload area */}
         <div className="space-y-5 p-6 sm:p-8 lg:border-r lg:border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)]">

@@ -87,7 +87,7 @@ export default async function AssessmentsPage() {
         actions={
           <Button
             asChild
-            className="h-10 min-h-0 rounded-[0.625rem] border-0 bg-[#111827] px-5 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.08)] hover:bg-[#111827]/90 hover:opacity-95"
+            className="h-10 min-h-0 rounded-sm border border-border bg-[var(--on-surface)] px-5 text-sm font-semibold text-[var(--surface-bright)] shadow-none hover:bg-[var(--on-surface)]/90 hover:opacity-95"
           >
             <Link href="/assessments/new" className="gap-2">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
@@ -138,7 +138,7 @@ export default async function AssessmentsPage() {
       )}
 
       {(activeCycles.length > 0 || archivedCycles.length > 0) && (
-        <div className="flex flex-col gap-6 rounded-xl border border-[color-mix(in_srgb,#e5e7eb_90%,transparent)] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6">
+        <div className="flex flex-col gap-6 rounded-sm border border-border bg-surface-container-lowest p-5 shadow-none sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6">
           <div className="flex min-w-0 flex-1 items-start gap-3">
             <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-sky-50 text-sky-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -244,7 +244,7 @@ function CycleCard({ cycle }: {
   return (
     <Link
       href={`/assessments/${cycle.id}`}
-      className={`anx-attainment-cycle-card group relative block overflow-hidden rounded-2xl border border-[color-mix(in_srgb,#e5e7eb_90%,transparent)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_40px_-12px_rgba(15,23,42,0.08)] calm-transition hover:border-[#d1d5db] hover:shadow-[0_16px_48px_-16px_rgba(15,23,42,0.1)] ${cardToneClass}`}
+      className={`anx-attainment-cycle-card group relative block overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none calm-transition hover:border-border ${cardToneClass}`}
     >
       <div className="anx-attainment-wave" aria-hidden />
       <div className={`relative z-[1] h-1 w-full ${accentBar}`} aria-hidden />

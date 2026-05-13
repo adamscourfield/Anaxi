@@ -74,7 +74,7 @@ export function AuthPageHeader({
 export function AuthCard({ children }: { children: ReactNode }) {
   return (
     <div
-      className="rounded-lg p-px shadow-[var(--shadow-ambient)]"
+      className="rounded-lg p-px shadow-none"
       style={{
         background: "rgba(255,255,255,0.82)",
         backdropFilter: "blur(20px)",
@@ -86,7 +86,6 @@ export function AuthCard({ children }: { children: ReactNode }) {
         style={{
           background: "var(--surface-container-lowest)",
           border: "1px solid color-mix(in srgb, var(--outline-variant) 12%, transparent)",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.75)",
         }}
       >
         {children}

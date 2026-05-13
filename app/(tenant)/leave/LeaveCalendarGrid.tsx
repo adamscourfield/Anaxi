@@ -286,7 +286,7 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
 
       <div
         key={animTick}
-        className={`loa-cal-month-enter overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.05),0_1px_3px_rgba(15,23,42,0.04)] ${loading ? "opacity-70" : ""}`}
+        className={`loa-cal-month-enter overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none ${loading ? "opacity-70" : ""}`}
       >
         <div className="grid grid-cols-7 border-b border-[#E5E7EB] bg-[#F9FAFB]">
           {WEEKDAYS.map((wd) => (

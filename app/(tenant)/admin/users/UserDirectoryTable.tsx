@@ -191,7 +191,7 @@ export function UserDirectoryTable({
   return (
     <div className="space-y-0">
       {/* ── Filters (aligned with Observation History) ───────────── */}
-          <div className="mb-6 filter-panel rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)]">
+          <div className="mb-6 filter-panel rounded-sm shadow-none">
         <form
           key={filterFormKey}
           onSubmit={applyFilters}
@@ -285,7 +285,7 @@ export function UserDirectoryTable({
       </div>
 
       {/* ── Table (Observation History table-shell) ───────────────── */}
-      <div className="table-shell rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)]">
+      <div className="table-shell rounded-sm shadow-none">
         <p className="sr-only" id="user-directory-scroll-hint">
           This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
         </p>

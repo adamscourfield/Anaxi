@@ -28,7 +28,7 @@ const STATUS_PILL: Record<RiskStatus, string> = {
 };
 
 const OBS_CARD_SHELL =
-  "overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] bg-[var(--surface-container-lowest)] shadow-[0_1px_3px_rgba(15,23,42,0.06)]";
+  "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
 function IconCircle({
   children,

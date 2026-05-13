@@ -43,7 +43,7 @@ export function PrioritiesExportButton({
       {activeTab === "cpd" && departmentId ? <input type="hidden" name="departmentId" value={departmentId} /> : null}
       <button
         type="submit"
-        className="inline-flex items-center gap-2 rounded-lg bg-[var(--on-surface)] px-5 py-2.5 text-sm font-semibold text-[var(--surface-container-lowest)] shadow-[0_1px_2px_rgba(15,23,42,0.08)] calm-transition hover:opacity-90 motion-safe:hover:-translate-y-px active:scale-[0.98]"
+        className="inline-flex items-center gap-2 rounded-lg bg-[var(--on-surface)] px-5 py-2.5 text-sm font-semibold text-[var(--surface-container-lowest)] shadow-none calm-transition hover:opacity-90 active:scale-[0.98]"
       >
         {DOWNLOAD_ICON}
         Export CSV

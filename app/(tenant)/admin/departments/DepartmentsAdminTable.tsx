@@ -30,7 +30,7 @@ type Props = {
 };
 
 const DEPT_CARD =
-  "overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
+  "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
 const ICON_ACTION =
   "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#E5E7EB] bg-[var(--surface-container-lowest)] text-[#6B7280] calm-transition hover:border-[#D1D5DB] hover:bg-[#F9FAFB] hover:text-[#111827]";
@@ -357,7 +357,7 @@ export function DepartmentsAdminTable({
           onClick={(e) => e.target === e.currentTarget && setEditingDept(null)}
           role="presentation"
         >
-          <div className="w-full max-w-sm rounded-2xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] p-6 shadow-[0_8px_30px_rgba(15,23,42,0.12)]" role="dialog" aria-modal="true" aria-labelledby="dept-rename-title">
+          <div className="w-full max-w-sm rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none" role="dialog" aria-modal="true" aria-labelledby="dept-rename-title">
             <h2 id="dept-rename-title" className="mb-4 text-lg font-bold text-[#111827]">
               Rename department
             </h2>

@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 export type TaxonomyRow = { id: string; value: string; active: boolean };
 
 const CARD =
-  "overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] shadow-[0_4px_24px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.04)]";
+  "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
 const FIELD =
   "min-h-[2.5rem] w-full min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3.5 text-sm text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#CBD5E1] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]";
@@ -258,7 +258,7 @@ export function TaxonomyEditableSection({
                             {menuOpenId === row.id ? (
                               <div
                                 ref={menuRef}
-                                className="absolute right-0 top-full z-20 mt-1 min-w-[10rem] rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] py-1 shadow-[0_8px_24px_rgba(15,23,42,0.1)]"
+                                className="absolute right-0 top-full z-20 mt-1 min-w-[10rem] rounded-sm border border-border bg-[var(--surface-container-lowest)] py-1 shadow-none"
                                 role="menu"
                               >
                                 <form action={deleteItem}>

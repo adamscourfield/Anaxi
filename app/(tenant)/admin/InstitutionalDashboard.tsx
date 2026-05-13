@@ -223,7 +223,7 @@ function AdminRowItem({
         className={`flex items-center gap-4 px-5 py-4 calm-transition group-hover:bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] ${!isLast ? "border-b border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)]" : ""}`}
       >
         <div
-          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl [&_svg]:shrink-0 calm-transition group-hover:shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${well}`}
+          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-sm [&_svg]:shrink-0 calm-transition ${well}`}
         >
           {icon}
         </div>
@@ -332,10 +332,10 @@ function AttentionBand({ items }: { items: DashboardAttentionDef[] }) {
       : "border-[color-mix(in_srgb,var(--success)_14%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_72%,var(--surface-container-lowest))]";
 
   return (
-    <section className={`rounded-2xl border px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)] sm:px-5 ${bandTone}`}>
+    <section className={`rounded-sm px-4 py-3.5 shadow-none sm:px-5 ${bandTone}`}>
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:gap-4">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--error)] text-sm font-bold text-white shadow-sm">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--error)] text-sm font-bold text-white shadow-none">
             !
           </span>
           <div className="grid min-w-0 gap-3 md:grid-cols-3">
@@ -481,7 +481,7 @@ export function InstitutionalDashboard({
         {filterOpen ? (
           <div
             id={panelId}
-            className="filter-panel rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)]"
+            className="filter-panel rounded-sm shadow-none"
           >
             <label className="flex flex-col gap-1.5">
               <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Search destinations</span>

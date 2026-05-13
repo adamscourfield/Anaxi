@@ -141,12 +141,12 @@ export function ObservationContextForm({
   return (
     <ObservationStageLayout currentStep={1}>
       {/* Main Card */}
-      <div className="home-hero-glass min-w-0 w-full overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.08)]">
+      <div className="home-hero-glass min-w-0 w-full overflow-hidden rounded-sm border border-border shadow-none">
         <div className="px-4 py-6 sm:px-8 sm:py-8">
           {/* Stage Header */}
           <div className="mb-8">
             <div className="flex items-start gap-3.5">
-              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)] [&_svg]:h-5 [&_svg]:w-5">
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-none [&_svg]:h-5 [&_svg]:w-5">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                   <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
                   <path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -291,7 +291,7 @@ export function ObservationContextForm({
               });
               router.push("/observe/new/signals");
             }}
-            className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--tertiary-container)] px-7 py-3 text-[0.875rem] font-semibold text-[var(--on-primary)] shadow-[0_2px_8px_rgba(0,0,0,0.12)] calm-transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--tertiary-container)] px-7 py-3 text-[0.875rem] font-semibold text-[var(--on-primary)] shadow-none calm-transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next Stage
             <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>

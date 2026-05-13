@@ -77,7 +77,7 @@ export default async function LeaveRequestPage() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <form action={createLoaRequest} className="space-y-5">
-            <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)] sm:p-6">
+            <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label htmlFor="loa-start" className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
@@ -108,7 +108,7 @@ export default async function LeaveRequestPage() {
               </div>
             </div>
 
-            <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)] sm:p-6">
+            <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
               <div className="space-y-4">
                 <label htmlFor="loa-reason" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                   <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -135,7 +135,7 @@ export default async function LeaveRequestPage() {
               </div>
             </div>
 
-            <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)] sm:p-6">
+            <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
               <div className="space-y-3">
                 <label htmlFor="loa-cover" className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                   <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -156,7 +156,7 @@ export default async function LeaveRequestPage() {
               </div>
             </div>
 
-            <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.06)] sm:p-6">
+            <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
               <div className="space-y-3">
                 <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                   <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>

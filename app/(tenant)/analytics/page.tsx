@@ -710,7 +710,7 @@ async function CpdTab({
                 <Link
                   key={row.signalKey}
                   href={`/analysis/cpd/${row.signalKey}?${params.toString()}`}
-                  className="block rounded-xl border border-[color-mix(in_srgb,#e5e7eb_90%,transparent)] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] calm-transition hover:border-[#d1d5db]"
+                  className="block rounded-sm border border-border bg-surface-container-lowest p-4 shadow-none calm-transition hover:border-border"
                 >
                   <p className="text-sm font-semibold text-[#111827] underline decoration-[color-mix(in_srgb,#111827_35%,transparent)] underline-offset-2">
                     {row.label}
@@ -906,7 +906,7 @@ async function StudentsTab({
             <table className="anx-priorities-table min-w-[960px]">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-20 bg-[#fafafa] shadow-[inset_-1px_0_0_#f3f4f6]">
+                  <th className="sticky left-0 z-20 border-r border-border bg-[var(--surface-container-low)]">
                     <Link href={studentSortHref("student")} className="anx-priorities-sort-link">
                       Student
                       {ICON_SORT}
@@ -939,7 +939,7 @@ async function StudentsTab({
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.studentId}>
-                    <td className="sticky left-0 z-10 bg-white shadow-[inset_-1px_0_0_#f3f4f6]">
+                    <td className="sticky left-0 z-10 border-r border-border bg-surface-container-lowest">
                       <Link
                         href={`/analysis/students/${row.studentId}?window=${windowDays}`}
                         className="group flex min-w-0 items-center gap-3"

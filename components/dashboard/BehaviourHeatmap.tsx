@@ -123,7 +123,7 @@ export function BehaviourHeatmap({
                     <td key={ci} className="p-0.5">
                       <div
                         className={`flex h-8 min-w-[2rem] items-center justify-center rounded-[5px] text-[11px] font-semibold tabular-nums transition-all duration-150 ${textClass} ${
-                          isActive ? "scale-[1.04] ring-2 ring-[rgba(61,6,11,0.14)] shadow-[0_6px_18px_rgba(15,23,42,0.08)]" : ""
+                          isActive ? "scale-[1.04] ring-2 ring-[color-mix(in_srgb,var(--error)_22%,transparent)] shadow-none" : ""
                         }`}
                         style={{ background: `rgba(254,159,159,${Math.min(0.96, opacity + (isActive ? 0.08 : 0))})` }}
                         title={`${yg} — ${columnLabels[ci]}: ${val} incident${val !== 1 ? "s" : ""}`}

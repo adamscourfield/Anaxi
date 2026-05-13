@@ -80,7 +80,7 @@ export default async function BehaviourImportPage() {
       <SnapshotUploader />
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <div className="home-hero-glass flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
+        <div className="home-hero-glass flex items-center justify-between gap-4 rounded-sm border border-border p-5 shadow-none sm:p-6">
           <div className="min-w-0">
             <p className="anx-label-micro">
               Total Records Sync&apos;d
@@ -111,7 +111,7 @@ export default async function BehaviourImportPage() {
           </div>
         </div>
 
-        <div className="home-hero-glass flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] p-5 shadow-[var(--anx-elevated-shadow)] sm:p-6">
+        <div className="home-hero-glass flex items-center justify-between gap-4 rounded-sm border border-border p-5 shadow-none sm:p-6">
           <div className="min-w-0">
             <p className="anx-label-micro">Integrity Score</p>
             <div className="mt-2 flex flex-wrap items-baseline gap-2">

@@ -204,7 +204,7 @@ export function EMTargetGroupAccordions({ students }: { students: EMStudentRow[]
 
   if (students.length === 0) {
     return (
-      <div className="rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] bg-[var(--surface-container-lowest)] px-6 py-14 text-center text-muted shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] px-6 py-14 text-center text-muted shadow-none">
         No students match your criteria.
       </div>
     );
@@ -222,7 +222,7 @@ export function EMTargetGroupAccordions({ students }: { students: EMStudentRow[]
         return (
           <div
             key={key}
-            className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)] shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+            className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none"
           >
             <button
               type="button"

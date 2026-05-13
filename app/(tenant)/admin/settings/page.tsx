@@ -59,11 +59,11 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         aria-selected={active}
         className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-[0.8125rem] font-semibold calm-transition sm:px-5 sm:py-3 ${
           active
-            ? "bg-[var(--surface-container-lowest)] text-[#111827] shadow-[0_1px_3px_rgba(15,23,42,0.08),0_4px_14px_rgba(15,23,42,0.06)]"
-            : "bg-transparent text-[#6B7280] hover:bg-white/60 hover:text-[#111827]"
+            ? "border border-border bg-[var(--surface-container-lowest)] text-text shadow-none"
+            : "bg-transparent text-muted hover:bg-[var(--surface-container-low)]/60 hover:text-text"
         }`}
       >
-        <span className={`shrink-0 [&_svg]:block ${active ? "text-[#6B7280]" : "text-[#9CA3AF]"}`} aria-hidden>
+        <span className={`shrink-0 [&_svg]:block ${active ? "text-muted" : "text-muted/70"}`} aria-hidden>
           {icon}
         </span>
         {label}
