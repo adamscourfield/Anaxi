@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Primary page titles: Space Grotesk everywhere `main` wraps app content. */
+  main h1 {
+    font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+  }
+  /* Opt out: use class `font-sans` on the h1 when Inter is intentional. */
+  main h1.font-sans {
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  }
+}
+
 :root {
   /* ── Design System: The Modern Academic Ledger ────────────────── */
 
@@ -312,10 +323,10 @@ body {
   color: var(--on-surface);
 }
 
-/* ── Display headlines (Inter) ──────────────────────────────────── */
+/* ── Display / headline: Space Grotesk (matches Tailwind `font-display`) ─ */
 .font-display,
 .font-headline {
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────── */
@@ -1309,6 +1320,7 @@ textarea:focus-visible {
 
 .anx-page-title {
   text-wrap: pretty;
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
   font-size: var(--anx-page-title-size);
   font-weight: 700;
   line-height: 1.1;

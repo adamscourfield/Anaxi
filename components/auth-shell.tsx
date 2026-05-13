@@ -52,8 +52,8 @@ export function AuthPageHeader({
   const alignClass = align === "center" ? "text-center md:text-left" : "text-left";
   const titleClass =
     variant === "light"
-      ? "text-[28px] font-bold leading-tight tracking-[-0.03em] text-text"
-      : "text-[28px] font-bold leading-tight tracking-[-0.03em] text-white";
+      ? "font-display text-[28px] font-bold leading-tight tracking-[-0.03em] text-text"
+      : "font-display text-[28px] font-bold leading-tight tracking-[-0.03em] text-white";
 
   return (
     <div className={`mb-10 space-y-1.5 ${alignClass}`}>
