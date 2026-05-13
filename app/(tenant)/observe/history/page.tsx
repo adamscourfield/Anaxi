@@ -24,22 +24,27 @@ import { PageHeader } from "@/components/ui/page-header";
 import { HistoryFilters } from "./HistoryFilters";
 import { ObservationHistoryAnalysis } from "./ObservationHistoryAnalysis";
 
-/* ── Signal dot colours by scale level ────────────────────────────────── */
+/* ── Pedagogical signal squares (ledger mock: mostly blue, warn / critical accents) ─ */
 const SIGNAL_DOT_COLOR: Record<string, string> = {
-  STRONG:     "bg-[var(--scale-strong-bar)]",
-  CONSISTENT: "bg-[var(--scale-consistent-bar)]",
-  SOME:       "bg-[var(--scale-some-bar)]",
-  LIMITED:    "bg-[var(--scale-limited-bar)]",
+  STRONG:     "bg-[var(--obs-signal-blue-strong)]",
+  CONSISTENT: "bg-[var(--obs-signal-blue)]",
+  SOME:       "bg-[var(--obs-signal-warn)]",
+  LIMITED:    "bg-[var(--obs-signal-critical)]",
 };
 
 const PHASE_BADGE: Record<string, string> = {
-  INSTRUCTION:           "border-[var(--phase-instruction-text)]/30 text-[var(--phase-instruction-text)]",
-  GUIDED_PRACTICE:       "border-[var(--phase-guided-text)]/30 text-[var(--phase-guided-text)]",
-  INDEPENDENT_PRACTICE:  "border-[var(--phase-independent-text)]/30 text-[var(--phase-independent-text)]",
-  UNKNOWN:               "border-border text-muted",
-  THRESHOLD:             "border-[var(--phase-instruction-text)]/30 text-[var(--phase-instruction-text)]",
-  TRANSITION_START:      "border-[var(--phase-instruction-text)]/30 text-[var(--phase-instruction-text)]",
-  BOOKS:                 "border-border text-muted",
+  INSTRUCTION:
+    "border-[var(--phase-instruction-border)] bg-[var(--phase-instruction-bg)] text-[var(--phase-instruction-text)]",
+  GUIDED_PRACTICE:
+    "border-[var(--phase-guided-border)] bg-[var(--phase-guided-bg)] text-[var(--phase-guided-text)]",
+  INDEPENDENT_PRACTICE:
+    "border-[var(--phase-independent-border)] bg-[var(--phase-independent-bg)] text-[var(--phase-independent-text)]",
+  UNKNOWN: "border-[var(--phase-unknown-border)] bg-[var(--phase-unknown-bg)] text-[var(--phase-unknown-text)]",
+  THRESHOLD:
+    "border-[var(--phase-instruction-border)] bg-[var(--phase-instruction-bg)] text-[var(--phase-instruction-text)]",
+  TRANSITION_START:
+    "border-[var(--phase-instruction-border)] bg-[var(--phase-instruction-bg)] text-[var(--phase-instruction-text)]",
+  BOOKS: "border-[var(--phase-unknown-border)] bg-[var(--phase-unknown-bg)] text-[var(--phase-unknown-text)]",
 };
 
 /* ── Pagination constants ─────────────────────────────────────────────── */
@@ -47,7 +52,7 @@ const PAGE_SIZE = 10;
 
 function formatLongDate(date: Date | string): string {
   const d = new Date(date);
-  return `${String(d.getDate()).padStart(2, "0")} ${d.toLocaleDateString("en-GB", { month: "short" })} ${d.getFullYear()}`;
+  return `${d.getDate()} ${d.toLocaleDateString("en-GB", { month: "short" })} ${d.getFullYear()}`;
 }
 
 export default async function ObservationHistoryPage({
@@ -327,11 +332,11 @@ export default async function ObservationHistoryPage({
   const historyFilterQueryString = historyFilterQuery.toString();
 
   return (
-    <div className="space-y-6">
+    <div className="obs-history-scope space-y-6">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <PageHeader variant="ledger"
         title="Observation History"
-        subtitle="Secure academic ledger of pedagogical data across all departments."
+        subtitle="Institutional observation record — filter by teacher, observer, dates, phase, and pedagogical signals."
         actions={
           user.role !== "TEACHER" ? (
             <Link
@@ -442,7 +447,7 @@ export default async function ObservationHistoryPage({
 
                       {/* Phase */}
                       <td className="px-4 py-4">
-                        <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.04em] ${phaseBadge}`}>
+                        <span className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.04em] ${phaseBadge}`}>
                           {formatPhaseLabel(phase)}
                         </span>
                       </td>
@@ -452,11 +457,11 @@ export default async function ObservationHistoryPage({
                         {signalValues.length === 0 ? (
                           <span className="text-xs text-muted">—</span>
                         ) : (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-0.5">
                             {signalValues.map((s: any, i: number) => (
                               <span
                                 key={i}
-                                className={`inline-block h-2.5 w-2.5 cursor-help rounded-md ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
+                                className={`inline-block h-2.5 w-2.5 shrink-0 cursor-help rounded-sm ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
                                 title={pedagogicalSignalTooltip(s.signalKey, s.valueKey)}
                               />
                             ))}
@@ -505,15 +510,15 @@ export default async function ObservationHistoryPage({
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.04em] ${phaseBadge}`}>
+                    <span className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.04em] ${phaseBadge}`}>
                       {formatPhaseLabel(phase)}
                     </span>
                     {signalValues.length > 0 && (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-0.5">
                         {signalValues.map((s: any, i: number) => (
                           <span
                             key={i}
-                            className={`inline-block h-2.5 w-2.5 cursor-help rounded-md ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
+                            className={`inline-block h-2.5 w-2.5 shrink-0 cursor-help rounded-sm ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
                             title={pedagogicalSignalTooltip(s.signalKey, s.valueKey)}
                           />
                         ))}
@@ -529,16 +534,18 @@ export default async function ObservationHistoryPage({
           {totalPages > 1 && (
             <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 px-5 py-3.5">
               <p className="text-[0.8125rem] text-muted">
-                Showing <span className="font-semibold text-text">{rangeStart}-{rangeEnd}</span> of <span className="font-semibold text-text">{totalCount}</span> observations found
+                Showing <span className="font-semibold text-text">{rangeStart}</span> to{" "}
+                <span className="font-semibold text-text">{rangeEnd}</span> of{" "}
+                <span className="font-semibold text-text">{totalCount}</span> results
               </p>
               <div className="flex items-center gap-1">
                 {/* Prev */}
                 {page > 1 ? (
-                  <Link href={pageUrl(page - 1)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text">
+                  <Link href={pageUrl(page - 1)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted calm-transition hover:bg-surface-container-low hover:text-text">
                     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </Link>
                 ) : (
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-border">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-md text-border">
                     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </span>
                 )}
@@ -547,22 +554,25 @@ export default async function ObservationHistoryPage({
                   p === "ellipsis" ? (
                     <span key={`e${i}`} className="inline-flex h-8 w-8 items-center justify-center text-[0.8125rem] text-muted">…</span>
                   ) : p === page ? (
-                    <span key={p} className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-[0.8125rem] font-semibold text-on-primary">
+                    <span
+                      key={p}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-950 bg-white text-[0.8125rem] font-semibold text-neutral-950"
+                    >
                       {p}
                     </span>
                   ) : (
-                    <Link key={p} href={pageUrl(p)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[0.8125rem] text-muted calm-transition hover:bg-surface-container-low hover:text-text">
+                    <Link key={p} href={pageUrl(p)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[0.8125rem] text-muted calm-transition hover:bg-surface-container-low hover:text-text">
                       {p}
                     </Link>
                   )
                 )}
                 {/* Next */}
                 {page < totalPages ? (
-                  <Link href={pageUrl(page + 1)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text">
+                  <Link href={pageUrl(page + 1)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted calm-transition hover:bg-surface-container-low hover:text-text">
                     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </Link>
                 ) : (
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-border">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-md text-border">
                     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </span>
                 )}

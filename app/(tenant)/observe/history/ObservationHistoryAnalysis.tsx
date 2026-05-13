@@ -31,7 +31,7 @@ const PRESET_META: Record<
   week: { label: "Last week", short: "Week" },
   month: { label: "Last month", short: "Month" },
   academic_year: { label: "Academic year", short: "Academic year" },
-  "26w": { label: "~26 weeks", short: "26 wks" },
+  "26w": { label: "~26 weeks", short: "26 weeks" },
 };
 
 type TooltipState = { x: number; y: number; text: string } | null;
@@ -104,14 +104,15 @@ function ChartTooltip({ state }: { state: TooltipState }) {
 /** Plot area inside the timeline SVG (must match line chart geometry). */
 const TIMELINE_PAD = { L: 36, R: 8, T: 12, B: 28, W: 640, H: 160 };
 
-const CHART_VIOLET = "#7C5CFF";
-const CHART_VIOLET_LIGHT = "#C4B5FF";
-/** Bar fill: medium violet → lighter violet (matches mock horizontal gradient). */
-const ROLE_BAR_GRADIENT = `linear-gradient(90deg, ${CHART_VIOLET} 0%, #9B7BFF 52%, ${CHART_VIOLET_LIGHT} 100%)`;
+/** Primary ink for observation intelligence charts (ledger / monochrome mock). */
+const OBS_CHART_INK = "#111827";
+const OBS_CHART_INK_SOFT = "#374151";
+/** Bar fill: deep slate → softer slate (horizontal emphasis without violet chrome). */
+const ROLE_BAR_GRADIENT = `linear-gradient(90deg, ${OBS_CHART_INK} 0%, ${OBS_CHART_INK_SOFT} 100%)`;
 
 function CalendarOutlineIcon({
   className,
-  stroke = CHART_VIOLET,
+  stroke = OBS_CHART_INK,
 }: {
   className?: string;
   stroke?: string;
@@ -312,7 +313,7 @@ function CoachingPairFilterForm({
   const base = new URLSearchParams(historyFilterQueryString);
   base.delete("coachingCoach");
   base.delete("coachingCoachee");
-  const triggerWhite = "!bg-background rounded-[10px]";
+  const triggerWhite = "field-filter-trigger obs-history-coaching-select !bg-background";
 
   /** Defer submit so FormSelect's hidden input reflects the new value (state updates are async). */
   const submitForm = useCallback(() => {
@@ -605,7 +606,7 @@ export function ObservationHistoryAnalysis({
   const analysisCardClass = "obs-history-elevated-card";
 
   const segmentBase =
-    "relative flex min-h-[2.5rem] flex-1 items-center justify-center rounded-lg px-3 py-2 text-center text-[0.8125rem] font-semibold calm-transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+    "relative flex min-h-[2.5rem] flex-1 items-center justify-center rounded-md px-3 py-2 text-center text-[0.8125rem] font-semibold calm-transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
   return (
     <section className="space-y-5" onMouseLeave={hideTip}>
@@ -616,8 +617,7 @@ export function ObservationHistoryAnalysis({
           {/* Analysis copy + quick presets */}
           <div className="min-w-0 flex-1 md:pr-8">
             <p
-              className="text-[0.6875rem] font-bold uppercase tracking-[0.1em]"
-              style={{ color: CHART_VIOLET }}
+              className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-muted"
             >
               Analysis
             </p>
@@ -667,16 +667,13 @@ export function ObservationHistoryAnalysis({
               Current window
             </p>
             <div className="mt-3 flex items-start gap-2.5">
-              <CalendarOutlineIcon className="mt-0.5 h-6 w-6 shrink-0" />
-              <p
-                className="text-[0.9375rem] font-bold leading-snug"
-                style={{ color: CHART_VIOLET }}
-              >
+              <CalendarOutlineIcon className="mt-0.5 h-6 w-6 shrink-0 text-muted" stroke="currentColor" />
+              <p className="text-[0.9375rem] font-bold leading-snug text-neutral-950">
                 {rangeLabel}
               </p>
             </div>
             <div
-              className="mt-5 flex w-full gap-1 rounded-xl bg-[#F3F4F6] p-1"
+              className="mt-5 flex w-full gap-0.5 rounded-md bg-[#F3F4F6] p-0.5"
               role="group"
               aria-label="Chart time window"
             >
@@ -688,10 +685,9 @@ export function ObservationHistoryAnalysis({
                     href={analysisHref(preset, historyFilterQueryString)}
                     className={`${segmentBase} ${
                       active
-                        ? "text-white shadow-none"
-                        : "text-[#6B7280] hover:bg-white/80 hover:text-text"
+                        ? "bg-neutral-950 text-white shadow-none"
+                        : "text-[#6B7280] hover:bg-white/90 hover:text-text"
                     }`}
-                    style={active ? { backgroundColor: CHART_VIOLET } : undefined}
                     aria-current={active ? "true" : undefined}
                   >
                     {PRESET_META[preset].short}
@@ -735,7 +731,7 @@ export function ObservationHistoryAnalysis({
                     <li key={row.role}>
                       <button
                         type="button"
-                        className="grid w-full cursor-default grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)_3.25rem] items-center gap-x-3 rounded-lg py-0.5 text-left text-sm calm-transition hover:bg-[rgba(124,92,255,0.06)] sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_3.5rem]"
+                        className="grid w-full cursor-default grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)_3.25rem] items-center gap-x-3 rounded-md py-0.5 text-left text-sm calm-transition hover:bg-neutral-950/[0.04] sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_3.5rem]"
                         onMouseEnter={(e) =>
                           showTip(
                             e,
@@ -760,9 +756,8 @@ export function ObservationHistoryAnalysis({
                         </div>
                         <span
                           className={`text-right text-[0.8125rem] font-semibold tabular-nums ${
-                            isLead ? "" : "text-[#6B7280]"
+                            isLead ? "text-neutral-950" : "text-[#6B7280]"
                           }`}
-                          style={isLead ? { color: CHART_VIOLET } : undefined}
                         >
                           {row.count.toLocaleString()}
                         </span>
@@ -772,7 +767,7 @@ export function ObservationHistoryAnalysis({
                 })}
               </ul>
               <p className="mt-auto pt-5 text-[0.6875rem] text-[#6B7280]">
-                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle" style={{ backgroundColor: CHART_VIOLET }} />{" "}
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-sm align-middle bg-neutral-950" />{" "}
                 Total observations
               </p>
             </>
@@ -825,7 +820,7 @@ export function ObservationHistoryAnalysis({
             (() => {
               const { padL, padT, plotW, plotH, pts, snapIdx, segmentD, hoverX } = timelineSvgPlot;
               return (
-                <div className="mt-4 w-full flex-1 overflow-x-auto rounded-[14px] bg-gradient-to-b from-[rgba(124,92,255,0.08)] to-transparent p-4">
+                <div className="mt-4 w-full flex-1 overflow-x-auto rounded-md border border-[#E5E7EB] bg-[#F9FAFB] p-4">
                   <svg
                     viewBox={`0 0 ${linePoints.w} ${linePoints.h}`}
                     className="h-48 w-full min-w-[280px] cursor-crosshair calm-transition"
@@ -843,9 +838,9 @@ export function ObservationHistoryAnalysis({
                   >
                     <defs>
                       <linearGradient id={`${chartSvgId}-fill`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={CHART_VIOLET} stopOpacity="0.22" />
-                        <stop offset="55%" stopColor={CHART_VIOLET} stopOpacity="0.08" />
-                        <stop offset="100%" stopColor={CHART_VIOLET} stopOpacity="0" />
+                        <stop offset="0%" stopColor={OBS_CHART_INK} stopOpacity="0.14" />
+                        <stop offset="55%" stopColor={OBS_CHART_INK} stopOpacity="0.06" />
+                        <stop offset="100%" stopColor={OBS_CHART_INK} stopOpacity="0" />
                       </linearGradient>
                     </defs>
                     <rect
@@ -853,7 +848,7 @@ export function ObservationHistoryAnalysis({
                       y={padT}
                       width={plotW}
                       height={plotH}
-                      rx="10"
+                      rx="2"
                       fill="#FFFFFF"
                       opacity="0.55"
                       className="pointer-events-none"
@@ -923,7 +918,7 @@ export function ObservationHistoryAnalysis({
                     <path
                       d={linePoints.d}
                       fill="none"
-                      stroke={CHART_VIOLET}
+                      stroke={OBS_CHART_INK}
                       strokeWidth="2.5"
                       strokeLinejoin="round"
                       strokeLinecap="round"
@@ -934,7 +929,7 @@ export function ObservationHistoryAnalysis({
                       <path
                         d={segmentD}
                         fill="none"
-                        stroke={CHART_VIOLET}
+                        stroke={OBS_CHART_INK}
                         strokeWidth="3"
                         strokeLinejoin="round"
                         strokeLinecap="round"
@@ -948,7 +943,7 @@ export function ObservationHistoryAnalysis({
                         x2={hoverX}
                         y1={padT}
                         y2={padT + plotH}
-                        stroke={CHART_VIOLET}
+                        stroke={OBS_CHART_INK}
                         strokeOpacity={0.28}
                         strokeWidth="1"
                         className="pointer-events-none"
@@ -964,7 +959,7 @@ export function ObservationHistoryAnalysis({
                             cy={p.y}
                             r={active ? 7.5 : 5}
                             fill="#FFFFFF"
-                            stroke={CHART_VIOLET}
+                            stroke={OBS_CHART_INK}
                             strokeWidth={active ? 2.75 : 2}
                             opacity={dim ? 0.3 : 1}
                           />
@@ -973,7 +968,7 @@ export function ObservationHistoryAnalysis({
                               cx={p.x}
                               cy={p.y}
                               r={active ? 3.25 : 2.25}
-                              fill={CHART_VIOLET}
+                              fill={OBS_CHART_INK}
                               opacity={dim ? 0.35 : 1}
                             />
                           ) : null}
@@ -991,7 +986,7 @@ export function ObservationHistoryAnalysis({
                     />
                   </svg>
                   <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.6875rem] text-[#6B7280]">
-                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke={CHART_VIOLET} strokeWidth="2" aria-hidden>
+                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke={OBS_CHART_INK} strokeWidth="2" aria-hidden>
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                       <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
                     </svg>
@@ -1014,7 +1009,7 @@ export function ObservationHistoryAnalysis({
                             {chartTimelineWeeks[chartTimelineWeeks.length - 1]?.label}
                           </span>
                           {" "}
-                          <span className="font-bold tabular-nums" style={{ color: CHART_VIOLET }}>
+                          <span className="font-bold tabular-nums" style={{ color: OBS_CHART_INK }}>
                             {timelineSeriesMode === "weekly"
                               ? rawObservationsInWindow.toLocaleString()
                               : formatChartCount(
@@ -1051,8 +1046,8 @@ export function ObservationHistoryAnalysis({
               Coaching pairs — weekly coverage
             </h3>
             <p className="mt-1 max-w-3xl text-[0.8125rem] text-[#6B7280]">
-              Green weeks had at least one observation with this coach observing this coachee. Hover for the observation
-              date; click to open details.
+              Black squares mark a week with at least one observation where this coach observed this coachee. Light grey
+              weeks have none. Hover for the observation date; click a black square to open details.
             </p>
             {coachingCoachFilterOptions.length > 0 || coachingCoacheeFilterOptions.length > 0 ? (
               <CoachingPairFilterForm
@@ -1070,6 +1065,7 @@ export function ObservationHistoryAnalysis({
                   : "No coaching assignments in this school."}
               </p>
             ) : (
+              <>
               <div className="obs-history-table-shell table-shell mt-4">
                 <div className="hidden overflow-x-auto md:block">
                   <table className="w-full min-w-[640px] text-left text-sm">
@@ -1105,7 +1101,7 @@ export function ObservationHistoryAnalysis({
                             {p.weeksWithObservation} / {p.weekHit.length}
                           </td>
                           <td className="px-4 py-4">
-                            <div className="flex flex-wrap gap-1">
+                            <div className="flex flex-wrap gap-0.5">
                               {p.weekHit.map((hit, i) => {
                                 const obsId = p.weekObservationIds[i];
                                 const iso = p.weekObservationDates[i];
@@ -1115,7 +1111,7 @@ export function ObservationHistoryAnalysis({
                                     <Link
                                       key={i}
                                       href={`/observe/${obsId}`}
-                                      className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm bg-[var(--scale-strong-bar)] calm-transition hover:ring-2 hover:ring-accent/40 hover:ring-offset-1 hover:ring-offset-surface-container-lowest"
+                                      className="inline-flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-sm bg-[var(--obs-coaching-hit)] calm-transition hover:ring-2 hover:ring-neutral-950/25 hover:ring-offset-1 hover:ring-offset-surface-container-lowest"
                                       title={`Observation ${formatObsDate(iso)} — click for details`}
                                       onMouseEnter={(e) =>
                                         showTip(e, `Observation\n${formatObsDate(iso)}\nClick to open`)
@@ -1128,7 +1124,7 @@ export function ObservationHistoryAnalysis({
                                 return (
                                   <span
                                     key={i}
-                                    className="inline-block h-4 w-4 shrink-0 rounded-sm bg-[var(--surface-container-high)]"
+                                    className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm bg-[var(--obs-coaching-miss)]"
                                     title={`${weekLbl}: no observation`}
                                     onMouseEnter={(e) => showTip(e, `${weekLbl}\nNo observation`)}
                                     onMouseMove={moveTip}
@@ -1154,7 +1150,7 @@ export function ObservationHistoryAnalysis({
                         {p.observationCount} coaching observation{p.observationCount === 1 ? "" : "s"} this period ·{" "}
                         {p.weeksWithObservation}/{p.weekHit.length} weeks with obs.
                       </p>
-                      <div className="mt-2 flex flex-wrap gap-1">
+                      <div className="mt-2 flex flex-wrap gap-0.5">
                         {p.weekHit.map((hit, i) => {
                           const obsId = p.weekObservationIds[i];
                           const iso = p.weekObservationDates[i];
@@ -1164,7 +1160,7 @@ export function ObservationHistoryAnalysis({
                               <Link
                                 key={i}
                                 href={`/observe/${obsId}`}
-                                className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm bg-[var(--scale-strong-bar)]"
+                                className="inline-flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-sm bg-[var(--obs-coaching-hit)]"
                                 title={`Observation ${formatObsDate(iso)}`}
                               />
                             );
@@ -1172,7 +1168,7 @@ export function ObservationHistoryAnalysis({
                           return (
                             <span
                               key={i}
-                              className="inline-block h-4 w-4 shrink-0 rounded-sm bg-[var(--surface-container-high)]"
+                              className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm bg-[var(--obs-coaching-miss)]"
                               title={`${weekLbl}: no observation`}
                             />
                           );
@@ -1182,6 +1178,28 @@ export function ObservationHistoryAnalysis({
                   ))}
                 </div>
               </div>
+              <div className="mt-4 flex flex-col gap-3 border-t border-border/25 pt-4 text-[0.8125rem] text-muted sm:flex-row sm:items-center sm:justify-between">
+                <div className="inline-flex items-center gap-2">
+                  <CalendarOutlineIcon className="h-4 w-4 shrink-0" stroke="currentColor" />
+                  <span>
+                    Window: <span className="font-semibold text-text">{rangeLabel}</span>
+                    {pairWeekly[0]?.weekHit.length ? (
+                      <span className="text-muted"> ({pairWeekly[0].weekHit.length} weeks)</span>
+                    ) : null}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-[var(--obs-coaching-miss)]" aria-hidden />
+                    No observation
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-[var(--obs-coaching-hit)]" aria-hidden />
+                    Observed
+                  </span>
+                </div>
+              </div>
+              </>
             )}
         </div>
       ) : null}

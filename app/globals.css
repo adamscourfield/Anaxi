@@ -662,6 +662,41 @@ textarea:focus-visible {
   }
 }
 
+/* Observation History — surfaces + tokens (intelligence / ledger mocks) */
+.obs-history-scope {
+  --obs-intelligence-ink: #111827;
+  --obs-intelligence-muted: #6b7280;
+  --obs-intelligence-track: #f3f4f6;
+  --obs-coaching-hit: #111827;
+  --obs-coaching-miss: #e5e7eb;
+  --obs-signal-blue-strong: #1d4ed8;
+  --obs-signal-blue: #3b82f6;
+  --obs-signal-warn: #ca8a04;
+  --obs-signal-critical: #dc2626;
+}
+
+.obs-history-elevated-card {
+  border-radius: var(--radius-lg);
+  background: var(--surface-container-lowest);
+  border: 1px solid hsl(var(--border));
+  box-shadow: none;
+}
+
+.obs-history-filter-panel.filter-panel {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  box-shadow: none;
+}
+
+.obs-history-filter-panel .field-filter-trigger,
+.obs-history-filter-panel .field.field-filter-trigger {
+  border-radius: var(--radius) !important;
+}
+
+.obs-history-coaching-select.field {
+  border-radius: var(--radius) !important;
+}
+
 /* Elevated dashboard cards — flat border, no lift */
 .anx-elevated-card {
   border-radius: var(--radius-lg);
