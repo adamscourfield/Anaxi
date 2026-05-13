@@ -1070,9 +1070,9 @@ textarea:focus-visible {
 
 /* ── Toolbar ───────────────────────────────────────────────────── */
 .premium-toolbar {
-  background: #ffffff;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  background: rgba(247,249,251,0.80);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   box-shadow: none;
 }
 
@@ -1357,9 +1357,9 @@ textarea:focus-visible {
 
 .anx-top-bar-frost {
   border-bottom: 1px solid hsl(var(--border));
-  background: #ffffff;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  background: var(--anx-frost-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   box-shadow: none;
 }
 
@@ -2183,4 +2183,34 @@ textarea:focus-visible {
 
 .footer-link:hover {
   color: rgba(255,255,255,0.75) !important;
+}
+
+/* ── Unlayered design-system locks (must beat @tailwind @layer ordering) ───────
+   If these sit inside @layer base/components, layered utilities can win and
+   strip display fonts or radii; unlayered always wins over layered CSS. */
+
+/* Page titles + display utility: Space Grotesk (opt out with .font-sans on h1). */
+.anx-page-title,
+.font-display,
+.font-headline,
+main h1:not(.font-sans) {
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+}
+
+/* Micro-radius: reinforce Tailwind rounded-* → 2px (see tailwind.config.ts). */
+.rounded,
+.rounded-sm,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl {
+  border-radius: 2px;
+}
+
+.rounded-none {
+  border-radius: 0;
+}
+
+.rounded-full {
+  border-radius: 9999px;
 }
