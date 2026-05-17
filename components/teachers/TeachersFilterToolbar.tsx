@@ -129,7 +129,7 @@ export function TeachersFilterToolbar(props: TeachersFilterToolbarProps) {
               <select
                 name="departmentId"
                 defaultValue={departmentId ?? ""}
-                className="field field-filter-trigger w-full min-w-0 !rounded-[10px] !py-2.5 !pl-3 !pr-9 !text-[0.8125rem] font-medium"
+                className="field field-filter-trigger w-full min-w-0 !rounded-md !py-2.5 !pl-3 !pr-9 !text-[0.8125rem] font-medium"
                 aria-label="Department"
               >
                 <option value="">All Departments</option>
@@ -199,7 +199,7 @@ export function TeachersFilterToolbar(props: TeachersFilterToolbarProps) {
             <select
               name="departmentId"
               defaultValue={departmentId ?? ""}
-              className="field field-filter-trigger w-full min-w-0 !rounded-[10px] !py-2.5 !pl-3 !pr-9 !text-[0.8125rem] font-medium"
+              className="field field-filter-trigger w-full min-w-0 !rounded-md !py-2.5 !pl-3 !pr-9 !text-[0.8125rem] font-medium"
               aria-label="Department"
             >
               <option value="">All Departments</option>

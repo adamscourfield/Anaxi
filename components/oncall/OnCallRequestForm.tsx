@@ -249,7 +249,7 @@ export function OnCallRequestForm({
                     key={t}
                     type="button"
                     onClick={() => setRequestType(t)}
-                    className={`relative flex items-center gap-3 rounded-[14px] border-2 px-4 py-4 text-left calm-transition ${
+                    className={`relative flex items-center gap-3 rounded-lg border-2 px-4 py-4 text-left calm-transition ${
                       isActive
                         ? "border-text bg-[color-mix(in_srgb,var(--primary)_04%,transparent)] shadow-sm ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)]"
                         : "border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] hover:border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] hover:bg-[var(--surface-container-low)]/60"

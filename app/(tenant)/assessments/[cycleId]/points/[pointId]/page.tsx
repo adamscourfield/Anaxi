@@ -502,7 +502,7 @@ export default function ResultPointPage() {
       {point.resultStatus !== "LOCKED" && (
         <Link
           href={`/assessments/${cycleId}/points/${pointId}/upload`}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-[0.625rem] border border-[#e5e7eb] bg-white px-4 text-sm font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#f9fafb]"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#e5e7eb] bg-white px-4 text-sm font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#f9fafb]"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path
@@ -517,7 +517,7 @@ export default function ResultPointPage() {
       )}
       <Link
         href={`/assessments/${cycleId}/compare?from=${pointId}`}
-        className="inline-flex h-10 items-center justify-center gap-2 rounded-[0.625rem] bg-[#111827] px-4 text-sm font-semibold text-white shadow-sm calm-transition hover:opacity-95"
+        className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#111827] px-4 text-sm font-semibold text-white shadow-sm calm-transition hover:opacity-95"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
           <path strokeLinecap="round" strokeLinejoin="round" d="M18 8V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />

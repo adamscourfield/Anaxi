@@ -689,7 +689,7 @@ function LeadershipHome({
                 <div
                   key={oc.id}
                   id={i === firstImmediateSupportIdx ? "immediate-support-needed" : undefined}
-                  className={`group flex min-w-0 flex-col gap-2 rounded-[14px] border border-transparent p-3.5 calm-transition sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-4 ${
+                  className={`group flex min-w-0 flex-col gap-2 rounded-lg border border-transparent p-3.5 calm-transition sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-4 ${
                     i === firstImmediateSupportIdx ? "scroll-mt-20" : ""
                   } ${
                     oc.status === "OPEN" || oc.status === "ACKNOWLEDGED"
@@ -1216,7 +1216,7 @@ function LeadershipHome({
                   description="When staff submit leave for approval, the newest requests will appear here."
                 />
               ) : (
-                <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] rounded-[14px] border border-[color-mix(in_srgb,var(--outline-variant)_28%,transparent)] bg-[var(--surface-container-lowest)]">
+                <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_28%,transparent)] bg-[var(--surface-container-lowest)]">
                   {pendingLeaveDetails.map((leave) => {
                     const reasonUpper = (leave.reasonLabel ?? "Personal").toUpperCase();
                     const isEmergency = reasonUpper.includes("EMERGENCY") || reasonUpper.includes("URGENT");

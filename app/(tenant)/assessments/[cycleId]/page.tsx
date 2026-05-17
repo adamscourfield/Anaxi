@@ -394,7 +394,7 @@ export default async function CycleDetailPage({
           <h2 className="text-lg font-bold tracking-tight text-[#111827]">Result Points</h2>
           <Link
             href={`/assessments/${cycle.id}/points/new`}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-[0.625rem] border border-[#e5e7eb] bg-white px-4 text-sm font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#f9fafb]"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#e5e7eb] bg-white px-4 text-sm font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#f9fafb]"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />

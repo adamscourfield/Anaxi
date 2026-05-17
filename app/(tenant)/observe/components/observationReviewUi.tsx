@@ -65,7 +65,7 @@ export function ObservationReviewSignalRow({
 }) {
   return (
     <div
-      className={`flex items-center gap-3 rounded-[999px] bg-[#E5E7EB]/90 px-5 py-3.5 ${OBS_REVIEW_TEXT}`}
+      className={`flex items-center gap-3 rounded-full bg-[#E5E7EB]/90 px-5 py-3.5 ${OBS_REVIEW_TEXT}`}
     >
       {icon ?? (
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-500 text-white">
