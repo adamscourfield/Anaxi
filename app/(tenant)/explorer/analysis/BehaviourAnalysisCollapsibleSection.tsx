@@ -26,20 +26,20 @@ export function BehaviourAnalysisCollapsibleSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-start gap-3 px-6 py-5 text-left calm-transition hover:bg-[#f9fafb] sm:gap-4"
+        className="flex w-full items-start gap-3 px-6 py-5 text-left calm-transition hover:bg-surface-container-low sm:gap-4"
         aria-expanded={open}
       >
         <span className="mt-0.5 shrink-0">{icon}</span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-[#333333]">{title}</h2>
-          <div className="mt-1 max-w-3xl text-[0.8125rem] font-normal leading-relaxed text-[#666666]">
+          <h2 className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-text">{title}</h2>
+          <div className="mt-1 max-w-3xl text-[0.8125rem] font-normal leading-relaxed text-muted">
             {subtitle}
           </div>
         </div>
         <span className="flex shrink-0 items-center gap-2.5">
           {countPill}
           <svg
-            className={`h-5 w-5 shrink-0 text-[#9ca3af] calm-transition ${open ? "-rotate-180" : ""}`}
+            className={`h-5 w-5 shrink-0 text-muted calm-transition ${open ? "-rotate-180" : ""}`}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
