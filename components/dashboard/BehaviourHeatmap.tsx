@@ -122,7 +122,7 @@ export function BehaviourHeatmap({
                   return (
                     <td key={ci} className="p-0.5">
                       <div
-                        className={`flex h-8 min-w-[2rem] items-center justify-center rounded-[5px] text-[11px] font-semibold tabular-nums transition-all duration-150 ${textClass} ${
+                        className={`flex h-8 min-w-[2rem] items-center justify-center rounded-sm text-[11px] font-semibold tabular-nums transition-all duration-150 ${textClass} ${
                           isActive ? "scale-[1.04] ring-2 ring-[color-mix(in_srgb,var(--error)_22%,transparent)] shadow-none" : ""
                         }`}
                         style={{ background: `rgba(254,159,159,${Math.min(0.96, opacity + (isActive ? 0.08 : 0))})` }}

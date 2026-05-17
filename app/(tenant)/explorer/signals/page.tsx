@@ -296,7 +296,7 @@ export default async function SignalsPage({
                   <select
                     name="departmentId"
                     defaultValue={rawDeptId ?? ""}
-                    className="field field-filter-trigger !w-full !rounded-[10px] !border-[#E5E7EB] !bg-white !py-2.5 !pl-10 !pr-3 !text-[0.8125rem] text-[#111827]"
+                    className="field field-filter-trigger !w-full !rounded-md !border-[#E5E7EB] !bg-white !py-2.5 !pl-10 !pr-3 !text-[0.8125rem] text-[#111827]"
                   >
                     <option value="">All Departments</option>
                     {selectableDepts.map((d: any) => (
@@ -313,7 +313,7 @@ export default async function SignalsPage({
               <button
                 type="submit"
                 form="signals-explorer-filters"
-                className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-[10px] bg-[#111827] px-4 text-[0.8125rem] font-semibold text-white shadow-sm transition-opacity hover:opacity-90 sm:min-w-[148px]"
+                className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-md bg-[#111827] px-4 text-[0.8125rem] font-semibold text-white shadow-sm transition-opacity hover:opacity-90 sm:min-w-[148px]"
               >
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v5.45a8.11 8.11 0 0 1-3.05 6.325l-.257.19-6.206 4.63a.75.75 0 0 1-.895 0l-6.207-4.63a8.11 8.11 0 0 1-3.048-6.327v-5.451c0-.54.384-1.006.917-1.097A32.08 32.08 0 0 1 12 3Z" />
@@ -321,7 +321,7 @@ export default async function SignalsPage({
                 Apply Filters
               </button>
               <details className="group relative w-full sm:w-auto" open={moreFiltersActive}>
-                <summary className="flex h-10 w-full cursor-pointer list-none items-center justify-center gap-2 rounded-[10px] border border-[#E5E7EB] bg-white px-4 text-[0.8125rem] font-medium text-[#374151] shadow-sm marker:hidden hover:bg-[#F9FAFB] sm:min-w-[140px] [&::-webkit-details-marker]:hidden">
+                <summary className="flex h-10 w-full cursor-pointer list-none items-center justify-center gap-2 rounded-md border border-[#E5E7EB] bg-white px-4 text-[0.8125rem] font-medium text-[#374151] shadow-sm marker:hidden hover:bg-[#F9FAFB] sm:min-w-[140px] [&::-webkit-details-marker]:hidden">
                   <svg className="h-4 w-4 shrink-0 text-[#6B7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
                   </svg>
@@ -340,7 +340,7 @@ export default async function SignalsPage({
                         form="signals-explorer-filters"
                         name="signalKey"
                         defaultValue={signalKeyFilter ?? ""}
-                        className="field field-filter-trigger !rounded-[10px] !border-[#E5E7EB] !py-2.5 !text-[0.8125rem]"
+                        className="field field-filter-trigger !rounded-md !border-[#E5E7EB] !py-2.5 !text-[0.8125rem]"
                       >
                         <option value="">All signals</option>
                         <optgroup label="Universal (classroom)">
@@ -382,7 +382,7 @@ export default async function SignalsPage({
                         form="signals-explorer-filters"
                         name="priority"
                         defaultValue={priorityFilter ?? ""}
-                        className="field field-filter-trigger !rounded-[10px] !border-[#E5E7EB] !py-2.5 !text-[0.8125rem]"
+                        className="field field-filter-trigger !rounded-md !border-[#E5E7EB] !py-2.5 !text-[0.8125rem]"
                       >
                         <option value="">All priorities</option>
                         {PRIORITY_LEVELS.map((p) => (
@@ -415,7 +415,7 @@ export default async function SignalsPage({
                   )}
                   <button
                     type="submit"
-                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-[10px] border border-[#E5E7EB] bg-white px-4 text-[0.8125rem] font-medium text-[#374151] shadow-sm hover:bg-[#F9FAFB] sm:w-auto"
+                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#E5E7EB] bg-white px-4 text-[0.8125rem] font-medium text-[#374151] shadow-sm hover:bg-[#F9FAFB] sm:w-auto"
                   >
                     <svg className="h-4 w-4 shrink-0 text-[#6B7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -706,7 +706,7 @@ export default async function SignalsPage({
                 improving.map((row) => (
                   <div
                     key={row.signalKey}
-                    className="flex items-center gap-4 rounded-[10px] border border-[#F3F4F6] bg-[#FAFAFA] p-4"
+                    className="flex items-center gap-4 rounded-md border border-[#F3F4F6] bg-[#FAFAFA] p-4"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-50">
                       <svg className="h-5 w-5 text-[#10B981]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>

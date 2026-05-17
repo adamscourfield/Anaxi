@@ -78,7 +78,7 @@ export default async function LeaveCalendarPage({
         <h1 className="text-[1.5rem] font-semibold tracking-tight text-text">Leave of Absence</h1>
         <div className="flex flex-wrap items-center gap-3">
           <div
-            className="inline-flex items-center gap-0.5 rounded-[14px] bg-[var(--surface-container-high)] p-1"
+            className="inline-flex items-center gap-0.5 rounded-lg bg-[var(--surface-container-high)] p-1"
             role="group"
             aria-label="Leave view"
           >

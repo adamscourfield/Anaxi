@@ -215,7 +215,7 @@ export function ReviewList({
                           key={signal.key}
                           type="button"
                           onClick={() => router.push(`/observe/new/signals?index=${index}`)}
-                          className="flex w-full items-center gap-3 rounded-[999px] bg-[#E5E7EB]/90 px-5 py-3.5 text-left transition-colors hover:bg-[#E5E7EB]"
+                          className="flex w-full items-center gap-3 rounded-full bg-[#E5E7EB]/90 px-5 py-3.5 text-left transition-colors hover:bg-[#E5E7EB]"
                         >
                           {statusIcon}
                           <span className="min-w-0 flex-1">
@@ -240,7 +240,7 @@ export function ReviewList({
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 rounded-[999px] border border-amber-200 bg-amber-50 px-5 py-3.5 text-[0.8125rem] leading-relaxed text-amber-900">
+                <div className="flex items-start gap-3 rounded-full border border-amber-200 bg-amber-50 px-5 py-3.5 text-[0.8125rem] leading-relaxed text-amber-900">
                   <span
                     className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-200 text-[0.625rem] font-bold text-amber-900"
                     aria-hidden

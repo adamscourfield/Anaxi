@@ -200,14 +200,14 @@ const config: Config = {
         "cat-indigo-bg":  "var(--cat-indigo-bg)",
         "cat-indigo-text":"var(--cat-indigo-text)",
       },
-      /* Micro-radius: literal 2px so corners never depend on var() resolution or rem root. */
+      /* Micro-radius: literal 4px so corners never depend on var() resolution or rem root. */
       borderRadius: {
-        DEFAULT: "2px",
-        sm: "2px",
-        md: "2px",
-        lg: "2px",
-        xl: "2px",
-        "2xl": "2px",
+        DEFAULT: "4px",
+        sm: "4px",
+        md: "4px",
+        lg: "4px",
+        xl: "4px",
+        "2xl": "4px",
         pill: "var(--radius-pill)",
       },
       boxShadow: {

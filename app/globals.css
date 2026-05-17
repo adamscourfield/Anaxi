@@ -122,11 +122,11 @@
   --anx-page-title-size:        clamp(1.75rem, 4vw, 2.25rem);
   --anx-pill-ghost-border:      color-mix(in srgb, var(--outline-variant) 35%, transparent);
 
-  /* ── Layout — micro-radius (2px) + full pills (plain CSS uses these vars) ─ */
-  --radius:             2px;
-  --radius-lg:          2px;
-  --radius-md:          2px;
-  --radius-sm:          2px;
+  /* ── Layout — micro-radius (4px) + full pills (plain CSS uses these vars) ─ */
+  --radius:             4px;
+  --radius-lg:          4px;
+  --radius-md:          4px;
+  --radius-sm:          4px;
   /* True capsules (badges, toggles) — keep fully rounded */
   --radius-pill:        9999px;
   --sidebar-width:      260px;
@@ -2286,14 +2286,14 @@ main h1:not(.font-sans) {
   font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
 }
 
-/* Micro-radius: reinforce Tailwind rounded-* → 2px (see tailwind.config.ts). */
+/* Micro-radius: reinforce Tailwind rounded-* → 4px (see tailwind.config.ts). */
 .rounded,
 .rounded-sm,
 .rounded-md,
 .rounded-lg,
 .rounded-xl,
 .rounded-2xl {
-  border-radius: 2px;
+  border-radius: 4px;
 }
 
 .rounded-none {
