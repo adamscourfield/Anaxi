@@ -808,7 +808,7 @@ textarea:focus-visible {
 /* Inputs inside filter panels: lift slightly from panel tint */
 .field-filter-trigger {
   background: var(--surface-container-lowest) !important;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 /* Primary / secondary actions in filter rows (Apply / Clear) */
@@ -1074,7 +1074,7 @@ textarea:focus-visible {
   justify-content: center;
   gap: 0.5rem;
   border: 0;
-  border-radius: 0.625rem;
+  border-radius: var(--radius);
   background: var(--on-surface);
   padding: 0.5rem 1.125rem;
   font-size: 0.8125rem;
@@ -1570,7 +1570,7 @@ textarea:focus-visible {
 /* ── Dashboard / home: consistent interactive surfaces ───────────── */
 /* Row links: same hover fill as Card tone=interactive (no lift — reserved for whole-card links). */
 .home-row-link {
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;
   transition-duration: var(--motion-duration-micro);
   transition-timing-function: var(--motion-ease-hvqt);
@@ -1581,7 +1581,7 @@ textarea:focus-visible {
 
 /* Row links on primary (CPD drill-down rows) */
 .home-row-link-on-dark {
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;
   transition-duration: var(--motion-duration-micro);
   transition-timing-function: var(--motion-ease-hvqt);
@@ -1857,8 +1857,8 @@ textarea:focus-visible {
   justify-content: center;
   gap: 0.5rem;
   border: 0;
-  border-radius: 0.625rem;
-  background: #111827;
+  border-radius: var(--radius);
+  background: var(--on-surface);
   padding: 0.625rem 1.25rem;
   font-size: 0.8125rem;
   font-weight: 600;
