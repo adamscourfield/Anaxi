@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
-import { prisma } from "@/lib/prisma";
+import { buildViewerContext } from "@/lib/viewerContext";
+import { parseWindow } from "@/lib/explorerUtils";
 import { PageHeader } from "@/components/ui/page-header";
 import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import {
@@ -12,17 +13,7 @@ import {
 } from "@/modules/authz";
 import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
 
-/* ─── Constants ─────────────────────────────────────────────────────────────── */
-
-const VALID_WINDOWS = [7, 21, 28, 90] as const;
-type WindowDays = (typeof VALID_WINDOWS)[number];
-
 /* ─── Helpers ───────────────────────────────────────────────────────────────── */
-
-function parseWindow(raw: string | undefined): WindowDays {
-  const n = Number(raw);
-  return VALID_WINDOWS.includes(n as WindowDays) ? (n as WindowDays) : 21;
-}
 
 function fmt(n: number | null, digits = 1): string {
   if (n === null) return "—";
@@ -67,16 +58,7 @@ export default async function AssessmentCohortsPage({
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
 
-  const [hodMemberships, coachAssignments] = await Promise.all([
-    (prisma as any).departmentMembership.findMany({
-      where: { userId: user.id, isHeadOfDepartment: true },
-    }),
-    (prisma as any).coachAssignment.findMany({ where: { coachUserId: user.id } }),
-  ]);
-
-  const hodDepartmentIds = (hodMemberships as any[]).map((m: any) => m.departmentId);
-  const coacheeUserIds = (coachAssignments as any[]).map((a: any) => a.coacheeUserId);
-  const viewerContext = { userId: user.id, role: user.role, hodDepartmentIds, coacheeUserIds };
+  const viewerContext = await buildViewerContext(user);
 
   if (!canViewExplorer(viewerContext) || !canViewAssessmentExplorer(viewerContext)) notFound();
 

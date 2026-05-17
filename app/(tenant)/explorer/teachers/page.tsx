@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
+import { buildViewerContext } from "@/lib/viewerContext";
+import { VALID_WINDOWS, type WindowDays, parseWindow } from "@/lib/explorerUtils";
 import { canViewExplorer, canExportExplorer } from "@/modules/authz";
 import { StatusPill, type PillVariant } from "@/components/ui/status-pill";
 import { Avatar } from "@/components/ui/avatar";
@@ -36,9 +38,6 @@ const STATUS_VARIANT: Record<RiskStatus, PillVariant> = {
   STABLE: "success",
   LOW_COVERAGE: "neutral",
 };
-
-const VALID_WINDOWS = [7, 21, 28, 90] as const;
-type WindowDays = (typeof VALID_WINDOWS)[number];
 
 /** Teachers per page */
 const ITEMS_PER_PAGE = 20;
@@ -83,17 +82,7 @@ export default async function ExplorerTeachersPage({
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
 
-  // Build viewer context
-  const [hodMemberships, coachAssignments] = await Promise.all([
-    (prisma as any).departmentMembership.findMany({
-      where: { userId: user.id, isHeadOfDepartment: true },
-    }),
-    (prisma as any).coachAssignment.findMany({ where: { coachUserId: user.id } }),
-  ]);
-
-  const hodDepartmentIds = (hodMemberships as any[]).map((m: any) => m.departmentId);
-  const coacheeUserIds = (coachAssignments as any[]).map((a: any) => a.coacheeUserId);
-  const viewerContext = { userId: user.id, role: user.role, hodDepartmentIds, coacheeUserIds };
+  const viewerContext = await buildViewerContext(user);
 
   if (!canViewExplorer(viewerContext)) notFound();
 
@@ -107,12 +96,9 @@ export default async function ExplorerTeachersPage({
   const heatmapKeys = signalKeys.slice(0, 6);
 
   // ─── Parse search params ────────────────────────────────────────────────────
-  const rawWindow = Number(
-    typeof searchParams?.windowDays === "string" ? searchParams.windowDays : "21",
+  const windowDays = parseWindow(
+    typeof searchParams?.windowDays === "string" ? searchParams.windowDays : undefined,
   );
-  const windowDays: WindowDays = VALID_WINDOWS.includes(rawWindow as WindowDays)
-    ? (rawWindow as WindowDays)
-    : 21;
 
   const mode =
     typeof searchParams?.mode === "string" && searchParams.mode === "priorities"
@@ -148,7 +134,7 @@ export default async function ExplorerTeachersPage({
   // ─── HOD scope: restrict departments to those the HOD leads ─────────────────
   const isHod = user.role === "HOD";
   const scopedDepartments = isHod
-    ? departments.filter((d) => hodDepartmentIds.includes(d.id))
+    ? departments.filter((d) => viewerContext.hodDepartmentIds.includes(d.id))
     : departments;
 
   // ─── Fetch data ─────────────────────────────────────────────────────────────
@@ -168,7 +154,7 @@ export default async function ExplorerTeachersPage({
   }
 
   // ─── HOD scope filter ───────────────────────────────────────────────────────
-  if (isHod && hodDepartmentIds.length > 0) {
+  if (isHod && viewerContext.hodDepartmentIds.length > 0) {
     const hodDeptNameSet = new Set(
       scopedDepartments.map((d) => d.name),
     );

@@ -6,6 +6,7 @@ import { H3, MetaText } from "@/components/ui/typography";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
+import { buildViewerContext } from "@/lib/viewerContext";
 import { canViewExplorer, canExportExplorer } from "@/modules/authz";
 import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import {
@@ -68,27 +69,7 @@ export default async function DepartmentsPage({
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
 
-  const [hodMemberships, coachAssignments] = await Promise.all([
-    (prisma as any).departmentMembership.findMany({
-      where: { userId: user.id, isHeadOfDepartment: true },
-    }),
-    (prisma as any).coachAssignment.findMany({
-      where: { coachUserId: user.id },
-    }),
-  ]);
-
-  const hodDepartmentIds = (hodMemberships as any[]).map(
-    (m: any) => m.departmentId,
-  );
-  const coacheeUserIds = (coachAssignments as any[]).map(
-    (a: any) => a.coacheeUserId,
-  );
-  const viewerContext = {
-    userId: user.id,
-    role: user.role,
-    hodDepartmentIds,
-    coacheeUserIds,
-  };
+  const viewerContext = await buildViewerContext(user);
 
   if (!canViewExplorer(viewerContext)) notFound();
 
@@ -107,7 +88,7 @@ export default async function DepartmentsPage({
 
   /* ---- Scoping: HODs only see their departments ---- */
   const isHod = user.role === "HOD";
-  const scopeIds = isHod ? hodDepartmentIds : undefined;
+  const scopeIds = isHod ? viewerContext.hodDepartmentIds : undefined;
   const filterIds = rawDeptId ? [rawDeptId] : scopeIds;
 
   /* ---- Data ---- */
@@ -126,7 +107,7 @@ export default async function DepartmentsPage({
 
   /* HOD-scoped department list for the filter dropdown */
   const selectableDepts = isHod
-    ? departments.filter((d) => hodDepartmentIds.includes(d.id))
+    ? departments.filter((d) => viewerContext.hodDepartmentIds.includes(d.id))
     : departments;
 
   /* ---- Sorting (alphabetical) ---- */

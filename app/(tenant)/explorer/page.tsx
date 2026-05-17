@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
+import { buildViewerContext } from "@/lib/viewerContext";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   canViewExplorer,
@@ -71,17 +72,7 @@ export default async function ExplorerPage() {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
 
-  // Build viewer context
-  const [hodMemberships, coachAssignments] = await Promise.all([
-    (prisma as any).departmentMembership.findMany({
-      where: { userId: user.id, isHeadOfDepartment: true },
-    }),
-    (prisma as any).coachAssignment.findMany({ where: { coachUserId: user.id } }),
-  ]);
-
-  const hodDepartmentIds = (hodMemberships as any[]).map((m: any) => m.departmentId);
-  const coacheeUserIds = (coachAssignments as any[]).map((a: any) => a.coacheeUserId);
-  const viewerContext = { userId: user.id, role: user.role, hodDepartmentIds, coacheeUserIds };
+  const viewerContext = await buildViewerContext(user);
 
   if (!canViewExplorer(viewerContext)) notFound();
   const canSeeBehaviour = canViewBehaviourExplorer(viewerContext);
@@ -98,7 +89,9 @@ export default async function ExplorerPage() {
     obsCount,
     recentObservations,
     deptMemberships,
-    ...behaviourResults
+    studentRiskResult,
+    cohortPivotResult,
+    assessmentRes,
   ] = await Promise.all([
     computeTeacherRiskIndex(user.tenantId, WINDOW_DAYS),
     computeDepartmentPivot(user.tenantId, WINDOW_DAYS),
@@ -122,17 +115,10 @@ export default async function ExplorerPage() {
       where: { tenantId: user.tenantId },
       select: { userId: true, departmentId: true },
     }) as Promise<{ userId: string; departmentId: string }[]>,
-    ...(canSeeBehaviour
-      ? [
-          computeStudentRiskIndex(user.tenantId, WINDOW_DAYS, user.id),
-          computeCohortPivot(user.tenantId, WINDOW_DAYS),
-        ]
-      : []),
+    canSeeBehaviour ? computeStudentRiskIndex(user.tenantId, WINDOW_DAYS, user.id) : Promise.resolve(null),
+    canSeeBehaviour ? computeCohortPivot(user.tenantId, WINDOW_DAYS) : Promise.resolve(null),
+    canSeeAssessment ? computeAssessmentAnalysis(user.tenantId) : Promise.resolve(null),
   ]);
-
-  const assessmentResult = canSeeAssessment
-    ? await computeAssessmentAnalysis(user.tenantId)
-    : null;
 
   // ─── Derive summary stats ───────────────────────────────────────────────────
   const driftingTeachers = teacherRiskRows.filter(
@@ -180,18 +166,14 @@ export default async function ExplorerPage() {
   let yearGroupCount = 0;
   let academicLoadPct = 0;
 
-  if (canSeeBehaviour && behaviourResults.length === 2) {
-    const studentResult = behaviourResults[0] as Awaited<ReturnType<typeof computeStudentRiskIndex>>;
-    const cohortResult = behaviourResults[1] as Awaited<ReturnType<typeof computeCohortPivot>>;
-
-    urgentStudents = studentResult.rows.filter(
+  if (canSeeBehaviour && studentRiskResult && cohortPivotResult) {
+    urgentStudents = studentRiskResult.rows.filter(
       (r) => r.band === "PRIORITY" || r.band === "URGENT",
     ).length;
-    totalStudents = studentResult.rows.length;
-    yearGroupCount = cohortResult.rows.length;
+    totalStudents = studentRiskResult.rows.length;
+    yearGroupCount = cohortPivotResult.rows.length;
 
-    // Compute academic load as average attendance across cohorts
-    const attendanceValues = cohortResult.rows
+    const attendanceValues = cohortPivotResult.rows
       .map((r) => r.attendanceMean)
       .filter((v): v is number => v !== null);
     academicLoadPct = attendanceValues.length > 0
@@ -200,9 +182,8 @@ export default async function ExplorerPage() {
   }
 
   let topStudentPriorities: { studentId: string; studentName: string; band: string }[] = [];
-  if (canSeeBehaviour && behaviourResults.length >= 1) {
-    const studentResult = behaviourResults[0] as Awaited<ReturnType<typeof computeStudentRiskIndex>>;
-    topStudentPriorities = studentResult.rows
+  if (canSeeBehaviour && studentRiskResult) {
+    topStudentPriorities = studentRiskResult.rows
       .filter((r) => r.band === "PRIORITY" || r.band === "URGENT")
       .slice(0, 3)
       .map((r) => ({
@@ -213,6 +194,8 @@ export default async function ExplorerPage() {
   }
 
   // ── Assessment summary ────────────────────────────────────────────────────
+  const assessmentResult = assessmentRes as Awaited<ReturnType<typeof computeAssessmentAnalysis>> | null;
+
   let assessmentStudentsTracked = 0;
   let assessmentValueAddConcerns = 0;
   let assessmentSendGap: number | null = null;
@@ -328,7 +311,7 @@ export default async function ExplorerPage() {
         <Link href="/explorer/teachers" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
           <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between gap-2">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#F3F4F6] text-[#9CA3AF]">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-surface-container-low text-muted">
                 <IconTeachers />
               </span>
               <span className="rounded-md bg-[var(--pill-error-bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
@@ -342,7 +325,7 @@ export default async function ExplorerPage() {
                 <span className="text-sm text-[var(--on-surface-variant)]">tracked</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[#E5E7EB] pt-3">
+            <div className="mt-4 border-t border-outline-variant pt-3">
               {driftingTeachers > 0 ? (
                 <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--error)]">
                   <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" />
@@ -359,7 +342,7 @@ export default async function ExplorerPage() {
         <Link href="/explorer/departments" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
           <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#F3F4F6] text-[#9CA3AF]">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-surface-container-low text-muted">
                 <IconDepartments />
               </span>
             </div>
@@ -370,7 +353,7 @@ export default async function ExplorerPage() {
                 <span className="text-sm text-[var(--on-surface-variant)]">depts</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[#E5E7EB] pt-3">
+            <div className="mt-4 border-t border-outline-variant pt-3">
               <p className="text-[13px] text-[var(--on-surface-variant)]">{totalObsAcrossDepts} total observations</p>
             </div>
           </div>
@@ -380,7 +363,7 @@ export default async function ExplorerPage() {
         <Link href="/explorer/signals" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
           <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#F3F4F6] text-[#9CA3AF]">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-surface-container-low text-muted">
                 <IconSignals />
               </span>
             </div>
@@ -391,7 +374,7 @@ export default async function ExplorerPage() {
                 <span className="text-sm text-[var(--on-surface-variant)]">tracked</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[#E5E7EB] pt-3">
+            <div className="mt-4 border-t border-outline-variant pt-3">
               {highPrioritySignals > 0 ? (
                 <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--error)]">
                   <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" />
@@ -408,7 +391,7 @@ export default async function ExplorerPage() {
         <Link href="/observe/history" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
           <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
             <div className="flex items-start justify-between">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#F3F4F6] text-[#9CA3AF]">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-surface-container-low text-muted">
                 <IconObservations />
               </span>
             </div>
@@ -418,7 +401,7 @@ export default async function ExplorerPage() {
                 <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{obsCount}</span>
               </div>
             </div>
-            <div className="mt-4 border-t border-[#E5E7EB] pt-3">
+            <div className="mt-4 border-t border-outline-variant pt-3">
               <p className="text-[13px] text-[var(--on-surface-variant)]">
                 recorded in last <span className="font-semibold text-text">{WINDOW_DAYS}d</span>
               </p>
@@ -431,7 +414,7 @@ export default async function ExplorerPage() {
           <Link href="/explorer/assessment" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
             <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
               <div className="flex items-start justify-between">
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#F3F4F6] text-[#9CA3AF]">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-surface-container-low text-muted">
                   <IconAssessment />
                 </span>
               </div>
@@ -442,7 +425,7 @@ export default async function ExplorerPage() {
                   <span className="text-sm text-[var(--on-surface-variant)]">students</span>
                 </div>
               </div>
-              <div className="mt-4 border-t border-[#E5E7EB] pt-3">
+              <div className="mt-4 border-t border-outline-variant pt-3">
                 {assessmentValueAddConcerns > 0 ? (
                   <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--error)]">
                     <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" />
@@ -558,8 +541,8 @@ export default async function ExplorerPage() {
                           No value-add concerns in this cycle.
                         </li>
                       ) : (
-                        topAssessmentPriorities.map((row, i) => (
-                          <li key={i} className="min-w-0">
+                        topAssessmentPriorities.map((row) => (
+                          <li key={`${row.teacherName}-${row.subject}`} className="min-w-0">
                             <p className="truncate text-[13px] font-medium text-white" title={`${row.teacherName} · ${row.subject}`}>
                               {row.subject}
                             </p>
@@ -583,10 +566,10 @@ export default async function ExplorerPage() {
         <div className="mt-10 space-y-5">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Pastoral pulse</p>
-            <h2 className="mt-1 text-pretty text-[clamp(1.5rem,3vw,1.75rem)] font-bold leading-tight tracking-[-0.03em] text-neutral-950">
+            <h2 className="mt-1 text-pretty text-[clamp(1.5rem,3vw,1.75rem)] font-bold leading-tight tracking-[-0.03em] text-text">
               Behaviour &amp; Welfare
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#64748B]">
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
               Real-time overview of student wellbeing and behaviour across the school.
             </p>
             <p className="mt-2 inline-flex flex-wrap items-center gap-2 text-[0.8125rem] text-muted">
@@ -600,54 +583,51 @@ export default async function ExplorerPage() {
             </p>
           </div>
 
-          <div className="explorer-hub-behaviour-strip divide-y divide-[#E5E7EB] md:grid md:grid-cols-4 md:divide-x md:divide-y-0">
+          <div className="explorer-hub-behaviour-strip divide-y divide-outline-variant md:grid md:grid-cols-4 md:divide-x md:divide-y-0">
             <Link
               href="/explorer/students"
-              className="block p-6 calm-transition hover:bg-neutral-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
+              className="block p-6 calm-transition hover:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
             >
-              <p className="text-sm font-semibold text-neutral-950">Students</p>
-              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-neutral-950">{totalStudents}</p>
-              <p className="mt-2 text-xs text-[#64748B]">Total active</p>
+              <p className="text-sm font-semibold text-text">Students</p>
+              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-text">{totalStudents}</p>
+              <p className="mt-2 text-xs text-muted">Total active</p>
             </Link>
             <Link
               href="/explorer/cohorts"
-              className="block p-6 calm-transition hover:bg-neutral-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
+              className="block p-6 calm-transition hover:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
             >
-              <p className="text-sm font-semibold text-neutral-950">Cohorts</p>
-              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-neutral-950">{yearGroupCount}</p>
-              <p className="mt-2 text-xs text-[#64748B]">Year groups</p>
+              <p className="text-sm font-semibold text-text">Cohorts</p>
+              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-text">{yearGroupCount}</p>
+              <p className="mt-2 text-xs text-muted">Year groups</p>
               <div className="mt-5">
-                <div className="h-2 w-full overflow-hidden rounded-sm bg-[#E5E7EB]">
+                <div className="h-2 w-full overflow-hidden rounded-sm bg-outline-variant">
                   <div
-                    className="h-full rounded-sm bg-neutral-950"
+                    className="h-full rounded-sm bg-text"
                     style={{ width: `${Math.min(100, Math.max(0, academicLoadPct))}%` }}
                   />
                 </div>
-                <p className="mt-2 text-xs text-[#64748B]">{academicLoadPct}% capacity</p>
+                <p className="mt-2 text-xs text-muted">{academicLoadPct}% avg attendance</p>
               </div>
             </Link>
             <Link
               href="/explorer/students"
-              className="block p-6 calm-transition hover:bg-neutral-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
+              className="block p-6 calm-transition hover:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
             >
-              <p className="text-sm font-semibold text-neutral-950">Priority students</p>
-              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-neutral-950">{urgentStudents}</p>
-              <p className="mt-2 text-xs text-[#64748B]">Urgent cases</p>
-              <p className="mt-4 flex items-center gap-2 text-xs text-[#64748B]">
+              <p className="text-sm font-semibold text-text">Priority students</p>
+              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-text">{urgentStudents}</p>
+              <p className="mt-2 text-xs text-muted">Urgent cases</p>
+              <p className="mt-4 flex items-center gap-2 text-xs text-muted">
                 <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#D93025]" aria-hidden />
                 Urgent &amp; priority bands
               </p>
             </Link>
             <Link
-              href="/explorer/analysis"
-              className="block p-6 calm-transition hover:bg-neutral-50/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
+              href="/explorer/students"
+              className="block p-6 calm-transition hover:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
             >
-              <p className="text-sm font-semibold text-neutral-950">Assessment window</p>
-              <div className="mt-3 flex items-baseline gap-1.5">
-                <span className="text-[2.75rem] font-bold leading-none tabular-nums text-neutral-950">{WINDOW_DAYS}</span>
-                <span className="text-sm font-medium text-[#64748B]">days</span>
-              </div>
-              <p className="mt-2 text-xs text-[#64748B]">Pastoral bands over the last {WINDOW_DAYS} days</p>
+              <p className="text-sm font-semibold text-text">Stable students</p>
+              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-text">{totalStudents - urgentStudents}</p>
+              <p className="mt-2 text-xs text-muted">In watch or stable bands</p>
             </Link>
           </div>
         </div>
@@ -656,25 +636,24 @@ export default async function ExplorerPage() {
       {/* ── Active intelligence log ────────────────────────────────────────── */}
       {displayedLogs.length > 0 && (
         <div className="explorer-hub-intelligence-log mt-10">
-          <div className="flex items-center justify-between border-b border-[#E5E7EB] px-5 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">Active intelligence log</p>
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-[#22c55e]" aria-hidden />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">Live syncing</span>
-            </div>
+          <div className="flex items-center justify-between border-b border-outline-variant px-5 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Active intelligence log</p>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+              Updated {computedAtStr}
+            </span>
           </div>
-          <div className="divide-y divide-[#E5E7EB]">
+          <div className="divide-y divide-outline-variant">
             {displayedLogs.map((entry) => (
               <Link
                 key={entry.id}
                 href={entry.href}
-                className="flex min-h-[3.25rem] items-stretch calm-transition hover:bg-[#FAFAFA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_20%,transparent)]"
+                className="flex min-h-[3.25rem] items-stretch calm-transition hover:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_20%,transparent)]"
               >
-                <div className="flex w-[3.5rem] shrink-0 items-center justify-center border-r border-[#E5E7EB] text-xs tabular-nums text-[#64748B]">
+                <div className="flex w-[3.5rem] shrink-0 items-center justify-center border-r border-outline-variant text-xs tabular-nums text-muted">
                   {entry.timeLabel}
                 </div>
                 <div className="flex min-w-0 flex-1 items-center px-4 py-3">
-                  <p className="text-sm text-neutral-950">
+                  <p className="text-sm text-text">
                     {entry.plainTitle ? (
                       <span className="font-medium">{entry.plainTitle}</span>
                     ) : (
@@ -686,7 +665,7 @@ export default async function ExplorerPage() {
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3 pr-4">
-                  <span className="text-xs text-[#64748B]">{entry.tagLabel}</span>
+                  <span className="text-xs text-muted">{entry.tagLabel}</span>
                   <svg className="h-4 w-4 shrink-0 text-[#9CA3AF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
                   </svg>

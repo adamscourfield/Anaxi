@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { requireFeature } from "@/lib/guards";
+import { buildViewerContext } from "@/lib/viewerContext";
+import { parseWindow } from "@/lib/explorerUtils";
 import {
   canViewExplorer,
   canExportExplorer,
@@ -19,9 +21,6 @@ import { triangulationPpClass, triangulationSendClass } from "@/modules/assessme
 
 /* ─── Constants ────────────────────────────────────────────────────────────── */
 
-const VALID_WINDOWS = [7, 21, 28] as const;
-type WindowDays = (typeof VALID_WINDOWS)[number];
-
 const BAND_ORDER: RiskBand[] = ["URGENT", "PRIORITY", "WATCH", "STABLE"];
 
 const BAND_LABELS: Record<RiskBand, string> = {
@@ -34,11 +33,6 @@ const BAND_LABELS: Record<RiskBand, string> = {
 const PER_PAGE = 15;
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
-
-function parseWindow(raw: string | undefined): WindowDays {
-  const n = Number(raw);
-  return VALID_WINDOWS.includes(n as WindowDays) ? (n as WindowDays) : 21;
-}
 
 function getInitials(name: string | null | undefined): string {
   const n = (name ?? "").trim();
@@ -90,35 +84,9 @@ export default async function StudentsPage({
 }) {
   const params = await searchParams;
   const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "ANALYSIS");
 
-  const analysisFeature = await prisma.tenantFeature.findUnique({
-    where: { tenantId_key: { tenantId: user.tenantId, key: "ANALYSIS" } },
-    select: { enabled: true },
-  });
-  if (!analysisFeature?.enabled) notFound();
-
-  // ── viewer context ──────────────────────────────────────────────
-  const [hodMemberships, coachAssignments] = await Promise.all([
-    (prisma as any).departmentMembership.findMany({
-      where: { userId: user.id, isHeadOfDepartment: true },
-    }),
-    (prisma as any).coachAssignment.findMany({
-      where: { coachUserId: user.id },
-    }),
-  ]);
-
-  const hodDepartmentIds = (hodMemberships as any[]).map(
-    (m: any) => m.departmentId,
-  );
-  const coacheeUserIds = (coachAssignments as any[]).map(
-    (a: any) => a.coacheeUserId,
-  );
-  const viewerContext = {
-    userId: user.id,
-    role: user.role,
-    hodDepartmentIds,
-    coacheeUserIds,
-  };
+  const viewerContext = await buildViewerContext(user);
 
   if (
     !canViewExplorer(viewerContext) ||
@@ -572,10 +540,7 @@ export default async function StudentsPage({
             </h3>
           </div>
           <p className="text-[0.8125rem] leading-relaxed text-muted">
-            {bandCounts.URGENT + bandCounts.PRIORITY} students in{" "}
-            {yearGroups.length > 0 ? yearGroups[yearGroups.length - 1] : "the cohort"}{" "}
-            have dropped attendance by &gt;5% in the last {windowDays} days.
-            Automatic alerts have been queued for the pastoral team.
+            {bandCounts.URGENT + bandCounts.PRIORITY} student{bandCounts.URGENT + bandCounts.PRIORITY !== 1 ? "s" : ""} in urgent or priority bands within the {windowDays}-day window.
           </p>
         </div>
 
@@ -593,12 +558,12 @@ export default async function StudentsPage({
             </h3>
           </div>
           <p className="text-[0.8125rem] leading-relaxed text-muted">
-            Last successful sync: Today at{" "}
+            Risk index computed at{" "}
             {computedAt.toLocaleTimeString("en-GB", {
               hour: "2-digit",
               minute: "2-digit",
-            })}
-            . All pupil premium records are current as of the latest census.
+            })}{" "}
+            on {computedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}.
           </p>
         </div>
 
@@ -616,9 +581,8 @@ export default async function StudentsPage({
             </h3>
           </div>
           <p className="text-[0.8125rem] leading-relaxed text-muted">
-            The current cohort is tracking {avgAttendance > 91 ? (avgAttendance - 91).toFixed(1) : "0"}% above the
-            national average for attendance. Maintaining this trend is critical
-            for the upcoming review.
+            Average attendance is {avgAttendance.toFixed(1)}% across{" "}
+            {allRows.length.toLocaleString()} students in the {windowDays}-day window.
           </p>
         </div>
       </div>

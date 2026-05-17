@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
+import { buildViewerContext } from "@/lib/viewerContext";
+import { parseWindow, type WindowDays } from "@/lib/explorerUtils";
 import { canViewExplorer, canExportExplorer } from "@/modules/authz";
 import {
   computeCpdPriorities,
@@ -23,9 +25,6 @@ import {
   type SignalKey,
 } from "@/modules/observations/signalTypes";
 
-const VALID_WINDOWS = [7, 21, 28, 90] as const;
-type WindowDays = (typeof VALID_WINDOWS)[number];
-
 const PRIORITY_LEVELS = ["HIGH", "MEDIUM", "LOW"] as const;
 type PriorityLevel = (typeof PRIORITY_LEVELS)[number];
 
@@ -35,11 +34,6 @@ function phaseGroupsForSchoolType(schoolType: "PRIMARY" | "SECONDARY"): LessonPh
   return schoolType === "PRIMARY"
     ? [...CLASSROOM_LESSON_PHASES_PRIMARY]
     : [...CLASSROOM_LESSON_PHASES_SECONDARY];
-}
-
-function parseWindow(raw: string | undefined): WindowDays {
-  const n = Number(raw);
-  return VALID_WINDOWS.includes(n as WindowDays) ? (n as WindowDays) : 21;
 }
 
 function parseSignalKey(
@@ -127,27 +121,7 @@ export default async function SignalsPage({
   const phaseGroupsForFilter = phaseGroupsForSchoolType(schoolType);
   const universalClassroomSignals = tenantSignalDefs.filter((s) => s.isUniversal);
 
-  const [hodMemberships, coachAssignments] = await Promise.all([
-    (prisma as any).departmentMembership.findMany({
-      where: { userId: user.id, isHeadOfDepartment: true },
-    }),
-    (prisma as any).coachAssignment.findMany({
-      where: { coachUserId: user.id },
-    }),
-  ]);
-
-  const hodDepartmentIds = (hodMemberships as any[]).map(
-    (m: any) => m.departmentId,
-  );
-  const coacheeUserIds = (coachAssignments as any[]).map(
-    (a: any) => a.coacheeUserId,
-  );
-  const viewerContext = {
-    userId: user.id,
-    role: user.role,
-    hodDepartmentIds,
-    coacheeUserIds,
-  };
+  const viewerContext = await buildViewerContext(user);
 
   if (!canViewExplorer(viewerContext)) return notFound();
 
@@ -163,7 +137,7 @@ export default async function SignalsPage({
   const isHod = user.role === "HOD";
 
   const departmentId =
-    rawDeptId && (!isHod || hodDepartmentIds.includes(rawDeptId))
+    rawDeptId && (!isHod || viewerContext.hodDepartmentIds.includes(rawDeptId))
       ? rawDeptId
       : undefined;
 
@@ -211,7 +185,7 @@ export default async function SignalsPage({
 
   const selectableDepts = isHod
     ? (departments as any[]).filter((d: any) =>
-        hodDepartmentIds.includes(d.id),
+        viewerContext.hodDepartmentIds.includes(d.id),
       )
     : (departments as any[]);
 
