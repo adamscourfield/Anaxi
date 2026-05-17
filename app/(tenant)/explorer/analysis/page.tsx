@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -18,8 +17,6 @@ import { Avatar } from "@/components/ui/avatar";
 import { BehaviourHeatmap } from "@/components/dashboard/BehaviourHeatmap";
 import {
   computeBehaviourAnalysis,
-  type BehaviourAnalysisSummary,
-  type BehaviourCohortDailyMetricRow,
   type OnCallRequestDetail,
 } from "@/modules/analysis/behaviourAnalysis";
 import { BehaviourAnalysisFilters } from "./BehaviourAnalysisFilters";
@@ -54,157 +51,15 @@ function fmtSnapshotDate(d: Date): string {
   });
 }
 
-/** Sparkline from real daily cohort series; slope reflects net change (up / down / flat). */
-function MiniSparkline({ color, values }: { color: string; values: number[] }) {
-  const w = 80;
-  const h = 32;
-  const pad = 2;
-  const vals = values.length >= 2 ? values : [0, 0];
-  const max = Math.max(...vals, 0);
-  const min = Math.min(...vals);
-  const span = max - min;
-  const flat = span === 0;
-  const innerH = h - pad * 2;
-  const midY = pad + innerH / 2;
-  const d = vals
-    .map((v, i) => {
-      const x = pad + (i / (vals.length - 1)) * (w - pad * 2);
-      const y = flat ? midY : pad + (1 - (v - min) / span) * innerH;
-      return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
-    })
-    .join(" ");
-
-  return (
-    <svg
-      viewBox={`0 0 ${w} ${h}`}
-      className="h-8 w-[5rem] shrink-0"
-      fill="none"
-      aria-hidden
-    >
-      <path d={d} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-const COHORT_SPARK_PICK: Record<
-  "det" | "ie" | "sus" | "pos" | "neg",
-  (row: BehaviourCohortDailyMetricRow) => number
-> = {
-  det: (r) => r.detentions,
-  ie: (r) => r.internalExclusions,
-  sus: (r) => r.suspensions,
-  pos: (r) => r.positivePoints,
-  neg: (r) => r.negativePoints,
-};
-function sectionHeader(title: string, subtitle?: string, titleExtras?: ReactNode) {
+function sectionHeader(title: string, subtitle?: string) {
   return (
     <div className="px-5 py-4 sm:px-6 sm:py-5">
-      <div className="flex flex-wrap items-center gap-2">
-        {titleExtras}
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">{title}</p>
-      </div>
+      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{title}</p>
       {subtitle ? (
-        <p className="mt-1 max-w-2xl text-[0.8125rem] leading-relaxed text-[#6B7280]">{subtitle}</p>
+        <p className="mt-1 max-w-2xl text-[0.8125rem] leading-relaxed text-muted">{subtitle}</p>
       ) : null}
     </div>
   );
-}
-
-function KpiIconWell({
-  bgClass,
-  children,
-}: {
-  bgClass: string;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${bgClass}`}
-    >
-      {children}
-    </div>
-  );
-}
-
-const KPI_CARD_BASE =
-  "anx-elevated-card flex gap-3 p-5 sm:gap-4 sm:p-6 bg-gradient-to-br from-[var(--surface-container-lowest)]";
-
-function kpiCardTintClass(tint: "violet" | "green" | "amber" | "blue"): string {
-  const t = {
-    violet: "to-[rgba(124,92,255,0.07)]",
-    green: "to-[rgba(34,197,94,0.08)]",
-    amber: "to-[rgba(245,158,11,0.09)]",
-    blue: "to-[rgba(59,130,246,0.08)]",
-  }[tint];
-  return `${KPI_CARD_BASE} ${t}`;
-}
-
-function StatCircleIcon({
-  bg,
-  stroke,
-  children,
-}: {
-  bg: string;
-  stroke: string;
-  children: ReactNode;
-}) {
-  return (
-    <span
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
-      style={{ backgroundColor: bg, color: stroke }}
-    >
-      {children}
-    </span>
-  );
-}
-
-type SecondaryStat = {
-  key: string;
-  label: string;
-  value: ReactNode;
-  valueClass?: string;
-};
-
-function buildSecondaryStats(
-  summary: BehaviourAnalysisSummary,
-  labels: {
-    positivePoints: string;
-    negativePoints: string;
-  },
-  detentionPlural: string,
-  internalExclusionPlural: string,
-  suspensionPlural: string,
-): SecondaryStat[] {
-  const secondaryStats: SecondaryStat[] = [
-    { key: "det", label: detentionPlural, value: summary.totalDetentions.toLocaleString() },
-    {
-      key: "ie",
-      label: internalExclusionPlural,
-      value: summary.totalInternalExclusions.toLocaleString(),
-    },
-    {
-      key: "sus",
-      label: suspensionPlural,
-      value: summary.totalSuspensions.toLocaleString(),
-    },
-  ];
-  if (summary.hasPositivePoints) {
-    secondaryStats.push({
-      key: "pos",
-      label: labels.positivePoints,
-      value: summary.totalPositivePoints.toLocaleString(),
-      valueClass: "text-[var(--scale-strong-text)]",
-    });
-  }
-  if (summary.hasNegativePoints) {
-    secondaryStats.push({
-      key: "neg",
-      label: labels.negativePoints,
-      value: summary.totalNegativePoints.toLocaleString(),
-      valueClass: "text-[var(--scale-limited-text)]",
-    });
-  }
-  return secondaryStats;
 }
 
 function buildBehaviourHeatmapData(
@@ -333,68 +188,11 @@ export default async function AnalysisPage({
     minute: "2-digit",
   });
 
-  const secondaryStats = buildSecondaryStats(summary, labels, detentionPlural, internalExclusionPlural, suspensionPlural);
   const behaviourHeatmap = buildBehaviourHeatmapData(
     result.onCallRequestDetails,
     yearGroups,
     yearGroupFilter || undefined,
   );
-
-  const secondaryVisual: Record<
-    string,
-    { circleBg: string; circleStroke: string; spark: string; icon: ReactNode }
-  > = {
-    det: {
-      circleBg: "rgba(124,92,255,0.18)",
-      circleStroke: "#7C5CFF",
-      spark: "#7C5CFF",
-      icon: (
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M6 12h12" />
-        </svg>
-      ),
-    },
-    ie: {
-      circleBg: "rgba(245,158,11,0.2)",
-      circleStroke: "#D97706",
-      spark: "#F59E0B",
-      icon: (
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M12 8v5M12 16h.01" />
-        </svg>
-      ),
-    },
-    sus: {
-      circleBg: "rgba(236,72,153,0.16)",
-      circleStroke: "#DB2777",
-      spark: "#EC4899",
-      icon: (
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M6 12h12" />
-        </svg>
-      ),
-    },
-    pos: {
-      circleBg: "rgba(34,197,94,0.14)",
-      circleStroke: "#15803d",
-      spark: "#22c55e",
-      icon: (
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 12l4 4 8-8" />
-        </svg>
-      ),
-    },
-    neg: {
-      circleBg: "rgba(239,68,68,0.12)",
-      circleStroke: "#dc2626",
-      spark: "#ef4444",
-      icon: (
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M8 12h8" />
-        </svg>
-      ),
-    },
-  };
 
   const suspensionStudentCount = result.suspensionIncidents.length;
 
@@ -435,140 +233,26 @@ export default async function AnalysisPage({
           </div>
         }
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {showExport ? (
-              <form action="/api/explorer/export" method="POST" className="inline">
-                <input type="hidden" name="view" value="BEHAVIOUR_STUDENTS_TABLE" />
-                <input type="hidden" name="windowDays" value={String(windowDays)} />
-                {yearGroupFilter ? <input type="hidden" name="yearGroup" value={yearGroupFilter} /> : null}
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-[#F9FAFB]"
-                >
-                  <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-                    <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
-                    <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
-                  </svg>
-                  Export
-                </button>
-              </form>
-            ) : null}
-            <a
-              href="#behaviour-analysis-filters"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0f172a] px-4 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm calm-transition hover:bg-[#1e293b] dark:bg-[#0f172a] dark:hover:bg-[#1e293b]"
-            >
-              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M4 21v-7M4 10v-3M4 3v3M10 21v-9M10 8V3M16 21v-5M16 12V3M22 21v-9M22 10V3" strokeLinecap="round" />
-              </svg>
-              Apply filters
-            </a>
-          </div>
+          showExport ? (
+            <form action="/api/explorer/export" method="POST" className="inline">
+              <input type="hidden" name="view" value="BEHAVIOUR_STUDENTS_TABLE" />
+              <input type="hidden" name="windowDays" value={String(windowDays)} />
+              {yearGroupFilter ? <input type="hidden" name="yearGroup" value={yearGroupFilter} /> : null}
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"
+              >
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                  <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
+                  <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
+                </svg>
+                Export
+              </button>
+            </form>
+          ) : null
         }
       />
-
-      {/* KPI row */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-        <div className={kpiCardTintClass("violet")}>
-          <KpiIconWell bgClass="bg-[rgba(124,92,255,0.14)] text-[#7C5CFF]">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" />
-            </svg>
-          </KpiIconWell>
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Cohort</p>
-            <p className="mt-1 text-[2rem] font-bold leading-none tracking-tight text-text sm:text-[2.35rem] tabular-nums">
-              {summary.totalStudents.toLocaleString()}
-            </p>
-            <p className="mt-1.5 text-[0.8125rem] text-[#6B7280]">Students in this filter</p>
-          </div>
-        </div>
-
-        <div className={kpiCardTintClass("green")}>
-          <KpiIconWell bgClass="bg-[rgba(34,197,94,0.12)] text-[#15803d]">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="M3 17l6-6 4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M14 7h7v7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </KpiIconWell>
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Avg attendance</p>
-            <p className="mt-1 text-[2rem] font-bold tabular-nums leading-none tracking-tight text-text sm:text-[2.35rem]">
-              {summary.attendanceMean !== null ? `${summary.attendanceMean.toFixed(1)}%` : "—"}
-            </p>
-            <p className="mt-1.5 text-[0.8125rem] text-[#6B7280]">Mean on latest snapshot in window</p>
-          </div>
-        </div>
-
-        <div className={kpiCardTintClass("amber")}>
-          <KpiIconWell bgClass="bg-[rgba(245,158,11,0.18)] text-[#c2410c]">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6-4.6-6 4.6 2.3-7-6-4.6h7.6z" />
-            </svg>
-          </KpiIconWell>
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">High priority</p>
-            <p className="mt-1 text-[2rem] font-bold tabular-nums leading-none tracking-tight text-text sm:text-[2.35rem]">
-              {summary.highPriorityCount}
-            </p>
-            <p className="mt-1.5 text-[0.8125rem] text-[#6B7280]">Urgent &amp; priority pastoral bands</p>
-          </div>
-        </div>
-
-        <div className={kpiCardTintClass("blue")}>
-          <KpiIconWell bgClass="bg-[rgba(59,130,246,0.14)] text-[#2563eb]">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </KpiIconWell>
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">{onCallPlural} (imports)</p>
-            <p className="mt-1 text-[2rem] font-bold tabular-nums leading-none tracking-tight text-text sm:text-[2.35rem]">
-              {summary.totalOnCalls}
-            </p>
-            <p className="mt-1.5 text-[0.8125rem] text-[#6B7280]">Snapshot totals · not live requests</p>
-          </div>
-        </div>
-      </div>
-
-      {secondaryStats.length > 0 ? (
-        <div>
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Sanctions &amp; points</p>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {secondaryStats.map((s) => {
-              const vis = secondaryVisual[s.key];
-              return (
-                <div
-                  key={s.key}
-                  className="anx-elevated-card flex items-center gap-3 rounded-2xl px-4 py-3.5"
-                >
-                  {vis ? (
-                    <StatCircleIcon bg={vis.circleBg} stroke={vis.circleStroke}>
-                      {vis.icon}
-                    </StatCircleIcon>
-                  ) : null}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#6B7280]">{s.label}</p>
-                    <p
-                      className={`mt-0.5 text-xl font-bold tabular-nums tracking-tight text-[#111827] ${s.valueClass ?? ""}`}
-                    >
-                      {s.value}
-                    </p>
-                  </div>
-                  {vis && s.key in COHORT_SPARK_PICK ? (
-                    <MiniSparkline
-                      color={vis.spark}
-                      values={result.cohortDailyMetrics.map(COHORT_SPARK_PICK[s.key as keyof typeof COHORT_SPARK_PICK])}
-                    />
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
 
       <BehaviourAnalysisFilters
         id="behaviour-analysis-filters"
@@ -583,14 +267,80 @@ export default async function AnalysisPage({
         buildClearHref={clearHref}
       />
 
+      {/* KPI row */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+        <div className="anx-elevated-card flex gap-3 p-5 sm:gap-4 sm:p-6">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-container-low text-muted">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Cohort</p>
+            <p className="mt-1 text-[2rem] font-bold leading-none tracking-tight text-text sm:text-[2.35rem] tabular-nums">
+              {summary.totalStudents.toLocaleString()}
+            </p>
+            <p className="mt-1.5 text-[0.8125rem] text-muted">Students in this filter</p>
+          </div>
+        </div>
+
+        <div className="anx-elevated-card flex gap-3 p-5 sm:gap-4 sm:p-6">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-container-low text-muted">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M3 17l6-6 4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 7h7v7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Avg attendance</p>
+            <p className="mt-1 text-[2rem] font-bold tabular-nums leading-none tracking-tight text-text sm:text-[2.35rem]">
+              {summary.attendanceMean !== null ? `${summary.attendanceMean.toFixed(1)}%` : "—"}
+            </p>
+            <p className="mt-1.5 text-[0.8125rem] text-muted">Mean on latest snapshot in window</p>
+          </div>
+        </div>
+
+        <div className="anx-elevated-card flex gap-3 p-5 sm:gap-4 sm:p-6">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-container-low text-muted">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6-4.6-6 4.6 2.3-7-6-4.6h7.6z" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">High priority</p>
+            <p className="mt-1 text-[2rem] font-bold tabular-nums leading-none tracking-tight text-text sm:text-[2.35rem]">
+              {summary.highPriorityCount}
+            </p>
+            <p className="mt-1.5 text-[0.8125rem] text-muted">Urgent &amp; priority pastoral bands</p>
+          </div>
+        </div>
+
+        <div className="anx-elevated-card flex gap-3 p-5 sm:gap-4 sm:p-6">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-container-low text-muted">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{onCallPlural} (imports)</p>
+            <p className="mt-1 text-[2rem] font-bold tabular-nums leading-none tracking-tight text-text sm:text-[2.35rem]">
+              {summary.totalOnCalls}
+            </p>
+            <p className="mt-1.5 text-[0.8125rem] text-muted">Snapshot totals · not live requests</p>
+          </div>
+        </div>
+      </div>
+
       <div id="behaviour-heatmap" className="anx-elevated-card overflow-hidden rounded-2xl scroll-mt-24">
         {sectionHeader(
           "Behaviour heatmap",
           "Weekday pattern of on-call incidents by year group for the selected window.",
         )}
-        <div className="border-t border-[rgba(15,23,42,0.06)] px-5 py-5 sm:px-6 sm:py-6">
+        <div className="border-t border-outline-variant px-5 py-5 sm:px-6 sm:py-6">
           {!hasOnCallFeature ? (
-            <p className="text-sm leading-relaxed text-[#6B7280]">
+            <p className="text-sm leading-relaxed text-muted">
               On-call workflow is not enabled for this school, so the live behaviour heatmap is unavailable.
             </p>
           ) : behaviourHeatmap ? (
@@ -602,31 +352,30 @@ export default async function AnalysisPage({
               hideCta
             />
           ) : (
-            <p className="text-sm leading-relaxed text-[#6B7280]">
+            <p className="text-sm leading-relaxed text-muted">
               No on-call incidents matched the current filters in this window.
             </p>
           )}
         </div>
       </div>
 
-      {/* Live on-call: charts (left) + frequent requesters (right) */}
+      {/* On-call: charts (left) + frequent requesters (right) */}
       <div className="anx-elevated-card overflow-hidden rounded-2xl">
         {sectionHeader(
           `${onCallPlural} · live`,
           "Requests in this window. Charts use school hours 8am–3pm. Tap a bar to open details.",
-          <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-[#22c55e]" title="Live data" aria-hidden />,
         )}
 
         {!hasOnCallFeature ? (
-          <div className="border-t border-[rgba(15,23,42,0.06)] px-5 py-6 sm:px-6">
-            <p className="text-sm leading-relaxed text-[#6B7280]">
+          <div className="border-t border-outline-variant px-5 py-6 sm:px-6">
+            <p className="text-sm leading-relaxed text-muted">
               On-call workflow is not enabled for this school. Enable the feature to see timing and teacher breakdowns;
               imported snapshots still include on-call counts in the overview above.
             </p>
           </div>
         ) : (
-          <div className="border-t border-[rgba(15,23,42,0.06)]">
-            <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:divide-x lg:divide-[rgba(15,23,42,0.06)]">
+          <div className="border-t border-outline-variant">
+            <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:divide-x lg:divide-outline-variant">
               <div className="min-w-0">
                 <OnCallBreakdownCharts
                   onCallByHour={result.onCallByHour}
@@ -636,14 +385,14 @@ export default async function AnalysisPage({
                 />
               </div>
 
-              <aside className="flex flex-col border-t border-[rgba(15,23,42,0.06)] bg-[rgba(124,92,255,0.02)] p-5 sm:p-6 lg:border-t-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Most frequent requesters</p>
-                <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">
+              <aside className="flex flex-col border-t border-outline-variant p-5 sm:p-6 lg:border-t-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">Most frequent requesters</p>
+                <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
                   Teachers raising the most on-call requests in this window.
                 </p>
                 <div className="mt-5 flex-1">
                   {topTeachers.length > 0 ? (
-                    <div className="anx-elevated-card--table table-shell overflow-hidden rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)]">
+                    <div className="anx-elevated-card--table table-shell overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest">
                       <p className="sr-only" id="explorer-analysis-oncall-requesters-scroll-hint">
                         This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
                       </p>
@@ -661,10 +410,10 @@ export default async function AnalysisPage({
                                 <td className="px-5 py-3.5">
                                   <div className="flex items-center gap-2.5">
                                     <Avatar name={row.teacherName} size="sm" />
-                                    <span className="font-medium text-[#111827]">{row.teacherName}</span>
+                                    <span className="font-medium text-text">{row.teacherName}</span>
                                   </div>
                                 </td>
-                                <td className="px-4 py-3.5 text-right tabular-nums text-[#6B7280]">{row.count}</td>
+                                <td className="px-4 py-3.5 text-right tabular-nums text-muted">{row.count}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -672,7 +421,7 @@ export default async function AnalysisPage({
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-[#6B7280]">No on-call requests for this cohort in the window.</p>
+                    <p className="text-sm text-muted">No on-call requests for this cohort in the window.</p>
                   )}
                 </div>
               </aside>
@@ -686,12 +435,12 @@ export default async function AnalysisPage({
         title={suspensionPlural}
         subtitle={`Students with at least one suspension on their latest snapshot (${summary.totalSuspensions.toLocaleString()} total on those records).`}
         countPill={
-          <span className="inline-flex items-center rounded-md bg-[#F3E8FF] px-2.5 py-1 text-[11px] font-semibold text-[#6B21A8]">
+          <span className="inline-flex items-center rounded-md bg-surface-container-low px-2.5 py-1 text-[11px] font-semibold text-muted">
             {suspensionStudentCount} student{suspensionStudentCount === 1 ? "" : "s"}
           </span>
         }
         icon={
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F3E8FF] text-[#6B21A8]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-surface-container-low text-muted">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden>
               <path d="M6 12h12" />
             </svg>
@@ -700,7 +449,7 @@ export default async function AnalysisPage({
       >
         {result.suspensionIncidents.length === 0 ? (
           <div className="px-6 py-10 text-center">
-            <p className="text-sm text-[#666666]">No suspensions on the latest snapshot for this cohort.</p>
+            <p className="text-sm text-muted">No suspensions on the latest snapshot for this cohort.</p>
           </div>
         ) : (
           <div className="px-6 pb-6 pt-2">
@@ -726,15 +475,15 @@ export default async function AnalysisPage({
                             <Avatar name={row.studentName} size="sm" />
                             <Link
                               href={`/students/${row.studentId}`}
-                              className="truncate font-medium text-[#333333] underline decoration-[#d1d5db] underline-offset-2 calm-transition hover:text-[#111827] hover:decoration-[#9ca3af]"
+                              className="truncate font-medium text-text underline underline-offset-2 calm-transition hover:text-muted"
                             >
                               {row.studentName}
                             </Link>
                           </div>
                         </td>
-                        <td className="text-[#666666]">{row.yearGroup ?? "—"}</td>
-                        <td className="text-right tabular-nums text-[#666666]">{row.suspensionsCount}</td>
-                        <td className="tabular-nums text-[#666666]">{fmtSnapshotDate(row.snapshotDate)}</td>
+                        <td className="text-muted">{row.yearGroup ?? "—"}</td>
+                        <td className="text-right tabular-nums text-muted">{row.suspensionsCount}</td>
+                        <td className="tabular-nums text-muted">{fmtSnapshotDate(row.snapshotDate)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -753,7 +502,7 @@ export default async function AnalysisPage({
             Urgent and priority bands from the pastoral risk model (aligned with{" "}
             <Link
               href="/explorer/students"
-              className="text-[#666666] underline decoration-[#d1d5db] underline-offset-2 calm-transition hover:text-[#333333]"
+              className="text-muted underline underline-offset-2 calm-transition hover:text-text"
             >
               Explorer
             </Link>{" "}
@@ -761,12 +510,12 @@ export default async function AnalysisPage({
           </>
         }
         countPill={
-          <span className="inline-flex items-center rounded-md bg-[#FFF7ED] px-2.5 py-1 text-[11px] font-semibold text-[#9A3412]">
+          <span className="inline-flex items-center rounded-md bg-surface-container-low px-2.5 py-1 text-[11px] font-semibold text-muted">
             {result.highPriorityStudents.length} student{result.highPriorityStudents.length === 1 ? "" : "s"}
           </span>
         }
         icon={
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#FFF7ED] text-[#9A3412]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-surface-container-low text-muted">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
               <path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6-4.6-6 4.6 2.3-7-6-4.6h7.6z" />
             </svg>
@@ -775,14 +524,14 @@ export default async function AnalysisPage({
       >
         {result.highPriorityStudents.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-14">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-[#FFF7ED]">
-              <svg className="h-6 w-6 text-[#9A3412]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-surface-container-low">
+              <svg className="h-6 w-6 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <circle cx="11" cy="11" r="6.5" />
                 <path d="m16.5 16.5 3 3" strokeLinecap="round" />
               </svg>
             </div>
-            <p className="text-[0.875rem] font-semibold text-[#333333]">No students in urgent or priority bands</p>
-            <p className="mt-1 max-w-sm text-center text-[0.8125rem] text-[#666666]">
+            <p className="text-[0.875rem] font-semibold text-text">No students in urgent or priority bands</p>
+            <p className="mt-1 max-w-sm text-center text-[0.8125rem] text-muted">
               Widen filters or check back after the next data import.
             </p>
           </div>
@@ -820,7 +569,7 @@ export default async function AnalysisPage({
                             <Avatar name={student.studentName} size="sm" />
                             <Link
                               href={`/analysis/students/${student.studentId}?window=${windowDays}`}
-                              className="truncate font-medium text-[#333333] underline decoration-[#d1d5db] underline-offset-2 calm-transition hover:text-[#111827] hover:decoration-[#9ca3af]"
+                              className="truncate font-medium text-text underline underline-offset-2 calm-transition hover:text-muted"
                             >
                               {student.studentName}
                             </Link>
@@ -839,7 +588,7 @@ export default async function AnalysisPage({
                             {student.band === "URGENT" ? "Urgent" : "Priority"}
                           </StatusPill>
                         </td>
-                        <td className="text-[#666666]">{student.yearGroup ?? "—"}</td>
+                        <td className="text-muted">{student.yearGroup ?? "—"}</td>
                         <td>
                           <div className="flex flex-wrap gap-1.5">
                             {student.ppFlag ? (
@@ -862,19 +611,19 @@ export default async function AnalysisPage({
                             ) : null}
                           </div>
                         </td>
-                        <td className="text-right tabular-nums text-[#666666]">
+                        <td className="text-right tabular-nums text-muted">
                           {student.attendancePct !== null ? `${student.attendancePct.toFixed(1)}%` : "—"}
                         </td>
-                        <td className="text-right tabular-nums text-[#666666]">{student.detentionsCount}</td>
-                        <td className="text-right tabular-nums text-[#666666]">{student.internalExclusionsCount}</td>
-                        <td className="text-right tabular-nums text-[#666666]">{student.onCallsCount}</td>
+                        <td className="text-right tabular-nums text-muted">{student.detentionsCount}</td>
+                        <td className="text-right tabular-nums text-muted">{student.internalExclusionsCount}</td>
+                        <td className="text-right tabular-nums text-muted">{student.onCallsCount}</td>
                         {summary.hasPositivePoints ? (
-                          <td className="text-right text-sm font-bold tabular-nums text-[#166534]">
+                          <td className="text-right text-sm font-bold tabular-nums text-[var(--scale-strong-text)]">
                             {student.positivePointsTotal}
                           </td>
                         ) : null}
                         {summary.hasNegativePoints ? (
-                          <td className="text-right tabular-nums text-[#666666]">{student.negativePointsTotal}</td>
+                          <td className="text-right tabular-nums text-muted">{student.negativePointsTotal}</td>
                         ) : null}
                       </tr>
                     ))}
