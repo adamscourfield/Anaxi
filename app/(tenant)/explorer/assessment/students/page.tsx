@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
-import { prisma } from "@/lib/prisma";
+import { buildViewerContext } from "@/lib/viewerContext";
 import { PageHeader } from "@/components/ui/page-header";
 import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import {
@@ -70,16 +70,7 @@ export default async function AssessmentStudentsPage({
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
 
-  const [hodMemberships, coachAssignments] = await Promise.all([
-    (prisma as any).departmentMembership.findMany({
-      where: { userId: user.id, isHeadOfDepartment: true },
-    }),
-    (prisma as any).coachAssignment.findMany({ where: { coachUserId: user.id } }),
-  ]);
-
-  const hodDepartmentIds = (hodMemberships as any[]).map((m: any) => m.departmentId);
-  const coacheeUserIds = (coachAssignments as any[]).map((a: any) => a.coacheeUserId);
-  const viewerContext = { userId: user.id, role: user.role, hodDepartmentIds, coacheeUserIds };
+  const viewerContext = await buildViewerContext(user);
 
   if (!canViewExplorer(viewerContext) || !canViewAssessmentExplorer(viewerContext)) notFound();
 
