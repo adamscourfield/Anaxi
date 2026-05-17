@@ -7,7 +7,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { buildViewerContext } from "@/lib/viewerContext";
-import { parseWindow, type WindowDays } from "@/lib/explorerUtils";
+import { VALID_WINDOWS, parseWindow, type WindowDays } from "@/lib/explorerUtils";
 import { canViewExplorer, canExportExplorer } from "@/modules/authz";
 import {
   computeCpdPriorities,
