@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import {
   canViewExplorer,
   canViewBehaviourExplorer,
+  canViewAssessmentExplorer,
   canViewTeacherAnalysis,
 } from "@/modules/authz";
 import { computeTeacherRiskIndex } from "@/modules/analysis/teacherRisk";
@@ -14,6 +15,7 @@ import { computeDepartmentPivot } from "@/modules/analysis/departmentPivot";
 import { computeStudentRiskIndex } from "@/modules/analysis/studentRisk";
 import { computeCohortPivot } from "@/modules/analysis/cohortPivot";
 import { computeCpdPriorities } from "@/modules/analysis/cpdPriorities";
+import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
 
 const WINDOW_DAYS = 21;
 const MAX_DRIFT_LOG_ENTRIES = 3;
@@ -53,6 +55,14 @@ function IconObservations() {
   );
 }
 
+function IconAssessment() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+    </svg>
+  );
+}
+
 function formatLogTime(d: Date): string {
   return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
@@ -75,6 +85,7 @@ export default async function ExplorerPage() {
 
   if (!canViewExplorer(viewerContext)) notFound();
   const canSeeBehaviour = canViewBehaviourExplorer(viewerContext);
+  const canSeeAssessment = canViewAssessmentExplorer(viewerContext);
 
   // ─── Fetch hub summary data in parallel ─────────────────────────────────────
   const since = new Date();
@@ -118,6 +129,10 @@ export default async function ExplorerPage() {
         ]
       : []),
   ]);
+
+  const assessmentResult = canSeeAssessment
+    ? await computeAssessmentAnalysis(user.tenantId)
+    : null;
 
   // ─── Derive summary stats ───────────────────────────────────────────────────
   const driftingTeachers = teacherRiskRows.filter(
@@ -195,6 +210,35 @@ export default async function ExplorerPage() {
         studentName: r.studentName,
         band: r.band === "URGENT" ? "Urgent" : "Priority",
       }));
+  }
+
+  // ── Assessment summary ────────────────────────────────────────────────────
+  let assessmentStudentsTracked = 0;
+  let assessmentValueAddConcerns = 0;
+  let assessmentSendGap: number | null = null;
+  let topAssessmentPriorities: { teacherName: string; subject: string; valueAdd: number }[] = [];
+
+  if (assessmentResult) {
+    assessmentStudentsTracked = assessmentResult.students.length;
+    assessmentValueAddConcerns = assessmentResult.teachers
+      .flatMap((t) => t.subjects.filter((s) => typeof s.valueAdd === "number" && (s.valueAdd as number) < -0.05))
+      .length;
+
+    const sendGaps = assessmentResult.cohorts
+      .map((c) => c.sendGap)
+      .filter((v): v is number => v !== null);
+    assessmentSendGap = sendGaps.length > 0
+      ? sendGaps.reduce((a, b) => a + b, 0) / sendGaps.length
+      : null;
+
+    topAssessmentPriorities = assessmentResult.teachers
+      .flatMap((t) =>
+        t.subjects
+          .filter((s) => typeof s.valueAdd === "number" && (s.valueAdd as number) < -0.05)
+          .map((s) => ({ teacherName: t.teacherName, subject: s.subject, valueAdd: s.valueAdd as number })),
+      )
+      .sort((a, b) => a.valueAdd - b.valueAdd)
+      .slice(0, 3);
   }
 
   const computedAt = deptResult.computedAt;
@@ -279,7 +323,7 @@ export default async function ExplorerPage() {
       />
 
       {/* ── Top Stats Row ──────────────────────────────────────────────────── */}
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-5 sm:grid-cols-2 ${canSeeAssessment ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
         {/* Teachers */}
         <Link href="/explorer/teachers" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
           <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
@@ -381,6 +425,41 @@ export default async function ExplorerPage() {
             </div>
           </div>
         </Link>
+
+        {/* Assessment */}
+        {canSeeAssessment && (
+          <Link href="/explorer/assessment" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+            <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
+              <div className="flex items-start justify-between">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#F3F4F6] text-[#9CA3AF]">
+                  <IconAssessment />
+                </span>
+              </div>
+              <div className="mt-4">
+                <p className="explorer-hub-kpi-label">Assessment</p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{assessmentStudentsTracked}</span>
+                  <span className="text-sm text-[var(--on-surface-variant)]">students</span>
+                </div>
+              </div>
+              <div className="mt-4 border-t border-[#E5E7EB] pt-3">
+                {assessmentValueAddConcerns > 0 ? (
+                  <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--error)]">
+                    <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" />
+                    {assessmentValueAddConcerns} value-add concern{assessmentValueAddConcerns !== 1 ? "s" : ""}
+                  </p>
+                ) : assessmentSendGap !== null && Math.abs(assessmentSendGap) > 0.08 ? (
+                  <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--error)]">
+                    <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" />
+                    SEND gap {assessmentSendGap > 0 ? "+" : ""}{(assessmentSendGap * 100).toFixed(1)}pp
+                  </p>
+                ) : (
+                  <p className="text-[13px] text-[var(--on-surface-variant)]">No value-add concerns</p>
+                )}
+              </div>
+            </div>
+          </Link>
+        )}
       </div>
 
       {/* ── Priorities (dark ledger band) ─────────────────────────────────── */}
@@ -405,11 +484,11 @@ export default async function ExplorerPage() {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Analysis</p>
                 <p className="mt-1 text-lg font-bold text-white">Priorities</p>
                 <p className="mt-1 text-sm leading-snug text-slate-300">
-                  Teacher drift, CPD signal focus, and student bands — full detail in analytics.
+                  Teacher drift, CPD signals, student bands, and assessment value-add — full detail in analytics.
                 </p>
               </div>
               <div
-                className={`grid min-w-0 flex-1 gap-4 ${canSeeBehaviour ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+                className={`grid min-w-0 flex-1 gap-4 ${canSeeBehaviour && canSeeAssessment ? "sm:grid-cols-4" : canSeeBehaviour || canSeeAssessment ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
               >
                 <div className="explorer-hub-priorities-column min-w-0 px-3 py-3">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Teachers</p>
@@ -464,6 +543,29 @@ export default async function ExplorerPage() {
                               {row.studentName}
                             </p>
                             <p className="text-[11px] text-slate-400">{row.band}</p>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
+                )}
+                {canSeeAssessment && (
+                  <div className="explorer-hub-priorities-column min-w-0 px-3 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Assessment</p>
+                    <ul className="mt-2 space-y-2">
+                      {topAssessmentPriorities.length === 0 ? (
+                        <li className="text-[13px] leading-snug text-slate-300">
+                          No value-add concerns in this cycle.
+                        </li>
+                      ) : (
+                        topAssessmentPriorities.map((row, i) => (
+                          <li key={i} className="min-w-0">
+                            <p className="truncate text-[13px] font-medium text-white" title={`${row.teacherName} · ${row.subject}`}>
+                              {row.subject}
+                            </p>
+                            <p className="text-[11px] tabular-nums text-slate-400">
+                              {row.teacherName} · {row.valueAdd >= 0 ? "+" : ""}{(row.valueAdd * 100).toFixed(1)}pp
+                            </p>
                           </li>
                         ))
                       )}
