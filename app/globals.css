@@ -1238,6 +1238,7 @@ textarea:focus-visible {
 /* 80% opacity with backdrop-blur. Uses outline-variant at 20% opacity   */
 /* for the ghost border (no solid 1px lines per the No-Line Rule).        */
 .glass-card {
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--surface-container-lowest) 80%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);

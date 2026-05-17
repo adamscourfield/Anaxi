@@ -286,7 +286,7 @@ export function TenantNav({
           onClick={() => isDrawer && onNavigate?.()}
           className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} group calm-transition rounded-md ${collapsed ? "p-1" : "px-1 py-0.5 -mx-1"} motion-safe:group-hover:-translate-y-px motion-safe:group-active:scale-[0.99]`}
         >
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-border bg-[var(--surface-container-high)] calm-transition">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center calm-transition">
             <Image src="/anaxi-logo.png" alt="Anaxi" width={22} height={22} priority className="h-[22px] w-[22px] object-contain" />
           </span>
           {!collapsed && (
