@@ -220,7 +220,7 @@ export default async function CohortsPage({
           )}
           {showExport && (
             <form action="/api/explorer/export" method="POST" className="inline">
-              <input type="hidden" name="view" value="COHORT_PIVOT" />
+              <input type="hidden" name="view" value="BEHAVIOUR_COHORTS_PIVOT" />
               <input type="hidden" name="windowDays" value={String(windowDays)} />
               <button
                 type="submit"

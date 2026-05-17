@@ -8,6 +8,7 @@ import {
   canViewExplorer,
   canExportExplorer,
   canViewBehaviourExplorer,
+  canViewStudentAnalysis,
 } from "@/modules/authz";
 import {
   computeStudentRiskIndex,
@@ -119,7 +120,11 @@ export default async function StudentsPage({
     coacheeUserIds,
   };
 
-  if (!canViewExplorer(viewerContext) || !canViewBehaviourExplorer(viewerContext))
+  if (
+    !canViewExplorer(viewerContext) ||
+    !canViewBehaviourExplorer(viewerContext) ||
+    !canViewStudentAnalysis(viewerContext)
+  )
     notFound();
 
   // ── params ──────────────────────────────────────────────────────

@@ -221,3 +221,13 @@ export function getExplorerTeacherScope(viewer: ViewerContext): string[] | undef
 export function canViewBehaviourExplorer(viewer: ViewerContext): boolean {
   return viewer.role === "ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
 }
+
+/**
+ * Whether assessment analysis views are accessible to this viewer.
+ * ADMIN / SLT → full access
+ * HOD → full access (can see attainment in their department context)
+ * Others → no access
+ */
+export function canViewAssessmentExplorer(viewer: ViewerContext): boolean {
+  return viewer.role === "ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
+}
