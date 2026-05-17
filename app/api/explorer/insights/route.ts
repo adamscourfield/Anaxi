@@ -3,12 +3,18 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { canViewExplorer, canViewAssessmentExplorer } from "@/modules/authz";
 import { prisma } from "@/lib/prisma";
+import { VALID_WINDOWS } from "@/lib/explorerUtils";
 import { writeInsights } from "@/modules/analysis/insightWriter";
 
 export async function POST(req: NextRequest) {
   try {
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "ANALYSIS");
+
+    // Destructive mutation — restrict to ADMIN and SLT only
+    if (user.role !== "ADMIN" && user.role !== "SLT") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const [hodMemberships, coachAssignments] = await Promise.all([
       (prisma as any).departmentMembership.findMany({
@@ -30,7 +36,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const windowDays: number = typeof body.windowDays === "number" ? body.windowDays : 21;
+    // Validate windowDays against the allowed set — prevents full-history DoS queries
+    const windowDays: number = VALID_WINDOWS.includes(body.windowDays) ? body.windowDays : 21;
 
     const result = await writeInsights(user.tenantId, windowDays);
 

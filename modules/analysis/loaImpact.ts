@@ -106,12 +106,8 @@ export async function computeLOAImpact(
         where: { snapshotDate: { gte: since } },
         orderBy: { snapshotDate: "desc" },
         take: 1,
-        select: { onCallsCount: true, attendancePct: true, detentionsCount: true },
+        select: { onCallsCount: true, attendancePct: true },
       },
-    },
-    select: {
-      id: true,
-      snapshots: true,
     },
   });
 

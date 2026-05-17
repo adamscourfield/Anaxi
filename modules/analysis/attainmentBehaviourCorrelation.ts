@@ -76,8 +76,8 @@ export function correlationStrength(r: number): CorrelationStrength {
   const abs = Math.abs(r);
   if (abs < 0.1) return "WEAK";
   if (r >= 0.5) return "STRONG_POSITIVE";
-  if (r >= 0.1) return "MODERATE_POSITIVE";
   if (r <= -0.5) return "STRONG_NEGATIVE";
+  if (r > 0) return "MODERATE_POSITIVE";
   return "MODERATE_NEGATIVE";
 }
 

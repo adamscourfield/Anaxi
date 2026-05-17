@@ -20,6 +20,7 @@ import { computeAttainmentBehaviourCorrelation } from "@/modules/analysis/attain
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const WINDOW_DAYS = 21;
+const SYSTEM_USER_ID = "system";
 const DRIFT_SEVERITY_THRESHOLD = 2.0;
 const VALUE_ADD_CONCERN_THRESHOLD = -0.05;
 const PROGRESS_DROP_THRESHOLD = -0.08;
@@ -49,19 +50,11 @@ export async function writeInsights(
   const now = new Date();
   const windowStart = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000);
 
-  // Delete insights generated in this same window to avoid duplication
-  const deleteResult = await (prisma as any).insight.deleteMany({
-    where: {
-      tenantId,
-      createdAt: { gte: windowStart },
-    },
-  });
-
-  // Run all analyses in parallel
+  // Run all analyses first
   const [teacherRisk, studentRisk, cpdRows, assessment, loaImpact, correlation] =
     await Promise.all([
       computeTeacherRiskIndex(tenantId, windowDays),
-      computeStudentRiskIndex(tenantId, windowDays, "system"),
+      computeStudentRiskIndex(tenantId, windowDays, SYSTEM_USER_ID),
       computeCpdPriorities(tenantId, windowDays),
       computeAssessmentAnalysis(tenantId),
       computeLOAImpact(tenantId, windowDays),
@@ -236,8 +229,9 @@ export async function writeInsights(
   );
 
   for (const studentId of triangulatedIds) {
-    const bRow = studentRisk.rows.find((r) => r.studentId === studentId)!;
-    const aRow = assessment.students.find((s) => s.studentId === studentId)!;
+    const bRow = studentRisk.rows.find((r) => r.studentId === studentId);
+    const aRow = assessment.students.find((s) => s.studentId === studentId);
+    if (!bRow || !aRow) continue;
     const flags = [bRow.sendFlag && "SEND", bRow.ppFlag && "PP"]
       .filter(Boolean)
       .join(", ");
@@ -314,15 +308,22 @@ export async function writeInsights(
     });
   }
 
-  // ── Write all insights ───────────────────────────────────────────────────────
+  // ── Atomically delete stale insights and write new ones ─────────────────────
 
-  if (insightsToCreate.length > 0) {
-    await (prisma as any).insight.createMany({ data: insightsToCreate });
-  }
+  let deletedCount = 0;
+  await (prisma as any).$transaction(async (tx: any) => {
+    const deleteResult = await tx.insight.deleteMany({
+      where: { tenantId, createdAt: { gte: windowStart } },
+    });
+    deletedCount = deleteResult.count;
+    if (insightsToCreate.length > 0) {
+      await tx.insight.createMany({ data: insightsToCreate });
+    }
+  });
 
   return {
     written: insightsToCreate.length,
-    deleted: deleteResult.count,
+    deleted: deletedCount,
     computedAt: now,
   };
 }

@@ -11,18 +11,11 @@ import {
   canExportExplorer,
 } from "@/modules/authz";
 import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
+import { parseWindow } from "@/lib/explorerUtils";
 
 /* ─── Constants ─────────────────────────────────────────────────────────────── */
 
-const VALID_WINDOWS = [7, 21, 28, 90] as const;
-type WindowDays = (typeof VALID_WINDOWS)[number];
-
-/* ─── Helpers ───────────────────────────────────────────────────────────────── */
-
-function parseWindow(raw: string | undefined): WindowDays {
-  const n = Number(raw);
-  return VALID_WINDOWS.includes(n as WindowDays) ? (n as WindowDays) : 21;
-}
+const PER_PAGE = 20;
 
 function fmt(n: number | null): string {
   if (n === null) return "—";
@@ -55,6 +48,30 @@ function getInitials(name: string): string {
   return name.substring(0, 2).toUpperCase();
 }
 
+/* ─── Components ────────────────────────────────────────────────────────────── */
+
+function SortLink({
+  label,
+  field,
+  current,
+  getUrl,
+}: {
+  label: string;
+  field: string;
+  current: string;
+  getUrl: (f: string) => string;
+}) {
+  const active = current === field;
+  return (
+    <Link
+      href={getUrl(field)}
+      className={`text-[11px] font-semibold ${active ? "text-accent underline underline-offset-2" : "text-muted hover:text-text"}`}
+    >
+      {label} {active ? "↓" : ""}
+    </Link>
+  );
+}
+
 /* ─── Page ───────────────────────────────────────────────────────────────────── */
 
 export default async function AssessmentTeachersPage({
@@ -85,6 +102,7 @@ export default async function AssessmentTeachersPage({
   const cycleId = Array.isArray(params.cycle) ? params.cycle[0] : params.cycle;
   const search = (Array.isArray(params.q) ? params.q[0] : params.q) ?? "";
   const sortParam = (Array.isArray(params.sort) ? params.sort[0] : params.sort) ?? "valueAdd";
+  const currentPage = Math.max(1, Number(Array.isArray(params.page) ? params.page[0] : params.page) || 1);
 
   const assessment = await computeAssessmentAnalysis(
     user.tenantId,
@@ -114,6 +132,25 @@ export default async function AssessmentTeachersPage({
     }
   });
 
+  // ── Pagination ──────────────────────────────────────────────────────────────
+
+  const totalFiltered = rows.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const pageStart = (safePage - 1) * PER_PAGE;
+  const pageRows = rows.slice(pageStart, pageStart + PER_PAGE);
+
+  function pageUrl(p: number): string {
+    const merged: Record<string, string> = {
+      windowDays: String(windowDays),
+      ...(cycleId ? { cycle: cycleId } : {}),
+      ...(search ? { q: search } : {}),
+      sort: sortParam,
+      ...(p > 1 ? { page: String(p) } : {}),
+    };
+    return `/explorer/assessment/teachers?${new URLSearchParams(merged)}`;
+  }
+
   // ── KPIs ────────────────────────────────────────────────────────────────────
 
   const withConcern = assessment.teachers.filter(
@@ -140,15 +177,6 @@ export default async function AssessmentTeachersPage({
       sort: s,
     });
     return `/explorer/assessment/teachers?${qs}`;
-  }
-
-  function SortLink({ label, field }: { label: string; field: string }) {
-    const active = sortParam === field;
-    return (
-      <Link href={sortUrl(field)} className={`text-[11px] font-semibold ${active ? "text-accent underline underline-offset-2" : "text-muted hover:text-text"}`}>
-        {label} {active ? "↓" : ""}
-      </Link>
-    );
   }
 
   return (
@@ -224,9 +252,9 @@ export default async function AssessmentTeachersPage({
         </form>
         <div className="flex items-center gap-3 text-[11px] text-muted">
           <span>Sort:</span>
-          <SortLink label="Value-add" field="valueAdd" />
-          <SortLink label="Mean" field="mean" />
-          <SortLink label="Name" field="name" />
+          <SortLink label="Value-add" field="valueAdd" current={sortParam} getUrl={sortUrl} />
+          <SortLink label="Mean" field="mean" current={sortParam} getUrl={sortUrl} />
+          <SortLink label="Name" field="name" current={sortParam} getUrl={sortUrl} />
         </div>
       </div>
 
@@ -259,7 +287,7 @@ export default async function AssessmentTeachersPage({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => {
+                {pageRows.map((row) => {
                   const totalStudents = row.subjects.reduce((s, sub) => s + sub.studentCount, 0);
                   const avgSendGap = row.subjects.filter((s) => s.sendGap !== null).reduce((s, sub) => s + (sub.sendGap ?? 0), 0) /
                     Math.max(1, row.subjects.filter((s) => s.sendGap !== null).length);
@@ -306,12 +334,12 @@ export default async function AssessmentTeachersPage({
             </table>
           </div>
 
-          {/* Subject drilldown for each teacher with concerns */}
-          {rows.filter((r) => r.overallValueAdd !== null && r.overallValueAdd < -0.05).length > 0 && (
+          {/* Subject drilldown for teachers with concerns on this page */}
+          {pageRows.filter((r) => r.overallValueAdd !== null && r.overallValueAdd < -0.05).length > 0 && (
             <div className="border-t border-border/20 p-5">
               <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Subject breakdown — below threshold</p>
               <div className="space-y-5">
-                {rows
+                {pageRows
                   .filter((r) => r.overallValueAdd !== null && r.overallValueAdd < -0.05)
                   .map((row) => (
                     <div key={row.teacherId}>
@@ -330,8 +358,8 @@ export default async function AssessmentTeachersPage({
                             </tr>
                           </thead>
                           <tbody>
-                            {row.subjects.map((sub, idx) => (
-                              <tr key={idx} className="border-t border-border/10">
+                            {row.subjects.map((sub) => (
+                              <tr key={`${sub.subject}-${sub.yearGroup}`} className="border-t border-border/10">
                                 <td className="py-1.5 pr-4 font-medium text-text">{sub.subject}</td>
                                 <td className="py-1.5 pr-4 text-muted">{sub.yearGroup}</td>
                                 <td className="py-1.5 pr-4 tabular-nums">{fmt(sub.meanNormalizedScore)}</td>
@@ -349,6 +377,40 @@ export default async function AssessmentTeachersPage({
               </div>
             </div>
           )}
+
+          {/* Pagination */}
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 px-5 py-3.5">
+            <p className="text-[0.8125rem] text-muted">
+              Showing <span className="font-semibold text-text">{pageStart + 1}–{Math.min(pageStart + PER_PAGE, totalFiltered)}</span> of{" "}
+              <span className="font-semibold text-text">{totalFiltered}</span> teachers
+            </p>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                {safePage > 1 && (
+                  <Link href={pageUrl(safePage - 1)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text" aria-label="Previous">
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </Link>
+                )}
+                {(() => {
+                  const half = 3;
+                  const winStart = Math.max(1, Math.min(safePage - half, totalPages - 6));
+                  const winEnd = Math.min(totalPages, winStart + 6);
+                  return Array.from({ length: winEnd - winStart + 1 }, (_, i) => winStart + i);
+                })().map((p) => (
+                  p === safePage ? (
+                    <span key={p} className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-[0.8125rem] font-semibold text-on-primary">{p}</span>
+                  ) : (
+                    <Link key={p} href={pageUrl(p)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[0.8125rem] text-muted calm-transition hover:bg-surface-container-low hover:text-text">{p}</Link>
+                  )
+                ))}
+                {safePage < totalPages && (
+                  <Link href={pageUrl(safePage + 1)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text" aria-label="Next">
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

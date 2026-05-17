@@ -11,16 +11,7 @@ import {
 } from "@/modules/authz";
 import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
 import { computeAttainmentBehaviourCorrelation } from "@/modules/analysis/attainmentBehaviourCorrelation";
-
-const WINDOW_DAYS = 21;
-
-const VALID_WINDOWS = [7, 21, 28, 90] as const;
-type WindowDays = (typeof VALID_WINDOWS)[number];
-
-function parseWindow(raw: string | undefined): WindowDays {
-  const n = Number(raw);
-  return VALID_WINDOWS.includes(n as WindowDays) ? (n as WindowDays) : 21;
-}
+import { parseWindow } from "@/lib/explorerUtils";
 
 function fmt2(n: number | null): string {
   if (n === null) return "—";
@@ -78,30 +69,24 @@ export default async function AssessmentHubPage({
   ).length;
   const totalTeachersTracked = assessment.teachers.length;
 
+  // Student counts for display
   const sendStudents = assessment.students.filter((s) => s.sendFlag);
   const nonSendStudents = assessment.students.filter((s) => !s.sendFlag);
-
-  const avgSendMean =
-    sendStudents.length > 0
-      ? sendStudents.reduce((s, r) => s + (r.overallMean ?? 0), 0) / sendStudents.length
-      : null;
-  const avgNonSendMean =
-    nonSendStudents.length > 0
-      ? nonSendStudents.reduce((s, r) => s + (r.overallMean ?? 0), 0) / nonSendStudents.length
-      : null;
-  const sendGap = avgNonSendMean !== null && avgSendMean !== null ? avgNonSendMean - avgSendMean : null;
-
   const ppStudents = assessment.students.filter((s) => s.ppFlag);
   const nonPpStudents = assessment.students.filter((s) => !s.ppFlag);
-  const avgPpMean =
-    ppStudents.length > 0
-      ? ppStudents.reduce((s, r) => s + (r.overallMean ?? 0), 0) / ppStudents.length
+
+  // Use cohort-based gap aggregation — consistent with the cohorts page and AI briefing
+  const cohortsWithSendGap = assessment.cohorts.filter((c) => c.sendGap !== null);
+  const sendGap =
+    cohortsWithSendGap.length > 0
+      ? cohortsWithSendGap.reduce((s, c) => s + c.sendGap!, 0) / cohortsWithSendGap.length
       : null;
-  const avgNonPpMean =
-    nonPpStudents.length > 0
-      ? nonPpStudents.reduce((s, r) => s + (r.overallMean ?? 0), 0) / nonPpStudents.length
+
+  const cohortsWithPpGap = assessment.cohorts.filter((c) => c.ppGap !== null);
+  const ppGap =
+    cohortsWithPpGap.length > 0
+      ? cohortsWithPpGap.reduce((s, c) => s + c.ppGap!, 0) / cohortsWithPpGap.length
       : null;
-  const ppGap = avgNonPpMean !== null && avgPpMean !== null ? avgNonPpMean - avgPpMean : null;
 
   const activeCycle = cycleId
     ? assessment.cycles.find((c) => c.cycleId === cycleId)
@@ -370,7 +355,7 @@ export default async function AssessmentHubPage({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="truncate text-[13px] font-medium text-text">{s.studentName}</p>
-                        {s.sendFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-[var(--pill-warning-bg)] text-[var(--pill-warning-text)]">SEN</span>}
+                        {s.sendFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-[var(--pill-warning-bg)] text-[var(--pill-warning-text)]">SEND</span>}
                         {s.ppFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-[var(--cat-violet-bg,#EDE9FE)] text-[var(--cat-violet-text,#5B21B6)]">PP</span>}
                       </div>
                       <p className="text-[11px] text-muted">Yr {s.yearGroup} · {decliningSubjects.join(", ")}</p>
@@ -394,8 +379,8 @@ export default async function AssessmentHubPage({
               <h2 className="text-sm font-semibold text-text">Attainment–behaviour correlations</h2>
               <p className="mt-0.5 text-[11px] text-muted">{correlation.pairedStudentCount} students with both assessment and behaviour data · {windowDays}d window</p>
             </div>
-            <Link href={`/explorer/assessment?windowDays=${windowDays}${cycleId ? `&cycle=${cycleId}` : ""}`} className="text-[11px] font-semibold text-accent hover:underline">
-              School-wide
+            <Link href={`/explorer/assessment/cohorts?windowDays=${windowDays}${cycleId ? `&cycle=${cycleId}` : ""}`} className="text-[11px] font-semibold text-accent hover:underline">
+              View cohorts →
             </Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

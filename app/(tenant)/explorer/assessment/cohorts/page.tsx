@@ -341,8 +341,8 @@ export default async function AssessmentCohortsPage({
               <tbody>
                 {cohortRows
                   .filter((r) => r.lowPriorMean !== null || r.midPriorMean !== null || r.highPriorMean !== null)
-                  .map((r, idx) => (
-                    <tr key={idx} className="border-t border-border/10">
+                  .map((r) => (
+                    <tr key={`${r.yearGroup}-${r.subject}`} className="border-t border-border/10">
                       <td className="py-1.5 pr-4 font-medium text-text">{r.yearGroup}</td>
                       <td className="py-1.5 pr-4 text-text">{r.subject}</td>
                       <td className={`py-1.5 pr-4 tabular-nums ${cellHeatClass(r.lowPriorMean)}`}>{fmt(r.lowPriorMean)}</td>

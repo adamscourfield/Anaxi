@@ -229,22 +229,22 @@ export async function computeBehaviourDepth(
 
   // ── Reason × year-group matrix ────────────────────────────────────────────
 
-  const matrixCounts = new Map<string, number>();
+  const matrixCounts = new Map<string, Map<string, number>>();
   for (const r of requests as any[]) {
     const yg: string = r.student?.yearGroup ?? "Unknown";
     const reason: string = r.behaviourReasonCategory ?? "Uncategorised";
-    const key = `${yg}:::${reason}`;
-    matrixCounts.set(key, (matrixCounts.get(key) ?? 0) + 1);
+    if (!matrixCounts.has(yg)) matrixCounts.set(yg, new Map());
+    const reasonMap = matrixCounts.get(yg)!;
+    reasonMap.set(reason, (reasonMap.get(reason) ?? 0) + 1);
   }
 
-  const reasonYearGroupMatrix: ReasonYearGroupCell[] = Array.from(
-    matrixCounts.entries(),
-  )
-    .map(([key, count]) => {
-      const [yearGroup, reason] = key.split(":::");
-      return { yearGroup, reason, count };
-    })
-    .sort((a, b) => b.count - a.count);
+  const reasonYearGroupMatrix: ReasonYearGroupCell[] = [];
+  for (const [yearGroup, reasonMap] of matrixCounts) {
+    for (const [reason, count] of reasonMap) {
+      reasonYearGroupMatrix.push({ yearGroup, reason, count });
+    }
+  }
+  reasonYearGroupMatrix.sort((a, b) => b.count - a.count);
 
   return {
     windowDays,

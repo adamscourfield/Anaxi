@@ -4,6 +4,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { canViewExplorer, canViewAssessmentExplorer } from "@/modules/authz";
 import { prisma } from "@/lib/prisma";
+import { VALID_WINDOWS } from "@/lib/explorerUtils";
 import { computeTeacherRiskIndex } from "@/modules/analysis/teacherRisk";
 import { computeStudentRiskIndex } from "@/modules/analysis/studentRisk";
 import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
@@ -21,10 +22,11 @@ export type AIBriefing = {
 
 type CacheEntry = { data: AIBriefing; expiresAt: number };
 
-// ─── In-memory cache (30 min) ─────────────────────────────────────────────────
+// ─── In-memory cache (30 min, max 500 entries) ────────────────────────────────
 
 const briefingCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 30 * 60 * 1000;
+const MAX_CACHE_SIZE = 500;
 
 function getCached(key: string): AIBriefing | null {
   const entry = briefingCache.get(key);
@@ -37,7 +39,21 @@ function getCached(key: string): AIBriefing | null {
 }
 
 function setCached(key: string, data: AIBriefing): void {
+  if (briefingCache.size >= MAX_CACHE_SIZE) {
+    const oldest = briefingCache.keys().next().value;
+    if (oldest !== undefined) briefingCache.delete(oldest);
+  }
   briefingCache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
+// ─── XML attribute escaping ───────────────────────────────────────────────────
+
+function xmlAttr(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 // ─── Prompt builder ───────────────────────────────────────────────────────────
@@ -71,7 +87,7 @@ function buildPrompt(data: {
   if (data.driftingTeachers.length > 0) {
     lines.push(`  <drifting_teachers>`);
     for (const t of data.driftingTeachers) {
-      lines.push(`    <teacher name="${t.name}" status="${t.status}" ids="${t.normalizedIDS.toFixed(2)}" />`);
+      lines.push(`    <teacher name="${xmlAttr(t.name)}" status="${xmlAttr(t.status)}" ids="${t.normalizedIDS.toFixed(2)}" />`);
     }
     lines.push(`  </drifting_teachers>`);
   }
@@ -80,7 +96,7 @@ function buildPrompt(data: {
     lines.push(`  <urgent_students>`);
     for (const s of data.urgentStudents) {
       const flags = [s.sendFlag && "SEND", s.ppFlag && "PP"].filter(Boolean).join(",");
-      lines.push(`    <student name="${s.name}" band="${s.band}" year="${s.yearGroup ?? "?"}"${flags ? ` flags="${flags}"` : ""} />`);
+      lines.push(`    <student name="${xmlAttr(s.name)}" band="${xmlAttr(s.band)}" year="${xmlAttr(s.yearGroup ?? "?")}"${flags ? ` flags="${flags}"` : ""} />`);
     }
     lines.push(`  </urgent_students>`);
   }
@@ -88,7 +104,7 @@ function buildPrompt(data: {
   if (data.valueAddConcerns.length > 0) {
     lines.push(`  <value_add_concerns>`);
     for (const v of data.valueAddConcerns) {
-      lines.push(`    <concern teacher="${v.teacherName}" subject="${v.subject}" value_add="${fmtPp(v.valueAdd)}" />`);
+      lines.push(`    <concern teacher="${xmlAttr(v.teacherName)}" subject="${xmlAttr(v.subject)}" value_add="${fmtPp(v.valueAdd)}" />`);
     }
     lines.push(`  </value_add_concerns>`);
   }
@@ -96,7 +112,7 @@ function buildPrompt(data: {
   if (data.strongCorrelations.length > 0) {
     lines.push(`  <attainment_behaviour_correlations>`);
     for (const c of data.strongCorrelations) {
-      lines.push(`    <correlation metric="${c.metricLabel}" r="${c.correlation.toFixed(2)}" strength="${c.strength}" n="${c.sampleSize}" />`);
+      lines.push(`    <correlation metric="${xmlAttr(c.metricLabel)}" r="${c.correlation.toFixed(2)}" strength="${xmlAttr(c.strength)}" n="${c.sampleSize}" />`);
     }
     lines.push(`  </attainment_behaviour_correlations>`);
   }
@@ -104,7 +120,7 @@ function buildPrompt(data: {
   if (data.loaImpacts.length > 0) {
     lines.push(`  <loa_impacts>`);
     for (const l of data.loaImpacts) {
-      lines.push(`    <impact teacher="${l.teacherName}" days_absent="${l.daysAbsent}" urgent_pct="${(l.urgentPriorityPct * 100).toFixed(0)}%" deviation="${fmtPp(l.deviation)}" />`);
+      lines.push(`    <impact teacher="${xmlAttr(l.teacherName)}" days_absent="${l.daysAbsent}" urgent_pct="${(l.urgentPriorityPct * 100).toFixed(0)}%" deviation="${fmtPp(l.deviation)}" />`);
     }
     lines.push(`  </loa_impacts>`);
   }
@@ -117,7 +133,8 @@ function buildPrompt(data: {
 
 function parseBriefingResponse(text: string): Omit<AIBriefing, "computedAt"> {
   const headlineMatch = text.match(/<headline>([\s\S]*?)<\/headline>/);
-  const headline = headlineMatch?.[1]?.trim() ?? "";
+  if (!headlineMatch) throw new Error("parse failure: no <headline> in Claude response");
+  const headline = headlineMatch[1].trim();
 
   const recsMatch = text.match(/<recommendations>([\s\S]*?)<\/recommendations>/);
   const recommendations: string[] = [];
@@ -165,6 +182,16 @@ Rules:
 - Do NOT invent data not present in the input.
 - Respond with the XML only — no preamble, no explanation.`;
 
+const FALLBACK_BRIEFING = {
+  headline: "AI briefing temporarily unavailable — review the Explorer dashboard directly.",
+  recommendations: [
+    "Check the Assessment Explorer for value-add concerns.",
+    "Review the Teachers Explorer for drift flags.",
+    "Monitor urgent student bands in the Students Explorer.",
+  ],
+  positiveSignals: [] as string[],
+};
+
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -193,7 +220,9 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const windowDays: number = typeof body.windowDays === "number" ? body.windowDays : 21;
+
+    // Validate windowDays against the allowed set — prevents full-history DoS queries
+    const windowDays: number = VALID_WINDOWS.includes(body.windowDays) ? body.windowDays : 21;
     const cycleId: string | undefined = typeof body.cycleId === "string" ? body.cycleId : undefined;
 
     const cacheKey = `${user.tenantId}:${windowDays}:${cycleId ?? ""}`;
@@ -262,6 +291,7 @@ export async function POST(req: NextRequest) {
         deviation: r.deviation as number,
       }));
 
+    // Use cohort-based gaps (consistent with cohorts page and briefing)
     const allMeans = assessment.cohorts
       .map((c) => c.meanNormalizedScore)
       .filter((v): v is number => v !== null);
@@ -293,9 +323,7 @@ export async function POST(req: NextRequest) {
       totalTeachers: assessment.teachers.length,
     });
 
-    // ── Call Claude ───────────────────────────────────────────────────────────
-    let briefing: AIBriefing;
-
+    // ── Call Claude — only cache on success, never cache fallback ────────────
     try {
       const client = new Anthropic();
       const response = await client.messages.create({
@@ -313,23 +341,14 @@ export async function POST(req: NextRequest) {
 
       const textBlock = response.content.find((b) => b.type === "text");
       const raw = textBlock && "text" in textBlock ? textBlock.text : "";
-      const parsed = parseBriefingResponse(raw);
-      briefing = { ...parsed, computedAt: new Date().toISOString() };
-    } catch {
-      briefing = {
-        headline: "AI briefing temporarily unavailable — review the Explorer dashboard directly.",
-        recommendations: [
-          "Check the Assessment Explorer for value-add concerns.",
-          "Review the Teachers Explorer for drift flags.",
-          "Monitor urgent student bands in the Students Explorer.",
-        ],
-        positiveSignals: [],
-        computedAt: new Date().toISOString(),
-      };
+      const parsed = parseBriefingResponse(raw); // throws if response is unparseable
+      const briefing: AIBriefing = { ...parsed, computedAt: new Date().toISOString() };
+      setCached(cacheKey, briefing);
+      return NextResponse.json(briefing);
+    } catch (claudeErr) {
+      console.error("[briefing] Claude error:", claudeErr);
+      return NextResponse.json({ ...FALLBACK_BRIEFING, computedAt: new Date().toISOString() });
     }
-
-    setCached(cacheKey, briefing);
-    return NextResponse.json(briefing);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Internal server error";
     if (message === "FORBIDDEN" || message === "FEATURE_DISABLED") {

@@ -15,19 +15,11 @@ import {
   type AssessmentStudentRow,
   type MovementLabel,
 } from "@/modules/analysis/assessmentAnalysis";
+import { parseWindow } from "@/lib/explorerUtils";
 
 /* ─── Constants ─────────────────────────────────────────────────────────────── */
 
-const VALID_WINDOWS = [7, 21, 28, 90] as const;
-type WindowDays = (typeof VALID_WINDOWS)[number];
 const PER_PAGE = 20;
-
-/* ─── Helpers ───────────────────────────────────────────────────────────────── */
-
-function parseWindow(raw: string | undefined): WindowDays {
-  const n = Number(raw);
-  return VALID_WINDOWS.includes(n as WindowDays) ? (n as WindowDays) : 21;
-}
 
 function fmt(n: number | null): string {
   if (n === null) return "—";
@@ -311,7 +303,7 @@ export default async function AssessmentStudentsPage({
                       <td className="px-4 py-3.5 text-muted">{row.yearGroup ?? "—"}</td>
                       <td className="px-4 py-3.5">
                         <div className="flex gap-1">
-                          {row.sendFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[var(--pill-warning-bg)] text-[var(--pill-warning-text)]">SEN</span>}
+                          {row.sendFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[var(--pill-warning-bg)] text-[var(--pill-warning-text)]">SEND</span>}
                           {row.ppFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[color-mix(in_srgb,#8B5CF6_15%,transparent)] text-[#6D28D9]">PP</span>}
                           {!row.sendFlag && !row.ppFlag && <span className="text-xs text-muted">—</span>}
                         </div>
@@ -372,7 +364,12 @@ export default async function AssessmentStudentsPage({
                     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </Link>
                 )}
-                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map((p) => (
+                {(() => {
+                  const half = 3;
+                  const winStart = Math.max(1, Math.min(safePage - half, totalPages - 6));
+                  const winEnd = Math.min(totalPages, winStart + 6);
+                  return Array.from({ length: winEnd - winStart + 1 }, (_, i) => winStart + i);
+                })().map((p) => (
                   p === safePage ? (
                     <span key={p} className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-[0.8125rem] font-semibold text-on-primary">{p}</span>
                   ) : (
