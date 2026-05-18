@@ -1283,140 +1283,99 @@ function TeacherHome({
 
   return (
     <div className="w-full min-w-0 space-y-8">
-      {/* ═══ Hero Section: Observations + KPI Tiles ═══ */}
-      <section className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-stretch">
-        <Card className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
-          <HomeCardHeading
-            icon={<IconChartBar className="text-[var(--info)]" />}
-            title="Your recent observations"
-            subtitle={`${windowDays}-day window`}
-            end={obsCount > 0 ? <StatusPill variant="accent" size="sm">{obsCount} observation{obsCount !== 1 ? "s" : ""}</StatusPill> : null}
+      {/* ═══ Your recent observations ═══ */}
+      <Card className="flex min-h-0 flex-col gap-5 rounded-sm !p-6 shadow-none">
+        <HomeCardHeading
+          icon={<IconChartBar className="text-[var(--info)]" />}
+          title="Your recent observations"
+          subtitle={`${windowDays}-day window`}
+          end={obsCount > 0 ? <StatusPill variant="accent" size="sm">{obsCount} observation{obsCount !== 1 ? "s" : ""}</StatusPill> : null}
+        />
+
+        {!selfProfile || selfProfile.teacherCoverage === 0 ? (
+          <HomeEmptyPanel
+            icon={<IconClipboard className="text-muted" />}
+            title="No observations in this window"
+            description="Capture an observation to see strengths and areas to watch."
+            action={<HomePrimaryLink href="/observe/new">Start an observation</HomePrimaryLink>}
           />
-
-          {!selfProfile || selfProfile.teacherCoverage === 0 ? (
-            <HomeEmptyPanel
-              icon={<IconClipboard className="text-muted" />}
-              title="No observations in this window"
-              description="Capture an observation to see strengths and areas to watch."
-              action={<HomePrimaryLink href="/observe/new">Start an observation</HomePrimaryLink>}
-            />
-          ) : (
-            <div className="flex min-h-0 flex-1 flex-col gap-4">
-              <MetaText>
-                {selfProfile.teacherCoverage} observation{selfProfile.teacherCoverage !== 1 ? "s" : ""} in last {windowDays} days
-                {selfProfile.lastObservationAt && (
-                  <> · Last: {new Date(selfProfile.lastObservationAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</>
-                )}
-              </MetaText>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {strengthSignals.length > 0 && (
-                  <div className="rounded-xl bg-[var(--surface-container-low)] p-4 space-y-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-status-approved-light text-[10px] text-status-approved-text">✓</span>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Strengths</span>
-                    </div>
-                    <div className="space-y-2.5">
-                      {strengthSignals.map((sig) => (
-                        <div key={sig.signalKey} className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                            <span className="text-[11px] font-bold text-scale-strong-text tabular-nums">
-                              {sig.currentMean !== null ? formatSignalRubricMean(sig.currentMean) : "—"}
-                            </span>
-                          </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-status-approved-light">
-                            <div
-                              className="h-full rounded-md bg-scale-strong calm-transition"
-                              style={{
-                                width:
-                                  sig.currentMean !== null
-                                    ? `${signalRubricMeanBarWidthPct(sig.currentMean)}%`
-                                    : "0%",
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 flex-col gap-4">
+            <MetaText>
+              {selfProfile.teacherCoverage} observation{selfProfile.teacherCoverage !== 1 ? "s" : ""} in last {windowDays} days
+              {selfProfile.lastObservationAt && (
+                <> · Last: {new Date(selfProfile.lastObservationAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</>
+              )}
+            </MetaText>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {strengthSignals.length > 0 && (
+                <div className="rounded-sm bg-[var(--surface-container-low)] p-4 space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-status-approved-light text-[10px] text-status-approved-text">✓</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Strengths</span>
                   </div>
-                )}
-                {watchSignals.length > 0 && (
-                  <div className="rounded-xl bg-[var(--surface-container-low)] p-4 space-y-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-scale-some-light text-[10px] text-scale-some-text">⚠</span>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Areas to watch</span>
-                    </div>
-                    <div className="space-y-2.5">
-                      {watchSignals.map((sig) => (
-                        <div key={sig.signalKey} className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                            <span className="text-[11px] font-bold text-[var(--warning)] tabular-nums">
-                              {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
-                            </span>
-                          </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-scale-some-light">
-                            <div
-                              className="h-full rounded-md bg-scale-some-bar calm-transition"
-                              style={{
-                                width:
-                                  sig.delta !== null ? `${signalRubricDeltaBarWidthPct(sig.delta)}%` : "0%",
-                              }}
-                            />
-                          </div>
+                  <div className="space-y-2.5">
+                    {strengthSignals.map((sig) => (
+                      <div key={sig.signalKey} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[12px] font-medium text-text">{sig.label}</span>
+                          <span className="text-[11px] font-bold text-scale-strong-text tabular-nums">
+                            {sig.currentMean !== null ? formatSignalRubricMean(sig.currentMean) : "—"}
+                          </span>
                         </div>
-                      ))}
-                    </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-sm bg-status-approved-light">
+                          <div
+                            className="h-full rounded-sm bg-scale-strong calm-transition"
+                            style={{ width: sig.currentMean !== null ? `${signalRubricMeanBarWidthPct(sig.currentMean)}%` : "0%" }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2 pt-1">
-                <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
-                  View your signal profile →
-                </Link>
-                <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
-                  View observations →
-                </Link>
-              </div>
-            </div>
-          )}
-        </Card>
-
-        <div className="flex w-full shrink-0 flex-col gap-4 lg:w-[300px]">
-          <Card className="flex min-h-0 flex-1 flex-col gap-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Observations</p>
-            <div>
-              <p className="mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] text-text">{obsCount}</p>
-              <div className="mt-2 h-1.5 w-full rounded-sm bg-[var(--surface-container)]">
-                <div className="h-full rounded-md bg-accent" style={{ width: `${Math.min(obsCount * 10, 100)}%` }} />
-              </div>
-              <p className="mt-2 text-xs text-muted">
-                {obsCount > 0 ? `in the last ${windowDays} days` : "No observations yet"}
-              </p>
-            </div>
-          </Card>
-
-          {hasMeetingsFeature && (
-            <Link href="/my-actions" className="flex min-h-0 flex-1 flex-col">
-              <Card className="home-pressable-card flex min-h-0 flex-1 cursor-pointer flex-col gap-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Open Actions</p>
-                <div>
-                  <p className={`mt-1 text-[36px] font-bold leading-none tracking-[-0.02em] ${actionCount > 0 ? "text-[var(--warning)]" : "text-text"}`}>
-                    {actionCount}
-                  </p>
-                  <p className="mt-2 text-xs text-muted">
-                    {actionCount > 0 ? `${actionCount} action${actionCount !== 1 ? "s" : ""} assigned` : "All caught up ✓"}
-                  </p>
                 </div>
-              </Card>
-            </Link>
-          )}
-        </div>
-      </section>
+              )}
+              {watchSignals.length > 0 && (
+                <div className="rounded-sm bg-[var(--surface-container-low)] p-4 space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-scale-some-light text-[10px] text-scale-some-text">⚠</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Areas to watch</span>
+                  </div>
+                  <div className="space-y-2.5">
+                    {watchSignals.map((sig) => (
+                      <div key={sig.signalKey} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[12px] font-medium text-text">{sig.label}</span>
+                          <span className="text-[11px] font-bold text-[var(--warning)] tabular-nums">
+                            {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-sm bg-scale-some-light">
+                          <div
+                            className="h-full rounded-sm bg-scale-some-bar calm-transition"
+                            style={{ width: sig.delta !== null ? `${signalRubricDeltaBarWidthPct(sig.delta)}%` : "0%" }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+                View your signal profile →
+              </Link>
+              <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+                View observations →
+              </Link>
+            </div>
+          </div>
+        )}
+      </Card>
 
-      {/* ═══ Actions List ═══ */}
+      {/* ═══ Actions — only when there are open items ═══ */}
       {hasMeetingsFeature && openActions.length > 0 && (
-        <Card className="space-y-4">
+        <Card className="space-y-4 rounded-sm !p-6 shadow-none">
           <div className="flex items-center justify-between">
             <HomeCardHeadingSm
               icon={<IconBolt className="text-scale-some-text" />}
@@ -1432,7 +1391,7 @@ function TeacherHome({
               <li key={action.id}>
                 <Link href="/my-actions" className="home-row-link flex items-center justify-between gap-3 p-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-[var(--surface-container-low)] text-muted">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
                     </span>
                     <span className="text-sm font-medium text-text truncate">{action.description}</span>
@@ -1450,14 +1409,14 @@ function TeacherHome({
         </Card>
       )}
 
-      {/* ═══ Leave & On-Call ═══ */}
-      {(hasLeaveFeature || hasOnCallFeature) && (
+      {/* ═══ Leave & On-Call — compact, no empty states ═══ */}
+      {(hasLeaveFeature || (hasOnCallFeature && onCallRequests.length > 0)) && (
         <section className="grid gap-4 sm:grid-cols-2">
           {hasLeaveFeature && (
-            <Card className="space-y-4">
+            <Card className="space-y-4 rounded-sm !p-5 shadow-none">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-container)] text-muted">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[var(--surface-container)] text-muted">
                     <LeaveCalendarIcon />
                   </span>
                   <h2 className="text-base font-bold tracking-[-0.01em] text-text">Leave of absence</h2>
@@ -1468,8 +1427,8 @@ function TeacherHome({
                   </StatusPill>
                 )}
               </div>
-              {loaRequest ? (
-                <div className="rounded-xl bg-[var(--surface-container-low)] p-4">
+              {loaRequest && (
+                <div className="rounded-sm bg-[var(--surface-container-low)] p-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-text">
                     <LeaveCalendarIcon className="shrink-0 text-muted" />
                     <span>
@@ -1479,58 +1438,48 @@ function TeacherHome({
                     </span>
                   </div>
                 </div>
-              ) : (
-                <div className="rounded-xl bg-[var(--surface-container-low)] p-4">
-                  <MetaText>No recent requests.</MetaText>
-                </div>
               )}
               <div className="flex flex-wrap gap-2">
-                <Link href="/leave/request" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+                <Link href="/leave/request" className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   Request leave →
                 </Link>
-                <Link href="/leave" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+                <Link href="/leave" className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   View status →
                 </Link>
               </div>
             </Card>
           )}
-          {hasOnCallFeature && (
-            <Card className="space-y-4">
+          {hasOnCallFeature && onCallRequests.length > 0 && (
+            <Card className="space-y-4 rounded-sm !p-5 shadow-none">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--tertiary-container)] text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[var(--tertiary-container)] text-[var(--on-primary)] [&_svg]:h-4 [&_svg]:w-4">
                     <IconBell />
                   </span>
                   <h2 className="text-base font-bold tracking-[-0.01em] text-text">On call</h2>
                 </div>
-                {onCallRequests.filter((r) => r.status === "OPEN").length > 0 && (
-                  <StatusPill variant="error" size="sm">OPEN</StatusPill>
+                {onCallRequests.some((r) => r.status === "OPEN") && (
+                  <StatusPill variant="error" size="sm">Open</StatusPill>
                 )}
               </div>
-              {onCallRequests.length === 0 ? (
-                <div className="rounded-xl bg-[var(--surface-container-low)] p-4">
-                  <MetaText>No recent on-call requests.</MetaText>
-                </div>
-              ) : (
-                <ul className="space-y-1.5">
-                  {onCallRequests.slice(0, 3).map((req) => (
-                    <li key={req.id} className="flex items-center justify-between rounded-xl bg-[var(--surface-container-low)] p-3 calm-transition hover:bg-[var(--surface-container)]">
-                      <div className="flex items-center gap-2.5">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-[var(--surface-container)] text-muted [&_svg]:h-3 [&_svg]:w-3">
-                          <IconBell />
-                        </span>
-                        <span className="text-sm font-medium text-text">{new Date(req.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
-                      </div>
-                      <StatusPill variant={req.status === "OPEN" ? "error" : req.status === "APPROVED" ? "success" : "neutral"} size="sm">{req.status}</StatusPill>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ul className="space-y-1.5">
+                {onCallRequests.slice(0, 3).map((req) => (
+                  <li key={req.id} className="flex items-center justify-between rounded-sm bg-[var(--surface-container-low)] p-3 calm-transition hover:bg-[var(--surface-container)]">
+                    <div className="flex items-center gap-2.5">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-[var(--surface-container)] text-muted [&_svg]:h-3 [&_svg]:w-3">
+                        <IconBell />
+                      </span>
+                      <span className="text-sm font-medium text-text">{new Date(req.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+                    </div>
+                    <StatusPill variant={req.status === "OPEN" ? "error" : req.status === "APPROVED" ? "success" : "neutral"} size="sm">{req.status}</StatusPill>
+                  </li>
+                ))}
+              </ul>
               <div className="flex flex-wrap gap-2">
-                <Link href="/on-call/new" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+                <Link href="/on-call/new" className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   Log on-call →
                 </Link>
-                <Link href="/on-call" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+                <Link href="/on-call" className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   View requests →
                 </Link>
               </div>
@@ -1539,7 +1488,7 @@ function TeacherHome({
         </section>
       )}
 
-      {/* ═══ Whole-school focus (dark card) ═══ */}
+      {/* ═══ Whole-school focus ═══ */}
       {wholeSchoolTop1 && (
         <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary rounded-2xl">
           <div className="flex items-center gap-2">
@@ -1556,7 +1505,7 @@ function TeacherHome({
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/20">
               <div
-                className="home-cpd-bar-fill h-full rounded-sm bg-surface-container-lowest/80"
+                className="home-cpd-bar-fill h-full rounded-sm"
                 style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
               />
             </div>

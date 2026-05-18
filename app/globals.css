@@ -1245,19 +1245,6 @@ textarea:focus-visible {
   border: 1px solid hsl(var(--border));
 }
 
-/* Dashboard hero tiles: frosted lift over page background */
-.home-hero-glass {
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--surface-container-lowest) 78%, transparent) 0%,
-    color-mix(in srgb, var(--surface-container-low) 52%, transparent) 100%
-  );
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid hsl(var(--border));
-  box-shadow: none;
-}
-
 /* CPD / whole-school dark hero: same corner radius language as dashboard cards */
 /* Explorer hub: top metric tiles (frosted, circular icon well) */
 .explorer-kpi-tile {
@@ -1607,29 +1594,10 @@ textarea:focus-visible {
     box-shadow: none;
     transform: none;
   }
-  .home-hero-glass.home-pressable-card:hover {
-    background: linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--surface-container-lowest) 88%, transparent) 0%,
-      color-mix(in srgb, var(--surface-container-low) 62%, transparent) 100%
-    );
-    border-color: hsl(var(--border));
-    box-shadow: none;
-    transform: none;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-pressable-card:hover {
     background-color: var(--surface-container-low);
-    box-shadow: none;
-  }
-  .home-hero-glass.home-pressable-card:hover {
-    background: linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--surface-container-lowest) 88%, transparent) 0%,
-      color-mix(in srgb, var(--surface-container-low) 62%, transparent) 100%
-    );
-    border-color: hsl(var(--border));
     box-shadow: none;
   }
 }
