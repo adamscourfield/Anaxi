@@ -49,6 +49,7 @@ import {
   IconTrendDown,
   IconTrendUp,
   IconUmbrella,
+  IconUsersTwo,
 } from "@/components/home/home-chrome";
 import { ppTableBadgeClass, sendTableBadgeClass } from "@/modules/assessments/attainmentColours";
 
@@ -191,7 +192,7 @@ function formatRelativeShort(iso: string): string {
 function AttentionBannerSeparator() {
   return (
     <div
-      className="hidden h-9 w-px shrink-0 bg-[color-mix(in_srgb,var(--error)_18%,transparent)] sm:block"
+      className="hidden h-9 w-px shrink-0 bg-[color-mix(in_srgb,var(--error)_18%,transparent)] lg:block"
       aria-hidden
     />
   );
@@ -361,7 +362,7 @@ function LeadershipAttentionStrip({
   return (
     <section className={`rounded-xl border px-4 py-3.5 sm:px-5 sm:py-4 ${shellClass}`}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-0">
-        <div className="flex shrink-0 items-center gap-3 lg:pr-1">
+        <div className="flex shrink-0 items-center gap-3 lg:pr-5">
           {hasCritical ? <AttentionBannerCriticalIcon /> : <AttentionBannerSuccessIcon />}
           <p className={`text-sm font-bold tracking-[-0.01em] ${headerTitleClass}`}>
             {hasCritical ? "Immediate attention" : hasWarningOnly ? "Review recommended" : "Operating within range"}
@@ -370,18 +371,18 @@ function LeadershipAttentionStrip({
 
         <AttentionBannerSeparator />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-0">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-0">
           {displayItems.map((item, idx) => (
             <Fragment key={`${item.title}-${item.href}`}>
               {idx > 0 ? (
                 <>
-                  <div className="h-px w-full shrink-0 bg-[color-mix(in_srgb,var(--error)_18%,transparent)] sm:hidden" aria-hidden />
+                  <div className="h-px w-full shrink-0 bg-[color-mix(in_srgb,var(--error)_18%,transparent)] lg:hidden" aria-hidden />
                   <AttentionBannerSeparator />
                 </>
               ) : null}
               <Link
                 href={item.href}
-                className="group min-w-0 flex-1 rounded-lg px-1 py-1 calm-transition sm:px-4 sm:py-0 hover:bg-white/70"
+                className="group min-w-0 flex-1 rounded-lg px-1 py-1 calm-transition lg:px-5 lg:py-0 hover:bg-white/70"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass(item.tone)}`} aria-hidden />
@@ -409,7 +410,7 @@ function LeadershipAttentionStrip({
 
         <Link
           href="/my-actions"
-          className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold calm-transition sm:self-center ${
+          className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold calm-transition self-start lg:self-center lg:ml-4 ${
             hasCritical
               ? "border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--error)] hover:bg-[var(--surface-container-low)]"
               : "border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] text-text hover:bg-[var(--surface-container-low)]"
@@ -506,7 +507,7 @@ function LeadershipHome({
         {/* Left: Staff signals — CPD priorities + intervention combined */}
         <Card className="flex min-h-0 flex-col gap-6 rounded-sm !p-6 shadow-none">
           <HomeCardHeading
-            icon={<IconSparkles />}
+            icon={<IconUsersTwo />}
             iconTileClassName="bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-none [&_svg]:text-[var(--on-primary)]"
             title="Staff signals"
             subtitle={`CPD drift and intervention — ${windowDays}-day window`}
