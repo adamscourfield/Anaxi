@@ -24,6 +24,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { HistoryFilters } from "./HistoryFilters";
 import { ObservationHistoryAnalysis } from "./ObservationHistoryAnalysis";
 import { SignalDotsClient } from "./SignalDotsClient";
+import { ClickableRow } from "./ClickableRow";
 
 /* ── Pedagogical signal squares (ledger mock: mostly blue, warn / critical accents) ─ */
 const SIGNAL_DOT_COLOR: Record<string, string> = {
@@ -399,7 +400,7 @@ export default async function ObservationHistoryPage({
         <div className="obs-history-table-shell table-shell">
           {/* Desktop table (≥ md) */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="table-head-row text-left">
                   <th className="px-5 py-3.5">Teacher</th>
@@ -417,15 +418,15 @@ export default async function ObservationHistoryPage({
                   const phaseBadge = PHASE_BADGE[phase] ?? PHASE_BADGE.UNKNOWN;
 
                   return (
-                    <tr key={obs.id} className="group table-row calm-transition">
+                    <ClickableRow key={obs.id} href={`/observe/${obs.id}`} className="group table-row calm-transition cursor-pointer">
                       {/* Teacher */}
                       <td className="px-5 py-4">
-                        <Link href={`/observe/${obs.id}`} className="flex items-center gap-3 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
                           <Avatar name={obs.observedTeacher?.fullName ?? "?"} size="sm" />
                           <span className="truncate font-semibold text-text group-hover:text-accent calm-transition">
                             {obs.observedTeacher?.fullName ?? "—"}
                           </span>
-                        </Link>
+                        </div>
                       </td>
 
                       {/* Observer */}
@@ -454,7 +455,7 @@ export default async function ObservationHistoryPage({
                       </td>
 
                       {/* Pedagogical Signals */}
-                      <td className="px-4 py-4">
+                      <td className="max-w-[200px] px-4 py-4">
                         <SignalDotsClient
                           signals={signalValues.map((s: any) => ({
                             colorClass: SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border",
@@ -462,7 +463,7 @@ export default async function ObservationHistoryPage({
                           }))}
                         />
                       </td>
-                    </tr>
+                    </ClickableRow>
                   );
                 })}
               </tbody>
@@ -508,12 +509,11 @@ export default async function ObservationHistoryPage({
                       {formatPhaseLabel(phase)}
                     </span>
                     {signalValues.length > 0 && (
-                      <div className="flex items-center gap-0.5">
+                      <div className="flex flex-wrap items-center gap-0.5">
                         {signalValues.map((s: any, i: number) => (
                           <span
                             key={i}
-                            className={`inline-block h-2.5 w-2.5 shrink-0 cursor-help rounded-sm ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
-                            title={pedagogicalSignalTooltip(s.signalKey, s.valueKey)}
+                            className={`inline-block h-2.5 w-2.5 shrink-0 rounded-sm ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
                           />
                         ))}
                       </div>

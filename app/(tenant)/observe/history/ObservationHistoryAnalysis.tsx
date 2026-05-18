@@ -1073,11 +1073,9 @@ export function ObservationHistoryAnalysis({
                       <tr className="table-head-row text-left">
                         <th className="px-5 py-3.5">Pair</th>
                         <th className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="inline-flex flex-col gap-0.5">
-                            <span>Coaching obs.</span>
-                            <span className="text-[0.625rem] font-normal normal-case tracking-normal text-muted">
-                              in this period
-                            </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            Coaching obs.
+                            <InfoCircleIcon title="Coaching observations within this analysis period" />
                           </span>
                         </th>
                         <th className="px-4 py-3.5 whitespace-nowrap">Weeks with obs.</th>

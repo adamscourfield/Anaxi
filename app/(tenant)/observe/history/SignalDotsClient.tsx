@@ -75,7 +75,7 @@ export function SignalDotsClient({
 
   return (
     <>
-      <div className="flex items-center gap-0.5">
+      <div className="flex flex-wrap items-center gap-0.5">
         {signals.map((s, i) => (
           <span
             key={i}
