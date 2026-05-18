@@ -1230,13 +1230,11 @@ export default function ResultPointPage() {
 
           {/* ── PASTORAL TAB ────────────────────────────────────────────────── */}
           {activeTab === "pastoral" && (
-            <div className="rounded-2xl bg-[#f8f9fa] p-4 sm:p-6">
-              <PastoralTab
-                data={pastoralData}
-                loading={pastoralLoading}
-                onOpenModal={(label, students) => setPastoralModal({ label, students })}
-              />
-            </div>
+            <PastoralTab
+              data={pastoralData}
+              loading={pastoralLoading}
+              onOpenModal={(label, students) => setPastoralModal({ label, students })}
+            />
           )}
 
           {/* ── TEACHING TAB ────────────────────────────────────────────────── */}
@@ -1413,7 +1411,12 @@ function pqMean(students: PastoralStudent[], key: keyof PastoralStudent): number
 type QuartileDef = { label: string; short: string; students: PastoralStudent[] };
 
 /** Q4 → Q1 bar colours (highest → lowest attainment quartile). */
-const QUARTILE_BAR_FILLS = ["#88c0bc", "#b4cbe9", "#f2c093", "#ec9a9a"] as const;
+const QUARTILE_BAR_FILLS = [
+  "var(--scale-strong-bar)",
+  "var(--scale-consistent-bar)",
+  "var(--scale-some-bar)",
+  "var(--scale-limited-bar)",
+] as const;
 
 function QuartileChart({
   metric,
@@ -1432,7 +1435,7 @@ function QuartileChart({
   const nonNull = values.filter((v): v is number => v !== null);
   const maxVal = nonNull.length ? Math.max(...nonNull) : 1;
   return (
-    <div className="rounded-xl border border-[var(--outline-variant)]/15 bg-[var(--surface)] p-4 shadow-sm">
+    <div className="rounded-sm border border-border bg-surface-container-lowest p-4 shadow-none">
       <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{label}</p>
       <div className="flex items-end gap-1.5" style={{ height: "7rem" }}>
         {quartiles.map((q, i) => {
@@ -1466,10 +1469,10 @@ function QuartileChart({
 }
 
 /** Pastoral scatter legend colours (PP / SEND / PP+SEND / Other). */
-const PASTORAL_DOT_PP = "#f59e0b";
-const PASTORAL_DOT_SEND = "#3b82f6";
-const PASTORAL_DOT_BOTH = "#a855f7";
-const PASTORAL_DOT_OTHER = "#4b5563";
+const PASTORAL_DOT_PP = "var(--scale-some)";
+const PASTORAL_DOT_SEND = "var(--scale-consistent)";
+const PASTORAL_DOT_BOTH = "var(--cat-violet-text)";
+const PASTORAL_DOT_OTHER = "var(--on-surface-muted)";
 
 function PastoralScatter({
   students,
@@ -1735,8 +1738,8 @@ function PastoralTab({
 
   const attendCellClass = (pct: number | null) => {
     if (pct === null) return "text-[var(--on-surface)]";
-    if (pct >= 96) return "font-semibold text-emerald-600";
-    if (pct < 90) return "font-semibold text-red-600";
+    if (pct >= 96) return "font-semibold text-[var(--status-approved-text)]";
+    if (pct < 90) return "font-semibold text-[var(--status-denied-text)]";
     return "text-[var(--on-surface)]";
   };
 
@@ -1744,7 +1747,7 @@ function PastoralTab({
     <th
       key={col}
       scope="col"
-      className="cursor-pointer select-none px-3 py-3.5 text-center text-[10px] font-bold uppercase tracking-wider text-neutral-500 hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
+      className="cursor-pointer select-none px-3 py-3.5 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
       onClick={() => toggle(col)}
     >
       <span className="inline-flex items-center justify-center gap-1">
@@ -1769,7 +1772,7 @@ function PastoralTab({
             value: cm.attendancePct !== null ? `${cm.attendancePct}%` : "—",
             sub: `${withSnapshot} of ${totalStudents} with data`,
             warn: cm.attendancePct !== null && cm.attendancePct < 92,
-            iconWrap: "bg-emerald-500/15 text-emerald-700",
+            iconWrap: "bg-status-approved-light text-status-approved-text",
             icon: (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -1783,7 +1786,7 @@ function PastoralTab({
             value: String(cm.below90Count),
             sub: `${cm.below90Pct}% of cohort`,
             warn: cm.below90Pct > 15,
-            iconWrap: "bg-amber-500/15 text-amber-700",
+            iconWrap: "bg-scale-some-light text-scale-some-text",
             icon: (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M23 18l-9.5-9.5-5 5L1 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -1796,7 +1799,7 @@ function PastoralTab({
             value: cm.detentionsCount !== null ? String(cm.detentionsCount) : "—",
             sub: "per student",
             warn: false,
-            iconWrap: "bg-violet-500/15 text-violet-700",
+            iconWrap: "bg-cat-violet-bg text-cat-violet-text",
             icon: (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <circle cx="12" cy="12" r="9" />
@@ -1809,7 +1812,7 @@ function PastoralTab({
             value: cm.onCallsCount !== null ? String(cm.onCallsCount) : "—",
             sub: "reroutings",
             warn: false,
-            iconWrap: "bg-sky-500/15 text-sky-700",
+            iconWrap: "bg-cat-blue-bg text-cat-blue-text",
             icon: (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -1821,7 +1824,7 @@ function PastoralTab({
             value: cm.positivePointsTotal !== null ? String(cm.positivePointsTotal) : "—",
             sub: "positive points",
             warn: false,
-            iconWrap: "bg-amber-400/25 text-amber-800",
+            iconWrap: "bg-scale-some-light text-scale-some-text",
             icon: (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -1832,7 +1835,7 @@ function PastoralTab({
           <div
             key={k.label}
             className={`flex items-start gap-3 rounded-sm border border-border bg-surface-container-lowest p-4 shadow-none ${
-              k.warn ? "ring-1 ring-red-200/80" : ""
+              k.warn ? "ring-1 ring-[var(--scale-limited-border)]" : ""
             }`}
           >
             <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${k.iconWrap}`}>
@@ -1935,14 +1938,14 @@ function PastoralTab({
         <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-5">
           <h2 className="text-lg font-bold tracking-tight text-[var(--on-surface)] sm:text-xl">Student Breakdown</h2>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="inline-flex rounded-md border border-neutral-200/90 bg-neutral-100/80 p-0.5">
+            <div className="inline-flex rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-0.5">
               <button
                 type="button"
                 onClick={() => setFilterPP((v) => !v)}
                 className={`rounded-md px-3 py-1.5 text-xs font-bold calm-transition ${
                   filterPP
-                    ? "bg-white text-[var(--on-surface)] shadow-sm"
-                    : "text-neutral-600 hover:text-[var(--on-surface)]"
+                    ? "bg-[var(--surface)] text-[var(--on-surface)] shadow-sm"
+                    : "text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"
                 }`}
               >
                 PP
@@ -1952,14 +1955,14 @@ function PastoralTab({
                 onClick={() => setFilterSEND((v) => !v)}
                 className={`rounded-md px-3 py-1.5 text-xs font-bold calm-transition ${
                   filterSEND
-                    ? "bg-white text-[var(--on-surface)] shadow-sm"
-                    : "text-neutral-600 hover:text-[var(--on-surface)]"
+                    ? "bg-[var(--surface)] text-[var(--on-surface)] shadow-sm"
+                    : "text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"
                 }`}
               >
                 SEND
               </button>
             </div>
-            <span className="text-[13px] text-neutral-500">
+            <span className="text-[13px] text-[var(--on-surface-muted)]">
               {filtered.length} student{filtered.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -1967,10 +1970,10 @@ function PastoralTab({
         <div className="overflow-x-auto px-1 pb-1">
           <table className="w-full min-w-[720px] border-collapse text-sm">
             <thead>
-              <tr className="border-y border-neutral-200/90">
+              <tr className="border-y border-[var(--outline-variant)]">
                 <th
                   scope="col"
-                  className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-neutral-500"
+                  className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]"
                 >
                   Student
                 </th>
@@ -1987,7 +1990,7 @@ function PastoralTab({
               {sorted.map((st) => (
                 <tr
                   key={st.studentId}
-                  className="calm-transition border-b border-neutral-200/70 last:border-0 hover:bg-neutral-50/90"
+                  className="calm-transition border-b border-[var(--outline-variant)]/70 last:border-0 hover:bg-[var(--surface-container-lowest)]"
                 >
                   <td className="px-5 py-3.5 align-middle">
                     <Link
@@ -2007,19 +2010,19 @@ function PastoralTab({
                   <td className={`px-3 py-3.5 text-center align-middle text-sm tabular-nums ${attendCellClass(st.attendancePct)}`}>
                     {st.attendancePct !== null ? `${Number(st.attendancePct).toFixed(1)}%` : "—"}
                   </td>
-                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-[var(--on-surface-muted)]">
                     {st.latenessCount ?? "—"}
                   </td>
-                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-[var(--on-surface-muted)]">
                     {st.detentionsCount ?? "—"}
                   </td>
-                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-[var(--on-surface-muted)]">
                     {st.internalExclusionsCount ?? "—"}
                   </td>
-                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-[var(--on-surface-muted)]">
                     {st.onCallsCount ?? "—"}
                   </td>
-                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-[var(--on-surface-muted)]">
                     {st.positivePointsTotal ?? "—"}
                   </td>
                 </tr>
@@ -2028,7 +2031,7 @@ function PastoralTab({
           </table>
         </div>
         {filtered.length === 0 && (
-          <div className="px-5 py-10 text-center text-sm text-neutral-500">
+          <div className="px-5 py-10 text-center text-sm text-[var(--on-surface-muted)]">
             No students match the current filter.
           </div>
         )}
