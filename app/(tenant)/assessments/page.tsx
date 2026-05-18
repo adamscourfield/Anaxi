@@ -227,7 +227,7 @@ function CycleCard({ cycle }: {
       href={`/assessments/${cycle.id}`}
       className="group relative block overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none calm-transition hover:border-[var(--outline)]"
     >
-      <div className="relative z-10 flex items-start justify-between gap-3 p-5 sm:p-6">
+      <div className="relative z-10 flex items-start justify-between gap-3 p-4 sm:p-5">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className={`rounded-md px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${QUAL_COLOURS[cycle.qualificationType]}`}>
@@ -243,7 +243,7 @@ function CycleCard({ cycle }: {
               </span>
             )}
           </div>
-          <h3 className="mt-3 text-lg font-bold tracking-tight text-text group-hover:opacity-90 calm-transition">
+          <h3 className="mt-2 text-base font-bold tracking-tight text-text group-hover:opacity-90 calm-transition">
             {cycle.label}
           </h3>
           {cycle.cohortLabel && (
@@ -285,9 +285,9 @@ function CycleMetric({
   icon: "star" | "book" | "doc";
 }) {
   return (
-    <div className="flex flex-col items-center bg-[var(--surface-container-lowest)] px-2 py-4 text-center sm:py-5">
+    <div className="flex items-center gap-2.5 bg-[var(--surface-container-lowest)] px-3.5 py-3">
       <span
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&_svg]:h-[18px] [&_svg]:w-[18px]"
+        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&_svg]:h-[14px] [&_svg]:w-[14px]"
         aria-hidden
       >
         {icon === "star" && (
@@ -307,8 +307,10 @@ function CycleMetric({
           </svg>
         )}
       </span>
-      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">{label}</p>
-      <p className="mt-1 text-xl font-bold tabular-nums tracking-tight text-text sm:text-2xl">{value}</p>
+      <div>
+        <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">{label}</p>
+        <p className="mt-0.5 text-sm font-bold tabular-nums tracking-tight text-text">{value}</p>
+      </div>
     </div>
   );
 }

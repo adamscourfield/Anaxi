@@ -193,6 +193,42 @@ type TeachingSubject = {
 
 type TeachingData = { subjects: TeachingSubject[] };
 
+// ─── Progress 8 types ─────────────────────────────────────────────────────────
+
+type StudentP8Detail = {
+  studentId: string;
+  name: string;
+  yearGroup: string | null;
+  ppFlag: boolean;
+  sendFlag: boolean;
+  hasKs2Data: boolean;
+  expectedA8: number | null;
+  actualA8: number | null;
+  p8: number | null;
+};
+
+type P8PointSummary = {
+  applicable: boolean;
+  cohort: {
+    averageP8: number | null;
+    positiveCount: number;
+    negativeCount: number;
+    zeroCount: number;
+    totalWithP8: number;
+    totalStudents: number;
+    missingKs2: number;
+  };
+  byYearGroup: Array<{
+    yearGroup: string;
+    averageP8: number | null;
+    count: number;
+    positiveCount: number;
+  }>;
+  ppSummary: { averageP8: number | null; count: number };
+  sendSummary: { averageP8: number | null; count: number };
+  students: StudentP8Detail[];
+};
+
 // ─── KPI Icon Components ──────────────────────────────────────────────────────
 
 function IconUsersKpi() {
@@ -407,11 +443,13 @@ export default function ResultPointPage() {
   const [expandedPctSubject, setExpandedPctSubject] = useState<string | null>(null);
   const [gcseGapView, setGcseGapView] = useState<"pp" | "send">("pp");
   const [gapView, setGapView] = useState<"pp" | "send">("pp");
-  const [activeTab, setActiveTab] = useState<"attainment" | "pastoral" | "teaching">("attainment");
+  const [activeTab, setActiveTab] = useState<"attainment" | "pastoral" | "teaching" | "progress8">("attainment");
   const [pastoralData, setPastoralData] = useState<PastoralData | null>(null);
   const [teachingData, setTeachingData] = useState<TeachingData | null>(null);
+  const [p8Data, setP8Data] = useState<P8PointSummary | null>(null);
   const [pastoralLoading, setPastoralLoading] = useState(false);
   const [teachingLoading, setTeachingLoading] = useState(false);
+  const [p8Loading, setP8Loading] = useState(false);
   const [pastoralModal, setPastoralModal] = useState<{ label: string; students: PastoralStudent[] } | null>(null);
   const [teachingModal, setTeachingModal] = useState<{ subject: string; teacherName: string; students: TeachingStudent[] } | null>(null);
   const [portalReady, setPortalReady] = useState(false);
@@ -456,6 +494,13 @@ export default function ResultPointPage() {
         .then((r) => r.ok ? r.json() : null)
         .then((d) => { if (d) setTeachingData(d); })
         .finally(() => setTeachingLoading(false));
+    }
+    if (activeTab === "progress8" && !p8Data && !p8Loading) {
+      setP8Loading(true);
+      fetch(`/api/assessments/metrics/progress8?pointId=${pointId}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => { if (d) setP8Data(d); })
+        .finally(() => setP8Loading(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, pointId]);
@@ -594,18 +639,19 @@ export default function ResultPointPage() {
 
           {/* Tab navigation */}
           <div className="anx-attainment-tabs" role="tablist">
-            {(["attainment", "pastoral", "teaching"] as const).map((tab) => {
-              const labels: Record<typeof tab, string> = {
+            {(["attainment", "pastoral", "teaching", ...(isGcse ? (["progress8"] as const) : [])] as const).map((tab) => {
+              const labels: Record<string, string> = {
                 attainment: "Attainment",
                 pastoral: "Pastoral",
                 teaching: "Teaching Group Analysis",
+                progress8: "Progress 8",
               };
               return (
                 <button
                   key={tab}
                   type="button"
                   role="tab"
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => setActiveTab(tab as "attainment" | "pastoral" | "teaching" | "progress8")}
                   className={`anx-attainment-tab ${activeTab === tab ? "anx-attainment-tab--active" : ""}`}
                 >
                   {labels[tab]}
@@ -1230,13 +1276,11 @@ export default function ResultPointPage() {
 
           {/* ── PASTORAL TAB ────────────────────────────────────────────────── */}
           {activeTab === "pastoral" && (
-            <div className="rounded-2xl bg-[#f8f9fa] p-4 sm:p-6">
-              <PastoralTab
-                data={pastoralData}
-                loading={pastoralLoading}
-                onOpenModal={(label, students) => setPastoralModal({ label, students })}
-              />
-            </div>
+            <PastoralTab
+              data={pastoralData}
+              loading={pastoralLoading}
+              onOpenModal={(label, students) => setPastoralModal({ label, students })}
+            />
           )}
 
           {/* ── TEACHING TAB ────────────────────────────────────────────────── */}
@@ -1246,6 +1290,11 @@ export default function ResultPointPage() {
               loading={teachingLoading}
               onOpenModal={(subject, teacherName, students) => setTeachingModal({ subject, teacherName, students })}
             />
+          )}
+
+          {/* ── PROGRESS 8 TAB ──────────────────────────────────────────────── */}
+          {activeTab === "progress8" && (
+            <Progress8Tab data={p8Data} loading={p8Loading} />
           )}
 
         </>
@@ -1402,6 +1451,315 @@ export default function ResultPointPage() {
   );
 }
 
+// ─── Progress 8 Tab ───────────────────────────────────────────────────────────
+
+function Progress8Tab({
+  data,
+  loading,
+}: {
+  data: P8PointSummary | null;
+  loading: boolean;
+}) {
+  const [sortKey, setSortKey] = useState<string>("p8");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [filterPP, setFilterPP] = useState(false);
+  const [filterSEND, setFilterSEND] = useState(false);
+  const [showMissingKs2, setShowMissingKs2] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="py-16 text-center text-sm text-[var(--on-surface-muted)]">
+        Computing Progress 8 estimates…
+      </div>
+    );
+  }
+  if (!data) {
+    return (
+      <div className="rounded-sm border border-border bg-surface-container-lowest p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-none">
+        No Progress 8 data available for this result point.
+      </div>
+    );
+  }
+  if (!data.applicable) {
+    return (
+      <div className="rounded-sm border border-border bg-surface-container-lowest p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-none">
+        Progress 8 analysis is only available for GCSE cycles.
+      </div>
+    );
+  }
+  if (data.cohort.totalStudents === 0) {
+    return (
+      <div className="rounded-sm border border-border bg-surface-container-lowest p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-none">
+        No students with GCSE results found for this result point.
+      </div>
+    );
+  }
+
+  const p8ColorClass = (p8: number | null) => {
+    if (p8 === null) return "text-muted";
+    if (p8 > 0.05) return "font-semibold text-[var(--status-approved-text)]";
+    if (p8 < -0.05) return "font-semibold text-[var(--status-denied-text)]";
+    return "text-muted";
+  };
+  const formatP8 = (p8: number | null) =>
+    p8 === null ? "—" : `${p8 > 0 ? "+" : ""}${p8.toFixed(2)}`;
+
+  const toggle = (key: string) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const filtered = data.students.filter((s) => {
+    if (filterPP && !s.ppFlag) return false;
+    if (filterSEND && !s.sendFlag) return false;
+    if (!showMissingKs2 && !s.hasKs2Data) return false;
+    return true;
+  });
+  const sorted = [...filtered].sort((a, b) => {
+    const av = a[sortKey as keyof StudentP8Detail] as number | null;
+    const bv = b[sortKey as keyof StudentP8Detail] as number | null;
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return sortDir === "asc" ? av - bv : bv - av;
+  });
+
+  const sortTh = (col: string, label: string) => (
+    <th
+      key={col}
+      scope="col"
+      className="cursor-pointer select-none px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
+      onClick={() => toggle(col)}
+    >
+      <span className="inline-flex items-center justify-center gap-1">
+        {label}
+        {sortKey === col && (
+          <span className="text-[11px] font-bold text-[var(--on-surface)]" aria-hidden>
+            {sortDir === "desc" ? "↓" : "↑"}
+          </span>
+        )}
+      </span>
+    </th>
+  );
+
+  const positivePct =
+    data.cohort.totalWithP8 > 0
+      ? Math.round((data.cohort.positiveCount / data.cohort.totalWithP8) * 100)
+      : 0;
+
+  const p8KpiClass = (p8: number | null) =>
+    p8 !== null && p8 > 0.05
+      ? "text-[var(--status-approved-text)]"
+      : p8 !== null && p8 < -0.05
+        ? "text-[var(--status-denied-text)]"
+        : "text-text";
+
+  return (
+    <div className="space-y-6">
+      {/* Caveat */}
+      <div className="flex items-start gap-3 rounded-sm border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-3 text-[12px] text-[var(--on-surface-muted)]">
+        <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+          <circle cx="12" cy="12" r="10" />
+          <path strokeLinecap="round" d="M12 8v4M12 16h.01" />
+        </svg>
+        <span>
+          <strong className="font-semibold text-[var(--on-surface)]">Estimated Progress 8</strong> — based on GCSE grades recorded at this result point only.
+          Final P8 uses complete end-of-year results across all 8 qualifying subjects.
+          {data.cohort.missingKs2 > 0 && (
+            <> {data.cohort.missingKs2} student{data.cohort.missingKs2 !== 1 ? "s" : ""} without KS2 scores are excluded.</>
+          )}
+        </span>
+      </div>
+
+      {/* KPI strip */}
+      <div className="flex flex-col gap-5 rounded-sm border border-border bg-surface-container-lowest p-5 shadow-none sm:flex-row sm:items-center sm:gap-0 sm:p-0">
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&_svg]:h-[18px] [&_svg]:w-[18px]" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l4-4 4 4 6-8" />
+            </svg>
+          </span>
+          <div>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Predicted P8</p>
+            <p className={`mt-0.5 text-xl font-bold tabular-nums ${p8KpiClass(data.cohort.averageP8)}`}>
+              {formatP8(data.cohort.averageP8)}
+            </p>
+            <p className="mt-0.5 text-[0.75rem] text-muted">{data.cohort.totalWithP8} students</p>
+          </div>
+        </div>
+        <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-status-approved-light text-[var(--status-approved-text)] [&_svg]:h-[18px] [&_svg]:w-[18px]" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 11l5-5 5 5M7 17l5-5 5 5" />
+            </svg>
+          </span>
+          <div>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Above 0</p>
+            <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{positivePct}%</p>
+            <p className="mt-0.5 text-[0.75rem] text-muted">{data.cohort.positiveCount} of {data.cohort.totalWithP8}</p>
+          </div>
+        </div>
+        <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-cat-violet-bg text-cat-violet-text [&_svg]:h-[18px] [&_svg]:w-[18px]" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+            </svg>
+          </span>
+          <div>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">PP predicted P8</p>
+            <p className={`mt-0.5 text-xl font-bold tabular-nums ${p8KpiClass(data.ppSummary.averageP8)}`}>
+              {formatP8(data.ppSummary.averageP8)}
+            </p>
+            <p className="mt-0.5 text-[0.75rem] text-muted">{data.ppSummary.count} PP students</p>
+          </div>
+        </div>
+        <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-cat-blue-bg text-cat-blue-text [&_svg]:h-[18px] [&_svg]:w-[18px]" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </span>
+          <div>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">SEND predicted P8</p>
+            <p className={`mt-0.5 text-xl font-bold tabular-nums ${p8KpiClass(data.sendSummary.averageP8)}`}>
+              {formatP8(data.sendSummary.averageP8)}
+            </p>
+            <p className="mt-0.5 text-[0.75rem] text-muted">{data.sendSummary.count} SEND students</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Year group breakdown */}
+      {data.byYearGroup.length > 1 && (
+        <div className="overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none">
+          <div className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] px-5 py-4">
+            <h2 className="text-base font-bold tracking-tight text-text">By Year Group</h2>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--outline-variant)]">
+                <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Year Group</th>
+                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Students</th>
+                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Avg P8</th>
+                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Above 0</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.byYearGroup.map((yg) => (
+                <tr key={yg.yearGroup} className="border-b border-[var(--outline-variant)]/70 last:border-0">
+                  <td className="px-5 py-3 font-medium text-text">{yg.yearGroup}</td>
+                  <td className="px-3 py-3 text-center tabular-nums text-[var(--on-surface-muted)]">{yg.count}</td>
+                  <td className={`px-3 py-3 text-center tabular-nums ${p8ColorClass(yg.averageP8)}`}>
+                    {formatP8(yg.averageP8)}
+                  </td>
+                  <td className="px-3 py-3 text-center tabular-nums text-[var(--on-surface-muted)]">
+                    {yg.positiveCount} ({Math.round((yg.positiveCount / yg.count) * 100)}%)
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Student breakdown */}
+      <div className="overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] px-5 py-4">
+          <div>
+            <h2 className="text-base font-bold tracking-tight text-text">Student Breakdown</h2>
+            {data.cohort.missingKs2 > 0 && (
+              <p className="mt-0.5 text-[11px] text-[var(--on-surface-muted)]">
+                {data.cohort.missingKs2} student{data.cohort.missingKs2 !== 1 ? "s" : ""} without KS2 data hidden by default
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-0.5">
+              <button
+                type="button"
+                onClick={() => setFilterPP((v) => !v)}
+                className={`rounded-md px-3 py-1.5 text-xs font-bold calm-transition ${filterPP ? "bg-[var(--surface)] text-[var(--on-surface)] shadow-sm" : "text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"}`}
+              >
+                PP
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterSEND((v) => !v)}
+                className={`rounded-md px-3 py-1.5 text-xs font-bold calm-transition ${filterSEND ? "bg-[var(--surface)] text-[var(--on-surface)] shadow-sm" : "text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"}`}
+              >
+                SEND
+              </button>
+            </div>
+            {data.cohort.missingKs2 > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowMissingKs2((v) => !v)}
+                className={`rounded-md border border-[var(--outline-variant)] px-3 py-1.5 text-xs font-bold calm-transition ${showMissingKs2 ? "bg-[var(--surface-container)] text-[var(--on-surface)]" : "bg-transparent text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"}`}
+              >
+                {showMissingKs2 ? "Hide" : "Show"} missing KS2
+              </button>
+            )}
+            <span className="text-[13px] text-[var(--on-surface-muted)]">
+              {sorted.length} student{sorted.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+        </div>
+        <div className="overflow-x-auto pb-1">
+          <table className="w-full min-w-[560px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-[var(--outline-variant)]">
+                <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Student</th>
+                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Year</th>
+                {sortTh("expectedA8", "Exp. A8")}
+                {sortTh("actualA8", "Act. A8")}
+                {sortTh("p8", "P8 Score")}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((s) => (
+                <tr key={s.studentId} className="border-b border-[var(--outline-variant)]/70 last:border-0 calm-transition hover:bg-[var(--surface-container-lowest)]">
+                  <td className="px-5 py-3 align-middle">
+                    <Link
+                      href={`/students/${s.studentId}`}
+                      className="font-medium text-[var(--on-surface)] hover:text-[var(--accent)] calm-transition"
+                    >
+                      {s.name}
+                    </Link>
+                    <div className="mt-0.5 flex flex-wrap gap-1">
+                      {s.ppFlag && <span className={ppInlineBadgeClass}>PP</span>}
+                      {s.sendFlag && <span className={sendInlineBadgeClass}>SEND</span>}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-center text-[var(--on-surface-muted)]">{s.yearGroup ?? "—"}</td>
+                  <td className="px-3 py-3 text-center tabular-nums text-[var(--on-surface-muted)]">
+                    {s.expectedA8 !== null ? s.expectedA8.toFixed(1) : "—"}
+                  </td>
+                  <td className="px-3 py-3 text-center tabular-nums text-[var(--on-surface-muted)]">
+                    {s.actualA8 !== null ? s.actualA8.toFixed(1) : "—"}
+                  </td>
+                  <td className={`px-3 py-3 text-center tabular-nums ${p8ColorClass(s.p8)}`}>
+                    {s.p8 !== null ? formatP8(s.p8) : (s.hasKs2Data ? "—" : "No KS2")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {sorted.length === 0 && (
+          <div className="px-5 py-8 text-center text-sm text-[var(--on-surface-muted)]">
+            No students match the current filter.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Pastoral Tab ─────────────────────────────────────────────────────────────
 
 function pqMean(students: PastoralStudent[], key: keyof PastoralStudent): number | null {
@@ -1413,7 +1771,12 @@ function pqMean(students: PastoralStudent[], key: keyof PastoralStudent): number
 type QuartileDef = { label: string; short: string; students: PastoralStudent[] };
 
 /** Q4 → Q1 bar colours (highest → lowest attainment quartile). */
-const QUARTILE_BAR_FILLS = ["#88c0bc", "#b4cbe9", "#f2c093", "#ec9a9a"] as const;
+const QUARTILE_BAR_FILLS = [
+  "var(--scale-strong-bar)",
+  "var(--scale-consistent-bar)",
+  "var(--scale-some-bar)",
+  "var(--scale-limited-bar)",
+] as const;
 
 function QuartileChart({
   metric,
@@ -1432,7 +1795,7 @@ function QuartileChart({
   const nonNull = values.filter((v): v is number => v !== null);
   const maxVal = nonNull.length ? Math.max(...nonNull) : 1;
   return (
-    <div className="rounded-xl border border-[var(--outline-variant)]/15 bg-[var(--surface)] p-4 shadow-sm">
+    <div className="rounded-sm border border-border bg-surface-container-lowest p-4 shadow-none">
       <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{label}</p>
       <div className="flex items-end gap-1.5" style={{ height: "7rem" }}>
         {quartiles.map((q, i) => {
@@ -1466,10 +1829,10 @@ function QuartileChart({
 }
 
 /** Pastoral scatter legend colours (PP / SEND / PP+SEND / Other). */
-const PASTORAL_DOT_PP = "#f59e0b";
-const PASTORAL_DOT_SEND = "#3b82f6";
-const PASTORAL_DOT_BOTH = "#a855f7";
-const PASTORAL_DOT_OTHER = "#4b5563";
+const PASTORAL_DOT_PP = "var(--scale-some)";
+const PASTORAL_DOT_SEND = "var(--scale-consistent)";
+const PASTORAL_DOT_BOTH = "var(--cat-violet-text)";
+const PASTORAL_DOT_OTHER = "var(--on-surface-muted)";
 
 function PastoralScatter({
   students,
@@ -1735,8 +2098,8 @@ function PastoralTab({
 
   const attendCellClass = (pct: number | null) => {
     if (pct === null) return "text-[var(--on-surface)]";
-    if (pct >= 96) return "font-semibold text-emerald-600";
-    if (pct < 90) return "font-semibold text-red-600";
+    if (pct >= 96) return "font-semibold text-[var(--status-approved-text)]";
+    if (pct < 90) return "font-semibold text-[var(--status-denied-text)]";
     return "text-[var(--on-surface)]";
   };
 
@@ -1744,7 +2107,7 @@ function PastoralTab({
     <th
       key={col}
       scope="col"
-      className="cursor-pointer select-none px-3 py-3.5 text-center text-[10px] font-bold uppercase tracking-wider text-neutral-500 hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
+      className="cursor-pointer select-none px-3 py-3.5 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
       onClick={() => toggle(col)}
     >
       <span className="inline-flex items-center justify-center gap-1">
@@ -1769,7 +2132,7 @@ function PastoralTab({
             value: cm.attendancePct !== null ? `${cm.attendancePct}%` : "—",
             sub: `${withSnapshot} of ${totalStudents} with data`,
             warn: cm.attendancePct !== null && cm.attendancePct < 92,
-            iconWrap: "bg-emerald-500/15 text-emerald-700",
+            iconWrap: "bg-status-approved-light text-status-approved-text",
             icon: (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -1783,7 +2146,7 @@ function PastoralTab({
             value: String(cm.below90Count),
             sub: `${cm.below90Pct}% of cohort`,
             warn: cm.below90Pct > 15,
-            iconWrap: "bg-amber-500/15 text-amber-700",
+            iconWrap: "bg-scale-some-light text-scale-some-text",
             icon: (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M23 18l-9.5-9.5-5 5L1 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -1796,7 +2159,7 @@ function PastoralTab({
             value: cm.detentionsCount !== null ? String(cm.detentionsCount) : "—",
             sub: "per student",
             warn: false,
-            iconWrap: "bg-violet-500/15 text-violet-700",
+            iconWrap: "bg-cat-violet-bg text-cat-violet-text",
             icon: (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <circle cx="12" cy="12" r="9" />
@@ -1809,7 +2172,7 @@ function PastoralTab({
             value: cm.onCallsCount !== null ? String(cm.onCallsCount) : "—",
             sub: "reroutings",
             warn: false,
-            iconWrap: "bg-sky-500/15 text-sky-700",
+            iconWrap: "bg-cat-blue-bg text-cat-blue-text",
             icon: (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -1821,7 +2184,7 @@ function PastoralTab({
             value: cm.positivePointsTotal !== null ? String(cm.positivePointsTotal) : "—",
             sub: "positive points",
             warn: false,
-            iconWrap: "bg-amber-400/25 text-amber-800",
+            iconWrap: "bg-scale-some-light text-scale-some-text",
             icon: (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -1832,7 +2195,7 @@ function PastoralTab({
           <div
             key={k.label}
             className={`flex items-start gap-3 rounded-sm border border-border bg-surface-container-lowest p-4 shadow-none ${
-              k.warn ? "ring-1 ring-red-200/80" : ""
+              k.warn ? "ring-1 ring-[var(--scale-limited-border)]" : ""
             }`}
           >
             <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${k.iconWrap}`}>
@@ -1935,14 +2298,14 @@ function PastoralTab({
         <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-5">
           <h2 className="text-lg font-bold tracking-tight text-[var(--on-surface)] sm:text-xl">Student Breakdown</h2>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="inline-flex rounded-md border border-neutral-200/90 bg-neutral-100/80 p-0.5">
+            <div className="inline-flex rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-0.5">
               <button
                 type="button"
                 onClick={() => setFilterPP((v) => !v)}
                 className={`rounded-md px-3 py-1.5 text-xs font-bold calm-transition ${
                   filterPP
-                    ? "bg-white text-[var(--on-surface)] shadow-sm"
-                    : "text-neutral-600 hover:text-[var(--on-surface)]"
+                    ? "bg-[var(--surface)] text-[var(--on-surface)] shadow-sm"
+                    : "text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"
                 }`}
               >
                 PP
@@ -1952,14 +2315,14 @@ function PastoralTab({
                 onClick={() => setFilterSEND((v) => !v)}
                 className={`rounded-md px-3 py-1.5 text-xs font-bold calm-transition ${
                   filterSEND
-                    ? "bg-white text-[var(--on-surface)] shadow-sm"
-                    : "text-neutral-600 hover:text-[var(--on-surface)]"
+                    ? "bg-[var(--surface)] text-[var(--on-surface)] shadow-sm"
+                    : "text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"
                 }`}
               >
                 SEND
               </button>
             </div>
-            <span className="text-[13px] text-neutral-500">
+            <span className="text-[13px] text-[var(--on-surface-muted)]">
               {filtered.length} student{filtered.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -1967,10 +2330,10 @@ function PastoralTab({
         <div className="overflow-x-auto px-1 pb-1">
           <table className="w-full min-w-[720px] border-collapse text-sm">
             <thead>
-              <tr className="border-y border-neutral-200/90">
+              <tr className="border-y border-[var(--outline-variant)]">
                 <th
                   scope="col"
-                  className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-neutral-500"
+                  className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]"
                 >
                   Student
                 </th>
@@ -1987,7 +2350,7 @@ function PastoralTab({
               {sorted.map((st) => (
                 <tr
                   key={st.studentId}
-                  className="calm-transition border-b border-neutral-200/70 last:border-0 hover:bg-neutral-50/90"
+                  className="calm-transition border-b border-[var(--outline-variant)]/70 last:border-0 hover:bg-[var(--surface-container-lowest)]"
                 >
                   <td className="px-5 py-3.5 align-middle">
                     <Link
@@ -2007,19 +2370,19 @@ function PastoralTab({
                   <td className={`px-3 py-3.5 text-center align-middle text-sm tabular-nums ${attendCellClass(st.attendancePct)}`}>
                     {st.attendancePct !== null ? `${Number(st.attendancePct).toFixed(1)}%` : "—"}
                   </td>
-                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-[var(--on-surface-muted)]">
                     {st.latenessCount ?? "—"}
                   </td>
-                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-[var(--on-surface-muted)]">
                     {st.detentionsCount ?? "—"}
                   </td>
-                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-[var(--on-surface-muted)]">
                     {st.internalExclusionsCount ?? "—"}
                   </td>
-                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-[var(--on-surface-muted)]">
                     {st.onCallsCount ?? "—"}
                   </td>
-                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-neutral-600">
+                  <td className="px-3 py-3.5 text-center align-middle tabular-nums text-[var(--on-surface-muted)]">
                     {st.positivePointsTotal ?? "—"}
                   </td>
                 </tr>
@@ -2028,7 +2391,7 @@ function PastoralTab({
           </table>
         </div>
         {filtered.length === 0 && (
-          <div className="px-5 py-10 text-center text-sm text-neutral-500">
+          <div className="px-5 py-10 text-center text-sm text-[var(--on-surface-muted)]">
             No students match the current filter.
           </div>
         )}

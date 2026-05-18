@@ -294,3 +294,196 @@ export async function getProgress8DashboardSummary(tenantId: string): Promise<Pr
     averagePredictedProgress8: average(predictedValues),
   };
 }
+
+// ─── Per-point Progress 8 analysis ───────────────────────────────────────────
+
+export type StudentP8Detail = {
+  studentId: string;
+  name: string;
+  yearGroup: string | null;
+  ppFlag: boolean;
+  sendFlag: boolean;
+  hasKs2Data: boolean;
+  expectedA8: number | null;
+  actualA8: number | null;
+  p8: number | null;
+};
+
+export type Progress8PointSummary = {
+  applicable: boolean;
+  cohort: {
+    averageP8: number | null;
+    positiveCount: number;
+    negativeCount: number;
+    zeroCount: number;
+    totalWithP8: number;
+    totalStudents: number;
+    missingKs2: number;
+  };
+  byYearGroup: Array<{
+    yearGroup: string;
+    averageP8: number | null;
+    count: number;
+    positiveCount: number;
+  }>;
+  ppSummary: { averageP8: number | null; count: number };
+  sendSummary: { averageP8: number | null; count: number };
+  students: StudentP8Detail[];
+};
+
+export async function getProgress8ForPoint(
+  pointId: string,
+  tenantId: string
+): Promise<Progress8PointSummary> {
+  const empty: Progress8PointSummary = {
+    applicable: false,
+    cohort: { averageP8: null, positiveCount: 0, negativeCount: 0, zeroCount: 0, totalWithP8: 0, totalStudents: 0, missingKs2: 0 },
+    byYearGroup: [],
+    ppSummary: { averageP8: null, count: 0 },
+    sendSummary: { averageP8: null, count: 0 },
+    students: [],
+  };
+
+  const point = await prisma.assessmentPoint.findFirst({
+    where: { id: pointId, cycle: { tenantId } },
+    include: {
+      cycle: { select: { qualificationType: true } },
+      assessments: {
+        where: { gradeFormat: "GCSE" },
+        select: {
+          id: true,
+          subject: true,
+          results: {
+            where: { tenantId },
+            select: {
+              assessmentId: true,
+              studentId: true,
+              rawValue: true,
+              normalizedScore: true,
+              status: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!point || point.cycle.qualificationType !== "GCSE") return empty;
+
+  const studentIds = [
+    ...new Set(point.assessments.flatMap((a) => a.results.map((r) => r.studentId))),
+  ];
+  if (studentIds.length === 0) return { ...empty, applicable: true };
+
+  const students = await prisma.student.findMany({
+    where: { id: { in: studentIds }, tenantId },
+    select: {
+      id: true,
+      fullName: true,
+      yearGroup: true,
+      ppFlag: true,
+      sendFlag: true,
+      ks2ReadingScaledScore: true,
+      ks2MathsScaledScore: true,
+    },
+  });
+
+  const benchmarkRows = await loadBenchmarks();
+  const benchmarkByScore = new Map(
+    benchmarkRows.map((row) => [row.ks2AverageScaledScore, row.expectedAttainment8])
+  );
+
+  const resultsByStudent = new Map<string, ScoredResult[]>();
+  for (const assessment of point.assessments) {
+    for (const result of assessment.results) {
+      const list = resultsByStudent.get(result.studentId) ?? [];
+      list.push({
+        assessmentId: result.assessmentId,
+        studentId: result.studentId,
+        subject: assessment.subject,
+        rawValue: result.rawValue,
+        normalizedScore: result.normalizedScore,
+        status: result.status,
+      });
+      resultsByStudent.set(result.studentId, list);
+    }
+  }
+
+  const details: StudentP8Detail[] = students.map((student) => {
+    const lookupScore = getProgress8BenchmarkLookupScore(
+      student.ks2ReadingScaledScore,
+      student.ks2MathsScaledScore
+    );
+    const expectedA8 = lookupScore !== null ? (benchmarkByScore.get(lookupScore) ?? null) : null;
+    const actualA8 = calculateStudentActualAttainment8(resultsByStudent.get(student.id) ?? []);
+    const p8 =
+      actualA8 !== null && expectedA8 !== null
+        ? round2((actualA8 - expectedA8) / 10)
+        : null;
+
+    return {
+      studentId: student.id,
+      name: student.fullName,
+      yearGroup: student.yearGroup,
+      ppFlag: student.ppFlag,
+      sendFlag: student.sendFlag,
+      hasKs2Data:
+        student.ks2ReadingScaledScore !== null && student.ks2MathsScaledScore !== null,
+      expectedA8,
+      actualA8,
+      p8,
+    };
+  });
+
+  details.sort((a, b) => {
+    if (a.p8 === null && b.p8 === null) return 0;
+    if (a.p8 === null) return 1;
+    if (b.p8 === null) return -1;
+    return b.p8 - a.p8;
+  });
+
+  const withP8 = details.filter((d) => d.p8 !== null);
+  const p8Values = withP8.map((d) => d.p8 as number);
+
+  const byYearGroupMap = new Map<string, { p8s: number[]; positiveCount: number }>();
+  for (const d of details) {
+    if (d.p8 === null) continue;
+    const yg = d.yearGroup ?? "Unknown";
+    const entry = byYearGroupMap.get(yg) ?? { p8s: [], positiveCount: 0 };
+    entry.p8s.push(d.p8);
+    if (d.p8 > 0.05) entry.positiveCount++;
+    byYearGroupMap.set(yg, entry);
+  }
+  const byYearGroup = [...byYearGroupMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([yearGroup, { p8s, positiveCount }]) => ({
+      yearGroup,
+      averageP8: average(p8s),
+      count: p8s.length,
+      positiveCount,
+    }));
+
+  const ppValues = details
+    .filter((d) => d.ppFlag && d.p8 !== null)
+    .map((d) => d.p8 as number);
+  const sendValues = details
+    .filter((d) => d.sendFlag && d.p8 !== null)
+    .map((d) => d.p8 as number);
+
+  return {
+    applicable: true,
+    cohort: {
+      averageP8: average(p8Values),
+      positiveCount: p8Values.filter((v) => v > 0.05).length,
+      negativeCount: p8Values.filter((v) => v < -0.05).length,
+      zeroCount: p8Values.filter((v) => v >= -0.05 && v <= 0.05).length,
+      totalWithP8: withP8.length,
+      totalStudents: details.length,
+      missingKs2: details.filter((d) => !d.hasKs2Data).length,
+    },
+    byYearGroup,
+    ppSummary: { averageP8: average(ppValues), count: ppValues.length },
+    sendSummary: { averageP8: average(sendValues), count: sendValues.length },
+    students: details,
+  };
+}
