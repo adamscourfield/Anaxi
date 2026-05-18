@@ -477,12 +477,25 @@ export async function fetchDashboardAttainmentKPIs(
 
 /* ── Behaviour Heatmap ───────────────────────────────────────────── */
 
+export type HeatmapCellIncident = {
+  id: string;
+  createdAt: string;
+  studentName: string;
+  studentYearGroup: string | null;
+  requesterName: string;
+  behaviourReasonCategory: string | null;
+  status: string;
+  location: string;
+};
+
 export type BehaviourHeatmapData = {
   yearGroups: string[];
   /** Day-of-week labels for the columns (e.g. ["Mon", "Tue", "Wed", "Thu", "Fri"]). */
   columnLabels: string[];
   /** matrix[rowIndex][colIndex] = incident count */
   matrix: number[][];
+  /** incidents[rowIndex][colIndex] = list of incidents for that cell */
+  incidents: HeatmapCellIncident[][][];
 };
 
 const DOW_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
@@ -502,14 +515,18 @@ export async function fetchBehaviourHeatmapMatrix(
 
       const requests = await (prisma as any).onCallRequest.findMany({
         where: { tenantId, createdAt: { gte: startDate } },
-        include: { student: { select: { yearGroup: true } } },
+        include: {
+          student: { select: { yearGroup: true, fullName: true } },
+          requester: { select: { fullName: true } },
+        },
         orderBy: { createdAt: "asc" },
       });
 
       if (!requests || (requests as any[]).length === 0) return null;
 
-      // Accumulate counts: yearGroup → dow (1=Mon … 5=Fri) → count
+      // Accumulate counts and incidents: yearGroup → dow (1=Mon … 5=Fri)
       const counts: Record<string, Record<number, number>> = {};
+      const incidentsByCell: Record<string, Record<number, HeatmapCellIncident[]>> = {};
 
       for (const req of requests as any[]) {
         const yg: string = req.student?.yearGroup ?? "Unknown";
@@ -518,6 +535,18 @@ export async function fetchBehaviourHeatmapMatrix(
         if (dow < 1 || dow > 5) continue; // skip weekends
         if (!counts[yg]) counts[yg] = {};
         counts[yg][dow] = (counts[yg][dow] ?? 0) + 1;
+        if (!incidentsByCell[yg]) incidentsByCell[yg] = {};
+        if (!incidentsByCell[yg][dow]) incidentsByCell[yg][dow] = [];
+        incidentsByCell[yg][dow].push({
+          id: req.id as string,
+          createdAt: (req.createdAt as Date).toISOString(),
+          studentName: (req.student?.fullName as string) ?? "—",
+          studentYearGroup: (req.student?.yearGroup as string | null) ?? null,
+          requesterName: (req.requester?.fullName as string) ?? "—",
+          behaviourReasonCategory: (req.behaviourReasonCategory as string | null) ?? null,
+          status: req.status as string,
+          location: (req.location as string) ?? "",
+        });
       }
 
       const yearGroups = Object.keys(counts).sort((a, b) => {
@@ -529,12 +558,15 @@ export async function fetchBehaviourHeatmapMatrix(
 
       if (yearGroups.length === 0) return null;
 
-      // Build matrix: rows = yearGroups, cols = Mon(1)…Fri(5)
+      // Build matrix and incidents: rows = yearGroups, cols = Mon(1)…Fri(5)
       const matrix = yearGroups.map((yg) =>
         [1, 2, 3, 4, 5].map((dow) => counts[yg]?.[dow] ?? 0)
       );
+      const incidents = yearGroups.map((yg) =>
+        [1, 2, 3, 4, 5].map((dow) => incidentsByCell[yg]?.[dow] ?? [])
+      );
 
-      return { yearGroups, columnLabels: DOW_LABELS, matrix };
+      return { yearGroups, columnLabels: DOW_LABELS, matrix, incidents };
     })(),
     null as BehaviourHeatmapData | null
   );

@@ -706,6 +706,7 @@ function LeadershipHome({
               yearGroups={behaviourHeatmap.yearGroups}
               columnLabels={behaviourHeatmap.columnLabels}
               matrix={behaviourHeatmap.matrix}
+              incidents={behaviourHeatmap.incidents}
               ctaHref={`/explorer/analysis?windowDays=${windowDays}#behaviour-heatmap`}
               ctaLabel="View full map"
             />
