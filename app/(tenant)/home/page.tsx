@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Fragment } from "react";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
@@ -189,45 +188,6 @@ function formatRelativeShort(iso: string): string {
   return `${hrs}h ago`;
 }
 
-function AttentionBannerSeparator() {
-  return (
-    <div
-      className="hidden h-9 w-px shrink-0 bg-[color-mix(in_srgb,var(--error)_18%,transparent)] lg:block"
-      aria-hidden
-    />
-  );
-}
-
-function AttentionBannerCriticalIcon() {
-  return (
-    <span
-      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--error)] shadow-sm"
-      aria-hidden
-    >
-      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
-        <path
-          fill="white"
-          d="M12 4 21 20H3L12 4z"
-        />
-        <path
-          fill="var(--error)"
-          d="M11 10h2v5h-2v-5zm0 6.5h2V18h-2v-1.5z"
-        />
-      </svg>
-    </span>
-  );
-}
-
-function AttentionBannerSuccessIcon() {
-  return (
-    <span
-      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--success)] text-lg font-bold leading-none text-white shadow-sm"
-      aria-hidden
-    >
-      ✓
-    </span>
-  );
-}
 
 function WindowSelector({ windowDays }: { windowDays: number }) {
   return (
@@ -331,93 +291,41 @@ function LeadershipAttentionStrip({
       : []),
   ];
 
-  const visibleItems = items.length > 0
-    ? items
-    : [{
-        title: "No immediate escalations",
-        detail: "Operational signals are currently within expected ranges",
-        href: "/my-actions",
-        tone: "success" as const,
-      }];
+  if (items.length === 0) return null;
 
-  const displayItems = visibleItems.slice(0, 3);
-  const hasCritical = visibleItems.some((item) => item.tone === "critical");
-  const hasWarningOnly = !hasCritical && visibleItems.some((item) => item.tone === "warning");
+  const displayItems = items.slice(0, 3);
+  const hasCritical = items.some((item) => item.tone === "critical");
 
   const shellClass = hasCritical
-    ? "border-[color-mix(in_srgb,var(--error)_32%,transparent)] bg-[color-mix(in_srgb,var(--error)_06%,var(--surface-container-lowest))] shadow-none"
-    : hasWarningOnly
-      ? "border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_70%,var(--surface-container-lowest))] shadow-none"
-      : "border-[color-mix(in_srgb,var(--success)_14%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_72%,var(--surface-container-lowest))] shadow-none";
+    ? "border-[color-mix(in_srgb,var(--error)_18%,transparent)] bg-[color-mix(in_srgb,var(--error)_03%,var(--surface-container-lowest))]"
+    : "border-[color-mix(in_srgb,var(--warning)_16%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_40%,var(--surface-container-lowest))]";
 
-  const headerTitleClass = hasCritical
-    ? "text-[var(--error)]"
-    : hasWarningOnly
-      ? "text-[var(--warning)]"
-      : "text-[var(--success)]";
-
-  const dotClass = (tone: "critical" | "warning" | "success") =>
-    tone === "critical" ? "bg-[var(--error)]" : tone === "warning" ? "bg-[var(--warning)]" : "bg-[var(--success)]";
+  const dotClass = (tone: "critical" | "warning") =>
+    tone === "critical" ? "bg-[var(--error)]" : "bg-[var(--warning)]";
 
   return (
-    <section className={`rounded-xl border px-4 py-3.5 sm:px-5 sm:py-4 ${shellClass}`}>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-0">
-        <div className="flex shrink-0 items-center gap-3 lg:pr-5">
-          {hasCritical ? <AttentionBannerCriticalIcon /> : <AttentionBannerSuccessIcon />}
-          <p className={`text-sm font-bold tracking-[-0.01em] ${headerTitleClass}`}>
-            {hasCritical ? "Immediate attention" : hasWarningOnly ? "Review recommended" : "Operating within range"}
-          </p>
-        </div>
-
-        <AttentionBannerSeparator />
-
-        <div className="flex min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-0">
-          {displayItems.map((item, idx) => (
-            <Fragment key={`${item.title}-${item.href}`}>
-              {idx > 0 ? (
-                <>
-                  <div className="h-px w-full shrink-0 bg-[color-mix(in_srgb,var(--error)_18%,transparent)] lg:hidden" aria-hidden />
-                  <AttentionBannerSeparator />
-                </>
-              ) : null}
-              <Link
-                href={item.href}
-                className="group min-w-0 flex-1 rounded-lg px-1 py-1 calm-transition lg:px-5 lg:py-0 hover:bg-white/70"
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass(item.tone)}`} aria-hidden />
-                  <p
-                    className={`truncate text-sm font-semibold tracking-[-0.01em] ${
-                      item.tone === "success" ? "text-text" : "text-[var(--error)]"
-                    }`}
-                  >
-                    {item.title}
-                  </p>
-                </div>
-                <p
-                  className={`mt-1 truncate pl-4 text-xs ${
-                    item.tone === "success" ? "text-muted" : "text-[var(--on-surface-variant)]"
-                  }`}
-                >
-                  {item.detail}
-                </p>
-              </Link>
-            </Fragment>
+    <section className={`rounded-xl border px-4 py-3 sm:px-5 shadow-none ${shellClass}`}>
+      <div className="flex flex-wrap items-start gap-3 lg:flex-nowrap lg:items-center">
+        <div className="flex min-w-0 flex-1 flex-col gap-2.5 lg:flex-row lg:items-center lg:divide-x lg:divide-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)]">
+          {displayItems.map((item) => (
+            <Link
+              key={`${item.title}-${item.href}`}
+              href={item.href}
+              className="group min-w-0 flex-1 rounded-lg py-0.5 calm-transition lg:px-4 first:lg:pl-0 hover:opacity-80"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass(item.tone)}`} aria-hidden />
+                <p className="truncate text-sm font-semibold text-text">{item.title}</p>
+              </div>
+              <p className="mt-0.5 truncate pl-4 text-xs text-muted">{item.detail}</p>
+            </Link>
           ))}
         </div>
-
-        <AttentionBannerSeparator />
-
         <Link
           href="/my-actions"
-          className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold calm-transition self-start lg:self-center lg:ml-4 ${
-            hasCritical
-              ? "border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--error)] hover:bg-[var(--surface-container-low)]"
-              : "border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] text-text hover:bg-[var(--surface-container-low)]"
-          }`}
+          className="shrink-0 self-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 py-2 text-xs font-semibold text-text calm-transition hover:bg-[var(--surface-container-low)]"
         >
-          View all actions
-          <span aria-hidden>→</span>
+          View all →
         </Link>
       </div>
     </section>
