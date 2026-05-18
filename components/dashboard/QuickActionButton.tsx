@@ -80,7 +80,7 @@ export function QuickActionButton({ items }: { items: QuickActionItem[] }) {
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0" aria-hidden>
           <path d="M7 1.5v11M1.5 7h11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
         </svg>
-        <span className="hidden sm:inline">+ Quick Action</span>
+        <span className="hidden sm:inline">Quick Action</span>
         <span className="sm:hidden">Quick</span>
       </button>
       {open ? (
