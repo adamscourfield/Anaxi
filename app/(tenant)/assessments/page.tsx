@@ -140,7 +140,7 @@ export default async function AssessmentsPage() {
       {(activeCycles.length > 0 || archivedCycles.length > 0) && (
         <div className="flex flex-col gap-6 rounded-sm border border-border bg-surface-container-lowest p-5 shadow-none sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6">
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--cat-blue-bg)] text-[var(--cat-blue-text)] [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l4-4 4 4 6-8" />
@@ -153,7 +153,7 @@ export default async function AssessmentsPage() {
           </div>
           <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--status-approved-bg)] text-[var(--status-approved-text)] [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
@@ -167,7 +167,7 @@ export default async function AssessmentsPage() {
           </div>
           <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)] [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeLinejoin="round" />
                 <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" />
@@ -180,7 +180,7 @@ export default async function AssessmentsPage() {
           </div>
           <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--status-pending-bg)] text-[var(--status-pending-text)] [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path d="M4 18h16" strokeLinecap="round" />
                 <path d="M7 15l3-3 3 2 4-5" strokeLinecap="round" strokeLinejoin="round" />
@@ -222,32 +222,11 @@ function CycleCard({ cycle }: {
   const subjectCount = new Set(cycle.points.flatMap((p) => p.assessments.map((a) => a.subject))).size;
   const hasData = entries > 0;
 
-  const accentKey = String(cycle.qualificationType);
-  const accentBar =
-    accentKey === "GCSE"
-      ? "bg-[var(--cat-blue-text)]"
-      : accentKey === "A_LEVEL"
-        ? "bg-[var(--cat-violet-text)]"
-        : accentKey === "PERCENTAGE"
-          ? "bg-[var(--status-approved-text)]"
-          : "bg-muted";
-
-  const cardToneClass =
-    accentKey === "GCSE"
-      ? "anx-attainment-cycle-card--gcse"
-      : accentKey === "A_LEVEL"
-        ? "anx-attainment-cycle-card--alevel"
-        : accentKey === "PERCENTAGE"
-          ? "anx-attainment-cycle-card--pct"
-          : "";
-
   return (
     <Link
       href={`/assessments/${cycle.id}`}
-      className={`anx-attainment-cycle-card group relative block overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none calm-transition hover:border-border ${cardToneClass}`}
+      className="group relative block overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none calm-transition hover:border-[var(--outline)]"
     >
-      <div className="anx-attainment-wave" aria-hidden />
-      <div className={`relative z-[1] h-1 w-full ${accentBar}`} aria-hidden />
       <div className="relative z-10 flex items-start justify-between gap-3 p-5 sm:p-6">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -281,14 +260,14 @@ function CycleCard({ cycle }: {
         </span>
       </div>
 
-      <div className="relative z-10 grid grid-cols-3 gap-px border-t border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)]">
-        <CycleMetric label="Points" value={cycle.points.length} icon="star" tone={accentKey} />
-        <CycleMetric label="Subjects" value={subjectCount} icon="book" tone={accentKey} />
-        <CycleMetric label="Entries" value={entries.toLocaleString()} icon="doc" tone={accentKey} />
+      <div className="grid grid-cols-3 gap-px border-t border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)]">
+        <CycleMetric label="Points" value={cycle.points.length} icon="star" />
+        <CycleMetric label="Subjects" value={subjectCount} icon="book" />
+        <CycleMetric label="Entries" value={entries.toLocaleString()} icon="doc" />
       </div>
 
       {!hasData && (
-        <p className="border-t border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] px-5 py-3 text-[11px] font-medium uppercase tracking-[0.08em] text-muted sm:px-6">
+        <p className="border-t border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] px-5 py-3 text-[11px] text-muted sm:px-6">
           No results uploaded yet
         </p>
       )}
@@ -300,26 +279,15 @@ function CycleMetric({
   label,
   value,
   icon,
-  tone,
 }: {
   label: string;
   value: string | number;
   icon: "star" | "book" | "doc";
-  tone: string;
 }) {
-  const well =
-    tone === "GCSE"
-      ? "bg-[var(--cat-blue-bg)] text-[var(--cat-blue-text)]"
-      : tone === "A_LEVEL"
-        ? "bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)]"
-        : tone === "PERCENTAGE"
-          ? "bg-[var(--status-approved-light)] text-[var(--status-approved-text)]"
-          : "bg-[var(--surface-container)] text-muted";
-
   return (
     <div className="flex flex-col items-center bg-[var(--surface-container-lowest)] px-2 py-4 text-center sm:py-5">
       <span
-        className={`inline-flex h-9 w-9 items-center justify-center rounded-md [&_svg]:h-[18px] [&_svg]:w-[18px] ${well}`}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&_svg]:h-[18px] [&_svg]:w-[18px]"
         aria-hidden
       >
         {icon === "star" && (

@@ -1900,7 +1900,7 @@ textarea:focus-visible {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--outline-variant);
 }
 
 .anx-attainment-tab {
@@ -1909,7 +1909,7 @@ textarea:focus-visible {
   padding: 0.625rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--on-surface-variant);
   background: transparent;
   cursor: pointer;
   transition:
@@ -1918,13 +1918,13 @@ textarea:focus-visible {
 }
 
 .anx-attainment-tab:hover {
-  color: #111827;
+  color: var(--on-surface);
 }
 
 .anx-attainment-tab--active {
-  border-bottom-color: #111827;
+  border-bottom-color: var(--on-surface);
   font-weight: 700;
-  color: #111827;
+  color: var(--on-surface);
 }
 
 .anx-priorities-definitions summary {
