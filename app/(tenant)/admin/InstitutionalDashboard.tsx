@@ -313,57 +313,48 @@ function MetricCard({ metric }: { metric: DashboardMetricDef }) {
 }
 
 function AttentionBand({ items }: { items: DashboardAttentionDef[] }) {
-  const visible = items.length > 0
-    ? items
-    : [
-        {
-          title: "Admin workspace healthy",
-          detail: "Core setup data is available and there are no active import jobs.",
-          href: "/admin/imports",
-          tone: "success" as const,
-          cta: "Review",
-        },
-      ];
+  if (items.length === 0) return null;
 
-  const bandTone = visible.some((item) => item.tone === "critical")
-    ? "border-[color-mix(in_srgb,var(--error)_16%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_58%,var(--surface-container-lowest))]"
-    : visible.some((item) => item.tone === "warning")
-      ? "border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_70%,var(--surface-container-lowest))]"
-      : "border-[color-mix(in_srgb,var(--success)_14%,transparent)] bg-[color-mix(in_srgb,var(--pill-success-bg)_72%,var(--surface-container-lowest))]";
+  const hasCritical = items.some((item) => item.tone === "critical");
+  const hasWarning = !hasCritical && items.some((item) => item.tone === "warning");
+
+  const bandTone = hasCritical
+    ? "border-[color-mix(in_srgb,var(--error)_16%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_40%,var(--surface-container-lowest))]"
+    : "border-[color-mix(in_srgb,var(--warning)_16%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_50%,var(--surface-container-lowest))]";
+
+  const iconBg = hasCritical ? "bg-[var(--error)]" : "bg-[var(--warning)]";
 
   return (
-    <section className={`rounded-sm px-4 py-3.5 shadow-none sm:px-5 ${bandTone}`}>
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:gap-4">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--error)] text-sm font-bold text-white shadow-none">
+    <section className={`rounded-sm border px-4 py-3 shadow-none sm:px-5 ${bandTone}`}>
+      <div className="flex flex-wrap items-start gap-3 xl:flex-nowrap xl:items-center">
+        <div className="flex min-w-0 flex-1 flex-col gap-2.5 md:flex-row md:items-center md:divide-x md:divide-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)]">
+          <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${iconBg} text-[11px] font-bold text-white`} aria-hidden>
             !
           </span>
-          <div className="grid min-w-0 gap-3 md:grid-cols-3">
-            {visible.slice(0, 3).map((item) => (
-              <Link
-                key={`${item.title}-${item.href}`}
-                href={item.href}
-                className="group min-w-0 rounded-xl px-2 py-1 calm-transition hover:bg-white/55"
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <span
-                    className={`h-2 w-2 shrink-0 rounded-full ${
-                      item.tone === "critical" ? "bg-[var(--error)]" : item.tone === "warning" ? "bg-[var(--warning)]" : "bg-[var(--success)]"
-                    }`}
-                  />
-                  <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{item.title}</p>
-                </div>
-                <p className="mt-0.5 truncate pl-4 text-xs text-muted">{item.detail}</p>
-              </Link>
-            ))}
-          </div>
+          {items.slice(0, 3).map((item) => (
+            <Link
+              key={`${item.title}-${item.href}`}
+              href={item.href}
+              className="group min-w-0 flex-1 rounded-lg py-0.5 calm-transition md:px-4 first:md:pl-2 hover:opacity-80"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${
+                    item.tone === "critical" ? "bg-[var(--error)]" : "bg-[var(--warning)]"
+                  }`}
+                  aria-hidden
+                />
+                <p className="truncate text-sm font-semibold text-text">{item.title}</p>
+              </div>
+              <p className="mt-0.5 truncate pl-4 text-xs text-muted">{item.detail}</p>
+            </Link>
+          ))}
         </div>
         <Link
-          href={visible[0]?.href ?? "/admin"}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white/80 px-4 py-2 text-sm font-semibold text-text shadow-sm ring-1 ring-inset ring-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] calm-transition hover:bg-white"
+          href={items[0]?.href ?? "/admin"}
+          className="shrink-0 self-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 py-2 text-xs font-semibold text-text calm-transition hover:bg-[var(--surface-container-low)]"
         >
-          {visible[0]?.cta ?? "View action"}
-          <span aria-hidden>→</span>
+          {items[0]?.cta ?? "View"} →
         </Link>
       </div>
     </section>
