@@ -64,6 +64,14 @@ function IconAssessment() {
   );
 }
 
+function IconBehaviour() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+    </svg>
+  );
+}
+
 function formatLogTime(d: Date): string {
   return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
@@ -306,7 +314,7 @@ export default async function ExplorerPage() {
       />
 
       {/* ── Top Stats Row ──────────────────────────────────────────────────── */}
-      <div className={`grid gap-5 sm:grid-cols-2 ${canSeeAssessment ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+      <div className={`grid gap-5 sm:grid-cols-2 ${canSeeBehaviour && canSeeAssessment ? "lg:grid-cols-6" : canSeeBehaviour || canSeeAssessment ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
         {/* Teachers */}
         <Link href="/explorer/teachers" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
           <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
@@ -443,6 +451,36 @@ export default async function ExplorerPage() {
             </div>
           </Link>
         )}
+
+        {/* Behaviour */}
+        {canSeeBehaviour && (
+          <Link href="/explorer/analysis" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+            <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
+              <div className="flex items-start justify-between">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-surface-container-low text-muted">
+                  <IconBehaviour />
+                </span>
+              </div>
+              <div className="mt-4">
+                <p className="explorer-hub-kpi-label">Behaviour</p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{totalStudents}</span>
+                  <span className="text-sm text-[var(--on-surface-variant)]">students</span>
+                </div>
+              </div>
+              <div className="mt-4 border-t border-outline-variant pt-3">
+                {urgentStudents > 0 ? (
+                  <p className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--error)]">
+                    <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--error)]" />
+                    {urgentStudents} urgent case{urgentStudents !== 1 ? "s" : ""}
+                  </p>
+                ) : (
+                  <p className="text-[13px] text-[var(--on-surface-variant)]">All students stable</p>
+                )}
+              </div>
+            </div>
+          </Link>
+        )}
       </div>
 
       {/* ── Priorities (dark ledger band) ─────────────────────────────────── */}
@@ -560,78 +598,6 @@ export default async function ExplorerPage() {
           </div>
         </Link>
       </div>
-
-      {/* ── Pastoral Pulse: Behaviour & Welfare ────────────────────────────── */}
-      {canSeeBehaviour && (
-        <div className="mt-10 space-y-5">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Pastoral pulse</p>
-            <h2 className="mt-1 text-pretty text-[clamp(1.5rem,3vw,1.75rem)] font-bold leading-tight tracking-[-0.03em] text-text">
-              Behaviour &amp; Welfare
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
-              Real-time overview of student wellbeing and behaviour across the school.
-            </p>
-            <p className="mt-2 inline-flex flex-wrap items-center gap-2 text-[0.8125rem] text-muted">
-              <svg className="h-4 w-4 shrink-0 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-                <rect x="3" y="5" width="18" height="16" rx="2" strokeLinejoin="round" />
-                <path strokeLinecap="round" d="M16 3v4M8 3v4M3 11h18" />
-              </svg>
-              <span>
-                {WINDOW_DAYS}d window • Updated {computedAtStr}
-              </span>
-            </p>
-          </div>
-
-          <div className="explorer-hub-behaviour-strip divide-y divide-outline-variant md:grid md:grid-cols-4 md:divide-x md:divide-y-0">
-            <Link
-              href="/explorer/students"
-              className="block p-6 calm-transition hover:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
-            >
-              <p className="text-sm font-semibold text-text">Students</p>
-              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-text">{totalStudents}</p>
-              <p className="mt-2 text-xs text-muted">Total active</p>
-            </Link>
-            <Link
-              href="/explorer/cohorts"
-              className="block p-6 calm-transition hover:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
-            >
-              <p className="text-sm font-semibold text-text">Cohorts</p>
-              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-text">{yearGroupCount}</p>
-              <p className="mt-2 text-xs text-muted">Year groups</p>
-              <div className="mt-5">
-                <div className="h-2 w-full overflow-hidden rounded-sm bg-outline-variant">
-                  <div
-                    className="h-full rounded-sm bg-text"
-                    style={{ width: `${Math.min(100, Math.max(0, academicLoadPct))}%` }}
-                  />
-                </div>
-                <p className="mt-2 text-xs text-muted">{academicLoadPct}% avg attendance</p>
-              </div>
-            </Link>
-            <Link
-              href="/explorer/students"
-              className="block p-6 calm-transition hover:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
-            >
-              <p className="text-sm font-semibold text-text">Priority students</p>
-              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-text">{urgentStudents}</p>
-              <p className="mt-2 text-xs text-muted">Urgent cases</p>
-              <p className="mt-4 flex items-center gap-2 text-xs text-muted">
-                <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#D93025]" aria-hidden />
-                Urgent &amp; priority bands
-              </p>
-            </Link>
-            <Link
-              href="/explorer/students"
-              className="block p-6 calm-transition hover:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--primary)_25%,transparent)]"
-            >
-              <p className="text-sm font-semibold text-text">Stable students</p>
-              <p className="mt-3 text-[2.75rem] font-bold leading-none tabular-nums text-text">{totalStudents - urgentStudents}</p>
-              <p className="mt-2 text-xs text-muted">In watch or stable bands</p>
-            </Link>
-          </div>
-        </div>
-      )}
 
       {/* ── Active intelligence log ────────────────────────────────────────── */}
       {displayedLogs.length > 0 && (
