@@ -1079,7 +1079,7 @@ export function ObservationHistoryAnalysis({
                           </span>
                         </th>
                         <th className="px-4 py-3.5 whitespace-nowrap">Weeks with obs.</th>
-                        <th className="w-full min-w-[240px] px-4 py-3.5 whitespace-nowrap">Weeks (oldest → newest)</th>
+                        <th className="min-w-[240px] px-4 py-3.5 whitespace-nowrap">Weeks (oldest → newest)</th>
                       </tr>
                     </thead>
                     <tbody>
