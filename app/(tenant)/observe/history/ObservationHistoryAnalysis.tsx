@@ -1081,7 +1081,7 @@ export function ObservationHistoryAnalysis({
                           </span>
                         </th>
                         <th className="px-4 py-3.5 whitespace-nowrap">Weeks with obs.</th>
-                        <th className="min-w-[240px] px-4 py-3.5">Weeks (oldest → newest)</th>
+                        <th className="w-full min-w-[240px] px-4 py-3.5 whitespace-nowrap">Weeks (oldest → newest)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1100,8 +1100,8 @@ export function ObservationHistoryAnalysis({
                           <td className="px-4 py-4 tabular-nums text-muted">
                             {p.weeksWithObservation} / {p.weekHit.length}
                           </td>
-                          <td className="px-4 py-4">
-                            <div className="flex flex-wrap gap-0.5">
+                          <td className="w-full px-4 py-4">
+                            <div className="flex w-full flex-wrap gap-0.5">
                               {p.weekHit.map((hit, i) => {
                                 const obsId = p.weekObservationIds[i];
                                 const iso = p.weekObservationDates[i];
