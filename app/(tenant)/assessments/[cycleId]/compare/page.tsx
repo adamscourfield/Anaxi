@@ -94,6 +94,40 @@ type RankMovementData = {
   teachingGroupShifts: TeachingGroupShift[];
 };
 
+type P8CohortSummary = {
+  averageP8: number | null;
+  positiveCount: number;
+  negativeCount: number;
+  zeroCount: number;
+  totalWithP8: number;
+  totalStudents: number;
+  missingKs2: number;
+};
+
+type P8GroupSummary = { averageP8: number | null; count: number };
+
+type P8CompareStudent = {
+  studentId: string;
+  name: string;
+  yearGroup: string | null;
+  ppFlag: boolean;
+  sendFlag: boolean;
+  fromP8: number | null;
+  toP8: number | null;
+  delta: number | null;
+};
+
+type P8CompareData = {
+  applicable: boolean;
+  fromSummary: P8CohortSummary;
+  toSummary: P8CohortSummary;
+  fromPpSummary: P8GroupSummary;
+  toPpSummary: P8GroupSummary;
+  fromSendSummary: P8GroupSummary;
+  toSendSummary: P8GroupSummary;
+  students: P8CompareStudent[];
+};
+
 // ─── Icon helpers ─────────────────────────────────────────────────────────────
 
 function IconTrendUp() {
@@ -221,6 +255,8 @@ export default function ComparisonPage() {
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("subject");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [p8Data, setP8Data] = useState<P8CompareData | null>(null);
+  const [p8SortDir, setP8SortDir] = useState<SortDir>("desc");
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -260,16 +296,23 @@ export default function ComparisonPage() {
     setLoading(true);
     setError(null);
     setRankData(null);
+    setP8Data(null);
     try {
       const res = await fetch(`/api/assessments/compare?fromPointId=${fromId}&toPointId=${toId}`);
       if (!res.ok) { const d = await res.json(); setError(d.error || "Failed to load comparison"); return; }
       const d = await res.json();
       setData(d);
-      // Fetch rank movement for PERCENTAGE / RAW formats
       const fmt = d.subjects?.[0]?.gradeFormat;
       if (fmt === "PERCENTAGE" || fmt === "RAW") {
         const rRes = await fetch(`/api/assessments/compare/ranks?fromPointId=${fromId}&toPointId=${toId}`);
         if (rRes.ok) setRankData(await rRes.json());
+      }
+      if (fmt === "GCSE") {
+        const p8Res = await fetch(`/api/assessments/compare/progress8?fromPointId=${fromId}&toPointId=${toId}`);
+        if (p8Res.ok) {
+          const p8 = await p8Res.json();
+          if (p8.applicable) setP8Data(p8);
+        }
       }
     } catch { setError("Failed to load comparison."); }
     finally { setLoading(false); }
@@ -563,6 +606,108 @@ export default function ComparisonPage() {
               </div>
             </div>
           </Card>
+
+          {/* Progress 8 comparison (GCSE only) */}
+          {p8Data && (
+            <>
+              {/* P8 summary strip */}
+              <div className="flex flex-col gap-5 rounded-sm border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] sm:flex-row sm:items-stretch sm:gap-0 sm:p-0">
+                {[
+                  {
+                    label: "Avg P8 (from)",
+                    value: p8Data.fromSummary.averageP8 !== null ? (p8Data.fromSummary.averageP8 > 0 ? "+" : "") + p8Data.fromSummary.averageP8.toFixed(2) : "—",
+                    sub: `${p8Data.fromSummary.totalWithP8} of ${p8Data.fromSummary.totalStudents} students`,
+                    colour: p8Data.fromSummary.averageP8 !== null && p8Data.fromSummary.averageP8 > 0 ? "text-[var(--success)]" : p8Data.fromSummary.averageP8 !== null && p8Data.fromSummary.averageP8 < 0 ? "text-[var(--error)]" : "text-[var(--on-surface)]",
+                  },
+                  {
+                    label: "Avg P8 (to)",
+                    value: p8Data.toSummary.averageP8 !== null ? (p8Data.toSummary.averageP8 > 0 ? "+" : "") + p8Data.toSummary.averageP8.toFixed(2) : "—",
+                    sub: `${p8Data.toSummary.totalWithP8} of ${p8Data.toSummary.totalStudents} students`,
+                    colour: p8Data.toSummary.averageP8 !== null && p8Data.toSummary.averageP8 > 0 ? "text-[var(--success)]" : p8Data.toSummary.averageP8 !== null && p8Data.toSummary.averageP8 < 0 ? "text-[var(--error)]" : "text-[var(--on-surface)]",
+                  },
+                  {
+                    label: "Above 0 (to)",
+                    value: p8Data.toSummary.totalWithP8 > 0 ? `${Math.round(p8Data.toSummary.positiveCount / p8Data.toSummary.totalWithP8 * 100)}%` : "—",
+                    sub: `${p8Data.toSummary.positiveCount} students`,
+                    colour: "text-[var(--on-surface)]",
+                  },
+                  {
+                    label: "PP avg P8 (to)",
+                    value: p8Data.toPpSummary.averageP8 !== null ? (p8Data.toPpSummary.averageP8 > 0 ? "+" : "") + p8Data.toPpSummary.averageP8.toFixed(2) : "—",
+                    sub: `${p8Data.toPpSummary.count} PP students`,
+                    colour: p8Data.toPpSummary.averageP8 !== null && p8Data.toPpSummary.averageP8 > 0 ? "text-[var(--success)]" : p8Data.toPpSummary.averageP8 !== null && p8Data.toPpSummary.averageP8 < 0 ? "text-[var(--error)]" : "text-[var(--on-surface-muted)]",
+                  },
+                ].map(({ label, value, sub, colour }, i) => (
+                  <div key={label} className={`flex flex-1 flex-col justify-center px-5 py-4 ${i > 0 ? "sm:border-l sm:border-[var(--outline-variant)]" : ""}`}>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
+                    <p className={`mt-0.5 text-2xl font-bold tabular-nums ${colour}`}>{value}</p>
+                    <p className="mt-0.5 text-[10px] text-[var(--on-surface-muted)]">{sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* P8 student table */}
+              <Card className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <SectionHeader title="Progress 8 by student" subtitle="Comparing predicted P8 score between the two result points" />
+                </div>
+                <div className="table-shell border-0 rounded-none shadow-none">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="table-head-row">
+                          <th className="px-5 py-3 text-left">Student</th>
+                          <th className="px-4 py-3 text-right">Year</th>
+                          <th className="px-4 py-3 text-right">P8 (from)</th>
+                          <th className="px-4 py-3 text-right">P8 (to)</th>
+                          <th
+                            className="px-5 py-3 text-right cursor-pointer select-none"
+                            onClick={() => setP8SortDir((d) => d === "asc" ? "desc" : "asc")}
+                          >
+                            Change<SortIcon active dir={p8SortDir} />
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...p8Data.students]
+                          .sort((a, b) => {
+                            if (a.delta === null && b.delta === null) return 0;
+                            if (a.delta === null) return 1;
+                            if (b.delta === null) return -1;
+                            return p8SortDir === "desc" ? b.delta - a.delta : a.delta - b.delta;
+                          })
+                          .map((s) => {
+                            const deltaUp = s.delta !== null && s.delta > 0.005;
+                            const deltaDown = s.delta !== null && s.delta < -0.005;
+                            return (
+                              <tr key={s.studentId} className="table-row">
+                                <td className="px-5 py-3 font-medium text-[var(--on-surface)]">
+                                  {s.name}
+                                  {s.ppFlag && <span className={`ml-1.5 ${ppInlineBadgeClassLg}`}>PP</span>}
+                                  {s.sendFlag && <span className={`ml-1.5 ${sendInlineBadgeClassLg}`}>SEND</span>}
+                                </td>
+                                <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">
+                                  {s.yearGroup ?? "—"}
+                                </td>
+                                <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">
+                                  {s.fromP8 !== null ? (s.fromP8 > 0 ? "+" : "") + s.fromP8.toFixed(2) : "—"}
+                                </td>
+                                <td className="px-4 py-3 text-right tabular-nums font-semibold text-[var(--on-surface)]">
+                                  {s.toP8 !== null ? (s.toP8 > 0 ? "+" : "") + s.toP8.toFixed(2) : "—"}
+                                </td>
+                                <td className={`px-5 py-3 text-right tabular-nums font-bold ${deltaUp ? "text-[var(--success)]" : deltaDown ? "text-[var(--error)]" : "text-[var(--on-surface-muted)]"}`}>
+                                  {s.delta !== null ? (s.delta > 0 ? "+" : "") + s.delta.toFixed(2) : "—"}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </Card>
+            </>
+          )}
 
           {/* Rank movement (PERCENTAGE / RAW) */}
           {rankData && rankData.rankMovements.length > 0 && (
