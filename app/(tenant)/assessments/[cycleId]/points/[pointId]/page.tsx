@@ -193,6 +193,42 @@ type TeachingSubject = {
 
 type TeachingData = { subjects: TeachingSubject[] };
 
+// ─── Progress 8 types ─────────────────────────────────────────────────────────
+
+type StudentP8Detail = {
+  studentId: string;
+  name: string;
+  yearGroup: string | null;
+  ppFlag: boolean;
+  sendFlag: boolean;
+  hasKs2Data: boolean;
+  expectedA8: number | null;
+  actualA8: number | null;
+  p8: number | null;
+};
+
+type P8PointSummary = {
+  applicable: boolean;
+  cohort: {
+    averageP8: number | null;
+    positiveCount: number;
+    negativeCount: number;
+    zeroCount: number;
+    totalWithP8: number;
+    totalStudents: number;
+    missingKs2: number;
+  };
+  byYearGroup: Array<{
+    yearGroup: string;
+    averageP8: number | null;
+    count: number;
+    positiveCount: number;
+  }>;
+  ppSummary: { averageP8: number | null; count: number };
+  sendSummary: { averageP8: number | null; count: number };
+  students: StudentP8Detail[];
+};
+
 // ─── KPI Icon Components ──────────────────────────────────────────────────────
 
 function IconUsersKpi() {
@@ -407,11 +443,13 @@ export default function ResultPointPage() {
   const [expandedPctSubject, setExpandedPctSubject] = useState<string | null>(null);
   const [gcseGapView, setGcseGapView] = useState<"pp" | "send">("pp");
   const [gapView, setGapView] = useState<"pp" | "send">("pp");
-  const [activeTab, setActiveTab] = useState<"attainment" | "pastoral" | "teaching">("attainment");
+  const [activeTab, setActiveTab] = useState<"attainment" | "pastoral" | "teaching" | "progress8">("attainment");
   const [pastoralData, setPastoralData] = useState<PastoralData | null>(null);
   const [teachingData, setTeachingData] = useState<TeachingData | null>(null);
+  const [p8Data, setP8Data] = useState<P8PointSummary | null>(null);
   const [pastoralLoading, setPastoralLoading] = useState(false);
   const [teachingLoading, setTeachingLoading] = useState(false);
+  const [p8Loading, setP8Loading] = useState(false);
   const [pastoralModal, setPastoralModal] = useState<{ label: string; students: PastoralStudent[] } | null>(null);
   const [teachingModal, setTeachingModal] = useState<{ subject: string; teacherName: string; students: TeachingStudent[] } | null>(null);
   const [portalReady, setPortalReady] = useState(false);
@@ -456,6 +494,13 @@ export default function ResultPointPage() {
         .then((r) => r.ok ? r.json() : null)
         .then((d) => { if (d) setTeachingData(d); })
         .finally(() => setTeachingLoading(false));
+    }
+    if (activeTab === "progress8" && !p8Data && !p8Loading) {
+      setP8Loading(true);
+      fetch(`/api/assessments/metrics/progress8?pointId=${pointId}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => { if (d) setP8Data(d); })
+        .finally(() => setP8Loading(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, pointId]);
@@ -594,18 +639,19 @@ export default function ResultPointPage() {
 
           {/* Tab navigation */}
           <div className="anx-attainment-tabs" role="tablist">
-            {(["attainment", "pastoral", "teaching"] as const).map((tab) => {
-              const labels: Record<typeof tab, string> = {
+            {(["attainment", "pastoral", "teaching", ...(isGcse ? (["progress8"] as const) : [])] as const).map((tab) => {
+              const labels: Record<string, string> = {
                 attainment: "Attainment",
                 pastoral: "Pastoral",
                 teaching: "Teaching Group Analysis",
+                progress8: "Progress 8",
               };
               return (
                 <button
                   key={tab}
                   type="button"
                   role="tab"
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => setActiveTab(tab as "attainment" | "pastoral" | "teaching" | "progress8")}
                   className={`anx-attainment-tab ${activeTab === tab ? "anx-attainment-tab--active" : ""}`}
                 >
                   {labels[tab]}
@@ -1246,6 +1292,11 @@ export default function ResultPointPage() {
             />
           )}
 
+          {/* ── PROGRESS 8 TAB ──────────────────────────────────────────────── */}
+          {activeTab === "progress8" && (
+            <Progress8Tab data={p8Data} loading={p8Loading} />
+          )}
+
         </>
       )}
 
@@ -1397,6 +1448,315 @@ export default function ResultPointPage() {
         <TeachingModal modal={teachingModal} onClose={() => setTeachingModal(null)} />
       )}
     </AttainmentPageShell>
+  );
+}
+
+// ─── Progress 8 Tab ───────────────────────────────────────────────────────────
+
+function Progress8Tab({
+  data,
+  loading,
+}: {
+  data: P8PointSummary | null;
+  loading: boolean;
+}) {
+  const [sortKey, setSortKey] = useState<string>("p8");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [filterPP, setFilterPP] = useState(false);
+  const [filterSEND, setFilterSEND] = useState(false);
+  const [showMissingKs2, setShowMissingKs2] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="py-16 text-center text-sm text-[var(--on-surface-muted)]">
+        Computing Progress 8 estimates…
+      </div>
+    );
+  }
+  if (!data) {
+    return (
+      <div className="rounded-sm border border-border bg-surface-container-lowest p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-none">
+        No Progress 8 data available for this result point.
+      </div>
+    );
+  }
+  if (!data.applicable) {
+    return (
+      <div className="rounded-sm border border-border bg-surface-container-lowest p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-none">
+        Progress 8 analysis is only available for GCSE cycles.
+      </div>
+    );
+  }
+  if (data.cohort.totalStudents === 0) {
+    return (
+      <div className="rounded-sm border border-border bg-surface-container-lowest p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-none">
+        No students with GCSE results found for this result point.
+      </div>
+    );
+  }
+
+  const p8ColorClass = (p8: number | null) => {
+    if (p8 === null) return "text-muted";
+    if (p8 > 0.05) return "font-semibold text-[var(--status-approved-text)]";
+    if (p8 < -0.05) return "font-semibold text-[var(--status-denied-text)]";
+    return "text-muted";
+  };
+  const formatP8 = (p8: number | null) =>
+    p8 === null ? "—" : `${p8 > 0 ? "+" : ""}${p8.toFixed(2)}`;
+
+  const toggle = (key: string) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const filtered = data.students.filter((s) => {
+    if (filterPP && !s.ppFlag) return false;
+    if (filterSEND && !s.sendFlag) return false;
+    if (!showMissingKs2 && !s.hasKs2Data) return false;
+    return true;
+  });
+  const sorted = [...filtered].sort((a, b) => {
+    const av = a[sortKey as keyof StudentP8Detail] as number | null;
+    const bv = b[sortKey as keyof StudentP8Detail] as number | null;
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return sortDir === "asc" ? av - bv : bv - av;
+  });
+
+  const sortTh = (col: string, label: string) => (
+    <th
+      key={col}
+      scope="col"
+      className="cursor-pointer select-none px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
+      onClick={() => toggle(col)}
+    >
+      <span className="inline-flex items-center justify-center gap-1">
+        {label}
+        {sortKey === col && (
+          <span className="text-[11px] font-bold text-[var(--on-surface)]" aria-hidden>
+            {sortDir === "desc" ? "↓" : "↑"}
+          </span>
+        )}
+      </span>
+    </th>
+  );
+
+  const positivePct =
+    data.cohort.totalWithP8 > 0
+      ? Math.round((data.cohort.positiveCount / data.cohort.totalWithP8) * 100)
+      : 0;
+
+  const p8KpiClass = (p8: number | null) =>
+    p8 !== null && p8 > 0.05
+      ? "text-[var(--status-approved-text)]"
+      : p8 !== null && p8 < -0.05
+        ? "text-[var(--status-denied-text)]"
+        : "text-text";
+
+  return (
+    <div className="space-y-6">
+      {/* Caveat */}
+      <div className="flex items-start gap-3 rounded-sm border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-3 text-[12px] text-[var(--on-surface-muted)]">
+        <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+          <circle cx="12" cy="12" r="10" />
+          <path strokeLinecap="round" d="M12 8v4M12 16h.01" />
+        </svg>
+        <span>
+          <strong className="font-semibold text-[var(--on-surface)]">Estimated Progress 8</strong> — based on GCSE grades recorded at this result point only.
+          Final P8 uses complete end-of-year results across all 8 qualifying subjects.
+          {data.cohort.missingKs2 > 0 && (
+            <> {data.cohort.missingKs2} student{data.cohort.missingKs2 !== 1 ? "s" : ""} without KS2 scores are excluded.</>
+          )}
+        </span>
+      </div>
+
+      {/* KPI strip */}
+      <div className="flex flex-col gap-5 rounded-sm border border-border bg-surface-container-lowest p-5 shadow-none sm:flex-row sm:items-center sm:gap-0 sm:p-0">
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&_svg]:h-[18px] [&_svg]:w-[18px]" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l4-4 4 4 6-8" />
+            </svg>
+          </span>
+          <div>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Predicted P8</p>
+            <p className={`mt-0.5 text-xl font-bold tabular-nums ${p8KpiClass(data.cohort.averageP8)}`}>
+              {formatP8(data.cohort.averageP8)}
+            </p>
+            <p className="mt-0.5 text-[0.75rem] text-muted">{data.cohort.totalWithP8} students</p>
+          </div>
+        </div>
+        <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-status-approved-light text-[var(--status-approved-text)] [&_svg]:h-[18px] [&_svg]:w-[18px]" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 11l5-5 5 5M7 17l5-5 5 5" />
+            </svg>
+          </span>
+          <div>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Above 0</p>
+            <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{positivePct}%</p>
+            <p className="mt-0.5 text-[0.75rem] text-muted">{data.cohort.positiveCount} of {data.cohort.totalWithP8}</p>
+          </div>
+        </div>
+        <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-cat-violet-bg text-cat-violet-text [&_svg]:h-[18px] [&_svg]:w-[18px]" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+            </svg>
+          </span>
+          <div>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">PP predicted P8</p>
+            <p className={`mt-0.5 text-xl font-bold tabular-nums ${p8KpiClass(data.ppSummary.averageP8)}`}>
+              {formatP8(data.ppSummary.averageP8)}
+            </p>
+            <p className="mt-0.5 text-[0.75rem] text-muted">{data.ppSummary.count} PP students</p>
+          </div>
+        </div>
+        <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+        <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-cat-blue-bg text-cat-blue-text [&_svg]:h-[18px] [&_svg]:w-[18px]" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+              <path strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </span>
+          <div>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">SEND predicted P8</p>
+            <p className={`mt-0.5 text-xl font-bold tabular-nums ${p8KpiClass(data.sendSummary.averageP8)}`}>
+              {formatP8(data.sendSummary.averageP8)}
+            </p>
+            <p className="mt-0.5 text-[0.75rem] text-muted">{data.sendSummary.count} SEND students</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Year group breakdown */}
+      {data.byYearGroup.length > 1 && (
+        <div className="overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none">
+          <div className="border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] px-5 py-4">
+            <h2 className="text-base font-bold tracking-tight text-text">By Year Group</h2>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--outline-variant)]">
+                <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Year Group</th>
+                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Students</th>
+                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Avg P8</th>
+                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Above 0</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.byYearGroup.map((yg) => (
+                <tr key={yg.yearGroup} className="border-b border-[var(--outline-variant)]/70 last:border-0">
+                  <td className="px-5 py-3 font-medium text-text">{yg.yearGroup}</td>
+                  <td className="px-3 py-3 text-center tabular-nums text-[var(--on-surface-muted)]">{yg.count}</td>
+                  <td className={`px-3 py-3 text-center tabular-nums ${p8ColorClass(yg.averageP8)}`}>
+                    {formatP8(yg.averageP8)}
+                  </td>
+                  <td className="px-3 py-3 text-center tabular-nums text-[var(--on-surface-muted)]">
+                    {yg.positiveCount} ({Math.round((yg.positiveCount / yg.count) * 100)}%)
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Student breakdown */}
+      <div className="overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] px-5 py-4">
+          <div>
+            <h2 className="text-base font-bold tracking-tight text-text">Student Breakdown</h2>
+            {data.cohort.missingKs2 > 0 && (
+              <p className="mt-0.5 text-[11px] text-[var(--on-surface-muted)]">
+                {data.cohort.missingKs2} student{data.cohort.missingKs2 !== 1 ? "s" : ""} without KS2 data hidden by default
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-md border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-0.5">
+              <button
+                type="button"
+                onClick={() => setFilterPP((v) => !v)}
+                className={`rounded-md px-3 py-1.5 text-xs font-bold calm-transition ${filterPP ? "bg-[var(--surface)] text-[var(--on-surface)] shadow-sm" : "text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"}`}
+              >
+                PP
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterSEND((v) => !v)}
+                className={`rounded-md px-3 py-1.5 text-xs font-bold calm-transition ${filterSEND ? "bg-[var(--surface)] text-[var(--on-surface)] shadow-sm" : "text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"}`}
+              >
+                SEND
+              </button>
+            </div>
+            {data.cohort.missingKs2 > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowMissingKs2((v) => !v)}
+                className={`rounded-md border border-[var(--outline-variant)] px-3 py-1.5 text-xs font-bold calm-transition ${showMissingKs2 ? "bg-[var(--surface-container)] text-[var(--on-surface)]" : "bg-transparent text-[var(--on-surface-muted)] hover:text-[var(--on-surface)]"}`}
+              >
+                {showMissingKs2 ? "Hide" : "Show"} missing KS2
+              </button>
+            )}
+            <span className="text-[13px] text-[var(--on-surface-muted)]">
+              {sorted.length} student{sorted.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+        </div>
+        <div className="overflow-x-auto pb-1">
+          <table className="w-full min-w-[560px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-[var(--outline-variant)]">
+                <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Student</th>
+                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Year</th>
+                {sortTh("expectedA8", "Exp. A8")}
+                {sortTh("actualA8", "Act. A8")}
+                {sortTh("p8", "P8 Score")}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((s) => (
+                <tr key={s.studentId} className="border-b border-[var(--outline-variant)]/70 last:border-0 calm-transition hover:bg-[var(--surface-container-lowest)]">
+                  <td className="px-5 py-3 align-middle">
+                    <Link
+                      href={`/students/${s.studentId}`}
+                      className="font-medium text-[var(--on-surface)] hover:text-[var(--accent)] calm-transition"
+                    >
+                      {s.name}
+                    </Link>
+                    <div className="mt-0.5 flex flex-wrap gap-1">
+                      {s.ppFlag && <span className={ppInlineBadgeClass}>PP</span>}
+                      {s.sendFlag && <span className={sendInlineBadgeClass}>SEND</span>}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-center text-[var(--on-surface-muted)]">{s.yearGroup ?? "—"}</td>
+                  <td className="px-3 py-3 text-center tabular-nums text-[var(--on-surface-muted)]">
+                    {s.expectedA8 !== null ? s.expectedA8.toFixed(1) : "—"}
+                  </td>
+                  <td className="px-3 py-3 text-center tabular-nums text-[var(--on-surface-muted)]">
+                    {s.actualA8 !== null ? s.actualA8.toFixed(1) : "—"}
+                  </td>
+                  <td className={`px-3 py-3 text-center tabular-nums ${p8ColorClass(s.p8)}`}>
+                    {s.p8 !== null ? formatP8(s.p8) : (s.hasKs2Data ? "—" : "No KS2")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {sorted.length === 0 && (
+          <div className="px-5 py-8 text-center text-sm text-[var(--on-surface-muted)]">
+            No students match the current filter.
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
