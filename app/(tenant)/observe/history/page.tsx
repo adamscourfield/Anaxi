@@ -23,6 +23,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/page-header";
 import { HistoryFilters } from "./HistoryFilters";
 import { ObservationHistoryAnalysis } from "./ObservationHistoryAnalysis";
+import { SignalDotsClient } from "./SignalDotsClient";
 
 /* ── Pedagogical signal squares (ledger mock: mostly blue, warn / critical accents) ─ */
 const SIGNAL_DOT_COLOR: Record<string, string> = {
@@ -454,19 +455,12 @@ export default async function ObservationHistoryPage({
 
                       {/* Pedagogical Signals */}
                       <td className="px-4 py-4">
-                        {signalValues.length === 0 ? (
-                          <span className="text-xs text-muted">—</span>
-                        ) : (
-                          <div className="flex items-center gap-0.5">
-                            {signalValues.map((s: any, i: number) => (
-                              <span
-                                key={i}
-                                className={`inline-block h-2.5 w-2.5 shrink-0 cursor-help rounded-sm ${SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border"}`}
-                                title={pedagogicalSignalTooltip(s.signalKey, s.valueKey)}
-                              />
-                            ))}
-                          </div>
-                        )}
+                        <SignalDotsClient
+                          signals={signalValues.map((s: any) => ({
+                            colorClass: SIGNAL_DOT_COLOR[s.valueKey] ?? "bg-border",
+                            tooltip: pedagogicalSignalTooltip(s.signalKey, s.valueKey),
+                          }))}
+                        />
                       </td>
                     </tr>
                   );
