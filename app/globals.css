@@ -1245,19 +1245,6 @@ textarea:focus-visible {
   border: 1px solid hsl(var(--border));
 }
 
-/* Dashboard hero tiles: frosted lift over page background */
-.home-hero-glass {
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--surface-container-lowest) 78%, transparent) 0%,
-    color-mix(in srgb, var(--surface-container-low) 52%, transparent) 100%
-  );
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid hsl(var(--border));
-  box-shadow: none;
-}
-
 /* CPD / whole-school dark hero: same corner radius language as dashboard cards */
 /* Explorer hub: top metric tiles (frosted, circular icon well) */
 .explorer-kpi-tile {
@@ -1346,14 +1333,19 @@ textarea:focus-visible {
 
 .home-cpd-hero {
   border-radius: var(--radius-lg);
-  background: linear-gradient(155deg, #0f172a 0%, #1e293b 42%, #0f172a 100%) !important;
+  background: linear-gradient(
+    155deg,
+    var(--primary-container) 0%,
+    color-mix(in srgb, var(--primary-container) 82%, var(--on-primary-fixed-variant)) 50%,
+    var(--primary-container) 100%
+  ) !important;
   color: var(--on-primary);
-  border: 1px solid hsl(var(--border) / 0.35);
+  border: 1px solid color-mix(in srgb, var(--on-primary) 12%, transparent);
   box-shadow: none;
 }
 
 .home-cpd-hero .home-cpd-bar-fill {
-  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+  background: var(--coral);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1602,29 +1594,10 @@ textarea:focus-visible {
     box-shadow: none;
     transform: none;
   }
-  .home-hero-glass.home-pressable-card:hover {
-    background: linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--surface-container-lowest) 88%, transparent) 0%,
-      color-mix(in srgb, var(--surface-container-low) 62%, transparent) 100%
-    );
-    border-color: hsl(var(--border));
-    box-shadow: none;
-    transform: none;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-pressable-card:hover {
     background-color: var(--surface-container-low);
-    box-shadow: none;
-  }
-  .home-hero-glass.home-pressable-card:hover {
-    background: linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--surface-container-lowest) 88%, transparent) 0%,
-      color-mix(in srgb, var(--surface-container-low) 62%, transparent) 100%
-    );
-    border-color: hsl(var(--border));
     box-shadow: none;
   }
 }
