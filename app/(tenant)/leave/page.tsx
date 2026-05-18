@@ -5,7 +5,6 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { canManageLoa } from "@/lib/loa";
 import { prisma } from "@/lib/prisma";
-import { StatCard } from "@/components/ui/stat-card";
 import { LeaveTable, type LeaveRow } from "./LeaveTable";
 import { LeaveCalendarGrid } from "./LeaveCalendarGrid";
 import { LeaveCreatedToast } from "@/components/leave/leave-created-toast";
@@ -98,39 +97,6 @@ export default async function LeavePage({
     orderBy: { createdAt: "desc" },
     take: 100,
   });
-
-  /* Stats */
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-
-  const totalPending = (requests as any[]).filter((r) => r.status === "PENDING").length;
-
-  const approvedThisMonth = (requests as any[]).filter(
-    (r) =>
-      r.status === "APPROVED" &&
-      new Date(r.updatedAt) >= monthStart &&
-      new Date(r.updatedAt) <= monthEnd,
-  ).length;
-
-  const deniedThisMonth = (requests as any[]).filter(
-    (r) =>
-      r.status === "DENIED" &&
-      new Date(r.updatedAt) >= monthStart &&
-      new Date(r.updatedAt) <= monthEnd,
-  ).length;
-
-  const resolved = (requests as any[]).filter(
-    (r) => r.status !== "PENDING" && r.updatedAt && r.createdAt,
-  );
-  const avgDays =
-    resolved.length > 0
-      ? resolved.reduce((sum, r) => {
-          const diff = new Date(r.updatedAt).getTime() - new Date(r.createdAt).getTime();
-          return sum + diff / (1000 * 60 * 60 * 24);
-        }, 0) / resolved.length
-      : null;
-  const avgResponseStr = avgDays !== null ? `${avgDays.toFixed(1)}d` : "—";
 
   function mapToLeaveRow(r: any): LeaveRow {
     const start = new Date(r.startDate);
@@ -249,85 +215,6 @@ export default async function LeavePage({
           </div>
         }
       />
-
-      {/* Stat cards — KPI row */}
-      <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
-        <StatCard
-          layout="kpi"
-          label="Total pending"
-          value={String(totalPending).padStart(2, "0")}
-          tone="glass"
-          showChevron={false}
-          icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <circle cx="12" cy="12" r="10" />
-              <path strokeLinecap="round" d="M12 6v6l4 2" />
-            </svg>
-          }
-          iconTileClassName="bg-[var(--pill-error-bg)] text-[var(--pill-error-text)]"
-          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
-          context={
-            totalPending > 0 ? (
-              <span className="font-semibold text-[var(--error)]">Needs review</span>
-            ) : (
-              <span className="font-medium text-muted">Queue clear</span>
-            )
-          }
-        />
-        <StatCard
-          layout="kpi"
-          label="Approved (month)"
-          value={String(approvedThisMonth).padStart(2, "0")}
-          tone="glass"
-          showChevron={false}
-          icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-          }
-          iconTileClassName="bg-[var(--status-approved-light)] text-[var(--status-approved-text)]"
-          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
-          context={<span className="font-medium text-muted">This month</span>}
-        />
-        <StatCard
-          layout="kpi"
-          label="Denied (month)"
-          value={String(deniedThisMonth).padStart(2, "0")}
-          tone="glass"
-          showChevron={false}
-          icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <circle cx="12" cy="12" r="10" />
-              <path strokeLinecap="round" d="M15 9l-6 6M9 9l6 6" />
-            </svg>
-          }
-          iconTileClassName="bg-[var(--surface-container)] text-muted"
-          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
-          context={<span className="font-medium text-muted">This month</span>}
-        />
-        <StatCard
-          layout="kpi"
-          label="Average response"
-          value={avgResponseStr}
-          tone="glass"
-          showChevron={false}
-          icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
-          iconTileClassName="bg-[var(--cat-blue-bg)] text-[var(--cat-blue-text)]"
-          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
-          context={
-            <span
-              className={`font-medium ${avgDays !== null && avgDays > 5 ? "font-semibold text-[var(--warning)]" : "text-muted"}`}
-            >
-              {avgDays !== null && avgDays > 5 ? "Above target" : "Median turnaround"}
-            </span>
-          }
-        />
-      </div>
 
       {isCalendar ? (
         <LeaveCalendarGrid
