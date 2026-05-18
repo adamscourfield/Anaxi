@@ -66,7 +66,7 @@ function buildBehaviourHeatmapData(
   details: OnCallRequestDetail[],
   availableYearGroups: string[],
   selectedYearGroup?: string,
-): { yearGroups: string[]; columnLabels: string[]; matrix: number[][] } | null {
+): { yearGroups: string[]; columnLabels: string[]; matrix: number[][]; incidents: import("@/modules/home/hydration").HeatmapCellIncident[][][] } | null {
   const columnLabels = ["Mon", "Tue", "Wed", "Thu", "Fri"];
   const baseYearGroups = selectedYearGroup
     ? [selectedYearGroup]
@@ -78,6 +78,8 @@ function buildBehaviourHeatmapData(
 
   const indexByYearGroup = new Map(baseYearGroups.map((yearGroup, index) => [yearGroup, index]));
   const matrix = baseYearGroups.map(() => [0, 0, 0, 0, 0]);
+  const incidents: import("@/modules/home/hydration").HeatmapCellIncident[][][] =
+    baseYearGroups.map(() => Array.from({ length: 5 }, () => []));
 
   for (const detail of details) {
     if (!detail.studentYearGroup) continue;
@@ -85,11 +87,22 @@ function buildBehaviourHeatmapData(
     if (rowIndex === undefined) continue;
     const day = new Date(detail.createdAt).getDay();
     if (day < 1 || day > 5) continue;
-    matrix[rowIndex][day - 1] += 1;
+    const colIndex = day - 1;
+    matrix[rowIndex][colIndex] += 1;
+    incidents[rowIndex][colIndex].push({
+      id: detail.id,
+      createdAt: detail.createdAt,
+      studentName: detail.studentName,
+      studentYearGroup: detail.studentYearGroup,
+      requesterName: detail.requesterName,
+      behaviourReasonCategory: detail.behaviourReasonCategory,
+      status: detail.status,
+      location: detail.location,
+    });
   }
 
   const filteredRows = baseYearGroups
-    .map((yearGroup, index) => ({ yearGroup, row: matrix[index] }))
+    .map((yearGroup, index) => ({ yearGroup, row: matrix[index], incRow: incidents[index] }))
     .filter(({ row }) => selectedYearGroup || row.some((value) => value > 0));
 
   if (filteredRows.length === 0) return null;
@@ -98,6 +111,7 @@ function buildBehaviourHeatmapData(
     yearGroups: filteredRows.map(({ yearGroup }) => yearGroup),
     columnLabels,
     matrix: filteredRows.map(({ row }) => row),
+    incidents: filteredRows.map(({ incRow }) => incRow),
   };
 }
 
@@ -348,6 +362,7 @@ export default async function AnalysisPage({
               yearGroups={behaviourHeatmap.yearGroups}
               columnLabels={behaviourHeatmap.columnLabels}
               matrix={behaviourHeatmap.matrix}
+              incidents={behaviourHeatmap.incidents}
               subtitle="Weekday distribution for the current filters"
               hideCta
             />
