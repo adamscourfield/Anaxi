@@ -78,10 +78,10 @@ export default async function AssessmentsPage() {
       <PageHeader
         variant="ledger"
         className="!mb-0 border-0 !pb-0"
-        eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-[#6B7280]"
+        eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-muted"
         eyebrow="Attainment"
-        titleClassName="text-[1.75rem] font-bold tracking-tight text-[#111827] md:text-[2rem]"
-        subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-[#374151]"
+        titleClassName="text-[1.75rem] font-bold tracking-tight text-text md:text-[2rem]"
+        subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-muted"
         title="Cycles"
         subtitle="Track cohort-level outcomes across the academic year — from baselines through to final results."
         actions={
@@ -116,7 +116,7 @@ export default async function AssessmentsPage() {
       {/* Active cycles */}
       {activeCycles.length > 0 && (
         <section className="space-y-5">
-          <h2 className="text-lg font-bold tracking-tight text-[#111827]">Active Cycles</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text">Active Cycles</h2>
           <div className="grid gap-5 sm:grid-cols-2">
             {activeCycles.map((cycle) => (
               <CycleCard key={cycle.id} cycle={cycle} />
@@ -128,7 +128,7 @@ export default async function AssessmentsPage() {
       {/* Archived cycles */}
       {archivedCycles.length > 0 && (
         <section className="space-y-5">
-          <h2 className="text-lg font-bold tracking-tight text-[#111827]">Archived Cycles</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text">Archived Cycles</h2>
           <div className="grid gap-5 sm:grid-cols-2">
             {archivedCycles.map((cycle) => (
               <CycleCard key={cycle.id} cycle={cycle} />
@@ -140,20 +140,20 @@ export default async function AssessmentsPage() {
       {(activeCycles.length > 0 || archivedCycles.length > 0) && (
         <div className="flex flex-col gap-6 rounded-sm border border-border bg-surface-container-lowest p-5 shadow-none sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6">
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-sky-50 text-sky-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--cat-blue-bg)] text-[var(--cat-blue-text)] [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l4-4 4 4 6-8" />
               </svg>
             </span>
             <div>
-              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">All cycles</p>
-              <p className="mt-0.5 text-xl font-bold tabular-nums text-[#111827]">{totalActive} active</p>
+              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">All cycles</p>
+              <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalActive} active</p>
             </div>
           </div>
-          <div className="hidden h-10 w-px shrink-0 bg-[#e5e7eb] sm:block" aria-hidden />
+          <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--status-approved-bg)] text-[var(--status-approved-text)] [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
@@ -161,34 +161,34 @@ export default async function AssessmentsPage() {
               </svg>
             </span>
             <div>
-              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">Total subjects</p>
-              <p className="mt-0.5 text-xl font-bold tabular-nums text-[#111827]">{totalSubjectsAll}</p>
+              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Total subjects</p>
+              <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalSubjectsAll}</p>
             </div>
           </div>
-          <div className="hidden h-10 w-px shrink-0 bg-[#e5e7eb] sm:block" aria-hidden />
+          <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)] [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeLinejoin="round" />
                 <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" />
               </svg>
             </span>
             <div>
-              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">Total entries</p>
-              <p className="mt-0.5 text-xl font-bold tabular-nums text-[#111827]">{totalEntriesAll.toLocaleString()}</p>
+              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Total entries</p>
+              <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalEntriesAll.toLocaleString()}</p>
             </div>
           </div>
-          <div className="hidden h-10 w-px shrink-0 bg-[#e5e7eb] sm:block" aria-hidden />
+          <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-rose-50 text-rose-600 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--status-pending-bg)] text-[var(--status-pending-text)] [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
                 <path d="M4 18h16" strokeLinecap="round" />
                 <path d="M7 15l3-3 3 2 4-5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
             <div>
-              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]">Predicted Progress 8</p>
-              <p className="mt-0.5 text-xl font-bold tabular-nums text-[#111827]">
+              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Predicted Progress 8</p>
+              <p className="mt-0.5 text-xl font-bold tabular-nums text-text">
                 {progress8Summary?.averagePredictedProgress8 !== null && progress8Summary?.averagePredictedProgress8 !== undefined
                   ? `${progress8Summary.averagePredictedProgress8 > 0 ? "+" : ""}${progress8Summary.averagePredictedProgress8.toFixed(2)}`
                   : "—"}
@@ -264,11 +264,11 @@ function CycleCard({ cycle }: {
               </span>
             )}
           </div>
-          <h3 className="mt-3 text-lg font-bold tracking-tight text-[#111827] group-hover:opacity-90 calm-transition">
+          <h3 className="mt-3 text-lg font-bold tracking-tight text-text group-hover:opacity-90 calm-transition">
             {cycle.label}
           </h3>
           {cycle.cohortLabel && (
-            <p className="mt-0.5 text-sm text-[#6B7280]">{cycle.cohortLabel}</p>
+            <p className="mt-0.5 text-sm text-muted">{cycle.cohortLabel}</p>
           )}
         </div>
         <span
