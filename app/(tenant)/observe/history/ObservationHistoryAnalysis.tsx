@@ -1071,7 +1071,7 @@ export function ObservationHistoryAnalysis({
                   <table className="w-full min-w-[640px] text-left text-sm">
                     <thead>
                       <tr className="table-head-row text-left">
-                        <th className="px-5 py-3.5">Pair</th>
+                        <th className="w-48 px-5 py-3.5 whitespace-nowrap">Pair</th>
                         <th className="px-4 py-3.5 whitespace-nowrap">
                           <span className="inline-flex items-center gap-1.5">
                             Coaching obs.
@@ -1085,7 +1085,7 @@ export function ObservationHistoryAnalysis({
                     <tbody>
                       {pairWeekly.map((p) => (
                         <tr key={`${p.coachId}-${p.coacheeId}`} className="group table-row calm-transition">
-                          <td className="px-5 py-4">
+                          <td className="w-48 px-5 py-4 whitespace-nowrap">
                             <span className="font-semibold text-text">{p.coachName}</span>
                             <span className="text-muted"> → </span>
                             <span className="font-semibold text-text">{p.coacheeName}</span>
@@ -1099,7 +1099,7 @@ export function ObservationHistoryAnalysis({
                             {p.weeksWithObservation} / {p.weekHit.length}
                           </td>
                           <td className="w-full px-4 py-4">
-                            <div className="flex w-full flex-wrap gap-0.5">
+                            <div className="flex w-full justify-between gap-0.5">
                               {p.weekHit.map((hit, i) => {
                                 const obsId = p.weekObservationIds[i];
                                 const iso = p.weekObservationDates[i];
