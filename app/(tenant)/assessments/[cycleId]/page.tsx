@@ -331,10 +331,10 @@ export default async function CycleDetailPage({
         </div>
       </div>
 
-      <section className="space-y-6">
+      <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-lg font-bold tracking-tight text-text">Result Points</h2>
-          <Button asChild variant="secondary" className="h-9 py-0 text-xs">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-muted)]">Result Points</h2>
+          <Button asChild variant="secondary" className="h-8 py-0 text-xs">
             <Link href={`/assessments/${cycle.id}/points/new`}>
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -344,7 +344,7 @@ export default async function CycleDetailPage({
           </Button>
         </div>
 
-        {cycle.points.length === 0 && (
+        {cycle.points.length === 0 ? (
           <Card className="overflow-hidden rounded-sm border border-border bg-surface-container-lowest p-0 shadow-none">
             <DataTableEmpty
               title="No result points yet"
@@ -359,116 +359,116 @@ export default async function CycleDetailPage({
               }
             />
           </Card>
+        ) : (
+          <Card className="overflow-hidden p-0">
+            <div className="table-shell border-0 rounded-none shadow-none">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="table-head-row">
+                      <th className="w-8 px-5 py-3 text-center">#</th>
+                      <th className="px-4 py-3 text-left">Point</th>
+                      <th className="hidden px-4 py-3 text-left sm:table-cell">Date</th>
+                      <th className="hidden px-4 py-3 text-left lg:table-cell">Subjects</th>
+                      <th className="px-4 py-3 text-right">Entries</th>
+                      <th className="px-4 py-3 text-right">Students</th>
+                      <th className="px-5 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cycle.points.map((point, idx) => {
+                      const entries = point.assessments.reduce((s, a) => s + a.entryCount, 0);
+                      const matched = point.assessments.reduce((s, a) => s + a.matchedStudentCount, 0);
+                      const hasData = entries > 0;
+                      const assessedDateLabel = formatAssessedDate(point.assessedAt);
+                      const ordinal = point.ordinal || idx + 1;
+                      const subjectsShown = point.assessments.slice(0, 5);
+                      const subjectsRemainder = point.assessments.length - 5;
+
+                      return (
+                        <tr key={point.id} className="table-row">
+                          <td className="px-5 py-3.5 text-center tabular-nums text-[var(--on-surface-muted)]">
+                            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-[var(--surface-container-low)] text-[11px] font-bold text-[var(--on-surface-muted)]">
+                              {ordinal}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
+                                {POINT_TYPE_LABELS[point.pointType]}
+                              </span>
+                              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${STATUS_COLOURS[point.resultStatus]}`}>
+                                {STATUS_LABELS[point.resultStatus]}
+                              </span>
+                            </div>
+                            <span className="font-semibold text-[var(--on-surface)]">{point.label}</span>
+                          </td>
+                          <td className="hidden px-4 py-3.5 text-[var(--on-surface-muted)] sm:table-cell">
+                            {assessedDateLabel ? (
+                              <span className="flex items-center gap-1.5 text-xs">
+                                <IconCalendar className="h-3.5 w-3.5 shrink-0" />
+                                {assessedDateLabel}
+                              </span>
+                            ) : (
+                              <span className="text-[var(--on-surface-muted)]/40">—</span>
+                            )}
+                          </td>
+                          <td className="hidden px-4 py-3.5 lg:table-cell">
+                            {point.assessments.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {subjectsShown.map((a) => (
+                                  <span
+                                    key={a.id}
+                                    className="rounded border border-[var(--outline-variant)]/40 bg-[var(--surface-container)] px-2 py-0.5 text-[10px] font-medium text-[var(--on-surface)]"
+                                  >
+                                    {a.subject}
+                                  </span>
+                                ))}
+                                {subjectsRemainder > 0 && (
+                                  <span className="rounded border border-[var(--outline-variant)]/40 bg-[var(--surface-container)] px-2 py-0.5 text-[10px] font-medium text-[var(--on-surface-muted)]">
+                                    +{subjectsRemainder}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-[var(--on-surface-muted)]/40">No uploads yet</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 text-right tabular-nums text-[var(--on-surface-muted)]">
+                            {hasData ? entries.toLocaleString() : <span className="text-[var(--on-surface-muted)]/40">—</span>}
+                          </td>
+                          <td className="px-4 py-3.5 text-right tabular-nums text-[var(--on-surface-muted)]">
+                            {hasData ? matched.toLocaleString() : <span className="text-[var(--on-surface-muted)]/40">—</span>}
+                          </td>
+                          <td className="px-5 py-3.5 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {point.resultStatus !== "LOCKED" && (
+                                <Button asChild className="h-7 py-0 text-[11px]">
+                                  <Link href={`/assessments/${cycle.id}/points/${point.id}/upload`}>
+                                    <IconUploadCloud />
+                                    Upload
+                                  </Link>
+                                </Button>
+                              )}
+                              {hasData && (
+                                <Button asChild variant="secondary" className="h-7 py-0 text-[11px]">
+                                  <Link href={`/assessments/${cycle.id}/points/${point.id}`}>
+                                    <IconBarChart />
+                                    Analysis
+                                  </Link>
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </Card>
         )}
-
-        <div className="space-y-5">
-          {cycle.points.map((point, idx) => {
-            const entries = point.assessments.reduce((s, a) => s + a.entryCount, 0);
-            const matched = point.assessments.reduce((s, a) => s + a.matchedStudentCount, 0);
-            const hasData = entries > 0;
-            const assessedDateLabel = formatAssessedDate(point.assessedAt);
-            const ordinal = point.ordinal || idx + 1;
-
-            return (
-              <article
-                key={point.id}
-                className="overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none"
-              >
-                <div className="flex items-start gap-4 p-4 sm:gap-5 sm:p-5">
-                  <span
-                    className="mt-0.5 hidden h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-sm font-bold tabular-nums text-muted sm:flex"
-                    aria-label={`Result point ${ordinal}`}
-                  >
-                    {ordinal}
-                  </span>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
-                        {POINT_TYPE_LABELS[point.pointType]}
-                      </span>
-                      <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${STATUS_COLOURS[point.resultStatus]}`}>
-                        {STATUS_LABELS[point.resultStatus]}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                      <div className="flex items-center gap-2.5 sm:hidden">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-[11px] font-bold tabular-nums text-muted" aria-hidden>
-                          {ordinal}
-                        </span>
-                        <h3 className="text-base font-bold tracking-tight text-text">{point.label}</h3>
-                      </div>
-                      <h3 className="hidden text-base font-bold tracking-tight text-text sm:block">{point.label}</h3>
-                      {assessedDateLabel ? (
-                        <span className="flex items-center gap-1.5 text-[11px] text-muted">
-                          <IconCalendar className="h-3.5 w-3.5 shrink-0" />
-                          {assessedDateLabel}
-                        </span>
-                      ) : null}
-                    </div>
-                    {hasData ? (
-                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted">
-                        <span className="inline-flex items-center gap-1.5">
-                          <IconBook className="h-3.5 w-3.5 shrink-0" />
-                          <strong className="font-bold text-text">{point.assessments.length}</strong> subjects
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <IconDocument className="h-3.5 w-3.5 shrink-0" />
-                          <strong className="font-bold text-text">{entries.toLocaleString()}</strong> entries
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <IconUsers className="h-3.5 w-3.5 shrink-0" />
-                          <strong className="font-bold text-text">{matched.toLocaleString()}</strong> students
-                        </span>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-2">
-                    {point.resultStatus !== "LOCKED" ? (
-                      <Button asChild className="h-8 py-0 text-xs">
-                        <Link href={`/assessments/${cycle.id}/points/${point.id}/upload`}>
-                          <IconUploadCloud />
-                          Upload
-                        </Link>
-                      </Button>
-                    ) : null}
-                    {hasData ? (
-                      <Button asChild variant="secondary" className="h-8 py-0 text-xs">
-                        <Link href={`/assessments/${cycle.id}/points/${point.id}`}>
-                          <IconBarChart />
-                          Analysis
-                        </Link>
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-
-                {point.assessments.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5 border-t border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] px-4 py-2.5 sm:px-5">
-                    {point.assessments.slice(0, 8).map((a) => (
-                      <span
-                        key={a.id}
-                        className="rounded-sm border border-border bg-surface-container-lowest px-2.5 py-1 text-[10px] font-semibold text-text"
-                      >
-                        {a.subject}
-                      </span>
-                    ))}
-                    {point.assessments.length > 8 ? (
-                      <span className="rounded-sm border border-border bg-surface-container px-2.5 py-1 text-[10px] font-semibold text-muted">
-                        +{point.assessments.length - 8} more
-                      </span>
-                    ) : null}
-                  </div>
-                ) : (
-                  <p className="border-t border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] px-4 py-2 text-[11px] text-muted sm:px-5">
-                    No results uploaded yet
-                  </p>
-                )}
-              </article>
-            );
-          })}
-        </div>
       </section>
     </AttainmentPageShell>
   );
