@@ -146,59 +146,29 @@ function IconUsers({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
-const kpiWellViolet =
-  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-md bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)] [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
-const kpiWellBlue =
-  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-md bg-[var(--cat-blue-bg)] text-[var(--cat-blue-text)] [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
-const kpiWellAmber =
-  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-md bg-[var(--status-pending-bg)] text-[var(--status-pending-text)] [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
+const kpiWell =
+  "flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&_svg]:h-[22px] [&_svg]:w-[22px] [&_svg]:stroke-[1.75]";
 
 function CycleOverviewTile({
   icon,
-  wellClass,
   label,
   value,
   footer,
-  decorative,
 }: {
   icon: ReactNode;
-  wellClass: string;
   label: string;
   value: string | number;
   footer?: ReactNode;
-  /** Soft wavy line in tile background (reference dashboard) */
-  decorative?: "wave-violet" | "wave-blue" | "bars" | "ring";
 }) {
   return (
-    <div
-      className="relative flex flex-col items-center overflow-hidden rounded-sm border border-border bg-surface-container-lowest px-5 pb-6 pt-7 text-center shadow-none"
-    >
-      {decorative === "bars" ? (
-        <span className="pointer-events-none absolute bottom-3 right-3 flex h-8 items-end gap-0.5 opacity-30" aria-hidden>
-          {[40, 65, 35, 80, 50].map((h, i) => (
-            <span key={i} className="w-1 rounded-sm bg-[var(--cat-violet-text)]" style={{ height: `${h}%` }} />
-          ))}
-        </span>
-      ) : null}
-      {decorative === "ring" ? (
-        <span
-          className="pointer-events-none absolute right-4 top-1/2 h-14 w-14 -translate-y-1/2 rounded-md border-2 border-dashed border-[var(--status-approved-border)] bg-[var(--status-approved-bg)] text-[var(--status-approved-text)]"
-          aria-hidden
-        >
-          <span className="flex h-full w-full items-center justify-center">
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" />
-            </svg>
-          </span>
-        </span>
-      ) : null}
-      <span className={`relative z-[1] ${wellClass}`} aria-hidden>
+    <div className="flex flex-col items-center rounded-sm border border-border bg-surface-container-lowest px-5 pb-6 pt-7 text-center shadow-none">
+      <span className={kpiWell} aria-hidden>
         {icon}
       </span>
-      <p className="relative z-[1] mt-5 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted">{label}</p>
-      <p className="relative z-[1] mt-2 text-[2rem] font-bold leading-none tracking-[-0.03em] text-text tabular-nums">{value}</p>
+      <p className="mt-5 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted">{label}</p>
+      <p className="mt-2 text-[2rem] font-bold leading-none tracking-[-0.03em] text-text tabular-nums">{value}</p>
       {footer != null ? (
-        <div className="relative z-[1] mt-2.5 text-[0.8125rem] leading-snug text-muted">{footer}</div>
+        <div className="mt-2.5 text-[0.8125rem] leading-snug text-muted">{footer}</div>
       ) : null}
     </div>
   );
@@ -347,22 +317,17 @@ export default async function CycleDetailPage({
       {/* Overview KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <CycleOverviewTile
-          wellClass={kpiWellViolet}
           icon={<IconTarget />}
           label="Result points"
           value={cycle.points.length}
-          decorative="wave-violet"
         />
         <CycleOverviewTile
-          wellClass={kpiWellBlue}
           icon={<IconBook />}
           label="Total subjects"
           value={totalSubjects}
           footer="Across all departments"
-          decorative="wave-blue"
         />
         <CycleOverviewTile
-          wellClass={kpiWellViolet}
           icon={<IconTrend />}
           label="Entries recorded"
           value={totalEntries.toLocaleString()}
@@ -371,15 +336,12 @@ export default async function CycleDetailPage({
               {entriesTrendLabel}
             </span>
           }
-          decorative="bars"
         />
         <CycleOverviewTile
-          wellClass={kpiWellAmber}
           icon={<IconShieldCheck />}
           label="Data integrity"
           value={integrityDisplay}
           footer="Share of rows marked present in uploads"
-          decorative="ring"
         />
       </div>
 
@@ -428,7 +390,7 @@ export default async function CycleDetailPage({
               >
                 <div className="hidden shrink-0 sm:flex sm:items-start sm:pt-1">
                   <span
-                    className="flex h-14 w-14 items-center justify-center rounded-md bg-[var(--cat-violet-bg)] text-lg font-bold tabular-nums text-[var(--cat-violet-text)]"
+                    className="flex h-14 w-14 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-lg font-bold tabular-nums text-muted"
                     aria-label={`Result point ${ordinal}`}
                   >
                     {ordinal}
@@ -453,7 +415,7 @@ export default async function CycleDetailPage({
                       <div>
                         <div className="flex items-start gap-3 sm:hidden">
                           <span
-                            className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--cat-violet-bg)] text-sm font-bold tabular-nums text-[var(--cat-violet-text)]"
+                            className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-sm font-bold tabular-nums text-muted"
                             aria-hidden
                           >
                             {ordinal}
@@ -512,7 +474,7 @@ export default async function CycleDetailPage({
                     <div className="px-4 py-3 sm:px-5">
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:divide-x sm:divide-[var(--outline-variant)]">
                       <div className="flex items-center gap-3 sm:pr-4">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)]">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted">
                           <IconBook className="h-4 w-4 shrink-0" />
                         </span>
                         <div>
@@ -523,7 +485,7 @@ export default async function CycleDetailPage({
                         </div>
                       </div>
                       <div className="flex items-center gap-3 sm:px-4">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--cat-blue-bg)] text-[var(--cat-blue-text)]">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted">
                           <IconDocument className="h-4 w-4 shrink-0" />
                         </span>
                         <div>
@@ -534,7 +496,7 @@ export default async function CycleDetailPage({
                         </div>
                       </div>
                       <div className="flex items-center gap-3 sm:pl-4">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--status-approved-bg)] text-[var(--status-approved-text)]">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted">
                           <IconUsers className="h-4 w-4 shrink-0" />
                         </span>
                         <div>
