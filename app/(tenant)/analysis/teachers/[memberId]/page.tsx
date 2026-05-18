@@ -173,6 +173,8 @@ export default async function TeacherProfilePage({
   const refRaw = typeof searchParams?.ref === "string" ? searchParams.ref : "";
   const refSource = refRaw === "instruction" || refRaw === "explorer" ? refRaw : undefined;
 
+  const highlightSignal = typeof searchParams?.signal === "string" ? searchParams.signal : null;
+
   const teacherId = params.memberId;
 
   const [hodMemberships, coachAssignments, teacherDeptMemberships, settings] = await Promise.all([
@@ -660,11 +662,17 @@ export default async function TeacherProfilePage({
             <tbody>
               {profile.signals.map((sig) => {
                 const isDriver = sig.driftContribution > 0;
+                const isHighlighted = highlightSignal === sig.signalKey;
                 return (
                   <tr
                     key={sig.signalKey}
-                    className={`border-b border-[color-mix(in_srgb,var(--outline-variant)_06%,transparent)] last:border-0 calm-transition ${
-                      isDriver ? "bg-[color-mix(in_srgb,var(--risk-urgent-bg)_55%,transparent)]" : ""
+                    id={sig.signalKey}
+                    className={`border-b border-[color-mix(in_srgb,var(--outline-variant)_06%,transparent)] last:border-0 calm-transition scroll-mt-20 ${
+                      isHighlighted
+                        ? "ring-2 ring-inset ring-accent/40 bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
+                        : isDriver
+                          ? "bg-[color-mix(in_srgb,var(--risk-urgent-bg)_55%,transparent)]"
+                          : ""
                     }`}
                   >
                     <td className="px-5 py-3.5 font-medium text-text">{sig.label}</td>

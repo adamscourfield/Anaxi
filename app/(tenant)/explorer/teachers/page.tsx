@@ -21,7 +21,8 @@ import {
 } from "@/modules/analysis/teacherRisk";
 import { TeachersFilterToolbar } from "@/components/teachers/TeachersFilterToolbar";
 import { TopDriverLinks } from "./TopDriverLinks";
-import { meanToHeatmapBarClass, signalHeatmapCellTitle } from "@/lib/analysis/signalHeatmap";
+import { meanToHeatmapBarClass } from "@/lib/analysis/signalHeatmap";
+import { SignalHeatmapClient } from "@/components/teachers/SignalHeatmapClient";
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 
@@ -409,21 +410,19 @@ export default async function ExplorerTeachersPage({
 
                           {/* Signal Heatmap */}
                           <td className="min-w-[11rem] px-4 py-5">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              {heatmapKeys.map((key) => {
+                            <SignalHeatmapClient
+                              cells={heatmapKeys.map((key) => {
                                 const cell = row.signalData[key];
                                 const mean = cell?.currentMean;
-                                const barClass = meanToHeatmapBarClass(mean);
-                                const label = signalLabelMap[key] ?? key;
-                                return (
-                                  <div
-                                    key={key}
-                                    className={`h-5 w-5 shrink-0 rounded-md ${barClass}`}
-                                    title={signalHeatmapCellTitle(label, mean)}
-                                  />
-                                );
+                                return {
+                                  key,
+                                  barClass: meanToHeatmapBarClass(mean),
+                                  label: signalLabelMap[key] ?? key,
+                                  mean,
+                                  href: `/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}&ref=explorer&signal=${key}#teacher-full-signal-profile`,
+                                };
                               })}
-                            </div>
+                            />
                           </td>
                         </tr>
                       );
@@ -543,21 +542,19 @@ export default async function ExplorerTeachersPage({
                             </span>
                           </td>
                           <td className="min-w-[11rem] px-4 py-5">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              {heatmapKeys.map((key) => {
+                            <SignalHeatmapClient
+                              cells={heatmapKeys.map((key) => {
                                 const cell = signalDataForHeat?.[key];
                                 const mean = cell?.currentMean;
-                                const barClass = meanToHeatmapBarClass(mean);
-                                const label = signalLabelMap[key] ?? key;
-                                return (
-                                  <div
-                                    key={key}
-                                    className={`h-5 w-5 shrink-0 rounded-md ${barClass}`}
-                                    title={signalHeatmapCellTitle(label, mean)}
-                                  />
-                                );
+                                return {
+                                  key,
+                                  barClass: meanToHeatmapBarClass(mean),
+                                  label: signalLabelMap[key] ?? key,
+                                  mean,
+                                  href: `/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}&ref=explorer&signal=${key}#teacher-full-signal-profile`,
+                                };
                               })}
-                            </div>
+                            />
                           </td>
                           <td className="px-4 py-5">
                             <TopDriverLinks
