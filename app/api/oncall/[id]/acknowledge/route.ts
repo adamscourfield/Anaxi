@@ -4,6 +4,7 @@ import { requireFeature } from "@/lib/guards";
 import { hasOnCallPermission } from "@/lib/rbac";
 import { acknowledgeOnCallRequest } from "@/modules/oncall/service";
 import { sendOnCallNotification } from "@/modules/oncall/notifications";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -18,11 +19,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     await sendOnCallNotification(user.tenantId, request, "acknowledged");
 
     return NextResponse.json(request);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    if (message === "request not found") return NextResponse.json({ error: message }, { status: 404 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

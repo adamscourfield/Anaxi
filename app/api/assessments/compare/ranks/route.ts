@@ -19,8 +19,9 @@ import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { computeRankMovement } from "@/modules/assessments/percentageAnalysis";
+import { withApi } from "@/lib/apiRoute";
 
-export async function GET(req: Request) {
+export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
 
@@ -51,4 +52,4 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json(result);
-}
+});

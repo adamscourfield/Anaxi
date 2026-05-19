@@ -3,8 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
+import { withApi } from "@/lib/apiRoute";
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const actor = await requireSuperAdminUser();
 
   const body = await req.json();
@@ -32,4 +33,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ success: true });
-}
+});

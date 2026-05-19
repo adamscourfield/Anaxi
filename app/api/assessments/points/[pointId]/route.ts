@@ -3,8 +3,9 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { ResultStatus } from "@prisma/client";
+import { withApi } from "@/lib/apiRoute";
 
-export async function GET(
+export const GET = withApi(async function GET(
   _req: Request,
   { params }: { params: { pointId: string } }
 ) {
@@ -45,9 +46,9 @@ export async function GET(
   if (!point) return NextResponse.json({ error: "Result point not found" }, { status: 404 });
 
   return NextResponse.json({ point });
-}
+});
 
-export async function PATCH(
+export const PATCH = withApi(async function PATCH(
   req: Request,
   { params }: { params: { pointId: string } }
 ) {
@@ -76,4 +77,4 @@ export async function PATCH(
   });
 
   return NextResponse.json({ point: updated });
-}
+});

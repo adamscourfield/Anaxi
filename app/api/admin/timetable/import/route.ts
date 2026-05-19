@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { parseTimetableCsv, TimetableMapping } from "@/modules/timetable/timetable-import";
 import { computeHeaderSignature } from "@/modules/timetable/timetable-fields";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
@@ -174,22 +175,7 @@ export async function POST(req: Request) {
       rowsFailed,
       conflictCount: allConflicts.length,
     });
-  } catch (err: unknown) {
-    await (prisma as any).timetableImportJob.update({
-      where: { id: importJob.id },
-      data: {
-        status: "FAILED",
-        finishedAt: new Date(),
-      },
-    });
-    logger.error("import.timetable.failed", {
-      tenantId: user.tenantId,
-      importJobId: importJob.id,
-      error: String((err as Error)?.message ?? err),
-    });
-    return NextResponse.json(
-      { error: "Import failed", detail: String((err as Error)?.message ?? err) },
-      { status: 500 },
-    );
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

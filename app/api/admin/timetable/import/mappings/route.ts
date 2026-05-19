@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireRole } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
+import { withApi } from "@/lib/apiRoute";
 
 /** GET /api/admin/timetable/import/mappings?headerSignature=... */
-export async function GET(req: Request) {
+export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   requireRole(user, ["ADMIN"]);
 
@@ -21,4 +22,4 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json({ mappings });
-}
+});

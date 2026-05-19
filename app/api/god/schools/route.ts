@@ -3,21 +3,22 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { assertCsrfFromForm } from "@/lib/csrf";
+import { withApi } from "@/lib/apiRoute";
 
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 }
 
-export async function GET() {
+export const GET = withApi(async function GET() {
   await requireSuperAdminUser();
   const schools = await prisma.tenant.findMany({
     orderBy: { name: "asc" },
     select: { id: true, name: true, status: true },
   });
   return NextResponse.json({ schools });
-}
+});
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const actor = await requireSuperAdminUser();
   const form = await req.formData();
   try {
@@ -89,4 +90,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.redirect(new URL(`/god/schools/${tenant.id}`, req.url));
-}
+});

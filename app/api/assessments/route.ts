@@ -4,8 +4,9 @@ import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { createAssessment } from "@/modules/assessments/import";
 import type { GradeFormat } from "@prisma/client";
+import { withApi } from "@/lib/apiRoute";
 
-export async function GET(req: Request) {
+export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
   const { searchParams } = new URL(req.url);
@@ -28,9 +29,9 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json({ assessments });
-}
+});
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
   requireAssessmentWrite(user);
@@ -75,4 +76,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ assessment }, { status: 201 });
-}
+});

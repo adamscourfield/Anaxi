@@ -33,6 +33,7 @@ Anaxi is a single Next.js 14 app with a PostgreSQL 16 database (via Docker Compo
 |------|---------|
 | Lint | `npm run lint` |
 | Test | `npm test` (vitest) |
+| E2E | `npm run test:e2e` (after `npm run seed:demo`) |
 | Build | `npm run build` |
 | Dev server | `npm run dev` |
 
@@ -42,6 +43,8 @@ Anaxi is a single Next.js 14 app with a PostgreSQL 16 database (via Docker Compo
 - **Login with `admin@demo.school`** will fail if both the base seed and demo seed have been run, because this email exists in two tenants and the auth code rejects ambiguous matches. Either pass `tenantId=demo_academy` in the login form, or use a unique-email user like `sarah.chen@demo.school` / `Password123!`.
 - **Docker in Cloud VMs** requires `fuse-overlayfs` storage driver and `iptables-legacy`. These are already configured when the environment is set up.
 - The `.env` file is created from `.env.example` — defaults work for local dev without any changes needed (except `NEXTAUTH_SECRET` should be set to any non-empty string).
+- **CI** runs on push/PR via `.github/workflows/ci.yml` (Postgres service, unit tests, build, Playwright smoke + auth E2E with demo seed).
+- **Cron endpoints** (header `x-cron-secret`): `import-pending-count`, `leave-pending-reminders`, `cleanup-shadow-super-admins`, `import-storage-cleanup`, `compute-student-flags`.
 
 ## Imported Claude Cowork project instructions
 

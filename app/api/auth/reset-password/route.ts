@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { withApi } from "@/lib/apiRoute";
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const { token, password } = await req.json().catch(() => ({}));
 
   if (!token || typeof token !== "string" || !password || typeof password !== "string") {
@@ -50,4 +51,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ ok: true });
-}
+});

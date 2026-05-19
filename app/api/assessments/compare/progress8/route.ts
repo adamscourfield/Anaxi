@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { getProgress8ForPoint } from "@/modules/assessments/progress8";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function GET(req: NextRequest) {
   try {
@@ -62,7 +63,6 @@ export async function GET(req: NextRequest) {
       students,
     });
   } catch (err) {
-    console.error("[compare/progress8]", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(err);
   }
 }

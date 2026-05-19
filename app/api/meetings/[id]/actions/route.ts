@@ -3,6 +3,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { createAction } from "@/modules/actions/service";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -26,11 +27,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     });
 
     return NextResponse.json(action, { status: 201 });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    if (message === "meeting not found") return NextResponse.json({ error: message }, { status: 404 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

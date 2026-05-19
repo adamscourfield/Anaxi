@@ -3,8 +3,9 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
+import { withApi } from "@/lib/apiRoute";
 
-export async function GET(req: Request) {
+export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
   if (!hasPermission(user.role, "students:read")) {
@@ -38,4 +39,4 @@ export async function GET(req: Request) {
       "Content-Disposition": 'attachment; filename="assessment-template-prefilled.csv"',
     },
   });
-}
+});

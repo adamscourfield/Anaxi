@@ -2,6 +2,7 @@
 
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { sendLeaveDecisionEmail, sendLeaveSubmittedEmail } from "@/lib/email";
+import { notifyLeaveReviewers } from "@/lib/inAppNotifications";
 import { requireFeature } from "@/lib/guards";
 import { canManageLoa, loaApproversForRequest } from "@/lib/loa";
 import { parseLocalDateInput } from "@/lib/leaveDates";
@@ -82,6 +83,12 @@ export async function createLoaRequest(formData: FormData) {
 
   const approvers = await loaApproversForRequest(user.tenantId, user.id);
   if (approvers.length > 0) {
+    await notifyLeaveReviewers({
+      tenantId: user.tenantId,
+      approverUserIds: approvers.map((a) => a.id),
+      requesterName: created.requester.fullName,
+      leaveRequestId: created.id,
+    });
     await sendLeaveSubmittedEmail({
       to: approvers.map((a) => a.email),
       approverUserIds: approvers.map((a) => a.id),

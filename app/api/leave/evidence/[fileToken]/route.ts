@@ -6,6 +6,7 @@ import { requireFeature } from "@/lib/guards";
 import { canManageLoa } from "@/lib/loa";
 import { medicalEvidenceDiskPath } from "@/lib/leaveMedicalUpload";
 import { prisma } from "@/lib/prisma";
+import { withApi } from "@/lib/apiRoute";
 
 const MIME: Record<string, string> = {
   ".pdf": "application/pdf",
@@ -14,7 +15,7 @@ const MIME: Record<string, string> = {
   ".png": "image/png",
 };
 
-export async function GET(
+export const GET = withApi(async function GET(
   _req: Request,
   { params }: { params: { fileToken: string } },
 ) {
@@ -56,4 +57,4 @@ export async function GET(
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-}
+});

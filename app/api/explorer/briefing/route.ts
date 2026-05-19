@@ -10,6 +10,7 @@ import { computeStudentRiskIndex } from "@/modules/analysis/studentRisk";
 import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
 import { computeLOAImpact } from "@/modules/analysis/loaImpact";
 import { computeAttainmentBehaviourCorrelation } from "@/modules/analysis/attainmentBehaviourCorrelation";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -349,11 +350,7 @@ export async function POST(req: NextRequest) {
       console.error("[briefing] Claude error:", claudeErr);
       return NextResponse.json({ ...FALLBACK_BRIEFING, computedAt: new Date().toISOString() });
     }
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    if (message === "FORBIDDEN" || message === "FEATURE_DISABLED") {
-      return NextResponse.json({ error: message }, { status: 403 });
-    }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

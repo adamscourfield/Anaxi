@@ -4,8 +4,9 @@ import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { calculateStudentDeltas } from "@/modules/students/service";
+import { withApi } from "@/lib/apiRoute";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export const GET = withApi(async function GET(req: Request, { params }: { params: { id: string } }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS");
   if (!hasPermission(user.role, "students:read")) {
@@ -32,4 +33,4 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     : null;
 
   return NextResponse.json({ ...student, trends });
-}
+});

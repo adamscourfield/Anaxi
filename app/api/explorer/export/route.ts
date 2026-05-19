@@ -15,6 +15,7 @@ import { computeCpdPriorities } from "@/modules/analysis/cpdPriorities";
 import { computeDepartmentPivot } from "@/modules/analysis/departmentPivot";
 import { computeStudentRiskIndex } from "@/modules/analysis/studentRisk";
 import { computeCohortPivot } from "@/modules/analysis/cohortPivot";
+import { withApi } from "@/lib/apiRoute";
 
 const WINDOW_OPTIONS = [7, 21, 28, 90] as const;
 type WindowDays = (typeof WINDOW_OPTIONS)[number];
@@ -32,7 +33,7 @@ function buildRow(values: (string | number | null | undefined)[]): string {
   return values.map(escapeCsv).join(",");
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withApi(async function POST(req: NextRequest | Request) {
   try {
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "ANALYSIS");
@@ -405,4 +406,4 @@ export async function POST(req: NextRequest) {
     logger.error("Explorer export error", { error: error?.message ?? String(error) });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
+});

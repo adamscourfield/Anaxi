@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/admin";
 import { parseStaffCsv } from "@/modules/staff-import/csv";
+import { withApi } from "@/lib/apiRoute";
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   await requireAdminUser();
 
   const form = await req.formData();
@@ -22,4 +23,4 @@ export async function POST(req: Request) {
     errors: errors.slice(0, 20),
     valid: errors.filter((e) => e.errorCode !== "MISSING_FULL_NAME").length === 0,
   });
-}
+});

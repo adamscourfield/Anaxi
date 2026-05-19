@@ -3,8 +3,9 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { QualificationType } from "@prisma/client";
+import { withApi } from "@/lib/apiRoute";
 
-export async function GET() {
+export const GET = withApi(async function GET() {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
 
@@ -29,9 +30,9 @@ export async function GET() {
   });
 
   return NextResponse.json({ cycles });
-}
+});
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
   requireAssessmentWrite(user);
@@ -66,4 +67,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ cycle }, { status: 201 });
-}
+});

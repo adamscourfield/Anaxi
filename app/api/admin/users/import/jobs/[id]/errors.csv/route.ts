@@ -1,7 +1,8 @@
 import { requireAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
+import { withApi } from "@/lib/apiRoute";
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export const GET = withApi(async function GET(_req: Request, { params }: { params: { id: string } }) {
   const user = await requireAdminUser();
 
   const job = await (prisma as any).importJob.findFirst({
@@ -29,4 +30,4 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       "Content-Disposition": `attachment; filename="staff-import-errors-${params.id}.csv"`,
     },
   });
-}
+});

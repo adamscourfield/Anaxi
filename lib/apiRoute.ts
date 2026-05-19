@@ -1,0 +1,16 @@
+import type { NextRequest } from "next/server";
+import { apiErrorResponse } from "@/lib/apiErrors";
+
+export type ApiRouteContext = { params: Record<string, string> };
+
+export function withApi<T extends ApiRouteContext = ApiRouteContext>(
+  handler: (req: NextRequest | Request, context: T) => Promise<Response>,
+) {
+  return async (req: NextRequest | Request, context: T) => {
+    try {
+      return await handler(req, context);
+    } catch (err) {
+      return apiErrorResponse(err);
+    }
+  };
+}

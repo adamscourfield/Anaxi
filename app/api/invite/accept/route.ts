@@ -2,12 +2,13 @@ import { createHash } from "crypto";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withApi } from "@/lib/apiRoute";
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const form = await req.formData();
   const token = String(form.get("token") ?? "");
   const password = String(form.get("password") ?? "");
@@ -60,4 +61,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.redirect(new URL("/login?invited=1", req.url));
-}
+});

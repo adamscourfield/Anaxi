@@ -25,8 +25,9 @@ import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { parseAndRankAssessmentCsv } from "@/modules/assessments/ranking";
+import { withApi } from "@/lib/apiRoute";
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
   requireAssessmentWrite(user);
@@ -50,4 +51,4 @@ export async function POST(req: Request) {
   const result = parseAndRankAssessmentCsv(csvText, { computeRanks });
 
   return NextResponse.json(result, { status: 200 });
-}
+});

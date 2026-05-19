@@ -3,8 +3,9 @@ import { parseStudentCsv } from "@/modules/students/csv";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature, requireRole } from "@/lib/guards";
+import { withApi } from "@/lib/apiRoute";
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS");
   requireRole(user, ["LEADER", "SLT", "ADMIN"]);
@@ -36,4 +37,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ totalRows: parsed.length, preview: parsed.slice(0, 20), errors });
-}
+});

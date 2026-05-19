@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
+import { withApi } from "@/lib/apiRoute";
 
-export async function GET(
+export const GET = withApi(async function GET(
   _req: Request,
   { params }: { params: { cycleId: string } }
 ) {
@@ -38,9 +39,9 @@ export async function GET(
   if (!cycle) return NextResponse.json({ error: "Cycle not found" }, { status: 404 });
 
   return NextResponse.json({ cycle });
-}
+});
 
-export async function PATCH(
+export const PATCH = withApi(async function PATCH(
   req: Request,
   { params }: { params: { cycleId: string } }
 ) {
@@ -65,4 +66,4 @@ export async function PATCH(
   });
 
   return NextResponse.json({ cycle: updated });
-}
+});

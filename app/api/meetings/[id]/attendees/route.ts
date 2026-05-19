@@ -3,6 +3,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { addAttendee, removeAttendee } from "@/modules/meetings/service";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -18,13 +19,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const attendee = await addAttendee(params.id, userId, user.tenantId);
     return NextResponse.json(attendee, { status: 201 });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    if (message === "meeting not found") return NextResponse.json({ error: message }, { status: 404 });
-    if (message === "attendee user not found in tenant") return NextResponse.json({ error: message }, { status: 400 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }
 
@@ -42,12 +38,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
     await removeAttendee(params.id, userId, user.tenantId);
     return new NextResponse(null, { status: 204 });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    if (message === "meeting not found") return NextResponse.json({ error: message }, { status: 404 });
-    if (message === "attendee user not found in tenant") return NextResponse.json({ error: message }, { status: 400 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

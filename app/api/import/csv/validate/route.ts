@@ -3,8 +3,9 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { parseStudentsCsv } from "@/modules/students/csv";
+import { withApi } from "@/lib/apiRoute";
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS_IMPORT");
   if (!hasPermission(user.role, "import:write")) {
@@ -23,4 +24,4 @@ export async function POST(req: Request) {
     errors,
     warnings: [],
   });
-}
+});

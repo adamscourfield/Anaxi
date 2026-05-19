@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireRole } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
+import { withApi } from "@/lib/apiRoute";
 
-export async function GET(
+export const GET = withApi(async function GET(
   _req: Request,
   { params }: { params: { jobId: string } },
 ) {
@@ -39,4 +40,4 @@ export async function GET(
       "Content-Disposition": `attachment; filename="timetable-errors-${params.jobId}.csv"`,
     },
   });
-}
+});

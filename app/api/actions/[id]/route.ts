@@ -3,6 +3,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { getActionDetail, updateActionStatus } from "@/modules/actions/service";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -18,12 +19,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     }
 
     return NextResponse.json(action);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    if (message === "action not found") return NextResponse.json({ error: message }, { status: 404 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }
 
@@ -41,12 +38,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     const action = await updateActionStatus(user.tenantId, params.id, user.id, { status });
     return NextResponse.json(action);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    if (message === "action not found") return NextResponse.json({ error: message }, { status: 404 });
-    if (message === "only owner can update action status") return NextResponse.json({ error: message }, { status: 403 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

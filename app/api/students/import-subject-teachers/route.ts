@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/apiErrors";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
@@ -125,6 +126,6 @@ export async function POST(req: Request) {
       importJobId: job.id,
       error: String((err as any)?.message ?? err),
     });
-    return NextResponse.json({ error: "Import failed" }, { status: 500 });
+    return apiErrorResponse(err, "Import failed");
   }
 }

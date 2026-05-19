@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 /** CSV export of staff and departments for the Institutional Dashboard “Export ledger” action. */
 export async function GET() {
@@ -73,11 +74,7 @@ export async function GET() {
         "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED" || message === "FORBIDDEN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }
