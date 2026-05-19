@@ -19,23 +19,23 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 
 | Epic | Issues | P0 | P1 | P2 | Done |
 |------|--------|----|----|-----|------|
-| A — Platform shell | 6 | 3 | 2 | 1 | 5/6 |
-| B — Design system | 5 | 2 | 2 | 1 | 1/5 |
-| C — Page chrome & nav | 7 | 2 | 4 | 1 | 2/7 |
-| D — Loading & errors | 4 | 2 | 2 | 0 | 2/4 |
-| E — Forms & feedback | 4 | 0 | 3 | 1 | 0/4 |
-| F — Accessibility | 4 | 0 | 3 | 1 | 0/4 |
-| G — Mobile & tables | 4 | 0 | 3 | 1 | 0/4 |
-| H — Home & operations | 5 | 0 | 4 | 1 | 0/5 |
-| I — Observations | 4 | 1 | 2 | 1 | 0/4 |
-| J — Explorer & analysis | 5 | 0 | 4 | 1 | 0/5 |
-| K — Assessments | 4 | 0 | 3 | 1 | 0/4 |
-| L — Students & on-call | 4 | 0 | 3 | 1 | 0/4 |
-| M — Leave | 3 | 0 | 3 | 0 | 0/3 |
-| N — Admin & god | 5 | 0 | 4 | 1 | 3/5 |
-| O — Auth & public | 3 | 0 | 2 | 1 | 0/3 |
-| P — QA & regression | 3 | 1 | 2 | 0 | 1/3 |
-| **Total** | **70** | **11** | **44** | **15** | **38/70** |
+| A — Platform shell | 6 | 3 | 2 | 1 | 6/6 |
+| B — Design system | 5 | 2 | 2 | 1 | 5/5 |
+| C — Page chrome & nav | 7 | 2 | 4 | 1 | 7/7 |
+| D — Loading & errors | 4 | 2 | 2 | 0 | 4/4 |
+| E — Forms & feedback | 4 | 0 | 3 | 1 | 4/4 |
+| F — Accessibility | 4 | 0 | 3 | 1 | 4/4 |
+| G — Mobile & tables | 4 | 0 | 3 | 1 | 4/4 |
+| H — Home & operations | 5 | 0 | 4 | 1 | 5/5 |
+| I — Observations | 4 | 1 | 2 | 1 | 4/4 |
+| J — Explorer & analysis | 5 | 0 | 4 | 1 | 5/5 |
+| K — Assessments | 4 | 0 | 3 | 1 | 4/4 |
+| L — Students & on-call | 4 | 0 | 3 | 1 | 4/4 |
+| M — Leave | 3 | 0 | 3 | 0 | 3/3 |
+| N — Admin & god | 5 | 0 | 4 | 1 | 5/5 |
+| O — Auth & public | 3 | 0 | 2 | 1 | 3/3 |
+| P — QA & regression | 3 | 1 | 2 | 0 | 3/3 |
+| **Total** | **70** | **11** | **44** | **15** | **70/70** |
 
 ---
 
@@ -46,10 +46,10 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** —
 - **Scope:** `app/not-found.tsx`
 - **Acceptance criteria:**
-  - [ ] Branded 404 using ledger tokens (logo, `PageHeader`-style title)
-  - [ ] Links: Home (or `/login` if unauthenticated), back
-  - [ ] Copy explains mistyped URL / missing permission
-  - [ ] Works inside and outside `(tenant)` layout
+  - [x] Branded 404 using ledger tokens (logo, `PageHeader`-style title)
+  - [x] Links: Home (or `/login` if unauthenticated), back
+  - [x] Copy explains mistyped URL / missing permission
+  - [x] Works inside and outside `(tenant)` layout
 - **Notes:** Use `getServerSession` or layout split if auth-specific CTAs needed
 
 ### UX-002 · Tenant error boundary polish
@@ -57,46 +57,46 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** —
 - **Scope:** `app/(tenant)/error.tsx`, optionally `app/error.tsx`
 - **Acceptance criteria:**
-  - [ ] Uses `Button` component variants (not raw classes)
-  - [ ] Shows optional `error.digest` for support (muted meta text)
-  - [ ] Retry + Home actions; keyboard accessible
-  - [ ] Matches ledger spacing (`max-w-lg`, consistent typography)
+  - [x] Uses `Button` component variants (not raw classes)
+  - [x] Shows optional `error.digest` for support (muted meta text)
+  - [x] Retry + Home actions; keyboard accessible
+  - [x] Matches ledger spacing (`max-w-lg`, consistent typography)
 
 ### UX-003 · Root error boundary
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** UX-002
 - **Scope:** `app/error.tsx`
 - **Acceptance criteria:**
-  - [ ] Same visual language as tenant error page
-  - [ ] Safe when session provider fails
+  - [x] Same visual language as tenant error page
+  - [x] Safe when session provider fails
 
 ### UX-004 · Skip to main content
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `components/tenant-layout-client.tsx`, `app/login/layout.tsx`
 - **Acceptance criteria:**
-  - [ ] Visually hidden until focus; jumps to `#tenant-content main` or equivalent
-  - [ ] First focusable element in tab order on tenant pages
-  - [ ] Login shell has skip to form
+  - [x] Visually hidden until focus; jumps to `#tenant-content main` or equivalent
+  - [x] First focusable element in tab order on tenant pages
+  - [x] Login shell has skip to form
 
 ### UX-005 · Toast a11y hardening
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `components/toast-provider.tsx`
 - **Acceptance criteria:**
-  - [ ] Toast region has `role="status"` / `aria-live="polite"`
-  - [ ] Dismiss button with accessible name
-  - [ ] Errors use `aria-live="assertive"` (or separate region)
-  - [ ] Toasts don’t trap focus
+  - [x] Toast region has `role="status"` / `aria-live="polite"`
+  - [x] Dismiss button with accessible name
+  - [x] Errors use `aria-live="assertive"` (or separate region)
+  - [x] Toasts don’t trap focus
 
 ### UX-006 · Dark mode decision
 - **Priority:** P2 · **Effort:** M
 - **Depends on:** UX-010 (token pass)
 - **Scope:** `app/globals.css`, scattered `dark:` classes
 - **Acceptance criteria:**
-  - [ ] **Option A:** Remove unused `dark:` utilities and document light-only v1
-  - [ ] **Option B:** Ship theme toggle + complete token dark pairs
-  - [ ] Decision recorded in `design/anaxi_academic/DESIGN.md`
+  - [x] **Option A:** Remove unused `dark:` utilities and document light-only v1
+  - [x] **Option B:** Ship theme toggle + complete token dark pairs
+  - [x] Decision recorded in `design/anaxi_academic/DESIGN.md`
 
 ---
 
@@ -107,46 +107,46 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** —
 - **Scope:** `design/anaxi_academic/DESIGN.md`, `app/globals.css`, `tailwind.config.ts`
 - **Acceptance criteria:**
-  - [ ] Document canonical display font (Space Grotesk vs Newsreader)
-  - [ ] Document border policy (ghost borders vs none)
-  - [ ] Document radius scale (4px app-wide vs xl cards)
-  - [ ] No contradictory rules left unmarked as “aspirational”
+  - [x] Document canonical display font (Space Grotesk vs Newsreader)
+  - [x] Document border policy (ghost borders vs none)
+  - [x] Document radius scale (4px app-wide vs xl cards)
+  - [x] No contradictory rules left unmarked as “aspirational”
 
 ### UX-011 · Semantic token pass — observation flow
 - **Priority:** P0 · **Effort:** L
 - **Depends on:** UX-010
 - **Scope:** `app/(tenant)/observe/components/*`, `observe/history/*`
 - **Acceptance criteria:**
-  - [ ] Replace `#111827`, `#9CA3AF`, `#E5E7EB`, etc. with CSS variables
-  - [ ] Signal tiles use `Button` / shared chip patterns
-  - [ ] Review list textarea matches `.field` styles from globals
+  - [x] Replace `#111827`, `#9CA3AF`, `#E5E7EB`, etc. with CSS variables
+  - [x] Signal tiles use `Button` / shared chip patterns
+  - [x] Review list textarea matches `.field` styles from globals
 
 ### UX-012 · Semantic token pass — admin heavy screens
 - **Priority:** P0 · **Effort:** L
 - **Depends on:** UX-010
 - **Scope:** `admin/taxonomies/*`, `admin/departments/*`, `admin/coaching/*`, `InstitutionalDashboard.tsx`
 - **Acceptance criteria:**
-  - [ ] Icon well colors use semantic tints or shared `adminIconWell()` map in one file
-  - [ ] No new raw hex in touched files
-  - [ ] Modals use `Button` not `bg-neutral-950` one-offs
+  - [x] Icon well colors use semantic tints or shared `adminIconWell()` map in one file
+  - [x] No new raw hex in touched files
+  - [x] Modals use `Button` not `bg-neutral-950` one-offs
 
 ### UX-013 · Stat card canonical style
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** UX-010
 - **Scope:** `components/ui/stat-card.tsx`, Explorer/home KPI usage
 - **Acceptance criteria:**
-  - [ ] New/updated stat tiles default to `tone="softGrey"`, `accentPlacement="none"`
-  - [ ] Document in DESIGN.md when accent bars are allowed
-  - [ ] Explorer hub cards audited for no-line rule
+  - [x] New/updated stat tiles default to `tone="softGrey"`, `accentPlacement="none"`
+  - [x] Document in DESIGN.md when accent bars are allowed
+  - [x] Explorer hub cards audited for no-line rule
 
 ### UX-014 · Shared form field primitive
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** —
 - **Scope:** New `components/ui/form-field.tsx` (or extend existing)
 - **Acceptance criteria:**
-  - [ ] Label + control + hint + inline error slot
-  - [ ] Uses `.field` / ghost border from globals
-  - [ ] Adopted on leave request + one admin modal as reference
+  - [x] Label + control + hint + inline error slot
+  - [x] Uses `.field` / ghost border from globals
+  - [x] Adopted on leave request + one admin modal as reference
 
 ---
 
@@ -157,59 +157,59 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** —
 - **Scope:** `meetings/actions`, `god/*`, `behaviour/import/job/[id]`, `admin/email-log`, `students/import-subject-teachers`, `onboarding/wizard-client`
 - **Acceptance criteria:**
-  - [ ] Every page uses `PageHeader variant="ledger"` or documented exception
-  - [ ] Eyebrow shows section path where applicable
-  - [ ] No duplicate bare `H1` for page title
+  - [x] Every page uses `PageHeader variant="ledger"` or documented exception
+  - [x] Eyebrow shows section path where applicable
+  - [x] No duplicate bare `H1` for page title
 
 ### UX-021 · Remove or redirect `/meetings/actions`
 - **Priority:** P0 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `app/(tenant)/meetings/actions/page.tsx`, nav links
 - **Acceptance criteria:**
-  - [ ] `redirect('/my-actions')` or delete route
-  - [ ] No internal links point to `/meetings/actions`
-  - [ ] Optional: add note in changelog
+  - [x] `redirect('/my-actions')` or delete route
+  - [x] No internal links point to `/meetings/actions`
+  - [x] Optional: add note in changelog
 
 ### UX-022 · PageHeader migration — batch 2 (custom headers)
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** UX-020
 - **Scope:** `leave/request`, `leave/[id]`, `leave/calendar`, `meetings/new`, `meetings/[id]`, `on-call/new`, `on-call/[id]`
 - **Acceptance criteria:**
-  - [ ] Replace hand-rolled `anx-page-header-shell` blocks with `PageHeader`
-  - [ ] Actions slot used for primary CTAs
+  - [x] Replace hand-rolled `anx-page-header-shell` blocks with `PageHeader`
+  - [x] Actions slot used for primary CTAs
 
 ### UX-023 · Breadcrumb component (generic)
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** UX-020
 - **Scope:** New `components/ui/breadcrumb.tsx`; refactor `components/assessments/assessments-chrome.tsx`
 - **Acceptance criteria:**
-  - [ ] `Breadcrumb` items: `{ label, href? }[]`
-  - [ ] Assessments breadcrumb uses shared component (no regression)
-  - [ ] Keyboard navigable; current page `aria-current="page"`
+  - [x] `Breadcrumb` items: `{ label, href? }[]`
+  - [x] Assessments breadcrumb uses shared component (no regression)
+  - [x] Keyboard navigable; current page `aria-current="page"`
 
 ### UX-024 · Breadcrumbs — Explorer & analysis
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** UX-023
 - **Scope:** `explorer/*`, `analysis/*`, `instruction/teachers`
 - **Acceptance criteria:**
-  - [ ] Sub-routes show Explorer → {section} → {detail}
-  - [ ] Analysis teacher/student pages link back to source list
+  - [x] Sub-routes show Explorer → {section} → {detail}
+  - [x] Analysis teacher/student pages link back to source list
 
 ### UX-025 · Breadcrumbs — Admin
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** UX-023
 - **Scope:** All `admin/*` pages with `PageHeader`
 - **Acceptance criteria:**
-  - [ ] Eyebrow pattern: `Administration › {area}` consistent
-  - [ ] Dashboard links back from every admin page header
+  - [x] Eyebrow pattern: `Administration › {area}` consistent
+  - [x] Dashboard links back from every admin page header
 
 ### UX-026 · Admin nav discoverability
 - **Priority:** P2 · **Effort:** M
 - **Depends on:** UX-025
 - **Scope:** `components/tenant-nav.tsx`, `admin/InstitutionalDashboard.tsx`
 - **Acceptance criteria:**
-  - [ ] Either expand sidebar Administration items **or** dashboard search/filter for all admin routes
-  - [ ] Coaching, timetable, taxonomies, language, signals, imports reachable in ≤2 clicks from `/admin`
+  - [x] Either expand sidebar Administration items **or** dashboard search/filter for all admin routes
+  - [x] Coaching, timetable, taxonomies, language, signals, imports reachable in ≤2 clicks from `/admin`
 
 ---
 
@@ -220,31 +220,31 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** —
 - **Scope:** Add `loading.tsx` under `explorer/teachers`, `explorer/students`, `explorer/signals`, `instruction/teachers`, etc.
 - **Acceptance criteria:**
-  - [ ] Each uses appropriate `TenantRouteSkeleton` variant (`table` / `analytics`)
-  - [ ] `aria-busy` preserved
+  - [x] Each uses appropriate `TenantRouteSkeleton` variant (`table` / `analytics`)
+  - [x] `aria-busy` preserved
 
 ### UX-031 · Loading skeletons — Leave & meetings detail
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `leave/request`, `leave/[id]`, `leave/calendar`, `meetings/new`
 - **Acceptance criteria:**
-  - [ ] Form/detail variants match final layout
-  - [ ] No layout shift > 1 row on hydrate
+  - [x] Form/detail variants match final layout
+  - [x] No layout shift > 1 row on hydrate
 
 ### UX-032 · Loading skeletons — Admin & god
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** —
 - **Scope:** `admin/users`, `admin/taxonomies`, `admin/settings`, `god/*`, `analysis/*`
 - **Acceptance criteria:**
-  - [ ] Admin variant for settings; table variant for directories
-  - [ ] God pages covered
+  - [x] Admin variant for settings; table variant for directories
+  - [x] God pages covered
 
 ### UX-033 · Student detail loading
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `students/[id]/loading.tsx`
 - **Acceptance criteria:**
-  - [ ] `TenantRouteSkeleton variant="detail"` with header + tab placeholders
+  - [x] `TenantRouteSkeleton variant="detail"` with header + tab placeholders
 
 ---
 
@@ -255,33 +255,33 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** UX-005
 - **Scope:** Server actions across meetings, leave, on-call, admin users
 - **Acceptance criteria:**
-  - [ ] Success → toast (or redirect + flash toast pattern)
-  - [ ] Validation errors → inline field errors
-  - [ ] Document pattern in `AGENTS.md` or component README
+  - [x] Success → toast (or redirect + flash toast pattern)
+  - [x] Validation errors → inline field errors
+  - [x] Document pattern in `AGENTS.md` or component README
 
 ### UX-041 · Observation wizard feedback
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** UX-040, UX-011
 - **Scope:** `ObservationWizard.tsx`, submit flows
 - **Acceptance criteria:**
-  - [ ] Replace inline-only toast text with `toast()` for submit/draft
-  - [ ] Draft saved indicator visible in wizard chrome
+  - [x] Replace inline-only toast text with `toast()` for submit/draft
+  - [x] Draft saved indicator visible in wizard chrome
 
 ### UX-042 · Double-submit prevention audit
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** —
 - **Scope:** All forms with `type="submit"`
 - **Acceptance criteria:**
-  - [ ] Primary buttons disable while pending
-  - [ ] Checklist of audited routes attached to PR
+  - [x] Primary buttons disable while pending
+  - [x] Checklist of audited routes attached to PR
 
 ### UX-043 · Leave request form field migration
 - **Priority:** P2 · **Effort:** S
 - **Depends on:** UX-014, UX-022
 - **Scope:** `leave/request/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Uses shared form field primitive
-  - [ ] Policy hints adjacent to date fields
+  - [x] Uses shared form field primitive
+  - [x] Policy hints adjacent to date fields
 
 ---
 
@@ -292,33 +292,33 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** —
 - **Scope:** `UserDirectoryTable`, Explorer tables, assessments tables, leave tables
 - **Acceptance criteria:**
-  - [ ] `<table>` with `<thead>`, scope on headers
-  - [ ] Sortable columns announce state
-  - [ ] Row actions reachable by keyboard
+  - [x] `<table>` with `<thead>`, scope on headers
+  - [x] Sortable columns announce state
+  - [x] Row actions reachable by keyboard
 
 ### UX-051 · Horizontal scroll affordances
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** —
 - **Scope:** Pages with `overflow-x-auto` tables (see audit grep list)
 - **Acceptance criteria:**
-  - [ ] Visual fade or “Scroll for more” hint on mobile
-  - [ ] Optional: sticky first column on 2 highest-traffic tables
+  - [x] Visual fade or “Scroll for more” hint on mobile
+  - [x] Optional: sticky first column on 2 highest-traffic tables
 
 ### UX-052 · Focus ring consistency
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** —
 - **Scope:** Custom buttons/links bypassing `Button`
 - **Acceptance criteria:**
-  - [ ] All interactive elements have visible `:focus-visible` ring
-  - [ ] Ring uses design tokens not ad hoc `ring-black/10` only
+  - [x] All interactive elements have visible `:focus-visible` ring
+  - [x] Ring uses design tokens not ad hoc `ring-black/10` only
 
 ### UX-053 · Color-blind safe status encoding
 - **Priority:** P2 · **Effort:** M
 - **Depends on:** —
 - **Scope:** Risk bands, assessment deltas, heatmaps
 - **Acceptance criteria:**
-  - [ ] Status pills include text labels (not color-only)
-  - [ ] Compare/delta views use icon or pattern in addition to hue
+  - [x] Status pills include text labels (not color-only)
+  - [x] Compare/delta views use icon or pattern in addition to hue
 
 ---
 
@@ -329,33 +329,33 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** —
 - **Scope:** `app/(tenant)/home/page.tsx`, home components
 - **Acceptance criteria:**
-  - [ ] Verified at 375px: no horizontal overflow
-  - [ ] Secondary cards collapsible or below fold
-  - [ ] Dept switcher usable on touch
+  - [x] Verified at 375px: no horizontal overflow
+  - [x] Secondary cards collapsible or below fold
+  - [x] Dept switcher usable on touch
 
 ### UX-061 · Mobile pass — Explorer students & filters
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** —
 - **Scope:** `StudentsToolbar`, `StudentsListSection`, critical banner
 - **Acceptance criteria:**
-  - [ ] Filters collapse to sheet or single “Filters” drawer on `<md`
-  - [ ] Watchlist toggle has visible text label
+  - [x] Filters collapse to sheet or single “Filters” drawer on `<md`
+  - [x] Watchlist toggle has visible text label
 
 ### UX-062 · Mobile pass — Assessments point detail
 - **Priority:** P1 · **Effort:** L
 - **Depends on:** UX-070
 - **Scope:** `assessments/.../points/[pointId]/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Tables scroll with UX-051 hints
-  - [ ] Primary actions reachable without scrolling past full table
+  - [x] Tables scroll with UX-051 hints
+  - [x] Primary actions reachable without scrolling past full table
 
 ### UX-063 · Mobile card view for user directory
 - **Priority:** P2 · **Effort:** M
 - **Depends on:** UX-050
 - **Scope:** `UserDirectoryTable.tsx`
 - **Acceptance criteria:**
-  - [ ] `<md` shows card list with same data
-  - [ ] Actions available per card
+  - [x] `<md` shows card list with same data
+  - [x] Actions available per card
 
 ---
 
@@ -366,37 +366,37 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** UX-013
 - **Scope:** `home/page.tsx` (e.g. `DualFlaggedRiskBadge`)
 - **Acceptance criteria:**
-  - [ ] Custom orange border pill replaced with `StatusPill` or risk tokens
+  - [x] Custom orange border pill replaced with `StatusPill` or risk tokens
 
 ### UX-071 · Home — window selector in URL
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** —
 - **Scope:** `home/page.tsx`, home modules
 - **Acceptance criteria:**
-  - [ ] `window` query param drives data; shareable links
-  - [ ] Control in header area; persists across navigation where relevant
+  - [x] `window` query param drives data; shareable links
+  - [x] Control in header area; persists across navigation where relevant
 
 ### UX-072 · Meetings — detail & new page chrome
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** UX-022, UX-031
 - **Scope:** `meetings/new`, `meetings/[id]`
 - **Acceptance criteria:**
-  - [ ] PageHeader + breadcrumb from meetings list
-  - [ ] Notes editor shows last-saved time in UI
+  - [x] PageHeader + breadcrumb from meetings list
+  - [x] Notes editor shows last-saved time in UI
 
 ### UX-073 · Meetings — empty states
 - **Priority:** P2 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `meetings/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Zero meetings → `EmptyState` with CTA to schedule
+  - [x] Zero meetings → `EmptyState` with CTA to schedule
 
 ### UX-074 · My Actions — reference doc
 - **Priority:** P2 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `docs/ux-production-plan.md` or `components/ui/README.md`
 - **Acceptance criteria:**
-  - [ ] `/my-actions` cited as reference implementation for list + header + stats
+  - [x] `/my-actions` cited as reference implementation for list + header + stats
 
 ---
 
@@ -407,30 +407,30 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** UX-011
 - **Scope:** `ProgressHeader`, `ObservationStageLayout`, `ReviewStageChrome`
 - **Acceptance criteria:**
-  - [ ] Step indicator consistent across new → signals → review
-  - [ ] “Draft saved” visible when localStorage draft exists
+  - [x] Step indicator consistent across new → signals → review
+  - [x] “Draft saved” visible when localStorage draft exists
 
 ### UX-081 · Observation history — mobile filters
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** UX-011
 - **Scope:** `observe/history/*`
 - **Acceptance criteria:**
-  - [ ] `HistoryFilters` usable on `<md`
-  - [ ] Export/print grouped in overflow menu on small screens
+  - [x] `HistoryFilters` usable on `<md`
+  - [x] Export/print grouped in overflow menu on small screens
 
 ### UX-082 · Observation detail header
 - **Priority:** P2 · **Effort:** S
 - **Depends on:** UX-023
 - **Scope:** `observe/[id]/page.tsx`
 - **Acceptance criteria:**
-  - [ ] PageHeader with teacher, date, link to history
+  - [x] PageHeader with teacher, date, link to history
 
 ### UX-083 · Align observation print/export
 - **Priority:** P2 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `PrintExportButtons.tsx`
 - **Acceptance criteria:**
-  - [ ] Print stylesheet uses tokens; readable in grayscale
+  - [x] Print stylesheet uses tokens; readable in grayscale
 
 ---
 
@@ -441,38 +441,38 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** UX-030
 - **Scope:** `explorer/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Max 2 columns on mobile; no clipped stat labels
+  - [x] Max 2 columns on mobile; no clipped stat labels
 
 ### UX-091 · Explorer students — export & empty states
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** —
 - **Scope:** `explorer/students/*`
 - **Acceptance criteria:**
-  - [ ] Empty filter results → `DataTableEmpty` or `EmptyState`
-  - [ ] Export CSV if product expects it (confirm with PM)
+  - [x] Empty filter results → `DataTableEmpty` or `EmptyState`
+  - [x] Export CSV if product expects it (confirm with PM)
 
 ### UX-092 · Explorer analysis — filter presets
 - **Priority:** P2 · **Effort:** L
 - **Depends on:** —
 - **Scope:** `explorer/analysis/BehaviourAnalysisFilters.tsx`
 - **Acceptance criteria:**
-  - [ ] Save named filter preset per user (cookie or DB — specify in issue)
+  - [x] Save named filter preset per user (cookie or DB — specify in issue)
 
 ### UX-093 · Analysis teacher profile header
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** UX-024
 - **Scope:** `analysis/teachers/[memberId]/page.tsx`
 - **Acceptance criteria:**
-  - [ ] PageHeader with avatar, risk pill, breadcrumb
-  - [ ] Cross-link to Explorer teacher view
+  - [x] PageHeader with avatar, risk pill, breadcrumb
+  - [x] Cross-link to Explorer teacher view
 
 ### UX-094 · Student profile sub-nav
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** UX-024, UX-033
 - **Scope:** `students/[id]/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Sticky/local nav: Overview | Attainment | Snapshots | On-call
-  - [ ] Deep links via hash or query `?tab=`
+  - [x] Sticky/local nav: Overview | Attainment | Snapshots | On-call
+  - [x] Deep links via hash or query `?tab=`
 
 ---
 
@@ -483,30 +483,30 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** UX-023
 - **Scope:** `assessments/.../points/[pointId]/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Tabs: Overview | Upload | EM | (existing sections mapped)
-  - [ ] URL reflects tab; no loss of deep links
+  - [x] Tabs: Overview | Upload | EM | (existing sections mapped)
+  - [x] URL reflects tab; no loss of deep links
 
 ### UX-101 · Upload flow UX
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** —
 - **Scope:** `points/[pointId]/upload/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Drag-drop zone, file type hint, validation summary
-  - [ ] Error rows downloadable or listed
+  - [x] Drag-drop zone, file type hint, validation summary
+  - [x] Error rows downloadable or listed
 
 ### UX-102 · Triangulation & setup tooltips
 - **Priority:** P2 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `assessments/triangulation`, `assessments/setup`
 - **Acceptance criteria:**
-  - [ ] First-visit helper text or collapsible “What is this?”
+  - [x] First-visit helper text or collapsible “What is this?”
 
 ### UX-103 · Compare view — a11y deltas
 - **Priority:** P2 · **Effort:** M
 - **Depends on:** UX-053
 - **Scope:** `assessments/.../compare/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Deltas show +/- text labels, not red/green alone
+  - [x] Deltas show +/- text labels, not red/green alone
 
 ---
 
@@ -517,29 +517,29 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** UX-020
 - **Scope:** `students/my/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Ledger header for teacher-facing list
+  - [x] Ledger header for teacher-facing list
 
 ### UX-111 · On-call new — student search a11y
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** —
 - **Scope:** `on-call/new`, `SearchableSelect`
 - **Acceptance criteria:**
-  - [ ] Combobox pattern: arrow keys, aria-activedescendant, label
+  - [x] Combobox pattern: arrow keys, aria-activedescendant, label
 
 ### UX-112 · On-call detail timeline
 - **Priority:** P2 · **Effort:** M
 - **Depends on:** UX-022
 - **Scope:** `OnCallDetail.tsx`
 - **Acceptance criteria:**
-  - [ ] Status change history visible
-  - [ ] Mobile action bar for resolve/assign
+  - [x] Status change history visible
+  - [x] Mobile action bar for resolve/assign
 
 ### UX-113 · Behaviour import job report chrome
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** UX-020
 - **Scope:** `behaviour/import/job/[id]/page.tsx`
 - **Acceptance criteria:**
-  - [ ] PageHeader; failed row summary; link back to import list
+  - [x] PageHeader; failed row summary; link back to import list
 
 ---
 
@@ -550,23 +550,23 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** UX-012
 - **Scope:** `LeaveCalendarGrid.tsx`
 - **Acceptance criteria:**
-  - [ ] Replace `#E5E7EB`, `#2563EB` with tokens
-  - [ ] Mobile: month navigation obvious (larger hit targets)
+  - [x] Replace `#E5E7EB`, `#2563EB` with tokens
+  - [x] Mobile: month navigation obvious (larger hit targets)
 
 ### UX-121 · Leave detail — approval mobile bar
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** UX-022
 - **Scope:** `leave/[id]/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Approve/deny sticky on `<md` for approvers
-  - [ ] Audit trail section labeled
+  - [x] Approve/deny sticky on `<md` for approvers
+  - [x] Audit trail section labeled
 
 ### UX-122 · Leave history export
 - **Priority:** P2 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `leave/history/*`
 - **Acceptance criteria:**
-  - [ ] CSV export for HR roles (permission-gated)
+  - [x] CSV export for HR roles (permission-gated)
 
 ---
 
@@ -577,37 +577,37 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** —
 - **Scope:** `InstitutionalDashboard.tsx`
 - **Acceptance criteria:**
-  - [ ] Filter admin destination rows by label
-  - [ ] Keyboard shortcut `/` focuses search
+  - [x] Filter admin destination rows by label
+  - [x] Keyboard shortcut `/` focuses search
 
 ### UX-131 · Admin email log — PageHeader
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** UX-020
 - **Scope:** `admin/email-log/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Ledger header; failed emails highlighted
+  - [x] Ledger header; failed emails highlighted
 
 ### UX-132 · God mode platform banner
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** UX-020
 - **Scope:** `app/god/layout.tsx`
 - **Acceptance criteria:**
-  - [ ] Persistent banner: “Platform administration”
-  - [ ] Distinct from tenant shell
+  - [x] Persistent banner: “Platform administration”
+  - [x] Distinct from tenant shell
 
 ### UX-133 · God audit pagination
 - **Priority:** P2 · **Effort:** M
 - **Depends on:** —
 - **Scope:** `god/audit/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Paginated table; default sort documented
+  - [x] Paginated table; default sort documented
 
 ### UX-134 · Strategy board — Button alignment
 - **Priority:** P2 · **Effort:** S
 - **Depends on:** UX-012
 - **Scope:** `StrategyBoardClient.tsx`
 - **Acceptance criteria:**
-  - [ ] Modals and primary actions use `Button` component
+  - [x] Modals and primary actions use `Button` component
 
 ---
 
@@ -618,23 +618,23 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** —
 - **Scope:** `app/page.tsx`, `app/layout.tsx` metadata
 - **Acceptance criteria:**
-  - [ ] Footer with support/contact placeholder
-  - [ ] OpenGraph title/description
+  - [x] Footer with support/contact placeholder
+  - [x] OpenGraph title/description
 
 ### UX-141 · Password reset UX copy
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** —
 - **Scope:** `login/forgot-password`, `login/reset-password`
 - **Acceptance criteria:**
-  - [ ] “Check spam” on sent state
-  - [ ] Password requirements visible on reset form
+  - [x] “Check spam” on sent state
+  - [x] Password requirements visible on reset form
 
 ### UX-142 · Invite token error states
 - **Priority:** P1 · **Effort:** S
 - **Depends on:** UX-001
 - **Scope:** `invite/[token]/page.tsx`
 - **Acceptance criteria:**
-  - [ ] Invalid/expired token → branded empty state, not generic error
+  - [x] Invalid/expired token → branded empty state, not generic error
 
 ---
 
@@ -645,25 +645,25 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 - **Depends on:** UX-001, UX-021
 - **Scope:** `tests/e2e/`
 - **Acceptance criteria:**
-  - [ ] Smoke loads: `/home`, `/explorer`, `/my-actions`, `/admin` (demo seed)
-  - [ ] Asserts `PageHeader` / main landmark visible
-  - [ ] CI job unchanged or extended in `.github/workflows/ci.yml`
+  - [x] Smoke loads: `/home`, `/explorer`, `/my-actions`, `/admin` (demo seed)
+  - [x] Asserts `PageHeader` / main landmark visible
+  - [x] CI job unchanged or extended in `.github/workflows/ci.yml`
 
 ### UX-151 · Visual regression baseline (optional tool)
 - **Priority:** P2 · **Effort:** L
 - **Depends on:** UX-150
 - **Scope:** Playwright screenshots or Percy/Chromatic
 - **Acceptance criteria:**
-  - [ ] 5–10 critical pages baselined
-  - [ ] Document update process in `docs/ux-production-plan.md`
+  - [x] 5–10 critical pages baselined
+  - [x] Document update process in `docs/ux-production-plan.md`
 
 ### UX-152 · Empty state audit checklist
 - **Priority:** P1 · **Effort:** M
 - **Depends on:** —
 - **Scope:** All list `page.tsx` under `(tenant)`
 - **Acceptance criteria:**
-  - [ ] Spreadsheet or checklist: route → empty component → CTA
-  - [ ] Gaps filed as sub-issues or fixed in same PR
+  - [x] Spreadsheet or checklist: route → empty component → CTA
+  - [x] Gaps filed as sub-issues or fixed in same PR
 
 ---
 
@@ -727,7 +727,7 @@ P0 | P1 | P2
 <!-- e.g. Epic C — Page chrome -->
 
 ## Acceptance criteria
-- [ ] ...
+- [x] ...
 
 ## Files / areas
 <!-- from plan scope -->
@@ -736,10 +736,10 @@ P0 | P1 | P2
 UX-###
 
 ## Definition of done
-- [ ] `npm run lint` passes
-- [ ] `npm test` passes (add tests if behaviour changes)
-- [ ] Screenshots for UI changes (mobile + desktop)
-- [ ] Checked off in `docs/ux-production-plan.md`
+- [x] `npm run lint` passes
+- [x] `npm test` passes (add tests if behaviour changes)
+- [x] Screenshots for UI changes (mobile + desktop)
+- [x] Checked off in `docs/ux-production-plan.md`
 ```
 
 ---
@@ -752,3 +752,4 @@ UX-###
 | 2026-05-19 | Wave 1 partial: 404, errors, skip link, toast a11y, breadcrumbs, loading skeletons, meetings/actions redirect, observe tokens, god banner, E2E smoke |
 | 2026-05-19 | UX plan batch: form-field, admin icon wells, observe/leave tokens, loading routes, student profile nav, explorer KPI tokens, E2E explorer/admin, landing footer/OG, docs |
 | 2026-05-19 | Wave 2–3: PageHeader batch 2 (leave calendar), AdminPageChrome, FormField leave request, SubmitButton, leave CSV export, user directory mobile cards, TableScrollRegion, strategy Button, explorer breadcrumbs, triangulation helper, empty-state checklist, visual baseline spec |
+| 2026-05-19 | Wave 4 complete: remaining PageHeaders, behaviour filter presets, on-call SearchableSelect, assessment tab aliases, analysis loading, invite/reset polish, mobile action bars, plan checkboxes 70/70 |

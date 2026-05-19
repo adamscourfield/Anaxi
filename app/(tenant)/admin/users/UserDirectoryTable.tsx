@@ -381,11 +381,11 @@ export function UserDirectoryTable({
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="table-head-row text-left">
-                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Staff member</th>
-                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Role</th>
-                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Status</th>
-                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Access</th>
-                <th className="px-5 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.1em]">Actions</th>
+                <th scope="col" className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Staff member</th>
+                <th scope="col" className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Role</th>
+                <th scope="col" className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Status</th>
+                <th scope="col" className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Access</th>
+                <th scope="col" className="px-5 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.1em]">Actions</th>
               </tr>
             </thead>
             <tbody>

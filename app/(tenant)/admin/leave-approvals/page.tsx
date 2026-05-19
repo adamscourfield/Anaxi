@@ -5,7 +5,7 @@ import { requireAdminUser } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
+import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { Avatar } from "@/components/ui/avatar";
 
 export default async function AdminLeaveApprovalsPage() {
@@ -102,7 +102,7 @@ export default async function AdminLeaveApprovalsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader variant="ledger"
+      <AdminPageChrome area="Leave approvals"
         title="Leave Approval Rules"
         subtitle="Manage approval groups, approvers, and optional scoped staff coverage for leave requests."
         actions={

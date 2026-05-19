@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
+import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { DepartmentsAdminTable } from "./DepartmentsAdminTable";
 
 export default async function AdminDepartmentsPage() {
@@ -122,21 +122,9 @@ export default async function AdminDepartmentsPage() {
 
   return (
     <div className="space-y-8 pb-8">
-      <PageHeader
-        variant="ledger"
-        eyebrowClassName="anx-eyebrow !text-[var(--on-surface-variant)]"
-        eyebrow={
-          <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-            <span>Administration</span>
-            <span className="text-[var(--on-surface-variant)]" aria-hidden>
-              &gt;
-            </span>
-            <span>Academic Departments</span>
-          </span>
-        }
+      <AdminPageChrome
+        area="Departments"
         title="Academic Departments"
-        titleClassName="!text-[var(--on-surface)]"
-        subtitleClassName="anx-page-subtitle !text-[var(--on-surface-variant)]"
         subtitle="Structure your school: departments, heads of department, and staff assignments for the current year."
         actions={
           <>

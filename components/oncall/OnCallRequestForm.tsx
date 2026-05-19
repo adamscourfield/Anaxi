@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { REASON_CATEGORIES, LOCATION_SUGGESTIONS } from "@/modules/oncall/types";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { toast } from "@/components/toast-provider";
 
 interface Student {
@@ -31,9 +34,7 @@ export function OnCallRequestForm({
   isPeakActivity,
 }: OnCallRequestFormProps) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [studentId, setStudentId] = useState("");
   const [requestType, setRequestType] = useState<"BEHAVIOUR" | "FIRST_AID">("BEHAVIOUR");
   const [reason, setReason] = useState("");
   const [location, setLocation] = useState("");
@@ -41,21 +42,13 @@ export function OnCallRequestForm({
   const [isEmergency, setIsEmergency] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
+  const studentOptions = students.map((s) => ({
+    value: s.id,
+    label: s.fullName,
+    detail: [s.upn, s.yearGroup].filter(Boolean).join(" · ") || undefined,
+  }));
 
-  useEffect(() => {
-    searchRef.current?.focus();
-  }, []);
-
-  const filtered = query.length > 0
-    ? students.filter((s) => {
-        const q = query.toLowerCase();
-        return (
-          s.fullName.toLowerCase().includes(q) ||
-          (s.upn != null && s.upn !== "" && s.upn.toLowerCase().includes(q))
-        );
-      }).slice(0, 8)
-    : [];
+  const selectedStudent = students.find((s) => s.id === studentId) ?? null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -109,17 +102,19 @@ export function OnCallRequestForm({
 
   return (
     <div className="w-full min-w-0 space-y-8 md:mx-auto md:max-w-2xl">
-      {/* ── Page header ───────────────────────────────────────────── */}
-      <header className="anx-page-header-shell">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
-          <div className="min-w-0 space-y-2">
-            <h1 className="text-pretty text-[clamp(1.625rem,3.5vw,2rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text">
-              New on call request
-            </h1>
-            <p className="max-w-xl text-pretty text-[0.9375rem] leading-relaxed text-muted/90">
-              Initiate an immediate response protocol for behavior or medical incidents within the institutional perimeter.
-            </p>
-          </div>
+      <PageHeader
+        variant="ledger"
+        title="New on call request"
+        subtitle="Initiate an immediate response protocol for behaviour or medical incidents."
+        eyebrow={
+          <Breadcrumb
+            items={[
+              { label: "On-call", href: "/on-call" },
+              { label: "New request" },
+            ]}
+          />
+        }
+        actions={
           <button
             type="button"
             role="switch"
@@ -136,8 +131,8 @@ export function OnCallRequestForm({
             </svg>
             Emergency
           </button>
-        </div>
-      </header>
+        }
+      />
 
       {/* ── Request Details card ───────────────────────────────────── */}
       <div className="home-hero-glass overflow-hidden rounded-sm border border-border shadow-none">
@@ -157,71 +152,19 @@ export function OnCallRequestForm({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 px-5 py-6 sm:px-7 sm:py-7">
-          {/* Student */}
           <div>
-            <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">
+            <label id="oncall-student-label" className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">
               Student
             </label>
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 00-3-3.87" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M16 3.13a4 4 0 010 7.75" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-              <input
-                ref={searchRef}
-                type="text"
-                value={selectedStudent ? selectedStudent.fullName : query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setSelectedStudent(null);
-                  setShowDropdown(true);
-                }}
-                onFocus={() => setShowDropdown(true)}
-                placeholder="Search by name or UPN..."
-                className="field pl-11"
-                autoComplete="off"
-              />
-              {selectedStudent && (
-                <button
-                  type="button"
-                  onClick={() => { setSelectedStudent(null); setQuery(""); }}
-                  className="absolute inset-y-0 right-3 flex items-center text-muted hover:text-error calm-transition"
-                >
-                  <svg viewBox="0 0 12 12" fill="none" className="h-3.5 w-3.5">
-                    <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </button>
-              )}
-              {showDropdown && filtered.length > 0 && (
-                <ul
-                  role="listbox"
-                  className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-border/70 bg-surface shadow-md"
-                >
-                  {filtered.map((s) => (
-                    <li key={s.id} role="option" aria-selected={selectedStudent?.id === s.id}>
-                      <button
-                        type="button"
-                        className="calm-transition w-full cursor-pointer px-3 py-2.5 text-left text-sm text-text hover:bg-divider/50"
-                        onMouseDown={() => {
-                          setSelectedStudent(s);
-                          setQuery("");
-                          setShowDropdown(false);
-                        }}
-                      >
-                        {s.fullName}{" "}
-                        <span className="text-muted">
-                          ({s.upn ?? "—"}{s.yearGroup ? ` · ${s.yearGroup}` : ""})
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <SearchableSelect
+              options={studentOptions}
+              value={studentId}
+              onChange={setStudentId}
+              placeholder="Select a student…"
+              searchPlaceholder="Search by name or UPN…"
+              ariaLabel="Student"
+              className="w-full"
+            />
           </div>
 
           {/* Request Type – card selection */}

@@ -42,7 +42,8 @@ export function HistoryFilters({
   const triggerWhite = "field-filter-trigger";
 
   return (
-    <div className="filter-panel obs-history-filter-panel">
+    <details className="filter-panel obs-history-filter-panel md:open">
+      <summary className="mb-4 cursor-pointer text-sm font-semibold text-text md:hidden">Filters</summary>
       <form
         method="get"
         action="/observe/history"
@@ -143,6 +144,6 @@ export function HistoryFilters({
           )}
         </div>
       </form>
-    </div>
+    </details>
   );
 }

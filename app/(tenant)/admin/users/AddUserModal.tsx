@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
+import { FormField } from "@/components/ui/form-field";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { toast } from "@/components/toast-provider";
 import type { ActionResult } from "./actions";
 
@@ -98,20 +101,20 @@ export function AddUserModal({
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
           <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
-            <label className="block">
-              <span className={FIELD_LABEL}>Full name</span>
+            <FormField id="add-user-name" label="Full name" required>
               <input
                 ref={nameRef}
+                id="add-user-name"
                 name="fullName"
                 required
                 autoComplete="name"
                 className="field w-full rounded-xl border-border/40 bg-background py-2.5 px-3 text-[0.8125rem]"
                 placeholder="Jane Smith"
               />
-            </label>
-            <label className="block">
-              <span className={FIELD_LABEL}>Email</span>
+            </FormField>
+            <FormField id="add-user-email" label="Email" required>
               <input
+                id="add-user-email"
                 name="email"
                 type="email"
                 required
@@ -119,7 +122,7 @@ export function AddUserModal({
                 className="field w-full rounded-xl border-border/40 bg-background py-2.5 px-3 text-[0.8125rem]"
                 placeholder="jane.smith@school.edu"
               />
-            </label>
+            </FormField>
             <label className="block">
               <span className={FIELD_LABEL}>Role</span>
               <select
@@ -156,13 +159,7 @@ export function AddUserModal({
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={pending}
-              className="inline-flex items-center justify-center rounded-xl bg-neutral-950 px-6 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 disabled:opacity-50"
-            >
-              {pending ? "Adding…" : "Add staff"}
-            </button>
+            <SubmitButton pendingLabel="Adding…">Add staff</SubmitButton>
           </div>
         </form>
       </div>

@@ -451,10 +451,14 @@ export default function ResultPointPage() {
   const [gcseGapView, setGcseGapView] = useState<"pp" | "send">("pp");
   const [gapView, setGapView] = useState<"pp" | "send">("pp");
   const tabFromUrl = searchParams.get("tab");
-  const initialTab =
-    tabFromUrl === "pastoral" || tabFromUrl === "teaching" || tabFromUrl === "progress8" || tabFromUrl === "attainment"
-      ? tabFromUrl
-      : "attainment";
+  const resolveTab = (tab: string | null): "attainment" | "pastoral" | "teaching" | "progress8" => {
+    if (tab === "overview" || tab === "attainment") return "attainment";
+    if (tab === "em" || tab === "teaching") return "teaching";
+    if (tab === "pastoral") return "pastoral";
+    if (tab === "progress8") return "progress8";
+    return "attainment";
+  };
+  const initialTab = resolveTab(tabFromUrl);
   const [activeTab, setActiveTab] = useState<"attainment" | "pastoral" | "teaching" | "progress8">(initialTab);
 
   function selectTab(tab: "attainment" | "pastoral" | "teaching" | "progress8") {
@@ -465,15 +469,12 @@ export default function ResultPointPage() {
   }
 
   useEffect(() => {
-    if (
-      tabFromUrl === "pastoral" ||
-      tabFromUrl === "teaching" ||
-      tabFromUrl === "progress8" ||
-      tabFromUrl === "attainment"
-    ) {
-      setActiveTab(tabFromUrl);
+    if (tabFromUrl === "upload") {
+      router.replace(`/assessments/${cycleId}/points/${pointId}/upload`);
+      return;
     }
-  }, [tabFromUrl]);
+    if (tabFromUrl) setActiveTab(resolveTab(tabFromUrl));
+  }, [tabFromUrl, cycleId, pointId, router]);
   const [pastoralData, setPastoralData] = useState<PastoralData | null>(null);
   const [teachingData, setTeachingData] = useState<TeachingData | null>(null);
   const [p8Data, setP8Data] = useState<P8PointSummary | null>(null);
@@ -697,13 +698,22 @@ export default function ResultPointPage() {
             />
           </div>
 
-          {/* Tab navigation */}
+          {/* Tab navigation (UX-100: Overview / Upload / E&M + extensions) */}
+          <div className="mb-2 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => router.push(`/assessments/${cycleId}/points/${pointId}/upload`)}
+            >
+              Upload
+            </Button>
+          </div>
           <div className="anx-attainment-tabs" role="tablist">
             {(["attainment", "pastoral", "teaching", ...(isGcse ? (["progress8"] as const) : [])] as const).map((tab) => {
               const labels: Record<string, string> = {
-                attainment: "Attainment",
+                attainment: "Overview",
                 pastoral: "Pastoral",
-                teaching: "Teaching",
+                teaching: "E&M",
                 progress8: "Progress 8",
               };
               return (
@@ -751,7 +761,7 @@ export default function ResultPointPage() {
                 </Link>
 
                 {/* 5+ White Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/5`} className="relative block cursor-pointer overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition motion-safe:hover:-translate-y-px motion-safe:hover:shadow-lg">
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/5`} className="relative block cursor-pointer overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition div:hover:-translate-y-px div:hover:shadow-lg">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 5+</p>
                   <div className="mt-3">
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em5}%</span>
@@ -762,7 +772,7 @@ export default function ResultPointPage() {
                 </Link>
 
                 {/* 7+ White Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/7`} className="relative block cursor-pointer overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition motion-safe:hover:-translate-y-px motion-safe:hover:shadow-lg">
+                <Link href={`/assessments/${cycleId}/points/${pointId}/em/7`} className="relative block cursor-pointer overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition div:hover:-translate-y-px div:hover:shadow-lg">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 7+</p>
                   <div className="mt-3">
                     <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em7}%</span>

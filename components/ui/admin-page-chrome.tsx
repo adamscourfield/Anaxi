@@ -13,7 +13,7 @@ export function AdminPageChrome({
 }: {
   area: string;
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   actions?: ReactNode;
   meta?: ReactNode;
 }) {

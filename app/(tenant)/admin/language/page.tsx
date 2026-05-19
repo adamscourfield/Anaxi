@@ -7,7 +7,7 @@ import { requireFeature } from "@/lib/guards";
 import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
+import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { ObservationSignalLabelsSection } from "../observation-signal-labels/ObservationSignalLabelsSection";
 
 const BEHAVIOUR_FIELDS = [
@@ -189,7 +189,8 @@ export default async function AdminLanguagePage() {
         </svg>
         Back to Admin
       </Link>
-      <PageHeader variant="ledger"
+      <AdminPageChrome
+        area="Language"
         title="Terminology"
         subtitle="Configure all language, vocabulary, and signal wording used across the product."
       />
