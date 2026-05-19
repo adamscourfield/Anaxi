@@ -40,6 +40,8 @@ export function apiErrorResponse(err: unknown, fallbackMessage = "Request failed
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     case "FEATURE_DISABLED":
       return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
+    case "CSRF_VALIDATION_FAILED":
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     default:
       if (NOT_FOUND_MESSAGES.has(message) || message.endsWith(" not found")) {
         return NextResponse.json({ error: message }, { status: 404 });

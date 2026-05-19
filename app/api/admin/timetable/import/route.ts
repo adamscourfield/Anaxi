@@ -138,7 +138,7 @@ export async function POST(req: Request) {
     await (prisma as any).timetableImportJob.update({
       where: { id: importJob.id },
       data: {
-        status: "COMPLETED",
+        status: "SUCCESS",
         rowCount: rows.length + errors.length,
         rowsProcessed,
         rowsFailed,

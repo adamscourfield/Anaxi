@@ -99,7 +99,7 @@ export async function POST(req: Request) {
         rowCount: rows.length,
         rowsProcessed: rows.length - errors.length,
         rowsFailed: errors.length,
-        status: errors.length ? "FAILED" : "COMPLETED",
+        status: errors.length ? "FAILED" : "SUCCESS",
         errorSummary: errors.length ? `${errors.length} errors` : null,
         finishedAt: new Date(),
       }

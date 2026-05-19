@@ -1,4 +1,5 @@
 "use server";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 
 import { revalidatePath } from "next/cache";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -21,6 +22,7 @@ function canManageStrategy(role: string): boolean {
 // ─── Areas ────────────────────────────────────────────────────────────────────
 
 export async function createStrategyArea(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   if (!canManageStrategy(user.role)) throw new Error("Unauthorised");
 
@@ -46,6 +48,7 @@ export async function createStrategyArea(formData: FormData) {
 }
 
 export async function updateStrategyArea(id: string, formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   if (!canManageStrategy(user.role)) throw new Error("Unauthorised");
 
@@ -76,6 +79,7 @@ export async function updateStrategyArea(id: string, formData: FormData) {
 }
 
 export async function toggleStrategyAreaComplete(id: string) {
+  await assertSafeServerAction();
   const user = await getSessionUserOrThrow();
   if (!canManageStrategy(user.role)) throw new Error("Unauthorised");
 
@@ -93,6 +97,7 @@ export async function toggleStrategyAreaComplete(id: string) {
 }
 
 export async function deleteStrategyArea(id: string) {
+  await assertSafeServerAction();
   const user = await getSessionUserOrThrow();
   if (!canManageStrategy(user.role)) throw new Error("Unauthorised");
 
@@ -106,6 +111,7 @@ export async function deleteStrategyArea(id: string) {
 // ─── Notes ────────────────────────────────────────────────────────────────────
 
 export async function createStrategyNote(areaId: string, text: string) {
+  await assertSafeServerAction();
   const user = await getSessionUserOrThrow();
   if (!canManageStrategy(user.role)) throw new Error("Unauthorised");
 
@@ -128,6 +134,7 @@ export async function createStrategyNote(areaId: string, text: string) {
 }
 
 export async function deleteStrategyNote(noteId: string) {
+  await assertSafeServerAction();
   const user = await getSessionUserOrThrow();
   if (!canManageStrategy(user.role)) throw new Error("Unauthorised");
 

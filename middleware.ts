@@ -37,6 +37,7 @@ export const config = {
     "/api/admin/:path*",
     "/god/:path*",
     "/api/god/:path*",
-    "/api/auth/switch-tenant"
-  ]
+    "/api/auth/switch-tenant",
+    "/api/((?!auth|cron|webhooks|invite|health).*)",
+  ],
 };

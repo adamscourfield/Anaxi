@@ -324,6 +324,14 @@ export async function POST(req: NextRequest) {
       totalTeachers: assessment.teachers.length,
     });
 
+    if (!process.env.ANTHROPIC_API_KEY?.trim()) {
+      return NextResponse.json({
+        ...FALLBACK_BRIEFING,
+        computedAt: new Date().toISOString(),
+        unavailableReason: "ANTHROPIC_API_KEY not configured",
+      });
+    }
+
     // ── Call Claude — only cache on success, never cache fallback ────────────
     try {
       const client = new Anthropic();

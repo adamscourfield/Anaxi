@@ -17,13 +17,13 @@ npm run dev
 
 ### Services overview
 
-Anaxi is a single Next.js 14 app with a PostgreSQL 16 database (via Docker Compose). No other infrastructure (Redis, queues, etc.) is required.
+Anaxi is a single Next.js 14 app with a PostgreSQL 16 database (via Docker Compose). No other infrastructure (Redis, queues, etc.) is required for local dev. Production may use S3 for import file storage and Postgres-backed rate limiting (built in).
 
 ### Starting the dev environment
 
 1. Start Postgres: `sudo dockerd &>/tmp/dockerd.log &` then `sudo docker compose up -d`
 2. Export the DB URL: `export DATABASE_URL='postgresql://postgres:postgres@localhost:5432/anaxi'`
-3. Apply schema: `npx prisma db push` (use `db push` instead of `migrate deploy` — the migration `20260320000000` has a date-ordering bug that causes it to run before the init migration)
+3. Apply schema: `npx prisma migrate deploy`
 4. Seed data: `npx prisma db seed` and optionally `npm run seed:demo` for a full demo dataset
 5. Dev server: `npm run dev` (port 3000; set `NEXTAUTH_URL` to match)
 
@@ -40,11 +40,13 @@ Anaxi is a single Next.js 14 app with a PostgreSQL 16 database (via Docker Compo
 ### Gotchas
 
 - Run `npm run build` before release; it validates types, lint, and static generation (including `/login` with Suspense).
-- **Login with `admin@demo.school`** will fail if both the base seed and demo seed have been run, because this email exists in two tenants and the auth code rejects ambiguous matches. Either pass `tenantId=demo_academy` in the login form, or use a unique-email user like `sarah.chen@demo.school` / `Password123!`.
+- **Base seed admin** is `admin@demo-school.local` (tenant `tenant_demo`). **Demo Academy** uses `admin@demo.school` — no email collision when both seeds run.
 - **Docker in Cloud VMs** requires `fuse-overlayfs` storage driver and `iptables-legacy`. These are already configured when the environment is set up.
 - The `.env` file is created from `.env.example` — defaults work for local dev without any changes needed (except `NEXTAUTH_SECRET` should be set to any non-empty string).
 - **CI** runs on push/PR via `.github/workflows/ci.yml` (Postgres service, unit tests, build, Playwright smoke + auth E2E with demo seed).
-- **Cron endpoints** (header `x-cron-secret`): `import-pending-count`, `leave-pending-reminders`, `cleanup-shadow-super-admins`, `import-storage-cleanup`, `compute-student-flags`.
+- **Cron endpoints** (header `x-cron-secret`): `import-pending-count`, `leave-pending-reminders`, `cleanup-shadow-super-admins`, `import-storage-cleanup`, `compute-student-flags`, `process-pending-imports`
+- **Health check**: `GET /api/health` (no auth)
+- **Production storage**: set `IMPORT_STORAGE_BACKEND=s3` and `IMPORT_S3_BUCKET` for multi-instance deploys
 
 ## Imported Claude Cowork project instructions
 

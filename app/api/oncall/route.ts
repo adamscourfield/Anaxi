@@ -5,6 +5,7 @@ import { hasOnCallPermission } from "@/lib/rbac";
 import { createOnCallRequest, getRequestsByStatus } from "@/modules/oncall/service";
 import { sendOnCallNotification } from "@/modules/oncall/notifications";
 import { apiErrorResponse } from "@/lib/apiErrors";
+import { onCallCreateBodySchema, parseBody } from "@/lib/validation/schemas";
 
 export async function POST(req: Request) {
   try {
@@ -14,12 +15,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { studentId, requestType, location, behaviourReasonCategory, notes, isEmergency } = body;
+    const { studentId, requestType, location, behaviourReasonCategory, notes, isEmergency } =
+      parseBody(onCallCreateBodySchema, await req.json());
 
-    if (!studentId || !requestType || !location) {
-      return NextResponse.json({ error: "studentId, requestType and location are required" }, { status: 400 });
-    }
     if (requestType === "BEHAVIOUR" && !behaviourReasonCategory) {
       return NextResponse.json({ error: "behaviourReasonCategory required for BEHAVIOUR type" }, { status: 400 });
     }

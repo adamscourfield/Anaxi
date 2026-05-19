@@ -1,4 +1,5 @@
 "use server";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";

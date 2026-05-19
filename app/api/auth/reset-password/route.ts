@@ -3,16 +3,15 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { withApi } from "@/lib/apiRoute";
+import { resetPasswordBodySchema } from "@/lib/validation/schemas";
 
 export const POST = withApi(async function POST(req: Request) {
-  const { token, password } = await req.json().catch(() => ({}));
-
-  if (!token || typeof token !== "string" || !password || typeof password !== "string") {
+  let token: string;
+  let password: string;
+  try {
+    ({ token, password } = resetPasswordBodySchema.parse(await req.json()));
+  } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-  }
-
-  if (password.length < 8) {
-    return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
   }
 
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");

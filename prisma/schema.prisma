@@ -1214,3 +1214,13 @@ enum LeaveApprovalGroupAppliesTo {
   ALL_STAFF
   SELECTED_MEMBERS
 }
+
+// Distributed rate-limit counters (shared across app instances).
+model RateLimitBucket {
+  key       String   @id
+  count     Int      @default(1)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}

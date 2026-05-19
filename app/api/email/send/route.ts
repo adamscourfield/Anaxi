@@ -11,7 +11,7 @@ const MAX_MESSAGE = 8000;
 
 export async function POST(req: Request) {
   try {
-    const limit = checkRateLimit(`email-send:${clientIp(req)}`, { max: 30, windowMs: 60_000 });
+    const limit = await checkRateLimit(`email-send:${clientIp(req)}`, { max: 30, windowMs: 60_000 });
     if (!limit.allowed) {
       return NextResponse.json(
         { error: "Too many email requests. Try again shortly." },

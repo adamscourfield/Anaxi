@@ -8,8 +8,7 @@ import { prisma } from "@/lib/prisma";
 import type { SnapshotMapping } from "@/modules/students/snapshot-import";
 import { computeHeaderSignature } from "@/modules/students/snapshot-fields";
 import { saveImportFile } from "@/lib/importStorage";
-import { runSnapshotImport, type RunSnapshotImportResult } from "@/modules/students/runSnapshotImport";
-import { notifyImportFinished } from "@/lib/inAppNotifications";
+import { processImportJob } from "@/modules/import/processPendingJobs";
 
 export async function POST(req: Request) {
   try {
@@ -41,58 +40,32 @@ export async function POST(req: Request) {
     const headers = firstLine.split(",").map((h) => h.trim());
     const headerSignature = computeHeaderSignature(headers);
 
-    const importJob = await (prisma as any).importJob.create({
+    const importJob = await prisma.importJob.create({
       data: {
         tenantId: user.tenantId,
         type: "STUDENT_SNAPSHOT",
-        status: "RUNNING",
+        status: "PENDING",
         uploadedBy: user.id,
         fileName: file.name,
         rowCount: 0,
-        mappingJson: mapping as any,
+        mappingJson: mapping as object,
         startedAt: new Date(),
       },
     });
 
     const storagePath = await saveImportFile(user.tenantId, importJob.id, text);
-    await (prisma as any).importJob.update({
+    await prisma.importJob.update({
       where: { id: importJob.id },
       data: { storagePath },
     });
 
-    let rowsProcessed = 0;
-    let rowsFailed = 0;
-    let errorReportJson: RunSnapshotImportResult["errorReportJson"];
-
-    try {
-      const result = await runSnapshotImport({
-        tenantId: user.tenantId,
-        importJobId: importJob.id,
-        csvText: text,
-        mapping,
-      });
-      rowsProcessed = result.rowsProcessed;
-      rowsFailed = result.rowsFailed;
-      errorReportJson = result.errorReportJson;
-    } catch (err) {
-      await (prisma as any).importJob.update({
-        where: { id: importJob.id },
-        data: {
-          status: "FAILED",
-          errorSummary: String(err instanceof Error ? err.message : err),
-          finishedAt: new Date(),
-        },
-      });
-      throw err;
-    }
-
     if (saveMapping) {
-      await (prisma as any).tenantImportMapping.create({
+      await prisma.tenantImportMapping.create({
         data: {
           tenantId: user.tenantId,
           type: "STUDENT_SNAPSHOT",
           name: mappingName,
-          mappingJson: mapping as any,
+          mappingJson: mapping as object,
           fixedCountScope: mapping.fixedCountScope ?? null,
           headerSignature,
           createdByUserId: user.id,
@@ -100,27 +73,21 @@ export async function POST(req: Request) {
       });
     }
 
-    await notifyImportFinished({
-      tenantId: user.tenantId,
-      userId: user.id,
-      importJobId: importJob.id,
-      fileName: file.name,
-      rowsFailed,
-    });
+    void processImportJob(importJob.id);
 
-    logger.info("import.snapshot.completed", {
+    logger.info("import.snapshot.queued", {
       tenantId: user.tenantId,
       importJobId: importJob.id,
-      rowsProcessed,
-      rowsFailed,
     });
 
-    return NextResponse.json({
-      importJobId: importJob.id,
-      rowsProcessed,
-      rowsFailed,
-      errorReportJson,
-    });
+    return NextResponse.json(
+      {
+        importJobId: importJob.id,
+        status: "PENDING",
+        message: "Import queued for processing",
+      },
+      { status: 202 },
+    );
   } catch (err) {
     return apiErrorResponse(err, "Import failed");
   }

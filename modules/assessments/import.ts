@@ -156,7 +156,7 @@ export async function importAssessmentResults(
   await prisma.importJob.update({
     where: { id: importJob.id },
     data: {
-      status: rowsFailed === 0 ? "SUCCESS" : rowsFailed === records.length ? "FAILED" : "COMPLETED",
+      status: rowsFailed === records.length ? "FAILED" : "SUCCESS",
       rowsProcessed,
       rowsFailed,
       finishedAt: new Date(),

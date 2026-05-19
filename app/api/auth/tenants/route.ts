@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, clientIp } from "@/lib/rateLimit";
+import { authTenantsBodySchema } from "@/lib/validation/schemas";
 
 export async function POST(request: NextRequest) {
-  const limit = checkRateLimit(`auth-tenants:${clientIp(request)}`, { max: 20, windowMs: 60_000 });
+  const limit = await checkRateLimit(`auth-tenants:${clientIp(request)}`, { max: 20, windowMs: 60_000 });
   if (!limit.allowed) {
     return NextResponse.json(
       { error: "Too many attempts. Try again shortly." },
@@ -12,11 +13,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await request.json().catch(() => null);
-  const email = typeof body?.email === "string" ? body.email.toLowerCase().trim() : "";
-  const password = typeof body?.password === "string" ? body.password : "";
-
-  if (!email || !password) {
+  let email: string;
+  let password: string;
+  try {
+    ({ email, password } = authTenantsBodySchema.parse(await request.json()));
+  } catch {
     return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
   }
 
