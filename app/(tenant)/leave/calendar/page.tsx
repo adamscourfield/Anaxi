@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
-import { canManageLoa } from "@/lib/loa";
+import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
+import { isApprovedStatus, isDeniedStatus, isPendingStatus } from "@/lib/leaveStatus";
 import { prisma } from "@/lib/prisma";
 import { StatCard } from "@/components/ui/stat-card";
 import { LeaveCalendarGrid } from "../LeaveCalendarGrid";
 import { fetchLeaveCalendarMonthRequests } from "@/modules/leave/leaveCalendarMonthData";
+import { loaPendingApprovalWhere, loaRequestVisibilityWhere } from "@/modules/leave/leaveQuery";
 
 export default async function LeaveCalendarPage({
   searchParams,
@@ -14,7 +16,8 @@ export default async function LeaveCalendarPage({
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "LEAVE");
-  const manager = await canManageLoa(user);
+  const isApprover = await canManageLoa(user);
+  const manageableIds = await loaManageableRequesterIds(user);
 
   const monthParam = String(searchParams?.month || "");
   let calendarDate = new Date();
@@ -24,38 +27,38 @@ export default async function LeaveCalendarPage({
   }
   const monthQuery = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth() + 1).padStart(2, "0")}`;
 
-  const requests = await (prisma as any).lOARequest.findMany({
-    where: manager
-      ? { tenantId: user.tenantId }
-      : { tenantId: user.tenantId, requesterId: user.id },
+  const requests = await prisma.lOARequest.findMany({
+    where: loaRequestVisibilityWhere(user.tenantId, user.id, manageableIds),
     include: { reason: true, requester: true },
     orderBy: { createdAt: "desc" },
-    take: 100,
+    take: 500,
   });
 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-  const totalPending = (requests as any[]).filter((r) => r.status === "PENDING").length;
+  const pendingForApprover = isApprover
+    ? await prisma.lOARequest.count({
+        where: loaPendingApprovalWhere(user.tenantId, user.id, manageableIds),
+      })
+    : requests.filter((r) => isPendingStatus(r.status)).length;
 
-  const approvedThisMonth = (requests as any[]).filter(
+  const approvedThisMonth = requests.filter(
     (r) =>
-      r.status === "APPROVED" &&
+      isApprovedStatus(r.status) &&
       new Date(r.updatedAt) >= monthStart &&
       new Date(r.updatedAt) <= monthEnd,
   ).length;
 
-  const deniedThisMonth = (requests as any[]).filter(
+  const deniedThisMonth = requests.filter(
     (r) =>
-      r.status === "DENIED" &&
+      isDeniedStatus(r.status) &&
       new Date(r.updatedAt) >= monthStart &&
       new Date(r.updatedAt) <= monthEnd,
   ).length;
 
-  const resolved = (requests as any[]).filter(
-    (r) => r.status !== "PENDING" && r.updatedAt && r.createdAt,
-  );
+  const resolved = requests.filter((r) => !isPendingStatus(r.status));
   const avgDays =
     resolved.length > 0
       ? resolved.reduce((sum, r) => {
@@ -67,8 +70,7 @@ export default async function LeaveCalendarPage({
 
   const calendarRequests = await fetchLeaveCalendarMonthRequests({
     tenantId: user.tenantId,
-    viewerUserId: user.id,
-    manager,
+    viewer: user,
     monthKey: monthQuery,
   });
 
@@ -86,59 +88,19 @@ export default async function LeaveCalendarPage({
               href="/leave?view=list"
               className="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text"
             >
-              <svg
-                className="h-3.5 w-3.5 shrink-0"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
-                  strokeLinecap="round"
-                />
-              </svg>
               List view
             </Link>
             <Link
               href={`/leave/calendar?month=${monthQuery}`}
               className="inline-flex items-center gap-2 rounded-xl bg-surface-container-lowest px-3.5 py-2 text-[0.8125rem] font-medium text-text calm-transition anx-card-elevated"
             >
-              <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none">
-                <rect
-                  x="3.5"
-                  y="4.5"
-                  width="13"
-                  height="12"
-                  rx="2"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <path
-                  d="M6.5 2.8v3.4M13.5 2.8v3.4M3.5 8.2h13"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
               Calendar
             </Link>
           </div>
-
           <Link
             href="/leave/request"
             className="inline-flex items-center gap-2 rounded-md bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-5 py-2.5 text-sm font-semibold text-on-primary shadow-none calm-transition hover:opacity-95 active:scale-[0.98]"
           >
-            <svg
-              className="h-3.5 w-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
             Request Leave
           </Link>
         </div>
@@ -147,11 +109,11 @@ export default async function LeaveCalendarPage({
       <div className="grid grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label="Total pending"
-          value={String(totalPending).padStart(2, "0")}
+          value={String(pendingForApprover).padStart(2, "0")}
           tone="glass"
           contextVariant="inline"
           context={
-            totalPending > 0 ? (
+            pendingForApprover > 0 ? (
               <span className="font-semibold text-error">Needs review</span>
             ) : (
               <span className="font-medium text-muted">Queue clear</span>
@@ -200,7 +162,7 @@ export default async function LeaveCalendarPage({
         >
           ← List view
         </Link>
-        {manager && (
+        {isApprover && (
           <Link
             href="/leave#pending-requests"
             className="rounded-lg border border-border/60 bg-surface-container-lowest/70 px-3.5 py-2 text-sm font-medium text-muted backdrop-blur-sm calm-transition hover:border-accent/30 hover:text-accent"

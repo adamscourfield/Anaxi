@@ -189,3 +189,47 @@ export async function sendLeaveDecisionEmail(options: {
 
   return sendEmail({ to, subject, message });
 }
+
+/**
+ * Notify approvers that a new leave request needs review.
+ */
+export async function sendLeaveSubmittedEmail(options: {
+  to: string[];
+  requesterName: string;
+  reasonLabel: string;
+  startDate: Date;
+  endDate: Date;
+  leaveRequestId: string;
+}): Promise<SendEmailResult> {
+  const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "http://localhost:3000";
+  const start = options.startDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const end = options.endDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const subject = `Leave request from ${options.requesterName} needs review`;
+  const message = [
+    "A new leave of absence request has been submitted.",
+    "",
+    `Staff member: ${options.requesterName}`,
+    `Reason: ${options.reasonLabel}`,
+    `Dates: ${start} – ${end}`,
+    "",
+    "Review and decide here:",
+    `${appUrl}/leave/${options.leaveRequestId}`,
+    "",
+    "– The Anaxi Team",
+  ].join("\n");
+
+  const results = await Promise.all(
+    options.to.map((to) => sendEmail({ to, subject, message })),
+  );
+  if (results.some((r) => r.status === "sent")) return { status: "sent" };
+  if (results.every((r) => r.status === "not_configured")) return { status: "not_configured" };
+  return { status: "failed" };
+}

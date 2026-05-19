@@ -3,27 +3,32 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { StatusPill } from "@/components/ui/status-pill";
+import { loaStatusLabel } from "@/lib/leaveStatus";
+import type { LoaStatusUiBucket } from "@/lib/leaveStatus";
+import type { LeaveRow } from "@/modules/leave/leaveRow";
 
-type HistoryRow = {
-  id: string;
-  requesterName: string;
-  requesterInitials: string;
-  requesterAvatarColor: string;
+type HistoryRow = LeaveRow & {
   requestedDates: string;
   daysLabel: string;
   reasonLabel: string;
-  status: "PENDING" | "APPROVED" | "DENIED";
 };
 
-function statusBadge(status: HistoryRow["status"]) {
-  if (status === "APPROVED") return <StatusPill variant="success">Approved</StatusPill>;
-  if (status === "DENIED") return <StatusPill variant="error">Denied</StatusPill>;
+function statusBadge(row: HistoryRow) {
+  if (row.status === "APPROVED") {
+    return <StatusPill variant="success">{loaStatusLabel(row.statusRaw)}</StatusPill>;
+  }
+  if (row.status === "DENIED") {
+    return <StatusPill variant="error">Denied</StatusPill>;
+  }
+  if (row.status === "CANCELLED") {
+    return <StatusPill variant="neutral">Cancelled</StatusPill>;
+  }
   return <StatusPill variant="warning">Pending</StatusPill>;
 }
 
 export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isManager: boolean }) {
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | HistoryRow["status"]>("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | LoaStatusUiBucket>("ALL");
 
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
@@ -34,18 +39,24 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
     });
   }, [query, rows, statusFilter]);
 
+  const filters: { label: string; value: "ALL" | LoaStatusUiBucket }[] = [
+    { label: "All statuses", value: "ALL" },
+    { label: "Pending", value: "PENDING" },
+    { label: "Approved", value: "APPROVED" },
+    { label: "Denied", value: "DENIED" },
+    { label: "Cancelled", value: "CANCELLED" },
+  ];
+
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold tracking-tight text-text">Full Leave Ledger History</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/leave"
-            className="inline-flex items-center rounded-md border border-border/60 bg-surface-container-low px-3.5 py-2 text-sm font-medium text-text calm-transition hover:border-border hover:bg-surface-container-high"
-          >
-            Back to dashboard
-          </Link>
-        </div>
+        <Link
+          href="/leave"
+          className="inline-flex items-center rounded-md border border-border/60 bg-surface-container-low px-3.5 py-2 text-sm font-medium text-text calm-transition hover:border-border hover:bg-surface-container-high"
+        >
+          Back to dashboard
+        </Link>
       </div>
 
       <div className="filter-panel flex flex-wrap gap-4">
@@ -63,13 +74,14 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
           <span className="filter-field-label">Status</span>
           <select
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as "ALL" | HistoryRow["status"])}
+            onChange={(event) => setStatusFilter(event.target.value as "ALL" | LoaStatusUiBucket)}
             className="field field-filter-trigger !py-2.5 !text-sm"
           >
-            <option value="ALL">All statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
-            <option value="DENIED">Denied</option>
+            {filters.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
           </select>
         </label>
       </div>
@@ -79,9 +91,7 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="table-head-row text-left">
-                {isManager && (
-                  <th className="px-5 py-3.5">Staff member</th>
-                )}
+                {isManager && <th className="px-5 py-3.5">Staff member</th>}
                 <th className="px-5 py-3.5">Requested dates</th>
                 <th className="px-5 py-3.5">Reason</th>
                 <th className="px-5 py-3.5 text-right">Status</th>
@@ -110,13 +120,15 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
                       </td>
                     )}
                     <td className="px-5 py-4 text-text">
-                      <p className="font-medium text-text">{row.requestedDates}</p>
-                      <p className="mt-0.5 text-sm text-muted">{row.daysLabel}</p>
+                      <Link href={`/leave/${row.id}`} className="block">
+                        <p className="font-medium text-text">{row.requestedDates}</p>
+                        <p className="mt-0.5 text-sm text-muted">{row.daysLabel}</p>
+                      </Link>
                     </td>
                     <td className="max-w-[min(28rem,50vw)] px-5 py-4 text-text">
                       <span className="line-clamp-2">{row.reasonLabel}</span>
                     </td>
-                    <td className="px-5 py-4 text-right">{statusBadge(row.status)}</td>
+                    <td className="px-5 py-4 text-right">{statusBadge(row)}</td>
                   </tr>
                 ))
               )}

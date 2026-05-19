@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { LeaveCalendarRequestJson } from "@/modules/leave/leaveCalendarMonthData";
+import { isApprovedStatus, isDeniedStatus } from "@/lib/leaveStatus";
 import {
   WEEKDAYS,
   stripTime,
@@ -82,22 +83,22 @@ function startCardVisuals(status: string): {
   titleClass: string;
   subClass: string;
 } {
-  if (status === "APPROVED") {
+  if (isApprovedStatus(status)) {
     return {
-      accentBar: "bg-[#16a34a]",
-      cardBg: "bg-[#ECFDF5]",
-      cardBorder: "border-[#D1FAE5]",
-      titleClass: "text-[#15803d]",
-      subClass: "text-[#166534]/90",
+      accentBar: "bg-[var(--success)]",
+      cardBg: "bg-[var(--status-approved-light)]",
+      cardBorder: "border-[color-mix(in_srgb,var(--success)_25%,transparent)]",
+      titleClass: "text-[var(--status-approved-text)]",
+      subClass: "text-[var(--status-approved-text)]/90",
     };
   }
-  if (status === "DENIED") {
+  if (isDeniedStatus(status)) {
     return {
-      accentBar: "bg-[#dc2626]",
-      cardBg: "bg-[#FEF2F2]",
-      cardBorder: "border-[#FECACA]",
-      titleClass: "text-[#b91c1c]",
-      subClass: "text-[#991b1b]/90",
+      accentBar: "bg-[var(--error)]",
+      cardBg: "bg-[var(--status-denied-light)]",
+      cardBorder: "border-[color-mix(in_srgb,var(--error)_25%,transparent)]",
+      titleClass: "text-[var(--status-denied-text)]",
+      subClass: "text-[var(--status-denied-text)]/90",
     };
   }
   return {

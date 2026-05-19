@@ -12,6 +12,7 @@
  * deviate meaningfully.
  */
 
+import { approvedStatusFilter } from "@/lib/leaveStatus";
 import { prisma } from "@/lib/prisma";
 import type { RiskBand } from "@/modules/analysis/studentRisk";
 import { BAND_ORDER } from "@/modules/analysis/studentRisk";
@@ -85,7 +86,7 @@ export async function computeLOAImpact(
   const loaRequests = await (prisma as any).lOARequest.findMany({
     where: {
       tenantId,
-      status: "APPROVED",
+      status: { in: approvedStatusFilter() },
       startDate: { lte: now },
       endDate: { gte: since },
     },

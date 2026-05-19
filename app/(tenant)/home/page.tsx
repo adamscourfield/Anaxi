@@ -746,14 +746,8 @@ function LeadershipHome({
                           </div>
                         </Link>
                         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
-                          <Button
-                            variant={isEmergency ? "primary" : "secondary"}
-                            asChild
-                            className="min-h-0 rounded-md px-4 py-2 text-xs"
-                          >
-                            <Link href={`/leave/${leave.id}`} aria-label={`Review leave for ${leave.requesterName}`}>
-                              Review in queue
-                            </Link>
+                          <Button variant="primary" asChild className="min-h-0 rounded-md px-4 py-2 text-xs">
+                            <Link href={`/leave/${leave.id}`}>Review request</Link>
                           </Button>
                         </div>
                       </div>
@@ -1105,12 +1099,16 @@ function TeacherHome({
   const loaStatusLabel: Record<string, string> = {
     PENDING: "Pending review",
     APPROVED: "Approved",
+    APPROVED_WITH_PAY: "Approved with pay",
+    APPROVED_WITHOUT_PAY: "Approved without pay",
     DENIED: "Not approved",
     CANCELLED: "Cancelled",
   };
   const loaStatusPill: Record<string, PillVariant> = {
     PENDING: "neutral",
     APPROVED: "success",
+    APPROVED_WITH_PAY: "success",
+    APPROVED_WITHOUT_PAY: "warning",
     DENIED: "error",
     CANCELLED: "neutral",
   };

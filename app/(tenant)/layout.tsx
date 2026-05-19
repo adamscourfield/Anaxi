@@ -2,14 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { TenantLayoutClient } from "@/components/tenant-layout-client";
 import { getOpenOnCallCount } from "@/lib/oncall/badge";
-import { canManageLoa } from "@/lib/loa";
+import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
 import { hasPermission } from "@/lib/rbac";
 import { ALL_FEATURE_KEYS, FeatureKey } from "@/lib/types";
-
-type PrismaWithLOA = typeof prisma & {
-  lOARequest: { count: (args: { where: Record<string, unknown> }) => Promise<number> };
-};
-const db = prisma as PrismaWithLOA;
+import { loaPendingApprovalWhere } from "@/modules/leave/leaveQuery";
 
 export default async function TenantLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUserOrThrow();
@@ -38,7 +34,12 @@ export default async function TenantLayout({ children }: { children: React.React
   const [onCallCount, leaveCount] = await Promise.all([
     canSeeOnCallBadge ? getOpenOnCallCount(user.tenantId) : Promise.resolve(0),
     isApprover
-      ? db.lOARequest.count({ where: { tenantId: user.tenantId, status: "PENDING", requesterId: { not: user.id } } })
+      ? (async () => {
+          const manageableIds = await loaManageableRequesterIds(user);
+          return prisma.lOARequest.count({
+            where: loaPendingApprovalWhere(user.tenantId, user.id, manageableIds),
+          });
+        })()
       : Promise.resolve(0),
   ]);
 

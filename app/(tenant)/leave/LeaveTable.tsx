@@ -3,21 +3,26 @@
 import Link from "next/link";
 import { useState } from "react";
 import { StatusPill } from "@/components/ui/status-pill";
+import { loaStatusLabel } from "@/lib/leaveStatus";
+import type { LeaveRow } from "@/modules/leave/leaveRow";
+import type { LoaStatusUiBucket } from "@/lib/leaveStatus";
 
-export type LeaveRow = {
-  id: string;
-  startDate: string;
-  endDate: string;
-  dateRangeLine: string;
-  days: number;
-  status: "PENDING" | "APPROVED" | "DENIED";
-  reasonLabel: string | null;
-  requesterName: string | null;
-  requesterInitials: string | null;
-  requesterAvatarColor: string | null;
-};
+export type { LeaveRow };
 
-type CompletedFilter = "ALL" | "APPROVED" | "DENIED";
+type CompletedFilter = "ALL" | LoaStatusUiBucket;
+
+function statusPill(row: LeaveRow) {
+  if (row.status === "APPROVED") {
+    return <StatusPill variant="success">{loaStatusLabel(row.statusRaw)}</StatusPill>;
+  }
+  if (row.status === "DENIED") {
+    return <StatusPill variant="error">Denied</StatusPill>;
+  }
+  if (row.status === "CANCELLED") {
+    return <StatusPill variant="neutral">Cancelled</StatusPill>;
+  }
+  return <StatusPill variant="warning">Pending</StatusPill>;
+}
 
 function PendingTable({
   rows,
@@ -112,11 +117,9 @@ function PendingTable({
 function CompletedTable({
   rows,
   isManager,
-  actionLabel,
 }: {
   rows: LeaveRow[];
   isManager: boolean;
-  actionLabel: string;
 }) {
   const [filter, setFilter] = useState<CompletedFilter>("ALL");
 
@@ -127,6 +130,7 @@ function CompletedTable({
     { label: "All", value: "ALL" },
     { label: "Approved", value: "APPROVED" },
     { label: "Denied", value: "DENIED" },
+    { label: "Cancelled", value: "CANCELLED" },
   ];
 
   return (
@@ -197,21 +201,17 @@ function CompletedTable({
                       </td>
                     )}
                     <td className="px-5 py-4">
-                      <p className="font-semibold text-text">{row.dateRangeLine}</p>
-                      <p className="mt-0.5 text-[0.8125rem] text-muted">
-                        {row.days} working day{row.days !== 1 ? "s" : ""}
-                      </p>
+                      <Link href={`/leave/${row.id}`} className="block">
+                        <p className="font-semibold text-text">{row.dateRangeLine}</p>
+                        <p className="mt-0.5 text-[0.8125rem] text-muted">
+                          {row.days} working day{row.days !== 1 ? "s" : ""}
+                        </p>
+                      </Link>
                     </td>
                     <td className="max-w-[min(28rem,50vw)] px-5 py-4 text-text">
                       <span className="line-clamp-2">{row.reasonLabel ?? "—"}</span>
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      {row.status === "APPROVED" ? (
-                        <StatusPill variant="success">Approved</StatusPill>
-                      ) : (
-                        <StatusPill variant="error">Denied</StatusPill>
-                      )}
-                    </td>
+                    <td className="px-5 py-4 text-right">{statusPill(row)}</td>
                   </tr>
                 ))
               )}
@@ -249,7 +249,7 @@ export function LeaveTable({
         <PendingTable rows={pendingRows} isManager={isManager} actionLabel={actionLabel} />
       </div>
       <div id="completed-requests">
-        <CompletedTable rows={completedRows} isManager={isManager} actionLabel={actionLabel} />
+        <CompletedTable rows={completedRows} isManager={isManager} />
       </div>
     </div>
   );
