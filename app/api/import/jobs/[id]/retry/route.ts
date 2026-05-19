@@ -39,14 +39,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     );
   }
 
-  const newJob = await (prisma as any).importJob.create({
-    data: {
-      tenantId: user.tenantId,
-      type: original.type,
-      status: "PENDING",
-      uploadedBy: user.id,
-      fileName: original.fileName,
-      rowCount: 0,
+  return NextResponse.json(
+    {
+      error:
+        "Automatic retry is not available because import files are not stored. Please re-upload your CSV file.",
     },
   });
 

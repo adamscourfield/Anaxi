@@ -40,6 +40,9 @@ export default async function SchoolDetailPage({
   const invitePreview =
     searchParams?.inviteCreated === "1" ? readGodInvitePreview(params.tenantId) : null;
 
+  const invitePreview =
+    searchParams?.inviteCreated === "1" ? readGodInvitePreview(params.tenantId) : null;
+
   const school = await prisma.tenant.findUnique({
     where: { id: params.tenantId },
     include: {
