@@ -1,175 +1,90 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { apiErrorResponse } from "@/lib/apiErrors";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { parseSnapshotCsv, SnapshotMapping } from "@/modules/students/snapshot-import";
+import type { SnapshotMapping } from "@/modules/students/snapshot-import";
 import { computeHeaderSignature } from "@/modules/students/snapshot-fields";
 import { saveImportFile } from "@/lib/importStorage";
+import { runSnapshotImport, type RunSnapshotImportResult } from "@/modules/students/runSnapshotImport";
 
 export async function POST(req: Request) {
-  const user = await getSessionUserOrThrow();
-  await requireFeature(user.tenantId, "STUDENTS_IMPORT");
-  if (!hasPermission(user.role, "import:write")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const form = await req.formData();
-  const file = form.get("file") as File | null;
-  const mappingRaw = String(form.get("mapping") ?? "{}");
-  const saveMapping = form.get("saveMapping") === "true";
-  const mappingName = String(form.get("mappingName") ?? "Snapshot import mapping");
-
-  if (!file) {
-    return NextResponse.json({ error: "file is required" }, { status: 400 });
-  }
-
-  let mapping: SnapshotMapping;
   try {
-    mapping = JSON.parse(mappingRaw) as SnapshotMapping;
-  } catch {
-    return NextResponse.json({ error: "Invalid mapping JSON" }, { status: 400 });
-  }
-
-  const text = await file.text();
-  const firstLine = text.split("\n")[0] ?? "";
-  const headers = firstLine.split(",").map((h) => h.trim());
-  const headerSignature = computeHeaderSignature(headers);
-
-  // Create import job
-  const importJob = await (prisma as any).importJob.create({
-    data: {
-      tenantId: user.tenantId,
-      type: "STUDENT_SNAPSHOT",
-      status: "RUNNING",
-      uploadedBy: user.id,
-      fileName: file.name,
-      rowCount: 0,
-      startedAt: new Date(),
-    },
-  });
-
-  const storagePath = await saveImportFile(user.tenantId, importJob.id, text);
-  await (prisma as any).importJob.update({
-    where: { id: importJob.id },
-    data: { storagePath },
-  });
-
-  try {
-    const { rows, errors } = parseSnapshotCsv(text, mapping, new Date());
-
-    // Save errors to DB
-    const errorCountsByCode: Record<string, number> = {};
-    for (const err of errors) {
-      errorCountsByCode[err.errorCode] = (errorCountsByCode[err.errorCode] ?? 0) + 1;
+    const user = await getSessionUserOrThrow();
+    await requireFeature(user.tenantId, "STUDENTS_IMPORT");
+    if (!hasPermission(user.role, "import:write")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (errors.length > 0) {
-      await (prisma as any).importError.createMany({
-        data: errors.slice(0, 500).map((e) => ({
-          importJobId: importJob.id,
-          rowNumber: e.rowNumber,
-          field: e.errorCode,
-          message: e.message,
-        })),
-      });
+    const form = await req.formData();
+    const file = form.get("file") as File | null;
+    const mappingRaw = String(form.get("mapping") ?? "{}");
+    const saveMapping = form.get("saveMapping") === "true";
+    const mappingName = String(form.get("mappingName") ?? "Snapshot import mapping");
+
+    if (!file) {
+      return NextResponse.json({ error: "file is required" }, { status: 400 });
     }
 
-    let rowsProcessed = 0;
-    let rowsFailed = errors.length;
-
-    // Upsert valid rows
-    for (const row of rows) {
-      try {
-        const student = await (prisma as any).student.upsert({
-          where: { tenantId_upn: { tenantId: user.tenantId, upn: row.upn } },
-          create: {
-            tenantId: user.tenantId,
-            upn: row.upn,
-            fullName: row.studentName,
-            yearGroup: row.yearGroup,
-            sendFlag: row.send,
-            ppFlag: row.pp,
-            status: "ACTIVE",
-          },
-          update: {
-            fullName: row.studentName,
-            yearGroup: row.yearGroup,
-            sendFlag: row.send,
-            ppFlag: row.pp,
-          },
-        });
-
-        await (prisma as any).studentSnapshot.upsert({
-          where: {
-            tenantId_studentId_snapshotDate: {
-              tenantId: user.tenantId,
-              studentId: student.id,
-              snapshotDate: row.snapshotDate,
-            },
-          },
-          create: {
-            tenantId: user.tenantId,
-            studentId: student.id,
-            snapshotDate: row.snapshotDate,
-            countScope: row.countScope,
-            positivePointsTotal: row.positivePoints,
-            negativePointsTotal: row.negativePoints,
-            detentionsCount: row.detentions,
-            internalExclusionsCount: row.internalExclusions,
-            suspensionsCount: row.suspensions,
-            attendancePct: row.attendancePercent,
-            latenessCount: row.lates,
-          },
-          update: {
-            countScope: row.countScope,
-            positivePointsTotal: row.positivePoints,
-            negativePointsTotal: row.negativePoints,
-            detentionsCount: row.detentions,
-            internalExclusionsCount: row.internalExclusions,
-            suspensionsCount: row.suspensions,
-            attendancePct: row.attendancePercent,
-            latenessCount: row.lates,
-          },
-        });
-
-        rowsProcessed++;
-      } catch (dbErr: any) {
-        rowsFailed++;
-        await (prisma as any).importError.create({
-          data: {
-            importJobId: importJob.id,
-            rowNumber: 0,
-            field: "DB_ERROR",
-            message: String(dbErr?.message ?? dbErr),
-          },
-        });
-      }
+    let mapping: SnapshotMapping;
+    try {
+      mapping = JSON.parse(mappingRaw) as SnapshotMapping;
+    } catch {
+      return NextResponse.json({ error: "Invalid mapping JSON" }, { status: 400 });
     }
 
-    const errorReportJson = {
-      totalRows: rows.length + errors.length,
-      rowsProcessed,
-      rowsFailed,
-      errorCountsByCode,
-      sampleErrors: errors.slice(0, 25),
-    };
+    const text = await file.text();
+    const firstLine = text.split("\n")[0] ?? "";
+    const headers = firstLine.split(",").map((h) => h.trim());
+    const headerSignature = computeHeaderSignature(headers);
 
-    await (prisma as any).importJob.update({
-      where: { id: importJob.id },
+    const importJob = await (prisma as any).importJob.create({
       data: {
-        status: rowsFailed === 0 ? "SUCCESS" : "FAILED",
-        rowCount: rows.length + errors.length,
-        rowsProcessed,
-        rowsFailed,
-        errorReportJson,
-        errorSummary: rowsFailed > 0 ? `${rowsFailed} rows had issues` : null,
-        finishedAt: new Date(),
+        tenantId: user.tenantId,
+        type: "STUDENT_SNAPSHOT",
+        status: "RUNNING",
+        uploadedBy: user.id,
+        fileName: file.name,
+        rowCount: 0,
+        mappingJson: mapping as any,
+        startedAt: new Date(),
       },
     });
 
-    // Save mapping if requested
+    const storagePath = await saveImportFile(user.tenantId, importJob.id, text);
+    await (prisma as any).importJob.update({
+      where: { id: importJob.id },
+      data: { storagePath },
+    });
+
+    let rowsProcessed = 0;
+    let rowsFailed = 0;
+    let errorReportJson: RunSnapshotImportResult["errorReportJson"];
+
+    try {
+      const result = await runSnapshotImport({
+        tenantId: user.tenantId,
+        importJobId: importJob.id,
+        csvText: text,
+        mapping,
+      });
+      rowsProcessed = result.rowsProcessed;
+      rowsFailed = result.rowsFailed;
+      errorReportJson = result.errorReportJson;
+    } catch (err) {
+      await (prisma as any).importJob.update({
+        where: { id: importJob.id },
+        data: {
+          status: "FAILED",
+          errorSummary: String(err instanceof Error ? err.message : err),
+          finishedAt: new Date(),
+        },
+      });
+      throw err;
+    }
+
     if (saveMapping) {
       await (prisma as any).tenantImportMapping.create({
         data: {
@@ -190,26 +105,14 @@ export async function POST(req: Request) {
       rowsProcessed,
       rowsFailed,
     });
+
     return NextResponse.json({
       importJobId: importJob.id,
       rowsProcessed,
       rowsFailed,
       errorReportJson,
     });
-  } catch (err: any) {
-    await (prisma as any).importJob.update({
-      where: { id: importJob.id },
-      data: {
-        status: "FAILED",
-        errorSummary: String(err?.message ?? err),
-        finishedAt: new Date(),
-      },
-    });
-    logger.error("import.snapshot.failed", {
-      tenantId: user.tenantId,
-      importJobId: importJob.id,
-      error: String(err?.message ?? err),
-    });
-    return NextResponse.json({ error: "Import failed", detail: String(err?.message ?? err) }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err, "Import failed");
   }
 }

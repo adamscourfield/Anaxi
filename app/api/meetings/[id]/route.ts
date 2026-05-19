@@ -1,11 +1,32 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { apiErrorResponse } from "@/lib/apiErrors";
+import { sendMeetingCancelledEmail, sendMeetingUpdatedEmail } from "@/lib/email";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { parseIsoDate } from "@/lib/parseDate";
 import { getMeetingDetail, updateMeeting, deleteMeeting } from "@/modules/meetings/service";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+function scheduleChanged(
+  existing: { startDateTime: Date; endDateTime: Date; location?: string | null; title: string },
+  input: Record<string, unknown>,
+): boolean {
+  if (input.title !== undefined && input.title !== existing.title) return true;
+  if (input.location !== undefined && input.location !== existing.location) return true;
+  if (input.startDateTime !== undefined) {
+    if (new Date(input.startDateTime as Date).getTime() !== new Date(existing.startDateTime).getTime()) {
+      return true;
+    }
+  }
+  if (input.endDateTime !== undefined) {
+    if (new Date(input.endDateTime as Date).getTime() !== new Date(existing.endDateTime).getTime()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export async function GET(_req: Request, { params }: { params: { id: string } }) {
   try {
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "MEETINGS");
@@ -15,19 +36,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     const meeting = await getMeetingDetail(user.tenantId, params.id);
 
-    const isAttendee = meeting.attendees.some((a: any) => a.userId === user.id);
+    const isAttendee = meeting.attendees.some((a: { userId: string }) => a.userId === user.id);
     const isCreator = meeting.createdByUserId === user.id;
     if (!isCreator && !isAttendee && !hasPermission(user.role, "meetings:view_all")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json(meeting);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    if (message === "meeting not found") return NextResponse.json({ error: message }, { status: 404 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }
 
@@ -75,19 +92,37 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       input.endedAt = new Date(endedAt);
     }
 
+    const notifyUpdate = scheduleChanged(meetingForAuth, input);
     const meeting = await updateMeeting(user.tenantId, params.id, { id: user.id, role: user.role }, input as any);
+
+    if (notifyUpdate) {
+      void Promise.allSettled(
+        meeting.attendees.map(
+          (attendee: { userId: string; user: { email: string; fullName: string } }) => {
+            if (attendee.userId === user.id) return Promise.resolve();
+            return sendMeetingUpdatedEmail({
+              to: attendee.user.email,
+              attendeeName: attendee.user.fullName,
+              title: meeting.title,
+              startDateTime: new Date(meeting.startDateTime),
+              endDateTime: new Date(meeting.endDateTime),
+              meetingId: meeting.id,
+              tenantId: user.tenantId,
+              attendeeUserId: attendee.userId,
+              location: meeting.location,
+            });
+          },
+        ),
+      );
+    }
+
     return NextResponse.json(meeting);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    if (message === "meeting not found") return NextResponse.json({ error: message }, { status: 404 });
-    if (message === "only creator can update meeting") return NextResponse.json({ error: message }, { status: 403 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   try {
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "MEETINGS");
@@ -95,14 +130,28 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const meeting = await getMeetingDetail(user.tenantId, params.id);
+
+    void Promise.allSettled(
+      meeting.attendees.map(
+        (attendee: { userId: string; user: { email: string; fullName: string } }) => {
+          if (attendee.userId === user.id) return Promise.resolve();
+          return sendMeetingCancelledEmail({
+            to: attendee.user.email,
+            attendeeName: attendee.user.fullName,
+            title: meeting.title,
+            startDateTime: new Date(meeting.startDateTime),
+            meetingId: meeting.id,
+            tenantId: user.tenantId,
+            attendeeUserId: attendee.userId,
+          });
+        },
+      ),
+    );
+
     await deleteMeeting(user.tenantId, params.id, { id: user.id, role: user.role });
     return new NextResponse(null, { status: 204 });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    if (message === "meeting not found") return NextResponse.json({ error: message }, { status: 404 });
-    if (message === "only creator can delete meeting") return NextResponse.json({ error: message }, { status: 403 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

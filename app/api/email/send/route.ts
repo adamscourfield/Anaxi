@@ -4,12 +4,21 @@ import { requireFeature } from "@/lib/guards";
 import { apiErrorResponse } from "@/lib/apiErrors";
 import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, clientIp } from "@/lib/rateLimit";
 
 const MAX_SUBJECT = 200;
 const MAX_MESSAGE = 8000;
 
 export async function POST(req: Request) {
   try {
+    const limit = checkRateLimit(`email-send:${clientIp(req)}`, { max: 30, windowMs: 60_000 });
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "Too many email requests. Try again shortly." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSec ?? 60) } },
+      );
+    }
+
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "ON_CALL");
 

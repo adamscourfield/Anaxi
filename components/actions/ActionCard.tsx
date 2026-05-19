@@ -8,6 +8,7 @@ interface ActionCardProps {
   action: {
     id: string;
     description: string;
+    blockReason?: string | null;
     ownerUserId: string;
     owner: { id: string; fullName: string };
     dueDate?: Date | string | null;
@@ -119,8 +120,11 @@ export function ActionCard({ action, currentUserId, onComplete }: ActionCardProp
 
       {/* Blocked badge */}
       {isBlocked && (
-        <span className="mt-0.5 flex-shrink-0 rounded-md border border-scale-some-border bg-scale-some-bg px-2 py-0.5 text-[0.6875rem] font-semibold text-scale-some-text">
-          Blocked
+        <span
+          className="mt-0.5 max-w-[40%] flex-shrink-0 truncate rounded-md border border-scale-some-border bg-scale-some-bg px-2 py-0.5 text-[0.6875rem] font-semibold text-scale-some-text"
+          title={action.blockReason ?? undefined}
+        >
+          {action.blockReason ? `Blocked: ${action.blockReason}` : "Blocked"}
         </span>
       )}
     </div>

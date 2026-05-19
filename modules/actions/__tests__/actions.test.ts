@@ -199,11 +199,11 @@ describe("blockAction", () => {
     (prisma as any).meetingAction.update.mockResolvedValue(mockAction({ status: "BLOCKED" }));
   });
 
-  it("marks action as BLOCKED and records reason in description", async () => {
+  it("marks action as BLOCKED and stores blockReason", async () => {
     const result = await blockAction("tenant_1", "action_1", "user_1", "waiting on IT");
     expect(result.status).toBe("BLOCKED");
     const updateCall = (prisma as any).meetingAction.update.mock.calls[0][0];
-    expect(updateCall.data.description).toContain("[Blocked: waiting on IT]");
+    expect(updateCall.data.blockReason).toBe("waiting on IT");
   });
 
   it("throws when non-owner tries to block", async () => {

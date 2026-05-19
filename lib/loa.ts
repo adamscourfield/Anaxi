@@ -177,12 +177,12 @@ export async function loaApproverEmailsForRequest(
 export async function loaApproversForRequest(
   tenantId: string,
   requesterUserId: string,
-): Promise<Array<{ id: string; email: string }>> {
+): Promise<Array<{ id: string; email: string; fullName: string }>> {
   const emails = await loaApproverEmailsForRequest(tenantId, requesterUserId);
   if (emails.length === 0) return [];
   const users = await prisma.user.findMany({
     where: { tenantId, email: { in: emails }, isActive: true },
-    select: { id: true, email: true },
+    select: { id: true, email: true, fullName: true },
   });
   return users;
 }

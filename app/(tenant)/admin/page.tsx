@@ -29,6 +29,7 @@ export default async function AdminIndexPage() {
     vocabCount,
     signalLabelCount,
     timetableUnknownTeacherCount,
+    failedEmailCount,
   ] =
     await Promise.all([
       prisma.loaReason.count({ where: { tenantId: tid } }),
@@ -45,6 +46,13 @@ export default async function AdminIndexPage() {
       prisma.tenantVocab.count({ where: { tenantId: tid } }),
       prisma.tenantSignalLabel.count({ where: { tenantId: tid } }),
       (prisma as any).timetableEntry.count({ where: { tenantId: tid, teacherUserId: null } }),
+      prisma.emailLog.count({
+        where: {
+          tenantId: tid,
+          status: "FAILED",
+          createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        },
+      }),
     ]);
 
   const taxonomyCount = loaCount + onCallReasonCount + locationCount + recipientCount;
@@ -127,6 +135,15 @@ export default async function AdminIndexPage() {
           href: "/admin/taxonomies",
           tone: "warning" as const,
           cta: "Configure",
+        }]
+      : []),
+    ...(failedEmailCount > 0
+      ? [{
+          title: `${failedEmailCount} email${failedEmailCount === 1 ? "" : "s"} failed this week`,
+          detail: "Review delivery errors in the email log",
+          href: "/admin/email-log",
+          tone: "critical" as const,
+          cta: "View log",
         }]
       : []),
   ];

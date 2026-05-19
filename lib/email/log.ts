@@ -28,3 +28,23 @@ export async function logEmailDelivery(options: {
     // Logging must not break sends
   }
 }
+
+/** Update delivery status from Resend webhooks (matched by provider message id). */
+export async function updateEmailLogByProviderId(
+  providerId: string,
+  status: EmailDeliveryStatus,
+  errorMessage?: string | null,
+): Promise<boolean> {
+  try {
+    const result = await prisma.emailLog.updateMany({
+      where: { providerId },
+      data: {
+        status,
+        ...(errorMessage !== undefined ? { errorMessage } : {}),
+      },
+    });
+    return result.count > 0;
+  } catch {
+    return false;
+  }
+}
