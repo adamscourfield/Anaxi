@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireSuperAdminUser } from "@/lib/admin";
-import { ensureCsrfToken } from "@/lib/csrf";
+import { getCsrfToken } from "@/lib/csrf";
 import { readGodInvitePreview } from "@/lib/godInviteCookie";
 import { CsrfInput } from "@/components/CsrfInput";
 import { prisma } from "@/lib/prisma";
@@ -35,7 +35,7 @@ export default async function SchoolDetailPage({
   searchParams?: { inviteCreated?: string };
 }) {
   await requireSuperAdminUser();
-  const csrfToken = await ensureCsrfToken();
+  const csrfToken = getCsrfToken();
 
   const invitePreview =
     searchParams?.inviteCreated === "1" ? readGodInvitePreview(params.tenantId) : null;
