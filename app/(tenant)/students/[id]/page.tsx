@@ -154,8 +154,13 @@ export default async function StudentDetailPage({
 
   // Contextual back link — callers can pass ?from=/some/path for context-aware navigation
   const rawFrom = Array.isArray(searchParams?.from) ? searchParams!.from[0] : (searchParams?.from ?? "");
-  const backHref = rawFrom && rawFrom.startsWith("/") ? rawFrom : "/students";
-  const backLabel = rawFrom && rawFrom.startsWith("/assessments") ? "Back to assessment" : "Back to students";
+  const backHref =
+    rawFrom && rawFrom.startsWith("/") ? rawFrom : "/explorer/students";
+  let backLabel = "Back to students";
+  if (rawFrom.includes("/assessments")) backLabel = "Back to assessment";
+  else if (rawFrom.includes("/students/my")) backLabel = "Back to my students";
+  else if (rawFrom.includes("/explorer/students")) backLabel = "Back to student list";
+  else if (rawFrom.includes("/analytics")) backLabel = "Back to analytics";
 
   const assessmentsFeature = await prisma.tenantFeature.findUnique({
     where: { tenantId_key: { tenantId: user.tenantId, key: "ASSESSMENTS" } },

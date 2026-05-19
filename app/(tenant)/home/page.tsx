@@ -56,7 +56,8 @@ const DEFAULT_WINDOW_DAYS = 21;
 const ALLOWED_WINDOW_DAYS = [7, 14, 21, 28];
 
 function studentAnalysisHref(studentId: string, windowDays: number): string {
-  return `/analysis/students/${studentId}?window=${windowDays}`;
+  const from = encodeURIComponent(`/home`);
+  return `/analysis/students/${studentId}?window=${windowDays}&from=${from}`;
 }
 
 /** Year-group pill — neutral grey chip (Attainment dual-flagged row) */
@@ -342,8 +343,6 @@ function LeadershipHome({
   pendingLeaveCount,
   pendingLeaveDetails,
   liveOnCallBanner,
-  onCallDetails,
-  onCallStats,
   weekObsCount,
   weekObsTeachers,
   attainmentSummary,
