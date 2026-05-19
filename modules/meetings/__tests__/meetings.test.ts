@@ -11,7 +11,7 @@ import {
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    user: { findMany: vi.fn() },
+    user: { findMany: vi.fn(), findFirst: vi.fn() },
     meeting: {
       create: vi.fn(),
       findFirst: vi.fn(),
@@ -188,25 +188,30 @@ describe("updateMeeting", () => {
   });
 
   it("updates title successfully", async () => {
-    const result = await updateMeeting("tenant_1", "meeting_1", "user_1", { title: "Updated" });
+    const result = await updateMeeting("tenant_1", "meeting_1", { id: "user_1", role: "TEACHER" }, { title: "Updated" });
     expect(result.title).toBe("Updated");
   });
 
-  it("throws when non-creator tries to update", async () => {
+  it("throws when non-creator without edit permission tries to update", async () => {
     await expect(
-      updateMeeting("tenant_1", "meeting_1", "other_user", { title: "X" })
+      updateMeeting("tenant_1", "meeting_1", { id: "other_user", role: "TEACHER" }, { title: "X" })
     ).rejects.toThrow("only creator can update meeting");
+  });
+
+  it("allows ADMIN with meetings:edit to update another user's meeting", async () => {
+    const result = await updateMeeting("tenant_1", "meeting_1", { id: "admin_1", role: "ADMIN" }, { title: "Updated" });
+    expect(result.title).toBe("Updated");
   });
 
   it("throws when meeting not found", async () => {
     (prisma as any).meeting.findFirst.mockResolvedValue(null);
     await expect(
-      updateMeeting("tenant_1", "nonexistent", "user_1", {})
+      updateMeeting("tenant_1", "nonexistent", { id: "user_1", role: "TEACHER" }, {})
     ).rejects.toThrow("meeting not found");
   });
 
   it("sets startedAt when meeting has not started", async () => {
-    await updateMeeting("tenant_1", "meeting_1", "user_1", { startedAt: now });
+    await updateMeeting("tenant_1", "meeting_1", { id: "user_1", role: "TEACHER" }, { startedAt: now });
     const updateCall = (prisma as any).meeting.update.mock.calls[0][0];
     expect(updateCall.data.startedAt).toEqual(now);
   });
@@ -216,14 +221,14 @@ describe("updateMeeting", () => {
       mockMeeting({ startedAt: new Date("2026-01-15T09:00:00Z") }),
     );
     await expect(
-      updateMeeting("tenant_1", "meeting_1", "user_1", { startedAt: now }),
+      updateMeeting("tenant_1", "meeting_1", { id: "user_1", role: "TEACHER" }, { startedAt: now }),
     ).rejects.toThrow("meeting already started");
   });
 
   it("throws when setting startedAt on cancelled meeting", async () => {
     (prisma as any).meeting.findFirst.mockResolvedValue(mockMeeting({ status: "CANCELLED" }));
     await expect(
-      updateMeeting("tenant_1", "meeting_1", "user_1", { startedAt: now }),
+      updateMeeting("tenant_1", "meeting_1", { id: "user_1", role: "TEACHER" }, { startedAt: now }),
     ).rejects.toThrow("cannot start a cancelled meeting");
   });
 
@@ -233,7 +238,7 @@ describe("updateMeeting", () => {
     (prisma as any).meeting.findFirst.mockResolvedValue(
       mockMeeting({ startedAt: started, status: "CONFIRMED", endedAt: null }),
     );
-    await updateMeeting("tenant_1", "meeting_1", "user_1", { endedAt: ended });
+    await updateMeeting("tenant_1", "meeting_1", { id: "user_1", role: "TEACHER" }, { endedAt: ended });
     const updateCall = (prisma as any).meeting.update.mock.calls[0][0];
     expect(updateCall.data.endedAt).toEqual(ended);
     expect(updateCall.data.endDateTime).toEqual(ended);
@@ -246,14 +251,14 @@ describe("updateMeeting", () => {
       mockMeeting({ startedAt: started, status: "CONFIRMED", endedAt: null }),
     );
     await expect(
-      updateMeeting("tenant_1", "meeting_1", "user_1", { endedAt: ended }),
+      updateMeeting("tenant_1", "meeting_1", { id: "user_1", role: "TEACHER" }, { endedAt: ended }),
     ).rejects.toThrow("endedAt must be after startedAt");
   });
 
   it("throws when ending meeting that never started", async () => {
     (prisma as any).meeting.findFirst.mockResolvedValue(mockMeeting({ startedAt: null }));
     await expect(
-      updateMeeting("tenant_1", "meeting_1", "user_1", { endedAt: later }),
+      updateMeeting("tenant_1", "meeting_1", { id: "user_1", role: "TEACHER" }, { endedAt: later }),
     ).rejects.toThrow("cannot end meeting before it has been started");
   });
 });
@@ -266,13 +271,13 @@ describe("deleteMeeting", () => {
   });
 
   it("deletes meeting for creator", async () => {
-    await deleteMeeting("tenant_1", "meeting_1", "user_1");
+    await deleteMeeting("tenant_1", "meeting_1", { id: "user_1", role: "TEACHER" });
     expect((prisma as any).meeting.delete).toHaveBeenCalledOnce();
   });
 
   it("throws when non-creator tries to delete", async () => {
     await expect(
-      deleteMeeting("tenant_1", "meeting_1", "other_user")
+      deleteMeeting("tenant_1", "meeting_1", { id: "other_user", role: "TEACHER" })
     ).rejects.toThrow("only creator can delete meeting");
   });
 });
@@ -281,10 +286,12 @@ describe("addAttendee", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (prisma as any).meeting.findFirst.mockResolvedValue(mockMeeting());
+    (prisma as any).user.findFirst.mockResolvedValue({ id: "user_2" });
     (prisma as any).meetingAttendee.upsert.mockResolvedValue({ id: "att_2", meetingId: "meeting_1", userId: "user_2" });
   });
 
   it("adds attendee successfully", async () => {
+    (prisma as any).user.findFirst.mockResolvedValue({ id: "user_2" });
     const result = await addAttendee("meeting_1", "user_2", "tenant_1");
     expect(result.userId).toBe("user_2");
   });

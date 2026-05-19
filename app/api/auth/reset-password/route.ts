@@ -15,31 +15,39 @@ export async function POST(req: Request) {
   }
 
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const passwordHash = await bcrypt.hash(password, 12);
 
-  const record = await prisma.passwordResetToken.findUnique({
-    where: { tokenHash },
-    include: { user: { select: { id: true } } },
+  const updated = await prisma.$transaction(async (tx) => {
+    const record = await tx.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: { user: { select: { id: true } } },
+    });
+
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      return null;
+    }
+
+    const marked = await tx.passwordResetToken.updateMany({
+      where: { id: record.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    if (marked.count !== 1) return null;
+
+    await tx.user.update({
+      where: { id: record.userId },
+      data: { passwordHash },
+    });
+
+    return record;
   });
 
-  if (!record || record.usedAt || record.expiresAt < new Date()) {
+  if (!updated) {
     return NextResponse.json(
       { error: "This reset link is invalid or has expired. Please request a new one." },
       { status: 400 }
     );
   }
-
-  const passwordHash = await bcrypt.hash(password, 12);
-
-  await prisma.$transaction([
-    prisma.user.updateMany({
-      where: { id: record.userId },
-      data: { passwordHash },
-    }),
-    prisma.passwordResetToken.update({
-      where: { id: record.id },
-      data: { usedAt: new Date() },
-    }),
-  ]);
 
   return NextResponse.json({ ok: true });
 }

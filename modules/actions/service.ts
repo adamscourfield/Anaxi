@@ -85,7 +85,7 @@ export async function blockAction(
   tenantId: string,
   actionId: string,
   userId: string,
-  _reason: string
+  reason: string
 ) {
   const action = await (prisma as any).meetingAction.findFirst({
     where: { id: actionId, tenantId },
@@ -93,9 +93,15 @@ export async function blockAction(
   if (!action) throw new Error("action not found");
   if (action.ownerUserId !== userId) throw new Error("only owner can block action");
 
+  const trimmedReason = reason.trim();
+  const description =
+    trimmedReason.length > 0
+      ? `[Blocked: ${trimmedReason}] ${action.description}`
+      : action.description;
+
   return (prisma as any).meetingAction.update({
     where: { id: actionId },
-    data: { status: "BLOCKED" },
+    data: { status: "BLOCKED", description },
     include: ACTION_INCLUDE,
   });
 }

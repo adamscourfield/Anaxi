@@ -23,6 +23,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
     if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
     if (message === "meeting not found") return NextResponse.json({ error: message }, { status: 404 });
+    if (message === "attendee user not found in tenant") return NextResponse.json({ error: message }, { status: 400 });
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
@@ -46,6 +47,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
     if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
     if (message === "meeting not found") return NextResponse.json({ error: message }, { status: 404 });
+    if (message === "attendee user not found in tenant") return NextResponse.json({ error: message }, { status: 400 });
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

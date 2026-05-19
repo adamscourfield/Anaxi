@@ -17,7 +17,7 @@
 
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature } from "@/lib/guards";
+import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { parseAssessmentCsv, detectSubjectColumns } from "@/modules/assessments/csv";
 import { importAssessmentResults, createAssessment } from "@/modules/assessments/import";
@@ -29,6 +29,7 @@ export async function POST(
 ) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
+  requireAssessmentWrite(user);
 
   const point = await prisma.assessmentPoint.findFirst({
     where: { id: params.pointId, tenantId: user.tenantId },
@@ -147,12 +148,15 @@ export async function POST(
       }
     );
 
-    // Update assessment counts
+    const resultCount = await prisma.assessmentResult.count({
+      where: { assessmentId: assessment.id, tenantId: user.tenantId },
+    });
+
     await prisma.assessment.update({
       where: { id: assessment.id },
       data: {
-        entryCount: summary.rowsProcessed,
-        matchedStudentCount: summary.rowsProcessed,
+        entryCount: resultCount,
+        matchedStudentCount: resultCount,
         rawFileName: file.name,
         uploadStatus: summary.rowsFailed === 0 ? "VALIDATED" : "PARTIAL",
         updatedAt: new Date(),

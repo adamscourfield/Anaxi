@@ -204,10 +204,12 @@ export async function getRequestsByStatus(
   tenantId: string,
   status?: string,
   take = 50,
-  skip = 0
+  skip = 0,
+  requesterUserId?: string
 ) {
   const where: Record<string, unknown> = { tenantId };
   if (status) where.status = status;
+  if (requesterUserId) where.requesterUserId = requesterUserId;
 
   const [data, total] = await Promise.all([
     (prisma as any).onCallRequest.findMany({

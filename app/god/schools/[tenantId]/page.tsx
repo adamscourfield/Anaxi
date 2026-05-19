@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireSuperAdminUser } from "@/lib/admin";
+import { readGodInvitePreview } from "@/lib/godInviteCookie";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,8 +25,17 @@ const MODULES = [
   "ASSESSMENTS",
 ] as const;
 
-export default async function SchoolDetailPage({ params, searchParams }: { params: { tenantId: string }, searchParams?: { invite?: string } }) {
+export default async function SchoolDetailPage({
+  params,
+  searchParams,
+}: {
+  params: { tenantId: string };
+  searchParams?: { inviteCreated?: string };
+}) {
   await requireSuperAdminUser();
+
+  const invitePreview =
+    searchParams?.inviteCreated === "1" ? readGodInvitePreview(params.tenantId) : null;
 
   const school = await prisma.tenant.findUnique({
     where: { id: params.tenantId },
@@ -49,13 +59,13 @@ export default async function SchoolDetailPage({ params, searchParams }: { param
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 p-6">
-      {searchParams?.invite ? (
+      {invitePreview ? (
         <Card className="border-success/30 bg-[var(--pill-success-bg)]">
           <div className="font-medium text-success">Invite created.</div>
-          <MetaText>Copy this one-time link and send it securely to the admin.</MetaText>
+          <MetaText>Copy this one-time link and send it securely to the admin. It is not stored in the URL.</MetaText>
           <details className="mt-2">
             <summary className="link-underline cursor-pointer text-xs text-muted">Show invite link</summary>
-            <div className="mt-1 break-all text-xs">{decodeURIComponent(searchParams.invite)}</div>
+            <div className="mt-1 break-all text-xs">{invitePreview}</div>
           </details>
         </Card>
       ) : null}

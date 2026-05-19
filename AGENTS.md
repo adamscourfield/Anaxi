@@ -25,14 +25,14 @@ Anaxi is a single Next.js 14 app with a PostgreSQL 16 database (via Docker Compo
 2. Export the DB URL: `export DATABASE_URL='postgresql://postgres:postgres@localhost:5432/anaxi'`
 3. Apply schema: `npx prisma db push` (use `db push` instead of `migrate deploy` — the migration `20260320000000` has a date-ordering bug that causes it to run before the init migration)
 4. Seed data: `npx prisma db seed` and optionally `npm run seed:demo` for a full demo dataset
-5. Dev server: `npm run dev` (port 5000)
+5. Dev server: `npm run dev` (port 3000; set `NEXTAUTH_URL` to match)
 
 ### Key commands
 
 | Task | Command |
 |------|---------|
 | Lint | `npm run lint` |
-| Test | `npm test` (vitest, 285 tests) |
+| Test | `npm test` (vitest) |
 | Build | `npm run build` |
 | Dev server | `npm run dev` |
 

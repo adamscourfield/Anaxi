@@ -57,10 +57,14 @@ export async function GET(req: Request) {
     const canViewAll = hasOnCallPermission(user.role, "oncall:view_all");
 
     if (!canViewAll) {
-      // Non-admins only see their own requests
-      const { data, total } = await getRequestsByStatus(user.tenantId, status, take, skip);
-      const own = (data as any[]).filter((r: any) => r.requesterUserId === user.id);
-      return NextResponse.json({ data: own, total: own.length, skip, take });
+      const { data, total } = await getRequestsByStatus(
+        user.tenantId,
+        status,
+        take,
+        skip,
+        user.id
+      );
+      return NextResponse.json({ data, total, skip, take });
     }
 
     const { data, total } = await getRequestsByStatus(user.tenantId, status, take, skip);

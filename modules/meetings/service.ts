@@ -1,5 +1,18 @@
 import { prisma } from "@/lib/prisma";
+import { hasPermission } from "@/lib/rbac";
+import type { UserRole } from "@/lib/types";
 import { CreateMeetingInput, UpdateMeetingInput } from "./types";
+
+export type MeetingActor = { id: string; role: UserRole };
+
+function canMutateMeeting(
+  createdByUserId: string,
+  actor: MeetingActor,
+  permission: "meetings:edit" | "meetings:delete"
+) {
+  if (createdByUserId === actor.id) return true;
+  return hasPermission(actor.role, permission);
+}
 
 const MEETING_INCLUDE = {
   createdBy: { select: { id: true, fullName: true, email: true } },
@@ -63,14 +76,18 @@ export async function getMeetingDetail(tenantId: string, meetingId: string) {
 export async function updateMeeting(
   tenantId: string,
   meetingId: string,
-  createdByUserId: string,
+  actor: MeetingActor,
   input: UpdateMeetingInput
 ) {
   const existing = await (prisma as any).meeting.findFirst({ where: { id: meetingId, tenantId } });
   if (!existing) throw new Error("meeting not found");
-  if (existing.createdByUserId !== createdByUserId) throw new Error("only creator can update meeting");
+  if (!canMutateMeeting(existing.createdByUserId, actor, "meetings:edit")) {
+    throw new Error("only creator can update meeting");
+  }
 
-  if (input.startDateTime && input.endDateTime && input.endDateTime <= input.startDateTime) {
+  const nextStart = input.startDateTime ?? existing.startDateTime;
+  const nextEnd = input.endDateTime ?? existing.endDateTime;
+  if (new Date(nextEnd) <= new Date(nextStart)) {
     throw new Error("endDateTime must be after startDateTime");
   }
 
@@ -127,14 +144,12 @@ export async function updateMeeting(
   });
 }
 
-export async function deleteMeeting(
-  tenantId: string,
-  meetingId: string,
-  createdByUserId: string
-) {
+export async function deleteMeeting(tenantId: string, meetingId: string, actor: MeetingActor) {
   const existing = await (prisma as any).meeting.findFirst({ where: { id: meetingId, tenantId } });
   if (!existing) throw new Error("meeting not found");
-  if (existing.createdByUserId !== createdByUserId) throw new Error("only creator can delete meeting");
+  if (!canMutateMeeting(existing.createdByUserId, actor, "meetings:delete")) {
+    throw new Error("only creator can delete meeting");
+  }
 
   await (prisma as any).meeting.delete({ where: { id: meetingId } });
 }
@@ -142,6 +157,12 @@ export async function deleteMeeting(
 export async function addAttendee(meetingId: string, userId: string, tenantId: string) {
   const meeting = await (prisma as any).meeting.findFirst({ where: { id: meetingId, tenantId } });
   if (!meeting) throw new Error("meeting not found");
+
+  const attendeeUser = await (prisma as any).user.findFirst({
+    where: { id: userId, tenantId, isActive: true },
+    select: { id: true },
+  });
+  if (!attendeeUser) throw new Error("attendee user not found in tenant");
 
   return (prisma as any).meetingAttendee.upsert({
     where: { meetingId_userId: { meetingId, userId } },

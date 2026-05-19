@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
+import { parseIsoDate } from "@/lib/parseDate";
 import { getMeetingDetail, updateMeeting, deleteMeeting } from "@/modules/meetings/service";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -48,8 +49,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const input: Record<string, unknown> = {};
     if (title !== undefined) input.title = title;
     if (type !== undefined) input.type = type;
-    if (startDateTime !== undefined) input.startDateTime = new Date(startDateTime);
-    if (endDateTime !== undefined) input.endDateTime = new Date(endDateTime);
+    if (startDateTime !== undefined) {
+      const parsed = parseIsoDate(startDateTime);
+      if (!parsed) return NextResponse.json({ error: "Invalid startDateTime" }, { status: 400 });
+      input.startDateTime = parsed;
+    }
+    if (endDateTime !== undefined) {
+      const parsed = parseIsoDate(endDateTime);
+      if (!parsed) return NextResponse.json({ error: "Invalid endDateTime" }, { status: 400 });
+      input.endDateTime = parsed;
+    }
     if (location !== undefined) input.location = location;
     if (notes !== undefined) input.notes = notes;
     if (status !== undefined) input.status = status;
@@ -66,7 +75,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       input.endedAt = new Date(endedAt);
     }
 
-    const meeting = await updateMeeting(user.tenantId, params.id, user.id, input as any);
+    const meeting = await updateMeeting(user.tenantId, params.id, { id: user.id, role: user.role }, input as any);
     return NextResponse.json(meeting);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
@@ -86,7 +95,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await deleteMeeting(user.tenantId, params.id, user.id);
+    await deleteMeeting(user.tenantId, params.id, { id: user.id, role: user.role });
     return new NextResponse(null, { status: 204 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";

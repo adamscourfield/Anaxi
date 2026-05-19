@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature } from "@/lib/guards";
+import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { QualificationType } from "@prisma/client";
 
@@ -34,6 +34,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
+  requireAssessmentWrite(user);
   const body = await req.json();
 
   const { label, cohortLabel, qualificationType, academicYear, startDate, endDate } = body;

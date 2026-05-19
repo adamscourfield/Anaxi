@@ -3,6 +3,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { sendMeetingInviteEmail } from "@/lib/email";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
+import { parseIsoDate } from "@/lib/parseDate";
 import { createMeeting, listMeetings } from "@/modules/meetings/service";
 
 export async function POST(req: Request) {
@@ -42,8 +43,13 @@ export async function POST(req: Request) {
           { status: 400 },
         );
       }
-      start = new Date(startDateTime);
-      end = new Date(endDateTime);
+      const parsedStart = parseIsoDate(startDateTime);
+      const parsedEnd = parseIsoDate(endDateTime);
+      if (!parsedStart || !parsedEnd) {
+        return NextResponse.json({ error: "Invalid startDateTime or endDateTime" }, { status: 400 });
+      }
+      start = parsedStart;
+      end = parsedEnd;
     }
 
     if (end <= start) {
