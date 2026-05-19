@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminUser } from "@/lib/admin";
+import { godInviteCookieName } from "@/lib/godInviteCookie";
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -45,5 +46,15 @@ export async function POST(req: Request, { params }: { params: { tenantId: strin
     },
   });
 
-  return NextResponse.redirect(new URL(`/god/schools/${tenant.id}?invite=${encodeURIComponent(inviteUrl)}`, req.url));
+  const response = NextResponse.redirect(
+    new URL(`/god/schools/${tenant.id}?inviteCreated=1`, req.url)
+  );
+  response.cookies.set(godInviteCookieName(tenant.id), inviteUrl, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 300,
+    path: `/god/schools/${tenant.id}`,
+  });
+  return response;
 }

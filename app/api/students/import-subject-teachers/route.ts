@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
+import { hasPermission } from "@/lib/rbac";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { parseSubjectTeacherCsv } from "@/modules/students/csv";
@@ -8,6 +9,9 @@ import { parseSubjectTeacherCsv } from "@/modules/students/csv";
 export async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS");
+  if (!hasPermission(user.role, "import:write")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const form = await req.formData();
   const file = form.get("file") as File | null;

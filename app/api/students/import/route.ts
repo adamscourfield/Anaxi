@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { apiErrorResponse } from "@/lib/apiErrors";
 import { requireFeature } from "@/lib/guards";
+import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { parseStudentsCsv, REQUIRED_FIELDS } from "@/modules/students/csv";
 
 export async function POST(req: Request) {
+  try {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS");
+  if (!hasPermission(user.role, "import:write")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const form = await req.formData();
   const file = form.get("file") as File | null;
@@ -14,7 +20,12 @@ export async function POST(req: Request) {
   const mappingJsonRaw = String(form.get("mappingJson") || "{}");
   if (!file || !snapshotDateRaw) return NextResponse.json({ error: "file and snapshotDate required" }, { status: 400 });
 
-  const mapping = JSON.parse(mappingJsonRaw) as Record<string, string>;
+  let mapping: Record<string, string>;
+  try {
+    mapping = JSON.parse(mappingJsonRaw) as Record<string, string>;
+  } catch {
+    return NextResponse.json({ error: "Invalid mapping JSON" }, { status: 400 });
+  }
   const missing = REQUIRED_FIELDS.filter((f) => !mapping[f]);
   if (missing.length) return NextResponse.json({ error: `missing required mappings: ${missing.join(", ")}` }, { status: 400 });
 
@@ -106,4 +117,7 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ importJobId: importJob.id, preview, errors, rowCount: parsed.length });
+  } catch (err) {
+    return apiErrorResponse(err);
+  }
 }

@@ -23,10 +23,13 @@
 
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { parseAndRankAssessmentCsv } from "@/modules/assessments/ranking";
 
 export async function POST(req: Request) {
-  await getSessionUserOrThrow();
+  const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "ASSESSMENTS");
+  requireAssessmentWrite(user);
 
   const form = await req.formData();
   const file = form.get("file") as File | null;

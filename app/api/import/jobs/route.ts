@@ -17,6 +17,7 @@ export async function POST(req: Request) {
       type: "STUDENTS_SNAPSHOT",
       status: "PENDING",
       uploadedBy: user.id,
+      fileName: "pending-upload.csv",
       rowCount: 0,
     },
   });

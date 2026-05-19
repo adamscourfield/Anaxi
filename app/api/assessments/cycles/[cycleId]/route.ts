@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature } from "@/lib/guards";
+import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -46,6 +46,7 @@ export async function PATCH(
 ) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
+  requireAssessmentWrite(user);
 
   const cycle = await prisma.assessmentCycle.findFirst({
     where: { id: params.cycleId, tenantId: user.tenantId },

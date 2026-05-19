@@ -44,7 +44,7 @@ export async function updateMeetingNotesAction(formData: FormData) {
   const meetingId = String(formData.get("meetingId") || "");
   const notes = String(formData.get("notes") || "").trim() || undefined;
 
-  await updateMeeting(user.tenantId, meetingId, user.id, { notes });
+  await updateMeeting(user.tenantId, meetingId, { id: user.id, role: user.role }, { notes });
   revalidatePath(`/meetings/${meetingId}`);
 }
 

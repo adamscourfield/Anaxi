@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature } from "@/lib/guards";
+import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { createAssessment } from "@/modules/assessments/import";
 import type { GradeFormat } from "@prisma/client";
@@ -33,6 +33,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
+  requireAssessmentWrite(user);
   const body = await req.json();
 
   const { pointId, subject, yearGroup, title, gradeFormat, maxScore } = body;

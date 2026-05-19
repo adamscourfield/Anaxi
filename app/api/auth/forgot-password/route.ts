@@ -6,24 +6,33 @@ import crypto from "crypto";
 const TOKEN_EXPIRY_HOURS = 1;
 
 export async function POST(req: Request) {
-  const { email } = await req.json().catch(() => ({}));
+  const { email, tenantId } = await req.json().catch(() => ({}));
 
   // Always return success to avoid leaking whether an email is registered
   const genericOk = NextResponse.json({ ok: true });
 
   if (!email || typeof email !== "string") return genericOk;
 
+  const normalizedEmail = email.toLowerCase().trim();
   const users = await prisma.user.findMany({
-    where: { email: email.toLowerCase().trim(), isActive: true },
+    where: {
+      email: normalizedEmail,
+      isActive: true,
+      ...(typeof tenantId === "string" && tenantId.trim()
+        ? { tenantId: tenantId.trim() }
+        : {}),
+    },
     select: { id: true, fullName: true, email: true },
   });
 
   if (users.length === 0) return genericOk;
+  if (users.length > 1) {
+    // Ambiguous without tenantId — do not reset the wrong account
+    return genericOk;
+  }
 
-  // Use first matching active user (email may belong to multiple tenants)
   const user = users[0];
 
-  // Invalidate any existing unused tokens for this user
   await prisma.passwordResetToken.updateMany({
     where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
     data: { usedAt: new Date() },

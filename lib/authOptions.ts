@@ -1,5 +1,8 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { PLATFORM_TENANT_ID } from "@/lib/constants";
+import { getNextAuthSecret } from "@/lib/nextAuthSecret";
+import { isActivePlatformSuperAdmin } from "@/lib/platform";
 
 /**
  * NextAuth configuration only — no top-level Prisma or bcrypt import so the
@@ -7,7 +10,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
  * a bloated or cyclic module graph (avoids "Cannot read properties of undefined (reading 'call')").
  */
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET || "dev-insecure-nextauth-secret",
+  secret: getNextAuthSecret(),
   session: { strategy: "jwt" },
   pages: { signIn: "/login", signOut: "/login/sign-out" },
   providers: [
@@ -72,6 +75,14 @@ export const authOptions: NextAuthOptions = {
           select: { id: true, tenantId: true, email: true, fullName: true, role: true, isActive: true },
         });
         if (targetUser) {
+          // Shadow SUPER_ADMIN rows in schools require a live platform super-admin.
+          if (
+            targetUser.role === "SUPER_ADMIN" &&
+            targetUser.tenantId !== PLATFORM_TENANT_ID
+          ) {
+            const allowed = await isActivePlatformSuperAdmin(currentEmail);
+            if (!allowed) return token;
+          }
           token.user = { ...targetUser, name: targetUser.fullName };
         }
       }
