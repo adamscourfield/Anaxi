@@ -272,20 +272,20 @@ export default async function ExplorerPage() {
     });
   }
 
-  const significantDrifters = teacherRiskRows
+  const significantDrifters = visibleTeacherRisk
     .filter((r) => r.status === "SIGNIFICANT_DRIFT")
     .slice(0, MAX_DRIFT_LOG_ENTRIES);
   for (const teacher of significantDrifters) {
     logEntries.push({
       id: `drift-${teacher.teacherMembershipId}`,
       icon: "signal",
-      href: "/explorer/signals",
+      href: `/analysis/teachers/${teacher.teacherMembershipId}?window=${WINDOW_DAYS}&ref=explorer`,
       at: computedAt.getTime(),
       timeLabel: formatLogTime(computedAt),
       headlinePrefix: null,
       emphasisText: null,
-      plainTitle: `Behaviour drift · ${teacher.teacherName}`,
-      tagLabel: "Priority",
+      plainTitle: `Instructional drift · ${teacher.teacherName}`,
+      tagLabel: "Instruction",
       tagVariant: "priority",
     });
   }
@@ -452,9 +452,9 @@ export default async function ExplorerPage() {
           </Link>
         )}
 
-        {/* Behaviour */}
+        {/* Students (pastoral) */}
         {canSeeBehaviour && (
-          <Link href="/explorer/analysis" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
+          <Link href={`/explorer/students?windowDays=${WINDOW_DAYS}`} className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-low)]">
             <div className="explorer-hub-kpi-card relative flex h-full flex-col justify-between p-5 calm-transition sm:p-6">
               <div className="flex items-start justify-between">
                 <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-surface-container-low text-muted">
@@ -462,7 +462,7 @@ export default async function ExplorerPage() {
                 </span>
               </div>
               <div className="mt-4">
-                <p className="explorer-hub-kpi-label">Behaviour</p>
+                <p className="explorer-hub-kpi-label">Students</p>
                 <div className="mt-1 flex items-baseline gap-2">
                   <span className="text-[2.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--on-surface)] tabular-nums">{totalStudents}</span>
                   <span className="text-sm text-[var(--on-surface-variant)]">students</span>

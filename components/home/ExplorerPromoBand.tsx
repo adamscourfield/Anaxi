@@ -11,7 +11,7 @@ export function ExplorerPromoBand({ windowDays }: { windowDays: number }) {
         </p>
       </div>
       <Link
-        href={`/explorer?window=${windowDays}`}
+        href={`/explorer?windowDays=${windowDays}`}
         className="mt-3 inline-flex shrink-0 items-center justify-center rounded-lg bg-[var(--surface-container-lowest)] px-4 py-2 text-xs font-semibold text-text ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] calm-transition hover:bg-[var(--surface-container)] sm:mt-0"
       >
         Open Explorer →
