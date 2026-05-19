@@ -56,9 +56,9 @@ export default async function ExplorerObservationsPage({
   // ─── HOD scoping ──────────────────────────────────────────────────────────
   let hodScopedTeacherIds: string[] | null = null;
 
-  if (user.role === "HOD" && hodDepartmentIds.length > 0) {
+  if (user.role === "HOD" && viewerContext.hodDepartmentIds.length > 0) {
     const deptMembers = await (prisma as any).departmentMembership.findMany({
-      where: { tenantId: user.tenantId, departmentId: { in: hodDepartmentIds } },
+      where: { tenantId: user.tenantId, departmentId: { in: viewerContext.hodDepartmentIds } },
       select: { userId: true },
     });
     hodScopedTeacherIds = (deptMembers as any[]).map((m: any) => m.userId);

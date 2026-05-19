@@ -49,36 +49,39 @@ export default async function StudentsPage({
     canViewExplorer(viewerContext) &&
     canViewBehaviourExplorer(viewerContext);
 
+  const q = Array.isArray(params.q) ? params.q[0] : params.q;
+  const yearGroup = Array.isArray(params.yearGroup) ? params.yearGroup[0] : params.yearGroup;
+  const band = Array.isArray(params.band) ? params.band[0] : params.band;
+  const page = Array.isArray(params.page) ? params.page[0] : params.page;
+  const view = Array.isArray(params.view) ? params.view[0] : params.view;
+
+  const mapped = new URLSearchParams();
+  if (q) mapped.set("studentSearch", q);
+  if (yearGroup) mapped.set("yearGroup", yearGroup);
+  if (band) mapped.set("band", band);
+  if (page) mapped.set("page", page);
+  if (view) mapped.set("view", view);
+
+  const qs = mapped.toString();
+
   if (canOpenExplorerStudentDirectory) {
-    const q = Array.isArray(params.q) ? params.q[0] : params.q;
-    const yearGroup = Array.isArray(params.yearGroup) ? params.yearGroup[0] : params.yearGroup;
-    const band = Array.isArray(params.band) ? params.band[0] : params.band;
-    const page = Array.isArray(params.page) ? params.page[0] : params.page;
+    const explorerQs = qs ? `?${qs}` : "";
+    redirect(`/explorer/students${explorerQs}`);
+  }
 
-    const mapped = new URLSearchParams();
-    if (q) mapped.set("studentSearch", q);
-    if (yearGroup) mapped.set("yearGroup", yearGroup);
-    if (band) mapped.set("band", band);
-    if (page) mapped.set("page", page);
-
-    const qs = mapped.toString();
-    redirect(`/explorer/students${qs ? `?${qs}` : ""}`);
+  if (user.role === "TEACHER" || user.role === "LEADER") {
+    redirect(`/students/my${qs ? `?${qs}` : ""}`);
   }
 
   return (
     <EmptyState
       title="Student directory"
-      description="The school-wide student risk overview lives in Explorer and is available to senior pastoral roles when the Analysis module is enabled. You can still open students from Assessments or use import tools where your school has turned them on."
+      description="The school-wide student risk overview is available to senior pastoral roles when the Analysis module is enabled. You can still open students from Assessments."
       action={
         <div className="flex flex-wrap justify-center gap-3">
           {featureOn("ASSESSMENTS") ? (
             <Button asChild variant="primary">
               <Link href="/assessments">Go to assessments</Link>
-            </Button>
-          ) : null}
-          {featureOn("STUDENTS_IMPORT") ? (
-            <Button asChild variant="secondary">
-              <Link href="/students/import">Student import</Link>
             </Button>
           ) : null}
           <Button asChild variant="secondary">
