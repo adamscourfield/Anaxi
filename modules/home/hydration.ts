@@ -88,9 +88,15 @@ export async function hydrateLeadershipHomeData({
 }) {
   const pendingLeavePromise = hasLeaveFeature
     ? safe(
-        (prisma as any).lOARequest.count({
-          where: { tenantId: user.tenantId, status: "PENDING" },
-        }),
+        (async () => {
+          const { loaManageableRequesterIds, canManageLoa } = await import("@/lib/loa");
+          const { loaPendingApprovalWhere } = await import("@/modules/leave/leaveQuery");
+          if (!(await canManageLoa(user))) return 0;
+          const manageableIds = await loaManageableRequesterIds(user);
+          return (prisma as any).lOARequest.count({
+            where: loaPendingApprovalWhere(user.tenantId, user.id, manageableIds),
+          });
+        })(),
         0 as number
       )
     : Promise.resolve(0);
@@ -126,25 +132,28 @@ export async function hydrateLeadershipHomeData({
 
   const pendingLeaveDetailsPromise: Promise<PendingLeaveDetail[]> = hasLeaveFeature
     ? safe(
-        (prisma as any).lOARequest
-          .findMany({
-            where: { tenantId: user.tenantId, status: "PENDING" },
+        (async () => {
+          const { loaManageableRequesterIds, canManageLoa } = await import("@/lib/loa");
+          const { loaPendingApprovalWhere } = await import("@/modules/leave/leaveQuery");
+          if (!(await canManageLoa(user))) return [];
+          const manageableIds = await loaManageableRequesterIds(user);
+          const rows = await (prisma as any).lOARequest.findMany({
+            where: loaPendingApprovalWhere(user.tenantId, user.id, manageableIds),
             include: { requester: { select: { fullName: true } }, reason: { select: { label: true } } },
             orderBy: { createdAt: "desc" },
             take: 3,
-          })
-          .then((rows: any[]) =>
-            rows.map((r: any) => ({
-              id: r.id as string,
-              requesterName: (r.requester?.fullName ?? "Unknown") as string,
-              reasonLabel: (r.reason?.label ?? null) as string | null,
-              startDate: (r.startDate as Date).toISOString(),
-              endDate: (r.endDate as Date).toISOString(),
-              notes: r.notes as string | null,
-              status: r.status as string,
-              createdAt: (r.createdAt as Date).toISOString(),
-            }))
-          ),
+          });
+          return rows.map((r: any) => ({
+            id: r.id as string,
+            requesterName: (r.requester?.fullName ?? "Unknown") as string,
+            reasonLabel: (r.reason?.label ?? null) as string | null,
+            startDate: (r.startDate as Date).toISOString(),
+            endDate: (r.endDate as Date).toISOString(),
+            notes: r.notes as string | null,
+            status: r.status as string,
+            createdAt: (r.createdAt as Date).toISOString(),
+          }));
+        })(),
         [] as PendingLeaveDetail[]
       )
     : Promise.resolve([] as PendingLeaveDetail[]);

@@ -1,5 +1,12 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { sendEmail, sendOnboardingEmail, sendObservationEmail, sendMeetingInviteEmail, sendLeaveDecisionEmail } from "@/lib/email";
+import {
+  sendEmail,
+  sendOnboardingEmail,
+  sendObservationEmail,
+  sendMeetingInviteEmail,
+  sendLeaveDecisionEmail,
+  sendLeaveSubmittedEmail,
+} from "@/lib/email";
 
 // Stub global fetch
 const fetchMock = vi.fn();
@@ -279,5 +286,27 @@ describe("sendLeaveDecisionEmail", () => {
     });
 
     expect(result.status).toBe("not_configured");
+  });
+});
+
+describe("sendLeaveSubmittedEmail", () => {
+  it("notifies approvers of a new request", async () => {
+    process.env.RESEND_API_KEY = "test-key";
+    fetchMock.mockResolvedValue({ ok: true, status: 200 });
+
+    const result = await sendLeaveSubmittedEmail({
+      to: ["hr@school.example", "hod@school.example"],
+      requesterName: "Alice Green",
+      reasonLabel: "Medical",
+      startDate: new Date("2026-06-10"),
+      endDate: new Date("2026-06-12"),
+      leaveRequestId: "loa_new123",
+    });
+
+    expect(result.status).toBe("sent");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.subject).toContain("Alice Green");
+    expect(body.text).toContain("/leave/loa_new123");
   });
 });

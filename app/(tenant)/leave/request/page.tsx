@@ -1,26 +1,19 @@
 import Link from "next/link";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
+import { businessDaysBetween } from "@/lib/leaveDates";
+import { leavePolicyMessageForCode, LEAVE_MEDICAL_MIN_BUSINESS_DAYS, LEAVE_NOTICE_HOURS } from "@/lib/leavePolicy";
+import { approvedStatusFilter, isPendingStatus } from "@/lib/leaveStatus";
 import { prisma } from "@/lib/prisma";
 import { createLoaRequest } from "../actions";
 import { FormSelect } from "@/components/ui/form-select";
 import { Button } from "@/components/ui/button";
 
-function businessDays(start: Date, end: Date): number {
-  let count = 0;
-  const cur = new Date(start);
-  cur.setHours(0, 0, 0, 0);
-  const fin = new Date(end);
-  fin.setHours(0, 0, 0, 0);
-  while (cur <= fin) {
-    const dow = cur.getDay();
-    if (dow !== 0 && dow !== 6) count++;
-    cur.setDate(cur.getDate() + 1);
-  }
-  return count;
-}
-
-export default async function LeaveRequestPage() {
+export default async function LeaveRequestPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "LEAVE");
   const reasons = await prisma.loaReason.findMany({
@@ -33,20 +26,24 @@ export default async function LeaveRequestPage() {
   const twelveMonthsAgo = new Date();
   twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
 
-  const pastRequests = await (prisma as any).lOARequest.findMany({
+  const pastRequests = await prisma.lOARequest.findMany({
     where: {
       tenantId: user.tenantId,
       requesterId: user.id,
-      status: { in: ["APPROVED", "PENDING"] },
+      status: { in: ["PENDING", ...approvedStatusFilter()] },
       startDate: { gte: twelveMonthsAgo },
     },
     include: { reason: true },
   });
 
+  const errorCode = String(searchParams?.error || "");
+  const errorMessage = errorCode ? leavePolicyMessageForCode(errorCode) : null;
+
   const leaveSummary: Record<string, number> = {};
-  for (const req of pastRequests as any[]) {
+  for (const req of pastRequests) {
+    if (!isPendingStatus(req.status) && !approvedStatusFilter().includes(req.status)) continue;
     const label = req.reason?.label ?? "Other";
-    const days = businessDays(new Date(req.startDate), new Date(req.endDate));
+    const days = businessDaysBetween(new Date(req.startDate), new Date(req.endDate));
     leaveSummary[label] = (leaveSummary[label] || 0) + days;
   }
 
@@ -76,7 +73,15 @@ export default async function LeaveRequestPage() {
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <form action={createLoaRequest} className="space-y-5">
+          {errorMessage ? (
+            <div
+              role="alert"
+              className="mb-5 rounded-xl border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_06%,var(--surface-container-lowest))] px-4 py-3 text-[0.875rem] text-[var(--error)]"
+            >
+              {errorMessage}
+            </div>
+          ) : null}
+          <form action={createLoaRequest} encType="multipart/form-data" className="space-y-5">
             <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -165,16 +170,24 @@ export default async function LeaveRequestPage() {
                   </svg>
                   Medical evidence
                 </label>
-                <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-low)]/40 py-12">
+                <label
+                  htmlFor="loa-medical"
+                  className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-low)]/40 px-4 py-8 calm-transition hover:border-text/20"
+                >
                   <svg className="mb-3 h-9 w-9 text-muted/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                     <path d="M12 18v-6M9 15l3-3 3 3" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <p className="text-[0.875rem] font-semibold text-text">Click to upload or drag and drop</p>
-                  <p className="mt-1 text-[0.75rem] text-muted">PDF, JPG OR PNG (MAX 5MB)</p>
-                  <input type="hidden" name="medicalEvidenceUrl" value="" />
-                </div>
+                  <p className="text-[0.875rem] font-semibold text-text">Choose file (PDF, JPG, PNG — max 5MB)</p>
+                  <input
+                    id="loa-medical"
+                    type="file"
+                    name="medicalEvidence"
+                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                    className="mt-3 max-w-full text-[0.75rem] text-muted file:mr-3 file:rounded-md file:border-0 file:bg-[var(--surface-container-high)] file:px-3 file:py-1.5 file:text-[0.75rem] file:font-semibold file:text-text"
+                  />
+                </label>
                 <p className="flex items-center gap-2 text-[11px] text-muted">
                   <svg className="h-3.5 w-3.5 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -185,16 +198,7 @@ export default async function LeaveRequestPage() {
             </div>
 
             <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-end">
-              <Button
-                type="button"
-                variant="secondary"
-                disabled
-                title="Draft saving is not available yet."
-                className="order-2 w-full rounded-md border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] sm:order-1 sm:w-auto"
-              >
-                Save Draft
-              </Button>
-              <Button type="submit" className="order-1 w-full gap-2 rounded-md px-8 py-3 shadow-md sm:order-2 sm:w-auto">
+              <Button type="submit" className="w-full gap-2 rounded-md px-8 py-3 shadow-md sm:ml-auto sm:w-auto">
                 Submit Request
                 <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>
                   <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -216,7 +220,7 @@ export default async function LeaveRequestPage() {
                   </svg>
                 </div>
                 <p className="text-[0.8125rem] leading-relaxed text-muted">
-                  Requests must be submitted at least 48 hours prior to the requested start date for planned absences.
+                  Requests must be submitted at least {LEAVE_NOTICE_HOURS} hours before the start date for planned absences.
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -227,7 +231,7 @@ export default async function LeaveRequestPage() {
                   </svg>
                 </div>
                 <p className="text-[0.8125rem] leading-relaxed text-muted">
-                  Medical certificates are mandatory for all absences exceeding two consecutive working days.
+                  Medical evidence is required for absences of {LEAVE_MEDICAL_MIN_BUSINESS_DAYS} or more consecutive working days.
                 </p>
               </div>
             </div>

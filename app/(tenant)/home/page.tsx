@@ -839,28 +839,9 @@ function LeadershipHome({
                           </div>
                         </Link>
                         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
-                          {isEmergency ? (
-                            <Button variant="primary" asChild className="min-h-0 rounded-md px-4 py-2 text-xs">
-                              <Link href="/leave#pending-requests">Review in queue</Link>
-                            </Button>
-                          ) : (
-                            <>
-                              <Button variant="ghost" asChild className="min-h-0 rounded-md px-3 py-2 text-xs font-medium text-[var(--pill-error-text)] hover:bg-status-denied-light">
-                                <Link href="/leave#pending-requests" aria-label={`Decline or review leave for ${leave.requesterName}`}>
-                                  Decline
-                                </Link>
-                              </Button>
-                              <Button
-                                variant="secondary"
-                                asChild
-                                className="min-h-0 rounded-md border-0 bg-[color-mix(in_srgb,var(--success)_14%,white)] px-4 py-2 text-xs font-semibold text-[#065F46] shadow-none hover:bg-[color-mix(in_srgb,var(--success)_22%,white)]"
-                              >
-                                <Link href="/leave#pending-requests" aria-label={`Approve leave for ${leave.requesterName}`}>
-                                  Approve
-                                </Link>
-                              </Button>
-                            </>
-                          )}
+                          <Button variant="primary" asChild className="min-h-0 rounded-md px-4 py-2 text-xs">
+                            <Link href={`/leave/${leave.id}`}>Review request</Link>
+                          </Button>
                         </div>
                       </div>
                     );
@@ -1180,12 +1161,16 @@ function TeacherHome({
   const loaStatusLabel: Record<string, string> = {
     PENDING: "Pending review",
     APPROVED: "Approved",
+    APPROVED_WITH_PAY: "Approved with pay",
+    APPROVED_WITHOUT_PAY: "Approved without pay",
     DENIED: "Not approved",
     CANCELLED: "Cancelled",
   };
   const loaStatusPill: Record<string, PillVariant> = {
     PENDING: "neutral",
     APPROVED: "success",
+    APPROVED_WITH_PAY: "success",
+    APPROVED_WITHOUT_PAY: "warning",
     DENIED: "error",
     CANCELLED: "neutral",
   };

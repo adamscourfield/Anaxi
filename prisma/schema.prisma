@@ -172,6 +172,9 @@ model LOARequest {
   coverRequirements  String?
   medicalEvidenceUrl String?
   notes              String?
+  decisionNotes      String?
+  decidedById        String?
+  decidedAt          DateTime?
   status             String     @default("PENDING")
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt

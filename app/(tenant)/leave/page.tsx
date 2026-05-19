@@ -3,71 +3,16 @@ import { Suspense } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
-import { canManageLoa } from "@/lib/loa";
+import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
+import { isPendingStatus, loaStatusUiBucket } from "@/lib/leaveStatus";
 import { prisma } from "@/lib/prisma";
-import { LeaveTable, type LeaveRow } from "./LeaveTable";
+import { LeaveTable } from "./LeaveTable";
 import { LeaveCalendarGrid } from "./LeaveCalendarGrid";
 import { LeaveCreatedToast } from "@/components/leave/leave-created-toast";
 import { Button } from "@/components/ui/button";
 import { fetchLeaveCalendarMonthRequests } from "@/modules/leave/leaveCalendarMonthData";
-
-/* ── Helpers ────────────────────────────────────────────────────── */
-
-function fmt(date: Date) {
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
-
-/** e.g. Oct 12 — Oct 15 (same year omitted on end when same month/year) */
-function fmtShortRange(start: Date, end: Date) {
-  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
-  const a = start.toLocaleDateString("en-GB", opts);
-  if (start.toDateString() === end.toDateString()) return a;
-  const sameMonth =
-    start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth();
-  const b = end.toLocaleDateString("en-GB", sameMonth ? { day: "numeric" } : opts);
-  return `${a} — ${b}`;
-}
-
-function businessDays(start: Date, end: Date): number {
-  let count = 0;
-  const cur = new Date(start);
-  cur.setHours(0, 0, 0, 0);
-  const fin = new Date(end);
-  fin.setHours(0, 0, 0, 0);
-  while (cur <= fin) {
-    const dow = cur.getDay();
-    if (dow !== 0 && dow !== 6) count++;
-    cur.setDate(cur.getDate() + 1);
-  }
-  return count;
-}
-
-const AVATAR_COLORS = [
-  "bg-cat-violet-bg text-cat-violet-text",
-  "bg-cat-blue-bg text-cat-blue-text",
-  "bg-scale-strong-light text-scale-strong-text",
-  "bg-scale-limited-light text-scale-limited-text",
-  "bg-scale-some-light text-scale-some-text",
-  "bg-cat-indigo-bg text-cat-indigo-text",
-];
-
-function avatarColor(name: string) {
-  let hash = 0;
-  for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[hash];
-}
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-}
-
-/* ── Page ───────────────────────────────────────────────────────── */
+import { loaRequestVisibilityWhere } from "@/modules/leave/leaveQuery";
+import { mapLoaRequestToLeaveRow } from "@/modules/leave/leaveRow";
 
 export default async function LeavePage({
   searchParams,
@@ -76,67 +21,43 @@ export default async function LeavePage({
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "LEAVE");
-  const manager = await canManageLoa(user);
+  const isApprover = await canManageLoa(user);
+  const manageableIds = await loaManageableRequesterIds(user);
 
   const view = String(searchParams?.view || "list");
   const monthParam = String(searchParams?.month || "");
 
-  /* Calendar month */
   let calendarDate = new Date();
   if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
     const [y, m] = monthParam.split("-").map(Number);
     calendarDate = new Date(y, m - 1, 1);
   }
 
-  /* Fetch requests */
-  const requests = await (prisma as any).lOARequest.findMany({
-    where: manager
-      ? { tenantId: user.tenantId }
-      : { tenantId: user.tenantId, requesterId: user.id },
+  const requests = await prisma.lOARequest.findMany({
+    where: loaRequestVisibilityWhere(user.tenantId, user.id, manageableIds),
     include: { reason: true, requester: true },
     orderBy: { createdAt: "desc" },
-    take: 100,
+    take: 200,
   });
 
-  function mapToLeaveRow(r: any): LeaveRow {
-    const start = new Date(r.startDate);
-    const end = new Date(r.endDate);
-    const name = r.requester?.fullName ?? null;
-    return {
-      id: r.id,
-      startDate: fmt(start),
-      endDate: fmt(end),
-      dateRangeLine: fmtShortRange(start, end),
-      days: businessDays(start, end),
-      status: r.status as "PENDING" | "APPROVED" | "DENIED",
-      reasonLabel: r.reason?.label ?? null,
-      requesterName: name,
-      requesterInitials: name ? initials(name) : null,
-      requesterAvatarColor: name ? avatarColor(name) : null,
-    };
-  }
-
-  const pendingRows: LeaveRow[] = (requests as any[])
-    .filter((r) => r.status === "PENDING")
+  const pendingRows = requests
+    .filter((r) => isPendingStatus(r.status))
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
     .slice(0, 50)
-    .map(mapToLeaveRow);
+    .map(mapLoaRequestToLeaveRow);
 
-  const completedRows: LeaveRow[] = (requests as any[])
-    .filter((r) => r.status === "APPROVED" || r.status === "DENIED")
+  const completedRows = requests
+    .filter((r) => loaStatusUiBucket(r.status) !== "PENDING")
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 50)
-    .map(mapToLeaveRow);
+    .map(mapLoaRequestToLeaveRow);
 
   const hasAnyListRows = pendingRows.length > 0 || completedRows.length > 0;
-
   const monthQuery = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth() + 1).padStart(2, "0")}`;
 
-  /* Calendar data */
   const calendarRequests = await fetchLeaveCalendarMonthRequests({
     tenantId: user.tenantId,
-    viewerUserId: user.id,
-    manager,
+    viewer: user,
     monthKey: monthQuery,
   });
 
@@ -245,7 +166,7 @@ export default async function LeavePage({
           </Button>
         </div>
       ) : (
-        <LeaveTable pendingRows={pendingRows} completedRows={completedRows} isManager={manager} />
+        <LeaveTable pendingRows={pendingRows} completedRows={completedRows} isManager={isApprover} />
       )}
     </div>
   );

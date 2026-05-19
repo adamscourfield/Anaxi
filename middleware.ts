@@ -27,6 +27,7 @@ export const config = {
     "/api/oncall/:path*",
     "/api/email/:path*",
     "/api/csv/:path*",
+    "/api/leave/:path*",
     "/god/:path*",
     "/api/god/:path*"
   ]
