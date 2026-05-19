@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useId } from "react";
 
 export interface SelectOption {
   value: string;
@@ -16,6 +16,8 @@ interface SearchableSelectProps {
   searchPlaceholder?: string;
   className?: string;
   disabled?: boolean;
+  /** Accessible name when no visible label is wired (UX-111). */
+  ariaLabel?: string;
 }
 
 export function SearchableSelect({
@@ -26,11 +28,14 @@ export function SearchableSelect({
   searchPlaceholder = "Search…",
   className = "",
   disabled = false,
+  ariaLabel,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listboxId = useId();
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -51,17 +56,25 @@ export function SearchableSelect({
     const q = query.trim().toLowerCase();
     if (!q) return options;
     return options.filter(
-      (o) => o.label.toLowerCase().includes(q) || (o.detail?.toLowerCase().includes(q) ?? false)
+      (o) => o.label.toLowerCase().includes(q) || (o.detail?.toLowerCase().includes(q) ?? false),
     );
   }, [query, options]);
 
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [filtered.length, query]);
+
   const selectedOption = options.find((o) => o.value === value);
+  const activeId = filtered[activeIndex] ? `${listboxId}-opt-${activeIndex}` : undefined;
 
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
         type="button"
         disabled={disabled}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
         onClick={() => setOpen(!open)}
         className={`field !flex w-full items-center justify-between gap-2 text-left ${
           disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
@@ -88,6 +101,11 @@ export function SearchableSelect({
               <input
                 ref={inputRef}
                 type="text"
+                role="combobox"
+                aria-controls={listboxId}
+                aria-expanded={open}
+                aria-activedescendant={activeId}
+                aria-autocomplete="list"
                 className="w-full border-none bg-transparent text-sm text-text outline-none placeholder:text-muted/60"
                 placeholder={searchPlaceholder}
                 value={query}
@@ -96,24 +114,51 @@ export function SearchableSelect({
                   if (e.key === "Escape") {
                     setOpen(false);
                     setQuery("");
+                    return;
+                  }
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setActiveIndex((i) => Math.min(i + 1, Math.max(0, filtered.length - 1)));
+                    return;
+                  }
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setActiveIndex((i) => Math.max(i - 1, 0));
+                    return;
+                  }
+                  if (e.key === "Enter" && filtered[activeIndex]) {
+                    e.preventDefault();
+                    onChange(filtered[activeIndex].value);
+                    setOpen(false);
+                    setQuery("");
                   }
                 }}
               />
             </div>
           </div>
-          <div className="max-h-[240px] overflow-y-auto py-1">
+          <div
+            id={listboxId}
+            role="listbox"
+            className="max-h-[240px] overflow-y-auto py-1"
+          >
             {filtered.length === 0 ? (
               <p className="px-4 py-3 text-sm text-muted">No results found</p>
             ) : (
-              filtered.map((option) => (
+              filtered.map((option, index) => (
                 <button
                   key={option.value}
+                  id={`${listboxId}-opt-${index}`}
                   type="button"
+                  role="option"
+                  aria-selected={option.value === value}
                   className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm calm-transition ${
-                    option.value === value
+                    index === activeIndex
                       ? "bg-accent/[0.06] font-medium text-accent"
-                      : "text-text hover:bg-bg"
+                      : option.value === value
+                        ? "bg-accent/[0.06] font-medium text-accent"
+                        : "text-text hover:bg-bg"
                   }`}
+                  onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => {
                     onChange(option.value);
                     setOpen(false);

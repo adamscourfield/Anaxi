@@ -131,12 +131,12 @@ function Toggle({
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className={`relative inline-flex h-[26px] w-[46px] shrink-0 items-center rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-neutral-950 ${
+      className={`relative inline-flex h-[26px] w-[46px] shrink-0 items-center rounded-md transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
         disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
       } ${checked ? "bg-[var(--primary)]" : "bg-[color-mix(in_srgb,var(--surface-container-high)_95%,var(--outline-variant))]"}`}
     >
       <span
-        className={`inline-block h-[20px] w-[20px] rounded-md bg-white shadow-sm transition-transform duration-200 dark:bg-neutral-100 ${
+        className={`inline-block h-[20px] w-[20px] rounded-md bg-white shadow-sm transition-transform duration-200 ${
           checked ? "translate-x-[23px]" : "translate-x-[3px]"
         }`}
       />
@@ -518,7 +518,7 @@ export function EditUserModal({
               type="button"
               onClick={handleSave}
               disabled={pending}
-              className="inline-flex items-center justify-center rounded-xl bg-neutral-950 px-6 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 disabled:opacity-50 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+              className="inline-flex items-center justify-center rounded-xl bg-neutral-950 px-6 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 disabled:opacity-50"
             >
               {pending ? "Saving…" : "Save changes"}
             </button>

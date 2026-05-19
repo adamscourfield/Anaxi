@@ -9,7 +9,7 @@ const CARD =
   "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
 const FIELD =
-  "min-h-[2.5rem] w-full min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3.5 text-sm text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#CBD5E1] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]";
+  "min-h-[2.5rem] w-full min-w-0 flex-1 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)] focus:border-[color-mix(in_srgb,var(--outline-variant)_50%,transparent)] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]";
 
 function GripIcon({ className }: { className?: string }) {
   return (
@@ -142,10 +142,10 @@ export function TaxonomyEditableSection({
 
   return (
     <div className={CARD}>
-      <div className="flex flex-col gap-3 border-b border-[#E5E7EB] px-6 py-6 sm:flex-row sm:items-start sm:justify-between sm:px-8">
+      <div className="flex flex-col gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] px-6 py-6 sm:flex-row sm:items-start sm:justify-between sm:px-8">
         <div className="min-w-0">
-          <h2 className="text-lg font-bold tracking-tight text-[#111827]">{title}</h2>
-          <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">{description}</p>
+          <h2 className="text-lg font-bold tracking-tight text-[var(--on-surface)]">{title}</h2>
+          <p className="mt-1 text-[0.8125rem] leading-relaxed text-[var(--on-surface-variant)]">{description}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-md bg-[#ECFDF5] px-2.5 py-1 text-[0.6875rem] font-semibold text-[#166534]">
@@ -153,7 +153,7 @@ export function TaxonomyEditableSection({
             {activeCount} active
           </span>
           {inactiveCount > 0 ? (
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-[#F3F4F6] px-2.5 py-1 text-[0.6875rem] font-semibold text-[#6B7280]">
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-[var(--surface-container-low)] px-2.5 py-1 text-[0.6875rem] font-semibold text-[var(--on-surface-variant)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#9CA3AF]" />
               {inactiveCount} inactive
             </span>
@@ -169,28 +169,28 @@ export function TaxonomyEditableSection({
             description="Add an entry below. Inactive items stay in the list but are hidden from staff when they choose a reason or location."
           />
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)]">
+          <div className="overflow-x-auto rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)]">
             <table className="w-full min-w-[640px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-[#E5E7EB] bg-[#F3F4F6]">
+                <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)]">
                   <th className="w-10 px-2 py-3 sm:w-12" aria-hidden />
-                  <th className="px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280]">{valueColumnHeader}</th>
-                  <th className="w-[120px] px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Status</th>
-                  <th className="min-w-[240px] px-4 py-3 text-right text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Actions</th>
+                  <th className="px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">{valueColumnHeader}</th>
+                  <th className="w-[120px] px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Status</th>
+                  <th className="min-w-[240px] px-4 py-3 text-right text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => {
                   const formId = `tax-update-${type}-${row.id}`;
                   return (
-                    <tr key={row.id} className="border-b border-[#E5E7EB] last:border-b-0" onDragEnter={() => handleDragEnter(row.id)}>
+                    <tr key={row.id} className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] last:border-b-0" onDragEnter={() => handleDragEnter(row.id)}>
                       <td className="align-middle px-2 py-4">
                         <button
                           type="button"
                           draggable
                           onDragStart={() => setDragId(row.id)}
                           onDragEnd={() => void handleDragEnd()}
-                          className="flex h-9 w-9 cursor-grab items-center justify-center rounded-lg text-[#9CA3AF] hover:bg-[#F3F4F6] active:cursor-grabbing"
+                          className="flex h-9 w-9 cursor-grab items-center justify-center rounded-lg text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] active:cursor-grabbing"
                           title="Drag to reorder"
                           aria-label="Drag to reorder"
                         >
@@ -201,15 +201,15 @@ export function TaxonomyEditableSection({
                         <form id={formId} action={updateItem} className="flex min-w-0 items-center gap-2">
                           <input type="hidden" name="type" value={type} />
                           <input type="hidden" name="id" value={row.id} />
-                          <span className="h-2 w-2 shrink-0 rounded-full bg-[#E5E7EB]" aria-hidden />
-                          {field === "email" ? <EnvelopeIcon className="h-4 w-4 shrink-0 text-[#9CA3AF]" /> : null}
+                          <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--surface-container)]" aria-hidden />
+                          {field === "email" ? <EnvelopeIcon className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)]" /> : null}
                           <input name="label" defaultValue={row.value} aria-label={valueInputLabel} className={FIELD} required />
                         </form>
                       </td>
                       <td className="px-4 py-4 align-middle">
                         <span
                           className={`inline-flex rounded-md px-2.5 py-1 text-[0.6875rem] font-semibold ${
-                            row.active ? "bg-[#ECFDF5] text-[#166534]" : "bg-[#F3F4F6] text-[#6B7280]"
+                            row.active ? "bg-[#ECFDF5] text-[#166534]" : "bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]"
                           }`}
                         >
                           {row.active ? "Active" : "Inactive"}
@@ -220,9 +220,9 @@ export function TaxonomyEditableSection({
                           <button
                             type="submit"
                             form={formId}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 py-2 text-[0.8125rem] font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#F9FAFB]"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[0.8125rem] font-semibold text-[var(--on-surface)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)]"
                           >
-                            <SaveDiskIcon className="h-4 w-4 shrink-0 text-[#6B7280]" />
+                            <SaveDiskIcon className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)]" />
                             Save
                           </button>
                           <form action={toggleActive} className="inline">
@@ -233,7 +233,7 @@ export function TaxonomyEditableSection({
                               type="submit"
                               className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[0.8125rem] font-semibold calm-transition ${
                                 row.active
-                                  ? "border-[#E5E7EB] bg-[var(--surface-container-lowest)] text-[#6B7280] hover:bg-[#F9FAFB]"
+                                  ? "border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"
                                   : "border-[#86EFAC] bg-[#ECFDF5] text-[#166534] hover:bg-[#D1FAE5]"
                               }`}
                             >
@@ -248,7 +248,7 @@ export function TaxonomyEditableSection({
                                 e.stopPropagation();
                                 setMenuOpenId((id) => (id === row.id ? null : row.id));
                               }}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#E5E7EB] bg-[var(--surface-container-lowest)] text-[#6B7280] calm-transition hover:bg-[#F9FAFB] hover:text-[#111827]"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
                               aria-expanded={menuOpenId === row.id}
                               aria-haspopup="menu"
                               title="More actions"
@@ -286,15 +286,15 @@ export function TaxonomyEditableSection({
           </div>
         )}
 
-        <div className="mt-6 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-5 sm:p-6">
-          <h3 className="text-[0.9375rem] font-bold text-[#111827]">Add {addItemNoun}</h3>
-          <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">
+        <div className="mt-6 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)] p-5 sm:p-6">
+          <h3 className="text-[0.9375rem] font-bold text-[var(--on-surface)]">Add {addItemNoun}</h3>
+          <p className="mt-1 text-[0.8125rem] leading-relaxed text-[var(--on-surface-variant)]">
             New entries are active by default. You can deactivate them anytime without deleting history.
           </p>
           <form action={addItem} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
             <input type="hidden" name="type" value={type} />
             <label className="min-w-0 flex-1">
-              <span className="mb-1.5 block text-[0.8125rem] font-semibold text-[#111827]">
+              <span className="mb-1.5 block text-[0.8125rem] font-semibold text-[var(--on-surface)]">
                 {field === "email" ? "Email address" : valueColumnHeader}
               </span>
               <input
@@ -307,7 +307,7 @@ export function TaxonomyEditableSection({
             </label>
             <button
               type="submit"
-              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[#111827] px-6 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[#1e293b]"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[var(--on-surface)] px-6 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[var(--primary-container)]"
             >
               Add
             </button>

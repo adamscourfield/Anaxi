@@ -79,9 +79,20 @@ export default async function LeaveCalendarPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[1.5rem] font-semibold tracking-tight text-text">Leave of Absence</h1>
-        <div className="flex flex-wrap items-center gap-3">
+      <PageHeader
+        variant="ledger"
+        title="Leave of Absence"
+        subtitle="Calendar view of approved and pending leave"
+        eyebrow={
+          <Breadcrumb
+            items={[
+              { label: "Leave", href: "/leave?view=list" },
+              { label: "Calendar" },
+            ]}
+          />
+        }
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
           <div
             className="inline-flex items-center gap-0.5 rounded-lg bg-[var(--surface-container-high)] p-1"
             role="group"
@@ -96,18 +107,17 @@ export default async function LeaveCalendarPage({
             <Link
               href={`/leave/calendar?month=${monthQuery}`}
               className="inline-flex items-center gap-2 rounded-xl bg-surface-container-lowest px-3.5 py-2 text-[0.8125rem] font-medium text-text calm-transition anx-card-elevated"
+              aria-current="page"
             >
               Calendar
             </Link>
           </div>
-          <Link
-            href="/leave/request"
-            className="inline-flex items-center gap-2 rounded-md bg-gradient-to-br from-[var(--primary)] to-[var(--primary-container)] px-5 py-2.5 text-sm font-semibold text-on-primary shadow-none calm-transition hover:opacity-95 active:scale-[0.98]"
-          >
-            Request Leave
-          </Link>
+          <Button asChild variant="primary">
+            <Link href="/leave/request">Request Leave</Link>
+          </Button>
         </div>
-      </div>
+        }
+      />
 
       <div className="grid grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4">
         <StatCard

@@ -3,6 +3,8 @@
 import { useState, useMemo, useRef, useEffect, useTransition, type ReactNode } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { FormSelect } from "@/components/ui/form-select";
+import { Button } from "@/components/ui/button";
+import { TableScrollRegion } from "@/components/ui/table-scroll-region";
 import { toast } from "@/components/toast-provider";
 import { EditUserModal, TeacherOption } from "./EditUserModal";
 import type { SummaryFilter } from "./UserDirectorySummary";
@@ -330,8 +332,52 @@ export function UserDirectoryTable({
         )}
       </p>
 
-      <div className="table-shell rounded-sm shadow-none">
-        <div className="overflow-x-auto">
+      <ul className="space-y-3 md:hidden" aria-label="Staff directory">
+        {pageUsers.length === 0 ? (
+          <li className="rounded-sm border border-border bg-surface-container-lowest px-4 py-8 text-center text-sm text-muted">
+            No staff match your search or filters.
+          </li>
+        ) : (
+          pageUsers.map((u) => {
+            const locked = rowLocked(u);
+            return (
+              <li
+                key={u.id}
+                className="rounded-sm border border-border bg-surface-container-lowest p-4 shadow-none"
+              >
+                <div className="flex items-start gap-3">
+                  <Avatar name={u.fullName} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-text">{u.fullName}</p>
+                    <p className="truncate text-sm text-muted">{u.email}</p>
+                    <p className="mt-1 text-sm text-text">{roleLabel(u.role)}</p>
+                    <p className="mt-2 text-xs text-muted">{u.isActive ? "Active" : "Inactive"}</p>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {u.emailObservations && <AccessBadge title="Observation emails">Obs</AccessBadge>}
+                      {u.emailMeetings && <AccessBadge title="Meeting emails">Meet</AccessBadge>}
+                      {u.emailLeave && <AccessBadge title="Leave emails">Leave</AccessBadge>}
+                      {u.receivesOnCallEmails && <AccessBadge title="On-call emails">On-call</AccessBadge>}
+                    </div>
+                    {!locked ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="mt-3 w-full"
+                        onClick={() => setEditingUser(u)}
+                      >
+                        Edit staff
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </li>
+            );
+          })
+        )}
+      </ul>
+
+      <div className="table-shell hidden rounded-sm shadow-none md:block">
+        <TableScrollRegion>
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="table-head-row text-left">
@@ -472,7 +518,7 @@ export function UserDirectoryTable({
               )}
             </tbody>
           </table>
-        </div>
+        </TableScrollRegion>
 
         {filtered.length > 0 && totalPages > 1 ? (
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 px-5 py-3.5">

@@ -35,7 +35,7 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 | N — Admin & god | 5 | 0 | 4 | 1 | 3/5 |
 | O — Auth & public | 3 | 0 | 2 | 1 | 0/3 |
 | P — QA & regression | 3 | 1 | 2 | 0 | 1/3 |
-| **Total** | **70** | **11** | **44** | **15** | **14/70** |
+| **Total** | **70** | **11** | **44** | **15** | **38/70** |
 
 ---
 
@@ -751,3 +751,4 @@ UX-###
 | 2026-05-19 | Initial plan from full-app UX audit |
 | 2026-05-19 | Wave 1 partial: 404, errors, skip link, toast a11y, breadcrumbs, loading skeletons, meetings/actions redirect, observe tokens, god banner, E2E smoke |
 | 2026-05-19 | UX plan batch: form-field, admin icon wells, observe/leave tokens, loading routes, student profile nav, explorer KPI tokens, E2E explorer/admin, landing footer/OG, docs |
+| 2026-05-19 | Wave 2–3: PageHeader batch 2 (leave calendar), AdminPageChrome, FormField leave request, SubmitButton, leave CSV export, user directory mobile cards, TableScrollRegion, strategy Button, explorer breadcrumbs, triangulation helper, empty-state checklist, visual baseline spec |

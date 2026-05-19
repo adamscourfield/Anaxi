@@ -70,6 +70,14 @@ export default async function TriangulationPage() {
         subtitle="Students with both a high pastoral risk band and low attainment scores — highest priority for intervention."
       />
 
+      <details className="rounded-xl border border-border/40 bg-surface-container-low px-4 py-3 text-sm text-muted">
+        <summary className="cursor-pointer font-medium text-text">What is triangulation?</summary>
+        <p className="mt-2 leading-relaxed">
+          This view combines pastoral risk bands from Explorer with attainment scores from assessment cycles. Students
+          listed here need coordinated pastoral and academic follow-up.
+        </p>
+      </details>
+
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="space-y-0.5">

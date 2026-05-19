@@ -88,26 +88,26 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
   return (
     <div className="space-y-8 pb-8">
-      <div className="space-y-6 border-b border-[#E5E7EB] pb-6">
+      <div className="space-y-6 border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] pb-6">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3.5 py-2 text-[0.8125rem] font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#F9FAFB]"
+          className="inline-flex items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 py-2 text-[0.8125rem] font-semibold text-[var(--on-surface)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)]"
         >
-          <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0 text-[#6B7280]" aria-hidden>
+          <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0 text-[var(--on-surface-variant)]" aria-hidden>
             <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           Back to Admin
         </Link>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#111827] sm:text-[1.75rem]">Platform</h1>
-          <p className="mt-1.5 max-w-2xl text-[0.8125rem] leading-relaxed text-[#6B7280]">
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--on-surface)] sm:text-[1.75rem]">Platform</h1>
+          <p className="mt-1.5 max-w-2xl text-[0.8125rem] leading-relaxed text-[var(--on-surface-variant)]">
             Configure school metadata, thresholds, and module availability.
           </p>
         </div>
       </div>
 
       <div
-        className="inline-flex flex-wrap gap-1 rounded-xl bg-[#F3F4F6] p-1"
+        className="inline-flex flex-wrap gap-1 rounded-xl bg-[var(--surface-container-low)] p-1"
         role="tablist"
         aria-label="Platform sections"
       >

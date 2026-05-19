@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
@@ -438,6 +438,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function ResultPointPage() {
   const { cycleId, pointId } = useParams<{ cycleId: string; pointId: string }>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [point, setPoint] = useState<PointData | null>(null);
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
@@ -448,7 +450,30 @@ export default function ResultPointPage() {
   const [expandedPctSubject, setExpandedPctSubject] = useState<string | null>(null);
   const [gcseGapView, setGcseGapView] = useState<"pp" | "send">("pp");
   const [gapView, setGapView] = useState<"pp" | "send">("pp");
-  const [activeTab, setActiveTab] = useState<"attainment" | "pastoral" | "teaching" | "progress8">("attainment");
+  const tabFromUrl = searchParams.get("tab");
+  const initialTab =
+    tabFromUrl === "pastoral" || tabFromUrl === "teaching" || tabFromUrl === "progress8" || tabFromUrl === "attainment"
+      ? tabFromUrl
+      : "attainment";
+  const [activeTab, setActiveTab] = useState<"attainment" | "pastoral" | "teaching" | "progress8">(initialTab);
+
+  function selectTab(tab: "attainment" | "pastoral" | "teaching" | "progress8") {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }
+
+  useEffect(() => {
+    if (
+      tabFromUrl === "pastoral" ||
+      tabFromUrl === "teaching" ||
+      tabFromUrl === "progress8" ||
+      tabFromUrl === "attainment"
+    ) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
   const [pastoralData, setPastoralData] = useState<PastoralData | null>(null);
   const [teachingData, setTeachingData] = useState<TeachingData | null>(null);
   const [p8Data, setP8Data] = useState<P8PointSummary | null>(null);
@@ -689,7 +714,7 @@ export default function ResultPointPage() {
                   role="tab"
                   aria-selected={activeTab === tab}
                   aria-controls={`point-panel-${tab}`}
-                  onClick={() => setActiveTab(tab as "attainment" | "pastoral" | "teaching" | "progress8")}
+                  onClick={() => selectTab(tab as "attainment" | "pastoral" | "teaching" | "progress8")}
                   className={`anx-attainment-tab ${activeTab === tab ? "anx-attainment-tab--active" : ""}`}
                 >
                   {labels[tab]}

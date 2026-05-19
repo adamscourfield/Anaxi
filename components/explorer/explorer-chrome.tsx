@@ -1,7 +1,28 @@
 import Link from "next/link";
+import { Breadcrumb, type BreadcrumbItem } from "@/components/ui/breadcrumb";
 
-/** Standard “Back to Explorer” row above child explorer pages */
-export function ExplorerBackLink() {
+/** Standard breadcrumb row above child explorer pages (UX-024). */
+export function ExplorerBackLink({
+  section,
+  sectionHref,
+  detail,
+}: {
+  section?: string;
+  sectionHref?: string;
+  detail?: string;
+}) {
+  const items: BreadcrumbItem[] = [{ label: "Explorer", href: "/explorer" }];
+  if (section) items.push({ label: section, href: sectionHref });
+  if (detail) items.push({ label: detail });
+
+  if (items.length > 1) {
+    return (
+      <nav className="mb-6" aria-label="Breadcrumb">
+        <Breadcrumb items={items} />
+      </nav>
+    );
+  }
+
   return (
     <div className="mb-6">
       <Link

@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { TableScrollRegion } from "@/components/ui/table-scroll-region";
 import { StatusPill } from "@/components/ui/status-pill";
+import { buildCsvContent, downloadCsv } from "@/lib/csv";
 import { loaStatusLabel } from "@/lib/leaveStatus";
 import type { LoaStatusUiBucket } from "@/lib/leaveStatus";
 import type { LeaveRow } from "@/modules/leave/leaveRow";
@@ -47,16 +50,33 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
     { label: "Cancelled", value: "CANCELLED" },
   ];
 
+  function exportCsv() {
+    const headers = isManager
+      ? ["Staff", "Dates", "Days", "Reason", "Status"]
+      : ["Dates", "Days", "Reason", "Status"];
+    const dataRows = filteredRows.map((row) =>
+      isManager
+        ? [row.requesterName, row.requestedDates, row.daysLabel, row.reasonLabel, row.statusRaw]
+        : [row.requestedDates, row.daysLabel, row.reasonLabel, row.statusRaw],
+    );
+    const content = buildCsvContent(headers, dataRows);
+    downloadCsv(`leave-history-${new Date().toISOString().slice(0, 10)}.csv`, content);
+  }
+
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold tracking-tight text-text">Full Leave Ledger History</h2>
-        <Link
-          href="/leave"
-          className="inline-flex items-center rounded-md border border-border/60 bg-surface-container-low px-3.5 py-2 text-sm font-medium text-text calm-transition hover:border-border hover:bg-surface-container-high"
-        >
-          Back to dashboard
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {isManager ? (
+            <Button type="button" variant="secondary" onClick={exportCsv}>
+              Export CSV
+            </Button>
+          ) : null}
+          <Button variant="secondary" asChild>
+            <Link href="/leave">Back to dashboard</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="filter-panel flex flex-wrap gap-4">
@@ -87,7 +107,7 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
       </div>
 
       <div className="table-shell">
-        <div className="overflow-x-auto">
+        <TableScrollRegion>
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="table-head-row text-left">
@@ -134,7 +154,7 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
               )}
             </tbody>
           </table>
-        </div>
+        </TableScrollRegion>
       </div>
     </section>
   );

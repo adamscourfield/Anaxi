@@ -23,7 +23,7 @@ const variantClasses: Record<Variant, string> = {
     "py-2.5 bg-[var(--tertiary-container)] text-[var(--on-tertiary-container)] shadow-none hover:opacity-95 motion-safe:active:scale-[0.98]",
 };
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
   /** Merge styles onto a single child (e.g. `next/link`) instead of rendering `<button>`. */
   asChild?: boolean;

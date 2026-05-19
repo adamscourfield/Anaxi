@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ClickableRow } from "@/components/ui/clickable-row";
 import { PageHeader } from "@/components/ui/page-header";
 import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
+import { ExplorerBreadcrumb } from "@/components/explorer/explorer-breadcrumb";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -254,12 +255,11 @@ export default async function ExplorerTeachersPage({
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6 pb-10">
-      <ExplorerBackLink />
+      <ExplorerBackLink section="Teachers" />
 
-      {/* ── Page header ────────────────────────────────────────────────────── */}
       <PageHeader
         variant="ledger"
-        eyebrow="Explorer"
+        eyebrow={<ExplorerBreadcrumb items={[{ label: "Teachers" }]} />}
         title="Teachers"
         subtitle="Observation coverage, signal means, and drift — switch window and pivot vs priorities."
         actions={

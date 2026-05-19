@@ -76,7 +76,7 @@ export default async function AdminSignalsPage() {
       />
       <p className="max-w-2xl text-[0.8125rem] leading-relaxed text-muted">
         Use this for signal-level wording only. For cross-module wording, use{" "}
-        <a className="font-semibold text-[#7C69EF] underline decoration-violet-200 underline-offset-2 hover:text-text dark:text-violet-400" href="/admin/language">
+        <a className="font-semibold text-[#7C69EF] underline decoration-violet-200 underline-offset-2 hover:text-text" href="/admin/language">
           Language
         </a>
         .

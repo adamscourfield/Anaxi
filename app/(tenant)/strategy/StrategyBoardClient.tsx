@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect, useId, useRef, useLayoutEffect } fr
 import { createPortal } from "react-dom";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   createStrategyArea,
@@ -245,7 +246,7 @@ function AreaModal({
     >
       <button
         type="button"
-        className="fixed inset-0 bg-black/50 backdrop-blur-[2px] calm-transition dark:bg-black/60"
+        className="fixed inset-0 bg-black/50 backdrop-blur-[2px] calm-transition"
         aria-label="Dismiss dialog"
         tabIndex={-1}
         onClick={onClose}
@@ -409,23 +410,15 @@ function AreaModal({
 
             {/* Footer */}
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-border/25 bg-background px-6 py-4 sm:px-7">
-              <button
-                type="button"
-                onClick={onClose}
-                className="calm-transition rounded-xl border border-border/45 bg-surface-container-lowest px-5 py-2.5 text-[0.8125rem] font-semibold text-text shadow-sm hover:bg-surface-container-low"
-              >
+              <Button type="button" variant="secondary" onClick={onClose}>
                 Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={pending}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-950 px-6 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 disabled:opacity-60 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
-              >
+              </Button>
+              <Button type="submit" variant="primary" disabled={pending} className="gap-2">
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 {submitLabel}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

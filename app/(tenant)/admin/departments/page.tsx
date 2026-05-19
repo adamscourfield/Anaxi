@@ -124,25 +124,25 @@ export default async function AdminDepartmentsPage() {
     <div className="space-y-8 pb-8">
       <PageHeader
         variant="ledger"
-        eyebrowClassName="anx-eyebrow !text-[#6B7280]"
+        eyebrowClassName="anx-eyebrow !text-[var(--on-surface-variant)]"
         eyebrow={
           <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
             <span>Administration</span>
-            <span className="text-[#9CA3AF]" aria-hidden>
+            <span className="text-[var(--on-surface-variant)]" aria-hidden>
               &gt;
             </span>
             <span>Academic Departments</span>
           </span>
         }
         title="Academic Departments"
-        titleClassName="!text-[#111827]"
-        subtitleClassName="anx-page-subtitle !text-[#6B7280]"
+        titleClassName="!text-[var(--on-surface)]"
+        subtitleClassName="anx-page-subtitle !text-[var(--on-surface-variant)]"
         subtitle="Structure your school: departments, heads of department, and staff assignments for the current year."
         actions={
           <>
             <Link
               href="/api/admin/departments/export"
-              className="inline-flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#F9FAFB]"
+              className="inline-flex items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-[var(--on-surface)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)]"
             >
               <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M10 3v14M6 13l4 4 4-4" />
@@ -153,12 +153,12 @@ export default async function AdminDepartmentsPage() {
               <input
                 name="name"
                 placeholder="New department name"
-                className="min-h-[2.75rem] w-full min-w-0 flex-1 rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-4 text-sm text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#CBD5E1] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)] sm:min-w-[12rem] sm:max-w-[220px]"
+                className="min-h-[2.75rem] w-full min-w-0 flex-1 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-4 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)] focus:border-[color-mix(in_srgb,var(--outline-variant)_50%,transparent)] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)] sm:min-w-[12rem] sm:max-w-[220px]"
                 required
               />
               <button
                 type="submit"
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#111827] px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[#1e293b]"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--on-surface)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[var(--primary-container)]"
               >
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden>
                   <path d="M10 4v12M4 10h12" />
