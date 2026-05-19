@@ -28,7 +28,7 @@ export const POST = withApi(async function POST(req: Request) {
     data: {
       tenantId: user.tenantId,
       type: "STUDENTS_SNAPSHOT",
-      status: errors.length ? "FAILED" : "COMPLETED",
+      status: errors.length ? "FAILED" : "SUCCESS",
       uploadedBy: user.id,
       fileName: csvFile.name,
       rowCount: parsed.length,

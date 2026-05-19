@@ -1,4 +1,5 @@
 "use server";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -41,6 +42,7 @@ async function assertStudentWriteAccess() {
 }
 
 export async function archiveStudentAction(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await assertStudentWriteAccess();
   const studentId = String(formData.get("studentId") || "").trim();
   const returnTo = String(formData.get("returnTo") || "/students");
@@ -59,6 +61,7 @@ export async function archiveStudentAction(formData: FormData) {
 }
 
 export async function unarchiveStudentAction(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await assertStudentWriteAccess();
   const studentId = String(formData.get("studentId") || "").trim();
   const returnTo = String(formData.get("returnTo") || "/students");
@@ -77,6 +80,7 @@ export async function unarchiveStudentAction(formData: FormData) {
 }
 
 export async function batchArchiveYearGroupAction(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await assertStudentWriteAccess();
   const yearGroup = ensureYearGroupLabel(String(formData.get("yearGroup") || ""));
 
@@ -94,6 +98,7 @@ export async function batchArchiveYearGroupAction(formData: FormData) {
 }
 
 export async function promoteYearGroupsAction() {
+  await assertSafeServerAction();
   const user = await assertStudentWriteAccess();
 
   const activeStudents = await (prisma as any).student.findMany({

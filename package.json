@@ -23,7 +23,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
+    "@aws-sdk/client-s3": "^3.1049.0",
     "@prisma/client": "^5.22.0",
+    "@sentry/nextjs": "^10.53.1",
     "bcryptjs": "^2.4.3",
     "csv-parse": "^5.5.6",
     "jose": "^5.6.3",
@@ -31,6 +33,7 @@
     "next-auth": "^4.24.13",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "svix": "^1.94.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

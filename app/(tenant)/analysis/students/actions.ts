@@ -1,4 +1,5 @@
 "use server";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
@@ -6,6 +7,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { canViewStudentAnalysis } from "@/modules/authz";
 
 export async function toggleWatchlist(studentId: string): Promise<{ onWatchlist: boolean }> {
+  await assertSafeServerAction();
   const user = await getSessionUserOrThrow();
 
   // RBAC: same rules as viewing
@@ -54,6 +56,7 @@ export async function bulkToggleWatchlist(
   studentIds: string[],
   add: boolean,
 ): Promise<{ updated: number }> {
+  await assertSafeServerAction();
   const user = await getSessionUserOrThrow();
 
   const canView = canViewStudentAnalysis({

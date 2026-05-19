@@ -1,4 +1,5 @@
 "use server";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { sendLeaveDecisionEmail, sendLeaveSubmittedEmail } from "@/lib/email";
@@ -18,6 +19,7 @@ function redirectRequestError(code: LeavePolicyViolation | "INVALID_REQUEST" | "
 }
 
 export async function createLoaRequest(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "LEAVE");
 
@@ -107,6 +109,7 @@ export async function createLoaRequest(formData: FormData) {
 }
 
 export async function decideLoaRequest(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "LEAVE");
   const requestId = String(formData.get("requestId") || "");
@@ -149,6 +152,7 @@ export async function decideLoaRequest(formData: FormData) {
 }
 
 export async function cancelLoaRequest(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "LEAVE");
   const requestId = String(formData.get("requestId") || "");

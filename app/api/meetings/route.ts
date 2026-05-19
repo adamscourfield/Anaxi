@@ -6,6 +6,7 @@ import { hasPermission } from "@/lib/rbac";
 import { parseIsoDate } from "@/lib/parseDate";
 import { createMeeting, listMeetings } from "@/modules/meetings/service";
 import { apiErrorResponse } from "@/lib/apiErrors";
+import { meetingCreateBodySchema, parseBody } from "@/lib/validation/schemas";
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +16,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await req.json();
     const {
       title,
       type,
@@ -23,14 +23,10 @@ export async function POST(req: Request) {
       endDateTime,
       location,
       notes,
-      attendeeIds = [],
+      attendeeIds,
       status,
       startNow,
-    } = body;
-
-    if (!title || !type) {
-      return NextResponse.json({ error: "title and type are required" }, { status: 400 });
-    }
+    } = parseBody(meetingCreateBodySchema, await req.json());
 
     let start: Date;
     let end: Date;

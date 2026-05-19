@@ -1,4 +1,5 @@
 "use server";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { sendObservationEmail } from "@/lib/email";
@@ -10,6 +11,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function createObservation(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
   requireRole(user, ["LEADER", "SLT", "ADMIN"]);
@@ -73,6 +75,7 @@ export async function createObservation(formData: FormData) {
 }
 
 export async function submitObservationDraft(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
   requireRole(user, ["LEADER", "SLT", "ADMIN"]);

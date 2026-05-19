@@ -1,4 +1,5 @@
 "use server";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -9,6 +10,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function createMeetingAction(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "MEETINGS");
   if (!hasPermission(user.role, "meetings:create")) throw new Error("FORBIDDEN");
@@ -38,6 +40,7 @@ export async function createMeetingAction(formData: FormData) {
 }
 
 export async function updateMeetingNotesAction(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "MEETINGS");
 
@@ -49,6 +52,7 @@ export async function updateMeetingNotesAction(formData: FormData) {
 }
 
 export async function addMeetingActionAction(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "MEETINGS");
 
@@ -68,6 +72,7 @@ export async function addMeetingActionAction(formData: FormData) {
 }
 
 export async function markActionDoneAction(formData: FormData) {
+  await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "MEETINGS");
 
