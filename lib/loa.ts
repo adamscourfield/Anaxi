@@ -168,7 +168,21 @@ export async function loaApproverEmailsForRequest(
 
   const users = await prisma.user.findMany({
     where: { tenantId, id: { in: Array.from(approverIds) }, isActive: true },
-    select: { email: true },
+    select: { id: true, email: true },
   });
   return [...new Set(users.map((u) => u.email).filter(Boolean))];
+}
+
+/** Approver emails and ids for leave notification preferences. */
+export async function loaApproversForRequest(
+  tenantId: string,
+  requesterUserId: string,
+): Promise<Array<{ id: string; email: string }>> {
+  const emails = await loaApproverEmailsForRequest(tenantId, requesterUserId);
+  if (emails.length === 0) return [];
+  const users = await prisma.user.findMany({
+    where: { tenantId, email: { in: emails }, isActive: true },
+    select: { id: true, email: true },
+  });
+  return users;
 }

@@ -15,6 +15,9 @@ export type UserRow = {
   role: string;
   isActive: boolean;
   receivesOnCallEmails: boolean;
+  emailObservations: boolean;
+  emailMeetings: boolean;
+  emailLeave: boolean;
   canApproveAllLoa: boolean;
   loaScopedCount: number;
 };

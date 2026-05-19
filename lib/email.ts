@@ -1,198 +1,178 @@
-import { logger } from "@/lib/logger";
+import { getAppUrl, formatDateRange, formatDateTime, getTenantEmailBranding } from "@/lib/email/format";
+import { buildMeetingIcs } from "@/lib/email/ics";
+import {
+  createPasswordSetToken,
+  sendEmail,
+  sendTemplatedEmail,
+  shouldSendUserEmail,
+  type SendEmailResult,
+} from "@/lib/email/send";
 
-export interface SendEmailOptions {
-  to: string;
-  subject: string;
-  message: string;
-}
-
-export interface SendEmailResult {
-  status: "sent" | "not_configured" | "failed";
-}
-
-/**
- * Send an email via the Resend API.
- *
- * Returns `{ status: "not_configured" }` when `RESEND_API_KEY` is not set,
- * allowing development and tests to proceed without a real mail provider.
- */
-export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
-  const { to, subject, message } = options;
-
-  if (!process.env.RESEND_API_KEY) {
-    logger.warn("email.not_configured", { to, subject });
-    return { status: "not_configured" };
-  }
-
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: process.env.FROM_EMAIL || "hi@anaxi.io",
-        to: [to],
-        subject,
-        text: message,
-      }),
-    });
-
-    if (res.ok) {
-      logger.info("email.sent", { to, subject });
-      return { status: "sent" };
-    }
-
-    const errorBody =
-      typeof res.text === "function" ? await res.text().catch(() => "(unreadable)") : "(unreadable)";
-    logger.error("email.failed", { to, subject, httpStatus: res.status, errorBody });
-    return { status: "failed" };
-  } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
-    logger.error("email.error", { to, subject, error: errorMessage });
-    return { status: "failed" };
-  }
-}
+export type { SendEmailOptions, SendEmailResult } from "@/lib/email/send";
+export { sendEmail, shouldSendUserEmail, createPasswordSetToken };
 
 /**
- * Build and send an onboarding email for a newly imported staff member.
+ * Build and send an onboarding email with a set-password link.
  */
 export async function sendOnboardingEmail(options: {
   to: string;
   fullName: string;
+  tenantId: string;
+  userId: string;
   tenantName?: string;
 }): Promise<SendEmailResult> {
-  const { to, fullName, tenantName } = options;
-  const schoolName = tenantName ?? "your school";
+  const { to, fullName, tenantId, userId } = options;
+  const branding = await getTenantEmailBranding(tenantId);
+  const schoolName = options.tenantName ?? branding.schoolName;
+  const token = await createPasswordSetToken(userId, 72);
+  const setPasswordUrl = `${getAppUrl()}/login/reset-password?token=${token}`;
+  const loginUrl = `${getAppUrl()}/login`;
 
-  const subject = `Welcome to ${schoolName} on Anaxi`;
-  const message = [
-    `Hi ${fullName},`,
-    "",
-    `You have been added to ${schoolName} on Anaxi.`,
-    "",
-    "You can log in at any time to access your dashboard, view meetings, and more.",
-    "",
-    "If you have any questions, please reach out to your school administrator.",
-    "",
-    "– The Anaxi Team",
-  ].join("\n");
-
-  return sendEmail({ to, subject, message });
+  return sendTemplatedEmail({
+    to,
+    subject: `Welcome to ${schoolName} on Anaxi`,
+    schoolName,
+    tenantId,
+    template: "onboarding",
+    metadata: { userId },
+    payload: {
+      preheader: `Set your password to join ${schoolName}`,
+      greeting: `Hi ${fullName},`,
+      lines: [
+        `You have been added to ${schoolName} on Anaxi.`,
+        "Set your password using the button below, then sign in with your school email.",
+        `Sign-in page: ${loginUrl}`,
+      ],
+      cta: { label: "Set your password", href: setPasswordUrl },
+    },
+  });
 }
 
-/**
- * Build and send an email notifying a teacher that they have received an observation.
- */
 export async function sendObservationEmail(options: {
   to: string;
   teacherName: string;
   observerName: string;
   observationId: string;
+  tenantId: string;
+  teacherUserId: string;
 }): Promise<SendEmailResult> {
-  const { to, teacherName, observerName, observationId } = options;
-  const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "http://localhost:3000";
+  if (!(await shouldSendUserEmail(options.teacherUserId, "observations"))) {
+    return { status: "sent" };
+  }
 
-  const subject = `New observation from ${observerName}`;
-  const message = [
-    `Hi ${teacherName},`,
-    "",
-    `${observerName} has submitted a classroom observation for you.`,
-    "",
-    "You can view the full observation here:",
-    "",
-    `${appUrl}/observe/${observationId}`,
-    "",
-    "If you have any questions, please contact your line manager.",
-    "",
-    "– The Anaxi Team",
-  ].join("\n");
+  const branding = await getTenantEmailBranding(options.tenantId);
+  const viewUrl = `${getAppUrl()}/observe/${options.observationId}`;
 
-  return sendEmail({ to, subject, message });
+  return sendTemplatedEmail({
+    to: options.to,
+    subject: `New observation from ${options.observerName}`,
+    schoolName: branding.schoolName,
+    tenantId: options.tenantId,
+    template: "observation",
+    metadata: { observationId: options.observationId },
+    payload: {
+      greeting: `Hi ${options.teacherName},`,
+      lines: [
+        `${options.observerName} has submitted a classroom observation for you.`,
+        "Open Anaxi to read the full feedback and signals.",
+      ],
+      cta: { label: "View observation", href: viewUrl },
+    },
+  });
 }
 
-/**
- * Build and send a meeting invite email to an attendee.
- */
 export async function sendMeetingInviteEmail(options: {
   to: string;
   attendeeName: string;
   title: string;
   startDateTime: Date;
+  endDateTime: Date;
   meetingId: string;
+  tenantId: string;
+  attendeeUserId: string;
+  location?: string | null;
+  organizerEmail: string;
+  organizerName: string;
 }): Promise<SendEmailResult> {
-  const { to, attendeeName, title, startDateTime, meetingId } = options;
-  const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "http://localhost:3000";
+  if (!(await shouldSendUserEmail(options.attendeeUserId, "meetings"))) {
+    return { status: "sent" };
+  }
 
-  const formattedDate = startDateTime.toLocaleString("en-GB", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "UTC",
+  const branding = await getTenantEmailBranding(options.tenantId);
+  const when = formatDateTime(options.startDateTime, branding.timezone);
+  const meetingUrl = `${getAppUrl()}/meetings/${options.meetingId}`;
+  const locationLine = options.location ? `Location: ${options.location}` : "";
+
+  const ics = buildMeetingIcs({
+    uid: `${options.meetingId}@anaxi`,
+    title: options.title,
+    description: `Meeting in Anaxi: ${meetingUrl}`,
+    location: options.location ?? undefined,
+    start: options.startDateTime,
+    end: options.endDateTime,
+    organizerEmail: options.organizerEmail,
+    organizerName: options.organizerName,
+    attendeeEmail: options.to,
+    attendeeName: options.attendeeName,
   });
 
-  const subject = `Meeting invite: ${title}`;
-  const message = [
-    `Hi ${attendeeName},`,
-    "",
-    `You have been invited to: ${title}`,
-    "",
-    `When: ${formattedDate}`,
-    "",
-    "View the meeting details here:",
-    "",
-    `${appUrl}/meetings/${meetingId}`,
-    "",
-    "– The Anaxi Team",
-  ].join("\n");
-
-  return sendEmail({ to, subject, message });
+  return sendTemplatedEmail({
+    to: options.to,
+    subject: `Meeting invite: ${options.title}`,
+    schoolName: branding.schoolName,
+    tenantId: options.tenantId,
+    template: "meeting_invite",
+    metadata: { meetingId: options.meetingId },
+    payload: {
+      greeting: `Hi ${options.attendeeName},`,
+      lines: [
+        `You have been invited to: ${options.title}`,
+        `When: ${when} (${branding.timezone})`,
+        ...(locationLine ? [locationLine] : []),
+        "A calendar file is attached — open it to add this meeting to your diary.",
+      ],
+      cta: { label: "View meeting", href: meetingUrl },
+    },
+    attachments: [{ filename: "invite.ics", content: ics }],
+  });
 }
 
-/**
- * Build and send an email notifying a staff member of the decision on their leave request.
- */
 export async function sendLeaveDecisionEmail(options: {
   to: string;
   requesterName: string;
   status: "APPROVED_WITH_PAY" | "APPROVED_WITHOUT_PAY" | "DENIED";
   leaveRequestId: string;
+  tenantId: string;
+  requesterUserId: string;
 }): Promise<SendEmailResult> {
-  const { to, requesterName, status, leaveRequestId } = options;
-  const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "http://localhost:3000";
+  if (!(await shouldSendUserEmail(options.requesterUserId, "leave"))) {
+    return { status: "sent" };
+  }
 
+  const branding = await getTenantEmailBranding(options.tenantId);
   const statusLabel =
-    status === "APPROVED_WITH_PAY"
+    options.status === "APPROVED_WITH_PAY"
       ? "approved with pay"
-      : status === "APPROVED_WITHOUT_PAY"
+      : options.status === "APPROVED_WITHOUT_PAY"
         ? "approved without pay"
         : "denied";
+  const leaveUrl = `${getAppUrl()}/leave/${options.leaveRequestId}`;
 
-  const subject = `Your leave request has been ${statusLabel}`;
-  const message = [
-    `Hi ${requesterName},`,
-    "",
-    `Your leave of absence request has been ${statusLabel}.`,
-    "",
-    "You can view the full details here:",
-    "",
-    `${appUrl}/leave/${leaveRequestId}`,
-    "",
-    "If you have any questions, please contact your line manager.",
-    "",
-    "– The Anaxi Team",
-  ].join("\n");
-
-  return sendEmail({ to, subject, message });
+  return sendTemplatedEmail({
+    to: options.to,
+    subject: `Your leave request has been ${statusLabel}`,
+    schoolName: branding.schoolName,
+    tenantId: options.tenantId,
+    template: "leave_decision",
+    metadata: { leaveRequestId: options.leaveRequestId, status: options.status },
+    payload: {
+      greeting: `Hi ${options.requesterName},`,
+      lines: [`Your leave of absence request has been ${statusLabel}.`],
+      cta: { label: "View request", href: leaveUrl },
+    },
+  });
 }
 
-/**
- * Notify approvers that a new leave request needs review.
- */
 export async function sendLeaveSubmittedEmail(options: {
   to: string[];
   requesterName: string;
@@ -200,36 +180,93 @@ export async function sendLeaveSubmittedEmail(options: {
   startDate: Date;
   endDate: Date;
   leaveRequestId: string;
+  tenantId: string;
+  approverUserIds: string[];
 }): Promise<SendEmailResult> {
-  const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "http://localhost:3000";
-  const start = options.startDate.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-  const end = options.endDate.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const branding = await getTenantEmailBranding(options.tenantId);
+  const dates = formatDateRange(options.startDate, options.endDate, branding.timezone);
+  const reviewUrl = `${getAppUrl()}/leave/${options.leaveRequestId}`;
   const subject = `Leave request from ${options.requesterName} needs review`;
-  const message = [
-    "A new leave of absence request has been submitted.",
-    "",
-    `Staff member: ${options.requesterName}`,
-    `Reason: ${options.reasonLabel}`,
-    `Dates: ${start} – ${end}`,
-    "",
-    "Review and decide here:",
-    `${appUrl}/leave/${options.leaveRequestId}`,
-    "",
-    "– The Anaxi Team",
-  ].join("\n");
 
-  const results = await Promise.all(
-    options.to.map((to) => sendEmail({ to, subject, message })),
-  );
+  const results: SendEmailResult[] = [];
+  for (let i = 0; i < options.to.length; i++) {
+    const to = options.to[i];
+    const userId = options.approverUserIds[i];
+    if (userId && !(await shouldSendUserEmail(userId, "leave"))) continue;
+
+    results.push(
+      await sendTemplatedEmail({
+        to,
+        subject,
+        schoolName: branding.schoolName,
+        tenantId: options.tenantId,
+        template: "leave_submitted",
+        metadata: { leaveRequestId: options.leaveRequestId },
+        payload: {
+          lines: [
+            "A new leave of absence request has been submitted.",
+            `Staff member: ${options.requesterName}`,
+            `Reason: ${options.reasonLabel}`,
+            `Dates: ${dates}`,
+          ],
+          cta: { label: "Review request", href: reviewUrl },
+        },
+      })
+    );
+  }
+
   if (results.some((r) => r.status === "sent")) return { status: "sent" };
   if (results.every((r) => r.status === "not_configured")) return { status: "not_configured" };
   return { status: "failed" };
+}
+
+export async function sendSchoolAdminInviteEmail(options: {
+  to: string;
+  fullName: string;
+  tenantId: string;
+  tenantName: string;
+  inviteToken: string;
+}): Promise<SendEmailResult> {
+  const inviteUrl = `${getAppUrl()}/invite/${options.inviteToken}`;
+
+  return sendTemplatedEmail({
+    to: options.to,
+    subject: `You're invited to administer ${options.tenantName} on Anaxi`,
+    schoolName: options.tenantName,
+    tenantId: options.tenantId,
+    template: "school_admin_invite",
+    payload: {
+      preheader: "Accept your school admin invite",
+      greeting: `Hi ${options.fullName},`,
+      lines: [
+        `You have been invited to set up ${options.tenantName} as a school administrator on Anaxi.`,
+        "This link expires in 7 days and can only be used once.",
+      ],
+      cta: { label: "Accept invite", href: inviteUrl },
+    },
+  });
+}
+
+export async function sendPasswordResetEmail(options: {
+  to: string;
+  fullName: string;
+  resetUrl: string;
+  tenantId?: string | null;
+}): Promise<SendEmailResult> {
+  return sendTemplatedEmail({
+    to: options.to,
+    subject: "Reset your Anaxi password",
+    schoolName: "Anaxi",
+    tenantId: options.tenantId ?? null,
+    template: "password_reset",
+    payload: {
+      greeting: `Hi ${options.fullName},`,
+      lines: [
+        "You requested a password reset for your Anaxi account.",
+        "This link is valid for 1 hour.",
+        "If you did not request this, you can ignore this email.",
+      ],
+      cta: { label: "Reset password", href: options.resetUrl },
+    },
+  });
 }

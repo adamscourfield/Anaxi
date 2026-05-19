@@ -2,6 +2,8 @@ import { createHash, randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminUser } from "@/lib/admin";
+import { assertCsrfFromForm } from "@/lib/csrf";
+import { sendSchoolAdminInviteEmail } from "@/lib/email";
 import { godInviteCookieName } from "@/lib/godInviteCookie";
 
 function hashToken(token: string) {
@@ -10,6 +12,12 @@ function hashToken(token: string) {
 
 export async function POST(req: Request, { params }: { params: { tenantId: string; inviteId: string } }) {
   const actor = await requireSuperAdminUser();
+  const form = await req.formData();
+  try {
+    await assertCsrfFromForm(form);
+  } catch {
+    return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
+  }
 
   const invite = await (prisma as any).schoolAdminInvite.findFirst({
     where: { id: params.inviteId, tenantId: params.tenantId },
@@ -27,6 +35,17 @@ export async function POST(req: Request, { params }: { params: { tenantId: strin
   });
 
   const inviteUrl = `${new URL(req.url).origin}/invite/${token}`;
+
+  const tenant = await prisma.tenant.findUnique({ where: { id: params.tenantId } });
+  if (tenant) {
+    await sendSchoolAdminInviteEmail({
+      to: invite.email,
+      fullName: invite.fullName,
+      tenantId: tenant.id,
+      tenantName: tenant.name,
+      inviteToken: token,
+    });
+  }
 
   await (prisma as any).auditLog.create({
     data: {

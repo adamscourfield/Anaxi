@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/email";
-import crypto from "crypto";
+import { sendPasswordResetEmail, createPasswordSetToken } from "@/lib/email";
+import { getAppUrl } from "@/lib/email/format";
 
 const TOKEN_EXPIRY_HOURS = 1;
 
 export async function POST(req: Request) {
   const { email, tenantId } = await req.json().catch(() => ({}));
 
-  // Always return success to avoid leaking whether an email is registered
   const genericOk = NextResponse.json({ ok: true });
 
   if (!email || typeof email !== "string") return genericOk;
@@ -22,14 +21,11 @@ export async function POST(req: Request) {
         ? { tenantId: tenantId.trim() }
         : {}),
     },
-    select: { id: true, fullName: true, email: true },
+    select: { id: true, fullName: true, email: true, tenantId: true },
   });
 
   if (users.length === 0) return genericOk;
-  if (users.length > 1) {
-    // Ambiguous without tenantId — do not reset the wrong account
-    return genericOk;
-  }
+  if (users.length > 1) return genericOk;
 
   const user = users[0];
 
@@ -38,33 +34,14 @@ export async function POST(req: Request) {
     data: { usedAt: new Date() },
   });
 
-  const rawToken = crypto.randomBytes(32).toString("hex");
-  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
-  const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+  const rawToken = await createPasswordSetToken(user.id, TOKEN_EXPIRY_HOURS);
+  const resetUrl = `${getAppUrl()}/login/reset-password?token=${rawToken}`;
 
-  await prisma.passwordResetToken.create({
-    data: { userId: user.id, tokenHash, expiresAt },
-  });
-
-  const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "http://localhost:3000";
-  const resetUrl = `${appUrl}/login/reset-password?token=${rawToken}`;
-
-  await sendEmail({
+  await sendPasswordResetEmail({
     to: user.email,
-    subject: "Reset your Anaxi password",
-    message: [
-      `Hi ${user.fullName},`,
-      "",
-      "You requested a password reset for your Anaxi account.",
-      "",
-      `Click the link below to set a new password (valid for ${TOKEN_EXPIRY_HOURS} hour):`,
-      "",
-      resetUrl,
-      "",
-      "If you did not request this, you can safely ignore this email.",
-      "",
-      "– The Anaxi Team",
-    ].join("\n"),
+    fullName: user.fullName,
+    resetUrl,
+    tenantId: user.tenantId,
   });
 
   return genericOk;

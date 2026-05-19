@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
+import { readImportFile, saveImportFile } from "@/lib/importStorage";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
@@ -18,12 +19,48 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (original.status !== "FAILED") {
     return NextResponse.json({ error: "Only failed jobs can be retried" }, { status: 400 });
   }
+  if (!original.storagePath) {
+    return NextResponse.json(
+      {
+        error:
+          "This job has no stored file. Please upload the CSV again from the import page.",
+      },
+      { status: 400 }
+    );
+  }
 
-  return NextResponse.json(
-    {
-      error:
-        "Automatic retry is not available because import files are not stored. Please re-upload your CSV file.",
+  let csvText: string;
+  try {
+    csvText = await readImportFile(original.storagePath);
+  } catch {
+    return NextResponse.json(
+      { error: "Stored import file is missing. Please upload the CSV again." },
+      { status: 410 }
+    );
+  }
+
+  const newJob = await (prisma as any).importJob.create({
+    data: {
+      tenantId: user.tenantId,
+      type: original.type,
+      status: "PENDING",
+      uploadedBy: user.id,
+      fileName: original.fileName,
+      rowCount: 0,
     },
-    { status: 400 }
-  );
+  });
+
+  const storagePath = await saveImportFile(user.tenantId, newJob.id, csvText);
+  await (prisma as any).importJob.update({
+    where: { id: newJob.id },
+    data: { storagePath },
+  });
+
+  return NextResponse.json({
+    jobId: newJob.id,
+    status: newJob.status,
+    message:
+      "A new import job was created with your saved file. Open Student Import and submit the file again, or use the snapshot import flow with the same mapping.",
+    fileName: original.fileName,
+  });
 }

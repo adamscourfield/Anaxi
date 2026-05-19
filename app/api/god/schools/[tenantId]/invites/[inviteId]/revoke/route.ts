@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminUser } from "@/lib/admin";
+import { assertCsrfFromForm } from "@/lib/csrf";
 
 export async function POST(req: Request, { params }: { params: { tenantId: string; inviteId: string } }) {
   const actor = await requireSuperAdminUser();
+  const form = await req.formData();
+  try {
+    await assertCsrfFromForm(form);
+  } catch {
+    return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
+  }
 
   const invite = await (prisma as any).schoolAdminInvite.findFirst({
     where: { id: params.inviteId, tenantId: params.tenantId },

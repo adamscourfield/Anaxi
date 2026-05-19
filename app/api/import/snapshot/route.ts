@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { parseSnapshotCsv, SnapshotMapping } from "@/modules/students/snapshot-import";
 import { computeHeaderSignature } from "@/modules/students/snapshot-fields";
+import { saveImportFile } from "@/lib/importStorage";
 
 export async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
@@ -47,6 +48,12 @@ export async function POST(req: Request) {
       rowCount: 0,
       startedAt: new Date(),
     },
+  });
+
+  const storagePath = await saveImportFile(user.tenantId, importJob.id, text);
+  await (prisma as any).importJob.update({
+    where: { id: importJob.id },
+    data: { storagePath },
   });
 
   try {

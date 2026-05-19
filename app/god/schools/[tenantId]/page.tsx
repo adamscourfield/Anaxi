@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { requireSuperAdminUser } from "@/lib/admin";
+import { ensureCsrfToken } from "@/lib/csrf";
 import { readGodInvitePreview } from "@/lib/godInviteCookie";
+import { CsrfInput } from "@/components/CsrfInput";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,6 +35,7 @@ export default async function SchoolDetailPage({
   searchParams?: { inviteCreated?: string };
 }) {
   await requireSuperAdminUser();
+  const csrfToken = await ensureCsrfToken();
 
   const invitePreview =
     searchParams?.inviteCreated === "1" ? readGodInvitePreview(params.tenantId) : null;
@@ -62,7 +65,9 @@ export default async function SchoolDetailPage({
       {invitePreview ? (
         <Card className="border-success/30 bg-[var(--pill-success-bg)]">
           <div className="font-medium text-success">Invite created.</div>
-          <MetaText>Copy this one-time link and send it securely to the admin. It is not stored in the URL.</MetaText>
+          <MetaText>
+            An invite email was sent to the admin. You can also copy the link below if needed.
+          </MetaText>
           <details className="mt-2">
             <summary className="link-underline cursor-pointer text-xs text-muted">Show invite link</summary>
             <div className="mt-1 break-all text-xs">{invitePreview}</div>
@@ -76,6 +81,7 @@ export default async function SchoolDetailPage({
 
       <Card>
         <form method="post" action={`/api/god/schools/${school.id}/status`} className="flex items-end gap-3">
+          <CsrfInput token={csrfToken} />
           <label className="text-sm font-medium">
             Status
             <select name="status" defaultValue={school.status} className="field ml-2">
@@ -90,6 +96,7 @@ export default async function SchoolDetailPage({
 
       <Card>
         <form method="post" action={`/api/god/schools/${school.id}/modules`} className="space-y-3">
+          <CsrfInput token={csrfToken} />
           <H2>Modules</H2>
           <div className="grid gap-1.5 sm:grid-cols-2">
             {MODULES.map((m) => (
@@ -118,6 +125,7 @@ export default async function SchoolDetailPage({
 
       <Card>
         <form method="post" action={`/api/god/schools/${school.id}/invites`} className="space-y-3">
+          <CsrfInput token={csrfToken} />
           <H2>Invite school admin</H2>
           <div className="grid gap-3 sm:grid-cols-2">
             <input required name="fullName" placeholder="Full name" className="field" />
@@ -149,10 +157,12 @@ export default async function SchoolDetailPage({
                   {!isAccepted ? (
                     <div className="flex gap-1">
                       <form method="post" action={`/api/god/schools/${school.id}/invites/${i.id}/resend`}>
+                        <CsrfInput token={csrfToken} />
                         <Button variant="secondary" type="submit" className="px-2 py-1 text-xs">Resend</Button>
                       </form>
                       {!isExpired ? (
                         <form method="post" action={`/api/god/schools/${school.id}/invites/${i.id}/revoke`}>
+                          <CsrfInput token={csrfToken} />
                           <Button variant="ghost" type="submit" className="px-2 py-1 text-xs">Revoke</Button>
                         </form>
                       ) : null}

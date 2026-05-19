@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminUser } from "@/lib/admin";
+import { assertCsrfFromForm } from "@/lib/csrf";
 
 const ALLOWED_MODULES = new Set([
   "OBSERVATIONS",
@@ -22,6 +23,11 @@ const ALLOWED_MODULES = new Set([
 export async function POST(req: Request, { params }: { params: { tenantId: string } }) {
   const actor = await requireSuperAdminUser();
   const form = await req.formData();
+  try {
+    await assertCsrfFromForm(form);
+  } catch {
+    return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
+  }
   const enabledModules = new Set(
     form
       .getAll("modules")

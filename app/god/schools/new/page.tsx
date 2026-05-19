@@ -1,4 +1,6 @@
 import { requireSuperAdminUser } from "@/lib/admin";
+import { ensureCsrfToken } from "@/lib/csrf";
+import { CsrfInput } from "@/components/CsrfInput";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { H1, MetaText } from "@/components/ui/typography";
@@ -17,6 +19,7 @@ const DEFAULT_MODULES = [
 
 export default async function NewSchoolPage() {
   await requireSuperAdminUser();
+  const csrfToken = await ensureCsrfToken();
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 p-6">
@@ -25,6 +28,7 @@ export default async function NewSchoolPage() {
 
       <Card>
         <form method="post" action="/api/god/schools" className="space-y-4">
+          <CsrfInput token={csrfToken} />
           <label className="block space-y-1.5 text-sm">
             <span className="font-medium">School name</span>
             <input required name="name" className="field w-full" placeholder="Riverdale Academy" />

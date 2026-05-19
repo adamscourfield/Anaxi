@@ -173,6 +173,12 @@ export default async function AdminIndexPage() {
           iconId: "settings",
         },
         {
+          href: "/admin/email-log",
+          label: "Email log",
+          desc: "Review delivery status for transactional emails sent by Anaxi.",
+          iconId: "settings",
+        },
+        {
           href: "/admin/features",
           label: "Feature Flags",
           desc: "Enable or disable modules for the tenant workspace.",

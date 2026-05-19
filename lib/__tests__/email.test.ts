@@ -1,4 +1,28 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn().mockResolvedValue({
+        isActive: true,
+        emailObservations: true,
+        emailMeetings: true,
+        emailLeave: true,
+        receivesOnCallEmails: true,
+      }),
+    },
+    tenantSettings: {
+      findUnique: vi.fn().mockResolvedValue({ timezone: "Europe/London", schoolName: "Test School" }),
+    },
+    tenant: { findUnique: vi.fn().mockResolvedValue({ name: "Test School" }) },
+    emailLog: { create: vi.fn().mockResolvedValue({}) },
+    passwordResetToken: {
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      create: vi.fn().mockResolvedValue({}),
+    },
+  },
+}));
+
 import {
   sendEmail,
   sendOnboardingEmail,
@@ -8,11 +32,32 @@ import {
   sendLeaveSubmittedEmail,
 } from "@/lib/email";
 
-// Stub global fetch
+import { prisma } from "@/lib/prisma";
+
 const fetchMock = vi.fn();
+
+function mockResendOk() {
+  return { ok: true, status: 200, json: async () => ({ id: "email_test_id" }) };
+}
+const activeUserPrefs = {
+  isActive: true,
+  emailObservations: true,
+  emailMeetings: true,
+  emailLeave: true,
+  receivesOnCallEmails: true,
+};
 
 beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
+  vi.mocked(prisma.user.findUnique).mockResolvedValue(activeUserPrefs as never);
+  vi.mocked(prisma.tenantSettings.findUnique).mockResolvedValue({
+    timezone: "Europe/London",
+    schoolName: "Test School",
+  } as never);
+  vi.mocked(prisma.tenant.findUnique).mockResolvedValue({ name: "Test School" } as never);
+  vi.mocked(prisma.emailLog.create).mockResolvedValue({} as never);
+  vi.mocked(prisma.passwordResetToken.updateMany).mockResolvedValue({ count: 0 });
+  vi.mocked(prisma.passwordResetToken.create).mockResolvedValue({} as never);
 });
 
 afterEach(() => {
@@ -39,7 +84,7 @@ describe("sendEmail", () => {
     process.env.RESEND_API_KEY = "test-key";
     process.env.FROM_EMAIL = "noreply@test.com";
 
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+    fetchMock.mockResolvedValueOnce(mockResendOk());
 
     const result = await sendEmail({
       to: "user@example.com",
@@ -66,7 +111,7 @@ describe("sendEmail", () => {
     process.env.RESEND_API_KEY = "test-key";
     delete process.env.FROM_EMAIL;
 
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+    fetchMock.mockResolvedValueOnce(mockResendOk());
 
     await sendEmail({ to: "user@example.com", subject: "Test", message: "Hello" });
 
@@ -121,11 +166,13 @@ describe("sendEmail", () => {
 describe("sendOnboardingEmail", () => {
   it("sends an email with the correct welcome content", async () => {
     process.env.RESEND_API_KEY = "test-key";
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+    fetchMock.mockResolvedValueOnce(mockResendOk());
 
     const result = await sendOnboardingEmail({
       to: "teacher@school.example",
       fullName: "Jane Doe",
+      tenantId: "tenant_1",
+      userId: "user_1",
       tenantName: "Springfield Academy",
     });
 
@@ -134,21 +181,22 @@ describe("sendOnboardingEmail", () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.subject).toBe("Welcome to Springfield Academy on Anaxi");
     expect(body.text).toContain("Hi Jane Doe");
-    expect(body.text).toContain("Springfield Academy");
+    expect(body.text).toContain("Set your password");
   });
 
   it("uses default school name when tenantName is not provided", async () => {
     process.env.RESEND_API_KEY = "test-key";
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+    fetchMock.mockResolvedValueOnce(mockResendOk());
 
     await sendOnboardingEmail({
       to: "teacher@school.example",
       fullName: "Jane Doe",
+      tenantId: "tenant_1",
+      userId: "user_1",
     });
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.subject).toBe("Welcome to your school on Anaxi");
-    expect(body.text).toContain("your school");
+    expect(body.subject).toContain("Test School");
   });
 
   it("returns not_configured when no API key", async () => {
@@ -157,6 +205,8 @@ describe("sendOnboardingEmail", () => {
     const result = await sendOnboardingEmail({
       to: "teacher@school.example",
       fullName: "Jane Doe",
+      tenantId: "tenant_1",
+      userId: "user_1",
     });
 
     expect(result.status).toBe("not_configured");
@@ -166,13 +216,15 @@ describe("sendOnboardingEmail", () => {
 describe("sendObservationEmail", () => {
   it("sends an email with the correct observation content", async () => {
     process.env.RESEND_API_KEY = "test-key";
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+    fetchMock.mockResolvedValueOnce(mockResendOk());
 
     const result = await sendObservationEmail({
       to: "teacher@school.example",
       teacherName: "Jane Doe",
       observerName: "Bob Smith",
       observationId: "obs_abc123",
+      tenantId: "tenant_1",
+      teacherUserId: "user_1",
     });
 
     expect(result.status).toBe("sent");
@@ -192,6 +244,8 @@ describe("sendObservationEmail", () => {
       teacherName: "Jane Doe",
       observerName: "Bob Smith",
       observationId: "obs_abc123",
+      tenantId: "tenant_1",
+      teacherUserId: "user_1",
     });
 
     expect(result.status).toBe("not_configured");
@@ -201,14 +255,19 @@ describe("sendObservationEmail", () => {
 describe("sendMeetingInviteEmail", () => {
   it("sends an email with the correct meeting invite content", async () => {
     process.env.RESEND_API_KEY = "test-key";
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+    fetchMock.mockResolvedValueOnce(mockResendOk());
 
     const result = await sendMeetingInviteEmail({
       to: "attendee@school.example",
       attendeeName: "Carol White",
       title: "Year 10 Review",
       startDateTime: new Date("2026-03-10T09:00:00Z"),
+      endDateTime: new Date("2026-03-10T10:00:00Z"),
       meetingId: "mtg_xyz456",
+      tenantId: "tenant_1",
+      attendeeUserId: "user_2",
+      organizerEmail: "org@school.example",
+      organizerName: "Org User",
     });
 
     expect(result.status).toBe("sent");
@@ -228,7 +287,12 @@ describe("sendMeetingInviteEmail", () => {
       attendeeName: "Carol White",
       title: "Year 10 Review",
       startDateTime: new Date("2026-03-10T09:00:00Z"),
+      endDateTime: new Date("2026-03-10T10:00:00Z"),
       meetingId: "mtg_xyz456",
+      tenantId: "tenant_1",
+      attendeeUserId: "user_2",
+      organizerEmail: "org@school.example",
+      organizerName: "Org User",
     });
 
     expect(result.status).toBe("not_configured");
@@ -238,13 +302,15 @@ describe("sendMeetingInviteEmail", () => {
 describe("sendLeaveDecisionEmail", () => {
   it("sends an email for an approved-with-pay decision", async () => {
     process.env.RESEND_API_KEY = "test-key";
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+    fetchMock.mockResolvedValueOnce(mockResendOk());
 
     const result = await sendLeaveDecisionEmail({
       to: "staff@school.example",
       requesterName: "Alice Green",
       status: "APPROVED_WITH_PAY",
       leaveRequestId: "loa_def789",
+      tenantId: "tenant_1",
+      requesterUserId: "user_1",
     });
 
     expect(result.status).toBe("sent");
@@ -258,13 +324,15 @@ describe("sendLeaveDecisionEmail", () => {
 
   it("sends an email for a denied decision", async () => {
     process.env.RESEND_API_KEY = "test-key";
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 200 });
+    fetchMock.mockResolvedValueOnce(mockResendOk());
 
     const result = await sendLeaveDecisionEmail({
       to: "staff@school.example",
       requesterName: "Alice Green",
       status: "DENIED",
       leaveRequestId: "loa_def789",
+      tenantId: "tenant_1",
+      requesterUserId: "user_1",
     });
 
     expect(result.status).toBe("sent");
@@ -283,6 +351,8 @@ describe("sendLeaveDecisionEmail", () => {
       requesterName: "Alice Green",
       status: "APPROVED_WITHOUT_PAY",
       leaveRequestId: "loa_def789",
+      tenantId: "tenant_1",
+      requesterUserId: "user_1",
     });
 
     expect(result.status).toBe("not_configured");
@@ -292,15 +362,17 @@ describe("sendLeaveDecisionEmail", () => {
 describe("sendLeaveSubmittedEmail", () => {
   it("notifies approvers of a new request", async () => {
     process.env.RESEND_API_KEY = "test-key";
-    fetchMock.mockResolvedValue({ ok: true, status: 200 });
+    fetchMock.mockResolvedValue(mockResendOk());
 
     const result = await sendLeaveSubmittedEmail({
       to: ["hr@school.example", "hod@school.example"],
+      approverUserIds: ["user_hr", "user_hod"],
       requesterName: "Alice Green",
       reasonLabel: "Medical",
       startDate: new Date("2026-06-10"),
       endDate: new Date("2026-06-12"),
       leaveRequestId: "loa_new123",
+      tenantId: "tenant_1",
     });
 
     expect(result.status).toBe("sent");

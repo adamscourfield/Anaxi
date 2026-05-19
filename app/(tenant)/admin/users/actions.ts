@@ -104,6 +104,9 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
     const userId = String(formData.get("userId") || "");
     const role = String(formData.get("role") || "");
     const receivesOnCallEmails = String(formData.get("receivesOnCallEmails")) === "true";
+    const emailObservations = String(formData.get("emailObservations")) !== "false";
+    const emailMeetings = String(formData.get("emailMeetings")) !== "false";
+    const emailLeave = String(formData.get("emailLeave")) !== "false";
     const canApproveAllLoa = String(formData.get("canApproveAllLoa")) === "true";
     const scopedLoaRaw = String(formData.get("scopedLoaTargetIds") || "");
     const scopedLoaTargetIds = scopedLoaRaw ? scopedLoaRaw.split(",").filter(Boolean) : [];
@@ -115,7 +118,14 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
 
     await (prisma as any).user.updateMany({
       where: { id: userId, tenantId: admin.tenantId },
-      data: { role, receivesOnCallEmails, canApproveAllLoa },
+      data: {
+        role,
+        receivesOnCallEmails,
+        emailObservations,
+        emailMeetings,
+        emailLeave,
+        canApproveAllLoa,
+      },
     });
 
     await (prisma as any).lOAApprovalScope.deleteMany({

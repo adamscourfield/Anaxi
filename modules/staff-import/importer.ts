@@ -168,7 +168,14 @@ export async function runStaffImport(
       // 5) Send onboarding email for newly created active users
       if (isNewUser && row.membershipStatus !== "ARCHIVED") {
         // Fire-and-forget — email failures should not block the import
-        sendOnboardingEmail({ to: row.email, fullName: row.fullName }).catch(() => {});
+        sendOnboardingEmail({
+          to: row.email,
+          fullName: row.fullName,
+          tenantId,
+          userId: user.id,
+        }).catch((err) => {
+          console.error("[staff-import] onboarding email failed", row.email, err);
+        });
       }
 
       rowsProcessed++;
