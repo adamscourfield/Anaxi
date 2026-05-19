@@ -7,6 +7,7 @@ import { SchoolSwitcher } from "@/components/school-switcher";
 import { PageTransition } from "@/components/page-transition";
 import { NotificationBell } from "@/components/notification-bell";
 import { TenantUiProvider } from "@/components/tenant-ui-context";
+import { SkipToContent } from "@/components/skip-to-content";
 import { FeatureKey, UserRole } from "@/lib/types";
 
 function MenuIcon({ className }: { className?: string }) {
@@ -84,6 +85,7 @@ export function TenantLayoutClient({
 
   return (
     <>
+      <SkipToContent targetId="tenant-main" />
       <TenantNav {...navProps} variant="sidebar" />
 
       {mobileNavOpen ? (
@@ -141,7 +143,7 @@ export function TenantLayoutClient({
             </span>
           </Link>
         </header>
-        <main className="anx-workspace-main min-w-0 flex-1 px-4 py-7 sm:px-6 md:px-8 md:py-10 lg:px-10">
+        <main id="tenant-main" className="anx-workspace-main min-w-0 flex-1 px-4 py-7 sm:px-6 md:px-8 md:py-10 lg:px-10">
           <PageTransition className="mx-auto min-w-0 max-w-[1400px]">
             <TenantUiProvider role={role} enabledFeatures={enabledFeatures}>
               {children}

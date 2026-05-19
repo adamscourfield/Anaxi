@@ -3,7 +3,8 @@ import { requireSuperAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { H1, MetaText } from "@/components/ui/typography";
+import { PageHeader } from "@/components/ui/page-header";
+import { MetaText } from "@/components/ui/typography";
 
 const PAGE_SIZE = 30;
 
@@ -42,7 +43,7 @@ export default async function GodAuditPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-6">
-      <H1>God Audit Log</H1>
+      <PageHeader variant="ledger" eyebrow="Platform" title="God audit log" subtitle="Platform-wide activity across schools." />
 
       <Card>
         <form className="grid gap-2 sm:grid-cols-4" method="get">

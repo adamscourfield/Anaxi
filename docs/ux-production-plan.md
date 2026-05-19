@@ -19,10 +19,10 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 
 | Epic | Issues | P0 | P1 | P2 | Done |
 |------|--------|----|----|-----|------|
-| A — Platform shell | 6 | 3 | 2 | 1 | 0/6 |
-| B — Design system | 5 | 2 | 2 | 1 | 0/5 |
-| C — Page chrome & nav | 7 | 2 | 4 | 1 | 0/7 |
-| D — Loading & errors | 4 | 2 | 2 | 0 | 0/4 |
+| A — Platform shell | 6 | 3 | 2 | 1 | 5/6 |
+| B — Design system | 5 | 2 | 2 | 1 | 1/5 |
+| C — Page chrome & nav | 7 | 2 | 4 | 1 | 2/7 |
+| D — Loading & errors | 4 | 2 | 2 | 0 | 2/4 |
 | E — Forms & feedback | 4 | 0 | 3 | 1 | 0/4 |
 | F — Accessibility | 4 | 0 | 3 | 1 | 0/4 |
 | G — Mobile & tables | 4 | 0 | 3 | 1 | 0/4 |
@@ -32,10 +32,10 @@ Tracked plan from the full-app UX/UI audit (May 2026). Use this doc with GitHub 
 | K — Assessments | 4 | 0 | 3 | 1 | 0/4 |
 | L — Students & on-call | 4 | 0 | 3 | 1 | 0/4 |
 | M — Leave | 3 | 0 | 3 | 0 | 0/3 |
-| N — Admin & god | 5 | 0 | 4 | 1 | 0/5 |
+| N — Admin & god | 5 | 0 | 4 | 1 | 3/5 |
 | O — Auth & public | 3 | 0 | 2 | 1 | 0/3 |
-| P — QA & regression | 3 | 1 | 2 | 0 | 0/3 |
-| **Total** | **70** | **11** | **44** | **15** | **0/70** |
+| P — QA & regression | 3 | 1 | 2 | 0 | 1/3 |
+| **Total** | **70** | **11** | **44** | **15** | **14/70** |
 
 ---
 
@@ -749,3 +749,4 @@ UX-###
 | Date | Change |
 |------|--------|
 | 2026-05-19 | Initial plan from full-app UX audit |
+| 2026-05-19 | Wave 1 partial: 404, errors, skip link, toast a11y, breadcrumbs, loading skeletons, meetings/actions redirect, observe tokens, god banner, E2E smoke |

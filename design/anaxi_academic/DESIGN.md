@@ -1,11 +1,28 @@
 # Design System Strategy: The Modern Academic Ledger
 
+## Implementation notes (shipped in app, May 2026)
+
+The running product intentionally differs from some aspirational rules below. **Canonical for engineering:**
+
+| Topic | Shipped choice |
+|-------|----------------|
+| Display / page titles | **Space Grotesk** on `main h1` (`--font-space-grotesk`) |
+| Body / UI | **Inter** |
+| Border radius | **4px** globally (`tailwind` `borderRadius`) |
+| Card borders | Ghost borders via `border-border` / `outline-variant` mixes; full “no-line” is aspirational |
+| Stat cards | Prefer `StatCard` `tone="softGrey"` without accent bars |
+| Theme | **Light only** for v1; sporadic `dark:` utilities are legacy—do not extend |
+
+When adding UI, follow tokens in `app/globals.css` and shared components (`PageHeader`, `Button`, `Breadcrumb`) rather than raw Tailwind grays.
+
+---
+
 ## 1. Overview & Creative North Star
 The Creative North Star for this design system is **"The Modern Academic Ledger."** 
 
 This system moves beyond the generic "SaaS dashboard" aesthetic. It draws inspiration from the tactile authority of British academic journals and the clinical efficiency of high-end developer tools. We are designing for "Institutional Confidence"—a layout that feels permanent, transparent, and calm.
 
-To break the "template" feel, we reject the rigid, boxed-in grid. Instead, we embrace **intentional asymmetry** and **editorial pacing**. Headlines utilize a sophisticated serif to provide a "human" academic touch, while the data-heavy UI remains surgically precise. We don't use lines to separate ideas; we use space and tonal shifts to guide the eye.
+To break the "template" feel, we reject the rigid, boxed-in grid. Instead, we embrace **intentional asymmetry** and **editorial pacing**. Headlines utilize a distinctive display face (Space Grotesk in the app; Newsreader was an early spec option) to provide a "human" academic touch, while the data-heavy UI remains surgically precise. We don't use lines to separate ideas; we use space and tonal shifts to guide the eye.
 
 ---
 

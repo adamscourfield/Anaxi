@@ -137,8 +137,8 @@ export function AuthFlowMain({
 }) {
   const mw = maxWidth === "sm" ? "max-w-[320px]" : "max-w-[440px]";
   return (
-    <main className="flex flex-grow flex-col items-center justify-center px-6 py-24 pt-28 md:pt-24">
-      <div className={`flex w-full flex-col ${mw}`}>
+    <main id="auth-main" className="flex flex-grow flex-col items-center justify-center px-6 py-24 pt-28 md:pt-24">
+      <div id="auth-form" className={`flex w-full flex-col ${mw}`}>
         <RouteEnter>{children}</RouteEnter>
       </div>
     </main>

@@ -67,7 +67,6 @@ export async function addMeetingActionAction(formData: FormData) {
   await createAction(user.tenantId, meetingId, user.id, { description, ownerUserId, dueDate });
 
   revalidatePath(`/meetings/${meetingId}`);
-  revalidatePath("/meetings/actions");
   revalidatePath("/my-actions");
 }
 
@@ -79,7 +78,6 @@ export async function markActionDoneAction(formData: FormData) {
   const actionId = String(formData.get("actionId") || "");
   await completeAction(user.tenantId, actionId, user.id);
 
-  revalidatePath("/meetings/actions");
   revalidatePath("/my-actions");
 }
 
