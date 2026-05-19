@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireEnv } from "@/lib/env";
 import { updateEmailLogByProviderId } from "@/lib/email/log";
 import type { EmailDeliveryStatus } from "@prisma/client";
 
@@ -21,12 +22,13 @@ function mapEventType(type: string): EmailDeliveryStatus | null {
 }
 
 export async function POST(req: Request) {
-  const secret = process.env.RESEND_WEBHOOK_SECRET;
-  if (secret) {
-    const provided = req.headers.get("resend-signature") || req.headers.get("x-resend-signature");
-    if (provided !== secret) {
-      return NextResponse.json({ error: "forbidden" }, { status: 403 });
-    }
+  const secret = requireEnv("RESEND_WEBHOOK_SECRET") ?? process.env.RESEND_WEBHOOK_SECRET;
+  if (!secret) {
+    return NextResponse.json({ error: "webhook not configured" }, { status: 503 });
+  }
+  const provided = req.headers.get("resend-signature") || req.headers.get("x-resend-signature");
+  if (provided !== secret) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
   let payload: ResendWebhookEvent;

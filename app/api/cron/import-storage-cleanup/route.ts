@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { assertCronAuthorized } from "@/lib/cronAuth";
 import { deleteImportFile } from "@/lib/importStorage";
 import { prisma } from "@/lib/prisma";
 
@@ -6,10 +7,8 @@ const RETENTION_DAYS = Number(process.env.IMPORT_RETENTION_DAYS || "90");
 
 /** Cron: delete stored import CSV files for jobs finished more than N days ago. */
 export async function POST(req: Request) {
-  const secret = req.headers.get("x-cron-secret");
-  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  }
+  const denied = assertCronAuthorized(req);
+  if (denied) return denied;
 
   const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
   const jobs = await (prisma as any).importJob.findMany({

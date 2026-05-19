@@ -23,7 +23,7 @@ export const POST = withApi(async function POST(req: Request) {
     return NextResponse.json({ error: "Invite expired" }, { status: 400 });
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, 12);
 
   await prisma.$transaction(async (tx) => {
     const existing = await tx.user.findFirst({ where: { tenantId: invite.tenantId, email: invite.email } });

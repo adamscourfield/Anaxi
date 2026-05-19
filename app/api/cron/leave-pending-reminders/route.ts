@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
+import { assertCronAuthorized } from "@/lib/cronAuth";
 import { sendLeavePendingReminderEmail } from "@/lib/email";
 import { loaApproversForRequest } from "@/lib/loa";
 import { prisma } from "@/lib/prisma";
 
 /** Cron: remind approvers about PENDING leave requests older than 48 hours. */
 export async function POST(req: Request) {
-  const secret = req.headers.get("x-cron-secret");
-  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  }
+  const denied = assertCronAuthorized(req);
+  if (denied) return denied;
 
   const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
   const pending = await prisma.lOARequest.findMany({
