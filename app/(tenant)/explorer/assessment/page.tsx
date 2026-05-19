@@ -131,32 +131,21 @@ export default async function AssessmentHubPage({
         variant="ledger"
         eyebrow="Explorer"
         title="Assessment"
-        subtitle="Attainment, value-add, group gaps, and cross-domain correlations across all active cycles."
+        subtitle="Attainment KPIs follow the selected assessment cycle. Behaviour correlations use the pastoral window below."
         meta={
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex flex-wrap items-center gap-2 text-[0.8125rem] leading-snug text-muted">
-              <svg className="anx-icon-inline opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-                <rect x="3" y="5" width="18" height="16" rx="2" strokeLinejoin="round" />
-                <path strokeLinecap="round" d="M16 3v4M8 3v4M3 11h18" />
-              </svg>
-              Updated {computedAtStr}
-            </span>
-            <div className="flex items-center gap-1">
-              {([7, 21, 28, 90] as const).map((w) => (
-                <Link
-                  key={w}
-                  href={windowUrl(w)}
-                  className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold calm-transition ${
-                    windowDays === w
-                      ? "bg-accent text-on-primary"
-                      : "text-muted hover:bg-surface-container-low hover:text-text"
-                  }`}
-                >
-                  {w}d
-                </Link>
-              ))}
-            </div>
-          </div>
+          <span className="inline-flex flex-wrap items-center gap-2 text-[0.8125rem] leading-snug text-muted">
+            <svg className="anx-icon-inline opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+              <rect x="3" y="5" width="18" height="16" rx="2" strokeLinejoin="round" />
+              <path strokeLinecap="round" d="M16 3v4M8 3v4M3 11h18" />
+            </svg>
+            {activeCycle ? (
+              <span>
+                Cycle: <span className="font-medium text-text">{activeCycle.cycleLabel}</span>
+              </span>
+            ) : null}
+            <span aria-hidden>·</span>
+            <span>Updated {computedAtStr}</span>
+          </span>
         }
       />
 
@@ -368,7 +357,23 @@ export default async function AssessmentHubPage({
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-text">Attainment–behaviour correlations</h2>
-              <p className="mt-0.5 text-[11px] text-muted">{correlation.pairedStudentCount} students with both assessment and behaviour data · {windowDays}d window</p>
+              <p className="mt-0.5 text-[11px] text-muted">{correlation.pairedStudentCount} students with both assessment and behaviour data</p>
+              <div className="mt-2 flex flex-wrap items-center gap-1">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Pastoral window:</span>
+                {([7, 21, 28, 90] as const).map((w) => (
+                  <Link
+                    key={w}
+                    href={windowUrl(w)}
+                    className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold calm-transition ${
+                      windowDays === w
+                        ? "bg-accent text-on-primary"
+                        : "text-muted ring-1 ring-inset ring-outline-variant hover:text-text"
+                    }`}
+                  >
+                    {w}d
+                  </Link>
+                ))}
+              </div>
             </div>
             <Link href={`/explorer/assessment/cohorts?windowDays=${windowDays}${cycleId ? `&cycle=${cycleId}` : ""}`} className="text-[11px] font-semibold text-accent hover:underline">
               View cohorts →
@@ -440,7 +445,7 @@ export default async function AssessmentHubPage({
       </div>
 
       <p className="mt-6 text-[0.75rem] text-muted">
-        Explorer · Assessment · {windowDays}d window · {computedAtStr}
+        Explorer · Assessment · {activeCycle?.cycleLabel ?? "Current cycle"} · correlations {windowDays}d · {computedAtStr}
       </p>
     </div>
   );

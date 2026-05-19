@@ -309,7 +309,7 @@ export default async function DepartmentsPage({
           </p>
         </div>
       ) : (
-        <DepartmentsTable rows={tableRows} />
+        <DepartmentsTable rows={tableRows} windowDays={windowDays} />
       )}
 
       {/* ── Bottom summary cards ───────────────────────────────── */}

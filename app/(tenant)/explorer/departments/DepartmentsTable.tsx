@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
+import { useRouter } from "next/navigation";
 
 type DepartmentRow = {
   departmentId: string;
@@ -19,36 +15,35 @@ type DepartmentRow = {
 
 type Props = {
   rows: DepartmentRow[];
+  windowDays: number;
   pageSize?: number;
 };
 
-/* ------------------------------------------------------------------ */
-/*  Status badge                                                       */
-/* ------------------------------------------------------------------ */
+function teachersExplorerHref(departmentId: string, windowDays: number): string {
+  const qs = new URLSearchParams({
+    windowDays: String(windowDays),
+    departmentId,
+    mode: "priorities",
+    page: "1",
+  });
+  return `/explorer/teachers?${qs}`;
+}
 
 const STATUS_STYLES: Record<string, string> = {
-  STABLE:
-    "bg-risk-stable-bg text-risk-stable-text",
-  WARNING:
-    "bg-risk-watch-bg text-risk-watch-text",
-  DRIFTING:
-    "bg-risk-priority-bg text-risk-priority-text",
-  "CRITICAL DRIFT":
-    "bg-risk-urgent-bg text-risk-urgent-text",
+  STABLE: "bg-risk-stable-bg text-risk-stable-text",
+  WARNING: "bg-risk-watch-bg text-risk-watch-text",
+  DRIFTING: "bg-risk-priority-bg text-risk-priority-text",
+  "CRITICAL DRIFT": "bg-risk-urgent-bg text-risk-urgent-text",
 };
 
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
-
-export function DepartmentsTable({ rows, pageSize = 10 }: Props) {
+export function DepartmentsTable({ rows, windowDays, pageSize = 10 }: Props) {
+  const router = useRouter();
   const [page, setPage] = useState(0);
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const visible = rows.slice(page * pageSize, page * pageSize + pageSize);
 
   return (
     <>
-      {/* Table */}
       <div className="table-shell">
         <p className="sr-only" id="explorer-departments-scroll-hint">
           This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
@@ -69,7 +64,16 @@ export function DepartmentsTable({ rows, pageSize = 10 }: Props) {
                 <tr
                   key={row.departmentId}
                   className="group table-row calm-transition cursor-pointer"
-                  onClick={() => window.location.href = `/explorer/departments/${row.departmentId}`}
+                  onClick={() => router.push(teachersExplorerHref(row.departmentId, windowDays))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      router.push(teachersExplorerHref(row.departmentId, windowDays));
+                    }
+                  }}
+                  tabIndex={0}
+                  role="link"
+                  aria-label={`View teachers in ${row.departmentName}`}
                 >
                   {/* Department name + faculty */}
                   <td className="px-5 py-4">
