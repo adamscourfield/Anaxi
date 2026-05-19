@@ -10,7 +10,10 @@ import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chro
 import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
 import { Card } from "@/components/ui/card";
 import type { PointType, ResultStatus, QualificationType } from "@prisma/client";
-import { pointTypePillClasses, resultStatusPillClasses } from "@/modules/assessments/attainmentColours";
+import { pointTypePillClasses } from "@/modules/assessments/attainmentColours";
+import { CycleArchiveControl } from "@/components/assessments/CycleArchiveControl";
+import { CycleCompareLink } from "@/components/assessments/CycleCompareLink";
+import { ResultPointStatusControl } from "@/components/assessments/ResultPointStatusControl";
 
 // ─── Type badges ─────────────────────────────────────────────────────────────
 
@@ -24,15 +27,6 @@ const POINT_TYPE_LABELS: Record<PointType, string> = {
 };
 
 const POINT_TYPE_COLOURS = pointTypePillClasses;
-
-const STATUS_LABELS: Record<ResultStatus, string> = {
-  DRAFT: "Draft",
-  VALIDATED: "Validated",
-  PUBLISHED: "Published",
-  LOCKED: "Locked",
-};
-
-const STATUS_COLOURS = resultStatusPillClasses;
 
 const QUAL_LABELS: Record<QualificationType, string> = {
   GCSE: "GCSE",
@@ -274,15 +268,24 @@ export default async function CycleDetailPage({
           </div>
         }
         actions={
-          <Link
-            href={`/assessments/${cycle.id}/points/new`}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-border bg-[var(--on-surface)] px-5 text-sm font-semibold text-[var(--surface-bright)] shadow-none calm-transition hover:opacity-95"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-            </svg>
-            Add point
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <CycleCompareLink
+              cycleId={cycle.id}
+              points={cycle.points.map((p) => ({
+                id: p.id,
+                entryCount: p.assessments.reduce((s, a) => s + a.entryCount, 0),
+              }))}
+            />
+            <CycleArchiveControl cycleId={cycle.id} isActive={cycle.isActive} />
+            <Button asChild>
+              <Link href={`/assessments/${cycle.id}/points/new`}>
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                </svg>
+                Add point
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -334,14 +337,23 @@ export default async function CycleDetailPage({
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-muted)]">Result Points</h2>
-          <Button asChild variant="secondary" className="h-8 py-0 text-xs">
-            <Link href={`/assessments/${cycle.id}/points/new`}>
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-              </svg>
-              Add point
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <CycleCompareLink
+              cycleId={cycle.id}
+              points={cycle.points.map((p) => ({
+                id: p.id,
+                entryCount: p.assessments.reduce((s, a) => s + a.entryCount, 0),
+              }))}
+            />
+            <Button asChild variant="secondary" className="h-8 py-0 text-xs">
+              <Link href={`/assessments/${cycle.id}/points/new`}>
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                </svg>
+                Add point
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {cycle.points.length === 0 ? (
@@ -386,7 +398,10 @@ export default async function CycleDetailPage({
                       const subjectsRemainder = point.assessments.length - 5;
 
                       return (
-                        <tr key={point.id} className="table-row">
+                        <tr
+                          key={point.id}
+                          className={`table-row ${point.resultStatus === "LOCKED" ? "opacity-90" : ""}`}
+                        >
                           <td className="px-5 py-3.5 text-center tabular-nums text-[var(--on-surface-muted)]">
                             <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-[var(--surface-container-low)] text-[11px] font-bold text-[var(--on-surface-muted)]">
                               {ordinal}
@@ -397,9 +412,7 @@ export default async function CycleDetailPage({
                               <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
                                 {POINT_TYPE_LABELS[point.pointType]}
                               </span>
-                              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${STATUS_COLOURS[point.resultStatus]}`}>
-                                {STATUS_LABELS[point.resultStatus]}
-                              </span>
+                              <ResultPointStatusControl pointId={point.id} status={point.resultStatus} compact />
                             </div>
                             <span className="font-semibold text-[var(--on-surface)]">{point.label}</span>
                           </td>

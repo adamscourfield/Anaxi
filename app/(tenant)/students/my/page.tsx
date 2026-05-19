@@ -114,7 +114,7 @@ export default async function MyStudentsPage({
         />
         <p className="text-sm text-muted">
           <Link href="/assessments" className="link-accent">
-            Open assessments
+            Open attainment
           </Link>{" "}
           to review attainment for your classes.
         </p>

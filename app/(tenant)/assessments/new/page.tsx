@@ -7,8 +7,18 @@ import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
+import { AttainmentWizardSteps } from "@/components/assessments/AttainmentWizardSteps";
 import { toast } from "@/components/toast-provider";
+import { defaultAcademicYearDates, defaultAcademicYearLabel } from "@/lib/attainmentDefaults";
 import { pointTypePillClasses } from "@/modules/assessments/attainmentColours";
+
+const WIZARD_STEPS = [
+  { id: "cycle", label: "Cycle details" },
+  { id: "points", label: "Result points" },
+] as const;
+
+const DEFAULT_DATES = defaultAcademicYearDates();
 
 type QualificationType = "GCSE" | "A_LEVEL" | "PERCENTAGE" | "OTHER";
 
@@ -65,9 +75,9 @@ export default function NewCyclePage() {
   // Cycle form
   const [cohortLabel, setCohortLabel] = useState("");
   const [qualificationType, setQualificationType] = useState<QualificationType>("GCSE");
-  const [academicYear, setAcademicYear] = useState("2024/25");
-  const [startDate, setStartDate] = useState("2024-09-01");
-  const [endDate, setEndDate] = useState("2025-08-31");
+  const [academicYear, setAcademicYear] = useState(defaultAcademicYearLabel);
+  const [startDate, setStartDate] = useState(DEFAULT_DATES.startDate);
+  const [endDate, setEndDate] = useState(DEFAULT_DATES.endDate);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -130,9 +140,8 @@ export default function NewCyclePage() {
       }
       const { cycle } = await res.json();
       setCycleId(cycle.id);
-      toast("Cycle created. Add your result points.", "success");
+      toast("Cycle created — add your result points.", "success");
       setStep("points");
-      toast("Cycle created", "success");
     } finally {
       setLoading(false);
     }
@@ -179,9 +188,8 @@ export default function NewCyclePage() {
           return;
         }
       }
-      toast("Result points saved.", "success");
+      toast("Result points created.", "success");
       setStep("done");
-      toast("Result points created", "success");
     } finally {
       setPointsLoading(false);
     }
@@ -212,7 +220,8 @@ export default function NewCyclePage() {
 
   if (step === "done") {
     return (
-      <div className="max-w-2xl space-y-8">
+      <AttainmentPageShell>
+      <div className="mx-auto max-w-2xl space-y-8">
         <AssessmentsBreadcrumb
           items={[
             { label: "Attainment", href: "/assessments" },
@@ -221,10 +230,14 @@ export default function NewCyclePage() {
         />
         <PageHeader variant="ledger" eyebrow="Attainment" title="Cycle created" subtitle={`"${cycleLabel}" is ready.`} />
         <Card className="space-y-4">
-          <p className="text-sm text-[var(--on-surface-muted)]">
-            Result points have been created. Upload subject results for each point to begin analysis.
-          </p>
-          <div className="flex gap-3">
+          <p className="text-sm text-muted">Next steps to unlock analysis:</p>
+          <ol className="list-decimal space-y-2 pl-5 text-sm text-text">
+            <li>Open the cycle and confirm result points</li>
+            <li>Upload a CSV for each snapshot (baseline, mock, final…)</li>
+            <li>Review attainment, pastoral, and teaching tabs per point</li>
+            <li>Compare two points to track movement over time</li>
+          </ol>
+          <div className="flex flex-wrap gap-3 pt-2">
             <Button onClick={() => router.push(`/assessments/${cycleId}`)}>
               Open cycle
             </Button>
@@ -234,11 +247,13 @@ export default function NewCyclePage() {
           </div>
         </Card>
       </div>
+      </AttainmentPageShell>
     );
   }
 
   return (
-    <div className="max-w-2xl space-y-8">
+    <AttainmentPageShell>
+    <div className="mx-auto max-w-2xl space-y-8">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -251,17 +266,7 @@ export default function NewCyclePage() {
         subtitle="A cycle tracks one cohort's outcomes across an academic year."
       />
 
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 text-sm">
-        {(["cycle", "points"] as const).map((s, i) => (
-          <span key={s} className="flex items-center gap-2">
-            {i > 0 && <span className="text-[var(--on-surface-muted)]">→</span>}
-            <span className={step === s ? "font-semibold text-[var(--accent)]" : "text-[var(--on-surface-muted)]"}>
-              {i + 1}. {s === "cycle" ? "Cycle details" : "Result points"}
-            </span>
-          </span>
-        ))}
-      </div>
+      <AttainmentWizardSteps steps={[...WIZARD_STEPS]} currentId={step === "points" ? "points" : "cycle"} />
 
       {/* Step 1: Cycle details */}
       {step === "cycle" && (
@@ -414,5 +419,6 @@ export default function NewCyclePage() {
         </Card>
       )}
     </div>
+    </AttainmentPageShell>
   );
 }

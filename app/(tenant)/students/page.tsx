@@ -76,12 +76,12 @@ export default async function StudentsPage({
   return (
     <EmptyState
       title="Student directory"
-      description="The school-wide student risk overview is available to senior pastoral roles when the Analysis module is enabled. You can still open students from Assessments."
+      description="The school-wide student risk overview is available to senior pastoral roles when the Analysis module is enabled. You can still open students from Attainment."
       action={
         <div className="flex flex-wrap justify-center gap-3">
           {featureOn("ASSESSMENTS") ? (
             <Button asChild variant="primary">
-              <Link href="/assessments">Go to assessments</Link>
+              <Link href="/assessments">Go to attainment</Link>
             </Button>
           ) : null}
           <Button asChild variant="secondary">
