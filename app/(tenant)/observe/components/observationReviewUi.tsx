@@ -67,7 +67,7 @@ export function ObservationReviewSignalRow({
 }) {
   return (
     <div
-      className={`flex items-center gap-3 rounded-full bg-[#E5E7EB]/90 px-5 py-3.5 ${OBS_REVIEW_TEXT}`}
+      className={`flex items-center gap-3 rounded-full bg-[var(--surface-container)]/90 px-5 py-3.5 ${OBS_REVIEW_TEXT}`}
     >
       {icon ?? (
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-500 text-white">
@@ -112,7 +112,7 @@ export function ObservationReviewTeacherCard({
             key={`${row.label}-${i}`}
             className={`flex gap-3 py-3.5 ${i > 0 ? "border-t border-white/10" : ""}`}
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/10 text-[#9CA3AF] [&_svg]:h-[18px] [&_svg]:w-[18px]">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-lowest)]/10 text-[var(--on-surface-variant)] [&_svg]:h-[18px] [&_svg]:w-[18px]">
               {row.icon}
             </span>
             <div className="min-w-0 pt-0.5 text-left">
@@ -136,13 +136,13 @@ export function ObservationReviewSessionCard({
   return (
     <div>
       <p className={`mb-2 text-[0.625rem] font-bold uppercase tracking-[0.14em] ${OBS_REVIEW_MUTED}`}>Session Context</p>
-      <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] shadow-sm">
         {rows.map((row, i) => (
           <div
             key={`${row.label}-${i}`}
             className={`flex items-start gap-3 px-4 py-4 ${i < rows.length - 1 ? "border-b border-[#F3F4F6]" : ""}`}
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#F3F4F6] text-[#6B7280] [&_svg]:h-[18px] [&_svg]:w-[18px]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-[var(--on-surface-variant)] [&_svg]:h-[18px] [&_svg]:w-[18px]">
               {row.icon}
             </span>
             <div className="min-w-0 pt-0.5">

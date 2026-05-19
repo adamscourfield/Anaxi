@@ -44,7 +44,7 @@ export function SignalTileGroup({
               <span
                 className={`rounded-md px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-widest ${
                   isSelected
-                    ? "bg-white/10 text-on-tertiary-container"
+                    ? "bg-[var(--surface-container-lowest)]/10 text-on-tertiary-container"
                     : "bg-surface-container text-muted"
                 }`}
               >
@@ -53,7 +53,7 @@ export function SignalTileGroup({
               <div
                 className={`flex h-5 w-5 items-center justify-center rounded-md border-2 ${
                   isSelected
-                    ? "border-on-tertiary-container/40 bg-white/10"
+                    ? "border-on-tertiary-container/40 bg-[var(--surface-container-lowest)]/10"
                     : "border-border/60 bg-transparent"
                 }`}
               >

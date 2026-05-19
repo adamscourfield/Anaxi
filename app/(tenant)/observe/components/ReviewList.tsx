@@ -132,7 +132,7 @@ export function ReviewList({
 
   return (
     <ReviewStageChrome>
-      <div className="relative -mx-4 min-h-0 bg-[#F9FAFB] px-4 pb-14 pt-1 sm:-mx-6 sm:px-6">
+      <div className="relative -mx-4 min-h-0 bg-[var(--surface-container-low)] px-4 pb-14 pt-1 sm:-mx-6 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="mb-6">
             <h2 className={`text-[1.375rem] font-bold ${OBS_REVIEW_TEXT}`}>Review &amp; Submit</h2>
@@ -178,7 +178,7 @@ export function ReviewList({
                     <button
                       type="button"
                       onClick={() => router.push("/observe/new/signals")}
-                      className={`inline-flex items-center gap-1.5 rounded-md border border-[#D1D5DB] bg-white px-3 py-1.5 text-[0.8125rem] font-medium ${OBS_REVIEW_MUTED} shadow-sm transition-colors hover:border-[#9CA3AF] hover:text-[#111827]`}
+                      className={`inline-flex items-center gap-1.5 rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] px-3 py-1.5 text-[0.8125rem] font-medium ${OBS_REVIEW_MUTED} shadow-sm transition-colors hover:border-[color-mix(in_srgb,var(--outline-variant)_70%,transparent)] hover:text-[var(--on-surface)]`}
                     >
                       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -198,7 +198,7 @@ export function ReviewList({
 
                       const statusIcon = display ? (
                         <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${display.dot}`}>
-                          <span className="h-2 w-2 rounded-full bg-white/90" aria-hidden />
+                          <span className="h-2 w-2 rounded-full bg-[var(--surface-container-lowest)]/90" aria-hidden />
                         </span>
                       ) : isSkipped ? (
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#9CA3AF] text-white">
@@ -207,7 +207,7 @@ export function ReviewList({
                           </svg>
                         </span>
                       ) : (
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-2 border-dashed border-[#D1D5DB] bg-[#F3F4F6]" aria-hidden />
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-2 border-dashed border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-low)]" aria-hidden />
                       );
 
                       return (
@@ -215,7 +215,7 @@ export function ReviewList({
                           key={signal.key}
                           type="button"
                           onClick={() => router.push(`/observe/new/signals?index=${index}`)}
-                          className="flex w-full items-center gap-3 rounded-full bg-[#E5E7EB]/90 px-5 py-3.5 text-left transition-colors hover:bg-[#E5E7EB]"
+                          className="flex w-full items-center gap-3 rounded-full bg-[var(--surface-container)]/90 px-5 py-3.5 text-left transition-colors hover:bg-[var(--surface-container)]"
                         >
                           {statusIcon}
                           <span className="min-w-0 flex-1">
@@ -225,7 +225,7 @@ export function ReviewList({
                             </span>
                           </span>
                           <svg
-                            className="h-4 w-4 shrink-0 text-[#9CA3AF]"
+                            className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)]"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -312,10 +312,10 @@ export function ReviewList({
                     }
                     title="Concluding notes"
                   />
-                  <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-sm">
+                  <div className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] shadow-sm">
                     <textarea
                       name="contextNote"
-                      className="field min-h-[140px] w-full resize-y border-0 bg-transparent px-5 py-4 text-[0.875rem] text-[#111827] shadow-none placeholder:text-[#9CA3AF] focus-visible:ring-0"
+                      className="field min-h-[140px] w-full resize-y border-0 bg-transparent px-5 py-4 text-[0.875rem] text-[var(--on-surface)] shadow-none placeholder:text-[var(--on-surface-variant)] focus-visible:ring-0"
                       placeholder="Final reflections on this session — strengths and areas for development…"
                       rows={5}
                       value={draft.context.contextNote}
@@ -326,7 +326,7 @@ export function ReviewList({
                       }}
                     />
                     <div className="flex justify-end border-t border-[#F3F4F6] px-5 py-3">
-                      <span className="rounded-md border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280]">
+                      <span className="rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)] px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
                         Required
                       </span>
                     </div>
@@ -337,7 +337,7 @@ export function ReviewList({
                   <button
                     type="submit"
                     disabled={!allDone}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1F2937] px-6 py-3.5 text-[0.875rem] font-semibold text-white shadow-sm transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary-container)] px-6 py-3.5 text-[0.875rem] font-semibold text-white shadow-sm transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                       <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
@@ -348,7 +348,7 @@ export function ReviewList({
                   <button
                     type="button"
                     onClick={() => router.back()}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#D1D5DB] bg-white px-6 py-3.5 text-[0.875rem] font-medium text-[#111827] shadow-sm transition-colors hover:bg-[#F9FAFB]"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] px-6 py-3.5 text-[0.875rem] font-medium text-[var(--on-surface)] shadow-sm transition-colors hover:bg-[var(--surface-container-low)]"
                   >
                     <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden>
                       <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />

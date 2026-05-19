@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 export function NotFoundScreen({
@@ -9,6 +12,8 @@ export function NotFoundScreen({
   homeHref: string;
   homeLabel: string;
 }) {
+  const router = useRouter();
+
   return (
     <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center space-y-8 px-6 py-16 text-center sm:items-start sm:text-left">
       <Image src="/anaxi-logo.png" alt="Anaxi" width={40} height={40} className="h-10 w-10 object-contain" />
@@ -24,9 +29,14 @@ export function NotFoundScreen({
         <Button asChild>
           <Link href={homeHref}>{homeLabel}</Link>
         </Button>
-        <Button variant="secondary" asChild>
-          <Link href="/login">Sign in</Link>
+        <Button type="button" variant="secondary" onClick={() => router.back()}>
+          Go back
         </Button>
+        {!homeHref.startsWith("/login") ? (
+          <Button variant="secondary" asChild>
+            <Link href="/login">Sign in</Link>
+          </Button>
+        ) : null}
       </div>
     </div>
   );

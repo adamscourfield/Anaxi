@@ -17,26 +17,26 @@ export function ReviewStageChrome({
   return (
     <div className="w-full min-w-0 max-w-full">
       <div className="mb-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6B7280]">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--on-surface-variant)]">
           Dashboard
           <span className="mx-1.5 text-[#E5E7EB]">/</span>
           Observations
         </span>
       </div>
 
-      <header className="rounded-xl border border-[#E5E7EB] bg-white px-5 py-5 shadow-sm sm:px-6 sm:py-6">
+      <header className="rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-5 py-5 shadow-sm sm:px-6 sm:py-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
           <div className="min-w-0 space-y-2">
-            <h1 className="text-pretty text-[clamp(1.625rem,3.5vw,2rem)] font-bold leading-[1.1] tracking-[-0.035em] text-[#111827]">
+            <h1 className="text-pretty text-[clamp(1.625rem,3.5vw,2rem)] font-bold leading-[1.1] tracking-[-0.035em] text-[var(--on-surface)]">
               New Observation
             </h1>
-            <p className="max-w-2xl text-pretty text-[0.9375rem] leading-relaxed text-[#6B7280]">
+            <p className="max-w-2xl text-pretty text-[0.9375rem] leading-relaxed text-[var(--on-surface-variant)]">
               Institutional record for quality assurance and staff development.
             </p>
           </div>
-          <div className="flex w-fit shrink-0 items-center gap-2 self-start rounded-md border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 py-2 shadow-sm sm:self-auto">
+          <div className="flex w-fit shrink-0 items-center gap-2 self-start rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)] px-3.5 py-2 shadow-sm sm:self-auto">
             <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400 ring-2 ring-amber-400/30" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#111827]">Draft Session</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface)]">Draft Session</span>
           </div>
         </div>
       </header>
@@ -53,10 +53,10 @@ export function ReviewStageChrome({
                 <span
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[0.75rem] font-bold shadow-sm ${
                     isActive
-                      ? "bg-[#1F2937] text-white ring-1 ring-black/10"
+                      ? "bg-[var(--primary-container)] text-white ring-1 ring-black/10"
                       : isCompleted
-                      ? "bg-[#111827] text-white"
-                      : "bg-[#E5E7EB] text-[#6B7280]"
+                      ? "bg-[var(--on-surface)] text-white"
+                      : "bg-[var(--surface-container)] text-[var(--on-surface-variant)]"
                   }`}
                 >
                   {isCompleted ? (
@@ -69,7 +69,7 @@ export function ReviewStageChrome({
                 </span>
                 <span
                   className={`whitespace-nowrap text-[0.8125rem] font-semibold tracking-[-0.01em] ${
-                    isActive ? "text-[#111827]" : isCompleted ? "text-[#111827]" : "text-[#6B7280]/70"
+                    isActive ? "text-[var(--on-surface)]" : isCompleted ? "text-[var(--on-surface)]" : "text-[var(--on-surface-variant)]/70"
                   }`}
                 >
                   {step.label}
@@ -78,7 +78,7 @@ export function ReviewStageChrome({
               {!isLast && (
                 <div
                   className={`mx-3 h-[2px] w-10 shrink-0 rounded-md sm:mx-4 sm:w-14 ${
-                    isCompleted ? "bg-[#111827]/25" : "bg-[#E5E7EB]"
+                    isCompleted ? "bg-[var(--on-surface)]/25" : "bg-[var(--surface-container)]"
                   }`}
                 />
               )}
@@ -94,12 +94,12 @@ export function ReviewStageChrome({
             <li
               key={step.number}
               className={`flex items-center gap-3 border-l-[3px] py-2.5 pl-3 first:pt-0 last:pb-0 ${
-                isActive ? "border-[#1F2937] bg-[#F3F4F6]" : "border-transparent"
+                isActive ? "border-[#1F2937] bg-[var(--surface-container-low)]" : "border-transparent"
               }`}
             >
               <span
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[0.75rem] font-bold shadow-sm ${
-                  isActive ? "bg-[#1F2937] text-white" : isCompleted ? "bg-[#111827] text-white" : "bg-[#E5E7EB] text-[#6B7280]"
+                  isActive ? "bg-[var(--primary-container)] text-white" : isCompleted ? "bg-[var(--on-surface)] text-white" : "bg-[var(--surface-container)] text-[var(--on-surface-variant)]"
                 }`}
               >
                 {isCompleted ? (
@@ -112,7 +112,7 @@ export function ReviewStageChrome({
               </span>
               <span
                 className={`min-w-0 text-[0.8125rem] font-semibold tracking-[-0.01em] ${
-                  isActive ? "text-[#111827]" : isCompleted ? "text-[#111827]" : "text-[#6B7280]/70"
+                  isActive ? "text-[var(--on-surface)]" : isCompleted ? "text-[var(--on-surface)]" : "text-[var(--on-surface-variant)]/70"
                 }`}
               >
                 {step.label}

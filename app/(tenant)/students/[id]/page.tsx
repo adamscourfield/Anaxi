@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { StudentProfileNav } from "@/components/students/student-profile-nav";
+import { StudentProfileTabScroll } from "@/components/students/student-profile-tab-scroll";
 import type { GradeFormat } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -426,6 +429,12 @@ export default async function StudentDetailPage({
         </div>
       </header>
 
+      <Suspense fallback={null}>
+        <StudentProfileNav studentId={params.id} />
+        <StudentProfileTabScroll />
+      </Suspense>
+
+      <div id="overview" className="scroll-mt-24 space-y-8">
       {/* Latest behaviour snapshot */}
       {latestSnapshot && attDisplay !== null ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -735,10 +744,10 @@ export default async function StudentDetailPage({
 
         {/* Assessments */}
         {assessmentsFeature?.enabled ? (
-          <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
+          <div id="attainment" className="scroll-mt-24 overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Attainment</h2>
+                <h2 id="attainment-heading" className="text-lg font-semibold tracking-[-0.02em] text-text">Attainment</h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted">
                   {activeCycle ? `Active cycle: ${activeCycle.label}` : "No active assessment cycle"}
                 </p>
@@ -852,8 +861,10 @@ export default async function StudentDetailPage({
         ) : null}
       </div>
 
+      </div>
+
       {/* Snapshot history */}
-      <Card>
+      <Card id="snapshots" className="scroll-mt-24">
         <SectionHeader title="Snapshot history" subtitle="Imported behaviour and attendance over time" />
         {chronSnapshots.length === 0 ? (
           <BodyText className="mt-4 text-muted">No rows to show.</BodyText>
@@ -930,7 +941,7 @@ export default async function StudentDetailPage({
           )}
         </Card>
 
-        <Card>
+        <Card id="on-call" className="scroll-mt-24">
           <SectionHeader title="On-call log" subtitle="Recent requests" />
           {(student.onCallRequests as any[]).length === 0 ? (
             <BodyText className="mt-4 text-muted">No on-call entries.</BodyText>

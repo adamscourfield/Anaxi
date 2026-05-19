@@ -46,9 +46,9 @@ function SignalTooltip({ state }: { state: TooltipState }) {
       <div className="whitespace-pre-wrap">
         {lines.map((line, i) =>
           i === 0 ? (
-            <p key={i} className="font-bold text-[#111827]">{line}</p>
+            <p key={i} className="font-bold text-[var(--on-surface)]">{line}</p>
           ) : (
-            <p key={i} className="mt-0.5 text-[#6B7280]">{line}</p>
+            <p key={i} className="mt-0.5 text-[var(--on-surface-variant)]">{line}</p>
           ),
         )}
       </div>

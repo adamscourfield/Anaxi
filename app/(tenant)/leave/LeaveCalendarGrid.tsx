@@ -193,7 +193,7 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 flex-wrap items-baseline gap-2">
-          <h2 className="text-[1.35rem] font-bold capitalize tracking-tight text-[#111827] sm:text-[1.5rem]">
+          <h2 className="text-[1.35rem] font-bold capitalize tracking-tight text-[var(--on-surface)] sm:text-[1.5rem]">
             {monthLabel}
           </h2>
           <div className="flex items-center gap-0.5">
@@ -201,7 +201,7 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
               type="button"
               disabled={loading}
               onClick={() => void goToMonth(prevMonthKey)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#9CA3AF] calm-transition hover:bg-[#F3F4F6] hover:text-[#111827] disabled:opacity-40"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] disabled:opacity-40"
               aria-label="Previous month"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -212,7 +212,7 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
               type="button"
               disabled={loading}
               onClick={() => void goToMonth(nextMonthKey)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#9CA3AF] calm-transition hover:bg-[#F3F4F6] hover:text-[#111827] disabled:opacity-40"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] disabled:opacity-40"
               aria-label="Next month"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -226,21 +226,21 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
           <div className="flex flex-wrap items-center gap-2" role="list" aria-label="Leave status legend">
             <span
               role="listitem"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#6B7280]"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]"
             >
               <span className="h-2 w-2 shrink-0 rounded-full bg-[#9CA3AF]" aria-hidden />
               Pending
             </span>
             <span
               role="listitem"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#6B7280]"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]"
             >
               <span className="h-2 w-2 shrink-0 rounded-full bg-[#22c55e]" aria-hidden />
               Approved
             </span>
             <span
               role="listitem"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[#6B7280]"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]"
             >
               <span className="h-2 w-2 shrink-0 rounded-full bg-[#ef4444]" aria-hidden />
               Declined
@@ -251,12 +251,12 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
             <button
               type="button"
               onClick={jumpToday}
-              className="rounded-lg border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3 py-2 text-[0.8125rem] font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#F9FAFB]"
+              className="rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[0.8125rem] font-semibold text-[var(--on-surface)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)]"
             >
               Today
             </button>
             <span
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#E5E7EB] bg-[var(--surface-container-lowest)] text-[#6B7280] shadow-sm"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] shadow-sm"
               title="Calendar"
               aria-hidden
             >
@@ -267,7 +267,7 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
             </span>
             <Link
               href={basePath === "calendar" ? "/leave?view=list" : "/leave?view=list"}
-              className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-2.5 text-[0.8125rem] font-semibold text-[#6B7280] shadow-sm calm-transition hover:bg-[#F9FAFB] hover:text-[#111827]"
+              className="inline-flex h-9 items-center gap-1 rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-2.5 text-[0.8125rem] font-semibold text-[var(--on-surface-variant)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
               title="Switch to list view to filter"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -289,11 +289,11 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
         key={animTick}
         className={`loa-cal-month-enter overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none ${loading ? "opacity-70" : ""}`}
       >
-        <div className="grid grid-cols-7 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+        <div className="grid grid-cols-7 border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)]">
           {WEEKDAYS.map((wd) => (
             <div
               key={wd}
-              className="border-r border-[#E5E7EB] py-2.5 text-center text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280] last:border-r-0"
+              className="border-r border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] py-2.5 text-center text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)] last:border-r-0"
             >
               {wd}
             </div>
@@ -363,31 +363,31 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
                     setSelectedKey((prev) => (prev === key ? null : key));
                   }
                 }}
-                className={`group relative min-h-[118px] border-b border-r border-[#E5E7EB] p-1.5 last:border-r-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2563EB]/40 ${
+                className={`group relative min-h-[118px] border-b border-r border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] p-1.5 last:border-r-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--info)]/40 ${
                   inMonth
                     ? isWeekend
                       ? "bg-[#FAFAFA]"
                       : "bg-[var(--surface-container-lowest)]"
-                    : "bg-[#F9FAFB]"
-                } ${isSelected ? "ring-1 ring-inset ring-[#2563EB]" : ""}`}
+                    : "bg-[var(--surface-container-low)]"
+                } ${isSelected ? "ring-1 ring-inset ring-[var(--info)]" : ""}`}
               >
                 <div className="mb-1 flex items-start justify-between gap-1">
                   <span
                     className={`text-[11px] font-bold tabular-nums ${
-                      inMonth ? (isToday ? "text-[#2563EB]" : "text-[#111827]") : "text-[#D1D5DB]"
+                      inMonth ? (isToday ? "text-[var(--info)]" : "text-[var(--on-surface)]") : "text-[#D1D5DB]"
                     }`}
                   >
                     {day.getDate()}
                   </span>
                   <div className="flex shrink-0 items-center gap-1">
                     {showSpanDot ? (
-                      <span className="mt-0.5 inline-block h-1.5 w-1.5 rounded-full bg-[#111827]" title="Multi-day leave" />
+                      <span className="mt-0.5 inline-block h-1.5 w-1.5 rounded-full bg-[var(--on-surface)]" title="Multi-day leave" />
                     ) : null}
                     {inMonth && day.getDay() !== 0 && day.getDay() !== 6 ? (
                       <Link
                         href={`/leave/request?date=${key}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="flex h-5 w-5 items-center justify-center rounded-md text-sm font-semibold leading-none text-[#9CA3AF] opacity-0 calm-transition hover:bg-[#F3F4F6] hover:text-[#111827] group-hover:opacity-100"
+                        className="flex h-5 w-5 items-center justify-center rounded-md text-sm font-semibold leading-none text-[var(--on-surface-variant)] opacity-0 calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] group-hover:opacity-100"
                         title={`Request leave for ${day.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}
                       >
                         +
@@ -402,7 +402,7 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
                       <div
                         key={block.key}
                         onClick={(e) => e.stopPropagation()}
-                        className="rounded-md bg-[#F3F4F6] px-2 py-1 text-[10px] font-medium leading-snug text-[#4B5563]"
+                        className="rounded-md bg-[var(--surface-container-low)] px-2 py-1 text-[10px] font-medium leading-snug text-[#4B5563]"
                       >
                         {continuationLabel(block.request)}
                       </div>

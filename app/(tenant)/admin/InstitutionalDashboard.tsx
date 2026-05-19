@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { StatusPill } from "@/components/ui/status-pill";
+import { adminIconWell } from "@/lib/admin-icon-well";
 
 export type AdminIconId =
   | "users"
@@ -53,28 +54,6 @@ export type DashboardSectionDef = {
   tag: string;
   rows: DashboardRowDef[];
 };
-
-function rowIconWell(href: string): string {
-  if (href === "/admin/users" || href === "/admin/settings") {
-    return "bg-[rgba(99,102,241,0.10)] text-[#4f46e5]";
-  }
-  if (href === "/admin/departments" || href === "/admin/taxonomies") {
-    return "bg-[rgba(59,130,246,0.10)] text-[#2563eb]";
-  }
-  if (href === "/admin/coaching" || href === "/admin/timetable") {
-    return "bg-[rgba(16,185,129,0.10)] text-[#059669]";
-  }
-  if (href === "/admin/leave-approvals" || href === "/admin/terminology" || href === "/admin/features") {
-    return "bg-[rgba(245,158,11,0.12)] text-[#b45309]";
-  }
-  if (href === "/admin/language" || href === "/admin/signals") {
-    return "bg-[rgba(124,58,237,0.10)] text-[#6d28d9]";
-  }
-  if (href === "/admin/imports") {
-    return "bg-[var(--surface-container-high)] text-[var(--on-surface-variant)]";
-  }
-  return "bg-[var(--surface-container-low)] text-muted";
-}
 
 const ICONS: Record<AdminIconId, ReactNode> = {
   users: (
@@ -213,7 +192,7 @@ function AdminRowItem({
   row: DashboardRowDef;
   isLast: boolean;
 }) {
-  const well = rowIconWell(row.href);
+  const well = adminIconWell(row.href);
   const icon = ICONS[row.iconId];
   const badgeEl = row.badge ? <RowBadgeView badge={row.badge} /> : null;
 
@@ -395,6 +374,19 @@ export function InstitutionalDashboard({
   useEffect(() => {
     if (filterOpen) inputRef.current?.focus();
   }, [filterOpen]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.tagName === "INPUT" || t?.tagName === "TEXTAREA" || t?.isContentEditable) return;
+      e.preventDefault();
+      setFilterOpen(true);
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const toggleFilter = useCallback(() => {
     setFilterOpen((o) => !o);

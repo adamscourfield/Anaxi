@@ -8,6 +8,9 @@ import { prisma } from "@/lib/prisma";
 import { createLoaRequest } from "../actions";
 import { FormSelect } from "@/components/ui/form-select";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { FormField } from "@/components/ui/form-field";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export default async function LeaveRequestPage({
   searchParams,
@@ -49,27 +52,24 @@ export default async function LeaveRequestPage({
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <header className="anx-page-header-shell">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
-          <div className="min-w-0 space-y-2">
-            <h1 className="text-pretty text-[clamp(1.625rem,3.5vw,2rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text">
-              Request Leave
-            </h1>
-            <p className="max-w-2xl text-pretty text-[0.9375rem] leading-relaxed text-muted/90">
-              Submit a formal absence request for administrative review. Please ensure all medical documentation is attached for relevant claims.
-            </p>
-          </div>
-          <Link
-            href="/leave"
-            className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_38%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-muted shadow-sm calm-transition hover:border-text/15 hover:text-text"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
-            </svg>
-            Back to Leave of Absence
-          </Link>
-        </div>
-      </header>
+      <PageHeader
+        variant="ledger"
+        title="Request leave"
+        subtitle="Submit a formal absence request for administrative review. Attach medical documentation when required."
+        eyebrow={
+          <Breadcrumb
+            items={[
+              { label: "Leave", href: "/leave" },
+              { label: "Request" },
+            ]}
+          />
+        }
+        actions={
+          <Button variant="secondary" asChild>
+            <Link href="/leave">Back to leave</Link>
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">

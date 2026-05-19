@@ -1,4 +1,5 @@
 import "./globals.css";
+import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { SessionProvider } from "@/components/session-provider";
@@ -28,6 +29,21 @@ const rootFontVars = {
   "--font-space-grotesk": spaceGrotesk.style.fontFamily,
   "--font-jetbrains-mono": jetbrainsMono.style.fontFamily,
 } as CSSProperties;
+
+export const metadata: Metadata = {
+  title: {
+    default: "Anaxi — Institutional intelligence for schools",
+    template: "%s · Anaxi",
+  },
+  description:
+    "Observations, assessments, and leadership signals in one place—so your school can act with evidence.",
+  openGraph: {
+    title: "Anaxi — Institutional intelligence for schools",
+    description:
+      "Observations, assessments, and leadership signals in one place—so your school can act with evidence.",
+    type: "website",
+  },
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
