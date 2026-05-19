@@ -8,15 +8,11 @@ import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
 import { MetaText } from "@/components/ui/typography";
 import { toast } from "@/components/toast-provider";
 
-/* ── Live meeting surface tokens (match product mock — do not change page background) ── */
-const NAVY = "#0f172a";
-const VIOLET_ICON = "#7C5CFF";
-const SLATE_900 = "#111827";
-const SLATE_600 = "#6B7280";
-const SLATE_400 = "#9CA3AF";
-const BORDER = "#E5E7EB";
 const MEETING_CARD =
   "rounded-sm border border-border bg-[var(--surface-container-lowest)] p-5 sm:p-6 shadow-none";
+
+const MEETING_FIELD =
+  "field w-full rounded-md border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm text-text outline-none transition focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_12%,transparent)]";
 
 interface Attendee {
   id: string;
@@ -159,12 +155,12 @@ function AvatarStack({ attendees }: { attendees: Attendee[] }) {
           </div>
         ))}
         {overflow > 0 && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-[var(--surface-container-lowest)] bg-[#F3F4F6] text-[11px] font-semibold text-[#6B7280]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-[var(--surface-container-lowest)] bg-[var(--surface-container-low)] text-[11px] font-semibold text-muted">
             +{overflow}
           </div>
         )}
       </div>
-      <span className="ml-3 text-sm" style={{ color: SLATE_600 }}>
+      <span className="ml-3 text-sm text-muted">
         {attendees.length} Attendees Present
       </span>
     </div>
@@ -270,8 +266,8 @@ function FormattingToolbar({
       <button
         type="button"
         onClick={() => insertFormatting("**", "**", "bold text")}
-        className="rounded-md p-1.5 calm-transition hover:bg-[#F3F4F6]"
-        style={{ color: SLATE_400 }}
+        className="rounded-md p-1.5 calm-transition hover:bg-[var(--surface-container-low)]"
+        
         title="Bold"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -282,8 +278,8 @@ function FormattingToolbar({
       <button
         type="button"
         onClick={() => insertFormatting("*", "*", "italic text")}
-        className="rounded-md p-1.5 calm-transition hover:bg-[#F3F4F6]"
-        style={{ color: SLATE_400 }}
+        className="rounded-md p-1.5 calm-transition hover:bg-[var(--surface-container-low)]"
+        
         title="Italic"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -295,8 +291,8 @@ function FormattingToolbar({
       <button
         type="button"
         onClick={insertList}
-        className="rounded-md p-1.5 calm-transition hover:bg-[#F3F4F6]"
-        style={{ color: SLATE_400 }}
+        className="rounded-md p-1.5 calm-transition hover:bg-[var(--surface-container-low)]"
+        
         title="Bullet List"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -311,8 +307,8 @@ function FormattingToolbar({
       <button
         type="button"
         onClick={insertLink}
-        className="rounded-md p-1.5 calm-transition hover:bg-[#F3F4F6]"
-        style={{ color: SLATE_400 }}
+        className="rounded-md p-1.5 calm-transition hover:bg-[var(--surface-container-low)]"
+        
         title="Insert Link"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -602,20 +598,20 @@ export function LiveMeetingView({
       <div>
         <div className="mb-2 flex flex-wrap items-center gap-3">
           {hasStarted && !isEnded && (
-            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: "#15803d" }}>
-              <span className="inline-block h-2 w-2 rounded-full bg-[#22c55e]" />
+            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-success">
+              <span className="inline-block h-2 w-2 rounded-full bg-success" />
               In progress
             </span>
           )}
           {!hasStarted && !isEnded && (status === "CONFIRMED" || status === "PENDING") && (
-            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: SLATE_600 }}>
-              <span className="inline-block h-2 w-2 rounded-full bg-[#D1D5DB]" />
+            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+              <span className="inline-block h-2 w-2 rounded-full bg-[var(--outline-variant)]" />
               Not started
             </span>
           )}
           {isEnded && (
-            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: SLATE_600 }}>
-              <span className="inline-block h-2 w-2 rounded-full bg-[#D1D5DB]" />
+            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+              <span className="inline-block h-2 w-2 rounded-full bg-[var(--outline-variant)]" />
               Ended
             </span>
           )}
@@ -623,13 +619,12 @@ export function LiveMeetingView({
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="text-[1.65rem] font-bold leading-tight tracking-[-0.02em] sm:text-[1.875rem]" style={{ color: SLATE_900 }}>
+            <h1 className="text-[1.65rem] font-bold leading-tight tracking-[-0.02em] text-text sm:text-[1.875rem]">
               {title}
             </h1>
             <div className="flex flex-wrap items-center gap-4">
               <span
-                className="flex items-center gap-2 font-mono text-sm tabular-nums"
-                style={{ color: SLATE_600 }}
+                className="flex items-center gap-2 font-mono text-sm tabular-nums text-muted"
                 title={
                   isEnded
                     ? "Session duration (logged)"
@@ -638,7 +633,7 @@ export function LiveMeetingView({
                       : "Timer starts when you start the meeting"
                 }
               >
-                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden style={{ color: SLATE_400 }}>
+                <svg className="h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 7v5l3 3" strokeLinecap="round" />
                 </svg>
@@ -650,11 +645,7 @@ export function LiveMeetingView({
 
           <div className="flex flex-wrap items-center gap-3">
             {canStartMeeting && !isEnded && !hasStarted && (
-              <Button
-                type="button"
-                className="rounded-xl px-5 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm hover:opacity-95"
-                style={{ backgroundColor: NAVY }}
-                disabled={startingMeeting}
+              <Button type="button" className="rounded-xl px-5 py-2.5 text-[0.8125rem]" disabled={startingMeeting}
                 onClick={() => void handleStartMeeting()}
               >
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -663,11 +654,11 @@ export function LiveMeetingView({
                 {startingMeeting ? "Starting..." : "Start meeting"}
               </Button>
             )}
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={handleSaveDraft}
-              className="inline-flex items-center gap-2 rounded-xl border bg-[var(--surface-container-lowest)] px-4 py-2.5 text-sm font-semibold shadow-sm calm-transition hover:bg-[#F9FAFB]"
-              style={{ borderColor: BORDER, color: SLATE_900 }}
+              className="rounded-xl px-4 py-2.5"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
@@ -675,11 +666,11 @@ export function LiveMeetingView({
                 <polyline points="7 3 7 8 15 8" />
               </svg>
               Save Draft
-            </button>
+            </Button>
             {!isEnded && (
               <Button
                 variant="danger"
-                className="rounded-xl border-0 bg-[#E85D4C] px-5 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm hover:bg-[#D64D3E] hover:opacity-100"
+                className="rounded-xl px-5 py-2.5 text-[0.8125rem]"
                 onClick={() => setEndMeetingOpen(true)}
               >
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -699,7 +690,7 @@ export function LiveMeetingView({
           {/* Minutes Header */}
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: "rgba(124, 92, 255, 0.12)", color: VIOLET_ICON }}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)]">
                 <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
@@ -708,7 +699,7 @@ export function LiveMeetingView({
                   <polyline points="10 9 9 9 8 9" />
                 </svg>
               </span>
-              <h2 className="text-lg font-bold" style={{ color: SLATE_900 }}>
+              <h2 className="text-lg font-bold text-text">
                 Live Minutes
               </h2>
             </div>
@@ -729,17 +720,17 @@ export function LiveMeetingView({
             onChange={(e) => canEdit && handleNotesChange(e.target.value)}
             readOnly={!canEdit}
             rows={18}
-            className="w-full resize-none rounded-none border-0 bg-transparent px-1.5 py-1 font-sans text-sm leading-relaxed placeholder:text-[#9CA3AF] focus:outline-none focus:ring-0"
-            style={{ color: SLATE_900 }}
+            className="w-full resize-none rounded-none border-0 bg-transparent px-1.5 py-1 font-sans text-sm leading-relaxed placeholder:text-muted focus:outline-none focus:ring-0"
+            
             placeholder={`${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} - INTRODUCTION\n\nStart taking meeting minutes here...`}
           />
 
           {/* Footer */}
-          <div className="mt-4 flex items-center justify-between border-t pt-3" style={{ borderColor: BORDER }}>
-            <span className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: SLATE_400 }}>
+          <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">
               {saveStatusLabel}
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: SLATE_400 }}>
+            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">
               Characters: {notes.length}
             </span>
           </div>
@@ -751,13 +742,13 @@ export function LiveMeetingView({
           {canAddActions && !isEnded && (
             <div className={MEETING_CARD}>
               <div className="mb-4 flex items-center gap-2">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#DCFCE7] text-[#15803d]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--status-approved-light)] text-[var(--status-approved-text)]">
                   <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
                     <polyline points="22 4 12 14.01 9 11.01" />
                   </svg>
                 </span>
-                <h3 className="text-base font-bold" style={{ color: SLATE_900 }}>
+                <h3 className="text-base font-bold text-text">
                   New Action Item
                 </h3>
               </div>
@@ -770,7 +761,7 @@ export function LiveMeetingView({
 
               <form onSubmit={handleAddAction} className="space-y-3">
                 <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em]" style={{ color: SLATE_600 }}>
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
                     Task Description
                   </label>
                   <input
@@ -778,21 +769,19 @@ export function LiveMeetingView({
                     value={taskDesc}
                     onChange={(e) => setTaskDesc(e.target.value)}
                     placeholder="e.g., Update Science lab schedule"
-                    className="w-full rounded-xl border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(15,23,42,0.08)]"
-                    style={{ borderColor: BORDER, color: SLATE_900 }}
+                    className="field w-full rounded-md border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm text-text outline-none transition focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_12%,transparent)]"
                     required
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em]" style={{ color: SLATE_600 }}>
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
                       Assign To
                     </label>
                     <select
                       value={assignToId}
                       onChange={(e) => setAssignToId(e.target.value)}
-                      className="w-full rounded-xl border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(15,23,42,0.08)]"
-                      style={{ borderColor: BORDER, color: SLATE_900 }}
+                      className="field w-full rounded-md border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm text-text outline-none transition focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_12%,transparent)]"
                     >
                       {attendees.map((a) => (
                         <option key={a.userId} value={a.userId}>
@@ -802,15 +791,14 @@ export function LiveMeetingView({
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em]" style={{ color: SLATE_600 }}>
+                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
                       Due Date
                     </label>
                     <input
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="w-full rounded-xl border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(15,23,42,0.08)]"
-                      style={{ borderColor: BORDER, color: SLATE_900 }}
+                      className="field w-full rounded-md border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm text-text outline-none transition focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_12%,transparent)]"
                     />
                   </div>
                 </div>
@@ -818,7 +806,7 @@ export function LiveMeetingView({
                   type="submit"
                   variant="danger"
                   disabled={submitting}
-                  className="w-full rounded-xl border-0 bg-[#E85D4C] py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#D64D3E] hover:opacity-100 disabled:opacity-40"
+                  className="w-full rounded-xl py-3"
                 >
                   {submitting ? "Adding…" : "Add Action Item"}
                 </Button>
@@ -828,23 +816,22 @@ export function LiveMeetingView({
 
           {/* ── Action Items ─────────────────────────────────────── */}
           <div className={MEETING_CARD}>
-            <h3 className="mb-4 text-base font-bold" style={{ color: SLATE_900 }}>
+            <h3 className="mb-4 text-base font-bold text-text">
               Action Items
               {totalActions > 0 && (
                 <span
-                  className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-md px-2 py-0.5 text-xs font-semibold"
-                  style={{ backgroundColor: "#F3F4F6", color: SLATE_600 }}
+                  className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-md bg-[var(--surface-container-low)] px-2 py-0.5 text-xs font-semibold text-muted"
                 >
                   {totalActions}
                 </span>
               )}
             </h3>
             {localActions.length === 0 ? (
-              <p className="text-sm" style={{ color: SLATE_600 }}>
+              <p className="text-sm text-muted">
                 No action items yet. Add one above.
               </p>
             ) : (
-              <div className="divide-y" style={{ borderColor: BORDER }}>
+              <div className="divide-y divide-border">
                 {localActions.map((action) => {
                   const overdue = action.status === "OPEN" && action.dueDate && isOverdue(action.dueDate);
                   const dueToday =
@@ -854,33 +841,33 @@ export function LiveMeetingView({
                       {/* Status circle */}
                       <div className="mt-0.5 flex-shrink-0">
                         {action.status === "DONE" ? (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[#22c55e]">
+                          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-success">
                             <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                               <polyline points="20 6 9 17 4 12" />
                             </svg>
                           </div>
                         ) : overdue ? (
-                          <div className="relative flex h-5 w-5 items-center justify-center rounded-md bg-[#DC2626]">
+                          <div className="relative flex h-5 w-5 items-center justify-center rounded-md bg-error">
                             <span className="h-1.5 w-1.5 rounded-full bg-white" aria-hidden />
                           </div>
                         ) : (
-                          <div className="h-5 w-5 rounded-md border-2" style={{ borderColor: "#D1D5DB" }} />
+                          <div className="h-5 w-5 rounded-md border-2 border-border" />
                         )}
                       </div>
                       {/* Task content */}
                       <div className="min-w-0 flex-1">
                         <p
-                          className={`text-sm font-medium leading-snug ${action.status === "DONE" ? "text-[#9CA3AF] line-through" : ""}`}
-                          style={action.status === "DONE" ? undefined : { color: SLATE_900 }}
+                          className={`text-sm font-medium leading-snug ${action.status === "DONE" ? "text-muted line-through" : ""}`}
+                          
                         >
                           {action.description}
                         </p>
-                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]" style={{ color: SLATE_600 }}>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted">
                           <span className="font-semibold">{getFirstName(action.owner.fullName)}</span>
                           {action.dueDate && (
                             <>
                               <span aria-hidden>·</span>
-                              <span className={dueToday || overdue ? "font-semibold text-[#DC2626]" : "font-medium"}>
+                              <span className={dueToday || overdue ? "font-semibold text-error" : "font-medium"}>
                                 {formatDueDate(action.dueDate)}
                               </span>
                             </>
@@ -895,16 +882,16 @@ export function LiveMeetingView({
           </div>
 
           {/* ── Efficiency Index ────────────────────────────────────── */}
-          <div className="rounded-sm border border-border p-5 text-white shadow-none sm:p-6" style={{ backgroundColor: NAVY }}>
+          <div className="rounded-sm border border-border bg-[var(--primary-container)] p-5 text-[var(--on-primary-fixed)] shadow-none sm:p-6">
             <div className="mb-2 flex items-center gap-2">
-              <svg className="h-5 w-5 shrink-0 text-[#60A5FA]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <svg className="h-5 w-5 shrink-0 text-[var(--info)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
                 <polyline points="17 6 23 6 23 12" />
               </svg>
-              <h3 className="text-lg font-bold text-white">Efficiency Index</h3>
+              <h3 className="text-lg font-bold">Efficiency Index</h3>
             </div>
-            <p className="text-sm font-semibold leading-snug text-white">{efficiencyMessage}</p>
-            <p className="mt-1 text-sm leading-relaxed text-white/75">{efficiencyDetail}</p>
+            <p className="text-sm font-semibold leading-snug">{efficiencyMessage}</p>
+            <p className="mt-1 text-sm leading-relaxed opacity-80">{efficiencyDetail}</p>
           </div>
         </div>
       </div>

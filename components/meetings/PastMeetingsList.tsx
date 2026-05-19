@@ -30,7 +30,7 @@ export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
 
   if (meetings.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border/60 px-6 py-10 text-center">
+      <div className="rounded-sm border border-dashed border-border/60 px-6 py-10 text-center">
         <p className="text-sm font-medium text-text">No past meetings</p>
         <p className="mt-1 text-xs text-muted">Completed meetings will appear here for easy reference.</p>
       </div>
@@ -45,10 +45,10 @@ export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
         return (
           <div
             key={m.id}
-            className="explorer-kpi-tile flex items-center gap-4 rounded-2xl px-5 py-4"
+            className="flex items-center gap-4 rounded-sm border border-border bg-[var(--surface-container-lowest)] px-5 py-4 calm-transition hover:bg-[var(--surface-container-low)]"
           >
             {/* Date badge */}
-            <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[var(--surface-container-lowest)] shadow-sm">
+            <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-sm bg-[var(--surface-container-low)]">
               <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                 {formatMonth(date)}
               </span>
@@ -73,7 +73,7 @@ export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
             <div className="flex flex-shrink-0 gap-2">
               <Link
                 href={`/meetings/${m.id}`}
-                className="calm-transition flex h-9 w-9 items-center justify-center rounded-md border border-border/40 bg-surface text-muted hover:bg-divider/60 hover:text-text"
+                className="calm-transition flex h-9 w-9 items-center justify-center rounded-sm bg-[var(--surface-container-low)] text-muted hover:bg-[var(--surface-container)] hover:text-text"
                 title="View meeting"
               >
                 <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
@@ -87,7 +87,7 @@ export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
               </Link>
               <a
                 href={`/api/meetings/${m.id}/download`}
-                className="calm-transition flex h-9 w-9 items-center justify-center rounded-md border border-border/40 bg-surface text-muted hover:bg-divider/60 hover:text-text"
+                className="calm-transition flex h-9 w-9 items-center justify-center rounded-sm bg-[var(--surface-container-low)] text-muted hover:bg-[var(--surface-container)] hover:text-text"
                 title="Download minutes"
                 download
               >
