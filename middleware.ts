@@ -1,12 +1,42 @@
 import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { getNextAuthSecret } from "@/lib/nextAuthSecret";
+import {
+  CSRF_COOKIE,
+  CSRF_COOKIE_OPTIONS,
+  CSRF_HEADER,
+  createCsrfToken,
+} from "@/lib/csrf-shared";
 
-export default withAuth({
-  pages: {
-    signIn: "/login"
+function withCsrf(req: NextRequest) {
+  const existing = req.cookies.get(CSRF_COOKIE)?.value;
+  const token = existing ?? createCsrfToken();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set(CSRF_HEADER, token);
+
+  const res = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+
+  if (!existing) {
+    res.cookies.set(CSRF_COOKIE, token, CSRF_COOKIE_OPTIONS);
+  }
+
+  return res;
+}
+
+export default withAuth(
+  function middleware(req) {
+    return withCsrf(req);
   },
-  secret: getNextAuthSecret()
-});
+  {
+    pages: {
+      signIn: "/login",
+    },
+    secret: getNextAuthSecret(),
+  },
+);
 
 export const config = {
   matcher: [

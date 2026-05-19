@@ -6,10 +6,8 @@ import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
 import { hasPermission } from "@/lib/rbac";
 import { ALL_FEATURE_KEYS, FeatureKey } from "@/lib/types";
 import { loaPendingApprovalWhere } from "@/modules/leave/leaveQuery";
-import { ensureCsrfToken } from "@/lib/csrf";
 
 export default async function TenantLayout({ children }: { children: React.ReactNode }) {
-  await ensureCsrfToken();
   const user = await getSessionUserOrThrow();
   const isSuperAdmin = user.role === "SUPER_ADMIN";
 

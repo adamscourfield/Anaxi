@@ -1,27 +1,24 @@
-import { cookies } from "next/headers";
-import crypto from "crypto";
+import { cookies, headers } from "next/headers";
+import nodeCrypto from "crypto";
+import {
+  CSRF_COOKIE,
+  CSRF_COOKIE_OPTIONS,
+  CSRF_HEADER,
+  createCsrfToken,
+} from "@/lib/csrf-shared";
 
-export const CSRF_COOKIE = "anaxi_csrf";
+export { CSRF_COOKIE, CSRF_COOKIE_OPTIONS, CSRF_HEADER, createCsrfToken };
 
-export function createCsrfToken(): string {
-  return crypto.randomBytes(24).toString("hex");
+/** Read CSRF token (cookie is created in middleware, not in Server Components). */
+export function getCsrfToken(): string {
+  const fromHeader = headers().get(CSRF_HEADER);
+  if (fromHeader) return fromHeader;
+  return cookies().get(CSRF_COOKIE)?.value ?? "";
 }
 
-/** Read or create a CSRF token (sets cookie when missing). */
+/** @deprecated Use {@link getCsrfToken}. Cookie is issued in middleware. */
 export async function ensureCsrfToken(): Promise<string> {
-  const store = cookies();
-  const existing = store.get(CSRF_COOKIE)?.value;
-  if (existing) return existing;
-
-  const token = createCsrfToken();
-  store.set(CSRF_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/",
-    maxAge: 60 * 60 * 8,
-  });
-  return token;
+  return getCsrfToken();
 }
 
 export function validateCsrfToken(submitted: string | null | undefined, cookieValue?: string | null): boolean {
@@ -29,7 +26,7 @@ export function validateCsrfToken(submitted: string | null | undefined, cookieVa
   const a = Buffer.from(submitted);
   const b = Buffer.from(cookieValue);
   if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
+  return nodeCrypto.timingSafeEqual(a, b);
 }
 
 export async function assertCsrfFromForm(form: FormData): Promise<void> {

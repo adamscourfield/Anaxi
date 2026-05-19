@@ -1,5 +1,5 @@
 import { requireSuperAdminUser } from "@/lib/admin";
-import { ensureCsrfToken } from "@/lib/csrf";
+import { getCsrfToken } from "@/lib/csrf";
 import { CsrfInput } from "@/components/CsrfInput";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,7 +19,7 @@ const DEFAULT_MODULES = [
 
 export default async function NewSchoolPage() {
   await requireSuperAdminUser();
-  const csrfToken = await ensureCsrfToken();
+  const csrfToken = getCsrfToken();
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 p-6">
