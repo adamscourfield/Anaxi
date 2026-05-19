@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { H1, H2, MetaText } from "@/components/ui/typography";
+import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
+import { toast } from "@/components/toast-provider";
 
 interface PreviewRow {
   email: string;
@@ -47,6 +49,18 @@ export default function StaffImportPage() {
   const [jobsLoaded, setJobsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  async function loadJobs() {
+    const res = await fetch("/api/admin/users/import/jobs");
+    if (!res.ok) return;
+    const data = await res.json();
+    setJobs(data.jobs ?? []);
+    setJobsLoaded(true);
+  }
+
+  useEffect(() => {
+    void loadJobs();
+  }, []);
+
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
     setSelectedFile(file);
@@ -64,6 +78,7 @@ export default function StaffImportPage() {
     const res = await fetch("/api/admin/users/import/upload", { method: "POST", body: form });
     if (!res.ok) {
       setError("Failed to parse file");
+      toast("Failed to parse file", "error");
       return;
     }
     const data = await res.json();
@@ -71,6 +86,12 @@ export default function StaffImportPage() {
     setParseErrors(data.errors ?? []);
     setRowCount(data.rowCount ?? 0);
     setValidated(true);
+    const blocking = (data.errors ?? []).filter((err: ParseError) => err.errorCode !== "MISSING_FULL_NAME");
+    if (blocking.length > 0) {
+      toast(`${blocking.length} blocking error(s) in CSV`, "error");
+    } else {
+      toast("CSV validated — review preview below", "success");
+    }
   }
 
   async function handleImport() {
@@ -86,47 +107,68 @@ export default function StaffImportPage() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Import failed");
+      const msg = data.error ?? "Import failed";
+      setError(msg);
+      toast(msg, "error");
       return;
     }
 
     const data = await res.json();
     setImportResult({ jobId: data.jobId, rowsProcessed: data.rowsProcessed, rowsFailed: data.rowsFailed });
+    toast(
+      `Imported ${data.rowsProcessed ?? 0} row${(data.rowsProcessed ?? 0) === 1 ? "" : "s"}${
+        (data.rowsFailed ?? 0) > 0 ? ` (${data.rowsFailed} failed)` : ""
+      }`,
+      data.rowsFailed > 0 ? "default" : "success",
+    );
     await loadJobs();
-  }
-
-  async function loadJobs() {
-    const res = await fetch("/api/admin/users/import/jobs");
-    if (!res.ok) return;
-    const data = await res.json();
-    setJobs(data.jobs ?? []);
-    setJobsLoaded(true);
   }
 
   const blockingErrors = parseErrors.filter((e) => e.errorCode !== "MISSING_FULL_NAME");
   const canImport = validated && selectedFile !== null && blockingErrors.length === 0;
+  const importLabel =
+    rowCount > 0 ? `Import ${rowCount} staff` : importing ? "Importing…" : "Import staff";
 
   return (
     <div className="space-y-6">
-      <H1>Import Staff</H1>
+      <PageHeader
+        variant="ledger"
+        eyebrow={
+          <>
+            <Link href="/admin/users" className="calm-transition hover:text-text">
+              User management
+            </Link>
+            &ensp;›&ensp;Import
+          </>
+        }
+        title="Import staff"
+        subtitle="Upload a CSV to add or update staff accounts, roles, and department assignments."
+      />
 
-      {/* Upload card */}
+      <Link
+        href="/admin/users"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted calm-transition hover:text-text"
+      >
+        ← Back to staff list
+      </Link>
+
+      <Card className="space-y-3 border-border/30 bg-surface-container-lowest/50">
+        <h2 className="text-sm font-semibold text-text">How it works</h2>
+        <ol className="list-decimal space-y-1.5 pl-5 text-sm text-muted">
+          <li>Download the template CSV and fill in staff details.</li>
+          <li>Choose your file — we validate it automatically and show a preview.</li>
+          <li>Import when the preview looks correct; download an error report if any rows fail.</li>
+        </ol>
+      </Card>
+
       <Card className="space-y-4">
-        <H2 className="text-base">Upload CSV</H2>
+        <h2 className="text-base font-semibold text-text">Upload CSV</h2>
         <div className="flex flex-wrap items-center gap-3">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={handleFileChange}
-          />
+          <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
           <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
             Choose CSV file
           </Button>
-          {selectedFile && (
-            <span className="text-sm text-text/70">{selectedFile.name}</span>
-          )}
+          {selectedFile ? <span className="text-sm text-text/70">{selectedFile.name}</span> : null}
           <a
             href="/api/admin/users/import/template"
             download="staff-import-template.csv"
@@ -135,17 +177,12 @@ export default function StaffImportPage() {
             Download template CSV
           </a>
         </div>
-        {error && (
-          <p className="text-sm text-error">{error}</p>
-        )}
+        {error ? <p className="text-sm text-error">{error}</p> : null}
       </Card>
 
-      {/* Parse errors */}
-      {parseErrors.length > 0 && (
+      {parseErrors.length > 0 ? (
         <Card className="space-y-3">
-          <H2 className="text-base">
-            Validation issues ({parseErrors.length})
-          </H2>
+          <h2 className="text-base font-semibold text-text">Validation issues ({parseErrors.length})</h2>
           <ul className="space-y-1 text-sm">
             {parseErrors.slice(0, 20).map((e, i) => (
               <li key={i} className={e.errorCode === "MISSING_FULL_NAME" ? "text-warning" : "text-error"}>
@@ -153,20 +190,19 @@ export default function StaffImportPage() {
               </li>
             ))}
           </ul>
-          {blockingErrors.length > 0 && (
+          {blockingErrors.length > 0 ? (
             <p className="text-sm font-medium text-error">
               {blockingErrors.length} blocking error(s) must be resolved before importing.
             </p>
-          )}
+          ) : null}
         </Card>
-      )}
+      ) : null}
 
-      {/* Preview card */}
-      {preview.length > 0 && (
+      {preview.length > 0 ? (
         <Card className="space-y-3">
-          <H2 className="text-base">
+          <h2 className="text-base font-semibold text-text">
             Preview (first {preview.length} of {rowCount} rows)
-          </H2>
+          </h2>
           <div className="overflow-x-auto">
             <div className="table-shell">
               <table className="w-full text-left text-sm">
@@ -196,33 +232,27 @@ export default function StaffImportPage() {
             </div>
           </div>
         </Card>
-      )}
+      ) : null}
 
-      {/* Import button */}
-      {validated && (
-        <div className="flex items-center gap-4">
-          <Button
-            variant="primary"
-            disabled={!canImport || importing}
-            onClick={handleImport}
-          >
-            {importing ? "Importing…" : "Validate & Import"}
+      {validated ? (
+        <div className="flex flex-wrap items-center gap-4">
+          <Button variant="primary" disabled={!canImport || importing} onClick={handleImport}>
+            {importing ? "Importing…" : importLabel}
           </Button>
-          {!canImport && blockingErrors.length > 0 && (
+          {!canImport && blockingErrors.length > 0 ? (
             <span className="text-sm text-error">Fix validation errors before importing</span>
-          )}
+          ) : null}
         </div>
-      )}
+      ) : null}
 
-      {/* Import result */}
-      {importResult && (
+      {importResult ? (
         <Card className="space-y-2">
-          <H2 className="text-base">Import complete</H2>
+          <h2 className="text-base font-semibold text-text">Import complete</h2>
           <p className="text-sm text-text">
             Rows processed: <strong>{importResult.rowsProcessed}</strong> &nbsp;|&nbsp; Rows failed:{" "}
             <strong>{importResult.rowsFailed}</strong>
           </p>
-          {importResult.rowsFailed > 0 && (
+          {importResult.rowsFailed > 0 ? (
             <a
               href={`/api/admin/users/import/jobs/${importResult.jobId}/errors.csv`}
               download
@@ -230,22 +260,22 @@ export default function StaffImportPage() {
             >
               Download error report CSV
             </a>
-          )}
+          ) : null}
         </Card>
-      )}
+      ) : null}
 
-      {/* Import history */}
       <Card className="space-y-3">
         <div className="flex items-center justify-between">
-          <H2 className="text-base">Import history</H2>
+          <h2 className="text-base font-semibold text-text">Import history</h2>
           <Button variant="ghost" onClick={loadJobs}>
-            {jobsLoaded ? "Refresh" : "Load history"}
+            Refresh
           </Button>
         </div>
-        {jobsLoaded && jobs.length === 0 && (
-          <p className="text-sm text-text/60">No import jobs yet.</p>
-        )}
-        {jobs.length > 0 && (
+        {!jobsLoaded ? (
+          <p className="text-sm text-text/60">Loading…</p>
+        ) : jobs.length === 0 ? (
+          <p className="text-sm text-text/60">No imports yet. Your recent jobs will appear here.</p>
+        ) : (
           <div className="overflow-x-auto">
             <div className="table-shell">
               <table className="w-full text-left text-sm">
@@ -263,7 +293,9 @@ export default function StaffImportPage() {
                   {jobs.map((job) => (
                     <tr key={job.id} className="table-row calm-transition">
                       <td className="px-5 py-3 text-text">{job.fileName}</td>
-                      <td className="px-4 py-3 text-text">{job.status}</td>
+                      <td className="px-4 py-3">
+                        <StatusPill variant={job.status === "COMPLETED" ? "success" : "neutral"}>{job.status}</StatusPill>
+                      </td>
                       <td className="px-4 py-3 text-right text-text">{job.rowCount}</td>
                       <td className="px-4 py-3 text-right text-text">{job.rowsFailed}</td>
                       <td className="px-4 py-3 text-text">{new Date(job.createdAt).toLocaleDateString()}</td>

@@ -3,8 +3,8 @@
 import type { ReactNode } from "react";
 import { useState, useMemo, useRef, useEffect, useTransition } from "react";
 import { createPortal } from "react-dom";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { toast } from "@/components/toast-provider";
+import type { ActionResult } from "./actions";
 
 export type EditableUser = {
   id: string;
@@ -26,12 +26,23 @@ export type EditUserModalProps = {
   allTeachers: TeacherOption[];
   scopedLoaTargetIds: string[];
   onClose: () => void;
-  saveAction: (formData: FormData) => void;
-  /** When true, viewing only — cannot save changes (e.g. tenant admin viewing a platform super admin). */
+  saveAction: (formData: FormData) => Promise<ActionResult>;
   readOnly?: boolean;
+  canAssignSuperAdmin: boolean;
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const ROLE_OPTIONS: { value: string; label: string }[] = [
+  { value: "SUPER_ADMIN", label: "Super Admin" },
+  { value: "ADMIN", label: "Administrator" },
+  { value: "SLT", label: "Senior Leader" },
+  { value: "HOD", label: "Head of Dept" },
+  { value: "LEADER", label: "Leader" },
+  { value: "TEACHER", label: "Teacher" },
+  { value: "HR", label: "HR Officer" },
+  { value: "ON_CALL", label: "On-Call Staff" },
+];
+
+const LOA_CAPABLE_ROLES = new Set(["HOD", "SLT", "HR", "ADMIN", "SUPER_ADMIN", "LEADER"]);
 
 function initialsFromName(name: string): string {
   return name
@@ -42,8 +53,6 @@ function initialsFromName(name: string): string {
     .join("")
     .toUpperCase();
 }
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
 
 function CloseIcon() {
   return (
@@ -103,27 +112,6 @@ function CalendarIcon({ className }: { className?: string }) {
   );
 }
 
-function WalletIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M21 12V7H5a2 2 0 010-4h14v4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M3 5v14a2 2 0 002 2h16v-5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M18 12a2 2 0 100 4h4v-4h-4z" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function PersonIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="12" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-// ─── Toggle switch ────────────────────────────────────────────────────────────
-
 function Toggle({
   checked,
   onChange,
@@ -153,32 +141,15 @@ function Toggle({
   );
 }
 
-// ─── Role options ─────────────────────────────────────────────────────────────
-
-const ROLE_OPTIONS: { value: string; label: string }[] = [
-  { value: "SUPER_ADMIN", label: "Super Admin" },
-  { value: "ADMIN", label: "Administrator" },
-  { value: "SLT", label: "Senior Leader" },
-  { value: "HOD", label: "Head of Dept" },
-  { value: "LEADER", label: "Leader" },
-  { value: "TEACHER", label: "Teacher" },
-  { value: "HR", label: "HR Officer" },
-  { value: "ON_CALL", label: "On-Call Staff" },
-];
-
-// ─── Teacher search dropdown ──────────────────────────────────────────────────
-
 function TeacherSearch({
   allTeachers,
   selectedIds,
   onAdd,
-  placeholder,
   disabled = false,
 }: {
   allTeachers: TeacherOption[];
   selectedIds: Set<string>;
   onAdd: (id: string) => void;
-  placeholder: string;
   disabled?: boolean;
 }) {
   const [query, setQuery] = useState("");
@@ -187,9 +158,7 @@ function TeacherSearch({
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
@@ -198,7 +167,7 @@ function TeacherSearch({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allTeachers.filter(
-      (t) => !selectedIds.has(t.id) && (q === "" || t.fullName.toLowerCase().includes(q))
+      (t) => !selectedIds.has(t.id) && (q === "" || t.fullName.toLowerCase().includes(q)),
     );
   }, [query, allTeachers, selectedIds]);
 
@@ -208,7 +177,7 @@ function TeacherSearch({
       <input
         type="text"
         className="field w-full rounded-xl border-border/40 bg-background py-2.5 pl-10 pr-3 text-[0.8125rem] shadow-none placeholder:text-muted/70 disabled:cursor-not-allowed disabled:opacity-60"
-        placeholder={placeholder}
+        placeholder="Add teachers by name…"
         value={query}
         disabled={disabled}
         onChange={(e) => {
@@ -248,10 +217,12 @@ const SECTION_LABEL = "mb-2 block text-[0.6875rem] font-semibold uppercase track
 function ScopedRow({
   icon,
   label,
+  description,
   toggle,
 }: {
   icon: ReactNode;
   label: string;
+  description?: string;
   toggle: ReactNode;
 }) {
   return (
@@ -260,7 +231,10 @@ function ScopedRow({
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-background text-muted">
           {icon}
         </span>
-        <span className="text-[0.8125rem] font-medium text-text">{label}</span>
+        <div className="min-w-0">
+          <span className="block text-[0.8125rem] font-medium text-text">{label}</span>
+          {description ? <span className="block text-[0.75rem] text-muted">{description}</span> : null}
+        </div>
       </div>
       {toggle}
     </li>
@@ -306,8 +280,6 @@ function SelectedChips({
   );
 }
 
-// ─── Main modal ───────────────────────────────────────────────────────────────
-
 export function EditUserModal({
   user,
   allTeachers,
@@ -315,6 +287,7 @@ export function EditUserModal({
   onClose,
   saveAction,
   readOnly = false,
+  canAssignSuperAdmin,
 }: EditUserModalProps) {
   const [pending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
@@ -322,14 +295,12 @@ export function EditUserModal({
   const [role, setRole] = useState(user.role);
   const [onCallRequests, setOnCallRequests] = useState(user.receivesOnCallEmails);
   const [leaveOfAbsence, setLeaveOfAbsence] = useState(user.canApproveAllLoa || scopedLoaTargetIds.length > 0);
-  const [budgetaryApproval, setBudgetaryApproval] = useState(false);
-  const [teacherObservations, setTeacherObservations] = useState(false);
-
-  const [obsAllTeachers, setObsAllTeachers] = useState(false);
-  const [obsTeacherIds, setObsTeacherIds] = useState<Set<string>>(new Set());
-
   const [loaAllTeachers, setLoaAllTeachers] = useState(user.canApproveAllLoa);
   const [loaTeacherIds, setLoaTeacherIds] = useState<Set<string>>(new Set(scopedLoaTargetIds));
+
+  const roleOptions = canAssignSuperAdmin
+    ? ROLE_OPTIONS
+    : ROLE_OPTIONS.filter((r) => r.value !== "SUPER_ADMIN");
 
   const teacherById = useMemo(() => {
     const map = new Map<string, TeacherOption>();
@@ -338,12 +309,10 @@ export function EditUserModal({
   }, [allTeachers]);
 
   const roleSelectRef = useRef<HTMLSelectElement>(null);
+  const showLoaSettings = LOA_CAPABLE_ROLES.has(role);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  useEffect(() => {
     const t = window.setTimeout(() => roleSelectRef.current?.focus({ preventScroll: true }), 0);
     return () => window.clearTimeout(t);
   }, []);
@@ -354,21 +323,30 @@ export function EditUserModal({
     fd.set("userId", user.id);
     fd.set("role", role);
     fd.set("receivesOnCallEmails", String(onCallRequests));
-    fd.set("canApproveAllLoa", String(leaveOfAbsence && loaAllTeachers));
-    fd.set("scopedLoaTargetIds", leaveOfAbsence && !loaAllTeachers ? Array.from(loaTeacherIds).join(",") : "");
+    const loaEnabled = showLoaSettings && leaveOfAbsence;
+    fd.set("canApproveAllLoa", String(loaEnabled && loaAllTeachers));
+    fd.set(
+      "scopedLoaTargetIds",
+      loaEnabled && !loaAllTeachers ? Array.from(loaTeacherIds).join(",") : "",
+    );
 
-    startTransition(() => {
-      saveAction(fd);
-      onClose();
+    startTransition(async () => {
+      const result = await saveAction(fd);
+      if (result.ok) {
+        toast("Changes saved", "success");
+        onClose();
+      } else {
+        toast(result.error, "error");
+      }
     });
   }
 
-  const roleLabel = ROLE_OPTIONS.find((r) => r.value === role)?.label ?? role;
+  const roleLabel = roleOptions.find((r) => r.value === role)?.label ?? role;
 
   const modal = (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={(e) => e.target === e.currentTarget && !pending && onClose()}
       role="presentation"
     >
       <div
@@ -378,7 +356,6 @@ export function EditUserModal({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-start justify-between gap-4 px-6 pb-5 pt-6">
           <div className="flex min-w-0 flex-1 gap-4">
             <span
@@ -402,7 +379,8 @@ export function EditUserModal({
           <button
             type="button"
             onClick={onClose}
-            className="calm-transition shrink-0 rounded-lg p-2 text-muted hover:bg-surface-container-low hover:text-text"
+            disabled={pending}
+            className="calm-transition shrink-0 rounded-lg p-2 text-muted hover:bg-surface-container-low hover:text-text disabled:opacity-50"
             aria-label="Close"
           >
             <CloseIcon />
@@ -410,7 +388,6 @@ export function EditUserModal({
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 pb-2">
-          {/* Institutional role */}
           <div>
             <label htmlFor="edit-user-role" className={SECTION_LABEL}>
               Institutional role
@@ -428,7 +405,7 @@ export function EditUserModal({
                 className="field w-full appearance-none rounded-xl border-border/40 bg-background py-2.5 pl-11 pr-10 text-[0.8125rem] font-medium text-text disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label={`Institutional role, ${roleLabel}`}
               >
-                {ROLE_OPTIONS.map((r) => (
+                {roleOptions.map((r) => (
                   <option key={r.value} value={r.value}>
                     {r.label}
                   </option>
@@ -440,103 +417,64 @@ export function EditUserModal({
             </div>
           </div>
 
-          {/* Scoped approvals */}
           <div className="mt-8">
-            <h3 className={SECTION_LABEL}>Scoped approvals</h3>
+            <h3 className={SECTION_LABEL}>Permissions</h3>
             <ul className="rounded-xl border border-border/25 px-3">
               <ScopedRow
                 icon={<PhoneIcon className="h-[18px] w-[18px]" />}
                 label="On-call requests"
+                description="Receives on-call email notifications"
                 toggle={<Toggle checked={onCallRequests} onChange={setOnCallRequests} disabled={readOnly} />}
               />
-              <ScopedRow
-                icon={<CalendarIcon className="h-[18px] w-[18px]" />}
-                label="Leave of absence"
-                toggle={<Toggle checked={leaveOfAbsence} onChange={setLeaveOfAbsence} disabled={readOnly} />}
-              />
-              <ScopedRow
-                icon={<WalletIcon className="h-[18px] w-[18px]" />}
-                label="Budgetary approval"
-                toggle={<Toggle checked={budgetaryApproval} onChange={setBudgetaryApproval} disabled={readOnly} />}
-              />
-              <ScopedRow
-                icon={<PersonIcon className="h-[18px] w-[18px]" />}
-                label="Teacher observations"
-                toggle={<Toggle checked={teacherObservations} onChange={setTeacherObservations} disabled={readOnly} />}
-              />
+              {showLoaSettings ? (
+                <ScopedRow
+                  icon={<CalendarIcon className="h-[18px] w-[18px]" />}
+                  label="Leave of absence approval"
+                  description="Can approve staff leave requests"
+                  toggle={<Toggle checked={leaveOfAbsence} onChange={setLeaveOfAbsence} disabled={readOnly} />}
+                />
+              ) : null}
             </ul>
           </div>
 
-          {/* Teacher observation scoping */}
-          <div className="mt-8 space-y-3">
-            <h3 className={SECTION_LABEL}>Teacher observation scoping</h3>
-            <div className="flex items-center justify-between">
-              <span className="text-[0.8125rem] font-medium text-text">All teachers</span>
-              <Toggle checked={obsAllTeachers} onChange={setObsAllTeachers} disabled={readOnly} />
-            </div>
-            {!obsAllTeachers ? (
-              <>
-                <TeacherSearch
-                  allTeachers={allTeachers}
-                  selectedIds={obsTeacherIds}
-                  onAdd={(id) => setObsTeacherIds((prev) => new Set(prev).add(id))}
-                  placeholder="Add teachers by name..."
+          {showLoaSettings && leaveOfAbsence ? (
+            <div className="mt-6 space-y-3 pb-4">
+              <h3 className={SECTION_LABEL}>Leave approval scope</h3>
+              <div className="flex items-center justify-between">
+                <span className="text-[0.8125rem] font-medium text-text">All teachers</span>
+                <Toggle
+                  checked={loaAllTeachers}
+                  onChange={(v) => {
+                    setLoaAllTeachers(v);
+                    if (v) setLoaTeacherIds(new Set());
+                  }}
                   disabled={readOnly}
                 />
-                <SelectedChips
-                  ids={obsTeacherIds}
-                  teacherById={teacherById}
-                  readOnly={readOnly}
-                  onRemove={(tid) =>
-                    setObsTeacherIds((prev) => {
-                      const next = new Set(prev);
-                      next.delete(tid);
-                      return next;
-                    })
-                  }
-                />
-              </>
-            ) : null}
-          </div>
-
-          {/* Leave approval scoping */}
-          <div className="mt-8 space-y-3 pb-4">
-            <h3 className={SECTION_LABEL}>Leave approval scoping</h3>
-            <div className="flex items-center justify-between">
-              <span className="text-[0.8125rem] font-medium text-text">All teachers</span>
-              <Toggle
-                checked={loaAllTeachers}
-                onChange={(v) => {
-                  setLoaAllTeachers(v);
-                  if (v) setLoaTeacherIds(new Set());
-                }}
-                disabled={readOnly}
-              />
+              </div>
+              {!loaAllTeachers ? (
+                <>
+                  <TeacherSearch
+                    allTeachers={allTeachers}
+                    selectedIds={loaTeacherIds}
+                    onAdd={(id) => setLoaTeacherIds((prev) => new Set(prev).add(id))}
+                    disabled={readOnly}
+                  />
+                  <SelectedChips
+                    ids={loaTeacherIds}
+                    teacherById={teacherById}
+                    readOnly={readOnly}
+                    onRemove={(tid) =>
+                      setLoaTeacherIds((prev) => {
+                        const next = new Set(prev);
+                        next.delete(tid);
+                        return next;
+                      })
+                    }
+                  />
+                </>
+              ) : null}
             </div>
-            {!loaAllTeachers ? (
-              <>
-                <TeacherSearch
-                  allTeachers={allTeachers}
-                  selectedIds={loaTeacherIds}
-                  onAdd={(id) => setLoaTeacherIds((prev) => new Set(prev).add(id))}
-                  placeholder="Add teachers by name..."
-                  disabled={readOnly}
-                />
-                <SelectedChips
-                  ids={loaTeacherIds}
-                  teacherById={teacherById}
-                  readOnly={readOnly}
-                  onRemove={(tid) =>
-                    setLoaTeacherIds((prev) => {
-                      const next = new Set(prev);
-                      next.delete(tid);
-                      return next;
-                    })
-                  }
-                />
-              </>
-            ) : null}
-          </div>
+          ) : null}
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-border/20 px-6 py-4">
