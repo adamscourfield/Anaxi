@@ -72,6 +72,16 @@ export default function LandingPage() {
           </div>
         </div>
       </main>
+
+      <footer className="border-t border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] px-4 py-8 text-center text-[0.8125rem] text-muted sm:px-6">
+        <p>Anaxi — institutional intelligence for schools</p>
+        <p className="mt-2">
+          Support:{" "}
+          <a href="mailto:support@anaxi.app" className="link-subtle font-medium text-text">
+            support@anaxi.app
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }

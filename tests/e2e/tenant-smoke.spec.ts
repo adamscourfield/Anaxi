@@ -29,6 +29,18 @@ test.describe("tenant smoke (UX-150)", () => {
     });
   });
 
+  test("explorer loads with main landmark", async ({ page }) => {
+    await page.goto("/explorer");
+    await expect(page.locator("#tenant-main")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  });
+
+  test("admin loads with main landmark", async ({ page }) => {
+    await page.goto("/admin");
+    await expect(page.locator("#tenant-main")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  });
+
   test("meetings/actions redirects to my-actions", async ({ page }) => {
     await page.goto("/meetings/actions");
     await expect(page).toHaveURL(/\/my-actions/, { timeout: 15_000 });

@@ -750,3 +750,4 @@ UX-###
 |------|--------|
 | 2026-05-19 | Initial plan from full-app UX audit |
 | 2026-05-19 | Wave 1 partial: 404, errors, skip link, toast a11y, breadcrumbs, loading skeletons, meetings/actions redirect, observe tokens, god banner, E2E smoke |
+| 2026-05-19 | UX plan batch: form-field, admin icon wells, observe/leave tokens, loading routes, student profile nav, explorer KPI tokens, E2E explorer/admin, landing footer/OG, docs |

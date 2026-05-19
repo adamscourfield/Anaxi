@@ -102,7 +102,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         className="pointer-events-none fixed bottom-0 right-0 z-[100] flex max-w-[min(100vw-1.5rem,24rem)] flex-col gap-2 p-4 sm:p-5"
         aria-label="Notifications"
       >
-        <div aria-live="polite" aria-relevant="additions" className="flex flex-col gap-2">
+        <div role="status" aria-live="polite" aria-relevant="additions" className="flex flex-col gap-2">
           {items
             .filter((t) => t.variant !== "error")
             .map((t) => (
@@ -119,7 +119,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               </button>
             ))}
         </div>
-        <div aria-live="assertive" aria-relevant="additions" className="flex flex-col gap-2">
+        <div role="alert" aria-live="assertive" aria-relevant="additions" className="flex flex-col gap-2">
           {items
             .filter((t) => t.variant === "error")
             .map((t) => (

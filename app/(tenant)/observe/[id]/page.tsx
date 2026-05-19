@@ -177,7 +177,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
   );
 
   return (
-    <div className="relative -mx-4 min-h-0 bg-[#F9FAFB] px-4 pb-14 pt-1 sm:-mx-6 sm:px-6">
+    <div className="relative -mx-4 min-h-0 bg-[var(--surface-container-low)] px-4 pb-14 pt-1 sm:-mx-6 sm:px-6">
       <ClearDraftOnSuccess draftKey={draftKey} />
 
       <div className="mx-auto max-w-6xl">
@@ -256,7 +256,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                   title="Concluding Reflections"
                 />
 
-                <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-sm">
+                <div className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] shadow-sm">
                   <div className="border-l-4 border-amber-400 px-6 py-6 sm:px-8 sm:py-7">
                     <blockquote className={`text-[0.9375rem] font-medium leading-relaxed italic ${OBS_REVIEW_TEXT}`}>
                       &ldquo;{observation.contextNote}&rdquo;
@@ -266,7 +266,7 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
                   <div className="flex flex-col gap-4 border-t border-[#F3F4F6] px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-8">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#E5E7EB] text-[0.6875rem] font-bold ${OBS_REVIEW_TEXT}`}
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container)] text-[0.6875rem] font-bold ${OBS_REVIEW_TEXT}`}
                         aria-hidden
                       >
                         {initials(observerName)}

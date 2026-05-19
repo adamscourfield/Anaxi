@@ -343,7 +343,7 @@ export default async function ObservationHistoryPage({
           user.role !== "TEACHER" ? (
             <Link
               href="/observe/new"
-              className="inline-flex items-center gap-2 rounded-md bg-neutral-950 px-5 py-2.5 text-[0.875rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-100"
+              className="inline-flex items-center gap-2 rounded-md bg-neutral-950 px-5 py-2.5 text-[0.875rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 dark:bg-[var(--surface-container-lowest)] dark:text-neutral-950 dark:hover:bg-neutral-100"
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" clipRule="evenodd" />
@@ -387,7 +387,7 @@ export default async function ObservationHistoryPage({
 
       {/* ── Results ─────────────────────────────────────────────────────── */}
       {obsList.length === 0 ? (
-        <div className="obs-history-elevated-card flex flex-col items-center justify-center border border-dashed border-[#E5E7EB] py-16">
+        <div className="obs-history-elevated-card flex flex-col items-center justify-center border border-dashed border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] py-16">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-accent/10">
             <svg className="h-6 w-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
               <circle cx="11" cy="11" r="6.5" /><path d="m16.5 16.5 3 3" strokeLinecap="round" />
@@ -550,7 +550,7 @@ export default async function ObservationHistoryPage({
                   ) : p === page ? (
                     <span
                       key={p}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-950 bg-white text-[0.8125rem] font-semibold text-neutral-950"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-950 bg-[var(--surface-container-lowest)] text-[0.8125rem] font-semibold text-neutral-950"
                     >
                       {p}
                     </span>

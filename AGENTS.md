@@ -27,6 +27,14 @@ Anaxi is a single Next.js 14 app with a PostgreSQL 16 database (via Docker Compo
 4. Seed data: `npx prisma db seed` and optionally `npm run seed:demo` for a full demo dataset
 5. Dev server: `npm run dev` (port 3000; set `NEXTAUTH_URL` to match)
 
+### UI mutation feedback
+
+- Success: `toast(msg, "success")` from `@/components/toast-provider`, or redirect + flash query param.
+- Validation: inline errors on `FormField` / `.field` controls.
+- Submit: disable primary buttons while pending (`useFormStatus` or local state).
+
+See `components/ui/README.md` for list/header reference patterns (`/my-actions`).
+
 ### Key commands
 
 | Task | Command |

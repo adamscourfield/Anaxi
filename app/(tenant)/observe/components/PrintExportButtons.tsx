@@ -1,7 +1,7 @@
 "use client";
 
 const outlineBtn =
-  "inline-flex items-center gap-2 rounded-xl border border-[#D1D5DB] bg-white px-4 py-2.5 text-[0.8125rem] font-medium text-[#6B7280] shadow-sm transition-colors hover:border-[#9CA3AF] hover:bg-[#F9FAFB] hover:text-[#111827]";
+  "inline-flex items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-medium text-[var(--on-surface-variant)] shadow-sm transition-colors hover:border-[color-mix(in_srgb,var(--outline-variant)_70%,transparent)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]";
 
 export function PrintExportButtons() {
   return (
