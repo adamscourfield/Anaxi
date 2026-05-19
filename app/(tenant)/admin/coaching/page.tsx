@@ -2,20 +2,20 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
+import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { Avatar } from "@/components/ui/avatar";
 
 const CARD =
   "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
 const LABEL =
-  "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#6B7280]";
+  "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]";
 
 const ICON_WELL =
   "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EEF2FF] text-[#4F46E5] [&_svg]:shrink-0";
 
 const FIELD =
-  "w-full min-h-[2.75rem] rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-3.5 text-sm text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#CBD5E1] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]";
+  "w-full min-h-[2.75rem] rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)] focus:border-[color-mix(in_srgb,var(--outline-variant)_50%,transparent)] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]";
 
 function PlusIcon({ className }: { className?: string }) {
   return (
@@ -106,24 +106,22 @@ export default async function AdminCoachingPage({
 
   return (
     <div className="space-y-6 pb-8">
-      <PageHeader
-        variant="ledger"
+      <AdminPageChrome
+        area="Coaching"
         title="Coaching Assignments"
-        titleClassName="!text-[#111827]"
-        subtitleClassName="anx-page-subtitle !text-[#6B7280]"
         subtitle="Manage coach-to-coachee pairs across your institution."
       />
 
       {/* New assignment */}
       <div className={CARD}>
-        <div className="border-b border-[#E5E7EB] px-6 py-6 sm:px-8 sm:py-7">
+        <div className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] px-6 py-6 sm:px-8 sm:py-7">
           <div className="flex gap-3 sm:gap-4">
             <span className={ICON_WELL} aria-hidden>
               <PlusIcon className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <h2 className="text-lg font-bold tracking-tight text-[#111827]">New assignment</h2>
-              <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">
+              <h2 className="text-lg font-bold tracking-tight text-[var(--on-surface)]">New assignment</h2>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-[var(--on-surface-variant)]">
                 Select a coach and a coachee to create a new coaching pair.
               </p>
             </div>
@@ -154,7 +152,7 @@ export default async function AdminCoachingPage({
           </label>
           <button
             type="submit"
-            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#111827] px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[#1e293b] sm:w-auto"
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--on-surface)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[var(--primary-container)] sm:w-auto"
           >
             <PlusIcon className="h-4 w-4" />
             Add Assignment
@@ -168,14 +166,14 @@ export default async function AdminCoachingPage({
         <>
           {/* Filters */}
           <div className={CARD}>
-            <div className="border-b border-[#E5E7EB] px-6 py-6 sm:px-8 sm:py-7">
+            <div className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] px-6 py-6 sm:px-8 sm:py-7">
               <div className="flex gap-3 sm:gap-4">
                 <span className={ICON_WELL} aria-hidden>
                   <FunnelIcon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold tracking-tight text-[#111827]">Filters</h2>
-                  <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#6B7280]">Search assignments by coach or coachee.</p>
+                  <h2 className="text-lg font-bold tracking-tight text-[var(--on-surface)]">Filters</h2>
+                  <p className="mt-1 text-[0.8125rem] leading-relaxed text-[var(--on-surface-variant)]">Search assignments by coach or coachee.</p>
                 </div>
               </div>
             </div>
@@ -183,7 +181,7 @@ export default async function AdminCoachingPage({
               <label className="min-w-0 flex-1 sm:min-w-[200px]">
                 <span className={LABEL}>Coach</span>
                 <div className="relative">
-                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
+                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
                   <input
                     name="coach"
                     defaultValue={searchParams?.coach ?? ""}
@@ -195,7 +193,7 @@ export default async function AdminCoachingPage({
               <label className="min-w-0 flex-1 sm:min-w-[200px]">
                 <span className={LABEL}>Coachee</span>
                 <div className="relative">
-                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
+                  <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--on-surface-variant)]" />
                   <input
                     name="coachee"
                     defaultValue={searchParams?.coachee ?? ""}
@@ -207,15 +205,15 @@ export default async function AdminCoachingPage({
               <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                 <button
                   type="submit"
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F3F4F6] px-5 py-2.5 text-sm font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#E5E7EB]/80 sm:flex-initial"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)] px-5 py-2.5 text-sm font-semibold text-[var(--on-surface)] shadow-sm calm-transition hover:bg-[var(--surface-container)]/80 sm:flex-initial"
                 >
-                  <FunnelIcon className="h-4 w-4 shrink-0 text-[#6B7280]" />
+                  <FunnelIcon className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)]" />
                   Apply filters
                 </button>
                 {hasFilters ? (
                   <a
                     href="/admin/coaching"
-                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-transparent px-4 py-2.5 text-sm font-semibold text-[#6B7280] calm-transition hover:bg-[#F9FAFB] hover:text-[#111827] sm:flex-initial"
+                    className="inline-flex flex-1 items-center justify-center rounded-xl border border-transparent px-4 py-2.5 text-sm font-semibold text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)] sm:flex-initial"
                   >
                     Clear
                   </a>
@@ -229,11 +227,11 @@ export default async function AdminCoachingPage({
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-[#E5E7EB] bg-transparent">
-                    <th className="px-6 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280] sm:px-8">Coach</th>
+                  <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-transparent">
+                    <th className="px-6 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)] sm:px-8">Coach</th>
                     <th className="w-[3rem] px-1 py-3.5 text-center sm:w-14" aria-hidden />
-                    <th className="px-6 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280] sm:px-8">Coachee</th>
-                    <th className="w-[1%] whitespace-nowrap px-6 py-3.5 text-right text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280] sm:px-8">
+                    <th className="px-6 py-3.5 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)] sm:px-8">Coachee</th>
+                    <th className="w-[1%] whitespace-nowrap px-6 py-3.5 text-right text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)] sm:px-8">
                       Actions
                     </th>
                   </tr>
@@ -241,20 +239,20 @@ export default async function AdminCoachingPage({
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-[0.8125rem] text-[#6B7280] sm:px-8">
+                      <td colSpan={4} className="px-6 py-12 text-center text-[0.8125rem] text-[var(--on-surface-variant)] sm:px-8">
                         No assignments match your filters.
                       </td>
                     </tr>
                   ) : (
                     filtered.map((a: any) => (
-                      <tr key={`${a.coachUserId}-${a.coacheeUserId}`} className="border-b border-[#E5E7EB] last:border-b-0">
+                      <tr key={`${a.coachUserId}-${a.coacheeUserId}`} className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] last:border-b-0">
                         <td className="px-6 py-5 align-middle sm:px-8">
                           <div className="flex min-w-0 items-center gap-3">
                             <Avatar name={a.coach?.fullName ?? "?"} size="md" />
-                            <span className="truncate text-[0.8125rem] font-semibold text-[#111827]">{a.coach?.fullName}</span>
+                            <span className="truncate text-[0.8125rem] font-semibold text-[var(--on-surface)]">{a.coach?.fullName}</span>
                           </div>
                         </td>
-                        <td className="px-1 py-5 text-center align-middle text-[#9CA3AF]">
+                        <td className="px-1 py-5 text-center align-middle text-[var(--on-surface-variant)]">
                           <span className="text-lg font-normal tabular-nums" aria-hidden>
                             →
                           </span>
@@ -263,7 +261,7 @@ export default async function AdminCoachingPage({
                         <td className="px-6 py-5 align-middle sm:px-8">
                           <div className="flex min-w-0 items-center gap-3">
                             <Avatar name={a.coachee?.fullName ?? "?"} size="md" />
-                            <span className="truncate text-[0.8125rem] font-medium text-[#111827]">{a.coachee?.fullName}</span>
+                            <span className="truncate text-[0.8125rem] font-medium text-[var(--on-surface)]">{a.coachee?.fullName}</span>
                           </div>
                         </td>
                         <td className="whitespace-nowrap px-6 py-5 text-right align-middle sm:px-8">
@@ -272,7 +270,7 @@ export default async function AdminCoachingPage({
                             <input type="hidden" name="coacheeUserId" value={a.coacheeUserId} />
                             <button
                               type="submit"
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#E5E7EB] bg-[var(--surface-container-lowest)] text-[#6B7280] calm-transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] calm-transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                               title="Remove assignment"
                             >
                               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -287,14 +285,14 @@ export default async function AdminCoachingPage({
                 </tbody>
               </table>
             </div>
-            <div className="border-t border-[#E5E7EB] px-6 py-3.5 sm:px-8">
-              <p className="text-[0.8125rem] text-[#6B7280]">
+            <div className="border-t border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] px-6 py-3.5 sm:px-8">
+              <p className="text-[0.8125rem] text-[var(--on-surface-variant)]">
                 Showing{" "}
-                <span className="font-semibold text-[#111827]">{filtered.length}</span>
+                <span className="font-semibold text-[var(--on-surface)]">{filtered.length}</span>
                 {filtered.length !== assignmentList.length ? (
                   <>
                     {" "}
-                    of <span className="font-semibold text-[#111827]">{assignmentList.length}</span>
+                    of <span className="font-semibold text-[var(--on-surface)]">{assignmentList.length}</span>
                   </>
                 ) : null}{" "}
                 assignment{assignmentList.length !== 1 ? "s" : ""}

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { toast as showToast } from "@/components/toast-provider";
 import { H2, H3, MetaText, Label } from "@/components/ui/typography";
 import type { TenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolType";
@@ -47,7 +48,7 @@ export function ObservationWizard({
   schoolType?: TenantSchoolType;
 }) {
   const [step, setStep] = useState<1 | 2>(1);
-  const [toast, setToast] = useState<string>("");
+  const [banner, setBanner] = useState<string>("");
   const [submitError, setSubmitError] = useState<string>("");
   const [context, setContext] = useState<ObservationContext>({
     observedTeacherId: "",
@@ -82,9 +83,10 @@ export function ObservationWizard({
   );
   const flowOrder = useMemo(() => [...phaseFocus, ...otherSignals], [phaseFocus, otherSignals]);
 
-  const setTransientToast = (message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(""), 2000);
+  const setTransientToast = (message: string, variant: "default" | "success" = "success") => {
+    showToast(message, variant);
+    setBanner(message);
+    window.setTimeout(() => setBanner(""), 2000);
   };
 
   const nextFocus = (currentKey: string) => {
@@ -299,7 +301,7 @@ export function ObservationWizard({
             <Button type="button" variant="secondary" className="px-3 py-1.5 text-xs" onClick={markRemaining}>Mark remaining as Not Observed</Button>
             <Button type="button" variant="ghost" className="px-3 py-1.5 text-xs" onClick={clearAllNotObserved}>Clear all Not Observed</Button>
           </div>
-          {toast ? <MetaText className="text-accent">{toast}</MetaText> : null}
+          {banner ? <MetaText className="text-accent">{banner}</MetaText> : null}
 
           <section className="space-y-3">
             <H3>Phase focus</H3>

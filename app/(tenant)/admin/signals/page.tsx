@@ -4,7 +4,7 @@ import { requireAdminUser } from "@/lib/admin";
 import { requireFeature } from "@/lib/guards";
 import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
-import { PageHeader } from "@/components/ui/page-header";
+import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { ObservationSignalLabelsSection } from "../observation-signal-labels/ObservationSignalLabelsSection";
 
 export default async function AdminSignalsPage() {
@@ -69,14 +69,14 @@ export default async function AdminSignalsPage() {
         </svg>
         Back to Terminology
       </Link>
-      <PageHeader
-        variant="ledger"
+      <AdminPageChrome
+        area="Signals"
         title="Observation Signals"
         subtitle="Edit signal display names and descriptions used in observation workflows."
       />
       <p className="max-w-2xl text-[0.8125rem] leading-relaxed text-muted">
         Use this for signal-level wording only. For cross-module wording, use{" "}
-        <a className="font-semibold text-[#7C69EF] underline decoration-violet-200 underline-offset-2 hover:text-text dark:text-violet-400" href="/admin/language">
+        <a className="font-semibold text-[#7C69EF] underline decoration-violet-200 underline-offset-2 hover:text-text" href="/admin/language">
           Language
         </a>
         .

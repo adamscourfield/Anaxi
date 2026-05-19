@@ -9,6 +9,8 @@ import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolTyp
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { ClearDraftOnSuccess } from "../components/ClearDraftOnSuccess";
 import { PrintExportButtons } from "../components/PrintExportButtons";
+import { PageHeader } from "@/components/ui/page-header";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import {
   OBS_REVIEW_MUTED,
   OBS_REVIEW_TEXT,
@@ -181,21 +183,20 @@ export default async function ObservationDetailPage({ params }: { params: { id: 
       <ClearDraftOnSuccess draftKey={draftKey} />
 
       <div className="mx-auto max-w-6xl">
-        <ObservationReviewBackLink href="/observe/history">Observation history</ObservationReviewBackLink>
-
-        <div className="mt-4 flex flex-wrap items-start justify-between gap-6">
-          <div className="min-w-0">
-            <h1 className={`text-pretty text-[1.625rem] font-bold leading-tight tracking-tight sm:text-[1.75rem] ${OBS_REVIEW_TEXT}`}>
-              Observation Review — {dateLabel}
-            </h1>
-            <p className={`mt-2 max-w-2xl text-[0.875rem] leading-relaxed ${OBS_REVIEW_MUTED}`}>
-              Final summative report for this observation session
-              {observation.subject ? ` · ${observation.subject}` : ""}
-              {observation.yearGroup ? ` · Year ${observation.yearGroup}` : ""}
-            </p>
-          </div>
-          <PrintExportButtons />
-        </div>
+        <PageHeader
+          variant="ledger"
+          title={`${teacherName} — ${dateLabel}`}
+          subtitle={`Observed by ${observerName}${observation.subject ? ` · ${observation.subject}` : ""}${observation.yearGroup ? ` · Year ${observation.yearGroup}` : ""}`}
+          eyebrow={
+            <Breadcrumb
+              items={[
+                { label: "Observations", href: "/observe/history" },
+                { label: dateLabel },
+              ]}
+            />
+          }
+          actions={<PrintExportButtons />}
+        />
 
         <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px] xl:gap-12">
           <div className="min-w-0 space-y-10">

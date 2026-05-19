@@ -6,6 +6,8 @@ import { hasPermission } from "@/lib/rbac";
 import { getMeetingDetail } from "@/modules/meetings/service";
 import { MEETING_TYPE_LABELS } from "@/modules/meetings/types";
 import { LiveMeetingView } from "@/components/meetings/LiveMeetingView";
+import { PageHeader } from "@/components/ui/page-header";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { prisma } from "@/lib/prisma";
 
 export default async function MeetingDetailPage({ params }: { params: { id: string } }) {
@@ -58,10 +60,20 @@ export default async function MeetingDetailPage({ params }: { params: { id: stri
   }
 
   return (
-    <div>
-      <div className="mb-4">
-        <Link href="/meetings" className="link-accent text-sm">← Meetings</Link>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        variant="ledger"
+        title={meeting.title}
+        subtitle={`${typeLabel} · ${new Date(meeting.startDateTime).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`}
+        eyebrow={
+          <Breadcrumb
+            items={[
+              { label: "Meetings", href: "/meetings" },
+              { label: meeting.title },
+            ]}
+          />
+        }
+      />
 
       <LiveMeetingView
         meetingId={meeting.id}

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
+import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 
 const REQUIRED_KEYS = ["positive_points", "detentions", "internal_exclusions", "on_calls", "suspensions"];
 
@@ -32,7 +32,7 @@ export default async function AdminVocabPage() {
   return (
     <div className="space-y-4">
       <Link href="/admin/terminology" className="link-accent text-xs">← Back to Terminology</Link>
-      <PageHeader variant="ledger" title="Terminology · Vocabulary" subtitle="Set singular/plural labels for behaviour event language." />
+      <AdminPageChrome area="Vocabulary" title="Terminology · Vocabulary" subtitle="Set singular/plural labels for behaviour event language." />
       <Card className="text-sm text-muted">
         This controls event nouns (for example: detention/detentions). For broader UI wording, use <a className="link-accent" href="/admin/language">Language</a>.
       </Card>

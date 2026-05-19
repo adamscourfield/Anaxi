@@ -344,6 +344,7 @@ export function LiveMeetingView({
   const { formatted: timer, seconds: elapsedSeconds } = useElapsedTimer(timerAnchor, timerEnd);
   const [notes, setNotes] = useState(initialNotes);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [startingMeeting, setStartingMeeting] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -374,8 +375,13 @@ export function LiveMeetingView({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ notes: value }),
           });
-          setSaveStatus(res.ok ? "saved" : "idle");
-          if (!res.ok) toast("Could not auto-save notes.", "error");
+          if (res.ok) {
+            setSaveStatus("saved");
+            setLastSavedAt(new Date());
+          } else {
+            setSaveStatus("idle");
+            toast("Could not auto-save notes.", "error");
+          }
         } catch {
           setSaveStatus("idle");
           toast("Could not auto-save notes.", "error");
@@ -587,10 +593,12 @@ export function LiveMeetingView({
 
   const saveStatusLabel =
     saveStatus === "saving"
-      ? "AUTO-SAVING TO CLOUD..."
-      : saveStatus === "saved"
-        ? "SAVED TO CLOUD"
-        : "READY";
+      ? "Saving…"
+      : saveStatus === "saved" && lastSavedAt
+        ? `Saved ${lastSavedAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+        : saveStatus === "saved"
+          ? "Saved"
+          : "Ready";
 
   return (
     <div className="space-y-6 pb-8 pt-1">

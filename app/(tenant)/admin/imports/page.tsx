@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
+import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function AdminImportsPage() {
@@ -15,7 +15,7 @@ export default async function AdminImportsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader variant="ledger" title="Import Jobs" subtitle="Recent import status, row counts, and top errors." />
+      <AdminPageChrome area="Imports" title="Import Jobs" subtitle="Recent import status, row counts, and top errors." />
       <Card className="overflow-hidden p-0">
         {jobs.length === 0 ? (
           <div className="p-4"><EmptyState title="No import jobs yet" description="Imported files will appear here with status and errors." /></div>

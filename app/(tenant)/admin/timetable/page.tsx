@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
+import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { SectionHeader } from "@/components/ui/section-header";
 import { TimetableImportMapper } from "@/components/timetable/TimetableImportMapper";
 
@@ -43,7 +43,7 @@ export default async function AdminTimetablePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader variant="ledger" title="Timetable" subtitle="Import timetable CSVs, resolve mappings, and inspect the latest entries." />
+      <AdminPageChrome area="Timetable" title="Timetable" subtitle="Import timetable CSVs, resolve mappings, and inspect the latest entries." />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Card>

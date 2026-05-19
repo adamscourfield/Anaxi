@@ -7,7 +7,9 @@ import { approvedStatusFilter, isPendingStatus } from "@/lib/leaveStatus";
 import { prisma } from "@/lib/prisma";
 import { createLoaRequest } from "../actions";
 import { FormSelect } from "@/components/ui/form-select";
+import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
@@ -83,10 +85,12 @@ export default async function LeaveRequestPage({
           <form action={createLoaRequest} encType="multipart/form-data" className="space-y-5">
             <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label htmlFor="loa-start" className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-                    Start date
-                  </label>
+                <FormField
+                  id="loa-start"
+                  label="Start date"
+                  required
+                  hint={`Submit at least ${LEAVE_NOTICE_HOURS} hours before the first day where possible.`}
+                >
                   <input
                     id="loa-start"
                     required
@@ -95,11 +99,17 @@ export default async function LeaveRequestPage({
                     defaultValue={today}
                     className="field rounded-xl bg-[var(--surface-container-low)]/80"
                   />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="loa-end" className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-                    End date
-                  </label>
+                </FormField>
+                <FormField
+                  id="loa-end"
+                  label="End date"
+                  required
+                  hint={
+                    LEAVE_MEDICAL_MIN_BUSINESS_DAYS > 0
+                      ? `Medical leave of ${LEAVE_MEDICAL_MIN_BUSINESS_DAYS}+ business days may require documentation.`
+                      : "Last day of absence (inclusive)."
+                  }
+                >
                   <input
                     id="loa-end"
                     required
@@ -108,7 +118,7 @@ export default async function LeaveRequestPage({
                     defaultValue={today}
                     className="field rounded-xl bg-[var(--surface-container-low)]/80"
                   />
-                </div>
+                </FormField>
               </div>
             </div>
 
@@ -197,12 +207,12 @@ export default async function LeaveRequestPage({
             </div>
 
             <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-end">
-              <Button type="submit" className="w-full gap-2 rounded-md px-8 py-3 shadow-md sm:ml-auto sm:w-auto">
+              <SubmitButton className="w-full gap-2 rounded-md px-8 py-3 shadow-md sm:ml-auto sm:w-auto" pendingLabel="Submitting…">
                 Submit Request
                 <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>
                   <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </Button>
+              </SubmitButton>
             </div>
           </form>
         </div>

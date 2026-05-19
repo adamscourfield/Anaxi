@@ -8,6 +8,10 @@ import { businessDaysBetween } from "@/lib/leaveDates";
 import { isPendingStatus, loaStatusLabel, normalizeLoaStatus } from "@/lib/leaveStatus";
 import { prisma } from "@/lib/prisma";
 import { cancelLoaRequest, decideLoaRequest } from "../actions";
+import { PageHeader } from "@/components/ui/page-header";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 const LEAVE_ELEVATED_CARD =
   "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
@@ -215,36 +219,36 @@ export default async function LeaveDetailPage({
   const surfaceCard = LEAVE_ELEVATED_CARD;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 pb-8 pt-1">
-      <Link
-        href={calendarBackHref}
-        className="inline-flex items-center gap-2 text-[0.8125rem] font-medium text-muted calm-transition hover:opacity-80"
-      >
-        <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden>
-          <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        {fromCalendar ? "Back to calendar" : "Back to requests"}
-      </Link>
+    <div className="mx-auto max-w-2xl space-y-6 pb-24 pt-1 md:pb-8">
+      <PageHeader
+        variant="ledger"
+        title={request.requester?.fullName ?? "Staff member"}
+        eyebrow={
+          <Breadcrumb
+            items={[
+              { label: "Leave", href: "/leave" },
+              { label: "Request detail" },
+            ]}
+          />
+        }
+        meta={
+          <span
+            className={`inline-flex shrink-0 items-center gap-2 rounded-md px-3.5 py-1.5 text-[0.8125rem] font-semibold ${statusStyle.badge}`}
+          >
+            <span className={statusStyle.iconWrap}>{statusStyle.icon}</span>
+            {loaStatusLabel(status)}
+          </span>
+        }
+        actions={
+          <Button variant="secondary" asChild>
+            <Link href={calendarBackHref}>{fromCalendar ? "Back to calendar" : "Back to requests"}</Link>
+          </Button>
+        }
+      />
 
       {/* Request summary */}
       <div className={surfaceCard}>
         <div className="px-6 py-7 sm:px-8 sm:py-8">
-          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-muted">
-                Leave request
-              </p>
-              <h1 className="mt-2 text-[1.5rem] font-bold leading-tight tracking-[-0.02em] text-text sm:text-[1.65rem]">
-                {request.requester?.fullName ?? "Staff member"}
-              </h1>
-            </div>
-            <span
-              className={`inline-flex shrink-0 items-center gap-2 rounded-md px-3.5 py-1.5 text-[0.8125rem] font-semibold ${statusStyle.badge}`}
-            >
-              <span className={statusStyle.iconWrap}>{statusStyle.icon}</span>
-              {loaStatusLabel(status)}
-            </span>
-          </div>
 
           <div className="overflow-hidden rounded-xl border border-border bg-[var(--surface-container-lowest)]">
             <div className="grid grid-cols-1 sm:grid-cols-2">
@@ -331,15 +335,28 @@ export default async function LeaveDetailPage({
         </div>
       ) : null}
 
+      <section aria-labelledby="leave-audit-heading" className={surfaceCard}>
+        <div className="border-b border-border px-6 py-5 sm:px-8">
+          <h2 id="leave-audit-heading" className="text-lg font-bold text-text">
+            Audit trail
+          </h2>
+          <p className="mt-1 text-[0.8125rem] text-muted">
+            Submitted {fmtSubmitted(new Date(request.createdAt))}
+            {request.updatedAt ? ` · Last updated ${fmtSubmitted(new Date(request.updatedAt))}` : ""}
+          </p>
+        </div>
+      </section>
+
       {manager && isPendingStatus(request.status) ? (
-        <div className={surfaceCard}>
-          <div className="border-b border-border px-6 py-6 sm:px-8">
+        <div className={`${surfaceCard} md:static fixed inset-x-0 bottom-0 z-30 border-t border-border md:border-t-0`}>
+          <div className="hidden border-b border-border px-6 py-6 sm:px-8 md:block">
             <h2 className="text-lg font-bold text-text">Make a decision</h2>
             <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
               Your decision will be recorded with a timestamp.
             </p>
           </div>
-          <form action={decideLoaRequest} className="space-y-6 px-6 py-7 sm:px-8 sm:py-8">
+          <p className="px-6 pt-4 text-sm font-semibold text-text md:hidden">Approve or deny</p>
+          <form action={decideLoaRequest} className="space-y-6 px-6 py-5 sm:px-8 sm:py-8">
             <input type="hidden" name="requestId" value={request.id} />
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -388,12 +405,9 @@ export default async function LeaveDetailPage({
               />
             </div>
 
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center rounded-xl bg-[var(--primary)] py-3.5 text-[0.9375rem] font-semibold text-on-primary shadow-sm calm-transition hover:opacity-95"
-            >
+            <SubmitButton className="flex w-full items-center justify-center rounded-xl py-3.5 text-[0.9375rem]">
               Save decision
-            </button>
+            </SubmitButton>
           </form>
         </div>
       ) : null}

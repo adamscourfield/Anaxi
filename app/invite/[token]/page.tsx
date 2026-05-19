@@ -27,9 +27,14 @@ export default async function InviteAcceptPage({ params }: { params: { token: st
 
       <AuthCard>
         {expired ? (
-          <div className="space-y-2 py-1 text-center">
+          <div className="space-y-4 py-2 text-center">
             <p className="text-[15px] font-semibold text-text">Invite unavailable</p>
-            <p className="text-sm text-error">This invite has expired or was already used.</p>
+            <p className="text-sm text-muted">
+              This invite link has expired or was already used. Ask your school administrator to send a new invite.
+            </p>
+            <Button asChild variant="secondary" className="w-full">
+              <a href="/login">Return to sign in</a>
+            </Button>
           </div>
         ) : (
           <form method="post" action="/api/invite/accept" className="space-y-5">

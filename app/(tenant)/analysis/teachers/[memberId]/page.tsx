@@ -4,7 +4,10 @@ import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
-import { H1, MetaText, BodyText } from "@/components/ui/typography";
+import { MetaText, BodyText } from "@/components/ui/typography";
+import { PageHeader } from "@/components/ui/page-header";
+import { AnalysisBreadcrumb } from "@/components/explorer/explorer-breadcrumb";
+import { StatusPill } from "@/components/ui/status-pill";
 import { computeTeacherSignalProfile, type RiskStatus, type SignalProfileEntry } from "@/modules/analysis/teacherRisk";
 import { canViewObservation, canViewTeacherAnalysis } from "@/modules/authz";
 import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
@@ -302,22 +305,41 @@ export default async function TeacherProfilePage({
 
   return (
     <div className="space-y-8 pb-10">
-      <Link href={backHref} className="link-muted-accent inline-flex text-sm font-medium">
-        {backLabel}
-      </Link>
+      <AnalysisBreadcrumb
+        items={[
+          { label: "Teachers", href: "/instruction/teachers" },
+          { label: profile.teacherName },
+        ]}
+      />
 
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <H1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl">{profile.teacherName}</H1>
-          <span
-            className={`rounded-md px-3 py-1 text-xs font-semibold tracking-wide ${STATUS_PILL[profile.status]}`}
+      <PageHeader
+        variant="ledger"
+        title={profile.teacherName}
+        subtitle={departmentNames.length > 0 ? departmentNames.join(", ") : undefined}
+        meta={
+          <StatusPill
+            variant={
+              profile.status === "SIGNIFICANT_DRIFT"
+                ? "error"
+                : profile.status === "STABLE"
+                  ? "success"
+                  : "warning"
+            }
           >
             {STATUS_LABELS[profile.status]}
-          </span>
-        </div>
-        {departmentNames.length > 0 && (
-          <BodyText className="text-[0.9375rem] text-muted">{departmentNames.join(", ")}</BodyText>
-        )}
+          </StatusPill>
+        }
+        actions={
+          <Link
+            href={`/explorer/teachers?window=${windowDays}`}
+            className="text-sm font-semibold text-accent underline-offset-2 hover:text-accentHover"
+          >
+            Explorer teacher view →
+          </Link>
+        }
+      />
+
+      <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.8125rem] leading-relaxed text-muted">
           <span className="inline-flex items-center gap-1.5">
             <IconCalendarSmall />

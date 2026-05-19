@@ -3,7 +3,7 @@ import { requireAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
 import { MetaText } from "@/components/ui/typography";
-import { PageHeader } from "@/components/ui/page-header";
+import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { StatusPill } from "@/components/ui/status-pill";
 
 export default async function EmailLogPage() {
@@ -19,17 +19,13 @@ export default async function EmailLogPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5 p-6">
-      <PageHeader
-        variant="ledger"
-        eyebrow={<>Administration › Email</>}
+      <AdminPageChrome
+        area="Email"
         title="Email delivery log"
         subtitle={
-          <>
-            Recent transactional emails for your school.
-            {failedCount > 0
-              ? ` ${failedCount} failed in this view.`
-              : " All recent sends succeeded or were skipped (not configured)."}
-          </>
+          failedCount > 0
+            ? `Recent transactional emails for your school. ${failedCount} failed in this view.`
+            : "Recent transactional emails for your school. All recent sends succeeded or were skipped (not configured)."
         }
       />
 

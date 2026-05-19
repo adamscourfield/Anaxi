@@ -4,6 +4,8 @@ import { type ReactNode, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { OnCallStatusBadge } from "./OnCallStatusBadge";
 import { REQUEST_TYPE_LABELS } from "@/modules/oncall/types";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -177,8 +179,13 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
   /** Full-height vertical track for timeline markers (mock: line runs top to bottom of card). */
   const TIMELINE_LINE_LEFT = "16px";
 
+  const hasActions =
+    (canAcknowledge && request.status === "OPEN") ||
+    (canResolve && (request.status === "OPEN" || request.status === "ACKNOWLEDGED")) ||
+    (canCancel && request.status === "OPEN");
+
   return (
-    <div className="w-full min-w-0 space-y-6 pb-8 pt-1">
+    <div className="w-full min-w-0 space-y-6 pb-24 pt-1 md:pb-8">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 gap-3 sm:gap-4">
           <div
@@ -333,10 +340,8 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
             </div>
           </div>
 
-          {(canAcknowledge && request.status === "OPEN") ||
-          (canResolve && (request.status === "OPEN" || request.status === "ACKNOWLEDGED")) ||
-          (canCancel && request.status === "OPEN") ? (
-            <div className={`${surfaceCard} p-5 sm:p-6`}>
+          {hasActions ? (
+            <div className={`${surfaceCard} hidden p-5 sm:p-6 md:block`}>
               <div className="flex flex-wrap gap-3">
                 {canAcknowledge && request.status === "OPEN" ? (
                   <Button
@@ -432,13 +437,38 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel }:
         </aside>
       </div>
 
-      <Link
-        href="/on-call"
-        className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium calm-transition hover:opacity-80"
-        style={{ color: SLATE_600 }}
-      >
-        <span aria-hidden>&larr;</span> Back to inbox
-      </Link>
+      {hasActions ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-[color-mix(in_srgb,var(--surface-container-lowest)_92%,transparent)] p-4 backdrop-blur-md md:hidden">
+          <div className="mx-auto flex max-w-lg flex-wrap gap-2">
+            {canAcknowledge && request.status === "OPEN" ? (
+              <Button
+                type="button"
+                className="flex-1 rounded-xl"
+                disabled={!!actionPending}
+                onClick={() => handleAction("acknowledge")}
+              >
+                {actionPending === "acknowledge" ? "Working…" : "Acknowledge"}
+              </Button>
+            ) : null}
+            {canResolve && (request.status === "OPEN" || request.status === "ACKNOWLEDGED") ? (
+              <Button
+                type="button"
+                variant="primary"
+                className="flex-1"
+                disabled={!!actionPending}
+                onClick={() => handleAction("resolve")}
+              >
+                {actionPending === "resolve" ? "Working…" : "Resolve"}
+              </Button>
+            ) : null}
+            {canCancel && request.status === "OPEN" ? (
+              <Button type="button" variant="ghost" disabled={!!actionPending} onClick={() => handleAction("cancel")}>
+                Cancel
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

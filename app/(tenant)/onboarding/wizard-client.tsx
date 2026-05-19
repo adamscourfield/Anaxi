@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { H1, MetaText } from "@/components/ui/typography";
+import { PageHeader } from "@/components/ui/page-header";
 
 const STEPS = [
   "School settings",
@@ -23,10 +23,12 @@ export default function OnboardingWizardClient({
 }) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <H1>School Onboarding</H1>
-        <MetaText>Step {stepIndex + 1} of {STEPS.length}</MetaText>
-      </div>
+      <PageHeader
+        variant="ledger"
+        eyebrow="Administration › Onboarding"
+        title="School onboarding"
+        subtitle={`Step ${stepIndex + 1} of ${STEPS.length}`}
+      />
 
       {/* Step indicator */}
       <ol className="flex gap-1.5 overflow-x-auto text-xs">

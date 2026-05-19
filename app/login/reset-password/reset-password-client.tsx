@@ -97,6 +97,10 @@ export function ResetPasswordClient() {
             </div>
           ) : (
             <form onSubmit={onSubmit} className="space-y-5">
+              <ul className="list-disc space-y-1 pl-4 text-[0.75rem] text-muted">
+                <li>At least 8 characters</li>
+                <li>Use a mix of letters and numbers for a stronger password</li>
+              </ul>
               <div className="space-y-2">
                 <AuthFieldLabel htmlFor="password">New password</AuthFieldLabel>
                 <input

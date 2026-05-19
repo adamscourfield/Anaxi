@@ -8,6 +8,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PastMeetingsList } from "@/components/meetings/PastMeetingsList";
 import { MeetingsFilters } from "@/components/meetings/MeetingsFilters";
 
@@ -174,10 +175,18 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
         </div>
 
         {upcoming.length === 0 ? (
-          <div className="rounded-sm border border-dashed border-border/60 px-6 py-10 text-center">
-            <p className="text-sm font-medium text-text">No upcoming meetings</p>
-            <p className="mt-1 text-xs text-muted">Create a meeting to start capturing decisions and actions.</p>
-          </div>
+          <EmptyState
+            mode="embedded"
+            title="No upcoming meetings"
+            description="Schedule a meeting to capture agendas, decisions, and follow-up actions."
+            action={
+              hasPermission(user.role, "meetings:create") ? (
+                <Button asChild>
+                  <Link href="/meetings/new">Schedule meeting</Link>
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="table-shell">
             <p className="sr-only" id="meetings-upcoming-scroll-hint">
