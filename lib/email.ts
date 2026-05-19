@@ -247,6 +247,117 @@ export async function sendSchoolAdminInviteEmail(options: {
   });
 }
 
+export async function sendMeetingUpdatedEmail(options: {
+  to: string;
+  attendeeName: string;
+  title: string;
+  startDateTime: Date;
+  endDateTime: Date;
+  meetingId: string;
+  tenantId: string;
+  attendeeUserId: string;
+  location?: string | null;
+}): Promise<SendEmailResult> {
+  if (!(await shouldSendUserEmail(options.attendeeUserId, "meetings"))) {
+    return { status: "sent" };
+  }
+
+  const branding = await getTenantEmailBranding(options.tenantId);
+  const when = formatDateTime(options.startDateTime, branding.timezone);
+  const meetingUrl = `${getAppUrl()}/meetings/${options.meetingId}`;
+  const locationLine = options.location ? `Location: ${options.location}` : "";
+
+  return sendTemplatedEmail({
+    to: options.to,
+    subject: `Meeting updated: ${options.title}`,
+    schoolName: branding.schoolName,
+    tenantId: options.tenantId,
+    template: "meeting_updated",
+    metadata: { meetingId: options.meetingId },
+    payload: {
+      greeting: `Hi ${options.attendeeName},`,
+      lines: [
+        `The meeting "${options.title}" has been updated.`,
+        `When: ${when} (${branding.timezone})`,
+        ...(locationLine ? [locationLine] : []),
+      ],
+      cta: { label: "View meeting", href: meetingUrl },
+    },
+  });
+}
+
+export async function sendMeetingCancelledEmail(options: {
+  to: string;
+  attendeeName: string;
+  title: string;
+  startDateTime: Date;
+  meetingId: string;
+  tenantId: string;
+  attendeeUserId: string;
+}): Promise<SendEmailResult> {
+  if (!(await shouldSendUserEmail(options.attendeeUserId, "meetings"))) {
+    return { status: "sent" };
+  }
+
+  const branding = await getTenantEmailBranding(options.tenantId);
+  const when = formatDateTime(options.startDateTime, branding.timezone);
+
+  return sendTemplatedEmail({
+    to: options.to,
+    subject: `Meeting cancelled: ${options.title}`,
+    schoolName: branding.schoolName,
+    tenantId: options.tenantId,
+    template: "meeting_cancelled",
+    metadata: { meetingId: options.meetingId },
+    payload: {
+      greeting: `Hi ${options.attendeeName},`,
+      lines: [
+        `The meeting "${options.title}" scheduled for ${when} has been cancelled.`,
+        "No further action is required.",
+      ],
+    },
+  });
+}
+
+export async function sendLeavePendingReminderEmail(options: {
+  to: string;
+  approverName: string;
+  requesterName: string;
+  reasonLabel: string;
+  startDate: Date;
+  endDate: Date;
+  leaveRequestId: string;
+  tenantId: string;
+  approverUserId: string;
+}): Promise<SendEmailResult> {
+  if (!(await shouldSendUserEmail(options.approverUserId, "leave"))) {
+    return { status: "sent" };
+  }
+
+  const branding = await getTenantEmailBranding(options.tenantId);
+  const dates = formatDateRange(options.startDate, options.endDate, branding.timezone);
+  const reviewUrl = `${getAppUrl()}/leave/${options.leaveRequestId}`;
+
+  return sendTemplatedEmail({
+    to: options.to,
+    subject: `Reminder: leave request from ${options.requesterName}`,
+    schoolName: branding.schoolName,
+    tenantId: options.tenantId,
+    template: "leave_reminder",
+    metadata: { leaveRequestId: options.leaveRequestId },
+    payload: {
+      greeting: `Hi ${options.approverName},`,
+      lines: [
+        "This leave request is still awaiting a decision.",
+        `Staff member: ${options.requesterName}`,
+        `Reason: ${options.reasonLabel}`,
+        `Dates: ${dates}`,
+      ],
+      cta: { label: "Review request", href: reviewUrl },
+    },
+  });
+}
+
 export async function sendPasswordResetEmail(options: {
   to: string;
   fullName: string;

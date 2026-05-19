@@ -2,10 +2,19 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail, createPasswordSetToken } from "@/lib/email";
 import { getAppUrl } from "@/lib/email/format";
+import { checkRateLimit, clientIp } from "@/lib/rateLimit";
 
 const TOKEN_EXPIRY_HOURS = 1;
 
 export async function POST(req: Request) {
+  const limit = checkRateLimit(`forgot-password:${clientIp(req)}`, { max: 10, windowMs: 60_000 });
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many attempts. Try again shortly." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec ?? 60) } },
+    );
+  }
+
   const { email, tenantId } = await req.json().catch(() => ({}));
 
   const genericOk = NextResponse.json({ ok: true });

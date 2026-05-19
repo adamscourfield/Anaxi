@@ -337,6 +337,7 @@ model ImportJob {
   rowsFailed      Int             @default(0)
   errorSummary    String?
   errorReportJson Json?
+  mappingJson     Json?
   startedAt       DateTime?
   finishedAt      DateTime?
   createdAt       DateTime        @default(now())
@@ -672,6 +673,7 @@ model MeetingAction {
   tenantId          String
   meetingId         String
   description       String
+  blockReason       String?
   ownerUserId       String
   dueDate           DateTime?
   status            ActionStatus @default(OPEN)

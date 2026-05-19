@@ -94,14 +94,10 @@ export async function blockAction(
   if (action.ownerUserId !== userId) throw new Error("only owner can block action");
 
   const trimmedReason = reason.trim();
-  const description =
-    trimmedReason.length > 0
-      ? `[Blocked: ${trimmedReason}] ${action.description}`
-      : action.description;
 
   return (prisma as any).meetingAction.update({
     where: { id: actionId },
-    data: { status: "BLOCKED", description },
+    data: { status: "BLOCKED", blockReason: trimmedReason || null },
     include: ACTION_INCLUDE,
   });
 }
