@@ -205,7 +205,7 @@ export async function getMeetingStats(tenantId: string, userId?: string) {
     (prisma as any).meeting.findFirst({
       where: meetingWhere,
       orderBy: { startDateTime: "asc" },
-      select: { title: true, startDateTime: true, location: true },
+      select: { id: true, title: true, startDateTime: true, location: true },
     }),
   ]);
 

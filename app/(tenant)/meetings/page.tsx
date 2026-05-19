@@ -114,24 +114,45 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
           }
           iconTileClassName="bg-[var(--status-approved-light)] text-[var(--status-approved-text)]"
           valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
-          context={<span className="font-medium text-muted">Target 95%</span>}
+          context={
+            stats.totalActions > 0 ? (
+              <span className="font-medium text-muted">
+                {Math.round((stats.completionRate / 100) * stats.totalActions)} of {stats.totalActions}{" "}
+                completed
+              </span>
+            ) : (
+              <span className="font-medium text-muted">No actions yet</span>
+            )
+          }
         />
-        <div className="explorer-kpi-tile flex min-h-[140px] flex-col justify-between rounded-2xl p-5 sm:p-6">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Next up</p>
-          {stats.nextMeeting ? (
-            <>
-              <p className="mt-2 line-clamp-2 text-base font-bold leading-snug tracking-[-0.02em] text-text">
-                {stats.nextMeeting.title}
-              </p>
-              <p className="mt-2 text-[0.8125rem] leading-snug text-muted">
+        <StatCard
+          layout="kpi"
+          label="Next up"
+          value={stats.nextMeeting?.title ?? "—"}
+          tone="glass"
+          href={stats.nextMeeting?.id ? `/meetings/${stats.nextMeeting.id}` : undefined}
+          showChevron={Boolean(stats.nextMeeting?.id)}
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          }
+          iconTileClassName="bg-[var(--cat-indigo-bg)] text-[var(--cat-indigo-text)]"
+          valueClassName="mt-1 line-clamp-2 text-xl font-bold leading-snug tracking-[-0.02em] text-text sm:text-[1.35rem]"
+          context={
+            stats.nextMeeting ? (
+              <span className="font-medium text-muted">
                 {formatTimeUntil(new Date(stats.nextMeeting.startDateTime))}
                 {stats.nextMeeting.location ? ` · ${stats.nextMeeting.location}` : ""}
-              </p>
-            </>
-          ) : (
-            <p className="mt-2 text-[0.8125rem] font-medium text-muted">No upcoming meetings</p>
-          )}
-        </div>
+              </span>
+            ) : (
+              <span className="font-medium text-muted">No upcoming meetings</span>
+            )
+          }
+        />
       </div>
 
       {/* ── Upcoming Meetings ───────────────────────────────────────────── */}
@@ -139,7 +160,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
         <h2 className="mb-5 text-lg font-bold tracking-[-0.02em] text-text">Upcoming Meetings</h2>
 
         {upcoming.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/60 px-6 py-10 text-center">
+          <div className="rounded-sm border border-dashed border-border/60 px-6 py-10 text-center">
             <p className="text-sm font-medium text-text">No upcoming meetings</p>
             <p className="mt-1 text-xs text-muted">Create a meeting to start capturing decisions and actions.</p>
           </div>
