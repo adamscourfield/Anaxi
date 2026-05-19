@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { FeatureKey, UserRole } from "@/lib/types";
 import { hasAnyPermission, hasPermission } from "@/lib/rbac";
+import { canAccessPrioritiesNav, canAccessTeacherDirectory } from "@/lib/analysisNav";
 
 type NavItem = {
   label: string;
@@ -113,6 +114,7 @@ export function TenantNav({
   enabledFeatures,
   onCallCount = 0,
   leaveCount = 0,
+  coacheeCount = 0,
   variant = "sidebar",
   onNavigate,
 }: {
@@ -120,6 +122,7 @@ export function TenantNav({
   enabledFeatures: FeatureKey[];
   onCallCount?: number;
   leaveCount?: number;
+  coacheeCount?: number;
   variant?: "sidebar" | "drawer";
   onNavigate?: () => void;
 }) {
@@ -163,6 +166,8 @@ export function TenantNav({
   const canAccessAdminUsers = hasPermission(role, "admin:users");
   const canAccessAdminSettings = hasPermission(role, "admin:settings");
   const canSeeAnalysis = hasAnyPermission(role, ["analysis:view", "analysis:export"]);
+  const canSeePriorities = canAccessPrioritiesNav(role, coacheeCount);
+  const canSeeTeacherDirectory = canAccessTeacherDirectory(role, coacheeCount);
   const canViewStrategy = role === "SUPER_ADMIN" || role === "ADMIN" || role === "SLT";
 
   const navItem = (label: string, href: string, badgeCount?: number): NavItem => ({
@@ -179,7 +184,8 @@ export function TenantNav({
       items: [
         ...(has("OBSERVATIONS") ? [navItem("New observation", "/observe/new")] : []),
         ...(has("OBSERVATIONS") ? [navItem("Observation history", "/observe/history")] : []),
-        ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Teachers", "/instruction/teachers")] : []),
+        ...(has("ANALYSIS") && canSeePriorities ? [navItem("Priorities", "/analytics")] : []),
+        ...(has("ANALYSIS") && canSeeTeacherDirectory ? [navItem("Teachers", "/instruction/teachers")] : []),
         ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Explorer", "/explorer")] : []),
       ],
     },

@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
-import { hasPermission } from "@/lib/rbac";
+import { canAccessTeacherDirectory } from "@/lib/analysisNav";
 import { canExportExplorer, canViewTeacherAnalysis } from "@/modules/authz";
 import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import {
@@ -102,8 +102,6 @@ export default async function InstructionTeachersPage({
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
 
-  if (!hasPermission(user.role, "analysis:view")) notFound();
-
   const [hodMemberships, coachAssignments] = await Promise.all([
     (prisma as any).departmentMembership.findMany({
       where: { userId: user.id, isHeadOfDepartment: true },
@@ -113,6 +111,8 @@ export default async function InstructionTeachersPage({
 
   const hodDepartmentIds = (hodMemberships as any[]).map((m: any) => m.departmentId);
   const coacheeUserIds = (coachAssignments as any[]).map((a: any) => a.coacheeUserId);
+
+  if (!canAccessTeacherDirectory(user.role, coacheeUserIds.length)) notFound();
 
   const viewerContext = { userId: user.id, role: user.role, hodDepartmentIds, coacheeUserIds };
 
