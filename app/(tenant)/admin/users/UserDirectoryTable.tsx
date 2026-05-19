@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useMemo, type FormEvent } from "react";
+import { useState, useMemo, useRef, useEffect, useTransition, type ReactNode } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { FormSelect } from "@/components/ui/form-select";
+import { toast } from "@/components/toast-provider";
 import { EditUserModal, TeacherOption } from "./EditUserModal";
+import type { SummaryFilter } from "./UserDirectorySummary";
+import type { ActionResult } from "./actions";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type UserRow = {
+export type UserRow = {
   id: string;
   fullName: string;
   email: string;
@@ -15,20 +16,31 @@ type UserRow = {
   isActive: boolean;
   receivesOnCallEmails: boolean;
   canApproveAllLoa: boolean;
+  loaScopedCount: number;
 };
 
-// ─── Inline icons ─────────────────────────────────────────────────────────────
+const ADMIN_ROLES = new Set(["ADMIN", "SLT", "SUPER_ADMIN"]);
+
+const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: "Super Admin",
+  ADMIN: "Administrator",
+  SLT: "Senior Leader",
+  HOD: "Head of Dept",
+  LEADER: "Leader",
+  TEACHER: "Teacher",
+  HR: "HR Officer",
+  ON_CALL: "On-Call Staff",
+};
+
+const ROLE_OPTIONS_ALL = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
+
+function roleLabel(role: string): string {
+  return ROLE_LABELS[role] || role;
+}
 
 function SearchIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-    >
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
       <circle cx="11" cy="11" r="7" />
       <path d="m17 17 4 4" strokeLinecap="round" />
     </svg>
@@ -51,131 +63,125 @@ function ChevronRightIcon() {
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
-  ADMIN: "Administrator",
-  SLT: "Senior Leader",
-  HOD: "Head of Dept",
-  LEADER: "Leader",
-  TEACHER: "Teacher",
-  HR: "HR Officer",
-  ON_CALL: "On-Call Staff",
-};
-
-function roleLabel(role: string): string {
-  return ROLE_LABELS[role] || role.charAt(0) + role.slice(1).toLowerCase();
-}
-
-function statusInfo(user: UserRow): { label: string; color: string; dotClass: string } {
-  if (user.isActive) {
-    return { label: "Active", color: "text-text", dotClass: "bg-scale-strong" };
-  }
-  return { label: "Inactive", color: "text-text", dotClass: "bg-on-surface-variant/45" };
+function AccessBadge({ children, title }: { children: ReactNode; title?: string }) {
+  return (
+    <span
+      title={title}
+      className="inline-flex items-center rounded-md border border-border/40 bg-surface-container-low px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.04em] text-muted"
+    >
+      {children}
+    </span>
+  );
 }
 
 const PAGE_SIZE = 20;
-
-type StatusFilter = "all" | "active" | "inactive";
 type SortKey = "name" | "role" | "status";
-
-// ─── Component ────────────────────────────────────────────────────────────────
+type StatusFilter = "all" | "active" | "inactive";
 
 export function UserDirectoryTable({
   users,
   allTeachers,
   scopedLoaByUser,
+  summaryFilter,
+  onSummaryFilterChange,
   saveAction,
-  canEditSuperUsers = true,
+  updateRoleAction,
+  toggleActiveAction,
+  resetPasswordAction,
+  canEditSuperUsers,
+  canAssignSuperAdmin,
 }: {
   users: UserRow[];
   allTeachers: TeacherOption[];
   scopedLoaByUser: Record<string, string[]>;
-  saveAction: (formData: FormData) => void;
-  /** False when the viewer is a tenant admin — they cannot edit platform super admins. */
-  canEditSuperUsers?: boolean;
+  summaryFilter: SummaryFilter;
+  onSummaryFilterChange: (f: SummaryFilter) => void;
+  saveAction: (formData: FormData) => Promise<ActionResult>;
+  updateRoleAction: (formData: FormData) => Promise<ActionResult>;
+  toggleActiveAction: (formData: FormData) => Promise<ActionResult>;
+  resetPasswordAction: (formData: FormData) => Promise<ActionResult>;
+  canEditSuperUsers: boolean;
+  canAssignSuperAdmin: boolean;
 }) {
-  const [appliedSearch, setAppliedSearch] = useState("");
-  const [draftSearch, setDraftSearch] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [sort, setSort] = useState<SortKey>("name");
   const [page, setPage] = useState(1);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
-  const [appliedStatus, setAppliedStatus] = useState<StatusFilter>("all");
-  const [draftStatus, setDraftStatus] = useState<StatusFilter>("all");
-  const [appliedRole, setAppliedRole] = useState("");
-  const [draftRole, setDraftRole] = useState("");
-  const [appliedSort, setAppliedSort] = useState<SortKey>("name");
-  const [draftSort, setDraftSort] = useState<SortKey>("name");
-  const [filterFormKey, setFilterFormKey] = useState(0);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const hasAppliedFilters = !!appliedSearch.trim() || appliedStatus !== "all" || !!appliedRole;
+  const roleOptionsInline = canAssignSuperAdmin
+    ? ROLE_OPTIONS_ALL
+    : ROLE_OPTIONS_ALL.filter((r) => r.value !== "SUPER_ADMIN");
 
-  const triggerWhite = "field-filter-trigger";
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search), 250);
+    return () => window.clearTimeout(t);
+  }, [search]);
 
-  // Filter + sort (applied values only — matches Observation History “Apply filters” pattern)
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  const statusFilter: StatusFilter =
+    summaryFilter.status === "active" ? "active" : summaryFilter.status === "inactive" ? "inactive" : "all";
+
   const filtered = useMemo(() => {
     let list = users;
 
-    if (appliedSearch.trim()) {
-      const q = appliedSearch.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       list = list.filter(
         (u) =>
           u.fullName.toLowerCase().includes(q) ||
           u.email.toLowerCase().includes(q) ||
-          roleLabel(u.role).toLowerCase().includes(q)
+          roleLabel(u.role).toLowerCase().includes(q),
       );
     }
 
-    if (appliedStatus === "active") list = list.filter((u) => u.isActive);
-    else if (appliedStatus === "inactive") list = list.filter((u) => !u.isActive);
+    if (statusFilter === "active") list = list.filter((u) => u.isActive);
+    else if (statusFilter === "inactive") list = list.filter((u) => !u.isActive);
 
-    if (appliedRole) list = list.filter((u) => u.role === appliedRole);
+    if (summaryFilter.roleGroup === "administrators") {
+      list = list.filter((u) => ADMIN_ROLES.has(u.role));
+    } else if (roleFilter) {
+      list = list.filter((u) => u.role === roleFilter);
+    }
 
     const sorted = [...list];
     sorted.sort((a, b) => {
-      if (appliedSort === "name") return a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" });
-      if (appliedSort === "role") return roleLabel(a.role).localeCompare(roleLabel(b.role), undefined, { sensitivity: "base" });
+      if (sort === "name") return a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" });
+      if (sort === "role") return roleLabel(a.role).localeCompare(roleLabel(b.role), undefined, { sensitivity: "base" });
       const sa = a.isActive ? 0 : 1;
       const sb = b.isActive ? 0 : 1;
       return sa - sb;
     });
     return sorted;
-  }, [users, appliedSearch, appliedStatus, appliedRole, appliedSort]);
+  }, [users, debouncedSearch, statusFilter, summaryFilter.roleGroup, roleFilter, sort]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, summaryFilter.roleGroup, roleFilter, sort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const start = (safePage - 1) * PAGE_SIZE;
   const pageUsers = filtered.slice(start, start + PAGE_SIZE);
 
-  function applyFilters(e: FormEvent) {
-    e.preventDefault();
-    setAppliedSearch(draftSearch);
-    setAppliedStatus(draftStatus);
-    setAppliedRole(draftRole);
-    setAppliedSort(draftSort);
-    setPage(1);
-  }
+  const triggerWhite = "field-filter-trigger";
 
-  function clearFilters() {
-    setDraftSearch("");
-    setAppliedSearch("");
-    setDraftStatus("all");
-    setAppliedStatus("all");
-    setDraftRole("");
-    setAppliedRole("");
-    setDraftSort("name");
-    setAppliedSort("name");
-    setPage(1);
-    setFilterFormKey((k) => k + 1);
-  }
-
-  // Generate page numbers to display
   function getPageNumbers(): (number | "ellipsis")[] {
-    if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-    const pages: (number | "ellipsis")[] = [];
-    pages.push(1);
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages: (number | "ellipsis")[] = [1];
     if (safePage > 3) pages.push("ellipsis");
     for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) {
       pages.push(i);
@@ -185,37 +191,78 @@ export function UserDirectoryTable({
     return pages;
   }
 
+  function rowLocked(u: UserRow) {
+    return u.role === "SUPER_ADMIN" && !canEditSuperUsers;
+  }
+
+  function runRowAction(fn: () => Promise<ActionResult>, successMessage: string) {
+    startTransition(async () => {
+      const result = await fn();
+      if (result.ok) {
+        toast(successMessage, "success");
+        setOpenMenuId(null);
+      } else {
+        toast(result.error, "error");
+      }
+    });
+  }
+
+  function handleRoleChange(userId: string, newRole: string) {
+    const fd = new FormData();
+    fd.set("userId", userId);
+    fd.set("role", newRole);
+    runRowAction(() => updateRoleAction(fd), "Role updated");
+  }
+
+  function handleToggleActive(u: UserRow) {
+    const label = u.isActive ? "deactivated" : "activated";
+    if (!window.confirm(`${u.isActive ? "Deactivate" : "Activate"} ${u.fullName}?`)) return;
+    const fd = new FormData();
+    fd.set("id", u.id);
+    fd.set("active", String(u.isActive));
+    runRowAction(() => toggleActiveAction(fd), `Staff member ${label}`);
+  }
+
+  function handleResetPassword(u: UserRow) {
+    if (
+      !window.confirm(
+        `Reset password for ${u.fullName} to the default temporary password (Password123!)? They should change it on next login.`,
+      )
+    ) {
+      return;
+    }
+    const fd = new FormData();
+    fd.set("id", u.id);
+    runRowAction(() => resetPasswordAction(fd), "Password reset");
+  }
+
   const sortLabel =
-    appliedSort === "name" ? "Name (A–Z)" : appliedSort === "role" ? "Institutional role" : "Status (active first)";
+    sort === "name" ? "Name (A–Z)" : sort === "role" ? "Role" : "Status (active first)";
 
   return (
-    <div className="space-y-0">
-      {/* ── Filters (aligned with Observation History) ───────────── */}
-          <div className="mb-6 filter-panel rounded-sm shadow-none">
-        <form
-          key={filterFormKey}
-          onSubmit={applyFilters}
-          className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4"
-        >
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[200px]">
+    <div className="space-y-4">
+      <div className="filter-panel rounded-sm shadow-none">
+        <div className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4">
+          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[220px]">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Search</span>
             <div className="relative">
               <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted" />
               <input
-                type="text"
-                value={draftSearch}
-                onChange={(e) => setDraftSearch(e.target.value)}
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Name, email, or role…"
                 className={`field w-full py-2.5 !pl-[3rem] pr-3 text-[0.875rem] ${triggerWhite}`}
               />
             </div>
           </label>
 
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
+          <label className="flex min-w-0 flex-col gap-1.5 lg:min-w-[140px]">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Status</span>
             <FormSelect
+              key={`status-${summaryFilter.status}-${summaryFilter.roleGroup}`}
               name="_status"
-              defaultValue={draftStatus}
+              defaultValue={summaryFilter.status}
               placeholder="All staff"
               triggerClassName={triggerWhite}
               options={[
@@ -223,94 +270,97 @@ export function UserDirectoryTable({
                 { value: "active", label: "Active only" },
                 { value: "inactive", label: "Inactive only" },
               ]}
-              onChange={(v) => setDraftStatus(v as StatusFilter)}
+              onChange={(v) =>
+                onSummaryFilterChange({
+                  ...summaryFilter,
+                  status: v as SummaryFilter["status"],
+                })
+              }
             />
           </label>
 
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[160px]">
-            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Institutional role</span>
+          <label className="flex min-w-0 flex-col gap-1.5 lg:min-w-[160px]">
+            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Role</span>
             <FormSelect
               name="_role"
-              defaultValue={draftRole}
+              defaultValue={roleFilter}
               placeholder="All roles"
               triggerClassName={triggerWhite}
-              options={[
-                { value: "", label: "All roles" },
-                ...Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label })),
-              ]}
-              onChange={setDraftRole}
+              options={[{ value: "", label: "All roles" }, ...roleOptionsInline]}
+              onChange={(v) => {
+                setRoleFilter(v);
+                if (v) onSummaryFilterChange({ ...summaryFilter, roleGroup: "all" });
+              }}
             />
           </label>
 
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[180px]">
+          <label className="flex min-w-0 flex-col gap-1.5 lg:min-w-[160px]">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Sort by</span>
             <FormSelect
               name="_sort"
-              defaultValue={draftSort}
+              defaultValue={sort}
               placeholder="Sort…"
               triggerClassName={triggerWhite}
               options={[
                 { value: "name", label: "Name (A–Z)" },
-                { value: "role", label: "Institutional role" },
+                { value: "role", label: "Role" },
                 { value: "status", label: "Status (active first)" },
               ]}
-              onChange={(v) => setDraftSort(v as SortKey)}
+              onChange={(v) => setSort(v as SortKey)}
             />
           </label>
-
-          <div className="filter-actions">
-            <button type="submit" className="btn-filter-primary btn-filter-primary--pill">
-              Apply Filters
-            </button>
-            {hasAppliedFilters && (
-              <button type="button" onClick={clearFilters} className="btn-filter-secondary">
-                Clear
-              </button>
-            )}
-          </div>
-        </form>
+        </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Staff Directory</h2>
-        <p className="text-[0.8125rem] text-muted">
-          Sorted by <span className="font-medium text-text">{sortLabel}</span>
-          {filtered.length !== users.length ? (
-            <>
-              {" "}
-              · <span className="font-medium text-text">{filtered.length}</span> of {users.length} shown
-            </>
-          ) : null}
-        </p>
-      </div>
+      <p className="text-[0.8125rem] text-muted">
+        {filtered.length === users.length ? (
+          <>
+            <span className="font-medium text-text">{filtered.length}</span> staff · sorted by{" "}
+            <span className="font-medium text-text">{sortLabel}</span>
+          </>
+        ) : (
+          <>
+            <span className="font-medium text-text">{filtered.length}</span> of{" "}
+            <span className="font-medium text-text">{users.length}</span> staff · sorted by{" "}
+            <span className="font-medium text-text">{sortLabel}</span>
+          </>
+        )}
+      </p>
 
-      {/* ── Table (Observation History table-shell) ───────────────── */}
       <div className="table-shell rounded-sm shadow-none">
-        <p className="sr-only" id="user-directory-scroll-hint">
-          This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
-        </p>
-        <div className="overflow-x-auto" aria-describedby="user-directory-scroll-hint">
+        <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="table-head-row text-left">
                 <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Staff member</th>
-                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Institutional role</th>
+                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Role</th>
                 <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Status</th>
+                <th className="px-5 py-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]">Access</th>
                 <th className="px-5 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.1em]">Actions</th>
               </tr>
             </thead>
             <tbody>
               {pageUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-12 text-center text-[0.875rem] text-muted">
-                    No users match your search or filters.
+                  <td colSpan={5} className="px-5 py-12 text-center text-[0.875rem] text-muted">
+                    No staff match your search or filters.
                   </td>
                 </tr>
               ) : (
                 pageUsers.map((u) => {
-                  const status = statusInfo(u);
+                  const locked = rowLocked(u);
+                  const loaTitle = u.canApproveAllLoa
+                    ? "Approves leave for all teachers"
+                    : u.loaScopedCount > 0
+                      ? `Approves leave for ${u.loaScopedCount} teacher${u.loaScopedCount === 1 ? "" : "s"}`
+                      : undefined;
+
                   return (
-                    <tr key={u.id} className="group table-row calm-transition">
+                    <tr
+                      key={u.id}
+                      className={`group table-row calm-transition ${locked ? "" : "cursor-pointer"}`}
+                      onClick={() => !locked && setEditingUser(u)}
+                    >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <Avatar name={u.fullName} size="md" />
@@ -320,27 +370,97 @@ export function UserDirectoryTable({
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-text">{roleLabel(u.role)}</td>
+                      <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                        {locked ? (
+                          <span className="text-text">{roleLabel(u.role)}</span>
+                        ) : (
+                          <select
+                            value={u.role}
+                            disabled={pending}
+                            onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                            className="field max-w-[11rem] rounded-lg border-border/50 bg-background py-1.5 pl-2 pr-7 text-[0.8125rem] font-medium text-text"
+                            aria-label={`Role for ${u.fullName}`}
+                          >
+                            {roleOptionsInline.map((r) => (
+                              <option key={r.value} value={r.value}>
+                                {r.label}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${status.dotClass}`} />
-                          <span className="text-[0.8125rem] font-medium text-text">{status.label}</span>
+                          <span
+                            className={`inline-block h-2 w-2 shrink-0 rounded-full ${
+                              u.isActive ? "bg-scale-strong" : "bg-on-surface-variant/45"
+                            }`}
+                          />
+                          <span className="text-[0.8125rem] font-medium text-text">
+                            {u.isActive ? "Active" : "Inactive"}
+                          </span>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-right">
-                        {u.role === "SUPER_ADMIN" && !canEditSuperUsers ? (
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {u.receivesOnCallEmails ? (
+                            <AccessBadge title="Receives on-call emails">On-call</AccessBadge>
+                          ) : null}
+                          {u.canApproveAllLoa || u.loaScopedCount > 0 ? (
+                            <AccessBadge title={loaTitle}>
+                              LOA{u.canApproveAllLoa ? "" : ` · ${u.loaScopedCount}`}
+                            </AccessBadge>
+                          ) : null}
+                          {!u.receivesOnCallEmails && !u.canApproveAllLoa && u.loaScopedCount === 0 ? (
+                            <span className="text-[0.8125rem] text-muted">—</span>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        {locked ? (
                           <span className="text-[0.8125rem] text-muted">—</span>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={() => setEditingUser(u)}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background px-3.5 py-2 text-sm font-semibold text-text shadow-sm calm-transition hover:border-border hover:bg-surface-container-low"
-                          >
-                            <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 text-muted" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-9.07 9.07-3.87.968.968-3.87 9.144-9.143z" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            Edit
-                          </button>
+                          <div className="relative inline-flex items-center gap-1" ref={openMenuId === u.id ? menuRef : undefined}>
+                            <button
+                              type="button"
+                              onClick={() => setEditingUser(u)}
+                              className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-background px-2.5 py-1.5 text-[0.8125rem] font-semibold text-text calm-transition hover:bg-surface-container-low"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              aria-expanded={openMenuId === u.id}
+                              aria-haspopup="menu"
+                              onClick={() => setOpenMenuId(openMenuId === u.id ? null : u.id)}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/70 bg-background text-muted calm-transition hover:bg-surface-container-low hover:text-text"
+                            >
+                              ⋮
+                            </button>
+                            {openMenuId === u.id ? (
+                              <div
+                                role="menu"
+                                className="absolute right-0 top-full z-20 mt-1 min-w-[11rem] rounded-lg border border-border/40 bg-background py-1 shadow-lg"
+                              >
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="block w-full px-3 py-2 text-left text-[0.8125rem] text-text calm-transition hover:bg-surface-container-low"
+                                  onClick={() => handleToggleActive(u)}
+                                >
+                                  {u.isActive ? "Deactivate" : "Activate"}
+                                </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="block w-full px-3 py-2 text-left text-[0.8125rem] text-text calm-transition hover:bg-surface-container-low"
+                                  onClick={() => handleResetPassword(u)}
+                                >
+                                  Reset password
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -351,15 +471,14 @@ export function UserDirectoryTable({
           </table>
         </div>
 
-        {/* ── Pagination (aligned with Observation History) ───────── */}
-        {filtered.length > 0 && totalPages > 1 && (
+        {filtered.length > 0 && totalPages > 1 ? (
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 px-5 py-3.5">
             <p className="text-[0.8125rem] text-muted">
               Showing{" "}
               <span className="font-semibold text-text">
                 {start + 1}-{Math.min(start + PAGE_SIZE, filtered.length)}
               </span>{" "}
-              of <span className="font-semibold text-text">{filtered.length.toLocaleString()}</span> staff
+              of <span className="font-semibold text-text">{filtered.length.toLocaleString()}</span>
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -389,7 +508,7 @@ export function UserDirectoryTable({
                   >
                     {p}
                   </button>
-                )
+                ),
               )}
               <button
                 type="button"
@@ -402,11 +521,10 @@ export function UserDirectoryTable({
               </button>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
-      {/* ── Edit User Modal ─────────────────────────────────────── */}
-      {editingUser && (
+      {editingUser ? (
         <EditUserModal
           user={editingUser}
           allTeachers={allTeachers}
@@ -414,8 +532,9 @@ export function UserDirectoryTable({
           onClose={() => setEditingUser(null)}
           saveAction={saveAction}
           readOnly={editingUser.role === "SUPER_ADMIN" && !canEditSuperUsers}
+          canAssignSuperAdmin={canAssignSuperAdmin}
         />
-      )}
+      ) : null}
     </div>
   );
 }
