@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { isProduction } from "@/lib/env";
+import { captureException } from "@/lib/observability";
 
 /** Map thrown auth/feature errors to HTTP responses. */
 const NOT_FOUND_MESSAGES = new Set([
@@ -47,6 +49,10 @@ export function apiErrorResponse(err: unknown, fallbackMessage = "Request failed
       }
       if (message.includes("required") || message.includes("Invalid")) {
         return NextResponse.json({ error: message }, { status: 400 });
+      }
+      if (isProduction()) {
+        captureException(err);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
       }
       return NextResponse.json({ error: message }, { status: 400 });
   }

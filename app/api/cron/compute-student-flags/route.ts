@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
+import { assertCronAuthorized } from "@/lib/cronAuth";
 import { prisma } from "@/lib/prisma";
 import { computeFlags } from "@/modules/students/flags";
 
 export async function POST(req: Request) {
-  const secret = req.headers.get("x-cron-secret");
-  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  }
+  const denied = assertCronAuthorized(req);
+  if (denied) return denied;
 
   const students = await (prisma as any).student.findMany({ include: { snapshots: { orderBy: { snapshotDate: "asc" } } } });
   let created = 0;

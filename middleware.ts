@@ -36,6 +36,7 @@ export const config = {
     "/api/explorer/:path*",
     "/api/admin/:path*",
     "/god/:path*",
-    "/api/god/:path*"
+    "/api/god/:path*",
+    "/api/auth/switch-tenant"
   ]
 };

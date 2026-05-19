@@ -15,9 +15,19 @@ if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV !== "production") {
   process.env.NEXTAUTH_SECRET = "dev-insecure-nextauth-secret";
 }
 
+const securityHeaders = [
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+];
+
 const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["@prisma/client", "bcryptjs"],
+  },
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
   },
   images: {
     remotePatterns: [
