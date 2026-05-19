@@ -157,7 +157,7 @@ export default async function StudentDetailPage({
   const backHref =
     rawFrom && rawFrom.startsWith("/") ? rawFrom : "/explorer/students";
   let backLabel = "Back to students";
-  if (rawFrom.includes("/assessments")) backLabel = "Back to assessment";
+  if (rawFrom.includes("/assessments")) backLabel = "Back to attainment";
   else if (rawFrom.includes("/students/my")) backLabel = "Back to my students";
   else if (rawFrom.includes("/explorer/students")) backLabel = "Back to student list";
   else if (rawFrom.includes("/analytics")) backLabel = "Back to analytics";
@@ -738,18 +738,18 @@ export default async function StudentDetailPage({
           <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Assessments</h2>
+                <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Attainment</h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted">
                   {activeCycle ? `Active cycle: ${activeCycle.label}` : "No active assessment cycle"}
                 </p>
               </div>
               <Link href="/assessments" className="shrink-0 text-sm font-semibold text-accent underline underline-offset-2 calm-transition hover:text-accentHover">
-                Open assessments →
+                Open attainment →
               </Link>
             </div>
 
             {!activeCycle ? (
-              <BodyText className="text-muted">Set an active cycle under Assessments to see results here.</BodyText>
+              <BodyText className="text-muted">Set an active cycle under Attainment to see results here.</BodyText>
             ) : attainmentBySubject.length === 0 ? (
               <div className="rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] bg-[var(--surface-container-low)]/35 p-8">
                 <EmptyState

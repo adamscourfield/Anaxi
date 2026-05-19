@@ -18,6 +18,11 @@ import Link from "next/link";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
+import { AttainmentExplorerLink } from "@/components/assessments/AttainmentExplorerLink";
+import { AttainmentPointLoadingSkeleton } from "@/components/assessments/AttainmentPointLoadingSkeleton";
+import { AttainmentTabPanelSkeleton } from "@/components/assessments/AttainmentTabPanelSkeleton";
+import { LockedPointBanner } from "@/components/assessments/LockedPointBanner";
+import { Button } from "@/components/ui/button";
 import type { GradeFormat, PointType, ResultStatus } from "@prisma/client";
 import { aLevelLetterCellClass, gcseNumericCellClass } from "@/lib/assessments/chartColours";
 import {
@@ -479,7 +484,34 @@ export default function ResultPointPage() {
     load();
   }, [pointId]);
 
-  // Lazy-load pastoral / teaching data on tab switch
+  // Prefetch pastoral / teaching / P8 after primary metrics load (GCSE gets P8)
+  useEffect(() => {
+    if (loading || !metrics || metrics.totalEntries === 0) return;
+    if (!pastoralData && !pastoralLoading) {
+      setPastoralLoading(true);
+      fetch(`/api/assessments/metrics/pastoral?pointId=${pointId}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d) setPastoralData(d); })
+        .finally(() => setPastoralLoading(false));
+    }
+    if (!teachingData && !teachingLoading) {
+      setTeachingLoading(true);
+      fetch(`/api/assessments/metrics/teaching?pointId=${pointId}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d) setTeachingData(d); })
+        .finally(() => setTeachingLoading(false));
+    }
+    if (metrics.dominantFormat === "GCSE" && !p8Data && !p8Loading) {
+      setP8Loading(true);
+      fetch(`/api/assessments/metrics/progress8?pointId=${pointId}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d) setP8Data(d); })
+        .finally(() => setP8Loading(false));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, metrics, pointId]);
+
+  // Lazy-load pastoral / teaching data on tab switch (fallback if prefetch missed)
   useEffect(() => {
     if (activeTab === "pastoral" && !pastoralData && !pastoralLoading) {
       setPastoralLoading(true);
@@ -522,7 +554,7 @@ export default function ResultPointPage() {
   }, [pctSummary]);
 
   if (loading) {
-    return <div className="w-full py-16 text-center text-sm text-[var(--on-surface-muted)]">Loading…</div>;
+    return <AttainmentPointLoadingSkeleton />;
   }
 
   // Build meta badges for PageHeader
@@ -543,34 +575,33 @@ export default function ResultPointPage() {
   ) : null;
 
   const headerActions = point ? (
-    <>
+    <div className="flex flex-wrap items-center gap-2">
+      <AttainmentExplorerLink cycleId={cycleId} />
       {point.resultStatus !== "LOCKED" && (
-        <Link
-          href={`/assessments/${cycleId}/points/${pointId}/upload`}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#e5e7eb] bg-white px-4 text-sm font-semibold text-[#111827] shadow-sm calm-transition hover:bg-[#f9fafb]"
-        >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <path
-              d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v9m-4-4 4-4 4 4" />
-          </svg>
-          Upload results
-        </Link>
+        <Button asChild variant="secondary">
+          <Link href={`/assessments/${cycleId}/points/${pointId}/upload`}>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path
+                d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v9m-4-4 4-4 4 4" />
+            </svg>
+            Upload results
+          </Link>
+        </Button>
       )}
-      <Link
-        href={`/assessments/${cycleId}/compare?from=${pointId}`}
-        className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#111827] px-4 text-sm font-semibold text-white shadow-sm calm-transition hover:opacity-95"
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M18 8V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v10M8 16l4-4 4 4" />
-        </svg>
-        Compare
-      </Link>
-    </>
+      <Button asChild>
+        <Link href={`/assessments/${cycleId}/compare?from=${pointId}`}>
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18 8V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v10M8 16l4-4 4 4" />
+          </svg>
+          Compare
+        </Link>
+      </Button>
+    </div>
   ) : null;
 
   return (
@@ -598,6 +629,10 @@ export default function ResultPointPage() {
       />
 
       {error && <p className="text-sm text-[var(--error)]">{error}</p>}
+
+      {point?.resultStatus === "LOCKED" && (
+        <LockedPointBanner status="LOCKED" cycleId={cycleId} />
+      )}
 
       {metrics && metrics.totalEntries === 0 && (
         <Card className="overflow-hidden p-0">
@@ -643,14 +678,17 @@ export default function ResultPointPage() {
               const labels: Record<string, string> = {
                 attainment: "Attainment",
                 pastoral: "Pastoral",
-                teaching: "Teaching Group Analysis",
+                teaching: "Teaching",
                 progress8: "Progress 8",
               };
               return (
                 <button
                   key={tab}
+                  id={`point-tab-${tab}`}
                   type="button"
                   role="tab"
+                  aria-selected={activeTab === tab}
+                  aria-controls={`point-panel-${tab}`}
                   onClick={() => setActiveTab(tab as "attainment" | "pastoral" | "teaching" | "progress8")}
                   className={`anx-attainment-tab ${activeTab === tab ? "anx-attainment-tab--active" : ""}`}
                 >
@@ -1467,11 +1505,7 @@ function Progress8Tab({
   const [showMissingKs2, setShowMissingKs2] = useState(false);
 
   if (loading) {
-    return (
-      <div className="py-16 text-center text-sm text-[var(--on-surface-muted)]">
-        Computing Progress 8 estimates…
-      </div>
-    );
+    return <AttainmentTabPanelSkeleton label="Progress 8" />;
   }
   if (!data) {
     return (
@@ -2053,11 +2087,7 @@ function PastoralTab({
   const [filterSEND, setFilterSEND] = useState(false);
 
   if (loading) {
-    return (
-      <div className="py-16 text-center text-sm text-[var(--on-surface-muted)]">
-        Loading pastoral data…
-      </div>
-    );
+    return <AttainmentTabPanelSkeleton label="pastoral data" />;
   }
   if (!data) {
     return (
@@ -2514,11 +2544,7 @@ function TeachingTab({
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
 
   if (loading) {
-    return (
-      <div className="py-16 text-center text-sm text-[var(--on-surface-muted)]">
-        Loading teaching group data…
-      </div>
-    );
+    return <AttainmentTabPanelSkeleton label="teaching data" />;
   }
   if (!data || !data.subjects.length) {
     return (

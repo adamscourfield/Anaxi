@@ -79,7 +79,10 @@ function CycleTable({ cycles, emptyLabel }: { cycles: CycleRow[]; emptyLabel: st
               const entries = totalEntries(cycle);
               const subjects = totalSubjects(cycle);
               return (
-                <tr key={cycle.id} className="table-row group">
+                <tr
+                  key={cycle.id}
+                  className={`table-row group ${!cycle.isActive ? "opacity-75 bg-[var(--surface-container-low)]/40" : ""}`}
+                >
                   <td className="px-5 py-3.5">
                     <Link
                       href={`/assessments/${cycle.id}`}
@@ -170,7 +173,7 @@ export default async function AssessmentsPage() {
         titleClassName="text-[1.75rem] font-bold tracking-tight text-text md:text-[2rem]"
         subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-muted"
         title="Cycles"
-        subtitle="Track cohort-level outcomes across the academic year — from baselines through to final results."
+        subtitle="Attainment cycles and grade imports — track cohort outcomes from baseline through to final results."
         actions={
           <Button
             asChild
@@ -185,6 +188,20 @@ export default async function AssessmentsPage() {
           </Button>
         }
       />
+
+      {cycles.length > 0 && (
+        <Card className="flex flex-col gap-3 border border-border bg-surface-container-low p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-text">Dual-flagged students</p>
+            <p className="mt-0.5 text-sm text-muted">
+              Students with high pastoral risk and low attainment — highest priority for intervention.
+            </p>
+          </div>
+          <Button asChild variant="secondary" className="shrink-0">
+            <Link href="/assessments/triangulation">View triangulation</Link>
+          </Button>
+        </Card>
+      )}
 
       {cycles.length === 0 && (
         <Card className="overflow-hidden p-0">

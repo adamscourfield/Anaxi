@@ -29,6 +29,7 @@ import type { GradeFormat } from "@prisma/client";
 import { hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
 import { competitionRank } from "@/modules/assessments/ranking";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
 import { percentileCellClass, gcseNumericCellClass, aLevelLetterCellClass } from "@/lib/assessments/chartColours";
 import {
   aLevelGradeBadgeClass,
@@ -417,7 +418,8 @@ export default async function SubjectDetailPage({
   const formatLabel = isGcse ? "GCSE" : isPercentage ? (assessment.gradeFormat === "RAW" ? "Raw score" : "Percentage") : "A-Level";
 
   return (
-    <div className="anx-reports-page w-full space-y-8 pb-16">
+    <AttainmentPageShell>
+    <div className="w-full space-y-8">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -626,8 +628,8 @@ export default async function SubjectDetailPage({
                   <th className="px-4 py-3">FLAGS</th>
                   {isPercentage && <th className="px-4 py-3">CLASS</th>}
                   <th className="px-4 py-3 text-center">{isPercentage ? "SCORE" : "GRADE"}</th>
-                  <th className="px-4 py-3 text-center">OVERALL AVG</th>
-                  <th className="px-4 py-3 text-center">VS AVG</th>
+                  <th className="hidden px-4 py-3 text-center md:table-cell">OVERALL AVG</th>
+                  <th className="hidden px-4 py-3 text-center md:table-cell">VS AVG</th>
                 </tr>
               </thead>
               <tbody>
@@ -701,7 +703,7 @@ export default async function SubjectDetailPage({
                         </td>
 
                         {/* Overall average */}
-                        <td className="px-4 py-3 text-center">
+                        <td className="hidden px-4 py-3 text-center md:table-cell">
                           {student.avg !== null ? (
                             <span className="font-semibold tabular-nums text-text">
                               {isPercentage ? `${student.avg}%` : student.avg.toFixed(1)}
@@ -712,7 +714,7 @@ export default async function SubjectDetailPage({
                         </td>
 
                         {/* vs avg */}
-                        <td className="px-4 py-3 text-center">
+                        <td className="hidden px-4 py-3 text-center md:table-cell">
                           {student.diff !== null ? (
                             <span className={`font-semibold tabular-nums ${student.diff > 0.05 ? "text-scale-strong-text" : student.diff < -0.05 ? "text-scale-limited-text" : "text-[var(--on-surface-muted)]"}`}>
                               {student.diff > 0.05 ? "+" : ""}{isPercentage ? `${student.diff}pp` : student.diff.toFixed(1)}
@@ -737,5 +739,6 @@ export default async function SubjectDetailPage({
         </div>
       </div>
     </div>
+    </AttainmentPageShell>
   );
 }
