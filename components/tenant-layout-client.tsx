@@ -5,6 +5,7 @@ import Link from "next/link";
 import { TenantNav } from "@/components/tenant-nav";
 import { SchoolSwitcher } from "@/components/school-switcher";
 import { PageTransition } from "@/components/page-transition";
+import { TenantUiProvider } from "@/components/tenant-ui-context";
 import { FeatureKey, UserRole } from "@/lib/types";
 
 function MenuIcon({ className }: { className?: string }) {
@@ -47,6 +48,7 @@ type TenantLayoutClientProps = {
   enabledFeatures: FeatureKey[];
   onCallCount: number;
   leaveCount: number;
+  coacheeCount?: number;
   tenantName: string;
   tenantOptions: { tenantId: string; tenantName: string; isCurrent: boolean }[];
   userFullName: string | null;
@@ -60,6 +62,7 @@ export function TenantLayoutClient({
   enabledFeatures,
   onCallCount,
   leaveCount,
+  coacheeCount = 0,
   tenantName,
   tenantOptions,
   userFullName,
@@ -73,6 +76,7 @@ export function TenantLayoutClient({
     enabledFeatures,
     onCallCount,
     leaveCount,
+    coacheeCount,
   };
 
   const initials = userInitials(userFullName || userEmail || "?");
@@ -136,7 +140,11 @@ export function TenantLayoutClient({
           </Link>
         </header>
         <main className="anx-workspace-main min-w-0 flex-1 px-4 py-7 sm:px-6 md:px-8 md:py-10 lg:px-10">
-          <PageTransition className="mx-auto min-w-0 max-w-[1400px]">{children}</PageTransition>
+          <PageTransition className="mx-auto min-w-0 max-w-[1400px]">
+            <TenantUiProvider role={role} enabledFeatures={enabledFeatures}>
+              {children}
+            </TenantUiProvider>
+          </PageTransition>
         </main>
       </div>
     </>

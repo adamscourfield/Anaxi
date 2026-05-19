@@ -7,6 +7,8 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { DriverChips } from "@/components/ui/driver-chips";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { RiskBand } from "@/modules/analysis/studentRisk";
 import { triangulationPpClass, triangulationSendClass } from "@/modules/assessments/attainmentColours";
@@ -53,7 +55,8 @@ export default async function TriangulationPage() {
   const { students, meta } = result;
 
   return (
-    <div className="anx-reports-page space-y-8 pb-8">
+    <AttainmentPageShell>
+    <div className="space-y-8">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -113,9 +116,14 @@ export default async function TriangulationPage() {
                     <DriverChips drivers={student.behaviouralDrivers} max={3} />
                   </div>
                 </div>
-                <StatusPill variant={BAND_PILL[student.behaviouralBand]} size="sm">
-                  {BAND_LABEL[student.behaviouralBand]}
-                </StatusPill>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <StatusPill variant={BAND_PILL[student.behaviouralBand]} size="sm">
+                    {BAND_LABEL[student.behaviouralBand]}
+                  </StatusPill>
+                  <Button asChild variant="secondary" className="h-7 py-0 text-[11px]">
+                    <Link href={`/students/${student.studentId}`}>View student</Link>
+                  </Button>
+                </div>
               </div>
 
               {/* Assessment results */}
@@ -149,5 +157,6 @@ export default async function TriangulationPage() {
         </div>
       )}
     </div>
+    </AttainmentPageShell>
   );
 }

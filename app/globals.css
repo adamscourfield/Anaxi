@@ -1867,6 +1867,10 @@ textarea:focus-visible {
 
 /* Attainment / assessment cycles (reference dashboard) */
 
+.anx-attainment-page {
+  background: var(--surface-container-lowest);
+}
+
 .anx-attainment-inner {
   max-width: 87.5rem;
 }

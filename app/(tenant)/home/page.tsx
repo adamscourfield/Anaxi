@@ -15,12 +15,31 @@ import {
 import { StudentRiskRow } from "@/modules/analysis/studentRisk";
 import { CohortPivotRow } from "@/modules/analysis/cohortPivot";
 import { UserRole } from "@/lib/types";
+import { cookies } from "next/headers";
 import { assembleHomeCards } from "@/modules/home/assembler";
+import { resolveHomeVariant, showsInsightWindow } from "@/modules/home/roleVariant";
+import { homeHeaderCopy } from "@/modules/home/headerCopy";
+import { buildLeadershipAttentionItems, buildHodAttentionItems } from "@/modules/home/buildAttention";
+import { AttentionStrip } from "@/components/home/AttentionStrip";
+import { HomePageTitle } from "@/components/home/HomePageTitle";
+import { LeadershipTodayBar, type TodaySummaryChip } from "@/components/home/LeadershipTodayBar";
+import { ExplorerPromoBand } from "@/components/home/ExplorerPromoBand";
+import {
+  AttainmentSummaryCard,
+  CohortChangeCard,
+  MeetingsTodayCard,
+  PositiveMomentumCard,
+} from "@/components/home/LeadershipExtras";
+import { CoacheePrioritiesCard } from "@/components/home/CoachHomeSections";
+import { MeetingsTodayList } from "@/components/home/MeetingsTodayList";
 import {
   hydrateLeadershipHomeData,
   hydrateHodHomeData,
   hydrateTeacherHomeData,
+  hydrateCoachHomeData,
+  hydrateHodAttentionContext,
   fetchBehaviourHeatmapMatrix,
+  fetchDashboardAttainmentKPIs,
   PendingLeaveDetail,
   OnCallDetail,
   AttainmentSummary,
@@ -28,13 +47,11 @@ import {
   BehaviourHeatmapData,
 } from "@/modules/home/hydration";
 import { BehaviourHeatmap } from "@/components/dashboard/BehaviourHeatmap";
-import { QuickActionButton } from "@/components/dashboard/QuickActionButton";
 import { Button } from "@/components/ui/button";
 import {
   HomeCardHeading,
   HomeCardHeadingSm,
   HomeEmptyPanel,
-  HomePageHeader,
   HomePrimaryLink,
   IconBell,
   IconBolt,
@@ -131,11 +148,7 @@ function signalRubricDeltaBarWidthPct(delta: number): number {
 }
 
 
-function roleVariant(role: UserRole): "leadership" | "hod" | "teacher" {
-  if (role === "SUPER_ADMIN" || role === "ADMIN" || role === "SLT") return "leadership";
-  if (role === "HOD") return "hod";
-  return "teacher";
-}
+const INSIGHT_WINDOW_COOKIE = "anaxi_insight_window";
 
 function leaveGovernanceQuarterLabel(): string {
   const month = new Date().getMonth();
@@ -190,149 +203,6 @@ function formatRelativeShort(iso: string): string {
 }
 
 
-function WindowSelector({ windowDays }: { windowDays: number }) {
-  return (
-    <div
-      className="segmented-toggle home-pulse-window-toggle touch-manipulation"
-      role="group"
-      aria-label="Analysis window length"
-    >
-      {[7, 14, 21, 28].map((w) => (
-        <Link
-          key={w}
-          href={`/home?window=${w}`}
-          className={`segmented-toggle-btn touch-manipulation ${windowDays === w ? "segmented-toggle-btn-active" : ""}`}
-        >
-          {w}d
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-function PageTitle({
-  windowDays,
-  quickActionItems,
-}: {
-  windowDays: number;
-  quickActionItems: { label: string; href: string; icon: ReactNode }[];
-}) {
-  return (
-    <HomePageHeader
-      eyebrow="Dashboard"
-      title="Institutional Pulse"
-      subtitle="Coverage, signals, and operational status for your school — tuned to the selected window."
-      actions={
-        <div className="flex w-full min-w-0 flex-row items-stretch gap-2 sm:items-center sm:gap-3">
-          <div className="min-w-0 flex-1 sm:flex-initial">
-            <WindowSelector windowDays={windowDays} />
-          </div>
-          {quickActionItems.length > 0 ? (
-            <div className="flex shrink-0 items-center self-center">
-              <QuickActionButton items={quickActionItems} />
-            </div>
-          ) : null}
-        </div>
-      }
-    />
-  );
-}
-
-function LeadershipAttentionStrip({
-  liveOnCallCount,
-  latestLiveOnCall,
-  interventionCount,
-  interventionDetailLabel,
-  attendanceDelta,
-  pendingLeaveCount,
-  windowDays,
-}: {
-  liveOnCallCount: number;
-  latestLiveOnCall: OnCallDetail | null;
-  interventionCount: number;
-  interventionDetailLabel: string;
-  attendanceDelta: number | null;
-  pendingLeaveCount: number;
-  windowDays: number;
-}) {
-  const items = [
-    ...(liveOnCallCount > 0
-      ? [{
-          title: `${liveOnCallCount} on-call escalation${liveOnCallCount === 1 ? "" : "s"}`,
-          detail: latestLiveOnCall
-            ? `${latestLiveOnCall.requesterName} • ${formatRelativeShort(latestLiveOnCall.createdAt)}`
-            : "Open requests in the live queue",
-          href: "/on-call",
-          tone: "critical" as const,
-        }]
-      : []),
-    ...(interventionCount > 0
-      ? [{
-          title: `${interventionCount} teacher${interventionCount === 1 ? "" : "s"} require intervention`,
-          detail: interventionDetailLabel,
-          href: `/analytics?tab=teachers&window=${windowDays}`,
-          tone: "critical" as const,
-        }]
-      : []),
-    ...(attendanceDelta !== null && attendanceDelta < 0
-      ? [{
-          title: "Attendance down",
-          detail: `${attendanceDelta.toFixed(1)}% from last week`,
-          href: `/analytics?tab=students&window=${windowDays}`,
-          tone: "critical" as const,
-        }]
-      : []),
-    ...(pendingLeaveCount > 0
-      ? [{
-          title: `${pendingLeaveCount} leave approval${pendingLeaveCount === 1 ? "" : "s"} pending`,
-          detail: "Cover decisions waiting",
-          href: "/leave#pending-requests",
-          tone: "warning" as const,
-        }]
-      : []),
-  ];
-
-  if (items.length === 0) return null;
-
-  const displayItems = items.slice(0, 3);
-  const hasCritical = items.some((item) => item.tone === "critical");
-
-  const shellClass = hasCritical
-    ? "border-[color-mix(in_srgb,var(--error)_18%,transparent)] bg-[color-mix(in_srgb,var(--error)_03%,var(--surface-container-lowest))]"
-    : "border-[color-mix(in_srgb,var(--warning)_16%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_40%,var(--surface-container-lowest))]";
-
-  const dotClass = (tone: "critical" | "warning") =>
-    tone === "critical" ? "bg-[var(--error)]" : "bg-[var(--warning)]";
-
-  return (
-    <section className={`rounded-xl border px-4 py-3 sm:px-5 shadow-none ${shellClass}`}>
-      <div className="flex flex-wrap items-start gap-3 lg:flex-nowrap lg:items-center">
-        <div className="flex min-w-0 flex-1 flex-col gap-2.5 lg:flex-row lg:items-center lg:divide-x lg:divide-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)]">
-          {displayItems.map((item) => (
-            <Link
-              key={`${item.title}-${item.href}`}
-              href={item.href}
-              className="group min-w-0 flex-1 rounded-lg py-0.5 calm-transition lg:px-4 first:lg:pl-0 hover:opacity-80"
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass(item.tone)}`} aria-hidden />
-                <p className="truncate text-sm font-semibold text-text">{item.title}</p>
-              </div>
-              <p className="mt-0.5 truncate pl-4 text-xs text-muted">{item.detail}</p>
-            </Link>
-          ))}
-        </div>
-        <Link
-          href="/my-actions"
-          className="shrink-0 self-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 py-2 text-xs font-semibold text-text calm-transition hover:bg-[var(--surface-container-low)]"
-        >
-          View all →
-        </Link>
-      </div>
-    </section>
-  );
-}
-
 function LeadershipHome({
   windowDays,
   cpdRows,
@@ -349,6 +219,9 @@ function LeadershipHome({
   hasStudentAnalysisFeature,
   watchlistStudents,
   behaviourHeatmap,
+  topImproving,
+  meetingsTodayCount,
+  attainmentKpis,
 }: {
   windowDays: number;
   cpdRows: CpdPriorityRow[];
@@ -365,6 +238,9 @@ function LeadershipHome({
   hasStudentAnalysisFeature?: boolean;
   watchlistStudents?: StudentRiskRow[];
   behaviourHeatmap: BehaviourHeatmapData | null;
+  topImproving: CpdPriorityRow[];
+  meetingsTodayCount: number;
+  attainmentKpis: Awaited<ReturnType<typeof fetchDashboardAttainmentKPIs>>;
 }) {
   const allDriftingCpd = cpdRows.filter((r) => r.teachersDriftingDown > 0);
   const topCpd = allDriftingCpd.slice(0, 3);
@@ -396,18 +272,40 @@ function LeadershipHome({
     .sort((a, b) => (bandOrder[a.band] ?? 9) - (bandOrder[b.band] ?? 9));
   const effectiveWatchlistStudents = watchlistStudents ?? derivedWatchlistStudents;
 
-  // On-call: separate open vs acknowledged (live queue)
+  const attentionItems = buildLeadershipAttentionItems({
+    liveOnCallCount: liveOnCallBanner.count,
+    latestLiveOnCall: liveOnCallBanner.latest,
+    interventionCount: allInterventionStaff.length,
+    interventionDetailLabel: interventionBannerDetail,
+    attendanceDelta,
+    pendingLeaveCount,
+    windowDays,
+  });
+
+  const todayChips: TodaySummaryChip[] = [
+    ...(liveOnCallBanner.count > 0
+      ? [{ label: "On-call", value: liveOnCallBanner.count, href: "/on-call", tone: "critical" as const }]
+      : []),
+    ...(allInterventionStaff.length > 0
+      ? [{
+          label: "Intervention",
+          value: allInterventionStaff.length,
+          href: `/analytics?tab=teachers&window=${windowDays}`,
+          tone: "critical" as const,
+        }]
+      : []),
+    ...(pendingLeaveCount > 0
+      ? [{ label: "Leave", value: pendingLeaveCount, href: "/leave#pending-requests", tone: "warning" as const }]
+      : []),
+    { label: "Obs this week", value: weekObsCount, href: "/explorer/observations" },
+    ...(meetingsTodayCount > 0 ? [{ label: "Meetings", value: meetingsTodayCount, href: "/meetings" }] : []),
+  ];
+
   return (
     <div className="w-full min-w-0 space-y-8">
-      <LeadershipAttentionStrip
-        liveOnCallCount={liveOnCallBanner.count}
-        latestLiveOnCall={liveOnCallBanner.latest}
-        interventionCount={allInterventionStaff.length}
-        interventionDetailLabel={interventionBannerDetail}
-        attendanceDelta={attendanceDelta}
-        pendingLeaveCount={pendingLeaveCount}
-        windowDays={windowDays}
-      />
+      <LeadershipTodayBar chips={todayChips} />
+      <AttentionStrip items={attentionItems} />
+      <ExplorerPromoBand windowDays={windowDays} />
 
       {/* ═══ Staff Signals + Operations ═══ */}
       <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(240px,0.6fr)] lg:items-start">
@@ -567,6 +465,8 @@ function LeadershipHome({
             )}
           </Card>
 
+          <MeetingsTodayCard count={meetingsTodayCount} />
+
           {/* Live on-call — only rendered when there are active escalations */}
           {liveOnCallBanner.count > 0 && (
             <Link href="/on-call" className="block">
@@ -604,6 +504,13 @@ function LeadershipHome({
           )}
         </div>
       </section>
+
+      <section className="grid min-w-0 gap-5 lg:grid-cols-2">
+        <CohortChangeCard cohortRows={cohortRows} windowDays={windowDays} />
+        <PositiveMomentumCard topImproving={topImproving} windowDays={windowDays} />
+      </section>
+
+      <AttainmentSummaryCard rows={attainmentKpis} windowDays={windowDays} />
 
       {/* ═══ Behaviour Heatmap ═══ */}
       {behaviourHeatmap && (
@@ -872,6 +779,7 @@ function HodHome({
   userId,
   allDepts,
   activeDeptId,
+  attentionItems,
 }: {
   windowDays: number;
   deptCpdRows: CpdPriorityRow[];
@@ -883,15 +791,19 @@ function HodHome({
   userId: string;
   allDepts: { id: string; name: string }[];
   activeDeptId: string;
+  attentionItems: import("@/modules/home/attentionItems").AttentionItem[];
 }) {
   const allDeptDriftingCpd = deptCpdRows.filter((r) => r.teachersDriftingDown > 0);
   const topDeptCpd = allDeptDriftingCpd.slice(0, 2);
-  const topDeptTeachers = deptTeacherRows.slice(0, 5);
+  const topDeptTeachers = deptTeacherRows
+    .filter((r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT")
+    .slice(0, 5);
   const deptObsCount = deptTeacherRows.reduce((sum, r) => sum + r.teacherCoverage, 0);
-  const deptCpdDrift = allDeptDriftingCpd.length;
 
   return (
     <div className="w-full min-w-0 space-y-8">
+      <AttentionStrip items={attentionItems} />
+      <ExplorerPromoBand windowDays={windowDays} />
       {/* Dept switcher — navigation control, sits at top */}
       {allDepts.length > 1 && (
         <div className="segmented-toggle">
@@ -1123,6 +1035,28 @@ function HodHome({
   );
 }
 
+function CoachHome({
+  windowDays,
+  coacheeRows,
+  coacheeCount,
+  teacherHomeProps,
+}: {
+  windowDays: number;
+  coacheeRows: TeacherRiskRow[];
+  coacheeCount: number;
+  teacherHomeProps: Omit<
+    Parameters<typeof TeacherHome>[0],
+    "showWholeSchoolFocus" | "wholeSchoolTop1"
+  >;
+}) {
+  return (
+    <div className="w-full min-w-0 space-y-8">
+      <CoacheePrioritiesCard coacheeRows={coacheeRows} windowDays={windowDays} coacheeCount={coacheeCount} />
+      <TeacherHome {...teacherHomeProps} showWholeSchoolFocus={false} wholeSchoolTop1={null} />
+    </div>
+  );
+}
+
 function TeacherHome({
   windowDays,
   selfProfile,
@@ -1134,6 +1068,8 @@ function TeacherHome({
   hasMeetingsFeature,
   hasLeaveFeature,
   hasOnCallFeature,
+  meetingsToday,
+  showWholeSchoolFocus = true,
 }: {
   windowDays: number;
   selfProfile: Awaited<ReturnType<typeof computeTeacherSignalProfile>>;
@@ -1145,6 +1081,8 @@ function TeacherHome({
   hasMeetingsFeature: boolean;
   hasLeaveFeature: boolean;
   hasOnCallFeature: boolean;
+  meetingsToday: { id: string; title: string; startDateTime: Date; location: string | null }[];
+  showWholeSchoolFocus?: boolean;
 }) {
   const signalsWithData = selfProfile?.signals.filter((s) => s.currentMean !== null) ?? [];
   const strengthSignals = [...signalsWithData]
@@ -1303,10 +1241,21 @@ function TeacherHome({
         </Card>
       )}
 
-      {/* ═══ Leave & On-Call — compact, no empty states ═══ */}
-      {(hasLeaveFeature || (hasOnCallFeature && onCallRequests.length > 0)) && (
+      {hasMeetingsFeature && <MeetingsTodayList meetings={meetingsToday} />}
+
+      {/* ═══ Leave & On-Call — compact when no active request ═══ */}
+      {hasLeaveFeature && !loaRequest && (
+        <p className="text-sm text-muted">
+          No active leave request.{" "}
+          <Link href="/leave/request" className="font-semibold text-[var(--primary)] hover:opacity-80">
+            Request leave →
+          </Link>
+        </p>
+      )}
+
+      {((hasLeaveFeature && loaRequest) || (hasOnCallFeature && onCallRequests.length > 0)) ? (
         <section className="grid gap-4 sm:grid-cols-2">
-          {hasLeaveFeature && (
+          {hasLeaveFeature && loaRequest ? (
             <Card className="space-y-4 rounded-sm !p-5 shadow-none">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -1342,8 +1291,8 @@ function TeacherHome({
                 </Link>
               </div>
             </Card>
-          )}
-          {hasOnCallFeature && onCallRequests.length > 0 && (
+          ) : null}
+          {hasOnCallFeature && onCallRequests.length > 0 ? (
             <Card className="space-y-4 rounded-sm !p-5 shadow-none">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -1378,12 +1327,12 @@ function TeacherHome({
                 </Link>
               </div>
             </Card>
-          )}
+          ) : null}
         </section>
-      )}
+      ) : null}
 
       {/* ═══ Whole-school focus ═══ */}
-      {wholeSchoolTop1 && (
+      {showWholeSchoolFocus && wholeSchoolTop1 && (
         <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary rounded-2xl">
           <div className="flex items-center gap-2">
             <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
@@ -1425,15 +1374,26 @@ export default async function HomePage({
   searchParams?: Record<string, string | string[]>;
 }) {
   const user = await getSessionUserOrThrow();
-  const variant = roleVariant(user.role);
+
+  const coachAssignments =
+    user.role === "LEADER"
+      ? await (prisma as any).coachAssignment.findMany({ where: { coachUserId: user.id } })
+      : [];
+  const coacheeCount = coachAssignments.length;
+  const variant = resolveHomeVariant(user.role, coacheeCount);
+  const headerCopy = homeHeaderCopy(variant);
 
   const settings = await db.tenantSettings.findUnique({
     where: { tenantId: user.tenantId },
   });
+  const cookieStore = cookies();
+  const cookieWindow = parseInt(cookieStore.get(INSIGHT_WINDOW_COOKIE)?.value ?? "", 10);
   const rawWindow = typeof searchParams?.window === "string" ? parseInt(searchParams.window, 10) : NaN;
   const windowDays: number = ALLOWED_WINDOW_DAYS.includes(rawWindow)
     ? rawWindow
-    : ((settings?.defaultInsightWindowDays as number) ?? DEFAULT_WINDOW_DAYS);
+    : ALLOWED_WINDOW_DAYS.includes(cookieWindow)
+      ? cookieWindow
+      : ((settings?.defaultInsightWindowDays as number) ?? DEFAULT_WINDOW_DAYS);
 
   const features = await db.tenantFeature.findMany({
     where: { tenantId: user.tenantId, enabled: true },
@@ -1476,10 +1436,7 @@ export default async function HomePage({
       const hasAssessmentsFeature = enabledFeatures.has("ASSESSMENTS");
       const hasStudentAnalysisFeature = enabledFeatures.has("STUDENT_ANALYSIS");
 
-      const [
-        { cpdRows, teacherRows, cohortRows, studentRows, pendingLeaveCount, pendingLeaveDetails, liveOnCallBanner, weekObsCount, weekObsTeachers, attainmentSummary, watchlistStudents },
-        behaviourHeatmap,
-      ] = await Promise.all([
+      const [leadershipData, behaviourHeatmap] = await Promise.all([
         hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature }),
         hasOnCallFeature ? fetchBehaviourHeatmapMatrix(user.tenantId, windowDays) : Promise.resolve(null),
       ]);
@@ -1487,20 +1444,23 @@ export default async function HomePage({
       return (
         <LeadershipHome
           windowDays={windowDays}
-          cpdRows={cpdRows}
-          teacherRows={teacherRows}
-          cohortRows={cohortRows}
-          studentRows={studentRows}
+          cpdRows={leadershipData.cpdRows}
+          teacherRows={leadershipData.teacherRows}
+          cohortRows={leadershipData.cohortRows}
+          studentRows={leadershipData.studentRows}
           hasLeaveFeature={hasLeaveFeature}
-          pendingLeaveCount={pendingLeaveCount}
-          pendingLeaveDetails={pendingLeaveDetails}
-          liveOnCallBanner={liveOnCallBanner}
-          weekObsCount={weekObsCount}
-          weekObsTeachers={weekObsTeachers}
-          attainmentSummary={attainmentSummary ?? null}
+          pendingLeaveCount={leadershipData.pendingLeaveCount}
+          pendingLeaveDetails={leadershipData.pendingLeaveDetails}
+          liveOnCallBanner={leadershipData.liveOnCallBanner}
+          weekObsCount={leadershipData.weekObsCount}
+          weekObsTeachers={leadershipData.weekObsTeachers}
+          attainmentSummary={leadershipData.attainmentSummary ?? null}
           hasStudentAnalysisFeature={hasStudentAnalysisFeature}
-          watchlistStudents={watchlistStudents}
+          watchlistStudents={leadershipData.watchlistStudents}
           behaviourHeatmap={behaviourHeatmap}
+          topImproving={leadershipData.topImproving}
+          meetingsTodayCount={leadershipData.meetingsTodayCount}
+          attainmentKpis={leadershipData.attainmentKpis}
         />
       );
     }
@@ -1519,6 +1479,27 @@ export default async function HomePage({
         );
       }
 
+      const hasLeaveFeature = homeAssembly.has("operations.leave-approvals");
+      const hodAttention = await hydrateHodAttentionContext({
+        user,
+        deptId: activeDeptId,
+        windowDays,
+        hasLeaveFeature,
+        hasOnCallFeature: enabledFeatures.has("ON_CALL"),
+        hasStudentAnalysisFeature: enabledFeatures.has("STUDENT_ANALYSIS"),
+      });
+
+      const deptInterventionCount = filteredTeacherRows.filter(
+        (r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT"
+      ).length;
+
+      const attentionItems = buildHodAttentionItems({
+        ...hodAttention,
+        interventionCount: deptInterventionCount,
+        windowDays,
+        deptId: activeDeptId,
+      });
+
       return (
         <HodHome
           windowDays={windowDays}
@@ -1531,35 +1512,66 @@ export default async function HomePage({
           userId={user.id}
           allDepts={allDepts}
           activeDeptId={activeDeptId}
+          attentionItems={attentionItems}
         />
       );
     }
 
-    const { selfProfile, wholeSchoolTop1, loaData, onCallData, openActionsData } = await hydrateTeacherHomeData({ user, windowDays, hasAnalysisFeature, assembly: homeAssembly });
+    if (variant === "coach") {
+      const coachData = await hydrateCoachHomeData({ user, windowDays, assembly: homeAssembly });
+      const teacherProps = {
+        windowDays,
+        selfProfile: coachData.selfProfile,
+        openActions: coachData.openActionsData as MeetingActionSummary[],
+        loaRequest: coachData.loaData as LoaSummary | null,
+        onCallRequests: coachData.onCallData as OnCallSummary[],
+        userId: user.id,
+        hasMeetingsFeature: homeAssembly.has("operations.meetings-today") || homeAssembly.has("operations.my-open-actions"),
+        hasLeaveFeature: homeAssembly.has("operations.my-leave-status"),
+        hasOnCallFeature: homeAssembly.has("culture.my-oncall-status"),
+        meetingsToday: coachData.meetingsToday,
+      };
+      return (
+        <CoachHome
+          windowDays={windowDays}
+          coacheeRows={coachData.coacheeRows}
+          coacheeCount={coachData.coacheeIds.length}
+          teacherHomeProps={teacherProps}
+        />
+      );
+    }
+
+    const teacherData = await hydrateTeacherHomeData({ user, windowDays, hasAnalysisFeature, assembly: homeAssembly });
 
     return (
       <TeacherHome
         windowDays={windowDays}
-        selfProfile={selfProfile}
-        openActions={openActionsData as MeetingActionSummary[]}
-        loaRequest={loaData as LoaSummary | null}
-        onCallRequests={onCallData as OnCallSummary[]}
-        wholeSchoolTop1={wholeSchoolTop1}
+        selfProfile={teacherData.selfProfile}
+        openActions={teacherData.openActionsData as MeetingActionSummary[]}
+        loaRequest={teacherData.loaData as LoaSummary | null}
+        onCallRequests={teacherData.onCallData as OnCallSummary[]}
+        wholeSchoolTop1={teacherData.wholeSchoolTop1}
         userId={user.id}
-        hasMeetingsFeature={homeAssembly.has("operations.my-open-actions") || homeAssembly.has("operations.meetings-today")}
+        hasMeetingsFeature={homeAssembly.has("operations.meetings-today") || homeAssembly.has("operations.my-open-actions")}
         hasLeaveFeature={homeAssembly.has("operations.my-leave-status")}
         hasOnCallFeature={homeAssembly.has("culture.my-oncall-status")}
+        meetingsToday={teacherData.meetingsToday}
       />
     );
   };
 
   const content = await pageContent();
+  const rawDeptQuery = typeof searchParams?.dept === "string" ? `dept=${searchParams.dept}` : undefined;
 
   return (
     <div className="w-full min-w-0 space-y-10">
-      <PageTitle
+      <HomePageTitle
+        copy={headerCopy}
         windowDays={windowDays}
+        showWindowSelector={showsInsightWindow(variant)}
+        windowExtraQuery={rawDeptQuery}
         quickActionItems={quickActionItems}
+        role={user.role}
       />
       {content}
     </div>

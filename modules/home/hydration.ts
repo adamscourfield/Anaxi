@@ -285,6 +285,21 @@ export async function hydrateLeadershipHomeData({
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
 
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const meetingsTodayPromise = safe(
+    (prisma as any).meeting.count({
+      where: {
+        tenantId: user.tenantId,
+        startDateTime: { gte: startOfToday, lte: endOfToday },
+      },
+    }),
+    0 as number
+  );
+
   const weekObsPromise = safe(
     (prisma as any).observation
       .findMany({
@@ -309,7 +324,7 @@ export async function hydrateLeadershipHomeData({
     { count: 0, recentTeachers: [] as { id: string; name: string }[] }
   );
 
-  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary] = await Promise.all([
+  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentKpis] = await Promise.all([
     safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]),
     safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]),
     safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }),
@@ -323,6 +338,8 @@ export async function hydrateLeadershipHomeData({
     onCallStatsPromise,
     weekObsPromise,
     attainmentPromise,
+    meetingsTodayPromise,
+    hasAssessmentsFeature ? fetchDashboardAttainmentKPIs(user.tenantId) : Promise.resolve([] as DashboardAttainmentKPIRow[]),
   ]);
 
   return {
@@ -339,6 +356,8 @@ export async function hydrateLeadershipHomeData({
     weekObsCount: weekObs.count,
     weekObsTeachers: weekObs.recentTeachers,
     attainmentSummary,
+    attainmentKpis,
+    meetingsTodayCount: meetingsTodayCount as number,
     watchlistStudents: studentResult.rows,
   };
 }
@@ -703,12 +722,36 @@ export async function hydrateTeacherHomeData({
       )
     : Promise.resolve([] as any[]);
 
-  const [selfProfile, wholeSchoolCpd, loaData, onCallData, openActionsData] = await Promise.all([
+  const meetingsTodayPromise = assembly.has("operations.meetings-today")
+    ? safe(
+        (async () => {
+          const start = new Date();
+          start.setHours(0, 0, 0, 0);
+          const end = new Date();
+          end.setHours(23, 59, 59, 999);
+          const rows = await (prisma as any).meeting.findMany({
+            where: {
+              tenantId: user.tenantId,
+              startDateTime: { gte: start, lte: end },
+              OR: [{ createdByUserId: user.id }, { attendees: { some: { userId: user.id } } }],
+            },
+            orderBy: { startDateTime: "asc" },
+            take: 5,
+            select: { id: true, title: true, startDateTime: true, location: true },
+          });
+          return rows as { id: string; title: string; startDateTime: Date; location: string | null }[];
+        })(),
+        [] as { id: string; title: string; startDateTime: Date; location: string | null }[]
+      )
+    : Promise.resolve([] as { id: string; title: string; startDateTime: Date; location: string | null }[]);
+
+  const [selfProfile, wholeSchoolCpd, loaData, onCallData, openActionsData, meetingsToday] = await Promise.all([
     selfProfilePromise,
     wholeSchoolCpdPromise,
     loaDataPromise,
     onCallDataPromise,
     openActionsDataPromise,
+    meetingsTodayPromise,
   ]);
 
   const wholeSchoolTop1 = (wholeSchoolCpd as CpdPriorityRow[]).find((r) => r.teachersDriftingDown > 0) ?? null;
@@ -719,5 +762,130 @@ export async function hydrateTeacherHomeData({
     loaData,
     onCallData,
     openActionsData,
+    meetingsToday,
+  };
+}
+
+export async function hydrateCoachHomeData({
+  user,
+  windowDays,
+  assembly,
+}: {
+  user: SessionUser;
+  windowDays: number;
+  assembly: HomeAssembly;
+}) {
+  const coachAssignments = await safe(
+    (prisma as any).coachAssignment.findMany({ where: { coachUserId: user.id } }),
+    [] as { coacheeUserId: string }[]
+  );
+  const coacheeIds = (coachAssignments as { coacheeUserId: string }[]).map((a) => a.coacheeUserId);
+
+  const teacherHome = await hydrateTeacherHomeData({
+    user,
+    windowDays,
+    hasAnalysisFeature: true,
+    assembly,
+  });
+
+  if (coacheeIds.length === 0) {
+    return { ...teacherHome, coacheeIds, coacheeRows: [] as TeacherRiskRow[] };
+  }
+
+  const allTeacherRows = await safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]);
+  const coacheeRows = (allTeacherRows as TeacherRiskRow[])
+    .filter((r) => coacheeIds.includes(r.teacherMembershipId))
+    .filter((r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT")
+    .slice(0, 8);
+
+  return { ...teacherHome, coacheeIds, coacheeRows };
+}
+
+export type HodAttentionContext = {
+  liveOnCallCount: number;
+  latestLiveOnCall: OnCallDetail | null;
+  pendingLeaveCount: number;
+  urgentStudentCount: number;
+};
+
+export async function hydrateHodAttentionContext({
+  user,
+  deptId,
+  windowDays,
+  hasLeaveFeature,
+  hasOnCallFeature,
+  hasStudentAnalysisFeature,
+}: {
+  user: SessionUser;
+  deptId: string;
+  windowDays: number;
+  hasLeaveFeature: boolean;
+  hasOnCallFeature: boolean;
+  hasStudentAnalysisFeature: boolean;
+}): Promise<HodAttentionContext> {
+  const deptMemberships = await safe(
+    (prisma as any).departmentMembership.findMany({
+      where: { tenantId: user.tenantId, departmentId: deptId },
+      select: { userId: true },
+    }),
+    [] as { userId: string }[]
+  );
+  const deptUserIds = new Set(deptMemberships.map((m) => m.userId));
+
+  const liveOnCallPromise = hasOnCallFeature
+    ? safe(
+        Promise.all([
+          (prisma as any).onCallRequest.count({
+            where: { tenantId: user.tenantId, status: { in: ["OPEN", "ACKNOWLEDGED"] } },
+          }),
+          (prisma as any).onCallRequest.findFirst({
+            where: { tenantId: user.tenantId, status: { in: ["OPEN", "ACKNOWLEDGED"] } },
+            orderBy: { createdAt: "desc" },
+            include: { requester: { select: { fullName: true } } },
+          }),
+        ]).then(([count, r]: [number, any]) => ({
+          count,
+          latest: r
+            ? ({
+                id: r.id as string,
+                requesterName: (r.requester?.fullName ?? "Unknown") as string,
+                location: (r.location ?? "") as string,
+                status: r.status as string,
+                createdAt: (r.createdAt as Date).toISOString(),
+                resolvedAt: r.resolvedAt ? (r.resolvedAt as Date).toISOString() : null,
+              } satisfies OnCallDetail)
+            : null,
+        })),
+        { count: 0, latest: null as OnCallDetail | null }
+      )
+    : Promise.resolve({ count: 0, latest: null as OnCallDetail | null });
+
+  const pendingLeavePromise = hasLeaveFeature
+    ? safe(
+        (prisma as any).lOARequest.count({
+          where: { tenantId: user.tenantId, status: "PENDING", requesterId: { in: [...deptUserIds] } },
+        }),
+        0
+      )
+    : Promise.resolve(0);
+
+  const urgentStudentsPromise = hasStudentAnalysisFeature
+    ? safe(computeStudentRiskIndex(user.tenantId, windowDays, user.id), {
+        rows: [] as StudentRiskRow[],
+        computedAt: new Date(),
+      }).then((res) => res.rows.filter((s) => s.band === "URGENT" || s.band === "PRIORITY").length)
+    : Promise.resolve(0);
+
+  const [liveOnCall, pendingLeaveCount, urgentStudentCount] = await Promise.all([
+    liveOnCallPromise,
+    pendingLeavePromise,
+    urgentStudentsPromise,
+  ]);
+
+  return {
+    liveOnCallCount: liveOnCall.count,
+    latestLiveOnCall: liveOnCall.latest,
+    pendingLeaveCount: pendingLeaveCount as number,
+    urgentStudentCount,
   };
 }

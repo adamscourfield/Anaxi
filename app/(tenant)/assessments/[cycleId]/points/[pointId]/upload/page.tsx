@@ -7,8 +7,21 @@ import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
+import { AttainmentWizardSteps } from "@/components/assessments/AttainmentWizardSteps";
+import { CsvFileDropzone } from "@/components/assessments/CsvFileDropzone";
+import { LockedPointBanner } from "@/components/assessments/LockedPointBanner";
 import { toast } from "@/components/toast-provider";
 import type { GradeFormat } from "@prisma/client";
+
+const UPLOAD_STEPS = [
+  { id: "setup", label: "File & format" },
+  { id: "detect", label: "Select subjects" },
+] as const;
+
+function yearGroupStorageKey(cycleId: string) {
+  return `anaxi-attainment-yg-${cycleId}`;
+}
 
 type Step = "setup" | "detect" | "done";
 
@@ -35,11 +48,13 @@ export default function UploadSubjectResultsPage() {
   const { cycleId, pointId } = useParams<{ cycleId: string; pointId: string }>();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
 
   const [pointLabel, setPointLabel] = useState("");
   const [cycleLabel, setCycleLabel] = useState("");
   const [qualificationType, setQualificationType] = useState<string>("GCSE");
   const [isLocked, setIsLocked] = useState(false);
+  const [hasExistingUpload, setHasExistingUpload] = useState(false);
 
   const [yearGroup, setYearGroup] = useState("");
   const [gradeFormat, setGradeFormat] = useState<GradeFormat>("GCSE");
@@ -59,8 +74,22 @@ export default function UploadSubjectResultsPage() {
     subjectsImported: number;
     totalProcessed: number;
     totalFailed: number;
+    parseErrors?: number;
     results: Array<{ subject: string; rowsProcessed: number; rowsFailed: number }>;
   } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(yearGroupStorageKey(cycleId));
+      if (saved) setYearGroup(saved);
+    }
+  }, [cycleId]);
+
+  useEffect(() => {
+    if (yearGroup.trim()) {
+      localStorage.setItem(yearGroupStorageKey(cycleId), yearGroup.trim());
+    }
+  }, [yearGroup, cycleId]);
 
   useEffect(() => {
     fetch(`/api/assessments/points/${pointId}`)
@@ -70,7 +99,7 @@ export default function UploadSubjectResultsPage() {
         setCycleLabel(point?.cycle?.label ?? "");
         setQualificationType(point?.cycle?.qualificationType ?? "GCSE");
         setIsLocked(point?.resultStatus === "LOCKED");
-        // Auto-set grade format from qualification type
+        setHasExistingUpload((point?.assessments?.length ?? 0) > 0);
         if (point?.cycle?.qualificationType === "A_LEVEL") setGradeFormat("A_LEVEL");
         else if (point?.cycle?.qualificationType === "GCSE") setGradeFormat("GCSE");
         else if (point?.cycle?.qualificationType === "PERCENTAGE") setGradeFormat("PERCENTAGE");
@@ -79,7 +108,7 @@ export default function UploadSubjectResultsPage() {
   }, [pointId]);
 
   async function handleDetect() {
-    const file = fileRef.current?.files?.[0];
+    const file = csvFile;
     if (!file) { setError("Select a CSV file."); toast("Select a CSV file.", "error"); return; }
     if (!yearGroup.trim()) { setError("Enter the year group."); toast("Enter the year group.", "error"); return; }
 
@@ -111,7 +140,7 @@ export default function UploadSubjectResultsPage() {
   }
 
   async function handleImport() {
-    const file = fileRef.current?.files?.[0];
+    const file = csvFile;
     if (!file || selectedSubjects.size === 0) return;
 
     setLoading(true);
@@ -128,9 +157,14 @@ export default function UploadSubjectResultsPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Import failed"); toast(data.error || "Import failed", "error"); return; }
       setImportResult(data);
-      toast(`Imported ${data.subjectsImported ?? 0} subject${(data.subjectsImported ?? 0) !== 1 ? "s" : ""} (${data.totalProcessed ?? 0} entries).`, "success");
+      const failed = data.totalFailed ?? 0;
+      toast(
+        failed > 0
+          ? `Imported with ${failed} unmatched row${failed !== 1 ? "s" : ""} — see summary below.`
+          : `Imported ${data.subjectsImported ?? 0} subject${(data.subjectsImported ?? 0) !== 1 ? "s" : ""} (${data.totalProcessed ?? 0} entries).`,
+        failed > 0 ? "error" : "success",
+      );
       setStep("done");
-      toast("Results imported", "success");
     } finally {
       setLoading(false);
     }
@@ -138,7 +172,8 @@ export default function UploadSubjectResultsPage() {
 
   if (step === "done" && importResult) {
     return (
-      <div className="max-w-2xl space-y-8">
+      <AttainmentPageShell>
+      <div className="mx-auto max-w-3xl space-y-8">
         <AssessmentsBreadcrumb
           items={[
             { label: "Attainment", href: "/assessments" },
@@ -150,8 +185,28 @@ export default function UploadSubjectResultsPage() {
         <Card className="space-y-5">
           <SectionHeader
             title={`${importResult.subjectsImported} subject${importResult.subjectsImported !== 1 ? "s" : ""} uploaded`}
-            subtitle={`${importResult.totalProcessed} entries matched to students`}
+            subtitle={`${importResult.totalProcessed} entries matched to students${importResult.totalFailed > 0 ? ` · ${importResult.totalFailed} rows could not be matched` : ""}`}
           />
+          {(importResult.totalFailed > 0 || (importResult.parseErrors ?? 0) > 0) && (
+            <div className="rounded-xl border border-[var(--error)]/30 bg-[var(--error)]/10 p-3 text-sm text-text">
+              <p className="font-semibold text-[var(--error)]">Import issues</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted">
+                {importResult.totalFailed > 0 && (
+                  <li>
+                    {importResult.totalFailed} row{importResult.totalFailed !== 1 ? "s" : ""} could not be matched to a student (check UPN/name in your student register).
+                  </li>
+                )}
+                {(importResult.parseErrors ?? 0) > 0 && (
+                  <li>{importResult.parseErrors} CSV parsing warning{(importResult.parseErrors ?? 0) !== 1 ? "s" : ""} were ignored during import.</li>
+                )}
+                {importResult.results.filter((r) => r.rowsFailed > 0).map((r) => (
+                  <li key={r.subject}>
+                    {r.subject}: {r.rowsFailed} failed, {r.rowsProcessed} matched
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="table-shell border-0 rounded-none shadow-none">
             <div className="overflow-x-auto">
@@ -191,12 +246,14 @@ export default function UploadSubjectResultsPage() {
           </div>
         </Card>
       </div>
+      </AttainmentPageShell>
     );
   }
 
   if (isLocked) {
     return (
-      <div className="max-w-2xl space-y-8">
+      <AttainmentPageShell>
+      <div className="mx-auto max-w-3xl space-y-8">
         <AssessmentsBreadcrumb
           items={[
             { label: "Attainment", href: "/assessments" },
@@ -209,13 +266,16 @@ export default function UploadSubjectResultsPage() {
           title="Result point locked"
           subtitle="This result point has been locked and cannot accept new uploads."
         />
+        <LockedPointBanner status="LOCKED" cycleId={cycleId} />
         <Button variant="ghost" onClick={() => router.push(`/assessments/${cycleId}`)}>← Back to cycle</Button>
       </div>
+      </AttainmentPageShell>
     );
   }
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <AttainmentPageShell>
+    <div className="mx-auto max-w-3xl space-y-8">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -230,17 +290,16 @@ export default function UploadSubjectResultsPage() {
         subtitle="Upload a CSV with grades for one or more subjects. The system will auto-detect subject columns."
       />
 
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 text-sm">
-        {(["setup", "detect"] as Step[]).map((s, i) => (
-          <span key={s} className="flex items-center gap-2">
-            {i > 0 && <span className="text-[var(--on-surface-muted)]">→</span>}
-            <span className={step === s ? "font-semibold text-[var(--accent)]" : "text-[var(--on-surface-muted)]"}>
-              {i + 1}. {s === "setup" ? "File & format" : "Select subjects"}
-            </span>
-          </span>
-        ))}
-      </div>
+      <AttainmentWizardSteps
+        steps={[...UPLOAD_STEPS]}
+        currentId={step === "detect" ? "detect" : "setup"}
+      />
+
+      {hasExistingUpload && (
+        <p className="rounded-xl border border-border bg-surface-container-low px-4 py-3 text-sm text-muted">
+          Re-importing replaces existing subject results for this year group on this result point. Other snapshots are unchanged.
+        </p>
+      )}
 
       {/* Step 1 */}
       {(step === "setup" || step === "detect") && (
@@ -278,11 +337,10 @@ export default function UploadSubjectResultsPage() {
               <p><span className="font-medium">A-Level:</span> &quot;Lastname, Firstname&quot;, Maths, Biology, History…</p>
               <p>Non-grade columns (PP, SEND, Gender, Attendance) are automatically excluded. Blank cells = subject not taken.</p>
             </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv"
-              className="block text-sm text-[var(--on-surface)] file:mr-3 file:rounded-lg file:border file:border-[var(--outline-variant)] file:bg-[var(--surface)] file:px-3 file:py-1.5 file:text-sm"
+            <CsvFileDropzone
+              file={csvFile}
+              onFileChange={setCsvFile}
+              inputRef={fileRef}
             />
             <a
               href={`/api/assessments/template${yearGroup.trim() ? `?yearGroup=${encodeURIComponent(yearGroup.trim())}` : ""}`}
@@ -387,5 +445,6 @@ export default function UploadSubjectResultsPage() {
         </Card>
       )}
     </div>
+    </AttainmentPageShell>
   );
 }

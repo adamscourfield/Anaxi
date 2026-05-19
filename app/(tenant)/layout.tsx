@@ -11,7 +11,12 @@ export default async function TenantLayout({ children }: { children: React.React
   const user = await getSessionUserOrThrow();
   const isSuperAdmin = user.role === "SUPER_ADMIN";
 
-  const [features, tenant, memberships] = await Promise.all([
+  const coachCountPromise =
+    user.role === "LEADER"
+      ? (prisma as any).coachAssignment.count({ where: { coachUserId: user.id } })
+      : Promise.resolve(0);
+
+  const [features, tenant, memberships, coacheeCount] = await Promise.all([
     prisma.tenantFeature.findMany({ where: { tenantId: user.tenantId, enabled: true } }),
     prisma.tenant.findUnique({ where: { id: user.tenantId }, select: { name: true } }),
     isSuperAdmin
@@ -20,6 +25,7 @@ export default async function TenantLayout({ children }: { children: React.React
           where: { email: user.email, isActive: true },
           select: { tenantId: true, tenant: { select: { name: true } } },
         }),
+    coachCountPromise,
   ]);
 
   const canSeeOnCallBadge = hasPermission(user.role, "oncall:view_all");
@@ -56,6 +62,7 @@ export default async function TenantLayout({ children }: { children: React.React
       enabledFeatures={isSuperAdmin ? ALL_FEATURE_KEYS : features.map((f) => f.key as FeatureKey)}
       onCallCount={onCallCount}
       leaveCount={leaveCount}
+      coacheeCount={coacheeCount}
       tenantName={tenantName}
       tenantOptions={tenantOptions}
       userFullName={user.fullName}
