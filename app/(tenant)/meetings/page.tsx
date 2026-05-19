@@ -9,6 +9,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { PastMeetingsList } from "@/components/meetings/PastMeetingsList";
+import { MeetingsFilters } from "@/components/meetings/MeetingsFilters";
 
 function getInitials(name: string): string {
   return name
@@ -36,8 +37,12 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
   await requireFeature(user.tenantId, "MEETINGS");
 
   const canViewAll = hasPermission(user.role, "meetings:view_all");
-  const showAll = canViewAll && searchParams?.scope !== "mine";
-  const type = searchParams?.type;
+  const scope = searchParams?.scope === "mine" ? "mine" : "all";
+  const showAll = canViewAll && scope !== "mine";
+  const validTypes = Object.keys(MEETING_TYPE_LABELS);
+  const type =
+    searchParams?.type && validTypes.includes(searchParams.type) ? searchParams.type : undefined;
+  const statsUserId = showAll ? undefined : user.id;
 
   const [meetings, stats] = await Promise.all([
     listMeetings(user.tenantId, {
@@ -45,7 +50,7 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
       isAttendee: !showAll,
       userId: user.id,
     }),
-    getMeetingStats(user.tenantId, canViewAll ? undefined : user.id),
+    getMeetingStats(user.tenantId, statsUserId),
   ]);
 
   const now = new Date();
@@ -75,6 +80,8 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
           ) : undefined
         }
       />
+
+      <MeetingsFilters canViewAll={canViewAll} scope={scope} type={type} />
 
       {/* ── Stats Cards (KPI row — matches Explorer / Signals) ─────────── */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -157,7 +164,14 @@ export default async function MeetingsPage({ searchParams }: { searchParams?: { 
 
       {/* ── Upcoming Meetings ───────────────────────────────────────────── */}
       <section>
-        <h2 className="mb-5 text-lg font-bold tracking-[-0.02em] text-text">Upcoming Meetings</h2>
+        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-lg font-bold tracking-[-0.02em] text-text">Upcoming Meetings</h2>
+          {(scope === "mine" || type) && (
+            <p className="text-[0.8125rem] text-muted">
+              {upcoming.length + past.length} meeting{upcoming.length + past.length !== 1 ? "s" : ""} matching filters
+            </p>
+          )}
+        </div>
 
         {upcoming.length === 0 ? (
           <div className="rounded-sm border border-dashed border-border/60 px-6 py-10 text-center">
