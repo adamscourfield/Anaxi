@@ -413,6 +413,12 @@ export function InstitutionalDashboard({
               Operational setup, data readiness, and administrative controls for your school in one place.
             </p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
+              <Link
+                href="/home"
+                className="inline-flex items-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] px-3 py-1.5 text-xs font-semibold text-text calm-transition hover:bg-[var(--surface-container-low)]"
+              >
+                School pulse →
+              </Link>
               <AdminMetaChip
                 icon={
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>

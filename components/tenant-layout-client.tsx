@@ -47,6 +47,7 @@ type TenantLayoutClientProps = {
   enabledFeatures: FeatureKey[];
   onCallCount: number;
   leaveCount: number;
+  coacheeCount?: number;
   tenantName: string;
   tenantOptions: { tenantId: string; tenantName: string; isCurrent: boolean }[];
   userFullName: string | null;
@@ -60,6 +61,7 @@ export function TenantLayoutClient({
   enabledFeatures,
   onCallCount,
   leaveCount,
+  coacheeCount = 0,
   tenantName,
   tenantOptions,
   userFullName,
@@ -73,6 +75,7 @@ export function TenantLayoutClient({
     enabledFeatures,
     onCallCount,
     leaveCount,
+    coacheeCount,
   };
 
   const initials = userInitials(userFullName || userEmail || "?");
