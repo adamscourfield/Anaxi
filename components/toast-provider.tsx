@@ -100,21 +100,42 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div
         className="pointer-events-none fixed bottom-0 right-0 z-[100] flex max-w-[min(100vw-1.5rem,24rem)] flex-col gap-2 p-4 sm:p-5"
-        aria-live="polite"
-        aria-relevant="additions"
+        aria-label="Notifications"
       >
-        {items.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => dismiss(t.id)}
-            className={`pointer-events-auto motion-safe:animate-toast-in rounded-xl border px-4 py-3 text-left text-sm font-medium leading-snug shadow-md calm-transition hover:opacity-95 ${variantStyles(
-              t.variant,
-            )}`}
-          >
-            {t.message}
-          </button>
-        ))}
+        <div aria-live="polite" aria-relevant="additions" className="flex flex-col gap-2">
+          {items
+            .filter((t) => t.variant !== "error")
+            .map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => dismiss(t.id)}
+                className={`pointer-events-auto motion-safe:animate-toast-in rounded-xl border px-4 py-3 text-left text-sm font-medium leading-snug shadow-md calm-transition hover:opacity-95 ${variantStyles(
+                  t.variant,
+                )}`}
+                aria-label={`Dismiss: ${t.message}`}
+              >
+                {t.message}
+              </button>
+            ))}
+        </div>
+        <div aria-live="assertive" aria-relevant="additions" className="flex flex-col gap-2">
+          {items
+            .filter((t) => t.variant === "error")
+            .map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => dismiss(t.id)}
+                className={`pointer-events-auto motion-safe:animate-toast-in rounded-xl border px-4 py-3 text-left text-sm font-medium leading-snug shadow-md calm-transition hover:opacity-95 ${variantStyles(
+                  t.variant,
+                )}`}
+                aria-label={`Dismiss error: ${t.message}`}
+              >
+                {t.message}
+              </button>
+            ))}
+        </div>
       </div>
     </ToastContext.Provider>
   );

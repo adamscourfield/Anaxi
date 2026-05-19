@@ -2,7 +2,8 @@ import Link from "next/link";
 import { requireAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card";
-import { H1, MetaText } from "@/components/ui/typography";
+import { MetaText } from "@/components/ui/typography";
+import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
 
 export default async function EmailLogPage() {
@@ -18,18 +19,19 @@ export default async function EmailLogPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5 p-6">
-      <div>
-        <Link href="/admin" className="text-sm text-muted hover:text-text">
-          ← Admin
-        </Link>
-        <H1 className="mt-2">Email delivery log</H1>
-        <MetaText>
-          Recent transactional emails for your school.
-          {failedCount > 0
-            ? ` ${failedCount} failed in this view.`
-            : " All recent sends succeeded or were skipped (not configured)."}
-        </MetaText>
-      </div>
+      <PageHeader
+        variant="ledger"
+        eyebrow={<>Administration › Email</>}
+        title="Email delivery log"
+        subtitle={
+          <>
+            Recent transactional emails for your school.
+            {failedCount > 0
+              ? ` ${failedCount} failed in this view.`
+              : " All recent sends succeeded or were skipped (not configured)."}
+          </>
+        }
+      />
 
       <Card className="overflow-x-auto">
         <table className="w-full text-left text-sm">

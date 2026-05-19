@@ -49,7 +49,13 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
       </header>
-      <main className="anx-workspace-main mx-auto w-full max-w-[1400px] px-6 pt-20 pb-10">
+      <div
+        className="fixed top-14 left-0 right-0 z-40 border-b border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-[var(--surface-container)] px-6 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]"
+        role="status"
+      >
+        Platform administration — changes affect live schools
+      </div>
+      <main className="anx-workspace-main mx-auto w-full max-w-[1400px] px-6 pt-28 pb-10">
         <PageTransition className="min-w-0">{children}</PageTransition>
       </main>
     </div>

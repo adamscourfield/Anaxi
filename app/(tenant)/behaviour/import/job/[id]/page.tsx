@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { H1, H2, MetaText } from "@/components/ui/typography";
+import { H2, MetaText } from "@/components/ui/typography";
+import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
 
 export default async function ImportJobPage({
@@ -36,13 +37,13 @@ export default async function ImportJobPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Link href="/behaviour/import?tab=history" className="link-accent text-sm">
-          ← Back to Import History
-        </Link>
-      </div>
-
-      <H1>Import Job Report</H1>
+      <PageHeader
+        variant="ledger"
+        eyebrow={<>Students › Behaviour import</>}
+        title="Import job report"
+        subtitle={job.fileName ? `File: ${job.fileName}` : undefined}
+        meta={<StatusPill variant={statusVariant}>{job.status}</StatusPill>}
+      />
 
       <Card className="space-y-2">
         <div className="flex justify-between text-sm">

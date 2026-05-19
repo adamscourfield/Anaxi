@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
+import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, InteractiveCard } from "@/components/ui/card";
-import { H1, MetaText } from "@/components/ui/typography";
+import { MetaText } from "@/components/ui/typography";
 
 export default async function GodDashboardPage() {
   await requireSuperAdminUser();
@@ -21,16 +22,22 @@ export default async function GodDashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <H1>God Mode</H1>
-          <MetaText>Platform-level school provisioning and module control.</MetaText>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/god/audit"><Button variant="secondary">Audit log</Button></Link>
-          <Link href="/god/schools/new"><Button>+ Create school</Button></Link>
-        </div>
-      </div>
+      <PageHeader
+        variant="ledger"
+        eyebrow="Platform"
+        title="God Mode"
+        subtitle="Platform-level school provisioning and module control."
+        actions={
+          <>
+            <Link href="/god/audit">
+              <Button variant="secondary">Audit log</Button>
+            </Link>
+            <Link href="/god/schools/new">
+              <Button>+ Create school</Button>
+            </Link>
+          </>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
@@ -54,7 +61,9 @@ export default async function GodDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">{school.name}</div>
-                  <MetaText>{school.slug ?? "no-slug"} · {school.status}</MetaText>
+                  <MetaText>
+                    {school.slug ?? "no-slug"} · {school.status}
+                  </MetaText>
                 </div>
                 <div className="text-right text-xs text-muted">
                   <div>{school.users.length} admin(s)</div>

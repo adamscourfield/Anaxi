@@ -1,14 +1,16 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-/** Observation review read-only / wizard styling (#F9FAFB page, #1F2937 teacher card, pill rows). */
+/** Observation review read-only / wizard styling (semantic tokens — UX-011). */
 
-export const OBS_REVIEW_PAGE_BG = "bg-[#F9FAFB]";
-export const OBS_REVIEW_TEXT = "text-[#111827]";
-export const OBS_REVIEW_MUTED = "text-[#6B7280]";
-export const OBS_REVIEW_CARD_DARK = "bg-[#1F2937]";
-export const OBS_REVIEW_SIDEBAR_LABEL = "text-[#93C5FD]";
-export const OBS_REVIEW_STATUS_ACCENT = "text-[#EC4899]";
+export const OBS_REVIEW_PAGE_BG = "bg-[var(--surface-container-low)]";
+export const OBS_REVIEW_TEXT = "text-[var(--on-surface)]";
+export const OBS_REVIEW_MUTED = "text-[var(--on-surface-variant)]";
+export const OBS_REVIEW_CARD_DARK = "bg-[var(--primary-container)]";
+export const OBS_REVIEW_SIDEBAR_LABEL = "text-[var(--primary-fixed-dim)]";
+export const OBS_REVIEW_STATUS_ACCENT = "text-[var(--tertiary-fixed-dim)]";
+export const OBS_REVIEW_BORDER = "border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)]";
+export const OBS_REVIEW_SURFACE = "bg-[var(--surface-container-lowest)]";
 
 export function ObservationReviewBackLink({
   href,
@@ -20,7 +22,7 @@ export function ObservationReviewBackLink({
   return (
     <Link
       href={href}
-      className={`inline-flex items-center gap-1.5 text-[0.8125rem] font-medium ${OBS_REVIEW_MUTED} transition-colors hover:text-[#111827] print:hidden`}
+      className={`inline-flex items-center gap-1.5 text-[0.8125rem] font-medium ${OBS_REVIEW_MUTED} transition-colors hover:text-[var(--on-surface)] print:hidden`}
     >
       <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden>
         <path

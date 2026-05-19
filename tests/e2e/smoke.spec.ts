@@ -13,4 +13,11 @@ test.describe("public smoke", () => {
     await page.goto("/login/forgot-password");
     await expect(page.getByRole("heading", { name: /reset password/i })).toBeVisible();
   });
+
+  test("unknown public route shows branded 404", async ({ page }) => {
+    await page.goto("/unknown-public-route-ux-smoke");
+    await expect(page.getByRole("heading", { name: /page not found/i })).toBeVisible({
+      timeout: 15_000,
+    });
+  });
 });

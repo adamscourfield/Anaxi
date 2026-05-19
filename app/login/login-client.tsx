@@ -13,6 +13,7 @@ import {
   AuthShell,
 } from "@/components/auth-shell";
 import { Button } from "@/components/ui/button";
+import { SkipToContent } from "@/components/skip-to-content";
 
 type School = { id: string; name: string };
 type Step = "credentials" | "selectSchool";
@@ -92,6 +93,7 @@ export function LoginClient() {
 
   return (
     <AuthShell variant="light">
+      <SkipToContent targetId="auth-form" label="Skip to sign in form" />
       <AuthNav />
       <AuthFlowMain maxWidth="md">
         <div className="mb-8 flex flex-col items-center sm:mb-10 sm:items-start">
