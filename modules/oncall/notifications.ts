@@ -1,6 +1,8 @@
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/email";
+import { getTenantEmailBranding, getAppUrl } from "@/lib/email/format";
+import { sendTemplatedEmail } from "@/lib/email/send";
+import { shouldSendUserEmail } from "@/lib/email/send";
 
 export async function sendOnCallNotification(
   tenantId: string,
@@ -25,13 +27,13 @@ export async function sendOnCallNotification(
   try {
     const recipients = await prisma.user.findMany({
       where: { tenantId, receivesOnCallEmails: true, isActive: true },
-      select: { email: true, fullName: true },
+      select: { id: true, email: true, fullName: true },
     });
 
     if (recipients.length === 0) return;
 
-    const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "http://localhost:3000";
-    const requestUrl = `${appUrl}/on-call/${request.id}`;
+    const branding = await getTenantEmailBranding(tenantId);
+    const requestUrl = `${getAppUrl()}/on-call/${request.id}`;
     const requestTypeLabel = request.requestType === "FIRST_AID" ? "First Aid" : "Behaviour";
     const emergencyFlag = request.isEmergency ? " [EMERGENCY]" : "";
 
@@ -48,27 +50,29 @@ export async function sendOnCallNotification(
     };
 
     const subject = subjectMap[type];
-    const intro = introMap[type];
+    const lines = [
+      introMap[type],
+      `Request type: ${requestTypeLabel}`,
+      `Status: ${request.status}`,
+      ...(request.isEmergency ? ["", "EMERGENCY — please respond urgently."] : []),
+    ];
 
     await Promise.allSettled(
-      recipients.map((recipient) => {
-        const message = [
-          `Hi ${recipient.fullName},`,
-          "",
-          intro,
-          "",
-          `Request type: ${requestTypeLabel}`,
-          `Status: ${request.status}`,
-          ...(request.isEmergency ? ["", "** EMERGENCY **"] : []),
-          "",
-          "View the full request here:",
-          "",
-          requestUrl,
-          "",
-          "– The Anaxi Team",
-        ].join("\n");
-
-        return sendEmail({ to: recipient.email, subject, message });
+      recipients.map(async (recipient) => {
+        if (!(await shouldSendUserEmail(recipient.id, "oncall"))) return;
+        return sendTemplatedEmail({
+          to: recipient.email,
+          subject,
+          schoolName: branding.schoolName,
+          tenantId,
+          template: `oncall_${type}`,
+          metadata: { requestId: request.id },
+          payload: {
+            greeting: `Hi ${recipient.fullName},`,
+            lines,
+            cta: { label: "View request", href: requestUrl },
+          },
+        });
       })
     );
   } catch (err: unknown) {

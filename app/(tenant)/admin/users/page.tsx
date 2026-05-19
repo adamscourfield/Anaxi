@@ -51,6 +51,9 @@ export default async function AdminUsersPage() {
       role: u.role as string,
       isActive: u.isActive as boolean,
       receivesOnCallEmails: u.receivesOnCallEmails as boolean,
+      emailObservations: u.emailObservations as boolean,
+      emailMeetings: u.emailMeetings as boolean,
+      emailLeave: u.emailLeave as boolean,
       canApproveAllLoa: u.canApproveAllLoa as boolean,
       loaScopedCount: scoped.length,
     };

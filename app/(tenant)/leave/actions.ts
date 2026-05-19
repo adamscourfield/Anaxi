@@ -3,7 +3,7 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { sendLeaveDecisionEmail, sendLeaveSubmittedEmail } from "@/lib/email";
 import { requireFeature } from "@/lib/guards";
-import { canManageLoa, loaApproverEmailsForRequest } from "@/lib/loa";
+import { canManageLoa, loaApproversForRequest } from "@/lib/loa";
 import { parseLocalDateInput } from "@/lib/leaveDates";
 import { saveMedicalEvidenceFile } from "@/lib/leaveMedicalUpload";
 import { validateLeavePolicy, type LeavePolicyViolation } from "@/lib/leavePolicy";
@@ -80,15 +80,17 @@ export async function createLoaRequest(formData: FormData) {
     include: { requester: { select: { fullName: true } }, reason: { select: { label: true } } },
   });
 
-  const approverEmails = await loaApproverEmailsForRequest(user.tenantId, user.id);
-  if (approverEmails.length > 0) {
+  const approvers = await loaApproversForRequest(user.tenantId, user.id);
+  if (approvers.length > 0) {
     await sendLeaveSubmittedEmail({
-      to: approverEmails,
+      to: approvers.map((a) => a.email),
+      approverUserIds: approvers.map((a) => a.id),
       requesterName: created.requester.fullName,
       reasonLabel: created.reason?.label ?? "Leave",
       startDate,
       endDate,
       leaveRequestId: created.id,
+      tenantId: user.tenantId,
     });
   }
 
@@ -130,6 +132,8 @@ export async function decideLoaRequest(formData: FormData) {
     requesterName: request.requester.fullName,
     status: decisionType,
     leaveRequestId: requestId,
+    tenantId: user.tenantId,
+    requesterUserId: request.requesterId,
   });
   revalidatePath(`/leave/${requestId}`);
   revalidatePath("/leave");

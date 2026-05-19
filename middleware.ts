@@ -29,6 +29,11 @@ export const config = {
     "/api/email/:path*",
     "/api/csv/:path*",
     "/api/leave/:path*",
+    "/api/meetings/:path*",
+    "/api/actions/:path*",
+    "/api/import/:path*",
+    "/api/explorer/:path*",
+    "/api/admin/:path*",
     "/god/:path*",
     "/api/god/:path*"
   ]

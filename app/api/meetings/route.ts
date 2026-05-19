@@ -75,14 +75,23 @@ export async function POST(req: Request) {
     });
 
     void Promise.allSettled(
-      meeting.attendees.map((attendee: { user: { email: string; fullName: string } }) =>
-        sendMeetingInviteEmail({
-          to: attendee.user.email,
-          attendeeName: attendee.user.fullName,
-          title: meeting.title,
-          startDateTime: new Date(meeting.startDateTime),
-          meetingId: meeting.id,
-        })
+      meeting.attendees.map(
+        (attendee: { userId: string; user: { email: string; fullName: string } }) => {
+          if (attendee.userId === user.id) return Promise.resolve();
+          return sendMeetingInviteEmail({
+            to: attendee.user.email,
+            attendeeName: attendee.user.fullName,
+            title: meeting.title,
+            startDateTime: new Date(meeting.startDateTime),
+            endDateTime: new Date(meeting.endDateTime),
+            meetingId: meeting.id,
+            tenantId: user.tenantId,
+            attendeeUserId: attendee.userId,
+            location: meeting.location,
+            organizerEmail: user.email,
+            organizerName: user.fullName,
+          });
+        }
       )
     );
 

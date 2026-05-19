@@ -65,6 +65,8 @@ export async function createObservation(formData: FormData) {
     teacherName: teacher.fullName,
     observerName: user.fullName,
     observationId: observation.id,
+    tenantId: user.tenantId,
+    teacherUserId: teacher.id,
   });
   revalidatePath("/observe/history");
   redirect(`/observe/${observation.id}`);
@@ -124,6 +126,8 @@ export async function submitObservationDraft(formData: FormData) {
     teacherName: teacher.fullName,
     observerName: user.fullName,
     observationId: observation.id,
+    tenantId: user.tenantId,
+    teacherUserId: teacher.id,
   });
   revalidatePath("/observe/history");
   redirect(`/observe/${observation.id}`);

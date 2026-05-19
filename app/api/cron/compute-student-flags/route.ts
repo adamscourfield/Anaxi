@@ -41,20 +41,26 @@ export async function POST(req: Request) {
       });
       if (duplicate) continue;
 
-      await (prisma as any).studentChangeFlag.create({
-        data: {
-          tenantId: student.tenantId,
-          studentId: student.id,
-          flagKey: flag.flagKey,
-          severity: flag.severity,
-          baselineFrom,
-          baselineTo,
-          currentFrom,
-          currentTo: latestDate,
-          detailsJson: flag.details
-        }
-      });
-      created += 1;
+      try {
+        await (prisma as any).studentChangeFlag.create({
+          data: {
+            tenantId: student.tenantId,
+            studentId: student.id,
+            flagKey: flag.flagKey,
+            severity: flag.severity,
+            baselineFrom,
+            baselineTo,
+            currentFrom,
+            currentTo: latestDate,
+            detailsJson: flag.details,
+          },
+        });
+        created += 1;
+      } catch (err: unknown) {
+        const code = (err as { code?: string })?.code;
+        if (code === "P2002") continue;
+        throw err;
+      }
     }
   }
 

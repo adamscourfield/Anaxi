@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminUser } from "@/lib/admin";
+import { assertCsrfFromForm } from "@/lib/csrf";
 
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
@@ -19,6 +20,11 @@ export async function GET() {
 export async function POST(req: Request) {
   const actor = await requireSuperAdminUser();
   const form = await req.formData();
+  try {
+    await assertCsrfFromForm(form);
+  } catch {
+    return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
+  }
 
   const name = String(form.get("name") ?? "").trim();
   const slugInput = String(form.get("slug") ?? "").trim();

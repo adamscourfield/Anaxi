@@ -21,12 +21,17 @@ export default function ForgotPasswordPage() {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setState("loading");
-    const email = String(new FormData(e.currentTarget).get("email") || "");
+    const fd = new FormData(e.currentTarget);
+    const email = String(fd.get("email") || "");
+    const tenantId = String(fd.get("tenantId") || "").trim();
     try {
       await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          ...(tenantId ? { tenantId } : {}),
+        }),
       });
       setState("sent");
     } catch {
@@ -78,6 +83,21 @@ export default function ForgotPasswordPage() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <AuthFieldLabel htmlFor="tenantId">School ID (optional)</AuthFieldLabel>
+                <input
+                  id="tenantId"
+                  name="tenantId"
+                  type="text"
+                  placeholder="e.g. demo_academy"
+                  className="field"
+                  autoComplete="off"
+                />
+                <p className="text-xs text-muted">
+                  Use this if your email is registered at more than one school.
+                </p>
+              </div>
+
               {state === "error" ? (
                 <div
                   className="rounded-md border border-[var(--coral-border)] px-4 py-3"
@@ -91,17 +111,6 @@ export default function ForgotPasswordPage() {
 
               <Button type="submit" disabled={state === "loading"} className="w-full">
                 {state === "loading" ? "Sending…" : "Send reset link"}
-                {state !== "loading" ? (
-                  <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>
-                    <path
-                      d="M3.5 8h9M9 4.5 12.5 8 9 11.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                ) : null}
               </Button>
             </form>
           )}

@@ -13,6 +13,9 @@ export type EditableUser = {
   role: string;
   isActive: boolean;
   receivesOnCallEmails: boolean;
+  emailObservations: boolean;
+  emailMeetings: boolean;
+  emailLeave: boolean;
   canApproveAllLoa: boolean;
 };
 
@@ -294,6 +297,9 @@ export function EditUserModal({
 
   const [role, setRole] = useState(user.role);
   const [onCallRequests, setOnCallRequests] = useState(user.receivesOnCallEmails);
+  const [emailObservations, setEmailObservations] = useState(user.emailObservations);
+  const [emailMeetings, setEmailMeetings] = useState(user.emailMeetings);
+  const [emailLeave, setEmailLeave] = useState(user.emailLeave);
   const [leaveOfAbsence, setLeaveOfAbsence] = useState(user.canApproveAllLoa || scopedLoaTargetIds.length > 0);
   const [loaAllTeachers, setLoaAllTeachers] = useState(user.canApproveAllLoa);
   const [loaTeacherIds, setLoaTeacherIds] = useState<Set<string>>(new Set(scopedLoaTargetIds));
@@ -323,6 +329,9 @@ export function EditUserModal({
     fd.set("userId", user.id);
     fd.set("role", role);
     fd.set("receivesOnCallEmails", String(onCallRequests));
+    fd.set("emailObservations", String(emailObservations));
+    fd.set("emailMeetings", String(emailMeetings));
+    fd.set("emailLeave", String(emailLeave));
     const loaEnabled = showLoaSettings && leaveOfAbsence;
     fd.set("canApproveAllLoa", String(loaEnabled && loaAllTeachers));
     fd.set(
@@ -425,6 +434,24 @@ export function EditUserModal({
                 label="On-call requests"
                 description="Receives on-call email notifications"
                 toggle={<Toggle checked={onCallRequests} onChange={setOnCallRequests} disabled={readOnly} />}
+              />
+              <ScopedRow
+                icon={<RoleBadgeIcon className="h-[18px] w-[18px]" />}
+                label="Observation emails"
+                description="Notify when observed"
+                toggle={<Toggle checked={emailObservations} onChange={setEmailObservations} disabled={readOnly} />}
+              />
+              <ScopedRow
+                icon={<CalendarIcon className="h-[18px] w-[18px]" />}
+                label="Meeting invites"
+                description="Email when added to meetings"
+                toggle={<Toggle checked={emailMeetings} onChange={setEmailMeetings} disabled={readOnly} />}
+              />
+              <ScopedRow
+                icon={<CalendarIcon className="h-[18px] w-[18px]" />}
+                label="Leave emails"
+                description="Leave submitted and decision notices"
+                toggle={<Toggle checked={emailLeave} onChange={setEmailLeave} disabled={readOnly} />}
               />
               {showLoaSettings ? (
                 <ScopedRow

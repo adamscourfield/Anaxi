@@ -36,6 +36,7 @@ model Tenant {
   onCallRecipients     OnCallRecipient[]
   onCallRequests       OnCallRequest[]
   onCallTimelineEvents OnCallTimelineEvent[]
+  emailLogs            EmailLog[]
   adminInvites         SchoolAdminInvite[]
   strategyAreas        StrategyArea[]
   strategyNotes        StrategyNote[]
@@ -59,6 +60,9 @@ model User {
   isActive                      Boolean                    @default(true)
   canApproveAllLoa              Boolean                    @default(false)
   receivesOnCallEmails          Boolean                    @default(false)
+  emailObservations             Boolean                    @default(true)
+  emailMeetings                 Boolean                    @default(true)
+  emailLeave                    Boolean                    @default(true)
   passwordHash                  String?
   auditLogs                     AuditLog[]                 @relation("AuditActor")
   coachAssignmentsAsCoach       CoachAssignment[]          @relation("CoachAssignmentCoach")
@@ -303,6 +307,23 @@ model StudentSubjectTeacher {
   @@index([tenantId, studentId, subjectId, effectiveFrom])
 }
 
+model EmailLog {
+  id           String              @id @default(cuid())
+  tenantId     String?
+  template     String
+  toEmail      String
+  subject      String
+  status       EmailDeliveryStatus
+  providerId   String?
+  errorMessage String?
+  metadataJson Json?
+  createdAt    DateTime            @default(now())
+  tenant       Tenant?             @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([status, createdAt])
+}
+
 model ImportJob {
   id              String          @id @default(cuid())
   tenantId        String
@@ -310,6 +331,7 @@ model ImportJob {
   status          ImportJobStatus @default(PENDING)
   uploadedBy      String
   fileName        String
+  storagePath     String?
   rowCount        Int             @default(0)
   rowsProcessed   Int             @default(0)
   rowsFailed      Int             @default(0)
@@ -962,6 +984,12 @@ enum ImportJobType {
   STAFF_IMPORT
   TIMETABLE
   ASSESSMENT_RESULTS
+}
+
+enum EmailDeliveryStatus {
+  SENT
+  FAILED
+  NOT_CONFIGURED
 }
 
 enum ImportJobStatus {
