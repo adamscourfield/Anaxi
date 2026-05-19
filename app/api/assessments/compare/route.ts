@@ -15,6 +15,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { displayGrade } from "@/modules/assessments/gradeNormalizer";
 import type { GradeFormat } from "@prisma/client";
+import { withApi } from "@/lib/apiRoute";
 
 const A_LEVEL_SCORE: Record<string, number> = {
   "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1,
@@ -64,7 +65,7 @@ function normScore(rawValue: string, format: GradeFormat, maxScore?: number | nu
   return null;
 }
 
-export async function GET(req: Request) {
+export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
 
@@ -277,4 +278,4 @@ export async function GET(req: Request) {
     },
     subjects: subjectComparisons,
   });
-}
+});

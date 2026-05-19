@@ -22,8 +22,9 @@ import { prisma } from "@/lib/prisma";
 import { parseAssessmentCsv, detectSubjectColumns } from "@/modules/assessments/csv";
 import { importAssessmentResults, createAssessment } from "@/modules/assessments/import";
 import type { GradeFormat } from "@prisma/client";
+import { withApi } from "@/lib/apiRoute";
 
-export async function POST(
+export const POST = withApi(async function POST(
   req: Request,
   { params }: { params: { pointId: string } }
 ) {
@@ -185,4 +186,4 @@ export async function POST(
     },
     { status: 201 }
   );
-}
+});

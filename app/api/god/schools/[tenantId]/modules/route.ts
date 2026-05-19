@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { assertCsrfFromForm } from "@/lib/csrf";
+import { withApi } from "@/lib/apiRoute";
 
 const ALLOWED_MODULES = new Set([
   "OBSERVATIONS",
@@ -20,7 +21,7 @@ const ALLOWED_MODULES = new Set([
   "ASSESSMENTS",
 ]);
 
-export async function POST(req: Request, { params }: { params: { tenantId: string } }) {
+export const POST = withApi(async function POST(req: Request, { params }: { params: { tenantId: string } }) {
   const actor = await requireSuperAdminUser();
   const form = await req.formData();
   try {
@@ -67,4 +68,4 @@ export async function POST(req: Request, { params }: { params: { tenantId: strin
   });
 
   return NextResponse.redirect(new URL(`/god/schools/${params.tenantId}`, req.url));
-}
+});

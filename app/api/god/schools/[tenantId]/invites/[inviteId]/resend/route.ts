@@ -5,12 +5,13 @@ import { requireSuperAdminUser } from "@/lib/admin";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { sendSchoolAdminInviteEmail } from "@/lib/email";
 import { godInviteCookieName } from "@/lib/godInviteCookie";
+import { withApi } from "@/lib/apiRoute";
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export async function POST(req: Request, { params }: { params: { tenantId: string; inviteId: string } }) {
+export const POST = withApi(async function POST(req: Request, { params }: { params: { tenantId: string; inviteId: string } }) {
   const actor = await requireSuperAdminUser();
   const form = await req.formData();
   try {
@@ -69,4 +70,4 @@ export async function POST(req: Request, { params }: { params: { tenantId: strin
     path: `/god/schools/${params.tenantId}`,
   });
   return response;
-}
+});

@@ -37,6 +37,7 @@ model Tenant {
   onCallRequests       OnCallRequest[]
   onCallTimelineEvents OnCallTimelineEvent[]
   emailLogs            EmailLog[]
+  inAppNotifications   InAppNotification[]
   adminInvites         SchoolAdminInvite[]
   strategyAreas        StrategyArea[]
   strategyNotes        StrategyNote[]
@@ -91,6 +92,7 @@ model User {
   subjectTeachings              StudentSubjectTeacher[]    @relation("SubjectTeacher")
   watchlistEntries              StudentWatchlist[]         @relation("WatchlistCreator")
   importMappingsCreated         TenantImportMapping[]      @relation("ImportMappingCreator")
+  inAppNotifications            InAppNotification[]
   timetableEntries              TimetableEntry[]           @relation("TimetableTeacher")
   timetableImportJobs           TimetableImportJob[]       @relation("TimetableImportUploader")
   tenant                        Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -322,6 +324,23 @@ model EmailLog {
 
   @@index([tenantId, createdAt])
   @@index([status, createdAt])
+}
+
+model InAppNotification {
+  id        String    @id @default(cuid())
+  tenantId  String
+  userId    String
+  type      String
+  title     String
+  body      String
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@index([tenantId, createdAt])
 }
 
 model ImportJob {

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
+import { withApi } from "@/lib/apiRoute";
 
-export async function GET() {
+export const GET = withApi(async function GET() {
   const user = await requireAdminUser();
 
   const jobs = await (prisma as any).importJob.findMany({
@@ -12,4 +13,4 @@ export async function GET() {
   });
 
   return NextResponse.json({ jobs });
-}
+});

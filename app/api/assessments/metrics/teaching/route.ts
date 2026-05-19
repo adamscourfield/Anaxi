@@ -14,6 +14,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { GradeFormat } from "@prisma/client";
+import { withApi } from "@/lib/apiRoute";
 
 const A_LEVEL_SCORE: Record<string, number> = {
   "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1,
@@ -44,7 +45,7 @@ function round1(v: number | null): number | null {
   return v !== null ? Math.round(v * 10) / 10 : null;
 }
 
-export async function GET(req: Request) {
+export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
 
@@ -353,4 +354,4 @@ export async function GET(req: Request) {
     assessedAt: assessedAt.toISOString(),
     subjects: subjectStats,
   });
-}
+});

@@ -5,6 +5,7 @@ import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { parseIsoDate } from "@/lib/parseDate";
 import { createMeeting, listMeetings } from "@/modules/meetings/service";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function POST(req: Request) {
   try {
@@ -96,11 +97,8 @@ export async function POST(req: Request) {
     );
 
     return NextResponse.json(meeting, { status: 201 });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }
 
@@ -128,10 +126,7 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json(meetings);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

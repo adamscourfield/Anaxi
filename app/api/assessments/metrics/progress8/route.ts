@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { getProgress8ForPoint } from "@/modules/assessments/progress8";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,7 +13,6 @@ export async function GET(req: NextRequest) {
     const data = await getProgress8ForPoint(pointId, user.tenantId);
     return NextResponse.json(data);
   } catch (err) {
-    console.error("[progress8 metrics]", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(err);
   }
 }

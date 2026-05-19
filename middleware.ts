@@ -32,6 +32,7 @@ export const config = {
     "/api/meetings/:path*",
     "/api/actions/:path*",
     "/api/import/:path*",
+    "/api/notifications/:path*",
     "/api/explorer/:path*",
     "/api/admin/:path*",
     "/god/:path*",

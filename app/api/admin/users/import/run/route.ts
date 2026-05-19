@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { requireAdminUser } from "@/lib/admin";
 import { parseStaffCsv } from "@/modules/staff-import/csv";
 import { runStaffImport } from "@/modules/staff-import/importer";
+import { withApi } from "@/lib/apiRoute";
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const user = await requireAdminUser();
 
   const form = await req.formData();
@@ -24,4 +25,4 @@ export async function POST(req: Request) {
   const result = await runStaffImport(user.tenantId, user.id, file.name, parsed, errors);
 
   return NextResponse.json(result);
-}
+});

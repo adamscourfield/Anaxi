@@ -26,6 +26,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { GradeFormat } from "@prisma/client";
+import { withApi } from "@/lib/apiRoute";
 
 // ─── Score display helpers ────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ function cohortAvg(vals: (number | null)[]): number | null {
 
 // ─── Route ────────────────────────────────────────────────────────────────────
 
-export async function GET(req: Request) {
+export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
 
@@ -288,4 +289,4 @@ export async function GET(req: Request) {
       (a, b) => (b.normalisedScore ?? -1) - (a.normalisedScore ?? -1)
     ),
   });
-}
+});

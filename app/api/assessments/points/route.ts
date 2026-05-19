@@ -3,8 +3,9 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { PointType, ResultStatus } from "@prisma/client";
+import { withApi } from "@/lib/apiRoute";
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
   requireAssessmentWrite(user);
@@ -70,4 +71,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ point }, { status: 201 });
-}
+});

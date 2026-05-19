@@ -9,6 +9,7 @@ import type { SnapshotMapping } from "@/modules/students/snapshot-import";
 import { computeHeaderSignature } from "@/modules/students/snapshot-fields";
 import { saveImportFile } from "@/lib/importStorage";
 import { runSnapshotImport, type RunSnapshotImportResult } from "@/modules/students/runSnapshotImport";
+import { notifyImportFinished } from "@/lib/inAppNotifications";
 
 export async function POST(req: Request) {
   try {
@@ -98,6 +99,14 @@ export async function POST(req: Request) {
         },
       });
     }
+
+    await notifyImportFinished({
+      tenantId: user.tenantId,
+      userId: user.id,
+      importJobId: importJob.id,
+      fileName: file.name,
+      rowsFailed,
+    });
 
     logger.info("import.snapshot.completed", {
       tenantId: user.tenantId,

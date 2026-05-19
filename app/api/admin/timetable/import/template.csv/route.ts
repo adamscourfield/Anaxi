@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withApi } from "@/lib/apiRoute";
 
 const TEMPLATE_HEADERS =
   "ClassCode,Subject,YearGroup,TeacherEmail,DayOfWeek,Period,Room,WeekPattern,StartTime,EndTime";
@@ -8,7 +9,7 @@ const EXAMPLE_ROW_1 =
 const EXAMPLE_ROW_2 =
   "10A/En1,English,10,e.jones@school.edu,3,1,A01,A,10:00,11:00";
 
-export async function GET() {
+export const GET = withApi(async function GET() {
   const csv = [TEMPLATE_HEADERS, EXAMPLE_ROW_1, EXAMPLE_ROW_2].join("\n");
   return new NextResponse(csv, {
     headers: {
@@ -16,4 +17,4 @@ export async function GET() {
       "Content-Disposition": 'attachment; filename="timetable-template.csv"',
     },
   });
-}
+});

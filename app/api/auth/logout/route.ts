@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
+import { withApi } from "@/lib/apiRoute";
 
-export async function POST(req: Request) {
+export const POST = withApi(async function POST(req: Request) {
   return NextResponse.redirect(new URL("/login/sign-out", req.url));
-}
+});

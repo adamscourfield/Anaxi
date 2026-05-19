@@ -4,6 +4,7 @@ import { requireFeature } from "@/lib/guards";
 import { hasOnCallPermission } from "@/lib/rbac";
 import { createOnCallRequest, getRequestsByStatus } from "@/modules/oncall/service";
 import { sendOnCallNotification } from "@/modules/oncall/notifications";
+import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function POST(req: Request) {
   try {
@@ -35,12 +36,8 @@ export async function POST(req: Request) {
     await sendOnCallNotification(user.tenantId, request, "created");
 
     return NextResponse.json(request, { status: 201 });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    if (message === "student not found") return NextResponse.json({ error: message }, { status: 404 });
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }
 
@@ -69,10 +66,7 @@ export async function GET(req: Request) {
 
     const { data, total } = await getRequestsByStatus(user.tenantId, status, take, skip);
     return NextResponse.json({ data, total, skip, take });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "UNAUTHENTICATED") return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
-    if (message === "FEATURE_DISABLED") return NextResponse.json({ error: "Feature disabled" }, { status: 403 });
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (err) {
+    return apiErrorResponse(err);
   }
 }

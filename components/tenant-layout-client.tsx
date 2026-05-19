@@ -5,6 +5,7 @@ import Link from "next/link";
 import { TenantNav } from "@/components/tenant-nav";
 import { SchoolSwitcher } from "@/components/school-switcher";
 import { PageTransition } from "@/components/page-transition";
+import { NotificationBell } from "@/components/notification-bell";
 import { TenantUiProvider } from "@/components/tenant-ui-context";
 import { FeatureKey, UserRole } from "@/lib/types";
 
@@ -119,6 +120,7 @@ export function TenantLayoutClient({
           <div className="min-w-0 flex-1">
             <SchoolSwitcher currentTenantName={tenantName} tenants={tenantOptions} />
           </div>
+          <NotificationBell />
           <Link
             href="/profile"
             className="flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5 calm-transition hover:bg-[var(--surface-container-low)] anx-hover-elevate motion-safe:active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 focus-visible:ring-offset-2 sm:gap-3 sm:px-2.5 sm:py-1.5"
