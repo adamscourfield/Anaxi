@@ -1,31 +1,19 @@
 import Link from "next/link";
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
+import { buildTenantFeatureList } from "@/lib/admin-feature-list";
 import { AdminFeatureFlags } from "@/components/admin/admin-feature-flags";
 import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
+import { toggleTenantFeature } from "@/app/(tenant)/admin/features/actions";
 
 export default async function AdminFeaturesPage() {
   const user = await requireAdminUser();
-  const features = await prisma.tenantFeature.findMany({
+  const rows = await prisma.tenantFeature.findMany({
     where: { tenantId: user.tenantId },
+    select: { key: true, enabled: true },
     orderBy: { key: "asc" },
   });
-
-  async function toggleFeature(formData: FormData) {
-    "use server";
-    const admin = await requireAdminUser();
-    const key = String(formData.get("key")) as string;
-    const enabled = String(formData.get("enabled")) === "true";
-    await prisma.tenantFeature.upsert({
-      where: { tenantId_key: { tenantId: admin.tenantId, key: key as never } },
-      create: { tenantId: admin.tenantId, key: key as never, enabled: !enabled },
-      update: { enabled: !enabled },
-    });
-    revalidatePath("/admin/features");
-    revalidatePath("/admin");
-    revalidatePath("/admin/settings");
-  }
+  const features = buildTenantFeatureList(rows);
 
   return (
     <div className="space-y-8 pb-8">
@@ -45,7 +33,7 @@ export default async function AdminFeaturesPage() {
           </Link>
         }
       />
-      <AdminFeatureFlags features={features as { key: string; enabled: boolean }[]} toggleFeature={toggleFeature} />
+      <AdminFeatureFlags features={features} toggleFeature={toggleTenantFeature} />
     </div>
   );
 }

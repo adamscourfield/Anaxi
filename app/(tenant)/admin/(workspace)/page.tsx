@@ -9,10 +9,7 @@ export default async function AdminWorkspacePage({
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const section = parseAdminSection(searchParams?.section);
+  const panel = await renderAdminPanel(section, searchParams);
 
-  return (
-    <Suspense fallback={<AdminPanelSkeleton />}>
-      {renderAdminPanel(section, searchParams)}
-    </Suspense>
-  );
+  return <Suspense fallback={<AdminPanelSkeleton />}>{panel}</Suspense>;
 }
