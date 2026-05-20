@@ -2,7 +2,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
-import { AdminSettingsForms } from "@/components/admin/admin-settings-forms";
+import { AdminFeatureFlags } from "@/components/admin/admin-feature-flags";
 import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 
 export default async function AdminFeaturesPage() {
@@ -45,13 +45,7 @@ export default async function AdminFeaturesPage() {
           </Link>
         }
       />
-      <AdminSettingsForms
-        tab="modules"
-        settings={null}
-        features={features as { key: string; enabled: boolean }[]}
-        saveSettings={async () => {}}
-        toggleFeature={toggleFeature}
-      />
+      <AdminFeatureFlags features={features as { key: string; enabled: boolean }[]} toggleFeature={toggleFeature} />
     </div>
   );
 }
