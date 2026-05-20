@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 type DepartmentRow = {
   departmentId: string;
@@ -130,34 +131,14 @@ export function DepartmentsTable({ rows, windowDays, pageSize = 10 }: Props) {
           </table>
         </div>
 
-        {/* Pagination footer */}
-        <div className="flex items-center justify-between border-t border-border/30 px-5 py-3">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-            Showing {visible.length} of {rows.length} departments
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted calm-transition hover:text-text disabled:opacity-30"
-              aria-label="Previous page"
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted calm-transition hover:text-text disabled:opacity-30"
-              aria-label="Next page"
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-        </div>
+        <TablePagination
+          page={page + 1}
+          totalPages={totalPages}
+          totalItems={rows.length}
+          pageSize={pageSize}
+          itemLabel="departments"
+          onPageChange={(p) => setPage(p - 1)}
+        />
       </div>
     </>
   );

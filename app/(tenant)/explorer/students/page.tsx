@@ -28,6 +28,7 @@ import { StudentsKpiStrip } from "./StudentsKpiStrip";
 import { StudentsBandChips } from "./StudentsBandChips";
 import { StudentsCriticalBanner } from "./StudentsCriticalBanner";
 import { StudentsListSection } from "./StudentsListSection";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const BASE_PATH = "/explorer/students";
 
@@ -232,69 +233,16 @@ export default async function StudentsPage({
     return buildStudentsListUrl(BASE_PATH, { ...urlBase, page: p > 1 ? p : undefined });
   }
 
-  function paginationRange(): (number | "ellipsis")[] {
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-    const pages: (number | "ellipsis")[] = [1];
-    if (safePage > 3) pages.push("ellipsis");
-    const start = Math.max(2, safePage - 1);
-    const end = Math.min(totalPages - 1, safePage + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-    if (safePage < totalPages - 2) pages.push("ellipsis");
-    pages.push(totalPages);
-    return pages;
-  }
-
-  const pagination =
-    totalPages > 1 ? (
-      <div className="flex items-center gap-1">
-        {safePage > 1 ? (
-          <Link
-            href={pageUrl(safePage - 1)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text"
-            aria-label="Previous page"
-          >
-            ‹
-          </Link>
-        ) : (
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-border">‹</span>
-        )}
-        {paginationRange().map((item, idx) =>
-          item === "ellipsis" ? (
-            <span key={`e-${idx}`} className="inline-flex h-8 w-8 items-center justify-center text-muted">
-              …
-            </span>
-          ) : item === safePage ? (
-            <span
-              key={item}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-[0.8125rem] font-semibold text-on-primary"
-            >
-              {item}
-            </span>
-          ) : (
-            <Link
-              key={item}
-              href={pageUrl(item)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[0.8125rem] text-muted calm-transition hover:bg-surface-container-low hover:text-text"
-            >
-              {item}
-            </Link>
-          ),
-        )}
-        {safePage < totalPages ? (
-          <Link
-            href={pageUrl(safePage + 1)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text"
-            aria-label="Next page"
-          >
-            ›
-          </Link>
-        ) : (
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-border">›</span>
-        )}
-      </div>
-    ) : null;
+  const pagination = (
+    <TablePagination
+      page={safePage}
+      totalPages={totalPages}
+      totalItems={totalFiltered}
+      pageSize={perPage}
+      itemLabel="students"
+      pageHref={pageUrl}
+    />
+  );
 
   return (
     <div className="space-y-6">

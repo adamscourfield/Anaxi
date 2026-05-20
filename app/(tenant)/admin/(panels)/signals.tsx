@@ -57,7 +57,7 @@ export async function SignalsAdminPanel() {
   }
 
   return (
-    <div className="space-y-6 bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] pb-8">
+    <div className="space-y-6 pb-8">
       <Link
         href={adminSectionPath("language")}
         className="inline-flex items-center gap-2 rounded-xl border border-border/40 bg-surface-container-lowest px-3.5 py-2 text-[0.8125rem] font-semibold text-text shadow-sm calm-transition hover:bg-surface-container-low"

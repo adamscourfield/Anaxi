@@ -24,6 +24,7 @@ import { TeachersFilterToolbar } from "@/components/teachers/TeachersFilterToolb
 import { TopDriverLinks } from "./TopDriverLinks";
 import { meanToHeatmapBarClass } from "@/lib/analysis/signalHeatmap";
 import { SignalHeatmapClient } from "@/components/teachers/SignalHeatmapClient";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 
@@ -57,21 +58,6 @@ function formatDrift(value: number): { text: string; arrow: string; color: strin
 /** Zero-pad a number to 2 digits */
 function zeroPad(n: number): string {
   return String(n).padStart(2, "0");
-}
-
-/* ─── Pagination helpers ──────────────────────────────────────────────────── */
-
-function buildPageNumbers(current: number, total: number): (number | "ellipsis")[] {
-  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
-  const pages: (number | "ellipsis")[] = [];
-  pages.push(1);
-  if (current > 3) pages.push("ellipsis");
-  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
-    pages.push(i);
-  }
-  if (current < total - 2) pages.push("ellipsis");
-  pages.push(total);
-  return pages;
 }
 
 /* ─── Page ─────────────────────────────────────────────────────────────────── */
@@ -217,8 +203,6 @@ export default async function ExplorerTeachersPage({
   const pivotSignalByTeacherId = new Map(
     pivotRows.map((row) => [row.teacherMembershipId, row.signalData]),
   );
-
-  const pageNumbers = buildPageNumbers(currentPage, totalPages);
 
   // ─── URL builder helpers ────────────────────────────────────────────────────
   function buildUrl(overrides: Record<string, string>) {
@@ -582,74 +566,17 @@ export default async function ExplorerTeachersPage({
         </>
       )}
 
-      {/* ── Pagination ──────────────────────────────────────────────────────── */}
-      {totalItems > 0 && (
-        <div className="mt-4 flex items-center justify-between rounded-xl bg-surface/60 px-5 py-3">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-            Showing {startIdx + 1}-{endIdx} of {totalItems} teachers
-          </p>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              {/* Previous */}
-              {currentPage > 1 ? (
-                <Link
-                  href={pageUrl(currentPage - 1)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:text-text"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </Link>
-              ) : (
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-border">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-              )}
-
-              {/* Page numbers */}
-              {pageNumbers.map((p, idx) =>
-                p === "ellipsis" ? (
-                  <span key={`ellipsis-${idx}`} className="px-1 text-sm text-muted">
-                    …
-                  </span>
-                ) : (
-                  <Link
-                    key={p}
-                    href={pageUrl(p)}
-                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium calm-transition ${
-                      p === currentPage
-                        ? "font-bold text-text underline underline-offset-4"
-                        : "text-muted hover:text-text"
-                    }`}
-                  >
-                    {p}
-                  </Link>
-                ),
-              )}
-
-              {/* Next */}
-              {currentPage < totalPages ? (
-                <Link
-                  href={pageUrl(currentPage + 1)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:text-text"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </Link>
-              ) : (
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-border">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      {totalItems > 0 ? (
+        <TablePagination
+          page={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={ITEMS_PER_PAGE}
+          itemLabel="teachers"
+          pageHref={pageUrl}
+          className="mt-4 rounded-xl border border-border/20 bg-[var(--surface-container-lowest)]"
+        />
+      ) : null}
 
     </div>
   );
