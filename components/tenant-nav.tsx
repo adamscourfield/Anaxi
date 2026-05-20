@@ -24,7 +24,15 @@ type NavRail = { y: number; h: number } | null;
 
 function navItemIsActive(pathname: string | null, href: string): boolean {
   if (href === "/home" || href === "/my-actions") return pathname === href;
-  if (href === "/admin") return pathname === "/admin";
+  if (href === "/admin") {
+    return (
+      pathname === "/admin" ||
+      (pathname?.startsWith("/admin/") === true && !pathname.startsWith("/admin/features"))
+    );
+  }
+  if (href === "/admin/features") {
+    return pathname === "/admin/features" || pathname?.startsWith("/admin/features/") === true;
+  }
   return pathname?.startsWith(href) ?? false;
 }
 
@@ -209,16 +217,7 @@ export function TenantNav({
     {
       label: "Administration",
       items: [
-        ...(canAccessAdmin && has("ADMIN") ? [navItem("Admin dashboard", "/admin")] : []),
-        ...(canAccessAdminUsers && has("ADMIN") ? [navItem("User management", "/admin/users")] : []),
-        ...(canAccessAdminSettings && has("ADMIN") ? [navItem("Departments", "/admin/departments")] : []),
-        ...(canAccessAdminSettings && has("ADMIN") ? [navItem("Coaching", "/admin/coaching")] : []),
-        ...(canAccessAdminSettings && has("ADMIN") ? [navItem("Taxonomies", "/admin/taxonomies")] : []),
-        ...(canAccessAdminSettings && has("ADMIN") ? [navItem("Timetable", "/admin/timetable")] : []),
-        ...(canAccessAdminSettings && has("ADMIN") ? [navItem("Language", "/admin/language")] : []),
-        ...(canAccessAdminSettings && has("ADMIN") ? [navItem("Signals", "/admin/signals")] : []),
-        ...(canAccessAdmin && has("ADMIN") ? [navItem("Imports", "/admin/imports")] : []),
-        ...(canAccessAdmin && has("ADMIN") ? [navItem("Email log", "/admin/email-log")] : []),
+        ...(canAccessAdmin && has("ADMIN") ? [navItem("Administration", "/admin")] : []),
         ...(canAccessAdminSettings && has("ADMIN") ? [navItem("Feature flags", "/admin/features")] : []),
       ],
     },

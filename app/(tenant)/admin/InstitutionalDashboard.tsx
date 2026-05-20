@@ -402,7 +402,7 @@ export function InstitutionalDashboard({
             <p className="anx-eyebrow">Dashboard</p>
             <h1 className="anx-page-title">Admin Pulse</h1>
             <p className="anx-page-subtitle">
-              Operational setup, data readiness, and administrative controls for your school in one place.
+              Operational setup, data readiness, and administrative controls for your school. Use the section menu to configure users, language, imports, and more without leaving administration.
             </p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
               <Link
@@ -440,6 +440,7 @@ export function InstitutionalDashboard({
             </div>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {sections.length > 0 ? (
             <button
               type="button"
               onClick={toggleFilter}
@@ -456,6 +457,7 @@ export function InstitutionalDashboard({
               </svg>
               Filter
             </button>
+            ) : null}
             <a href="/api/admin/ledger/export" className="anx-btn-pill-primary calm-transition">
               <svg className="h-3.5 w-3.5 shrink-0 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -512,16 +514,22 @@ export function InstitutionalDashboard({
       </section>
 
       {visibleSections.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-surface-container-low/40 px-6 py-12 text-center">
-          <p className="text-sm font-medium text-text">No destinations match &ldquo;{query.trim()}&rdquo;</p>
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            className="mt-3 text-sm font-semibold text-accent hover:text-accentHover calm-transition"
-          >
-            Clear search
-          </button>
-        </div>
+        q ? (
+          <div className="rounded-2xl border border-dashed border-border/60 bg-surface-container-low/40 px-6 py-12 text-center">
+            <p className="text-sm font-medium text-text">No destinations match &ldquo;{query.trim()}&rdquo;</p>
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="mt-3 text-sm font-semibold text-accent hover:text-accentHover calm-transition"
+            >
+              Clear search
+            </button>
+          </div>
+        ) : sections.length === 0 ? null : (
+          <div className="rounded-2xl border border-dashed border-border/60 bg-surface-container-low/40 px-6 py-12 text-center">
+            <p className="text-sm font-medium text-muted">Choose a section from the menu to get started.</p>
+          </div>
+        )
       ) : (
         <section className="grid gap-5 xl:grid-cols-3">
           {visibleSections.map((sec) => <SectionBlock key={sec.title} {...sec} />)}

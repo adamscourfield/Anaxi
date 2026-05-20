@@ -4,7 +4,6 @@ import {
   InstitutionalDashboard,
   type DashboardAttentionDef,
   type DashboardMetricDef,
-  type DashboardSectionDef,
 } from "./InstitutionalDashboard";
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -26,8 +25,6 @@ export default async function AdminIndexPage() {
     departmentCount,
     hodCount,
     enabledFeatureCount,
-    vocabCount,
-    signalLabelCount,
     timetableUnknownTeacherCount,
     failedEmailCount,
   ] =
@@ -43,8 +40,6 @@ export default async function AdminIndexPage() {
       prisma.department.count({ where: { tenantId: tid } }),
       prisma.departmentMembership.count({ where: { tenantId: tid, isHeadOfDepartment: true } }),
       prisma.tenantFeature.count({ where: { tenantId: tid, enabled: true } }),
-      prisma.tenantVocab.count({ where: { tenantId: tid } }),
-      prisma.tenantSignalLabel.count({ where: { tenantId: tid } }),
       (prisma as any).timetableEntry.count({ where: { tenantId: tid, teacherUserId: null } }),
       prisma.emailLog.count({
         where: {
@@ -148,111 +143,9 @@ export default async function AdminIndexPage() {
       : []),
   ];
 
-  const sections: DashboardSectionDef[] = [
-    {
-      title: "People & Access",
-      tag: "Foundation",
-      rows: [
-        {
-          href: "/admin/users",
-          label: "Users",
-          desc: "Manage staff profiles, role-based access, and identity authentication.",
-          iconId: "users",
-        },
-        {
-          href: "/admin/departments",
-          label: "Departments",
-          desc: "Organize institutional structures and faculty hierarchies.",
-          iconId: "departments",
-        },
-        {
-          href: "/admin/coaching",
-          label: "Coaching",
-          desc: "Track professional development and mentorship programs.",
-          iconId: "coaching",
-        },
-        {
-          href: "/admin/leave-approvals",
-          label: "Leave Approvals",
-          desc: "Review absence requests and maintain staffing continuity.",
-          iconId: "leaveApprovals",
-        },
-      ],
-    },
-    {
-      title: "Platform & Language",
-      tag: "Standardization",
-      rows: [
-        {
-          href: "/admin/settings",
-          label: "Settings",
-          desc: "Configure global system behaviors and security protocols.",
-          iconId: "settings",
-        },
-        {
-          href: "/admin/email-log",
-          label: "Email log",
-          desc: "Review delivery status for transactional emails sent by Anaxi.",
-          iconId: "settings",
-        },
-        {
-          href: "/admin/features",
-          label: "Feature Flags",
-          desc: "Enable or disable modules for the tenant workspace.",
-          iconId: "features",
-        },
-        {
-          href: "/admin/terminology",
-          label: "Terminology",
-          desc: "Customize internal nomenclature and system-wide labels.",
-          iconId: "terminology",
-        },
-        {
-          href: "/admin/language",
-          label: "Language",
-          desc: `${vocabCount} vocabulary override${vocabCount === 1 ? "" : "s"} currently configured.`,
-          iconId: "language",
-        },
-        {
-          href: "/admin/signals",
-          label: "Signals",
-          desc: `${signalLabelCount} observation signal label${signalLabelCount === 1 ? "" : "s"} customized.`,
-          iconId: "signals",
-        },
-      ],
-    },
-    {
-      title: "Data & Imports",
-      tag: "Processing",
-      rows: [
-        {
-          href: "/admin/taxonomies",
-          label: "Taxonomies",
-          desc: "Manage complex categorical hierarchies and tagging systems.",
-          iconId: "taxonomies",
-          badge: taxonomyCount > 0 ? { type: "taxonomy", count: taxonomyCount } : undefined,
-        },
-        {
-          href: "/admin/timetable",
-          label: "Timetable",
-          desc: "Review and override institutional scheduling matrices.",
-          iconId: "timetable",
-          badge: hasTimetable ? { type: "timetable", synced: true } : undefined,
-        },
-        {
-          href: "/admin/imports",
-          label: "Import Jobs",
-          desc: "Bulk data ingestion, validation logs, and sync history.",
-          iconId: "imports",
-          badge: activeJobCount > 0 ? { type: "imports", activeCount: activeJobCount } : undefined,
-        },
-      ],
-    },
-  ];
-
   return (
     <InstitutionalDashboard
-      sections={sections}
+      sections={[]}
       metrics={metrics}
       attentionItems={attentionItems}
       updatedAtLabel={updatedAtLabel}
