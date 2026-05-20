@@ -308,9 +308,9 @@ function LeadershipHome({
       <ExplorerPromoBand windowDays={windowDays} />
 
       {/* ═══ Staff Signals + Operations ═══ */}
-      <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(240px,0.6fr)] lg:items-start">
+      <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(240px,0.6fr)] lg:items-stretch">
         {/* Left: Staff signals — CPD priorities + intervention combined */}
-        <Card className="flex min-h-0 flex-col gap-6 rounded-sm !p-6 shadow-none">
+        <Card className="flex h-full min-h-0 flex-col gap-6 rounded-sm !p-6 shadow-none">
           <HomeCardHeading
             icon={<IconUsersTwo />}
             iconTileClassName="bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-none [&_svg]:text-[var(--on-primary)]"
