@@ -55,3 +55,8 @@ export function buildAdminHubSections(role: UserRole): AdminHubNavSection[] {
     },
   ].filter((section) => section.items.length > 0);
 }
+
+/** Flat list of section ids visible in the admin nav for a role. */
+export function flatAdminNavSections(role: UserRole): AdminSectionId[] {
+  return buildAdminHubSections(role).flatMap((group) => group.items.map((item) => item.section));
+}

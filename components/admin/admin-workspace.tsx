@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { UserRole } from "@/lib/types";
 import type { AdminSectionId } from "@/lib/admin-sections";
 import { adminSectionPath, parseAdminSection } from "@/lib/admin-sections";
-import { buildAdminHubSections } from "@/lib/admin-hub-nav";
+import { buildAdminHubSections, flatAdminNavSections } from "@/lib/admin-hub-nav";
+import { adminBackgroundPrefetchSections, staggeredAdminPrefetch } from "@/lib/admin-prefetch";
 import { AdminWorkspaceContext } from "@/components/admin/admin-workspace-context";
 import { AdminPanelSkeleton } from "@/components/admin/admin-panel-skeleton";
 
@@ -29,6 +30,9 @@ export function AdminWorkspace({
   const [isPending, startTransition] = useTransition();
   const navSections = buildAdminHubSections(role);
   const prefetched = useRef(new Set<AdminSectionId>([urlSection]));
+  const backgroundPrefetchStarted = useRef(false);
+  const cacheRef = useRef(panelCache);
+  cacheRef.current = panelCache;
 
   useEffect(() => {
     setActiveSection(urlSection);
@@ -39,12 +43,31 @@ export function AdminWorkspace({
 
   const prefetchSection = useCallback(
     (section: AdminSectionId) => {
-      if (prefetched.current.has(section) || panelCache[section]) return;
+      if (prefetched.current.has(section) || cacheRef.current[section]) return;
       prefetched.current.add(section);
       router.prefetch(adminSectionPath(section));
     },
-    [router, panelCache],
+    [router],
   );
+
+  useEffect(() => {
+    if (backgroundPrefetchStarted.current) return;
+
+    const overviewReady =
+      cacheRef.current.overview != null || (urlSection === "overview" && children != null);
+    if (!overviewReady) return;
+
+    backgroundPrefetchStarted.current = true;
+
+    const navSections = flatAdminNavSections(role);
+    const toWarm = adminBackgroundPrefetchSections(navSections).filter(
+      (section) => !prefetched.current.has(section) && !cacheRef.current[section],
+    );
+
+    if (toWarm.length === 0) return;
+
+    return staggeredAdminPrefetch(toWarm, prefetchSection, { gapMs: 120 });
+  }, [role, urlSection, children, prefetchSection]);
 
   const selectSection = useCallback(
     (section: AdminSectionId) => {
@@ -131,7 +154,7 @@ export function AdminWorkspace({
         </aside>
 
         <div className="min-w-0 flex-1">
-          {showSkeleton ? <AdminPanelSkeleton /> : null}
+          {showSkeleton ? <AdminPanelSkeleton section={activeSection} /> : null}
           {!showSkeleton ? (
             <>
               {(

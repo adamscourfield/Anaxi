@@ -1,5 +1,5 @@
-import { AdminPanelSkeleton } from "@/components/admin/admin-panel-skeleton";
+import { AdminWorkspaceLoading } from "@/components/admin/admin-workspace-loading";
 
-export default function AdminWorkspaceLoading() {
-  return <AdminPanelSkeleton />;
+export default function AdminWorkspaceRouteLoading() {
+  return <AdminWorkspaceLoading />;
 }
