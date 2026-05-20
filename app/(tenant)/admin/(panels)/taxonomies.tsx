@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import { adminSectionPath, revalidateAdmin } from "@/lib/admin-sections";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
@@ -258,7 +259,7 @@ export async function TaxonomiesAdminPanel({
 
   return (
     <div className="space-y-6 pb-8">
-      <Link
+      <AdminSectionLink
         href="/admin"
         className="inline-flex items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 py-2 text-[0.8125rem] font-semibold text-[var(--on-surface)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)]"
       >
@@ -266,7 +267,7 @@ export async function TaxonomiesAdminPanel({
           <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         Back to Admin
-      </Link>
+      </AdminSectionLink>
 
       <PageHeader
         variant="ledger"

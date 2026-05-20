@@ -5,19 +5,23 @@ import type { ReactNode } from "react";
 import { parseAdminSection } from "@/lib/admin-sections";
 import { useAdminWorkspace } from "@/components/admin/admin-workspace-context";
 
-function sectionFromAdminHref(href: string) {
+function parseAdminHref(href: string) {
   if (!href.startsWith("/admin")) return null;
   try {
     const url = new URL(href, "http://local");
     if (url.pathname !== "/admin") return null;
-    const section = url.searchParams.get("section");
-    return parseAdminSection(section, "overview");
+    const section = parseAdminSection(url.searchParams.get("section"), "overview");
+    const extra: Record<string, string> = {};
+    url.searchParams.forEach((value, key) => {
+      if (key !== "section" && value) extra[key] = value;
+    });
+    return { section, extra: Object.keys(extra).length > 0 ? extra : undefined };
   } catch {
     return null;
   }
 }
 
-/** In-workspace links switch sections without a route transition. */
+/** In-workspace links switch sections without a full route transition when possible. */
 export function AdminSectionLink({
   href,
   className,
@@ -28,19 +32,15 @@ export function AdminSectionLink({
   children: ReactNode;
 }) {
   const workspace = useAdminWorkspace();
-  const section = sectionFromAdminHref(href);
+  const parsed = parseAdminHref(href);
 
-  if (workspace && section && section !== "overview") {
+  if (workspace && parsed) {
     return (
-      <button type="button" onClick={() => workspace.selectSection(section)} className={className}>
-        {children}
-      </button>
-    );
-  }
-
-  if (workspace && section === "overview") {
-    return (
-      <button type="button" onClick={() => workspace.selectSection("overview")} className={className}>
+      <button
+        type="button"
+        onClick={() => workspace.selectSection(parsed.section, parsed.extra)}
+        className={className}
+      >
         {children}
       </button>
     );

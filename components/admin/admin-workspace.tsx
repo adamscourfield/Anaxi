@@ -7,6 +7,11 @@ import type { AdminSectionId } from "@/lib/admin-sections";
 import { adminSectionPath, parseAdminSection } from "@/lib/admin-sections";
 import { buildAdminHubSections, flatAdminNavSections } from "@/lib/admin-hub-nav";
 import { adminBackgroundPrefetchSections, staggeredAdminPrefetch } from "@/lib/admin-prefetch";
+import {
+  decideUrlSectionSync,
+  shouldShowPanelSkeleton,
+  type AdminSectionExtra,
+} from "@/lib/admin-workspace-nav";
 import { AdminWorkspaceContext } from "@/components/admin/admin-workspace-context";
 import { AdminPanelSkeleton } from "@/components/admin/admin-panel-skeleton";
 
@@ -25,6 +30,8 @@ export function AdminWorkspace({
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlSection = parseAdminSection(searchParams.get("section"));
+  const desiredSectionRef = useRef<AdminSectionId>(urlSection);
+  const inFlightDesiredRef = useRef<AdminSectionId | null>(null);
   const [activeSection, setActiveSection] = useState<AdminSectionId>(urlSection);
   const [panelCache, setPanelCache] = useState<Partial<Record<AdminSectionId, ReactNode>>>({});
   const [isPending, startTransition] = useTransition();
@@ -35,17 +42,30 @@ export function AdminWorkspace({
   cacheRef.current = panelCache;
 
   useEffect(() => {
-    setActiveSection(urlSection);
     if (children) {
       setPanelCache((prev) => ({ ...prev, [urlSection]: children }));
+    }
+
+    const sync = decideUrlSectionSync(urlSection, desiredSectionRef.current, inFlightDesiredRef.current);
+
+    if (sync === "apply") {
+      setActiveSection(urlSection);
+      inFlightDesiredRef.current = null;
+      return;
+    }
+
+    if (sync === "external") {
+      desiredSectionRef.current = urlSection;
+      setActiveSection(urlSection);
+      inFlightDesiredRef.current = null;
     }
   }, [urlSection, children]);
 
   const prefetchSection = useCallback(
-    (section: AdminSectionId) => {
+    (section: AdminSectionId, extra?: AdminSectionExtra) => {
       if (prefetched.current.has(section) || cacheRef.current[section]) return;
       prefetched.current.add(section);
-      router.prefetch(adminSectionPath(section));
+      router.prefetch(adminSectionPath(section, extra));
     },
     [router],
   );
@@ -59,35 +79,34 @@ export function AdminWorkspace({
 
     backgroundPrefetchStarted.current = true;
 
-    const navSections = flatAdminNavSections(role);
-    const toWarm = adminBackgroundPrefetchSections(navSections).filter(
+    const flat = flatAdminNavSections(role);
+    const toWarm = adminBackgroundPrefetchSections(flat).filter(
       (section) => !prefetched.current.has(section) && !cacheRef.current[section],
     );
 
     if (toWarm.length === 0) return;
 
-    return staggeredAdminPrefetch(toWarm, prefetchSection, { gapMs: 120 });
+    return staggeredAdminPrefetch(toWarm, (section) => prefetchSection(section), { gapMs: 120 });
   }, [role, urlSection, children, prefetchSection]);
 
   const selectSection = useCallback(
-    (section: AdminSectionId) => {
+    (section: AdminSectionId, extra?: AdminSectionExtra) => {
+      desiredSectionRef.current = section;
+      inFlightDesiredRef.current = section;
       setActiveSection(section);
 
-      if (panelCache[section]) {
-        window.history.replaceState(null, "", adminSectionPath(section));
-        return;
-      }
-
       startTransition(() => {
-        router.replace(adminSectionPath(section));
+        router.replace(adminSectionPath(section, extra));
       });
     },
-    [panelCache, router],
+    [router],
   );
 
   useEffect(() => {
     const onPopState = () => {
       const next = readSectionFromWindow();
+      desiredSectionRef.current = next;
+      inFlightDesiredRef.current = null;
       setActiveSection(next);
       if (!cacheRef.current[next]) {
         startTransition(() => {
@@ -100,9 +119,9 @@ export function AdminWorkspace({
   }, [router]);
 
   const cachedPanel = panelCache[activeSection];
-  const awaitingNavigation = !cachedPanel && (isPending || urlSection !== activeSection);
-  const showSkeleton = awaitingNavigation;
-  const panelContent = cachedPanel ?? (urlSection === activeSection && !isPending ? children : null);
+  const showSkeleton = shouldShowPanelSkeleton(Boolean(cachedPanel), isPending);
+  const panelContent =
+    cachedPanel ?? (urlSection === activeSection && !isPending && children ? children : null);
 
   return (
     <AdminWorkspaceContext.Provider value={{ selectSection }}>
@@ -135,8 +154,8 @@ export function AdminWorkspace({
                           onMouseEnter={() => prefetchSection(item.section)}
                           onFocus={() => prefetchSection(item.section)}
                           aria-current={isActive ? "page" : undefined}
-                          disabled={isPending && isActive && !cachedPanel}
-                          className={`block w-full px-4 py-2.5 text-left text-[0.8125rem] font-semibold calm-transition disabled:opacity-60 ${
+                          disabled={isPending}
+                          className={`block w-full px-4 py-2.5 text-left text-[0.8125rem] font-semibold calm-transition disabled:cursor-wait disabled:opacity-60 ${
                             isActive
                               ? "bg-[color-mix(in_srgb,var(--primary)_8%,var(--surface-container-low))] text-text"
                               : "text-muted hover:bg-[var(--surface-container-low)]/60 hover:text-text"
@@ -155,26 +174,22 @@ export function AdminWorkspace({
 
         <div className="min-w-0 flex-1">
           {showSkeleton ? <AdminPanelSkeleton section={activeSection} /> : null}
-          {!showSkeleton ? (
-            <>
-              {(
-                Object.keys(panelCache) as AdminSectionId[]
-              ).map((sectionId) => {
-                if (sectionId === activeSection) return null;
-                const node = panelCache[sectionId];
-                if (!node) return null;
-                return (
-                  <div key={sectionId} id={`admin-panel-${sectionId}`} hidden aria-hidden style={{ contentVisibility: "hidden" }}>
-                    {node}
-                  </div>
-                );
-              })}
-              {panelContent ? (
-                <div key={activeSection} id={`admin-panel-${activeSection}`}>
-                  {panelContent}
-                </div>
-              ) : null}
-            </>
+          {!showSkeleton && panelContent ? (
+            <div key={activeSection} id={`admin-panel-${activeSection}`}>
+              {panelContent}
+            </div>
+          ) : null}
+          {!showSkeleton && !panelContent ? (
+            <div className="rounded-2xl border border-dashed border-border/60 bg-[var(--surface-container-low)]/40 px-6 py-12 text-center">
+              <p className="text-sm font-medium text-text">This section could not be loaded.</p>
+              <button
+                type="button"
+                onClick={() => selectSection(activeSection)}
+                className="mt-3 text-sm font-semibold text-accent hover:text-accentHover calm-transition"
+              >
+                Try again
+              </button>
+            </div>
           ) : null}
         </div>
       </div>

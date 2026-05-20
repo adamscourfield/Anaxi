@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import { adminSectionPath } from "@/lib/admin-sections";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
@@ -91,9 +91,9 @@ export async function UsersAdminPanel() {
           title="No staff yet"
           description="Add someone manually or import a CSV to populate your directory."
           action={
-            <Link href={adminSectionPath("users-import")} className="anx-btn-pill-primary calm-transition">
+            <AdminSectionLink href={adminSectionPath("users-import")} className="anx-btn-pill-primary calm-transition">
               Import CSV
-            </Link>
+            </AdminSectionLink>
           }
         />
       </div>

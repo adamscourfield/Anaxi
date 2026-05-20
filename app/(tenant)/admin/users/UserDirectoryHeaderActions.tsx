@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AdminSectionLink } from "@/components/admin/admin-section-link";
 
 function UploadIcon() {
   return (
@@ -24,10 +24,10 @@ function AddStaffIcon() {
 export function UserDirectoryHeaderActions({ onAddStaff }: { onAddStaff: () => void }) {
   return (
     <>
-      <Link href="/admin?section=users-import" className="anx-btn-pill-ghost calm-transition">
+      <AdminSectionLink href="/admin?section=users-import" className="anx-btn-pill-ghost calm-transition">
         <UploadIcon />
         Import CSV
-      </Link>
+      </AdminSectionLink>
       <button type="button" onClick={onAddStaff} className="anx-btn-pill-primary calm-transition">
         <AddStaffIcon />
         Add staff
