@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import type { ReactNode } from "react";
 import { revalidatePath } from "next/cache";
 import { revalidateAdmin } from "@/lib/admin-sections";
@@ -184,12 +185,12 @@ export async function LanguageAdminPanel() {
 
   return (
     <div className="space-y-8 pb-8">
-      <Link href="/admin" className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text">
+      <AdminSectionLink href="/admin" className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text">
         <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden>
           <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         Back to Admin
-      </Link>
+      </AdminSectionLink>
       <AdminPageChrome
         area="Language"
         title="Terminology"

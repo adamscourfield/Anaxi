@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
+import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -135,9 +136,9 @@ export default function StaffImportPage() {
         variant="ledger"
         eyebrow={
           <>
-            <Link href="/admin/users" className="calm-transition hover:text-text">
+            <AdminSectionLink href="/admin?section=users" className="calm-transition hover:text-text">
               User management
-            </Link>
+            </AdminSectionLink>
             &ensp;›&ensp;Import
           </>
         }
@@ -145,12 +146,12 @@ export default function StaffImportPage() {
         subtitle="Upload a CSV to add or update staff accounts, roles, and department assignments."
       />
 
-      <Link
-        href="/admin/users"
+      <AdminSectionLink
+        href="/admin?section=users"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-muted calm-transition hover:text-text"
       >
         ← Back to staff list
-      </Link>
+      </AdminSectionLink>
 
       <Card className="space-y-3 border-border/30 bg-surface-container-lowest/50">
         <h2 className="text-sm font-semibold text-text">How it works</h2>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import { adminSectionPath, revalidateAdmin } from "@/lib/admin-sections";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
@@ -107,7 +108,7 @@ export async function LeaveApprovalsAdminPanel() {
         subtitle="Manage approval groups, approvers, and optional scoped staff coverage for leave requests."
         actions={
           <div className="flex items-center gap-3">
-            <Link
+            <AdminSectionLink
               href="/admin?section=taxonomies&tab=loa-reasons"
               className="inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-muted calm-transition hover:bg-[var(--surface-container-low)] hover:text-text"
             >
@@ -116,7 +117,7 @@ export async function LeaveApprovalsAdminPanel() {
                 <circle cx="10" cy="10" r="7" />
               </svg>
               LOA Reasons
-            </Link>
+            </AdminSectionLink>
             <form action={createGroup} className="flex items-center gap-2">
               <input
                 name="name"
