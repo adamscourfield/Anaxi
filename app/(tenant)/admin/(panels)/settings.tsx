@@ -36,13 +36,7 @@ export async function SettingsAdminPanel() {
         title="School settings"
         subtitle="Configure school metadata, timezone, and insight thresholds."
       />
-      <AdminSettingsForms
-        tab="school"
-        settings={settings}
-        features={[]}
-        saveSettings={saveSettings}
-        toggleFeature={async () => {}}
-      />
+      <AdminSettingsForms tab="school" settings={settings} saveSettings={saveSettings} />
     </div>
   );
 }

@@ -1,22 +1,21 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
-/** Client-only tab switcher so taxonomy sub-tabs do not trigger route navigation. */
+/** Mobile taxonomy section picker; desktop uses sidebar tiles in the parent view. */
 export function TaxonomyTabsShell({
   tabs,
-  initialTab,
+  activeTab,
+  onTabChange,
   labels,
   children,
 }: {
   tabs: readonly string[];
-  initialTab: string;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
   labels: Record<string, string>;
-  children: (activeTab: string, selectTab: (tab: string) => void) => ReactNode;
+  children: ReactNode;
 }) {
-  const safeInitial = tabs.includes(initialTab) ? initialTab : tabs[0];
-  const [activeTab, setActiveTab] = useState(safeInitial);
-
   return (
     <div className="space-y-6">
       <div className="md:hidden">
@@ -26,7 +25,7 @@ export function TaxonomyTabsShell({
         <select
           id="taxonomy-tab"
           value={activeTab}
-          onChange={(e) => setActiveTab(e.target.value)}
+          onChange={(e) => onTabChange(e.target.value)}
           className="w-full rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm font-medium text-[var(--on-surface)] shadow-sm outline-none transition focus:border-[#93C5FD] focus:ring-2 focus:ring-[rgba(59,130,246,0.15)]"
         >
           {tabs.map((t) => (
@@ -36,7 +35,7 @@ export function TaxonomyTabsShell({
           ))}
         </select>
       </div>
-      {children(activeTab, setActiveTab)}
+      {children}
     </div>
   );
 }
