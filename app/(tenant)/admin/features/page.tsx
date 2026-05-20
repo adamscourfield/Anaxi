@@ -24,6 +24,7 @@ export default async function AdminFeaturesPage() {
     });
     revalidatePath("/admin/features");
     revalidatePath("/admin");
+    revalidatePath("/admin/settings");
   }
 
   return (

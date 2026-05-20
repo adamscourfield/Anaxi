@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { StatusPill } from "@/components/ui/status-pill";
 import { adminIconWell } from "@/lib/admin-icon-well";
@@ -284,10 +285,11 @@ function MetricCard({ metric }: { metric: DashboardMetricDef }) {
   );
 
   if (!metric.href) return content;
+  const Nav = metric.href.startsWith("/admin") ? AdminSectionLink : Link;
   return (
-    <Link href={metric.href} className="block h-full">
+    <Nav href={metric.href} className="block h-full text-left">
       {content}
-    </Link>
+    </Nav>
   );
 }
 
@@ -310,8 +312,10 @@ function AttentionBand({ items }: { items: DashboardAttentionDef[] }) {
           <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${iconBg} text-[11px] font-bold text-white`} aria-hidden>
             !
           </span>
-          {items.slice(0, 3).map((item) => (
-            <Link
+          {items.slice(0, 3).map((item) => {
+            const Nav = item.href.startsWith("/admin") ? AdminSectionLink : Link;
+            return (
+            <Nav
               key={`${item.title}-${item.href}`}
               href={item.href}
               className="group min-w-0 flex-1 rounded-lg py-0.5 calm-transition md:px-4 first:md:pl-2 hover:opacity-80"
@@ -326,15 +330,22 @@ function AttentionBand({ items }: { items: DashboardAttentionDef[] }) {
                 <p className="truncate text-sm font-semibold text-text">{item.title}</p>
               </div>
               <p className="mt-0.5 truncate pl-4 text-xs text-muted">{item.detail}</p>
-            </Link>
-          ))}
+            </Nav>
+          );
+          })}
         </div>
-        <Link
-          href={items[0]?.href ?? "/admin"}
+        {(() => {
+          const ctaHref = items[0]?.href ?? "/admin";
+          const CtaNav = ctaHref.startsWith("/admin") ? AdminSectionLink : Link;
+          return (
+        <CtaNav
+          href={ctaHref}
           className="shrink-0 self-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 py-2 text-xs font-semibold text-text calm-transition hover:bg-[var(--surface-container-low)]"
         >
           {items[0]?.cta ?? "View"} →
-        </Link>
+        </CtaNav>
+          );
+        })()}
       </div>
     </section>
   );

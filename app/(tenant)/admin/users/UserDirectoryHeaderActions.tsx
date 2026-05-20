@@ -24,7 +24,7 @@ function AddStaffIcon() {
 export function UserDirectoryHeaderActions({ onAddStaff }: { onAddStaff: () => void }) {
   return (
     <>
-      <Link href="/admin/users/import" className="anx-btn-pill-ghost calm-transition">
+      <Link href="/admin?section=users-import" className="anx-btn-pill-ghost calm-transition">
         <UploadIcon />
         Import CSV
       </Link>

@@ -1,28 +1,44 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildAdminHubSections,
-  isAdminHubExcludedPath,
-  isAdminHubNavActive,
-} from "@/lib/admin-hub-nav";
+  adminSectionPath,
+  isAdminSectionId,
+  parseAdminSection,
+  sectionFromLegacyPath,
+} from "@/lib/admin-sections";
+import { buildAdminHubSections } from "@/lib/admin-hub-nav";
+
+describe("admin sections", () => {
+  it("parses section query param", () => {
+    expect(parseAdminSection("users")).toBe("users");
+    expect(parseAdminSection("bogus")).toBe("overview");
+    expect(parseAdminSection(undefined)).toBe("overview");
+  });
+
+  it("builds admin URLs", () => {
+    expect(adminSectionPath("overview")).toBe("/admin");
+    expect(adminSectionPath("users")).toBe("/admin?section=users");
+    expect(adminSectionPath("taxonomies", { tab: "loa-reasons" })).toBe(
+      "/admin?section=taxonomies&tab=loa-reasons",
+    );
+  });
+
+  it("maps legacy paths", () => {
+    expect(sectionFromLegacyPath("/admin/departments")).toBe("departments");
+    expect(sectionFromLegacyPath("/admin/users/import")).toBe("users-import");
+  });
+
+  it("knows valid section ids", () => {
+    expect(isAdminSectionId("imports")).toBe(true);
+    expect(isAdminSectionId("features")).toBe(false);
+  });
+});
 
 describe("admin hub nav", () => {
-  it("marks overview only on /admin", () => {
-    expect(isAdminHubNavActive("/admin", "/admin")).toBe(true);
-    expect(isAdminHubNavActive("/admin/users", "/admin")).toBe(false);
-    expect(isAdminHubNavActive("/admin/users", "/admin/users")).toBe(true);
-    expect(isAdminHubNavActive("/admin/users/import", "/admin/users")).toBe(true);
-  });
-
-  it("excludes feature flags from hub chrome", () => {
-    expect(isAdminHubExcludedPath("/admin/features")).toBe(true);
-    expect(isAdminHubExcludedPath("/admin/users")).toBe(false);
-  });
-
   it("builds RBAC-filtered sections for admins", () => {
     const sections = buildAdminHubSections("ADMIN");
-    const hrefs = sections.flatMap((s) => s.items.map((i) => i.href));
-    expect(hrefs).toContain("/admin/users");
-    expect(hrefs).toContain("/admin/settings");
-    expect(hrefs).not.toContain("/admin/features");
+    const sectionIds = sections.flatMap((s) => s.items.map((i) => i.section));
+    expect(sectionIds).toContain("users");
+    expect(sectionIds).toContain("settings");
+    expect(sectionIds).not.toContain("users-import");
   });
 });

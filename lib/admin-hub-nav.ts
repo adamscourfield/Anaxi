@@ -1,8 +1,9 @@
 import type { UserRole } from "@/lib/types";
 import { hasPermission } from "@/lib/rbac";
+import type { AdminSectionId } from "@/lib/admin-sections";
 
 export type AdminHubNavItem = {
-  href: string;
+  section: AdminSectionId;
   label: string;
 };
 
@@ -16,11 +17,6 @@ export function isAdminHubExcludedPath(pathname: string): boolean {
   return pathname === "/admin/features" || pathname.startsWith("/admin/features/");
 }
 
-export function isAdminHubNavActive(pathname: string, href: string): boolean {
-  if (href === "/admin") return pathname === "/admin";
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
 export function buildAdminHubSections(role: UserRole): AdminHubNavSection[] {
   const canAccessAdmin = hasPermission(role, "admin:access");
   const canAccessAdminUsers = hasPermission(role, "admin:users");
@@ -29,32 +25,32 @@ export function buildAdminHubSections(role: UserRole): AdminHubNavSection[] {
   return [
     {
       title: "Overview",
-      items: [...(canAccessAdmin ? [{ href: "/admin", label: "Admin Pulse" }] : [])],
+      items: [...(canAccessAdmin ? [{ section: "overview" as const, label: "Admin Pulse" }] : [])],
     },
     {
       title: "People & access",
       items: [
-        ...(canAccessAdminUsers ? [{ href: "/admin/users", label: "Users" }] : []),
-        ...(canAccessAdminSettings ? [{ href: "/admin/departments", label: "Departments" }] : []),
-        ...(canAccessAdminSettings ? [{ href: "/admin/coaching", label: "Coaching" }] : []),
-        ...(canAccessAdminSettings ? [{ href: "/admin/leave-approvals", label: "Leave approvals" }] : []),
+        ...(canAccessAdminUsers ? [{ section: "users" as const, label: "Users" }] : []),
+        ...(canAccessAdminSettings ? [{ section: "departments" as const, label: "Departments" }] : []),
+        ...(canAccessAdminSettings ? [{ section: "coaching" as const, label: "Coaching" }] : []),
+        ...(canAccessAdminSettings ? [{ section: "leave-approvals" as const, label: "Leave approvals" }] : []),
       ],
     },
     {
       title: "Platform & language",
       items: [
-        ...(canAccessAdminSettings ? [{ href: "/admin/settings", label: "School settings" }] : []),
-        ...(canAccessAdminSettings ? [{ href: "/admin/language", label: "Language" }] : []),
-        ...(canAccessAdminSettings ? [{ href: "/admin/signals", label: "Signals" }] : []),
-        ...(canAccessAdmin ? [{ href: "/admin/email-log", label: "Email log" }] : []),
+        ...(canAccessAdminSettings ? [{ section: "settings" as const, label: "School settings" }] : []),
+        ...(canAccessAdminSettings ? [{ section: "language" as const, label: "Language" }] : []),
+        ...(canAccessAdminSettings ? [{ section: "signals" as const, label: "Signals" }] : []),
+        ...(canAccessAdmin ? [{ section: "email-log" as const, label: "Email log" }] : []),
       ],
     },
     {
       title: "Data & imports",
       items: [
-        ...(canAccessAdminSettings ? [{ href: "/admin/taxonomies", label: "Taxonomies" }] : []),
-        ...(canAccessAdminSettings ? [{ href: "/admin/timetable", label: "Timetable" }] : []),
-        ...(canAccessAdmin ? [{ href: "/admin/imports", label: "Import jobs" }] : []),
+        ...(canAccessAdminSettings ? [{ section: "taxonomies" as const, label: "Taxonomies" }] : []),
+        ...(canAccessAdminSettings ? [{ section: "timetable" as const, label: "Timetable" }] : []),
+        ...(canAccessAdmin ? [{ section: "imports" as const, label: "Import jobs" }] : []),
       ],
     },
   ].filter((section) => section.items.length > 0);
