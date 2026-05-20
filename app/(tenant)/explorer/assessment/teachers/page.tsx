@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -369,39 +370,14 @@ export default async function AssessmentTeachersPage({
             </div>
           )}
 
-          {/* Pagination */}
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 px-5 py-3.5">
-            <p className="text-[0.8125rem] text-muted">
-              Showing <span className="font-semibold text-text">{pageStart + 1}–{Math.min(pageStart + PER_PAGE, totalFiltered)}</span> of{" "}
-              <span className="font-semibold text-text">{totalFiltered}</span> teachers
-            </p>
-            {totalPages > 1 && (
-              <div className="flex items-center gap-1">
-                {safePage > 1 && (
-                  <Link href={pageUrl(safePage - 1)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text" aria-label="Previous">
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </Link>
-                )}
-                {(() => {
-                  const half = 3;
-                  const winStart = Math.max(1, Math.min(safePage - half, totalPages - 6));
-                  const winEnd = Math.min(totalPages, winStart + 6);
-                  return Array.from({ length: winEnd - winStart + 1 }, (_, i) => winStart + i);
-                })().map((p) => (
-                  p === safePage ? (
-                    <span key={p} className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-[0.8125rem] font-semibold text-on-primary">{p}</span>
-                  ) : (
-                    <Link key={p} href={pageUrl(p)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[0.8125rem] text-muted calm-transition hover:bg-surface-container-low hover:text-text">{p}</Link>
-                  )
-                ))}
-                {safePage < totalPages && (
-                  <Link href={pageUrl(safePage + 1)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text" aria-label="Next">
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
+          <TablePagination
+            page={safePage}
+            totalPages={totalPages}
+            totalItems={totalFiltered}
+            pageSize={PER_PAGE}
+            itemLabel="teachers"
+            pageHref={pageUrl}
+          />
         </div>
       )}
 

@@ -39,18 +39,6 @@ type ScopedApproverGroup = {
   targets: ScopedTarget[];
 };
 
-type TaxonomyActions = {
-  addItem: (formData: FormData) => Promise<void>;
-  updateItem: (formData: FormData) => Promise<void>;
-  toggleActive: (formData: FormData) => Promise<void>;
-  deleteItem: (formData: FormData) => Promise<void>;
-  reorderTaxonomy: (formData: FormData) => Promise<void>;
-  removeAuthoriser: (formData: FormData) => Promise<void>;
-  addScopedAuthoriser: (formData: FormData) => Promise<void>;
-  removeScopedTarget: (formData: FormData) => Promise<void>;
-  removeScopedAuthoriser: (formData: FormData) => Promise<void>;
-};
-
 export function TaxonomiesAdminView({
   initialTab,
   loaRows,
@@ -62,7 +50,15 @@ export function TaxonomiesAdminView({
   staff,
   globalAuthoriserIds,
   scopedApproverIds,
-  actions,
+  addItem,
+  updateItem,
+  toggleActive,
+  deleteItem,
+  reorderTaxonomy,
+  removeAuthoriser,
+  addScopedAuthoriser,
+  removeScopedTarget,
+  removeScopedAuthoriser,
 }: {
   initialTab: TaxonomyTab;
   loaRows: TaxonomyRow[];
@@ -74,7 +70,15 @@ export function TaxonomiesAdminView({
   staff: StaffOption[];
   globalAuthoriserIds: string[];
   scopedApproverIds: string[];
-  actions: TaxonomyActions;
+  addItem: (formData: FormData) => Promise<void>;
+  updateItem: (formData: FormData) => Promise<void>;
+  toggleActive: (formData: FormData) => Promise<void>;
+  deleteItem: (formData: FormData) => Promise<void>;
+  reorderTaxonomy: (formData: FormData) => Promise<void>;
+  removeAuthoriser: (formData: FormData) => Promise<void>;
+  addScopedAuthoriser: (formData: FormData) => Promise<void>;
+  removeScopedTarget: (formData: FormData) => Promise<void>;
+  removeScopedAuthoriser: (formData: FormData) => Promise<void>;
 }) {
   const safeInitial = TAXONOMY_TABS.includes(initialTab) ? initialTab : "loa-reasons";
   const [tab, setTab] = useState<TaxonomyTab>(safeInitial);
@@ -143,11 +147,11 @@ export function TaxonomiesAdminView({
           rows={loaRows}
           valueColumnHeader="Reason"
           addItemNoun="reason"
-          updateItem={actions.updateItem}
-          toggleActive={actions.toggleActive}
-          deleteItem={actions.deleteItem}
-          reorderTaxonomy={actions.reorderTaxonomy}
-          addItem={actions.addItem}
+          updateItem={updateItem}
+          toggleActive={toggleActive}
+          deleteItem={deleteItem}
+          reorderTaxonomy={reorderTaxonomy}
+          addItem={addItem}
         />
       ) : null}
 
@@ -160,11 +164,11 @@ export function TaxonomiesAdminView({
           rows={reasonRows}
           valueColumnHeader="Reason"
           addItemNoun="reason"
-          updateItem={actions.updateItem}
-          toggleActive={actions.toggleActive}
-          deleteItem={actions.deleteItem}
-          reorderTaxonomy={actions.reorderTaxonomy}
-          addItem={actions.addItem}
+          updateItem={updateItem}
+          toggleActive={toggleActive}
+          deleteItem={deleteItem}
+          reorderTaxonomy={reorderTaxonomy}
+          addItem={addItem}
         />
       ) : null}
 
@@ -177,11 +181,11 @@ export function TaxonomiesAdminView({
           rows={locationRows}
           valueColumnHeader="Location"
           addItemNoun="location"
-          updateItem={actions.updateItem}
-          toggleActive={actions.toggleActive}
-          deleteItem={actions.deleteItem}
-          reorderTaxonomy={actions.reorderTaxonomy}
-          addItem={actions.addItem}
+          updateItem={updateItem}
+          toggleActive={toggleActive}
+          deleteItem={deleteItem}
+          reorderTaxonomy={reorderTaxonomy}
+          addItem={addItem}
         />
       ) : null}
 
@@ -194,11 +198,11 @@ export function TaxonomiesAdminView({
           rows={recipientRows}
           valueColumnHeader="Email"
           addItemNoun="recipient"
-          updateItem={actions.updateItem}
-          toggleActive={actions.toggleActive}
-          deleteItem={actions.deleteItem}
-          reorderTaxonomy={actions.reorderTaxonomy}
-          addItem={actions.addItem}
+          updateItem={updateItem}
+          toggleActive={toggleActive}
+          deleteItem={deleteItem}
+          reorderTaxonomy={reorderTaxonomy}
+          addItem={addItem}
         />
       ) : null}
 
@@ -232,7 +236,7 @@ export function TaxonomiesAdminView({
                       </svg>
                       All staff
                     </span>
-                    <form action={actions.removeAuthoriser}>
+                    <form action={removeAuthoriser}>
                       <input type="hidden" name="id" value={row.id} />
                       <Button variant="ghost" type="submit" className="py-2 text-xs text-[var(--on-surface-variant)] hover:text-red-600">
                         Remove
@@ -255,7 +259,7 @@ export function TaxonomiesAdminView({
               <p className="mt-1 text-[0.8125rem] text-[var(--on-surface-variant)]">
                 Staff already listed as scoped-only approvers are excluded until you remove that role.
               </p>
-              <form action={actions.addItem} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+              <form action={addItem} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                 <input type="hidden" name="type" value="loa_authoriser" />
                 <div className="min-w-0 flex-1">
                   <Label htmlFor="global-auth-staff">Staff member</Label>
@@ -308,7 +312,7 @@ export function TaxonomiesAdminView({
                       <span className="inline-flex items-center gap-1.5 rounded-md bg-[#FFFBEB] px-2.5 py-1 text-xs font-semibold text-[#92400E]">
                         {targets.length} {targets.length === 1 ? "person" : "people"}
                       </span>
-                      <form action={actions.removeScopedAuthoriser}>
+                      <form action={removeScopedAuthoriser}>
                         <input type="hidden" name="approverId" value={approverId} />
                         <Button variant="ghost" type="submit" className="py-2 text-xs text-[var(--on-surface-variant)] hover:text-red-600">
                           Remove all
@@ -323,7 +327,7 @@ export function TaxonomiesAdminView({
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {targets.map((scope) => (
-                        <form key={scope.id} action={actions.removeScopedTarget} className="contents">
+                        <form key={scope.id} action={removeScopedTarget} className="contents">
                           <input type="hidden" name="id" value={scope.id} />
                           <button
                             type="submit"
@@ -338,7 +342,7 @@ export function TaxonomiesAdminView({
                       ))}
                     </div>
 
-                    <form action={actions.addScopedAuthoriser} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <form action={addScopedAuthoriser} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
                       <input type="hidden" name="approverId" value={approverId} />
                       <div className="min-w-0 flex-1">
                         <Label htmlFor={`scoped-add-${approverId}`}>Add covered person</Label>
@@ -380,7 +384,7 @@ export function TaxonomiesAdminView({
               <p className="mt-1 text-[0.8125rem] text-[var(--on-surface-variant)]">
                 Pick who approves, then who they cover. After saving, open their card to attach more people.
               </p>
-              <form action={actions.addScopedAuthoriser} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+              <form action={addScopedAuthoriser} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
                 <div className="min-w-0">
                   <Label htmlFor="scoped-new-approver">Authoriser</Label>
                   <select

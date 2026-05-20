@@ -5,6 +5,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { FormSelect } from "@/components/ui/form-select";
 import { Button } from "@/components/ui/button";
 import { TableScrollRegion } from "@/components/ui/table-scroll-region";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { toast } from "@/components/toast-provider";
 import { EditUserModal, TeacherOption } from "./EditUserModal";
 import type { SummaryFilter } from "./UserDirectorySummary";
@@ -48,22 +49,6 @@ function SearchIcon({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
       <circle cx="11" cy="11" r="7" />
       <path d="m17 17 4 4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
-      <path d="M10 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -183,18 +168,6 @@ export function UserDirectoryTable({
   const pageUsers = filtered.slice(start, start + PAGE_SIZE);
 
   const triggerWhite = "field-filter-trigger";
-
-  function getPageNumbers(): (number | "ellipsis")[] {
-    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
-    const pages: (number | "ellipsis")[] = [1];
-    if (safePage > 3) pages.push("ellipsis");
-    for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) {
-      pages.push(i);
-    }
-    if (safePage < totalPages - 2) pages.push("ellipsis");
-    pages.push(totalPages);
-    return pages;
-  }
 
   function rowLocked(u: UserRow) {
     return u.role === "SUPER_ADMIN" && !canEditSuperUsers;
@@ -520,57 +493,14 @@ export function UserDirectoryTable({
           </table>
         </TableScrollRegion>
 
-        {filtered.length > 0 && totalPages > 1 ? (
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 px-5 py-3.5">
-            <p className="text-[0.8125rem] text-muted">
-              Showing{" "}
-              <span className="font-semibold text-text">
-                {start + 1}-{Math.min(start + PAGE_SIZE, filtered.length)}
-              </span>{" "}
-              of <span className="font-semibold text-text">{filtered.length.toLocaleString()}</span>
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={safePage === 1}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text disabled:pointer-events-none disabled:opacity-40"
-                aria-label="Previous page"
-              >
-                <ChevronLeftIcon />
-              </button>
-              {getPageNumbers().map((p, idx) =>
-                p === "ellipsis" ? (
-                  <span key={`e-${idx}`} className="inline-flex h-8 w-8 items-center justify-center text-[0.8125rem] text-muted">
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPage(p)}
-                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-[0.8125rem] calm-transition ${
-                      p === safePage
-                        ? "bg-accent font-semibold text-on-primary"
-                        : "text-muted hover:bg-surface-container-low hover:text-text"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ),
-              )}
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safePage === totalPages}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted calm-transition hover:bg-surface-container-low hover:text-text disabled:pointer-events-none disabled:opacity-40"
-                aria-label="Next page"
-              >
-                <ChevronRightIcon />
-              </button>
-            </div>
-          </div>
-        ) : null}
+        <TablePagination
+          page={safePage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={PAGE_SIZE}
+          itemLabel="staff"
+          onPageChange={setPage}
+        />
       </div>
 
       {editingUser ? (

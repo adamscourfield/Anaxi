@@ -70,7 +70,7 @@ export function ObservationSignalLabelsSection({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] border-collapse text-left text-[0.8125rem]">
             <thead>
-              <tr className={`${ROW_BORDER} bg-[#F3F4F6]`}>
+              <tr className={ROW_BORDER}>
                 <th className={`${TH} w-[220px]`}>Signal</th>
                 <th className={`${TH} min-w-[140px]`}>Default name</th>
                 <th className={`${TH} min-w-[160px]`}>
@@ -91,7 +91,7 @@ export function ObservationSignalLabelsSection({
                 return (
                   <tr
                     key={signal.key}
-                    className={`group calm-transition odd:bg-[rgba(124,92,255,0.035)] hover:bg-[rgba(124,92,255,0.06)] ${ROW_BORDER} last:border-b-0`}
+                    className={`group calm-transition hover:bg-[var(--surface-container-low)]/60 ${ROW_BORDER} last:border-b-0`}
                   >
                     <td className="px-4 py-4 align-top sm:px-5">
                       <div className="flex items-start gap-3">

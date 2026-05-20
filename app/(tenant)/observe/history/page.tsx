@@ -25,6 +25,7 @@ import { HistoryFilters } from "./HistoryFilters";
 import { ObservationHistoryAnalysis } from "./ObservationHistoryAnalysis";
 import { SignalDotsClient } from "./SignalDotsClient";
 import { ClickableRow } from "./ClickableRow";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 /* ── Pedagogical signal squares (ledger mock: mostly blue, warn / critical accents) ─ */
 const SIGNAL_DOT_COLOR: Record<string, string> = {
@@ -303,21 +304,6 @@ export default async function ObservationHistoryPage({
     return `/observe/history${qs ? `?${qs}` : ""}`;
   }
 
-  /* Compute visible page numbers (e.g. 1 2 3 ... 10) */
-  function getPageNumbers(): (number | "ellipsis")[] {
-    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
-    const pages: (number | "ellipsis")[] = [];
-    pages.push(1);
-    if (page > 3) pages.push("ellipsis");
-    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
-    if (page < totalPages - 2) pages.push("ellipsis");
-    pages.push(totalPages);
-    return pages;
-  }
-
-  const rangeStart = (page - 1) * PAGE_SIZE + 1;
-  const rangeEnd = Math.min(page * PAGE_SIZE, totalCount as number);
-
   const historyFilterQuery = new URLSearchParams();
   if (teacherId) historyFilterQuery.set("teacherId", teacherId);
   if (observerId) historyFilterQuery.set("observerId", observerId);
@@ -525,54 +511,14 @@ export default async function ObservationHistoryPage({
           </div>
 
           {/* ── Pagination ───────────────────────────────────────────────── */}
-          {totalPages > 1 && (
-            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 px-5 py-3.5">
-              <p className="text-[0.8125rem] text-muted">
-                Showing <span className="font-semibold text-text">{rangeStart}</span> to{" "}
-                <span className="font-semibold text-text">{rangeEnd}</span> of{" "}
-                <span className="font-semibold text-text">{totalCount}</span> results
-              </p>
-              <div className="flex items-center gap-1">
-                {/* Prev */}
-                {page > 1 ? (
-                  <Link href={pageUrl(page - 1)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted calm-transition hover:bg-surface-container-low hover:text-text">
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </Link>
-                ) : (
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-md text-border">
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </span>
-                )}
-                {/* Pages */}
-                {getPageNumbers().map((p, i) =>
-                  p === "ellipsis" ? (
-                    <span key={`e${i}`} className="inline-flex h-8 w-8 items-center justify-center text-[0.8125rem] text-muted">…</span>
-                  ) : p === page ? (
-                    <span
-                      key={p}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-950 bg-[var(--surface-container-lowest)] text-[0.8125rem] font-semibold text-neutral-950"
-                    >
-                      {p}
-                    </span>
-                  ) : (
-                    <Link key={p} href={pageUrl(p)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[0.8125rem] text-muted calm-transition hover:bg-surface-container-low hover:text-text">
-                      {p}
-                    </Link>
-                  )
-                )}
-                {/* Next */}
-                {page < totalPages ? (
-                  <Link href={pageUrl(page + 1)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted calm-transition hover:bg-surface-container-low hover:text-text">
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </Link>
-                ) : (
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-md text-border">
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalCount as number}
+            pageSize={PAGE_SIZE}
+            itemLabel="results"
+            pageHref={pageUrl}
+          />
         </div>
       )}
     </div>

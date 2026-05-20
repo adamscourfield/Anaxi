@@ -21,6 +21,7 @@ import { StudentsKpiStrip } from "@/app/(tenant)/explorer/students/StudentsKpiSt
 import { StudentsBandChips } from "@/app/(tenant)/explorer/students/StudentsBandChips";
 import { StudentsCriticalBanner } from "@/app/(tenant)/explorer/students/StudentsCriticalBanner";
 import { StudentsListSection } from "@/app/(tenant)/explorer/students/StudentsListSection";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const BASE_PATH = "/students/my";
 
@@ -184,6 +185,21 @@ export default async function MyStudentsPage({
     (r) => r.band === "URGENT" || r.band === "PRIORITY",
   );
 
+  function pageUrl(p: number): string {
+    return buildStudentsListUrl(BASE_PATH, { ...urlBase, page: p > 1 ? p : undefined });
+  }
+
+  const pagination = (
+    <TablePagination
+      page={safePage}
+      totalPages={totalPages}
+      totalItems={totalFiltered}
+      pageSize={perPage}
+      itemLabel="students"
+      pageHref={pageUrl}
+    />
+  );
+
   return (
     <div className="space-y-6">
       <nav className="text-[0.8125rem] text-muted" aria-label="Breadcrumb">
@@ -244,7 +260,7 @@ export default async function MyStudentsPage({
           pageStart={pageStart}
           pageEnd={pageEnd}
           totalFiltered={totalFiltered}
-          pagination={null}
+          pagination={pagination}
         />
       )}
     </div>

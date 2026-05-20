@@ -7,6 +7,7 @@
 - **`Breadcrumb`** (`breadcrumb.tsx`) — section navigation with `aria-current="page"`.
 - **`FormField`** (`form-field.tsx`) — label, control, hint, and inline error slot using `.field` styles.
 - **`TableScrollRegion`** (`table-scroll-region.tsx`) — horizontal tables with mobile scroll hint.
+- **`TablePagination`** (`table-pagination.tsx`) — list/table footer pagination (matches user directory); use `pageHref` for server pages or `onPageChange` for client state.
 
 ## Mutation feedback (UX-040)
 

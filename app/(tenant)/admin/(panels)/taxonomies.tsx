@@ -1,11 +1,22 @@
 import Link from "next/link";
 import { AdminSectionLink } from "@/components/admin/admin-section-link";
-import { adminSectionPath, revalidateAdmin } from "@/lib/admin-sections";
+import { adminSectionPath } from "@/lib/admin-sections";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { PageHeader } from "@/components/ui/page-header";
 import { TaxonomiesAdminView } from "@/components/admin/taxonomies-admin-view";
 import { TAXONOMY_TABS, type TaxonomyTab } from "@/components/admin/taxonomy-tab-meta";
+import {
+  addScopedAuthoriser,
+  addTaxonomyItem,
+  deleteTaxonomyItem,
+  removeLoaAuthoriser,
+  removeScopedAuthoriser,
+  removeScopedTarget,
+  reorderTaxonomy,
+  toggleTaxonomyActive,
+  updateTaxonomyItem,
+} from "@/app/(tenant)/admin/taxonomies/actions";
 
 export async function TaxonomiesAdminPanel({
   searchParams,
@@ -38,173 +49,6 @@ export async function TaxonomiesAdminPanel({
     } else {
       scopesByApprover.set(scope.approverId, { approver: scope.approver, targets: [scope] });
     }
-  }
-
-  async function addItem(formData: FormData) {
-    "use server";
-    const admin = await requireAdminUser();
-    const type = String(formData.get("type"));
-    const value = String(formData.get("value") || "").trim();
-    if (!value) return;
-
-    if (type === "loa") {
-      const agg = await prisma.loaReason.aggregate({
-        where: { tenantId: admin.tenantId },
-        _max: { sortOrder: true },
-      });
-      const sortOrder = (agg._max.sortOrder ?? -1) + 1;
-      await prisma.loaReason.create({ data: { tenantId: admin.tenantId, label: value, sortOrder } });
-    }
-    if (type === "reason") {
-      const agg = await (prisma as any).onCallReason.aggregate({
-        where: { tenantId: admin.tenantId },
-        _max: { sortOrder: true },
-      });
-      const sortOrder = (agg._max.sortOrder ?? -1) + 1;
-      await (prisma as any).onCallReason.create({ data: { tenantId: admin.tenantId, label: value, sortOrder } });
-    }
-    if (type === "location") {
-      const agg = await (prisma as any).onCallLocation.aggregate({
-        where: { tenantId: admin.tenantId },
-        _max: { sortOrder: true },
-      });
-      const sortOrder = (agg._max.sortOrder ?? -1) + 1;
-      await (prisma as any).onCallLocation.create({ data: { tenantId: admin.tenantId, label: value, sortOrder } });
-    }
-    if (type === "recipient") {
-      const agg = await (prisma as any).onCallRecipient.aggregate({
-        where: { tenantId: admin.tenantId },
-        _max: { sortOrder: true },
-      });
-      const sortOrder = (agg._max.sortOrder ?? -1) + 1;
-      await (prisma as any).onCallRecipient.create({ data: { tenantId: admin.tenantId, email: value, sortOrder } });
-    }
-    if (type === "loa_authoriser") {
-      await (prisma as any).lOAAuthoriser.upsert({
-        where: { tenantId_userId: { tenantId: admin.tenantId, userId: value } },
-        update: {},
-        create: { tenantId: admin.tenantId, userId: value },
-      });
-    }
-    revalidateAdmin("taxonomies");
-  }
-
-  async function updateItem(formData: FormData) {
-    "use server";
-    const admin = await requireAdminUser();
-    const type = String(formData.get("type"));
-    const id = String(formData.get("id"));
-    const label = String(formData.get("label") || "").trim();
-    if (!id) return;
-    if (type === "loa") await prisma.loaReason.updateMany({ where: { id, tenantId: admin.tenantId }, data: { label } });
-    if (type === "reason") await (prisma as any).onCallReason.updateMany({ where: { id, tenantId: admin.tenantId }, data: { label } });
-    if (type === "location") await (prisma as any).onCallLocation.updateMany({ where: { id, tenantId: admin.tenantId }, data: { label } });
-    if (type === "recipient") await (prisma as any).onCallRecipient.updateMany({ where: { id, tenantId: admin.tenantId }, data: { email: label } });
-    revalidateAdmin("taxonomies");
-  }
-
-  async function toggleActive(formData: FormData) {
-    "use server";
-    const admin = await requireAdminUser();
-    const type = String(formData.get("type"));
-    const id = String(formData.get("id"));
-    const active = String(formData.get("active")) === "true";
-    if (!id) return;
-    if (type === "loa") await prisma.loaReason.updateMany({ where: { id, tenantId: admin.tenantId }, data: { active: !active } });
-    if (type === "reason") await (prisma as any).onCallReason.updateMany({ where: { id, tenantId: admin.tenantId }, data: { active: !active } });
-    if (type === "location") await (prisma as any).onCallLocation.updateMany({ where: { id, tenantId: admin.tenantId }, data: { active: !active } });
-    if (type === "recipient") await (prisma as any).onCallRecipient.updateMany({ where: { id, tenantId: admin.tenantId }, data: { active: !active } });
-    revalidateAdmin("taxonomies");
-  }
-
-  async function deleteItem(formData: FormData) {
-    "use server";
-    const admin = await requireAdminUser();
-    const type = String(formData.get("type"));
-    const id = String(formData.get("id"));
-    if (!id) return;
-    if (type === "loa") await prisma.loaReason.deleteMany({ where: { id, tenantId: admin.tenantId } });
-    if (type === "reason") await (prisma as any).onCallReason.deleteMany({ where: { id, tenantId: admin.tenantId } });
-    if (type === "location") await (prisma as any).onCallLocation.deleteMany({ where: { id, tenantId: admin.tenantId } });
-    if (type === "recipient") await (prisma as any).onCallRecipient.deleteMany({ where: { id, tenantId: admin.tenantId } });
-    revalidateAdmin("taxonomies");
-  }
-
-  async function reorderTaxonomy(formData: FormData) {
-    "use server";
-    const admin = await requireAdminUser();
-    const type = String(formData.get("type"));
-    const raw = String(formData.get("orderedIds") || "");
-    const ids = raw.split(",").map((s) => s.trim()).filter(Boolean);
-    if (!ids.length) return;
-
-    if (type === "loa") {
-      await prisma.$transaction(
-        ids.map((rowId, idx) =>
-          prisma.loaReason.updateMany({ where: { id: rowId, tenantId: admin.tenantId }, data: { sortOrder: idx } })
-        )
-      );
-    }
-    if (type === "reason") {
-      await prisma.$transaction(
-        ids.map((rowId, idx) =>
-          (prisma as any).onCallReason.updateMany({ where: { id: rowId, tenantId: admin.tenantId }, data: { sortOrder: idx } })
-        )
-      );
-    }
-    if (type === "location") {
-      await prisma.$transaction(
-        ids.map((rowId, idx) =>
-          (prisma as any).onCallLocation.updateMany({ where: { id: rowId, tenantId: admin.tenantId }, data: { sortOrder: idx } })
-        )
-      );
-    }
-    if (type === "recipient") {
-      await prisma.$transaction(
-        ids.map((rowId, idx) =>
-          (prisma as any).onCallRecipient.updateMany({ where: { id: rowId, tenantId: admin.tenantId }, data: { sortOrder: idx } })
-        )
-      );
-    }
-    revalidateAdmin("taxonomies");
-  }
-
-  async function removeAuthoriser(formData: FormData) {
-    "use server";
-    const admin = await requireAdminUser();
-    const id = String(formData.get("id"));
-    await (prisma as any).lOAAuthoriser.deleteMany({ where: { id, tenantId: admin.tenantId } });
-    revalidateAdmin("taxonomies");
-  }
-
-  async function addScopedAuthoriser(formData: FormData) {
-    "use server";
-    const admin = await requireAdminUser();
-    const approverId = String(formData.get("approverId") || "").trim();
-    const targetUserId = String(formData.get("targetUserId") || "").trim();
-    if (!approverId || !targetUserId || approverId === targetUserId) return;
-    await (prisma as any).lOAApprovalScope.upsert({
-      where: { tenantId_approverId_targetUserId: { tenantId: admin.tenantId, approverId, targetUserId } },
-      update: {},
-      create: { tenantId: admin.tenantId, approverId, targetUserId },
-    });
-    revalidateAdmin("taxonomies");
-  }
-
-  async function removeScopedTarget(formData: FormData) {
-    "use server";
-    const admin = await requireAdminUser();
-    const id = String(formData.get("id"));
-    await (prisma as any).lOAApprovalScope.deleteMany({ where: { id, tenantId: admin.tenantId } });
-    revalidateAdmin("taxonomies");
-  }
-
-  async function removeScopedAuthoriser(formData: FormData) {
-    "use server";
-    const admin = await requireAdminUser();
-    const approverId = String(formData.get("approverId"));
-    await (prisma as any).lOAApprovalScope.deleteMany({ where: { tenantId: admin.tenantId, approverId } });
-    revalidateAdmin("taxonomies");
   }
 
   const globalAuthoriserIds = (loaAuthorisers as any[]).map((a) => a.userId as string);
@@ -314,17 +158,15 @@ export async function TaxonomiesAdminPanel({
         staff={staffOptions}
         globalAuthoriserIds={globalAuthoriserIds}
         scopedApproverIds={scopedApproverIds}
-        actions={{
-          addItem,
-          updateItem,
-          toggleActive,
-          deleteItem,
-          reorderTaxonomy,
-          removeAuthoriser,
-          addScopedAuthoriser,
-          removeScopedTarget,
-          removeScopedAuthoriser,
-        }}
+        addItem={addTaxonomyItem}
+        updateItem={updateTaxonomyItem}
+        toggleActive={toggleTaxonomyActive}
+        deleteItem={deleteTaxonomyItem}
+        reorderTaxonomy={reorderTaxonomy}
+        removeAuthoriser={removeLoaAuthoriser}
+        addScopedAuthoriser={addScopedAuthoriser}
+        removeScopedTarget={removeScopedTarget}
+        removeScopedAuthoriser={removeScopedAuthoriser}
       />
     </div>
   );
