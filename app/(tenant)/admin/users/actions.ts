@@ -24,6 +24,7 @@ async function runAction(fn: () => Promise<void>): Promise<ActionResult> {
   try {
     await fn();
     revalidatePath("/admin/users");
+    revalidatePath("/admin");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: actionError(e) };
