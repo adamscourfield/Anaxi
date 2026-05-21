@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature } from "@/lib/guards";
+import { requireFeatureForPage } from "@/lib/guards";
 import { canManageLoa } from "@/lib/loa";
 import { businessDaysBetween } from "@/lib/leaveDates";
 import { isPendingStatus, loaStatusLabel, normalizeLoaStatus } from "@/lib/leaveStatus";
@@ -188,7 +188,7 @@ export default async function LeaveDetailPage({
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const user = await getSessionUserOrThrow();
-  await requireFeature(user.tenantId, "LEAVE");
+  await requireFeatureForPage(user.tenantId, "LEAVE");
 
   const request = await prisma.lOARequest.findFirst({
     where: { id: params.id, tenantId: user.tenantId },

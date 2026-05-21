@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/rbac";
 import { SessionUser } from "@/lib/types";
@@ -6,19 +7,31 @@ import {
   type LeaveApprovalGroupRecord,
 } from "@/modules/authz";
 
+function isLeaveApprovalSchemaUnavailable(err: unknown): boolean {
+  return (
+    err instanceof Prisma.PrismaClientKnownRequestError &&
+    (err.code === "P2021" || err.code === "P2010")
+  );
+}
+
 async function loadLeaveApprovalGroups(tenantId: string): Promise<LeaveApprovalGroupRecord[]> {
-  const groups = await prisma.leaveApprovalGroup.findMany({
-    where: { tenantId },
-    include: {
-      approvers: { select: { approverUserId: true } },
-      scopes: { select: { subjectUserId: true } },
-    },
-  });
-  return groups.map((g) => ({
-    appliesTo: g.appliesTo,
-    approverUserIds: g.approvers.map((a) => a.approverUserId),
-    subjectUserIds: g.scopes.map((s) => s.subjectUserId),
-  }));
+  try {
+    const groups = await prisma.leaveApprovalGroup.findMany({
+      where: { tenantId },
+      include: {
+        approvers: { select: { approverUserId: true } },
+        scopes: { select: { subjectUserId: true } },
+      },
+    });
+    return groups.map((g) => ({
+      appliesTo: g.appliesTo,
+      approverUserIds: g.approvers.map((a) => a.approverUserId),
+      subjectUserIds: g.scopes.map((s) => s.subjectUserId),
+    }));
+  } catch (err) {
+    if (isLeaveApprovalSchemaUnavailable(err)) return [];
+    throw err;
+  }
 }
 
 function canApproveViaGroups(

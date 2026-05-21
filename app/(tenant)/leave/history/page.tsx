@@ -1,5 +1,5 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature } from "@/lib/guards";
+import { requireFeatureForPage } from "@/lib/guards";
 import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
@@ -9,7 +9,7 @@ import { mapLoaRequestToLeaveRow } from "@/modules/leave/leaveRow";
 
 export default async function LeaveHistoryPage() {
   const user = await getSessionUserOrThrow();
-  await requireFeature(user.tenantId, "LEAVE");
+  await requireFeatureForPage(user.tenantId, "LEAVE");
   const isManager = await canManageLoa(user);
   const manageableIds = await loaManageableRequesterIds(user);
 

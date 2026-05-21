@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature } from "@/lib/guards";
+import { requireFeatureForPage } from "@/lib/guards";
 import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
 import { isApprovedStatus, isDeniedStatus, isPendingStatus } from "@/lib/leaveStatus";
 import { prisma } from "@/lib/prisma";
@@ -18,7 +18,7 @@ export default async function LeaveCalendarPage({
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const user = await getSessionUserOrThrow();
-  await requireFeature(user.tenantId, "LEAVE");
+  await requireFeatureForPage(user.tenantId, "LEAVE");
   const isApprover = await canManageLoa(user);
   const manageableIds = await loaManageableRequesterIds(user);
 
