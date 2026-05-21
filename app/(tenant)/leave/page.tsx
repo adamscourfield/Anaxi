@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature } from "@/lib/guards";
+import { requireFeatureForPage } from "@/lib/guards";
 import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
 import { isPendingStatus, loaStatusUiBucket } from "@/lib/leaveStatus";
 import { prisma } from "@/lib/prisma";
@@ -20,12 +20,14 @@ export default async function LeavePage({
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const user = await getSessionUserOrThrow();
-  await requireFeature(user.tenantId, "LEAVE");
-  const isApprover = await canManageLoa(user);
-  const manageableIds = await loaManageableRequesterIds(user);
+  await requireFeatureForPage(user.tenantId, "LEAVE");
 
   const view = String(searchParams?.view || "list");
+  const isCalendar = view === "calendar";
   const monthParam = String(searchParams?.month || "");
+
+  const isApprover = await canManageLoa(user);
+  const manageableIds = await loaManageableRequesterIds(user);
 
   let calendarDate = new Date();
   if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
@@ -55,13 +57,13 @@ export default async function LeavePage({
   const hasAnyListRows = pendingRows.length > 0 || completedRows.length > 0;
   const monthQuery = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth() + 1).padStart(2, "0")}`;
 
-  const calendarRequests = await fetchLeaveCalendarMonthRequests({
-    tenantId: user.tenantId,
-    viewer: user,
-    monthKey: monthQuery,
-  });
-
-  const isCalendar = view === "calendar";
+  const calendarRequests = isCalendar
+    ? await fetchLeaveCalendarMonthRequests({
+        tenantId: user.tenantId,
+        viewer: user,
+        monthKey: monthQuery,
+      })
+    : [];
 
   return (
     <div className="space-y-8">

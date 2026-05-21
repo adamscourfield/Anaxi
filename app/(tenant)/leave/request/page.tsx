@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature } from "@/lib/guards";
+import { requireFeatureForPage } from "@/lib/guards";
 import { businessDaysBetween } from "@/lib/leaveDates";
 import { leavePolicyMessageForCode, LEAVE_MEDICAL_MIN_BUSINESS_DAYS, LEAVE_NOTICE_HOURS } from "@/lib/leavePolicy";
 import { approvedStatusFilter, isPendingStatus } from "@/lib/leaveStatus";
@@ -19,7 +19,7 @@ export default async function LeaveRequestPage({
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
   const user = await getSessionUserOrThrow();
-  await requireFeature(user.tenantId, "LEAVE");
+  await requireFeatureForPage(user.tenantId, "LEAVE");
   const reasons = await prisma.loaReason.findMany({
     where: { tenantId: user.tenantId, active: true },
     orderBy: { label: "asc" },

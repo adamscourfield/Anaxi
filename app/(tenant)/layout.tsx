@@ -29,19 +29,21 @@ export default async function TenantLayout({ children }: { children: React.React
   ]);
 
   const canSeeOnCallBadge = hasPermission(user.role, "oncall:view_all");
-  const isApprover = await canManageLoa(user);
 
-  const [onCallCount, leaveCount] = await Promise.all([
-    canSeeOnCallBadge ? getOpenOnCallCount(user.tenantId) : Promise.resolve(0),
-    isApprover
-      ? (async () => {
-          const manageableIds = await loaManageableRequesterIds(user);
-          return prisma.lOARequest.count({
-            where: loaPendingApprovalWhere(user.tenantId, user.id, manageableIds),
-          });
-        })()
-      : Promise.resolve(0),
-  ]);
+  let leaveCount = 0;
+  try {
+    const isApprover = await canManageLoa(user);
+    if (isApprover) {
+      const manageableIds = await loaManageableRequesterIds(user);
+      leaveCount = await prisma.lOARequest.count({
+        where: loaPendingApprovalWhere(user.tenantId, user.id, manageableIds),
+      });
+    }
+  } catch {
+    leaveCount = 0;
+  }
+
+  const onCallCount = canSeeOnCallBadge ? await getOpenOnCallCount(user.tenantId) : 0;
 
   const tenantName = tenant?.name || "School";
   const tenantOptions = isSuperAdmin
