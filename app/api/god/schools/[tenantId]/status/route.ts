@@ -4,7 +4,8 @@ import { requireSuperAdminUser } from "@/lib/admin";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { withApi } from "@/lib/apiRoute";
 
-export const POST = withApi(async function POST(req: Request, { params }: { params: { tenantId: string } }) {
+export const POST = withApi(async function POST(req: Request, { params }: { params: Promise<{ tenantId: string }> }) {
+  const resolvedParams = await params;
   const actor = await requireSuperAdminUser();
   const form = await req.formData();
   try {
@@ -17,10 +18,10 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const before = await prisma.tenant.findUnique({ where: { id: params.tenantId }, select: { status: true } });
+  const before = await prisma.tenant.findUnique({ where: { id: resolvedParams.tenantId }, select: { status: true } });
   if (!before) return NextResponse.json({ error: "School not found" }, { status: 404 });
 
-  const updated = await prisma.tenant.update({ where: { id: params.tenantId }, data: { status } });
+  const updated = await prisma.tenant.update({ where: { id: resolvedParams.tenantId }, data: { status } });
 
   await (prisma as any).auditLog.create({
     data: {
@@ -34,5 +35,5 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
     },
   });
 
-  return NextResponse.redirect(new URL(`/god/schools/${params.tenantId}`, req.url));
+  return NextResponse.redirect(new URL(`/god/schools/${resolvedParams.tenantId}`, req.url));
 });

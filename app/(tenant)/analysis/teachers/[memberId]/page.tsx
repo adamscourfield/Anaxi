@@ -162,23 +162,25 @@ export default async function TeacherProfilePage({
   params,
   searchParams,
 }: {
-  params: { memberId: string };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: Promise<{ memberId: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
+  const resolvedParams = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
 
-  const rawWindow = Number(searchParams?.window ?? "21");
+  const rawWindow = Number(resolvedSearchParams.window ?? "21");
   const windowDays = WINDOW_OPTIONS.includes(rawWindow as (typeof WINDOW_OPTIONS)[number])
     ? (rawWindow as (typeof WINDOW_OPTIONS)[number])
     : 21;
 
-  const refRaw = typeof searchParams?.ref === "string" ? searchParams.ref : "";
+  const refRaw = typeof resolvedSearchParams.ref === "string" ? resolvedSearchParams.ref : "";
   const refSource = refRaw === "instruction" || refRaw === "explorer" ? refRaw : undefined;
 
-  const highlightSignal = typeof searchParams?.signal === "string" ? searchParams.signal : null;
+  const highlightSignal = typeof resolvedSearchParams.signal === "string" ? resolvedSearchParams.signal : null;
 
-  const teacherId = params.memberId;
+  const teacherId = resolvedParams.memberId;
 
   const [hodMemberships, coachAssignments, teacherDeptMemberships, settings] = await Promise.all([
     (prisma as any).departmentMembership.findMany({

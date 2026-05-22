@@ -8,9 +8,10 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export default async function InviteAcceptPage({ params }: { params: { token: string } }) {
+export default async function InviteAcceptPage({ params }: { params: Promise<{ token: string }> }) {
+  const resolvedParams = await params;
   const invite = await (prisma as any).schoolAdminInvite.findUnique({
-    where: { tokenHash: hashToken(params.token) },
+    where: { tokenHash: hashToken(resolvedParams.token) },
     include: { tenant: true },
   });
 
@@ -58,7 +59,7 @@ export default async function InviteAcceptPage({ params }: { params: { token: st
                 className="field"
               />
             </div>
-            <input type="hidden" name="token" value={params.token} />
+            <input type="hidden" name="token" value={resolvedParams.token} />
             <Button type="submit" className="w-full">
               Accept invite
             </Button>

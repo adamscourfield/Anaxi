@@ -23,6 +23,10 @@ const FORBIDDEN_MESSAGES = new Set([
   "only the requester can cancel",
 ]);
 
+function isNextDynamicServerUsageError(message: string): boolean {
+  return message.startsWith("Dynamic server usage:");
+}
+
 export function apiErrorResponse(err: unknown, fallbackMessage = "Request failed"): NextResponse {
   if (err instanceof ZodError) {
     return NextResponse.json(
@@ -53,7 +57,9 @@ export function apiErrorResponse(err: unknown, fallbackMessage = "Request failed
         return NextResponse.json({ error: message }, { status: 400 });
       }
       if (isProduction()) {
-        captureException(err);
+        if (!isNextDynamicServerUsageError(message)) {
+          captureException(err);
+        }
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
       }
       return NextResponse.json({ error: message }, { status: 400 });

@@ -6,8 +6,9 @@ import { resolveOnCallRequest } from "@/modules/oncall/service";
 import { sendOnCallNotification } from "@/modules/oncall/notifications";
 import { apiErrorResponse } from "@/lib/apiErrors";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const resolvedParams = await params;
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "ON_CALL");
     if (!hasOnCallPermission(user.role, "oncall:resolve")) {
@@ -15,7 +16,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
 
     const body = await req.json().catch(() => ({}));
-    const request = await resolveOnCallRequest(params.id, user.tenantId, user.id, body);
+    const request = await resolveOnCallRequest(resolvedParams.id, user.tenantId, user.id, body);
     await sendOnCallNotification(user.tenantId, request, "resolved");
 
     return NextResponse.json(request);

@@ -29,7 +29,7 @@
     "bcryptjs": "^2.4.3",
     "csv-parse": "^5.5.6",
     "jose": "^5.6.3",
-    "next": "14.2.5",
+    "next": "15.5.18",
     "next-auth": "^4.24.13",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -44,13 +44,17 @@
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.5",
-    "postcss": "^8.4.47",
+    "eslint-config-next": "^15.5.18",
+    "postcss": "8.5.10",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.13",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
-    "vitest": "^2.1.2"
+    "vitest": "^4.1.7"
+  },
+  "overrides": {
+    "uuid": "11.1.1",
+    "postcss": "8.5.10"
   }
 }

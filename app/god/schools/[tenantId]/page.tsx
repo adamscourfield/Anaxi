@@ -31,17 +31,19 @@ export default async function SchoolDetailPage({
   params,
   searchParams,
 }: {
-  params: { tenantId: string };
-  searchParams?: { inviteCreated?: string };
+  params: Promise<{ tenantId: string }>;
+  searchParams?: Promise<{ inviteCreated?: string }>;
 }) {
   await requireSuperAdminUser();
-  const csrfToken = getCsrfToken();
+  const csrfToken = await getCsrfToken();
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
 
   const invitePreview =
-    searchParams?.inviteCreated === "1" ? readGodInvitePreview(params.tenantId) : null;
+    resolvedSearchParams?.inviteCreated === "1" ? await readGodInvitePreview(resolvedParams.tenantId) : null;
 
   const school = await prisma.tenant.findUnique({
-    where: { id: params.tenantId },
+    where: { id: resolvedParams.tenantId },
     include: {
       features: true,
       users: {

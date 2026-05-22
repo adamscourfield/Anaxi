@@ -6,7 +6,7 @@ export function godInviteCookieName(tenantId: string) {
   return `${COOKIE_PREFIX}${tenantId}`;
 }
 
-export function readGodInvitePreview(tenantId: string): string | null {
-  const store = cookies();
+export async function readGodInvitePreview(tenantId: string): Promise<string | null> {
+  const store = await cookies();
   return store.get(godInviteCookieName(tenantId))?.value ?? null;
 }

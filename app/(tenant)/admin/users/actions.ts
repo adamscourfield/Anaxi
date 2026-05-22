@@ -33,6 +33,7 @@ async function runAction(fn: () => Promise<void>): Promise<ActionResult> {
 
 export async function createUser(formData: FormData): Promise<ActionResult> {
   return runAction(async () => {
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const fullName = String(formData.get("fullName") || "").trim();
     const email = String(formData.get("email") || "")
@@ -60,6 +61,7 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
 
 export async function toggleActive(formData: FormData): Promise<ActionResult> {
   return runAction(async () => {
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const id = String(formData.get("id"));
     await assertAdminCanMutateUser(admin, id, admin.tenantId);
@@ -73,6 +75,7 @@ export async function toggleActive(formData: FormData): Promise<ActionResult> {
 
 export async function resetPassword(formData: FormData): Promise<ActionResult> {
   return runAction(async () => {
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const id = String(formData.get("id"));
     await assertAdminCanMutateUser(admin, id, admin.tenantId);
@@ -87,6 +90,7 @@ export async function resetPassword(formData: FormData): Promise<ActionResult> {
 
 export async function updateUserRole(formData: FormData): Promise<ActionResult> {
   return runAction(async () => {
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const userId = String(formData.get("userId") || "");
     const role = String(formData.get("role") || "");
@@ -102,6 +106,7 @@ export async function updateUserRole(formData: FormData): Promise<ActionResult> 
 
 export async function updateUser(formData: FormData): Promise<ActionResult> {
   return runAction(async () => {
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const userId = String(formData.get("userId") || "");
     const role = String(formData.get("role") || "");

@@ -19,7 +19,7 @@ const DEFAULT_MODULES = [
 
 export default async function NewSchoolPage() {
   await requireSuperAdminUser();
-  const csrfToken = getCsrfToken();
+  const csrfToken = await getCsrfToken();
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 p-6">

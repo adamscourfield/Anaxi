@@ -5,10 +5,11 @@ import { withApi } from "@/lib/apiRoute";
 
 export const POST = withApi(async function POST(
   _req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const resolvedParams = await params;
   const user = await getSessionUserOrThrow();
-  const result = await markNotificationRead(user.id, params.id);
+  const result = await markNotificationRead(user.id, resolvedParams.id);
   if (result.count === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

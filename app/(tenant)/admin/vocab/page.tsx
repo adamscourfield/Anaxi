@@ -2,6 +2,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
@@ -14,6 +15,7 @@ export default async function AdminVocabPage() {
 
   async function saveVocab(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     for (const key of REQUIRED_KEYS) {
       const singular = String(formData.get(`${key}_singular`) || "");

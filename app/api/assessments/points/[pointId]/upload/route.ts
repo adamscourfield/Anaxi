@@ -26,14 +26,15 @@ import { withApi } from "@/lib/apiRoute";
 
 export const POST = withApi(async function POST(
   req: Request,
-  { params }: { params: { pointId: string } }
+  { params }: { params: Promise<{ pointId: string }> }
 ) {
+  const resolvedParams = await params;
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
   requireAssessmentWrite(user);
 
   const point = await prisma.assessmentPoint.findFirst({
-    where: { id: params.pointId, tenantId: user.tenantId },
+    where: { id: resolvedParams.pointId, tenantId: user.tenantId },
     include: { cycle: { select: { id: true, label: true, qualificationType: true } } },
   });
   if (!point) return NextResponse.json({ error: "Result point not found" }, { status: 404 });
@@ -122,13 +123,13 @@ export const POST = withApi(async function POST(
 
   for (const [subject, records] of recordsBySubject) {
     let assessment = await prisma.assessment.findFirst({
-      where: { tenantId: user.tenantId, pointId: params.pointId, subject, yearGroup },
+      where: { tenantId: user.tenantId, pointId: resolvedParams.pointId, subject, yearGroup },
     });
 
     if (!assessment) {
       assessment = await createAssessment({
         tenantId: user.tenantId,
-        pointId: params.pointId,
+        pointId: resolvedParams.pointId,
         subject,
         yearGroup,
         title: `${subject} — ${yearGroup} (${point.label})`,

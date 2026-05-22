@@ -7,13 +7,14 @@ import { withApi } from "@/lib/apiRoute";
 
 export const GET = withApi(async function GET(
   _req: Request,
-  { params }: { params: { pointId: string } }
+  { params }: { params: Promise<{ pointId: string }> }
 ) {
+  const resolvedParams = await params;
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
 
   const point = await prisma.assessmentPoint.findFirst({
-    where: { id: params.pointId, tenantId: user.tenantId },
+    where: { id: resolvedParams.pointId, tenantId: user.tenantId },
     include: {
       cycle: {
         select: {
@@ -50,14 +51,15 @@ export const GET = withApi(async function GET(
 
 export const PATCH = withApi(async function PATCH(
   req: Request,
-  { params }: { params: { pointId: string } }
+  { params }: { params: Promise<{ pointId: string }> }
 ) {
+  const resolvedParams = await params;
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
   requireAssessmentWrite(user);
 
   const point = await prisma.assessmentPoint.findFirst({
-    where: { id: params.pointId, tenantId: user.tenantId },
+    where: { id: resolvedParams.pointId, tenantId: user.tenantId },
   });
   if (!point) return NextResponse.json({ error: "Result point not found" }, { status: 404 });
 
@@ -70,7 +72,7 @@ export const PATCH = withApi(async function PATCH(
   }
 
   const updated = await prisma.assessmentPoint.update({
-    where: { id: params.pointId },
+    where: { id: resolvedParams.pointId },
     data: {
       ...(resultStatus ? { resultStatus } : {}),
     },

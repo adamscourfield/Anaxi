@@ -10,13 +10,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { prisma } from "@/lib/prisma";
 
-export default async function MeetingDetailPage({ params }: { params: { id: string } }) {
+export default async function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "MEETINGS");
+  const resolvedParams = await params;
 
   let meeting: any;
   try {
-    meeting = await getMeetingDetail(user.tenantId, params.id);
+    meeting = await getMeetingDetail(user.tenantId, resolvedParams.id);
   } catch {
     notFound();
   }

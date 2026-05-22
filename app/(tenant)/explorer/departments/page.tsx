@@ -63,11 +63,12 @@ function deriveStatus(
 export default async function DepartmentsPage({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   /* ---- Auth & feature gate ---- */
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
+  const resolvedSearchParams = (await searchParams) ?? {};
 
   const viewerContext = await buildViewerContext(user);
 
@@ -76,14 +77,14 @@ export default async function DepartmentsPage({
   const showExport = canExportExplorer(viewerContext);
 
   /* ---- Search params ---- */
-  const rawWindow = String(searchParams.windowDays ?? "21");
+  const rawWindow = String(resolvedSearchParams.windowDays ?? "21");
   const windowDays: WindowDays = isValidWindow(rawWindow)
     ? (Number(rawWindow) as WindowDays)
     : 21;
 
   const rawDeptId =
-    typeof searchParams.departmentId === "string"
-      ? searchParams.departmentId
+    typeof resolvedSearchParams.departmentId === "string"
+      ? resolvedSearchParams.departmentId
       : undefined;
 
   /* ---- Scoping: HODs only see their departments ---- */

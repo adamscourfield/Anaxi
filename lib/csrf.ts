@@ -10,10 +10,12 @@ import {
 export { CSRF_COOKIE, CSRF_COOKIE_OPTIONS, CSRF_HEADER, createCsrfToken };
 
 /** Read CSRF token (cookie is created in middleware, not in Server Components). */
-export function getCsrfToken(): string {
-  const fromHeader = headers().get(CSRF_HEADER);
+export async function getCsrfToken(): Promise<string> {
+  const headerStore = await headers();
+  const fromHeader = headerStore.get(CSRF_HEADER);
   if (fromHeader) return fromHeader;
-  return cookies().get(CSRF_COOKIE)?.value ?? "";
+  const cookieStore = await cookies();
+  return cookieStore.get(CSRF_COOKIE)?.value ?? "";
 }
 
 /** @deprecated Use {@link getCsrfToken}. Cookie is issued in middleware. */
@@ -30,7 +32,7 @@ export function validateCsrfToken(submitted: string | null | undefined, cookieVa
 }
 
 export async function assertCsrfFromForm(form: FormData): Promise<void> {
-  const store = cookies();
+  const store = await cookies();
   const cookie = store.get(CSRF_COOKIE)?.value;
   const submitted = String(form.get("_csrf") ?? "");
   if (!validateCsrfToken(submitted, cookie)) {

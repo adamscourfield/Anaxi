@@ -32,3 +32,13 @@ export async function assertAdminCanMutateUser(actor: SessionUser, targetUserId:
   });
   if (target?.role === "SUPER_ADMIN") throw new Error("FORBIDDEN");
 }
+
+export async function assertUsersBelongToTenant(tenantId: string, userIds: string[]) {
+  const uniqueIds = [...new Set(userIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return;
+
+  const count = await prisma.user.count({
+    where: { tenantId, id: { in: uniqueIds } },
+  });
+  if (count !== uniqueIds.length) throw new Error("FORBIDDEN");
+}

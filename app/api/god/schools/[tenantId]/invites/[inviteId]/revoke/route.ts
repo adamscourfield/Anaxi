@@ -4,7 +4,8 @@ import { requireSuperAdminUser } from "@/lib/admin";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { withApi } from "@/lib/apiRoute";
 
-export const POST = withApi(async function POST(req: Request, { params }: { params: { tenantId: string; inviteId: string } }) {
+export const POST = withApi(async function POST(req: Request, { params }: { params: Promise<{ tenantId: string; inviteId: string }> }) {
+  const resolvedParams = await params;
   const actor = await requireSuperAdminUser();
   const form = await req.formData();
   try {
@@ -14,7 +15,7 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
   }
 
   const invite = await (prisma as any).schoolAdminInvite.findFirst({
-    where: { id: params.inviteId, tenantId: params.tenantId },
+    where: { id: resolvedParams.inviteId, tenantId: resolvedParams.tenantId },
   });
   if (!invite) return NextResponse.json({ error: "Invite not found" }, { status: 404 });
 
@@ -27,7 +28,7 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
 
   await (prisma as any).auditLog.create({
     data: {
-      tenantId: params.tenantId,
+      tenantId: resolvedParams.tenantId,
       actorUserId: actor.id,
       action: "school.admin.invite.revoke",
       targetType: "SchoolAdminInvite",
@@ -36,5 +37,5 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
     },
   });
 
-  return NextResponse.redirect(new URL(`/god/schools/${params.tenantId}`, req.url));
+  return NextResponse.redirect(new URL(`/god/schools/${resolvedParams.tenantId}`, req.url));
 });

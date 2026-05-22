@@ -4,12 +4,13 @@ import { requireFeature } from "@/lib/guards";
 import { getMeetingDetail } from "@/modules/meetings/service";
 import { apiErrorResponse } from "@/lib/apiErrors";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const resolvedParams = await params;
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "MEETINGS");
 
-    const meeting = await getMeetingDetail(user.tenantId, params.id);
+    const meeting = await getMeetingDetail(user.tenantId, resolvedParams.id);
 
     const isAttendee = meeting.attendees.some((a: any) => a.userId === user.id);
     const isCreator = meeting.createdByUserId === user.id;

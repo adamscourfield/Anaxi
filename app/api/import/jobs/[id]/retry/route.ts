@@ -8,8 +8,9 @@ import { prisma } from "@/lib/prisma";
 import { runSnapshotImport } from "@/modules/students/runSnapshotImport";
 import type { SnapshotMapping } from "@/modules/students/snapshot-import";
 
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const resolvedParams = await params;
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "STUDENTS_IMPORT");
     if (!hasPermission(user.role, "import:write")) {
@@ -17,7 +18,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     }
 
     const original = await (prisma as any).importJob.findFirst({
-      where: { id: params.id, tenantId: user.tenantId },
+      where: { id: resolvedParams.id, tenantId: user.tenantId },
     });
     if (!original) return NextResponse.json({ error: "Not found" }, { status: 404 });
     if (original.status !== "FAILED") {

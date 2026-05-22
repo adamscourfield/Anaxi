@@ -1086,10 +1086,11 @@ async function resolveCpdDepartmentForAnalytics(
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
+  const sp = (await searchParams) ?? {};
 
   const [hodMemberships, coachAssignments] = await Promise.all([
     (prisma as any).departmentMembership.findMany({
@@ -1100,15 +1101,14 @@ export default async function AnalyticsPage({
   const hodDepartmentIds = (hodMemberships as any[]).map((m: any) => m.departmentId);
   const coacheeUserIds = (coachAssignments as any[]).map((a: any) => a.coacheeUserId);
 
-  const rawTab = typeof searchParams?.tab === "string" ? searchParams.tab : "teachers";
+  const rawTab = typeof sp.tab === "string" ? sp.tab : "teachers";
   const activeTab: Tab = TABS.includes(rawTab as Tab) ? (rawTab as Tab) : "teachers";
 
-  const rawWindow = Number(searchParams?.window ?? "21");
+  const rawWindow = Number(sp.window ?? "21");
   const windowDays = WINDOW_OPTIONS.includes(rawWindow as (typeof WINDOW_OPTIONS)[number])
     ? (rawWindow as (typeof WINDOW_OPTIONS)[number])
     : 21;
 
-  const sp = searchParams ?? {};
   const rawTeacherSort = typeof sp.sort === "string" ? sp.sort : "";
   const rawTeacherDir = typeof sp.dir === "string" ? sp.dir : "";
   const teacherSortPreserve: Record<string, string> = {};

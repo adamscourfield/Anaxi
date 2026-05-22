@@ -1371,9 +1371,10 @@ const db = prisma as PrismaWithExtras;
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[]>;
+  searchParams?: Promise<Record<string, string | string[]>>;
 }) {
   const user = await getSessionUserOrThrow();
+  const resolvedSearchParams = (await searchParams) ?? {};
 
   const coachAssignments =
     user.role === "LEADER"
@@ -1386,9 +1387,9 @@ export default async function HomePage({
   const settings = await db.tenantSettings.findUnique({
     where: { tenantId: user.tenantId },
   });
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const cookieWindow = parseInt(cookieStore.get(INSIGHT_WINDOW_COOKIE)?.value ?? "", 10);
-  const rawWindow = typeof searchParams?.window === "string" ? parseInt(searchParams.window, 10) : NaN;
+  const rawWindow = typeof resolvedSearchParams.window === "string" ? parseInt(resolvedSearchParams.window, 10) : NaN;
   const windowDays: number = ALLOWED_WINDOW_DAYS.includes(rawWindow)
     ? rawWindow
     : ALLOWED_WINDOW_DAYS.includes(cookieWindow)
@@ -1466,7 +1467,7 @@ export default async function HomePage({
     }
 
     if (variant === "hod") {
-      const rawDept = typeof searchParams?.dept === "string" ? searchParams.dept : null;
+      const rawDept = typeof resolvedSearchParams.dept === "string" ? resolvedSearchParams.dept : null;
       const { allDepts, activeDeptId, deptName, deptCpdRows, filteredTeacherRows, selfProfile, wholeSchoolTop1 } = await hydrateHodHomeData({ user, windowDays, searchDeptId: rawDept });
 
       if (!hasAnalysisFeature || !activeDeptId) {
@@ -1561,7 +1562,7 @@ export default async function HomePage({
   };
 
   const content = await pageContent();
-  const rawDeptQuery = typeof searchParams?.dept === "string" ? `dept=${searchParams.dept}` : undefined;
+  const rawDeptQuery = typeof resolvedSearchParams.dept === "string" ? `dept=${resolvedSearchParams.dept}` : undefined;
 
   return (
     <div className="w-full min-w-0 space-y-10">

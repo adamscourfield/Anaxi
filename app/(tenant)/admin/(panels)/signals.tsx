@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { adminSectionPath, revalidateAdmin } from "@/lib/admin-sections";
+import { adminSectionPath } from "@/lib/admin-sections";
+import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { requireAdminUser } from "@/lib/admin";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import { requireFeature } from "@/lib/guards";
 import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
@@ -16,6 +18,7 @@ export async function SignalsAdminPanel() {
 
   async function saveAll(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
 
@@ -32,6 +35,7 @@ export async function SignalsAdminPanel() {
 
   async function resetOne(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
     const key = String(formData.get("signalKey") || "");
@@ -46,6 +50,7 @@ export async function SignalsAdminPanel() {
 
   async function resetAll(_formData?: FormData) {
     "use server";
+    await assertSafeServerAction(_formData);
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
     for (const signal of getAllSignalDefinitionsForTenantLabels()) {
@@ -92,4 +97,3 @@ export async function SignalsAdminPanel() {
     </div>
   );
 }
-

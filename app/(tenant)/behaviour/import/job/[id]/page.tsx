@@ -14,14 +14,15 @@ import { StatusPill } from "@/components/ui/status-pill";
 export default async function ImportJobPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS_IMPORT");
   if (!hasPermission(user.role, "import:write")) redirect("/tenant");
+  const resolvedParams = await params;
 
   const job = await (prisma as any).importJob.findFirst({
-    where: { id: params.id, tenantId: user.tenantId },
+    where: { id: resolvedParams.id, tenantId: user.tenantId },
     include: { errors: { orderBy: { rowNumber: "asc" } } },
   });
   if (!job) notFound();

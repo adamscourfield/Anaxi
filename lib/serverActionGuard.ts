@@ -23,7 +23,7 @@ function allowedHosts(): Set<string> {
 export async function assertSafeServerAction(formData?: FormData): Promise<void> {
   if (!isProduction()) return;
 
-  const headerList = headers();
+  const headerList = await headers();
   const allowed = allowedHosts();
   const host = headerList.get("x-forwarded-host") || headerList.get("host");
   const origin = headerList.get("origin");
@@ -43,7 +43,7 @@ export async function assertSafeServerAction(formData?: FormData): Promise<void>
   }
 
   if (formData?.has("_csrf")) {
-    const cookie = cookies().get(CSRF_COOKIE)?.value;
+    const cookie = (await cookies()).get(CSRF_COOKIE)?.value;
     const submitted = String(formData.get("_csrf") ?? "");
     if (!validateCsrfToken(submitted, cookie)) {
       throw new Error("CSRF_VALIDATION_FAILED");

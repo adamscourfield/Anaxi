@@ -6,13 +6,14 @@ import { withApi } from "@/lib/apiRoute";
 
 export const GET = withApi(async function GET(
   _req: Request,
-  { params }: { params: { cycleId: string } }
+  { params }: { params: Promise<{ cycleId: string }> }
 ) {
+  const resolvedParams = await params;
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
 
   const cycle = await prisma.assessmentCycle.findFirst({
-    where: { id: params.cycleId, tenantId: user.tenantId },
+    where: { id: resolvedParams.cycleId, tenantId: user.tenantId },
     include: {
       points: {
         orderBy: { ordinal: "asc" },
@@ -43,14 +44,15 @@ export const GET = withApi(async function GET(
 
 export const PATCH = withApi(async function PATCH(
   req: Request,
-  { params }: { params: { cycleId: string } }
+  { params }: { params: Promise<{ cycleId: string }> }
 ) {
+  const resolvedParams = await params;
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
   requireAssessmentWrite(user);
 
   const cycle = await prisma.assessmentCycle.findFirst({
-    where: { id: params.cycleId, tenantId: user.tenantId },
+    where: { id: resolvedParams.cycleId, tenantId: user.tenantId },
   });
   if (!cycle) return NextResponse.json({ error: "Cycle not found" }, { status: 404 });
 
@@ -58,7 +60,7 @@ export const PATCH = withApi(async function PATCH(
   const { status, isActive } = body;
 
   const updated = await prisma.assessmentCycle.update({
-    where: { id: params.cycleId },
+    where: { id: resolvedParams.cycleId },
     data: {
       ...(status !== undefined ? { status } : {}),
       ...(isActive !== undefined ? { isActive } : {}),

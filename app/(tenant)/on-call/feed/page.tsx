@@ -17,14 +17,19 @@ const FEED_STATUS_PILL: Record<string, PillVariant> = {
   CANCELLED: "error",
 };
 
-export default async function OnCallFeedPage({ searchParams }: { searchParams: Record<string, string | undefined> }) {
+export default async function OnCallFeedPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | undefined>>;
+}) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ON_CALL");
   const vocab = await getTenantVocab(user.tenantId);
+  const resolvedSearchParams = (await searchParams) ?? {};
 
-  const status = searchParams.status || "";
-  const yearGroup = searchParams.yearGroup || "";
-  const emailError = searchParams.emailError || "";
+  const status = resolvedSearchParams.status || "";
+  const yearGroup = resolvedSearchParams.yearGroup || "";
+  const emailError = resolvedSearchParams.emailError || "";
   const start = new Date();
   start.setHours(0, 0, 0, 0);
 

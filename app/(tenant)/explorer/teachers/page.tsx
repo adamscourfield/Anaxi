@@ -65,10 +65,11 @@ function zeroPad(n: number): string {
 export default async function ExplorerTeachersPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
+  const resolvedSearchParams = (await searchParams) ?? {};
 
   const viewerContext = await buildViewerContext(user);
 
@@ -85,30 +86,30 @@ export default async function ExplorerTeachersPage({
 
   // ─── Parse search params ────────────────────────────────────────────────────
   const windowDays = parseWindow(
-    typeof searchParams?.windowDays === "string" ? searchParams.windowDays : undefined,
+    typeof resolvedSearchParams.windowDays === "string" ? resolvedSearchParams.windowDays : undefined,
   );
 
   const mode =
-    typeof searchParams?.mode === "string" && searchParams.mode === "priorities"
+    typeof resolvedSearchParams.mode === "string" && resolvedSearchParams.mode === "priorities"
       ? "priorities"
       : "pivot";
 
   const sort =
-    typeof searchParams?.sort === "string" &&
-    ["drift", "coverage", "name"].includes(searchParams.sort)
-      ? (searchParams.sort as "drift" | "coverage" | "name")
+    typeof resolvedSearchParams.sort === "string" &&
+    ["drift", "coverage", "name"].includes(resolvedSearchParams.sort)
+      ? (resolvedSearchParams.sort as "drift" | "coverage" | "name")
       : "drift";
 
   const dir =
-    typeof searchParams?.dir === "string" && ["asc", "desc"].includes(searchParams.dir)
-      ? (searchParams.dir as "asc" | "desc")
+    typeof resolvedSearchParams.dir === "string" && ["asc", "desc"].includes(resolvedSearchParams.dir)
+      ? (resolvedSearchParams.dir as "asc" | "desc")
       : "desc";
 
   const departmentId =
-    typeof searchParams?.departmentId === "string" ? searchParams.departmentId : undefined;
+    typeof resolvedSearchParams.departmentId === "string" ? resolvedSearchParams.departmentId : undefined;
 
   const rawPage = Number(
-    typeof searchParams?.page === "string" ? searchParams.page : "1",
+    typeof resolvedSearchParams.page === "string" ? resolvedSearchParams.page : "1",
   );
   const page = rawPage >= 1 ? Math.floor(rawPage) : 1;
 

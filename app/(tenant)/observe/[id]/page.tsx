@@ -35,12 +35,13 @@ function formatRole(role: string) {
   return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export default async function ObservationDetailPage({ params }: { params: { id: string } }) {
+export default async function ObservationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
+  const resolvedParams = await params;
 
   const observation = await (prisma as any).observation.findFirst({
-    where: { id: params.id, tenantId: user.tenantId },
+    where: { id: resolvedParams.id, tenantId: user.tenantId },
     include: { observedTeacher: true, observer: true, signals: true },
   });
   if (!observation) notFound();

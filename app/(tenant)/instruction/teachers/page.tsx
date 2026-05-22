@@ -85,10 +85,11 @@ async function resolvePivotTeacherFilter(args: {
 export default async function InstructionTeachersPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
+  const resolvedSearchParams = (await searchParams) ?? {};
 
   const [hodMemberships, coachAssignments] = await Promise.all([
     (prisma as any).departmentMembership.findMany({
@@ -113,32 +114,32 @@ export default async function InstructionTeachersPage({
   const heatmapKeys = signalDefs.map((s) => s.key).slice(0, 6);
 
   const rawWindow = Number(
-    typeof searchParams?.windowDays === "string" ? searchParams.windowDays : "21",
+    typeof resolvedSearchParams.windowDays === "string" ? resolvedSearchParams.windowDays : "21",
   );
   const windowDays: WindowDays = VALID_WINDOWS.includes(rawWindow as WindowDays)
     ? (rawWindow as WindowDays)
     : 21;
 
   const mode =
-    typeof searchParams?.mode === "string" && searchParams.mode === "priorities"
+    typeof resolvedSearchParams.mode === "string" && resolvedSearchParams.mode === "priorities"
       ? "priorities"
       : "pivot";
 
   const sort =
-    typeof searchParams?.sort === "string" &&
-    ["drift", "coverage", "name"].includes(searchParams.sort)
-      ? (searchParams.sort as "drift" | "coverage" | "name")
+    typeof resolvedSearchParams.sort === "string" &&
+    ["drift", "coverage", "name"].includes(resolvedSearchParams.sort)
+      ? (resolvedSearchParams.sort as "drift" | "coverage" | "name")
       : "drift";
 
   const dir =
-    typeof searchParams?.dir === "string" && ["asc", "desc"].includes(searchParams.dir)
-      ? (searchParams.dir as "asc" | "desc")
+    typeof resolvedSearchParams.dir === "string" && ["asc", "desc"].includes(resolvedSearchParams.dir)
+      ? (resolvedSearchParams.dir as "asc" | "desc")
       : "desc";
 
   const departmentId =
-    typeof searchParams?.departmentId === "string" ? searchParams.departmentId : undefined;
+    typeof resolvedSearchParams.departmentId === "string" ? resolvedSearchParams.departmentId : undefined;
 
-  const rawPage = Number(typeof searchParams?.page === "string" ? searchParams.page : "1");
+  const rawPage = Number(typeof resolvedSearchParams.page === "string" ? resolvedSearchParams.page : "1");
   const page = rawPage >= 1 ? Math.floor(rawPage) : 1;
 
   const departments: { id: string; name: string }[] = await (prisma as any).department.findMany({

@@ -11,13 +11,14 @@ const PAGE_SIZE = 30;
 export default async function GodAuditPage({
   searchParams,
 }: {
-  searchParams?: { action?: string; tenantId?: string; page?: string };
+  searchParams?: Promise<{ action?: string; tenantId?: string; page?: string }>;
 }) {
   await requireSuperAdminUser();
+  const resolvedSearchParams = await searchParams;
 
-  const action = searchParams?.action?.trim() || "";
-  const tenantId = searchParams?.tenantId?.trim() || "";
-  const page = Math.max(1, Number(searchParams?.page ?? "1") || 1);
+  const action = resolvedSearchParams?.action?.trim() || "";
+  const tenantId = resolvedSearchParams?.tenantId?.trim() || "";
+  const page = Math.max(1, Number(resolvedSearchParams?.page ?? "1") || 1);
 
   const where: any = {
     ...(action ? { action: { contains: action, mode: "insensitive" } } : {}),

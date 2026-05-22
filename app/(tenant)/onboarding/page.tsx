@@ -33,10 +33,11 @@ const BEHAVIOUR_FIELDS = [
 export default async function OnboardingPage({
   searchParams,
 }: {
-  searchParams: { step?: string };
+  searchParams?: Promise<{ step?: string }>;
 }) {
   const user = await requireAdminUser();
-  const step = parseInt(searchParams?.step ?? "1");
+  const resolvedSearchParams = await searchParams;
+  const step = parseInt(resolvedSearchParams?.step ?? "1");
 
   const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } });
   const features = await prisma.tenantFeature.findMany({ where: { tenantId: user.tenantId } });

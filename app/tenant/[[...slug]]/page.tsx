@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 
-export default function TenantCompatPage({
+export default async function TenantCompatPage({
   params,
 }: {
-  params: { slug?: string[] };
+  params: Promise<{ slug?: string[] }>;
 }) {
-  const { slug } = params;
+  const { slug } = await params;
 
   if (!slug || slug.length === 0) {
     redirect("/home");

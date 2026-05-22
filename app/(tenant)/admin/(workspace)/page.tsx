@@ -4,8 +4,9 @@ import { renderAdminPanel } from "@/app/(tenant)/admin/(panels)/render-panel";
 export default async function AdminWorkspacePage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const section = parseAdminSection(searchParams?.section);
-  return renderAdminPanel(section, searchParams);
+  const params = (await searchParams) ?? {};
+  const section = parseAdminSection(params.section);
+  return renderAdminPanel(section, params);
 }

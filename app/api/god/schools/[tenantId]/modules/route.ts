@@ -21,7 +21,8 @@ const ALLOWED_MODULES = new Set([
   "ASSESSMENTS",
 ]);
 
-export const POST = withApi(async function POST(req: Request, { params }: { params: { tenantId: string } }) {
+export const POST = withApi(async function POST(req: Request, { params }: { params: Promise<{ tenantId: string }> }) {
+  const resolvedParams = await params;
   const actor = await requireSuperAdminUser();
   const form = await req.formData();
   try {
@@ -36,16 +37,16 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
       .filter((m) => ALLOWED_MODULES.has(m))
   );
 
-  const tenant = await prisma.tenant.findUnique({ where: { id: params.tenantId } });
+  const tenant = await prisma.tenant.findUnique({ where: { id: resolvedParams.tenantId } });
   if (!tenant) return NextResponse.json({ error: "School not found" }, { status: 404 });
 
-  const existing = await prisma.tenantFeature.findMany({ where: { tenantId: params.tenantId } });
+  const existing = await prisma.tenantFeature.findMany({ where: { tenantId: resolvedParams.tenantId } });
 
   const upserts = Array.from(enabledModules).map((key) =>
     prisma.tenantFeature.upsert({
-      where: { tenantId_key: { tenantId: params.tenantId, key } },
+      where: { tenantId_key: { tenantId: resolvedParams.tenantId, key } },
       update: { enabled: true },
-      create: { tenantId: params.tenantId, key, enabled: true },
+      create: { tenantId: resolvedParams.tenantId, key, enabled: true },
     })
   );
 
@@ -57,15 +58,15 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
 
   await (prisma as any).auditLog.create({
     data: {
-      tenantId: params.tenantId,
+      tenantId: resolvedParams.tenantId,
       actorUserId: actor.id,
       action: "school.modules.update",
       targetType: "Tenant",
-      targetId: params.tenantId,
+      targetId: resolvedParams.tenantId,
       beforeJson: { enabled: existing.filter((f) => f.enabled).map((f) => f.key) },
       afterJson: { enabled: Array.from(enabledModules) },
     },
   });
 
-  return NextResponse.redirect(new URL(`/god/schools/${params.tenantId}`, req.url));
+  return NextResponse.redirect(new URL(`/god/schools/${resolvedParams.tenantId}`, req.url));
 });

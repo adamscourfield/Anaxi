@@ -17,13 +17,14 @@ const MIME: Record<string, string> = {
 
 export const GET = withApi(async function GET(
   _req: Request,
-  { params }: { params: { fileToken: string } },
+  { params }: { params: Promise<{ fileToken: string }> },
 ) {
   try {
+    const resolvedParams = await params;
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "LEAVE");
 
-    const fileToken = path.basename(params.fileToken);
+    const fileToken = path.basename(resolvedParams.fileToken);
     const diskPath = medicalEvidenceDiskPath(user.tenantId, fileToken);
     if (!diskPath) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

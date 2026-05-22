@@ -184,14 +184,16 @@ export default async function LeaveDetailPage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeatureForPage(user.tenantId, "LEAVE");
+  const resolvedParams = await params;
+  const query = (await searchParams) ?? {};
 
   const request = await prisma.lOARequest.findFirst({
-    where: { id: params.id, tenantId: user.tenantId },
+    where: { id: resolvedParams.id, tenantId: user.tenantId },
     include: { requester: true, reason: true },
   });
   if (!request) notFound();
@@ -207,8 +209,8 @@ export default async function LeaveDetailPage({
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.PENDING;
   const canCancel = isOwner && isPendingStatus(request.status);
 
-  const fromCalendar = searchParams?.from === "calendar";
-  const calendarMonth = String(searchParams?.month || "");
+  const fromCalendar = query.from === "calendar";
+  const calendarMonth = String(query.month || "");
   const calendarBackHref =
     fromCalendar && /^\d{4}-\d{2}$/.test(calendarMonth)
       ? `/leave/calendar?month=${calendarMonth}`

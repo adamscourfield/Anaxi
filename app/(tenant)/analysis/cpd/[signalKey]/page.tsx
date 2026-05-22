@@ -84,21 +84,23 @@ export default async function CpdSignalDrilldownPage({
   params,
   searchParams,
 }: {
-  params: { signalKey: string };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: Promise<{ signalKey: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
+  const resolvedParams = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
 
-  const rawWindow = Number(searchParams?.window ?? "21");
+  const rawWindow = Number(resolvedSearchParams.window ?? "21");
   const windowDays = WINDOW_OPTIONS.includes(rawWindow as (typeof WINDOW_OPTIONS)[number])
     ? (rawWindow as (typeof WINDOW_OPTIONS)[number])
     : 21;
 
-  const signalKey = params.signalKey;
+  const signalKey = resolvedParams.signalKey;
 
   const rawDept =
-    typeof searchParams?.department === "string" ? searchParams.department : undefined;
+    typeof resolvedSearchParams.department === "string" ? resolvedSearchParams.department : undefined;
 
   const [hodMemberships, coachAssignments] = await Promise.all([
     (prisma as any).departmentMembership.findMany({

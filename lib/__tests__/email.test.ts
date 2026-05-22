@@ -48,6 +48,7 @@ const activeUserPrefs = {
 };
 
 beforeEach(() => {
+  fetchMock.mockReset();
   vi.stubGlobal("fetch", fetchMock);
   vi.mocked(prisma.user.findUnique).mockResolvedValue(activeUserPrefs as never);
   vi.mocked(prisma.tenantSettings.findUnique).mockResolvedValue({

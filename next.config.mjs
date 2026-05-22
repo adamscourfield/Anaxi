@@ -22,10 +22,7 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    instrumentationHook: true,
-    serverComponentsExternalPackages: ["@prisma/client", "bcryptjs"],
-  },
+  serverExternalPackages: ["@prisma/client", "bcryptjs"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

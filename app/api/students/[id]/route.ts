@@ -5,8 +5,10 @@ import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { calculateStudentDeltas } from "@/modules/students/service";
 import { withApi } from "@/lib/apiRoute";
+import { canAccessStudentRecord } from "@/modules/students/access";
 
-export const GET = withApi(async function GET(req: Request, { params }: { params: { id: string } }) {
+export const GET = withApi(async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS");
   if (!hasPermission(user.role, "students:read")) {
@@ -14,7 +16,7 @@ export const GET = withApi(async function GET(req: Request, { params }: { params
   }
 
   const student = await (prisma as any).student.findFirst({
-    where: { id: params.id, tenantId: user.tenantId },
+    where: { id: resolvedParams.id, tenantId: user.tenantId },
     include: {
       snapshots: { orderBy: { snapshotDate: "desc" }, take: 10 },
       changeFlags: { where: { resolvedAt: null }, orderBy: { createdAt: "desc" } },
@@ -22,6 +24,9 @@ export const GET = withApi(async function GET(req: Request, { params }: { params
   });
 
   if (!student) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(await canAccessStudentRecord(user, student.id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const snaps = (student.snapshots ?? []).map((s: any) => ({
     ...s,

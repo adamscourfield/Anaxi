@@ -176,6 +176,20 @@ export async function POST(req: Request) {
       conflictCount: allConflicts.length,
     });
   } catch (err) {
+    await (prisma as any).timetableImportJob.update({
+      where: { id: importJob.id },
+      data: {
+        status: "FAILED",
+        errorReportJson: [
+          {
+            rowNumber: 0,
+            errorCode: "IMPORT_ERROR",
+            message: err instanceof Error ? err.message : "Timetable import failed",
+          },
+        ],
+        finishedAt: new Date(),
+      },
+    });
     return apiErrorResponse(err);
   }
 }

@@ -5,7 +5,8 @@ import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { withApi } from "@/lib/apiRoute";
 
-export const GET = withApi(async function GET(req: Request, { params }: { params: { id: string } }) {
+export const GET = withApi(async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS_IMPORT");
   if (!hasPermission(user.role, "import:write")) {
@@ -13,7 +14,7 @@ export const GET = withApi(async function GET(req: Request, { params }: { params
   }
 
   const job = await (prisma as any).importJob.findFirst({
-    where: { id: params.id, tenantId: user.tenantId },
+    where: { id: resolvedParams.id, tenantId: user.tenantId },
     include: { errors: { orderBy: { rowNumber: "asc" } } },
   });
 
@@ -40,7 +41,7 @@ export const GET = withApi(async function GET(req: Request, { params }: { params
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="import-errors-${params.id}.csv"`,
+      "Content-Disposition": `attachment; filename="import-errors-${resolvedParams.id}.csv"`,
     },
   });
 });

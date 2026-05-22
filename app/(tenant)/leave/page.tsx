@@ -17,14 +17,15 @@ import { mapLoaRequestToLeaveRow } from "@/modules/leave/leaveRow";
 export default async function LeavePage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeatureForPage(user.tenantId, "LEAVE");
 
-  const view = String(searchParams?.view || "list");
+  const params = (await searchParams) ?? {};
+  const view = String(params.view || "list");
   const isCalendar = view === "calendar";
-  const monthParam = String(searchParams?.month || "");
+  const monthParam = String(params.month || "");
 
   const isApprover = await canManageLoa(user);
   const manageableIds = await loaManageableRequesterIds(user);

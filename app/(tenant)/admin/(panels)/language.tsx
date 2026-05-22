@@ -2,9 +2,10 @@ import Link from "next/link";
 import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import type { ReactNode } from "react";
 import { revalidatePath } from "next/cache";
-import { revalidateAdmin } from "@/lib/admin-sections";
+import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import { requireFeature } from "@/lib/guards";
 import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
@@ -112,6 +113,7 @@ export async function LanguageAdminPanel() {
 
   async function saveBehaviourLabels(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const data: Record<string, string> = {};
     for (const field of BEHAVIOUR_FIELDS) {
@@ -128,6 +130,7 @@ export async function LanguageAdminPanel() {
 
   async function saveVocab(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     for (const key of VOCAB_KEYS) {
       const singular = String(formData.get(`${key}_singular`) || "");
@@ -143,6 +146,7 @@ export async function LanguageAdminPanel() {
 
   async function saveSignalLabels(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
     for (const signal of getAllSignalDefinitionsForTenantLabels()) {
@@ -158,6 +162,7 @@ export async function LanguageAdminPanel() {
 
   async function resetAllSignals(_formData?: FormData) {
     "use server";
+    await assertSafeServerAction(_formData);
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
     for (const signal of getAllSignalDefinitionsForTenantLabels()) {
@@ -171,6 +176,7 @@ export async function LanguageAdminPanel() {
 
   async function resetSignal(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
     const key = String(formData.get("signalKey") || "");
@@ -336,4 +342,3 @@ export async function LanguageAdminPanel() {
     </div>
   );
 }
-

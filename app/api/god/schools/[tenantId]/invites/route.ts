@@ -11,7 +11,8 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export const POST = withApi(async function POST(req: Request, { params }: { params: { tenantId: string } }) {
+export const POST = withApi(async function POST(req: Request, { params }: { params: Promise<{ tenantId: string }> }) {
+  const resolvedParams = await params;
   const actor = await requireSuperAdminUser();
   const form = await req.formData();
   try {
@@ -24,7 +25,7 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
 
   if (!email || !fullName) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-  const tenant = await prisma.tenant.findUnique({ where: { id: params.tenantId } });
+  const tenant = await prisma.tenant.findUnique({ where: { id: resolvedParams.tenantId } });
   if (!tenant) return NextResponse.json({ error: "School not found" }, { status: 404 });
 
   const token = randomBytes(24).toString("hex");

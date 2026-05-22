@@ -11,7 +11,8 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export const POST = withApi(async function POST(req: Request, { params }: { params: { tenantId: string; inviteId: string } }) {
+export const POST = withApi(async function POST(req: Request, { params }: { params: Promise<{ tenantId: string; inviteId: string }> }) {
+  const resolvedParams = await params;
   const actor = await requireSuperAdminUser();
   const form = await req.formData();
   try {
@@ -21,7 +22,7 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
   }
 
   const invite = await (prisma as any).schoolAdminInvite.findFirst({
-    where: { id: params.inviteId, tenantId: params.tenantId },
+    where: { id: resolvedParams.inviteId, tenantId: resolvedParams.tenantId },
   });
   if (!invite) return NextResponse.json({ error: "Invite not found" }, { status: 404 });
   if (invite.acceptedAt) return NextResponse.json({ error: "Invite already accepted" }, { status: 400 });
@@ -37,7 +38,7 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
 
   const inviteUrl = `${new URL(req.url).origin}/invite/${token}`;
 
-  const tenant = await prisma.tenant.findUnique({ where: { id: params.tenantId } });
+  const tenant = await prisma.tenant.findUnique({ where: { id: resolvedParams.tenantId } });
   if (tenant) {
     await sendSchoolAdminInviteEmail({
       to: invite.email,
@@ -50,7 +51,7 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
 
   await (prisma as any).auditLog.create({
     data: {
-      tenantId: params.tenantId,
+      tenantId: resolvedParams.tenantId,
       actorUserId: actor.id,
       action: "school.admin.invite.resend",
       targetType: "SchoolAdminInvite",
@@ -60,14 +61,14 @@ export const POST = withApi(async function POST(req: Request, { params }: { para
   });
 
   const response = NextResponse.redirect(
-    new URL(`/god/schools/${params.tenantId}?inviteCreated=1`, req.url)
+    new URL(`/god/schools/${resolvedParams.tenantId}?inviteCreated=1`, req.url)
   );
-  response.cookies.set(godInviteCookieName(params.tenantId), inviteUrl, {
+  response.cookies.set(godInviteCookieName(resolvedParams.tenantId), inviteUrl, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: 300,
-    path: `/god/schools/${params.tenantId}`,
+    path: `/god/schools/${resolvedParams.tenantId}`,
   });
   return response;
 });

@@ -26,15 +26,16 @@ function scheduleChanged(
   return false;
 }
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const resolvedParams = await params;
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "MEETINGS");
     if (!hasPermission(user.role, "meetings:view_own") && !hasPermission(user.role, "meetings:view_all")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const meeting = await getMeetingDetail(user.tenantId, params.id);
+    const meeting = await getMeetingDetail(user.tenantId, resolvedParams.id);
 
     const isAttendee = meeting.attendees.some((a: { userId: string }) => a.userId === user.id);
     const isCreator = meeting.createdByUserId === user.id;
@@ -48,12 +49,13 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const resolvedParams = await params;
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "MEETINGS");
 
-    const meetingForAuth = await getMeetingDetail(user.tenantId, params.id);
+    const meetingForAuth = await getMeetingDetail(user.tenantId, resolvedParams.id);
     const isCreator = meetingForAuth.createdByUserId === user.id;
     const canPatch = hasPermission(user.role, "meetings:edit") || isCreator;
     if (!canPatch) {
@@ -93,7 +95,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     const notifyUpdate = scheduleChanged(meetingForAuth, input);
-    const meeting = await updateMeeting(user.tenantId, params.id, { id: user.id, role: user.role }, input as any);
+    const meeting = await updateMeeting(user.tenantId, resolvedParams.id, { id: user.id, role: user.role }, input as any);
 
     if (notifyUpdate) {
       void Promise.allSettled(
@@ -122,15 +124,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const resolvedParams = await params;
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "MEETINGS");
     if (!hasPermission(user.role, "meetings:delete")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const meeting = await getMeetingDetail(user.tenantId, params.id);
+    const meeting = await getMeetingDetail(user.tenantId, resolvedParams.id);
 
     void Promise.allSettled(
       meeting.attendees.map(
@@ -149,7 +152,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
       ),
     );
 
-    await deleteMeeting(user.tenantId, params.id, { id: user.id, role: user.role });
+    await deleteMeeting(user.tenantId, resolvedParams.id, { id: user.id, role: user.role });
     return new NextResponse(null, { status: 204 });
   } catch (err) {
     return apiErrorResponse(err);

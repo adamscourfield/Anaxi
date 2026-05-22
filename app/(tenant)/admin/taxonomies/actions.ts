@@ -1,10 +1,12 @@
 "use server";
 
-import { revalidateAdmin } from "@/lib/admin-sections";
+import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 
 export async function addTaxonomyItem(formData: FormData) {
+  await assertSafeServerAction(formData);
   const admin = await requireAdminUser();
   const type = String(formData.get("type"));
   const value = String(formData.get("value") || "").trim();
@@ -53,6 +55,7 @@ export async function addTaxonomyItem(formData: FormData) {
 }
 
 export async function updateTaxonomyItem(formData: FormData) {
+  await assertSafeServerAction(formData);
   const admin = await requireAdminUser();
   const type = String(formData.get("type"));
   const id = String(formData.get("id"));
@@ -66,6 +69,7 @@ export async function updateTaxonomyItem(formData: FormData) {
 }
 
 export async function toggleTaxonomyActive(formData: FormData) {
+  await assertSafeServerAction(formData);
   const admin = await requireAdminUser();
   const type = String(formData.get("type"));
   const id = String(formData.get("id"));
@@ -79,6 +83,7 @@ export async function toggleTaxonomyActive(formData: FormData) {
 }
 
 export async function deleteTaxonomyItem(formData: FormData) {
+  await assertSafeServerAction(formData);
   const admin = await requireAdminUser();
   const type = String(formData.get("type"));
   const id = String(formData.get("id"));
@@ -91,6 +96,7 @@ export async function deleteTaxonomyItem(formData: FormData) {
 }
 
 export async function reorderTaxonomy(formData: FormData) {
+  await assertSafeServerAction(formData);
   const admin = await requireAdminUser();
   const type = String(formData.get("type"));
   const raw = String(formData.get("orderedIds") || "");
@@ -129,6 +135,7 @@ export async function reorderTaxonomy(formData: FormData) {
 }
 
 export async function removeLoaAuthoriser(formData: FormData) {
+  await assertSafeServerAction(formData);
   const admin = await requireAdminUser();
   const id = String(formData.get("id"));
   await (prisma as any).lOAAuthoriser.deleteMany({ where: { id, tenantId: admin.tenantId } });
@@ -136,6 +143,7 @@ export async function removeLoaAuthoriser(formData: FormData) {
 }
 
 export async function addScopedAuthoriser(formData: FormData) {
+  await assertSafeServerAction(formData);
   const admin = await requireAdminUser();
   const approverId = String(formData.get("approverId") || "").trim();
   const targetUserId = String(formData.get("targetUserId") || "").trim();
@@ -149,6 +157,7 @@ export async function addScopedAuthoriser(formData: FormData) {
 }
 
 export async function removeScopedTarget(formData: FormData) {
+  await assertSafeServerAction(formData);
   const admin = await requireAdminUser();
   const id = String(formData.get("id"));
   await (prisma as any).lOAApprovalScope.deleteMany({ where: { id, tenantId: admin.tenantId } });
@@ -156,6 +165,7 @@ export async function removeScopedTarget(formData: FormData) {
 }
 
 export async function removeScopedAuthoriser(formData: FormData) {
+  await assertSafeServerAction(formData);
   const admin = await requireAdminUser();
   const approverId = String(formData.get("approverId"));
   await (prisma as any).lOAApprovalScope.deleteMany({ where: { tenantId: admin.tenantId, approverId } });

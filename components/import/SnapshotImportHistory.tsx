@@ -88,6 +88,8 @@ export function SnapshotImportHistory({
         <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-text">
           Recent Import History
         </h3>
+        {/* API download endpoint; keep a native anchor for file navigation. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a
           href="/api/import/jobs?format=csv"
           className="flex items-center gap-1.5 text-xs font-medium text-muted hover:text-text calm-transition"

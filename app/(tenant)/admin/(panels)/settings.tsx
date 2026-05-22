@@ -1,6 +1,7 @@
-import { revalidateAdmin } from "@/lib/admin-sections";
+import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import { AdminSettingsForms } from "@/components/admin/admin-settings-forms";
 import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 
@@ -11,6 +12,7 @@ export async function SettingsAdminPanel() {
 
   async function saveSettings(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const schoolName = String(formData.get("schoolName") || "").trim();
     const timezone = String(formData.get("timezone") || "Europe/London");
@@ -40,4 +42,3 @@ export async function SettingsAdminPanel() {
     </div>
   );
 }
-

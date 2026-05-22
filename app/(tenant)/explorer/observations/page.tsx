@@ -29,10 +29,11 @@ function formatShortDate(date: Date | string): string {
 export default async function ExplorerObservationsPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
+  const resolvedSearchParams = (await searchParams) ?? {};
 
   const viewerContext = await buildViewerContext(user);
 
@@ -41,17 +42,17 @@ export default async function ExplorerObservationsPage({
   const showExport = canExportExplorer(viewerContext);
 
   // ─── Parse search params ──────────────────────────────────────────────────
-  const rawWindow = typeof searchParams?.windowDays === "string" ? searchParams.windowDays : "21";
+  const rawWindow = typeof resolvedSearchParams.windowDays === "string" ? resolvedSearchParams.windowDays : "21";
   const windowDays: WindowDays = isValidWindow(rawWindow) ? (Number(rawWindow) as WindowDays) : 21;
 
   const departmentId =
-    typeof searchParams?.departmentId === "string" ? searchParams.departmentId : "";
+    typeof resolvedSearchParams.departmentId === "string" ? resolvedSearchParams.departmentId : "";
   const teacherMembershipId =
-    typeof searchParams?.teacherMembershipId === "string" ? searchParams.teacherMembershipId : "";
+    typeof resolvedSearchParams.teacherMembershipId === "string" ? resolvedSearchParams.teacherMembershipId : "";
   const yearGroup =
-    typeof searchParams?.yearGroup === "string" ? searchParams.yearGroup.trim() : "";
+    typeof resolvedSearchParams.yearGroup === "string" ? resolvedSearchParams.yearGroup.trim() : "";
   const subject =
-    typeof searchParams?.subject === "string" ? searchParams.subject.trim() : "";
+    typeof resolvedSearchParams.subject === "string" ? resolvedSearchParams.subject.trim() : "";
 
   // ─── HOD scoping ──────────────────────────────────────────────────────────
   let hodScopedTeacherIds: string[] | null = null;

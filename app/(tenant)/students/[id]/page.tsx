@@ -16,6 +16,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { displayGrade, hasRecordedGrade } from "@/modules/assessments/gradeNormalizer";
 import { canViewStudentAnalysis, canViewTeacherAnalysis } from "@/modules/authz";
 import { computeStudentRiskProfile, RiskBand, Confidence } from "@/modules/analysis/studentRisk";
+import { canAccessStudentRecord } from "@/modules/students/access";
 import { toggleWatchlist } from "@/app/(tenant)/analysis/students/actions";
 import { archiveStudentAction, unarchiveStudentAction } from "../actions";
 
@@ -144,19 +145,21 @@ export default async function StudentDetailPage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS");
+  const resolvedParams = await params;
+  const query = (await searchParams) ?? {};
 
-  const rawWindow = Number(searchParams?.window ?? "21");
+  const rawWindow = Number(query.window ?? "21");
   const windowDays = WINDOW_OPTIONS.includes(rawWindow as (typeof WINDOW_OPTIONS)[number])
     ? (rawWindow as (typeof WINDOW_OPTIONS)[number])
     : 21;
 
   // Contextual back link — callers can pass ?from=/some/path for context-aware navigation
-  const rawFrom = Array.isArray(searchParams?.from) ? searchParams!.from[0] : (searchParams?.from ?? "");
+  const rawFrom = Array.isArray(query.from) ? query.from[0] : (query.from ?? "");
   const backHref =
     rawFrom && rawFrom.startsWith("/") ? rawFrom : "/explorer/students";
   let backLabel = "Back to students";
@@ -171,7 +174,7 @@ export default async function StudentDetailPage({
   });
 
   const student = await (prisma as any).student.findFirst({
-    where: { id: params.id, tenantId: user.tenantId },
+    where: { id: resolvedParams.id, tenantId: user.tenantId },
     include: {
       snapshots: { orderBy: { snapshotDate: "desc" } },
       subjectTeachers: {
@@ -184,6 +187,7 @@ export default async function StudentDetailPage({
     },
   });
   if (!student) notFound();
+  if (!(await canAccessStudentRecord(user, student.id))) notFound();
 
   const analysisFeature = await prisma.tenantFeature.findUnique({
     where: { tenantId_key: { tenantId: user.tenantId, key: "ANALYSIS" } },
@@ -198,7 +202,7 @@ export default async function StudentDetailPage({
   const showAnalysis = analysisFeature?.enabled && canViewAnalysis;
 
   const analysisProfile = showAnalysis
-    ? await computeStudentRiskProfile(user.tenantId, params.id, windowDays, user.id)
+    ? await computeStudentRiskProfile(user.tenantId, resolvedParams.id, windowDays, user.id)
     : null;
 
   const snapshots = student.snapshots as Array<{
@@ -232,7 +236,7 @@ export default async function StudentDetailPage({
       const cyclePickRows = await prisma.assessmentResult.findMany({
         where: {
           tenantId: user.tenantId,
-          studentId: params.id,
+          studentId: resolvedParams.id,
           status: "PRESENT",
           assessment: { point: { cycleId: { in: cycleIds } } },
         },
@@ -277,7 +281,7 @@ export default async function StudentDetailPage({
       const results = await prisma.assessmentResult.findMany({
         where: {
           tenantId: user.tenantId,
-          studentId: params.id,
+          studentId: resolvedParams.id,
           status: "PRESENT",
           assessment: { point: { cycleId: activeCycle.id } },
         },
@@ -430,7 +434,7 @@ export default async function StudentDetailPage({
       </header>
 
       <Suspense fallback={null}>
-        <StudentProfileNav studentId={params.id} />
+        <StudentProfileNav studentId={resolvedParams.id} />
         <StudentProfileTabScroll />
       </Suspense>
 
@@ -498,7 +502,7 @@ export default async function StudentDetailPage({
               {WINDOW_OPTIONS.map((w) => (
                 <Link
                   key={w}
-                  href={`/students/${params.id}?window=${w}`}
+                  href={`/students/${resolvedParams.id}?window=${w}`}
                   className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}
                 >
                   {w} days

@@ -16,10 +16,11 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 export default async function LeaveRequestPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeatureForPage(user.tenantId, "LEAVE");
+  const params = (await searchParams) ?? {};
   const reasons = await prisma.loaReason.findMany({
     where: { tenantId: user.tenantId, active: true },
     orderBy: { label: "asc" },
@@ -40,7 +41,7 @@ export default async function LeaveRequestPage({
     include: { reason: true },
   });
 
-  const errorCode = String(searchParams?.error || "");
+  const errorCode = String(params.error || "");
   const errorMessage = errorCode ? leavePolicyMessageForCode(errorCode) : null;
 
   const leaveSummary: Record<string, number> = {};

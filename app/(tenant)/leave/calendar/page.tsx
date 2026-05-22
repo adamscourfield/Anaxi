@@ -15,14 +15,15 @@ import { loaPendingApprovalWhere, loaRequestVisibilityWhere } from "@/modules/le
 export default async function LeaveCalendarPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeatureForPage(user.tenantId, "LEAVE");
   const isApprover = await canManageLoa(user);
   const manageableIds = await loaManageableRequesterIds(user);
 
-  const monthParam = String(searchParams?.month || "");
+  const params = (await searchParams) ?? {};
+  const monthParam = String(params.month || "");
   let calendarDate = new Date();
   if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
     const [y, m] = monthParam.split("-").map(Number);

@@ -4,6 +4,7 @@ import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { withApi } from "@/lib/apiRoute";
+import { getAccessibleStudentIdsForUser } from "@/modules/students/access";
 
 export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
@@ -20,9 +21,14 @@ export const GET = withApi(async function GET(req: Request) {
   const page = Number(searchParams.get("page") ?? 1);
   const pageSize = 50;
   const skip = (page - 1) * pageSize;
+  const accessibleIds = await getAccessibleStudentIdsForUser(user);
+  if (accessibleIds !== null && accessibleIds.size === 0) {
+    return NextResponse.json({ students: [], total: 0, page, pageSize });
+  }
 
   const where: any = {
     tenantId: user.tenantId,
+    ...(accessibleIds !== null ? { id: { in: Array.from(accessibleIds) } } : {}),
     ...(yearGroup ? { yearGroup } : {}),
     ...(send !== null ? { sendFlag: send === "true" } : {}),
     ...(pp !== null ? { ppFlag: pp === "true" } : {}),

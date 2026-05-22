@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { AdminSectionLink } from "@/components/admin/admin-section-link";
-import { adminSectionPath, revalidateAdmin } from "@/lib/admin-sections";
+import { adminSectionPath } from "@/lib/admin-sections";
+import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
-import { requireAdminUser } from "@/lib/admin";
+import { assertUsersBelongToTenant, requireAdminUser } from "@/lib/admin";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -29,6 +31,7 @@ export async function LeaveApprovalsAdminPanel() {
 
   async function createGroup(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const name = String(formData.get("name") || "").trim();
     const appliesTo = String(formData.get("appliesTo") || "ALL_STAFF");
@@ -39,6 +42,7 @@ export async function LeaveApprovalsAdminPanel() {
 
   async function deleteGroup(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const id = String(formData.get("id"));
     await (prisma as any).leaveApprovalGroup.deleteMany({ where: { id, tenantId: admin.tenantId } });
@@ -47,10 +51,12 @@ export async function LeaveApprovalsAdminPanel() {
 
   async function addApprover(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const groupId = String(formData.get("groupId"));
     const approverUserId = String(formData.get("approverUserId") || "");
     if (!approverUserId) return;
+    await assertUsersBelongToTenant(admin.tenantId, [approverUserId]);
     const grp = await (prisma as any).leaveApprovalGroup.findFirst({ where: { id: groupId, tenantId: admin.tenantId } });
     if (!grp) return;
     await (prisma as any).leaveApprovalGroupMember.upsert({
@@ -63,9 +69,11 @@ export async function LeaveApprovalsAdminPanel() {
 
   async function removeApprover(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const groupId = String(formData.get("groupId"));
     const approverUserId = String(formData.get("approverUserId"));
+    await assertUsersBelongToTenant(admin.tenantId, [approverUserId]);
     const grp = await (prisma as any).leaveApprovalGroup.findFirst({ where: { id: groupId, tenantId: admin.tenantId } });
     if (!grp) return;
     await (prisma as any).leaveApprovalGroupMember.deleteMany({ where: { groupId, approverUserId } });
@@ -74,10 +82,12 @@ export async function LeaveApprovalsAdminPanel() {
 
   async function addScope(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const groupId = String(formData.get("groupId"));
     const subjectUserId = String(formData.get("subjectUserId") || "");
     if (!subjectUserId) return;
+    await assertUsersBelongToTenant(admin.tenantId, [subjectUserId]);
     const grp = await (prisma as any).leaveApprovalGroup.findFirst({ where: { id: groupId, tenantId: admin.tenantId } });
     if (!grp) return;
     await (prisma as any).leaveApprovalGroupScope.upsert({
@@ -90,9 +100,11 @@ export async function LeaveApprovalsAdminPanel() {
 
   async function removeScope(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const groupId = String(formData.get("groupId"));
     const subjectUserId = String(formData.get("subjectUserId"));
+    await assertUsersBelongToTenant(admin.tenantId, [subjectUserId]);
     const grp = await (prisma as any).leaveApprovalGroup.findFirst({ where: { id: groupId, tenantId: admin.tenantId } });
     if (!grp) return;
     await (prisma as any).leaveApprovalGroupScope.deleteMany({ where: { groupId, subjectUserId } });
@@ -312,4 +324,3 @@ export async function LeaveApprovalsAdminPanel() {
     </div>
   );
 }
-

@@ -33,16 +33,21 @@ function formatTimeUntil(date: Date): string {
   return remainingMins > 0 ? `Starts in ${hrs}h ${remainingMins}m` : `Starts in ${hrs}h`;
 }
 
-export default async function MeetingsPage({ searchParams }: { searchParams?: { scope?: string; type?: string } }) {
+export default async function MeetingsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ scope?: string; type?: string }>;
+}) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "MEETINGS");
+  const resolvedSearchParams = await searchParams;
 
   const canViewAll = hasPermission(user.role, "meetings:view_all");
-  const scope = searchParams?.scope === "mine" ? "mine" : "all";
+  const scope = resolvedSearchParams?.scope === "mine" ? "mine" : "all";
   const showAll = canViewAll && scope !== "mine";
   const validTypes = Object.keys(MEETING_TYPE_LABELS);
   const type =
-    searchParams?.type && validTypes.includes(searchParams.type) ? searchParams.type : undefined;
+    resolvedSearchParams?.type && validTypes.includes(resolvedSearchParams.type) ? resolvedSearchParams.type : undefined;
   const statsUserId = showAll ? undefined : user.id;
 
   const [meetings, stats] = await Promise.all([

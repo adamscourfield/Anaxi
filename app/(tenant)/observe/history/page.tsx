@@ -61,32 +61,33 @@ function formatLongDate(date: Date | string): string {
 export default async function ObservationHistoryPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
+  const resolvedSearchParams = (await searchParams) ?? {};
 
-  const teacherId = String(searchParams?.teacherId || "");
-  const subject = String(searchParams?.subject || "").trim();
-  const yearGroup = String(searchParams?.yearGroup || "").trim();
-  const observerId = String(searchParams?.observerId || "");
-  const from = String(searchParams?.from || "");
-  const to = String(searchParams?.to || "");
-  const phaseRaw = String(searchParams?.phase || "").trim();
+  const teacherId = String(resolvedSearchParams.teacherId || "");
+  const subject = String(resolvedSearchParams.subject || "").trim();
+  const yearGroup = String(resolvedSearchParams.yearGroup || "").trim();
+  const observerId = String(resolvedSearchParams.observerId || "");
+  const from = String(resolvedSearchParams.from || "");
+  const to = String(resolvedSearchParams.to || "");
+  const phaseRaw = String(resolvedSearchParams.phase || "").trim();
   const phaseFilter = OBSERVATION_HISTORY_PHASE_FILTERS.has(phaseRaw) ? phaseRaw : "";
-  const signalKeyRaw = String(searchParams?.signalKey || "").trim();
+  const signalKeyRaw = String(resolvedSearchParams.signalKey || "").trim();
   const schoolType = await getTenantSchoolType(user.tenantId);
   const tenantSignalDefs = getSignalDefinitionsForSchoolType(schoolType);
   const validSignalKeys = new Set(tenantSignalDefs.map((s) => s.key));
   const signalKeyFilter = (validSignalKeys as Set<string>).has(signalKeyRaw) ? signalKeyRaw : "";
-  const page = Math.max(1, Number(searchParams?.page || "1"));
-  const windowDays = Number(searchParams?.window || "");
+  const page = Math.max(1, Number(resolvedSearchParams.page || "1"));
+  const windowDays = Number(resolvedSearchParams.window || "");
   const useWindow = Number.isFinite(windowDays) && windowDays > 0 && !from && !to;
   const windowStart = useWindow ? new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000) : null;
-  const analysisPresetRaw = String(searchParams?.analysis || "").trim();
+  const analysisPresetRaw = String(resolvedSearchParams.analysis || "").trim();
   const analysisPreset = parseObservationAnalysisPreset(analysisPresetRaw) ?? "26w";
-  const coachingCoachIdRaw = String(searchParams?.coachingCoach || "").trim();
-  const coachingCoacheeIdRaw = String(searchParams?.coachingCoachee || "").trim();
+  const coachingCoachIdRaw = String(resolvedSearchParams.coachingCoach || "").trim();
+  const coachingCoacheeIdRaw = String(resolvedSearchParams.coachingCoachee || "").trim();
 
   const [teachers, observers, hodMemberships, coachAssignments, tenantSignalLabels] = await Promise.all([
     (prisma as any).user.findMany({ where: { tenantId: user.tenantId, isActive: true }, orderBy: { fullName: "asc" } }),

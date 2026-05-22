@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { revalidateAdmin } from "@/lib/admin-sections";
+import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
-import { requireAdminUser } from "@/lib/admin";
+import { assertUsersBelongToTenant, requireAdminUser } from "@/lib/admin";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { DepartmentsAdminTable } from "../departments/DepartmentsAdminTable";
@@ -27,6 +28,7 @@ export async function DepartmentsAdminPanel() {
 
   async function createDepartment(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const name = String(formData.get("name") || "").trim();
     if (!name) return;
@@ -40,6 +42,7 @@ export async function DepartmentsAdminPanel() {
 
   async function renameDepartment(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const id = String(formData.get("id"));
     const name = String(formData.get("name") || "").trim();
@@ -53,6 +56,7 @@ export async function DepartmentsAdminPanel() {
 
   async function deleteDepartment(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const id = String(formData.get("id"));
     await (prisma as any).department.deleteMany({ where: { id, tenantId: admin.tenantId } });
@@ -61,10 +65,12 @@ export async function DepartmentsAdminPanel() {
 
   async function addMember(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const departmentId = String(formData.get("departmentId"));
     const userId = String(formData.get("userId") || "");
     if (!userId) return;
+    await assertUsersBelongToTenant(admin.tenantId, [userId]);
     const dept = await (prisma as any).department.findFirst({ where: { id: departmentId, tenantId: admin.tenantId } });
     if (!dept) return;
     await (prisma as any).departmentMembership.upsert({
@@ -77,9 +83,11 @@ export async function DepartmentsAdminPanel() {
 
   async function removeMember(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const departmentId = String(formData.get("departmentId"));
     const userId = String(formData.get("userId"));
+    await assertUsersBelongToTenant(admin.tenantId, [userId]);
     const dept = await (prisma as any).department.findFirst({ where: { id: departmentId, tenantId: admin.tenantId } });
     if (!dept) return;
     await (prisma as any).departmentMembership.deleteMany({ where: { departmentId, userId } });
@@ -88,10 +96,12 @@ export async function DepartmentsAdminPanel() {
 
   async function toggleHod(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const departmentId = String(formData.get("departmentId"));
     const userId = String(formData.get("userId"));
     const current = String(formData.get("current")) === "true";
+    await assertUsersBelongToTenant(admin.tenantId, [userId]);
     const dept = await (prisma as any).department.findFirst({ where: { id: departmentId, tenantId: admin.tenantId } });
     if (!dept) return;
     await (prisma as any).departmentMembership.updateMany({
@@ -174,4 +184,3 @@ export async function DepartmentsAdminPanel() {
     </div>
   );
 }
-

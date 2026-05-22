@@ -6,13 +6,14 @@ import { withApi } from "@/lib/apiRoute";
 
 export const GET = withApi(async function GET(
   _req: Request,
-  { params }: { params: { jobId: string } },
+  { params }: { params: Promise<{ jobId: string }> },
 ) {
+  const resolvedParams = await params;
   const user = await getSessionUserOrThrow();
   requireRole(user, ["ADMIN"]);
 
   const job = await (prisma as any).timetableImportJob.findFirst({
-    where: { id: params.jobId, tenantId: user.tenantId },
+    where: { id: resolvedParams.jobId, tenantId: user.tenantId },
   });
 
   if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -38,7 +39,7 @@ export const GET = withApi(async function GET(
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="timetable-conflicts-${params.jobId}.csv"`,
+      "Content-Disposition": `attachment; filename="timetable-conflicts-${resolvedParams.jobId}.csv"`,
     },
   });
 });

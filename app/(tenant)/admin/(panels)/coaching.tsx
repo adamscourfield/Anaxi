@@ -1,6 +1,7 @@
-import { revalidateAdmin } from "@/lib/admin-sections";
+import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
-import { requireAdminUser } from "@/lib/admin";
+import { assertUsersBelongToTenant, requireAdminUser } from "@/lib/admin";
+import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { CoachingAssignmentsView } from "@/components/admin/coaching-assignments-view";
@@ -45,10 +46,12 @@ export async function CoachingAdminPanel() {
 
   async function addAssignment(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const coachUserId = String(formData.get("coachUserId") || "");
     const coacheeUserId = String(formData.get("coacheeUserId") || "");
     if (!coachUserId || !coacheeUserId || coachUserId === coacheeUserId) return;
+    await assertUsersBelongToTenant(admin.tenantId, [coachUserId, coacheeUserId]);
     await (prisma as any).coachAssignment.upsert({
       where: { tenantId_coachUserId_coacheeUserId: { tenantId: admin.tenantId, coachUserId, coacheeUserId } },
       update: {},
@@ -59,9 +62,11 @@ export async function CoachingAdminPanel() {
 
   async function removeAssignment(formData: FormData) {
     "use server";
+    await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     const coachUserId = String(formData.get("coachUserId"));
     const coacheeUserId = String(formData.get("coacheeUserId"));
+    await assertUsersBelongToTenant(admin.tenantId, [coachUserId, coacheeUserId]);
     await (prisma as any).coachAssignment.deleteMany({
       where: { tenantId: admin.tenantId, coachUserId, coacheeUserId },
     });
@@ -144,4 +149,3 @@ export async function CoachingAdminPanel() {
     </div>
   );
 }
-
