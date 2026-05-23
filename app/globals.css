@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 @layer base {
-  /* Primary page titles: Space Grotesk everywhere `main` wraps app content. */
+  /* Primary page titles use Space Mono; normal app text remains Inter. */
   main h1 {
-    font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+    font-family: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
   /* Opt out: use class `font-sans` on the h1 when Inter is intentional. */
   main h1.font-sans {
@@ -323,10 +323,10 @@ body {
   color: var(--on-surface);
 }
 
-/* ── Display / headline: Space Grotesk (matches Tailwind `font-display`) ─ */
+/* ── Display / headline: Inter by default; page-title h1s are overridden below. ─ */
 .font-display,
 .font-headline {
-  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────── */
@@ -1409,7 +1409,7 @@ textarea:focus-visible {
 
 .anx-page-title {
   text-wrap: pretty;
-  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: var(--anx-page-title-size);
   font-weight: 700;
   line-height: 1.1;
@@ -2264,12 +2264,12 @@ textarea:focus-visible {
    If these sit inside @layer base/components, layered utilities can win and
    strip display fonts or radii; unlayered always wins over layered CSS. */
 
-/* Page titles + display utility: Space Grotesk (opt out with .font-sans on h1). */
+/* Page titles only: Space Mono. Everything else should inherit Inter. */
 .anx-page-title,
-.font-display,
-.font-headline,
+h1.font-display,
+h1.font-headline,
 main h1:not(.font-sans) {
-  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 /* Micro-radius: reinforce Tailwind rounded-* → 4px (see tailwind.config.ts). */

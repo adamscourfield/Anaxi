@@ -15,9 +15,9 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['var(--font-space-grotesk)', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
         serif: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['var(--font-jetbrains-mono)', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+        mono: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         // ── Design System: The Modern Academic Ledger ──────────────
