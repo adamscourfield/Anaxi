@@ -326,7 +326,7 @@ body {
 /* ── Display / headline: Inter by default; page-title h1s are overridden below. ─ */
 .font-display,
 .font-headline {
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────── */
