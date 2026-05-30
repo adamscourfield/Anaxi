@@ -1,7 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
-import { Inter, Space_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { SessionProvider } from "@/components/session-provider";
 import { motionRootCssProperties } from "@/lib/motion/tokens";
 
@@ -11,18 +11,23 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const spaceMono = Space_Mono({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-space-mono",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-space-grotesk",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-jetbrains-mono",
 });
 
 /** Inline font stacks so `var(--font-*)` always resolves (layer / hydration safe). */
 const rootFontVars = {
-  "--font-space-mono": spaceMono.style.fontFamily,
   "--font-inter": inter.style.fontFamily,
-  "--font-space-grotesk": spaceMono.style.fontFamily,
-  "--font-jetbrains-mono": inter.style.fontFamily,
+  "--font-space-grotesk": spaceGrotesk.style.fontFamily,
+  "--font-jetbrains-mono": jetbrainsMono.style.fontFamily,
 } as CSSProperties;
 
 export const metadata: Metadata = {
@@ -44,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${spaceMono.variable} ${inter.className}`}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${inter.className}`}
       style={rootFontVars}
     >
       <body className="antialiased bg-[var(--surface-bright)] text-[var(--on-surface)]">
