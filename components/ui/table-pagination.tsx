@@ -34,8 +34,19 @@ type TablePaginationProps = {
   itemLabel?: string;
   className?: string;
   onPageChange?: (page: number) => void;
-  pageHref?: (page: number) => string;
+  /**
+   * Serialisable base href for server components, e.g. "/observe/history?teacherId=..."
+   * The component will preserve existing query params and update the `page` param.
+   */
+  pageHrefBase?: string;
 };
+
+function withPageParam(baseHref: string, page: number): string {
+  const url = new URL(baseHref, "http://localhost");
+  if (page > 1) url.searchParams.set("page", String(page));
+  else url.searchParams.delete("page");
+  return `${url.pathname}${url.search}${url.hash}`;
+}
 
 export function TablePagination({
   page,
@@ -45,7 +56,7 @@ export function TablePagination({
   itemLabel = "items",
   className = "",
   onPageChange,
-  pageHref,
+  pageHrefBase,
 }: TablePaginationProps) {
   if (totalItems === 0 || totalPages <= 1) return null;
 
@@ -56,8 +67,8 @@ export function TablePagination({
 
   const PrevControl =
     safePage > 1 ? (
-      pageHref ? (
-        <Link href={pageHref(safePage - 1)} className={navBtn} aria-label="Previous page">
+      pageHrefBase ? (
+        <Link href={withPageParam(pageHrefBase, safePage - 1)} className={navBtn} aria-label="Previous page">
           <ChevronLeftIcon />
         </Link>
       ) : (
@@ -73,8 +84,8 @@ export function TablePagination({
 
   const NextControl =
     safePage < totalPages ? (
-      pageHref ? (
-        <Link href={pageHref(safePage + 1)} className={navBtn} aria-label="Next page">
+      pageHrefBase ? (
+        <Link href={withPageParam(pageHrefBase, safePage + 1)} className={navBtn} aria-label="Next page">
           <ChevronRightIcon />
         </Link>
       ) : (
@@ -117,8 +128,8 @@ export function TablePagination({
             >
               {p}
             </span>
-          ) : pageHref ? (
-            <Link key={p} href={pageHref(p)} className={`${pageBtn} text-muted hover:bg-surface-container-low hover:text-text`}>
+          ) : pageHrefBase ? (
+            <Link key={p} href={withPageParam(pageHrefBase, p)} className={`${pageBtn} text-muted hover:bg-surface-container-low hover:text-text`}>
               {p}
             </Link>
           ) : (

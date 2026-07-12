@@ -518,7 +518,7 @@ export default async function ObservationHistoryPage({
             totalItems={totalCount as number}
             pageSize={PAGE_SIZE}
             itemLabel="results"
-            pageHref={pageUrl}
+            pageHrefBase={pageUrl(1)}
           />
         </div>
       )}

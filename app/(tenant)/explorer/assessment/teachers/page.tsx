@@ -376,7 +376,7 @@ export default async function AssessmentTeachersPage({
             totalItems={totalFiltered}
             pageSize={PER_PAGE}
             itemLabel="teachers"
-            pageHref={pageUrl}
+            pageHrefBase={pageUrl(1)}
           />
         </div>
       )}

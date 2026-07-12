@@ -574,7 +574,7 @@ export default async function ExplorerTeachersPage({
           totalItems={totalItems}
           pageSize={ITEMS_PER_PAGE}
           itemLabel="teachers"
-          pageHref={pageUrl}
+          pageHrefBase={pageUrl(1)}
           className="mt-4 rounded-xl border border-border/20 bg-[var(--surface-container-lowest)]"
         />
       ) : null}

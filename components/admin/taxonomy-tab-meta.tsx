@@ -1,19 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-
-export const TAXONOMY_TABS = [
-  "loa-reasons",
-  "loa-authorisers",
-  "on-call-reasons",
-  "on-call-locations",
-  "on-call-recipients",
-] as const;
-
-export type TaxonomyTab = (typeof TAXONOMY_TABS)[number];
-
-export const LEAVE_TAXONOMY_TABS: TaxonomyTab[] = ["loa-reasons", "loa-authorisers"];
-export const ON_CALL_TAXONOMY_TABS: TaxonomyTab[] = ["on-call-reasons", "on-call-locations", "on-call-recipients"];
+import {
+  LEAVE_TAXONOMY_TABS,
+  ON_CALL_TAXONOMY_TABS,
+  TAXONOMY_TABS,
+  type TaxonomyTab,
+} from "@/components/admin/taxonomy-tab-meta.shared";
 
 const ICON_WELL_BASE =
   "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border [&_svg]:shrink-0";

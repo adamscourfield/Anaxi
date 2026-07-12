@@ -240,7 +240,7 @@ export default async function StudentsPage({
       totalItems={totalFiltered}
       pageSize={perPage}
       itemLabel="students"
-      pageHref={pageUrl}
+      pageHrefBase={pageUrl(1)}
     />
   );
 

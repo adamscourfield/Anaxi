@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { PageHeader } from "@/components/ui/page-header";
 import { TaxonomiesAdminView } from "@/components/admin/taxonomies-admin-view";
-import { TAXONOMY_TABS, type TaxonomyTab } from "@/components/admin/taxonomy-tab-meta";
+import { TAXONOMY_TABS, type TaxonomyTab } from "@/components/admin/taxonomy-tab-meta.shared";
 import {
   addScopedAuthoriser,
   addTaxonomyItem,

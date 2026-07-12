@@ -10,12 +10,14 @@ import {
   LEAVE_TAXONOMY_TABS,
   ON_CALL_TAXONOMY_TABS,
   TAB_LABELS,
+  TAXONOMY_TABS,
+  type TaxonomyTab,
+} from "@/components/admin/taxonomy-tab-meta.shared";
+import {
   TAB_META,
   TAXONOMY_AUTH_CARD,
   TAXONOMY_ICON_WELL_BASE,
   TAXONOMY_NAV_CARD,
-  TAXONOMY_TABS,
-  type TaxonomyTab,
 } from "@/components/admin/taxonomy-tab-meta";
 import { TaxonomyEditableSection, type TaxonomyRow } from "@/app/(tenant)/admin/taxonomies/TaxonomyEditableSection";
 

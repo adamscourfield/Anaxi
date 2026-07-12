@@ -349,7 +349,7 @@ export default async function AssessmentStudentsPage({
             totalItems={totalFiltered}
             pageSize={PER_PAGE}
             itemLabel="students"
-            pageHref={pageUrl}
+            pageHrefBase={pageUrl(1)}
           />
         </div>
       )}
