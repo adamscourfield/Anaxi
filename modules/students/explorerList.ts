@@ -23,6 +23,7 @@ export type StudentsListFilters = {
   studentSearch: string;
   send: string;
   pp: string;
+  confidence: string;
   watchlistOnly: boolean;
   attendanceBelow80: boolean;
 };
@@ -85,6 +86,9 @@ export function filterStudentRows(
   if (filters.send === "false") result = result.filter((r) => !r.sendFlag);
   if (filters.pp === "true") result = result.filter((r) => r.ppFlag);
   if (filters.pp === "false") result = result.filter((r) => !r.ppFlag);
+  if (filters.confidence === "HIGH" || filters.confidence === "LOW") {
+    result = result.filter((r) => r.confidence === filters.confidence);
+  }
   if (filters.watchlistOnly) result = result.filter((r) => r.onWatchlist);
   if (filters.attendanceBelow80) {
     result = result.filter(
@@ -132,6 +136,7 @@ export type StudentsUrlParams = {
   studentSearch?: string;
   send?: string;
   pp?: string;
+  confidence?: string;
   watchlist?: string;
   attendanceBelow?: string;
   page?: number;
@@ -153,6 +158,7 @@ export function buildStudentsListUrl(
   if (params.studentSearch) merged.set("studentSearch", params.studentSearch);
   if (params.send) merged.set("send", params.send);
   if (params.pp) merged.set("pp", params.pp);
+  if (params.confidence) merged.set("confidence", params.confidence);
   if (params.watchlist === "1") merged.set("watchlist", "1");
   if (params.attendanceBelow === "1") merged.set("attendanceBelow", "1");
   if (params.scope === "my") merged.set("scope", "my");

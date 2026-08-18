@@ -62,6 +62,7 @@ export function StudentsToolbar({
   const [windowDays, setWindowDays] = useState(String(urlBase.windowDays));
   const [send, setSend] = useState(urlBase.send ?? "");
   const [pp, setPp] = useState(urlBase.pp ?? "");
+  const [confidence, setConfidence] = useState(urlBase.confidence ?? "");
   const [watchlist, setWatchlist] = useState(urlBase.watchlist === "1");
   const [view, setView] = useState<StudentsViewMode>(
     urlBase.view ?? DEFAULT_VIEW_MODE,
@@ -76,6 +77,7 @@ export function StudentsToolbar({
     setWindowDays(String(urlBase.windowDays));
     setSend(urlBase.send ?? "");
     setPp(urlBase.pp ?? "");
+    setConfidence(urlBase.confidence ?? "");
     setWatchlist(urlBase.watchlist === "1");
     setView(urlBase.view ?? DEFAULT_VIEW_MODE);
   }, [urlBase]);
@@ -99,6 +101,7 @@ export function StudentsToolbar({
         studentSearch: search || undefined,
         send: send || undefined,
         pp: pp || undefined,
+        confidence: confidence || undefined,
         watchlist: watchlist ? "1" : undefined,
         attendanceBelow: urlBase.attendanceBelow,
         scope: urlBase.scope,
@@ -110,6 +113,7 @@ export function StudentsToolbar({
     [
       basePath,
       band,
+      confidence,
       pp,
       router,
       search,
@@ -154,6 +158,7 @@ export function StudentsToolbar({
         studentSearch: search || undefined,
         send: send || undefined,
         pp: pp || undefined,
+        confidence: confidence || undefined,
         watchlist: watchlist ? "1" : undefined,
         attendanceBelow: urlBase.attendanceBelow,
         scope: urlBase.scope,
@@ -327,6 +332,28 @@ export function StudentsToolbar({
               onChange={(v) => {
                 setPp(v);
                 pushParams({ pp: v || undefined });
+              }}
+            />
+          </label>
+
+          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[130px]">
+            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+              Confidence
+            </span>
+            <FormSelect
+              name="confidence"
+              defaultValue={confidence}
+              key={`confidence-${confidence}`}
+              placeholder="All"
+              triggerClassName={triggerWhite}
+              options={[
+                { value: "", label: "All" },
+                { value: "HIGH", label: "High confidence" },
+                { value: "LOW", label: "Low confidence" },
+              ]}
+              onChange={(v) => {
+                setConfidence(v);
+                pushParams({ confidence: v || undefined });
               }}
             />
           </label>

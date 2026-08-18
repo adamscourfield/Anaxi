@@ -95,6 +95,12 @@ function buildActiveChips(
   if (filters.pp === "false") {
     chips.push({ key: "pp", label: "PP: No", removeHref: omit({ pp: undefined }) });
   }
+  if (filters.confidence === "HIGH") {
+    chips.push({ key: "confidence", label: "Confidence: High", removeHref: omit({ confidence: undefined }) });
+  }
+  if (filters.confidence === "LOW") {
+    chips.push({ key: "confidence", label: "Confidence: Low", removeHref: omit({ confidence: undefined }) });
+  }
   if (filters.watchlistOnly) {
     chips.push({
       key: "watchlist",
@@ -145,6 +151,7 @@ export default async function StudentsPage({
   const bandFilter = firstParam(params, "band");
   const sendFilter = firstParam(params, "send");
   const ppFilter = firstParam(params, "pp");
+  const confidenceFilter = firstParam(params, "confidence");
   const watchlistFilter = firstParam(params, "watchlist") === "1";
   const attendanceBelow = firstParam(params, "attendanceBelow") === "1";
   const viewMode = parseViewMode(firstParam(params, "view"), bandFilter);
@@ -155,6 +162,7 @@ export default async function StudentsPage({
     studentSearch ||
     sendFilter ||
     ppFilter ||
+    confidenceFilter ||
     watchlistFilter ||
     attendanceBelow ||
     firstParam(params, "page");
@@ -183,6 +191,7 @@ export default async function StudentsPage({
     studentSearch,
     send: sendFilter,
     pp: ppFilter,
+    confidence: confidenceFilter,
     watchlistOnly: watchlistFilter,
     attendanceBelow80: attendanceBelow,
   };
@@ -198,6 +207,7 @@ export default async function StudentsPage({
     studentSearch: studentSearch || undefined,
     send: sendFilter || undefined,
     pp: ppFilter || undefined,
+    confidence: confidenceFilter || undefined,
     watchlist: watchlistFilter ? "1" : undefined,
     attendanceBelow: attendanceBelow ? "1" : undefined,
   };
