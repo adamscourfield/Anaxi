@@ -100,6 +100,7 @@ function iconFor(href: string) {
   if (href.includes("/observe/history")) return "history";
   if (href.includes("/observe")) return "radar";
   if (href.includes("/instruction")) return "users";
+  if (href === "/explorer/teachers") return "users";
   if (href.includes("/explorer")) return "grid";
   if (href.includes("/assessments")) return "chart";
   if (href.includes("/students")) return "users";
@@ -193,7 +194,7 @@ export function TenantNav({
         ...(has("OBSERVATIONS") ? [navItem("New observation", "/observe/new")] : []),
         ...(has("OBSERVATIONS") ? [navItem("Observation history", "/observe/history")] : []),
         ...(has("ANALYSIS") && canSeePriorities ? [navItem("Priorities", "/analytics")] : []),
-        ...(has("ANALYSIS") && canSeeTeacherDirectory ? [navItem("Teachers", "/instruction/teachers")] : []),
+        ...(has("ANALYSIS") && canSeeTeacherDirectory ? [navItem("Teachers", "/explorer/teachers")] : []),
         ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Explorer", "/explorer")] : []),
       ],
     },

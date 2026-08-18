@@ -9,7 +9,8 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { buildViewerContext } from "@/lib/viewerContext";
 import { VALID_WINDOWS, type WindowDays, parseWindow } from "@/lib/explorerUtils";
-import { canViewExplorer, canExportExplorer } from "@/modules/authz";
+import { canAccessTeacherDirectory } from "@/lib/analysisNav";
+import { canExportExplorer, canViewTeacherAnalysis, getExplorerTeacherScope } from "@/modules/authz";
 import { StatusPill, type PillVariant } from "@/components/ui/status-pill";
 import { Avatar } from "@/components/ui/avatar";
 import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
@@ -73,7 +74,7 @@ export default async function ExplorerTeachersPage({
 
   const viewerContext = await buildViewerContext(user);
 
-  if (!canViewExplorer(viewerContext)) notFound();
+  if (!canAccessTeacherDirectory(user.role, viewerContext.coacheeUserIds.length)) notFound();
 
   const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } });
   const schoolType = settings?.schoolType ?? "SECONDARY";
@@ -126,17 +127,30 @@ export default async function ExplorerTeachersPage({
     ? departments.filter((d) => viewerContext.hodDepartmentIds.includes(d.id))
     : departments;
 
+  // ─── Row-level scope: narrows the query for TEACHER (self) / LEADER (coachees) ──
+  const pivotFilter = getExplorerTeacherScope(viewerContext);
+
+  const deptMemberships = await (prisma as any).departmentMembership.findMany({
+    where: { tenantId: user.tenantId },
+    select: { userId: true, departmentId: true },
+  });
+  const teacherDeptIds = new Map<string, string[]>();
+  for (const m of deptMemberships as { userId: string; departmentId: string }[]) {
+    if (!teacherDeptIds.has(m.userId)) teacherDeptIds.set(m.userId, []);
+    teacherDeptIds.get(m.userId)!.push(m.departmentId);
+  }
+
   // ─── Fetch data ─────────────────────────────────────────────────────────────
   let pivotRows: TeacherPivotRow[] = [];
   let riskRows: TeacherRiskRow[] = [];
 
   if (mode === "pivot") {
-    const result = await computeTeacherPivot(user.tenantId, windowDays);
+    const result = await computeTeacherPivot(user.tenantId, windowDays, pivotFilter);
     pivotRows = result.rows;
   } else {
     const [riskResult, pivotResult] = await Promise.all([
       computeTeacherRiskIndex(user.tenantId, windowDays),
-      computeTeacherPivot(user.tenantId, windowDays),
+      computeTeacherPivot(user.tenantId, windowDays, pivotFilter),
     ]);
     riskRows = riskResult;
     pivotRows = pivotResult.rows;
@@ -169,6 +183,19 @@ export default async function ExplorerTeachersPage({
       }
     }
   }
+
+  // ─── Row-level visibility (TEACHER/LEADER/HOD scoping) ─────────────────────
+  function filterByVisibility<T extends { teacherMembershipId: string }>(rows: T[]): T[] {
+    return rows.filter((r) =>
+      canViewTeacherAnalysis(viewerContext, {
+        teacherUserId: r.teacherMembershipId,
+        teacherDepartmentIds: teacherDeptIds.get(r.teacherMembershipId) ?? [],
+      }),
+    );
+  }
+
+  pivotRows = filterByVisibility(pivotRows);
+  riskRows = filterByVisibility(riskRows);
 
   if (mode === "pivot") {
     const multiplier = dir === "asc" ? 1 : -1;
@@ -271,7 +298,6 @@ export default async function ExplorerTeachersPage({
 
       {/* ── Controls bar (matches teachers table filter design) ───────────── */}
       <TeachersFilterToolbar
-        variant="explorer"
         windowDays={windowDays}
         mode={mode}
         sort={sort}
@@ -291,8 +317,12 @@ export default async function ExplorerTeachersPage({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
                 </svg>
               </div>
-              <p className="text-[0.875rem] font-semibold text-text">No teachers found</p>
-              <p className="mt-1 text-[0.8125rem] text-muted">Try adjusting the window or department filter.</p>
+              <p className="text-[0.875rem] font-semibold text-text">No teachers in scope</p>
+              <p className="mt-1 max-w-md text-center text-[0.8125rem] text-muted">
+                {user.role === "LEADER"
+                  ? "You do not have coaching assignments, or no observations exist for your coachees in this window."
+                  : "Try adjusting the window or department filter."}
+              </p>
             </div>
           ) : (
             <div className="table-shell">
@@ -430,8 +460,12 @@ export default async function ExplorerTeachersPage({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
                 </svg>
               </div>
-              <p className="text-[0.875rem] font-semibold text-text">No teachers found</p>
-              <p className="mt-1 text-[0.8125rem] text-muted">Try adjusting the window or department filter.</p>
+              <p className="text-[0.875rem] font-semibold text-text">No teachers in scope</p>
+              <p className="mt-1 max-w-md text-center text-[0.8125rem] text-muted">
+                {user.role === "LEADER"
+                  ? "You do not have coaching assignments, or no observations exist for your coachees in this window."
+                  : "Try adjusting the window or department filter."}
+              </p>
             </div>
           ) : (
             <div className="table-shell">

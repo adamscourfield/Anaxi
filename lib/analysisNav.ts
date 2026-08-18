@@ -9,7 +9,7 @@ export function canAccessPrioritiesNav(role: UserRole, coacheeCount = 0): boolea
   return false;
 }
 
-/** Teachers directory (/instruction/teachers) — coaches with assignments included. */
+/** Teachers directory (/explorer/teachers) — coaches with assignments included. */
 export function canAccessTeacherDirectory(role: UserRole, coacheeCount = 0): boolean {
   if (hasPermission(role, "analysis:view")) return true;
   if (role === "LEADER" && coacheeCount > 0) return true;

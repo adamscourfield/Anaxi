@@ -289,17 +289,13 @@ export default async function TeacherProfilePage({
   });
 
   const backHref =
-    refSource === "instruction"
-      ? `/instruction/teachers?windowDays=${windowDays}`
-      : refSource === "explorer"
-        ? `/explorer/teachers?windowDays=${windowDays}`
-        : `/analytics?tab=teachers&window=${windowDays}`;
+    refSource === "instruction" || refSource === "explorer"
+      ? `/explorer/teachers?windowDays=${windowDays}`
+      : `/analytics?tab=teachers&window=${windowDays}`;
   const backLabel =
-    refSource === "instruction"
+    refSource === "instruction" || refSource === "explorer"
       ? "← Back to teachers"
-      : refSource === "explorer"
-        ? "← Back to Explorer teachers"
-        : "← Back to teacher priorities";
+      : "← Back to teacher priorities";
 
   const historyHref = `/observe/history?teacherId=${teacherId}&window=${windowDays}`;
   const profileHref = buildWindowHref(teacherId, windowDays, refSource);
@@ -309,7 +305,7 @@ export default async function TeacherProfilePage({
     <div className="space-y-8 pb-10">
       <AnalysisBreadcrumb
         items={[
-          { label: "Teachers", href: "/instruction/teachers" },
+          { label: "Teachers", href: "/explorer/teachers" },
           { label: profile.teacherName },
         ]}
       />
