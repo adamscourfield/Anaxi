@@ -142,7 +142,8 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
   const [location, setLocation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const submitIntentRef = useRef<"draft" | "schedule" | "startNow">("schedule");
+  const [saveAsDraft, setSaveAsDraft] = useState(false);
+  const submitIntentRef = useRef<"schedule" | "startNow">("schedule");
 
   /** Redirect to list for scheduled meetings that are not starting in the next few minutes. */
   const FUTURE_REDIRECT_THRESHOLD_MS = 5 * 60 * 1000;
@@ -181,8 +182,8 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
       ? new Date(startDateTime.getTime() + 60 * 60 * 1000)
       : null;
 
-    const isDraft = intent === "draft";
     const startNow = intent === "startNow";
+    const isDraft = !startNow && saveAsDraft;
 
     const body: Record<string, unknown> = {
       title: data.get("title") as string,
@@ -254,22 +255,12 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
             <button
               type="submit"
               onClick={() => {
-                submitIntentRef.current = "draft";
-              }}
-              disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-container-lowest px-4 py-2.5 text-sm font-semibold text-text calm-transition hover:bg-surface-container-low disabled:opacity-60"
-            >
-              Save as Draft
-            </button>
-            <button
-              type="submit"
-              onClick={() => {
                 submitIntentRef.current = "schedule";
               }}
               disabled={submitting}
               className="inline-flex items-center gap-2 rounded-xl bg-text px-5 py-2.5 text-sm font-semibold text-bg calm-transition hover:opacity-90 disabled:opacity-60"
             >
-              {submitting ? "Creating..." : "Create Meeting"}
+              {submitting ? (saveAsDraft ? "Saving..." : "Creating...") : saveAsDraft ? "Save as Draft" : "Create Meeting"}
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -361,6 +352,22 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
               />
             </div>
           </div>
+
+          {/* Save as draft toggle */}
+          <label className="flex items-start gap-2.5">
+            <input
+              type="checkbox"
+              checked={saveAsDraft}
+              onChange={(e) => setSaveAsDraft(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-border"
+            />
+            <span>
+              <span className="block text-sm font-medium text-text">Save as draft</span>
+              <span className="block text-[12px] text-muted">
+                Keep this unconfirmed for now — you can finalize it later.
+              </span>
+            </span>
+          </label>
 
           {/* Pre-Meeting Notes */}
           <div>

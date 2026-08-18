@@ -68,6 +68,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/anaxi
       NEXTAUTH_SECRET: ci-test-secret
       NEXTAUTH_URL: http://localhost:3000
+      CRON_SECRET: ci-test-cron-secret
       PLAYWRIGHT_BASE_URL: http://localhost:3000
       E2E_EMAIL: sarah.chen@demo.school
       E2E_PASSWORD: Password123!
