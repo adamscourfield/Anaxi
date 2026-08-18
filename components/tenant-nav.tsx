@@ -193,7 +193,10 @@ export function TenantNav({
       items: [
         ...(has("OBSERVATIONS") ? [navItem("New observation", "/observe/new")] : []),
         ...(has("OBSERVATIONS") ? [navItem("Observation history", "/observe/history")] : []),
-        ...(has("ANALYSIS") && canSeePriorities ? [navItem("Priorities", "/analytics")] : []),
+        // Explorer (teachers/students priority views + signals) is now a superset of
+        // Priorities for anyone who can see both — only show Priorities to roles Explorer
+        // doesn't reach (plain TEACHER, LEADER without analysis:view).
+        ...(has("ANALYSIS") && canSeePriorities && !canSeeAnalysis ? [navItem("Priorities", "/analytics")] : []),
         ...(has("ANALYSIS") && canSeeTeacherDirectory ? [navItem("Teachers", "/explorer/teachers")] : []),
         ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Explorer", "/explorer")] : []),
       ],

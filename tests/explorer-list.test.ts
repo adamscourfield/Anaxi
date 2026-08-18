@@ -59,6 +59,7 @@ describe("filterStudentRows", () => {
       studentSearch: "",
       send: "",
       pp: "",
+      confidence: "",
       watchlistOnly: false,
       attendanceBelow80: false,
     });
@@ -73,11 +74,28 @@ describe("filterStudentRows", () => {
       studentSearch: "car",
       send: "",
       pp: "",
+      confidence: "",
       watchlistOnly: false,
       attendanceBelow80: false,
     });
     expect(filtered).toHaveLength(1);
     expect(filtered[0].studentName).toBe("Cara");
+  });
+
+  it("filters by confidence", () => {
+    const mixed = [...rows, row({ studentId: "e", confidence: "LOW", studentName: "Eve" })];
+    const filtered = filterStudentRows(mixed, {
+      view: "all",
+      band: "",
+      yearGroup: "",
+      studentSearch: "",
+      send: "",
+      pp: "",
+      confidence: "LOW",
+      watchlistOnly: false,
+      attendanceBelow80: false,
+    });
+    expect(filtered.map((r) => r.studentId)).toEqual(["e"]);
   });
 });
 

@@ -141,6 +141,7 @@ export default async function MyStudentsPage({
     studentSearch,
     send: sendFilter,
     pp: ppFilter,
+    confidence: "",
     watchlistOnly: watchlistFilter,
     attendanceBelow80: attendanceBelow,
   };
