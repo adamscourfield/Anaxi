@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { FeatureKey, UserRole } from "@/lib/types";
 import { hasAnyPermission, hasPermission } from "@/lib/rbac";
-import { canAccessPrioritiesNav, canAccessTeacherDirectory } from "@/lib/analysisNav";
+import { canAccessTeacherDirectory } from "@/lib/analysisNav";
 
 type NavItem = {
   label: string;
@@ -175,7 +175,6 @@ export function TenantNav({
   const canAccessAdminUsers = hasPermission(role, "admin:users");
   const canAccessAdminSettings = hasPermission(role, "admin:settings");
   const canSeeAnalysis = hasAnyPermission(role, ["analysis:view", "analysis:export"]);
-  const canSeePriorities = canAccessPrioritiesNav(role, coacheeCount);
   const canSeeTeacherDirectory = canAccessTeacherDirectory(role, coacheeCount);
   const canViewStrategy = role === "SUPER_ADMIN" || role === "ADMIN" || role === "SLT";
 
@@ -193,11 +192,13 @@ export function TenantNav({
       items: [
         ...(has("OBSERVATIONS") ? [navItem("New observation", "/observe/new")] : []),
         ...(has("OBSERVATIONS") ? [navItem("Observation history", "/observe/history")] : []),
-        // Explorer (teachers/students priority views + signals) is now a superset of
-        // Priorities for anyone who can see both — only show Priorities to roles Explorer
-        // doesn't reach (plain TEACHER, LEADER without analysis:view).
-        ...(has("ANALYSIS") && canSeePriorities && !canSeeAnalysis ? [navItem("Priorities", "/analytics")] : []),
-        ...(has("ANALYSIS") && canSeeTeacherDirectory ? [navItem("Teachers", "/explorer/teachers")] : []),
+        // Priorities has no standalone nav entry any more — it now lives inside Explorer
+        // for whoever can see Explorer. Teachers is Explorer's one exception: a shortcut
+        // kept only for roles who can see multiple staff members' data but can't reach
+        // Explorer itself (LEADER with coachees, no analysis:view).
+        ...(has("ANALYSIS") && canSeeTeacherDirectory && !canSeeAnalysis
+          ? [navItem("Teachers", "/explorer/teachers")]
+          : []),
         ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Explorer", "/explorer")] : []),
       ],
     },
