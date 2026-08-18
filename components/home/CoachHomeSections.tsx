@@ -71,7 +71,7 @@ export function CoacheePrioritiesCard({
         </ul>
       )}
       <div className="flex flex-wrap gap-2">
-        <HomePrimaryLink href="/instruction/teachers">Coachee directory →</HomePrimaryLink>
+        <HomePrimaryLink href="/explorer/teachers">Coachee directory →</HomePrimaryLink>
         <HomePrimaryLink href="/observe/new">New observation</HomePrimaryLink>
       </div>
     </Card>
