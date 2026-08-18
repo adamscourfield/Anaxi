@@ -67,14 +67,14 @@ export default async function OnCallHomePage() {
         title="On Call"
         actions={
           <>
-            <button type="button" className="anx-btn-pill-ghost w-full calm-transition sm:w-auto">
-              <svg className="anx-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <Button type="button" variant="secondary" className="h-10 min-h-0 w-full gap-2 rounded-md px-6 sm:w-auto">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
                 <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
                 <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
               </svg>
               Download report
-            </button>
+            </Button>
             <Link href="/on-call/new" className="w-full sm:w-auto">
               <Button className="h-10 min-h-0 w-full gap-2 rounded-md px-6 shadow-md sm:w-auto">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
