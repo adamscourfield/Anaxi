@@ -13,7 +13,34 @@ const FEATURES = [
   "ANALYSIS", "ASSESSMENTS"
 ] as const;
 
+// ─── Safety Gate ──────────────────────────────────────────────────────────────
+// This is the seed `npx prisma db seed` runs by default (see prisma.seed in
+// package.json), so it needs the same production guard as seed.demo.ts —
+// otherwise a bare `prisma db seed` (or `prisma migrate reset`) against a real
+// database would create a demo tenant with a well-known hardcoded password.
+
+function assertSafe() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "Demo seed REFUSED: NODE_ENV === 'production'. " +
+        "This seed must never run against a production database. " +
+        "Use `npm run seed:godmode` to set up production instead."
+    );
+  }
+  const dbUrl = process.env.DATABASE_URL ?? "";
+  const isLocal = dbUrl.includes("localhost") || dbUrl.includes("127.0.0.1");
+  const hasFlag = process.env.ALLOW_DEMO_SEED === "true";
+  if (!isLocal && !hasFlag) {
+    throw new Error(
+      "Demo seed REFUSED: DATABASE_URL does not include 'localhost' or '127.0.0.1', " +
+        "and ALLOW_DEMO_SEED is not set to 'true'. " +
+        "Set ALLOW_DEMO_SEED=true to override for non-local staging environments."
+    );
+  }
+}
+
 async function main() {
+  assertSafe();
   await seedProgress8Benchmarks(prisma);
 
   const tenant = await prisma.tenant.upsert({
