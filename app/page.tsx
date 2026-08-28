@@ -1,7 +1,15 @@
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { authOptions } from "@/lib/auth";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await getServerSession(authOptions);
+  if ((session as any)?.user?.id) {
+    redirect("/home");
+  }
+
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-white text-[var(--on-surface)]">
       <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center border-b border-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] bg-white px-4 shadow-header sm:px-6 lg:px-10">
