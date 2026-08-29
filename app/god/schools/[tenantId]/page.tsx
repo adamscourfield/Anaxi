@@ -60,6 +60,9 @@ export default async function SchoolDetailPage({
 
   if (!school) notFound();
 
+  const settings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: school.id } });
+  const schoolType = settings?.schoolType ?? "SECONDARY";
+
   const enabled = new Set(school.features.filter((f) => f.enabled).map((f) => f.key));
 
   return (
@@ -94,6 +97,23 @@ export default async function SchoolDetailPage({
           </label>
           <Button type="submit">Update</Button>
         </form>
+      </Card>
+
+      <Card>
+        <form method="post" action={`/api/god/schools/${school.id}/school-type`} className="flex items-end gap-3">
+          <CsrfInput token={csrfToken} />
+          <label className="text-sm font-medium">
+            School type
+            <select name="schoolType" defaultValue={schoolType} className="field ml-2">
+              <option value="SECONDARY">Secondary</option>
+              <option value="PRIMARY">Primary</option>
+            </select>
+          </label>
+          <Button type="submit">Update</Button>
+        </form>
+        <MetaText className="mt-2">
+          Controls which observation signal catalog (primary vs. secondary) this school sees in Language/Signals admin.
+        </MetaText>
       </Card>
 
       <Card>

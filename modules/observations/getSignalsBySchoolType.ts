@@ -15,13 +15,14 @@ export function getSignalDefinitionsForSchoolType(schoolType: SchoolTypeRouting)
     : SIGNAL_DEFINITIONS.filter((d) => !d.deprecated);
 }
 
-/** Admin / onboarding: all distinct keys (secondary includes deprecated for legacy label rows). */
-export function getAllSignalDefinitionsForTenantLabels(): SignalDefinition[] {
+/**
+ * Admin / onboarding: all distinct keys for the tenant's own school type
+ * (secondary includes deprecated signals, so legacy label rows stay editable).
+ */
+export function getAllSignalDefinitionsForTenantLabels(schoolType: SchoolTypeRouting): SignalDefinition[] {
+  const source = schoolType === "PRIMARY" ? PRIMARY_SIGNAL_DEFINITIONS : SIGNAL_DEFINITIONS;
   const byKey = new Map<string, SignalDefinition>();
-  for (const d of SIGNAL_DEFINITIONS) byKey.set(d.key, d);
-  for (const d of PRIMARY_SIGNAL_DEFINITIONS) {
-    if (!byKey.has(d.key)) byKey.set(d.key, d);
-  }
+  for (const d of source) byKey.set(d.key, d);
   return [...byKey.values()].sort((a, b) => a.order - b.order);
 }
 

@@ -95,15 +95,9 @@ async function seedSchool(
     });
   }
 
-  const signalDefs =
-    schoolType === "PRIMARY"
-      ? [...SIGNAL_DEFINITIONS, ...PRIMARY_SIGNAL_DEFINITIONS]
-      : SIGNAL_DEFINITIONS;
+  const signalDefs = schoolType === "PRIMARY" ? PRIMARY_SIGNAL_DEFINITIONS : SIGNAL_DEFINITIONS;
 
-  const seenKeys = new Set<string>();
   for (const signal of signalDefs) {
-    if (seenKeys.has(signal.key)) continue;
-    seenKeys.add(signal.key);
     await (prisma as any).tenantSignalLabel.upsert({
       where: { tenantId_signalKey: { tenantId: tenant.id, signalKey: signal.key } },
       update: { displayName: signal.displayNameDefault, description: signal.descriptionDefault },
