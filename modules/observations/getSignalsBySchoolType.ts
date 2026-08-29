@@ -8,17 +8,12 @@ export function getSignalsForPhase(phase: string, schoolType: SchoolTypeRouting)
   return schoolType === "PRIMARY" ? getSignalsForObservationPhasePrimary(phase) : getSignalsForObservationPhase(phase);
 }
 
-/** Definitions for UI, seeds, and analysis: primary set or secondary active (non-deprecated) signals. */
+/** Definitions for UI, seeds, and analysis: primary set or secondary set. */
 export function getSignalDefinitionsForSchoolType(schoolType: SchoolTypeRouting): SignalDefinition[] {
-  return schoolType === "PRIMARY"
-    ? PRIMARY_SIGNAL_DEFINITIONS
-    : SIGNAL_DEFINITIONS.filter((d) => !d.deprecated);
+  return schoolType === "PRIMARY" ? PRIMARY_SIGNAL_DEFINITIONS : SIGNAL_DEFINITIONS.filter((d) => !d.deprecated);
 }
 
-/**
- * Admin / onboarding: all distinct keys for the tenant's own school type
- * (secondary includes deprecated signals, so legacy label rows stay editable).
- */
+/** Admin / onboarding: all distinct keys for the tenant's own school type. */
 export function getAllSignalDefinitionsForTenantLabels(schoolType: SchoolTypeRouting): SignalDefinition[] {
   const source = schoolType === "PRIMARY" ? PRIMARY_SIGNAL_DEFINITIONS : SIGNAL_DEFINITIONS;
   const byKey = new Map<string, SignalDefinition>();

@@ -4,6 +4,7 @@ import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { sendOnboardingEmail } from "@/lib/email";
 import {
   assertAdminCanMutateUser,
   assertAdminCannotAssignSuperAdminRole,
@@ -44,7 +45,7 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     assertAdminCannotAssignSuperAdminRole(admin, role);
     const password = String(formData.get("password") || "Password123!");
     const hash = await bcrypt.hash(password, 10);
-    await (prisma as any).user.create({
+    const user = await (prisma as any).user.create({
       data: {
         tenantId: admin.tenantId,
         fullName,
@@ -56,6 +57,16 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
         receivesOnCallEmails: false,
         receivesFirstAidEmails: false,
       },
+    });
+
+    // Fire-and-forget — email failures should not block staff creation.
+    sendOnboardingEmail({
+      to: email,
+      fullName,
+      tenantId: admin.tenantId,
+      userId: user.id,
+    }).catch((err) => {
+      console.error("[users] onboarding email failed", email, err);
     });
   });
 }
