@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
+import Link from "next/link";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
@@ -56,17 +57,17 @@ export default async function StudentsImportPage() {
       <Card className="space-y-4">
         <SectionHeader title="Cohort management" subtitle="Archive leavers or roll year groups forward without deleting historical records." />
         {canWriteStudents ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <form action={batchArchiveYearGroupAction} className="space-y-2 rounded-xl border border-border/40 bg-bg/40 p-4">
               <h3 className="text-sm font-semibold text-text">Batch archive by year group</h3>
               <p className="text-xs text-muted">
-                Archived students are hidden from on-call pickers and active cohort views, but retain all past snapshots and assessment links.
+                Archived students are hidden from on-call pickers and active cohort views, but retain all past snapshots and assessment links. Use this for a cohort that is leaving entirely, e.g. all of Year 13.
               </p>
               <input
                 name="yearGroup"
                 className="field w-full"
                 list="active-year-groups"
-                placeholder="e.g. Year 11"
+                placeholder="e.g. Year 13"
                 required
               />
               <datalist id="active-year-groups">
@@ -80,10 +81,20 @@ export default async function StudentsImportPage() {
             <form action={promoteYearGroupsAction} className="space-y-2 rounded-xl border border-border/40 bg-bg/40 p-4">
               <h3 className="text-sm font-semibold text-text">Batch promote year groups</h3>
               <p className="text-xs text-muted">
-                Moves active students up one year (e.g. Year 7 → Year 8, Y10 → Y11) and archives students in the current highest year group.
+                Moves every active student up one year (e.g. Year 7 → Year 8) and archives students in the current highest year group. Use this when a whole year group moves on together.
               </p>
               <Button type="submit" className="w-full">Promote all active cohorts</Button>
             </form>
+
+            <div className="space-y-2 rounded-xl border border-border/40 bg-bg/40 p-4">
+              <h3 className="text-sm font-semibold text-text">Selective promotion</h3>
+              <p className="text-xs text-muted">
+                For a mixed cohort where only some students continue, e.g. Year 11 into Year 12 sixth form. Pick who continues; everyone else in that year group is archived as a leaver.
+              </p>
+              <Button asChild variant="secondary" className="w-full">
+                <Link href="/students/import/promote">Choose who continues</Link>
+              </Button>
+            </div>
           </div>
         ) : (
           <p className="text-sm text-muted">You do not have permission to run cohort management actions.</p>
