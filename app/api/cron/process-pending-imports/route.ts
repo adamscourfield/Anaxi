@@ -10,3 +10,6 @@ export async function POST(req: Request) {
   const processed = await processPendingImportJobs(10);
   return NextResponse.json({ processed, checkedAt: new Date().toISOString() });
 }
+
+/** Vercel Cron always triggers via GET. */
+export const GET = POST;

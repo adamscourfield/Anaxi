@@ -85,3 +85,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ created, scanned });
 }
+
+/** Vercel Cron always triggers via GET. */
+export const GET = POST;

@@ -85,8 +85,8 @@ export default async function LandingPage() {
         <p>Anaxi — institutional intelligence for schools</p>
         <p className="mt-2">
           Support:{" "}
-          <a href="mailto:support@anaxi.app" className="link-subtle font-medium text-text">
-            support@anaxi.app
+          <a href="mailto:hi@anaxi.io" className="link-subtle font-medium text-text">
+            hi@anaxi.io
           </a>
         </p>
       </footer>

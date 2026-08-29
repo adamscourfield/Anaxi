@@ -39,3 +39,6 @@ export async function POST(req: Request) {
     checkedAt: new Date().toISOString(),
   });
 }
+
+/** Vercel Cron always triggers via GET. */
+export const GET = POST;
