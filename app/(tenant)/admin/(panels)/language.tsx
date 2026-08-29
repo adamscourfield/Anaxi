@@ -101,13 +101,13 @@ export async function LanguageAdminPanel() {
   });
   const observationsEnabled = observationsFeature?.enabled ?? false;
 
-  const signalCatalog = getAllSignalDefinitionsForTenantLabels();
-
   const [settings, signalLabels, vocab] = await Promise.all([
     (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } }),
     getTenantSignalLabels(user.tenantId),
     prisma.tenantVocab.findMany({ where: { tenantId: user.tenantId }, orderBy: { key: "asc" } }),
   ]);
+  const schoolType = settings?.schoolType ?? "SECONDARY";
+  const signalCatalog = getAllSignalDefinitionsForTenantLabels(schoolType);
 
   const vocabByKey = new Map<string, any>((vocab as any[]).map((v: any) => [v.key, v]));
 
@@ -149,7 +149,8 @@ export async function LanguageAdminPanel() {
     await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
-    for (const signal of getAllSignalDefinitionsForTenantLabels()) {
+    const adminSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: admin.tenantId } });
+    for (const signal of getAllSignalDefinitionsForTenantLabels(adminSettings?.schoolType ?? "SECONDARY")) {
       const displayName = String(formData.get(`display_${signal.key}`) || signal.displayNameDefault).trim();
       const description = String(formData.get(`description_${signal.key}`) || "");
       await upsertTenantSignalLabel(admin.tenantId, signal.key, displayName || signal.displayNameDefault, description);
@@ -165,7 +166,8 @@ export async function LanguageAdminPanel() {
     await assertSafeServerAction(_formData);
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
-    for (const signal of getAllSignalDefinitionsForTenantLabels()) {
+    const adminSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: admin.tenantId } });
+    for (const signal of getAllSignalDefinitionsForTenantLabels(adminSettings?.schoolType ?? "SECONDARY")) {
       await upsertTenantSignalLabel(admin.tenantId, signal.key, signal.displayNameDefault, null);
     }
     revalidateAdmin("language");
@@ -180,7 +182,8 @@ export async function LanguageAdminPanel() {
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
     const key = String(formData.get("signalKey") || "");
-    const signal = getAllSignalDefinitionsForTenantLabels().find((s) => s.key === key);
+    const adminSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: admin.tenantId } });
+    const signal = getAllSignalDefinitionsForTenantLabels(adminSettings?.schoolType ?? "SECONDARY").find((s) => s.key === key);
     if (!signal) return;
     await upsertTenantSignalLabel(admin.tenantId, signal.key, signal.displayNameDefault, null);
     revalidateAdmin("language");

@@ -33,6 +33,8 @@ export const POST = withApi(async function POST(req: Request) {
   const adminEmail = String(form.get("adminEmail") ?? "").trim().toLowerCase();
   const temporaryPassword = String(form.get("temporaryPassword") ?? "ChangeMe123!");
   const modules = form.getAll("modules").map((v) => String(v));
+  const schoolTypeInput = String(form.get("schoolType") ?? "SECONDARY");
+  const schoolType = schoolTypeInput === "PRIMARY" ? "PRIMARY" : "SECONDARY";
 
   if (!name || !adminName || !adminEmail) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -51,6 +53,10 @@ export const POST = withApi(async function POST(req: Request) {
       slug: slugBase,
       status: "ACTIVE",
     },
+  });
+
+  await (prisma as any).tenantSettings.create({
+    data: { tenantId: tenant.id, schoolName: name, schoolType },
   });
 
   const passwordHash = await bcrypt.hash(temporaryPassword, 10);
@@ -82,7 +88,7 @@ export const POST = withApi(async function POST(req: Request) {
       targetType: "Tenant",
       targetId: tenant.id,
       afterJson: {
-        tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug, status: tenant.status },
+        tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug, status: tenant.status, schoolType },
         admin: { id: adminUser.id, email: adminUser.email, role: adminUser.role },
         modules,
       },

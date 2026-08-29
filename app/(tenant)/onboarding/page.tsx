@@ -97,7 +97,8 @@ export default async function OnboardingPage({
   async function saveSignalLabels(formData: FormData) {
     "use server";
     const admin = await requireAdminUser();
-    for (const signal of getAllSignalDefinitionsForTenantLabels()) {
+    const adminSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: admin.tenantId } });
+    for (const signal of getAllSignalDefinitionsForTenantLabels(adminSettings?.schoolType ?? "SECONDARY")) {
       const displayName = String(formData.get(`display_${signal.key}`) || signal.displayNameDefault).trim();
       const description = String(formData.get(`description_${signal.key}`) || "");
       await upsertTenantSignalLabel(admin.tenantId, signal.key, displayName || signal.displayNameDefault, description);
@@ -230,7 +231,7 @@ export default async function OnboardingPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {getAllSignalDefinitionsForTenantLabels().map((signal) => (
+                    {getAllSignalDefinitionsForTenantLabels(settings?.schoolType ?? "SECONDARY").map((signal) => (
                       <tr className="table-row align-top" key={signal.key}>
                         <td className="px-5 py-3 font-mono text-xs">{signal.key}</td>
                         <td className="px-4 py-3">

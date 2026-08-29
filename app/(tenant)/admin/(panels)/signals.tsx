@@ -5,6 +5,7 @@ import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { requireAdminUser } from "@/lib/admin";
 import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import { requireFeature } from "@/lib/guards";
+import { prisma } from "@/lib/prisma";
 import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
 import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
@@ -13,16 +14,20 @@ import { ObservationSignalLabelsSection } from "@/app/(tenant)/admin/observation
 export async function SignalsAdminPanel() {
   const user = await requireAdminUser();
   await requireFeature(user.tenantId, "OBSERVATIONS");
-  const labels = await getTenantSignalLabels(user.tenantId);
-  const signalCatalog = getAllSignalDefinitionsForTenantLabels();
+  const [labels, settings] = await Promise.all([
+    getTenantSignalLabels(user.tenantId),
+    (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } }),
+  ]);
+  const signalCatalog = getAllSignalDefinitionsForTenantLabels(settings?.schoolType ?? "SECONDARY");
 
   async function saveAll(formData: FormData) {
     "use server";
     await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
+    const adminSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: admin.tenantId } });
 
-    for (const signal of getAllSignalDefinitionsForTenantLabels()) {
+    for (const signal of getAllSignalDefinitionsForTenantLabels(adminSettings?.schoolType ?? "SECONDARY")) {
       const displayName = String(formData.get(`display_${signal.key}`) || signal.displayNameDefault);
       const description = String(formData.get(`description_${signal.key}`) || "");
       await upsertTenantSignalLabel(admin.tenantId, signal.key, displayName, description);
@@ -39,7 +44,8 @@ export async function SignalsAdminPanel() {
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
     const key = String(formData.get("signalKey") || "");
-    const signal = getAllSignalDefinitionsForTenantLabels().find((row) => row.key === key);
+    const adminSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: admin.tenantId } });
+    const signal = getAllSignalDefinitionsForTenantLabels(adminSettings?.schoolType ?? "SECONDARY").find((row) => row.key === key);
     if (!signal) return;
 
     await upsertTenantSignalLabel(admin.tenantId, signal.key, signal.displayNameDefault, null);
@@ -53,7 +59,8 @@ export async function SignalsAdminPanel() {
     await assertSafeServerAction(_formData);
     const admin = await requireAdminUser();
     await requireFeature(admin.tenantId, "OBSERVATIONS");
-    for (const signal of getAllSignalDefinitionsForTenantLabels()) {
+    const adminSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: admin.tenantId } });
+    for (const signal of getAllSignalDefinitionsForTenantLabels(adminSettings?.schoolType ?? "SECONDARY")) {
       await upsertTenantSignalLabel(admin.tenantId, signal.key, signal.displayNameDefault, null);
     }
     revalidateAdmin("signals", "language");

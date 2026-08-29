@@ -18,26 +18,28 @@ function allowedHosts(): Set<string> {
 
 /**
  * CSRF / origin checks for server actions (production).
- * Validates Origin/Host against NEXTAUTH_URL and optional _csrf form field.
+ * Validates Origin against the request's own Host (so the app can be reachable on more
+ * than one domain, e.g. an apex + www alias, without a fixed NEXTAUTH_URL causing false
+ * failures), falling back to an allow-list of configured hosts when Origin is absent.
  */
 export async function assertSafeServerAction(formData?: FormData): Promise<void> {
   if (!isProduction()) return;
 
   const headerList = await headers();
-  const allowed = allowedHosts();
   const host = headerList.get("x-forwarded-host") || headerList.get("host");
   const origin = headerList.get("origin");
 
-  if (host && allowed.size > 0 && !allowed.has(host)) {
-    throw new Error("CSRF_VALIDATION_FAILED");
-  }
-
-  if (origin && allowed.size > 0) {
+  if (origin) {
     try {
-      if (!allowed.has(new URL(origin).host)) {
+      if (!host || new URL(origin).host !== host) {
         throw new Error("CSRF_VALIDATION_FAILED");
       }
     } catch {
+      throw new Error("CSRF_VALIDATION_FAILED");
+    }
+  } else {
+    const allowed = allowedHosts();
+    if (host && allowed.size > 0 && !allowed.has(host)) {
       throw new Error("CSRF_VALIDATION_FAILED");
     }
   }

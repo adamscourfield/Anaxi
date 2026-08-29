@@ -55,6 +55,14 @@ export default async function NewSchoolPage() {
             <input name="temporaryPassword" defaultValue="ChangeMe123!" className="field w-full" />
           </label>
 
+          <label className="block space-y-1.5 text-sm">
+            <span className="font-medium">School type</span>
+            <select name="schoolType" defaultValue="SECONDARY" className="field w-full">
+              <option value="SECONDARY">Secondary</option>
+              <option value="PRIMARY">Primary</option>
+            </select>
+          </label>
+
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium">Enable modules</legend>
             <div className="grid gap-1.5 sm:grid-cols-2">
