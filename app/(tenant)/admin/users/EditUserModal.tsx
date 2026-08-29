@@ -13,6 +13,7 @@ export type EditableUser = {
   role: string;
   isActive: boolean;
   receivesOnCallEmails: boolean;
+  receivesFirstAidEmails: boolean;
   emailObservations: boolean;
   emailMeetings: boolean;
   emailLeave: boolean;
@@ -102,6 +103,16 @@ function PhoneIcon({ className }: { className?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+function FirstAidIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <rect x="3" y="6" width="18" height="14" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 6V5a2 2 0 012-2h4a2 2 0 012 2v1" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 10v6M9 13h6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -297,6 +308,7 @@ export function EditUserModal({
 
   const [role, setRole] = useState(user.role);
   const [onCallRequests, setOnCallRequests] = useState(user.receivesOnCallEmails);
+  const [firstAidEmails, setFirstAidEmails] = useState(user.receivesFirstAidEmails);
   const [emailObservations, setEmailObservations] = useState(user.emailObservations);
   const [emailMeetings, setEmailMeetings] = useState(user.emailMeetings);
   const [emailLeave, setEmailLeave] = useState(user.emailLeave);
@@ -329,6 +341,7 @@ export function EditUserModal({
     fd.set("userId", user.id);
     fd.set("role", role);
     fd.set("receivesOnCallEmails", String(onCallRequests));
+    fd.set("receivesFirstAidEmails", String(firstAidEmails));
     fd.set("emailObservations", String(emailObservations));
     fd.set("emailMeetings", String(emailMeetings));
     fd.set("emailLeave", String(emailLeave));
@@ -431,9 +444,15 @@ export function EditUserModal({
             <ul className="rounded-xl border border-border/25 px-3">
               <ScopedRow
                 icon={<PhoneIcon className="h-[18px] w-[18px]" />}
-                label="On-call requests"
-                description="Receives on-call email notifications"
+                label="Behaviour on-call emails"
+                description="Notified on behaviour on-call requests"
                 toggle={<Toggle checked={onCallRequests} onChange={setOnCallRequests} disabled={readOnly} />}
+              />
+              <ScopedRow
+                icon={<FirstAidIcon className="h-[18px] w-[18px]" />}
+                label="First aid emails"
+                description="Notified on first aid on-call requests"
+                toggle={<Toggle checked={firstAidEmails} onChange={setFirstAidEmails} disabled={readOnly} />}
               />
               <ScopedRow
                 icon={<RoleBadgeIcon className="h-[18px] w-[18px]" />}

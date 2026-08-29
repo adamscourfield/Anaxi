@@ -149,7 +149,7 @@ export async function createPasswordSetToken(userId: string, expiryHours = 72): 
 
 export async function shouldSendUserEmail(
   userId: string,
-  kind: "observations" | "meetings" | "leave" | "oncall"
+  kind: "observations" | "meetings" | "leave" | "oncall" | "oncall_first_aid"
 ): Promise<boolean> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -159,6 +159,7 @@ export async function shouldSendUserEmail(
       emailMeetings: true,
       emailLeave: true,
       receivesOnCallEmails: true,
+      receivesFirstAidEmails: true,
     },
   });
   if (!user?.isActive) return false;
@@ -171,6 +172,8 @@ export async function shouldSendUserEmail(
       return user.emailLeave;
     case "oncall":
       return user.receivesOnCallEmails;
+    case "oncall_first_aid":
+      return user.receivesFirstAidEmails;
     default:
       return true;
   }

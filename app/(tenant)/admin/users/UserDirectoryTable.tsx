@@ -18,6 +18,7 @@ export type UserRow = {
   role: string;
   isActive: boolean;
   receivesOnCallEmails: boolean;
+  receivesFirstAidEmails: boolean;
   emailObservations: boolean;
   emailMeetings: boolean;
   emailLeave: boolean;
@@ -330,6 +331,7 @@ export function UserDirectoryTable({
                       {u.emailMeetings && <AccessBadge title="Meeting emails">Meet</AccessBadge>}
                       {u.emailLeave && <AccessBadge title="Leave emails">Leave</AccessBadge>}
                       {u.receivesOnCallEmails && <AccessBadge title="On-call emails">On-call</AccessBadge>}
+                      {u.receivesFirstAidEmails && <AccessBadge title="First aid emails">First aid</AccessBadge>}
                     </div>
                     {!locked ? (
                       <Button
@@ -428,12 +430,15 @@ export function UserDirectoryTable({
                           {u.receivesOnCallEmails ? (
                             <AccessBadge title="Receives on-call emails">On-call</AccessBadge>
                           ) : null}
+                          {u.receivesFirstAidEmails ? (
+                            <AccessBadge title="Receives first aid emails">First aid</AccessBadge>
+                          ) : null}
                           {u.canApproveAllLoa || u.loaScopedCount > 0 ? (
                             <AccessBadge title={loaTitle}>
                               LOA{u.canApproveAllLoa ? "" : ` · ${u.loaScopedCount}`}
                             </AccessBadge>
                           ) : null}
-                          {!u.receivesOnCallEmails && !u.canApproveAllLoa && u.loaScopedCount === 0 ? (
+                          {!u.receivesOnCallEmails && !u.receivesFirstAidEmails && !u.canApproveAllLoa && u.loaScopedCount === 0 ? (
                             <span className="text-[0.8125rem] text-muted">—</span>
                           ) : null}
                         </div>
