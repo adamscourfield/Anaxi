@@ -81,6 +81,7 @@ export async function runStaffImport(
           isActive: row.membershipStatus !== "ARCHIVED",
           canApproveAllLoa: false,
           receivesOnCallEmails: false,
+          receivesFirstAidEmails: false,
         },
       });
 

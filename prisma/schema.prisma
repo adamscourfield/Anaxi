@@ -61,6 +61,7 @@ model User {
   isActive                      Boolean                    @default(true)
   canApproveAllLoa              Boolean                    @default(false)
   receivesOnCallEmails          Boolean                    @default(false)
+  receivesFirstAidEmails        Boolean                    @default(false)
   emailObservations             Boolean                    @default(true)
   emailMeetings                 Boolean                    @default(true)
   emailLeave                    Boolean                    @default(true)

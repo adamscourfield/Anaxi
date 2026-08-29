@@ -54,6 +54,7 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
         isActive: true,
         canApproveAllLoa: false,
         receivesOnCallEmails: false,
+        receivesFirstAidEmails: false,
       },
     });
   });
@@ -111,6 +112,7 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
     const userId = String(formData.get("userId") || "");
     const role = String(formData.get("role") || "");
     const receivesOnCallEmails = String(formData.get("receivesOnCallEmails")) === "true";
+    const receivesFirstAidEmails = String(formData.get("receivesFirstAidEmails")) === "true";
     const emailObservations = String(formData.get("emailObservations")) !== "false";
     const emailMeetings = String(formData.get("emailMeetings")) !== "false";
     const emailLeave = String(formData.get("emailLeave")) !== "false";
@@ -128,6 +130,7 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
       data: {
         role,
         receivesOnCallEmails,
+        receivesFirstAidEmails,
         emailObservations,
         emailMeetings,
         emailLeave,

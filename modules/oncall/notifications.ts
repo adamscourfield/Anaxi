@@ -25,8 +25,14 @@ export async function sendOnCallNotification(
   });
 
   try {
+    const isFirstAid = request.requestType === "FIRST_AID";
+    const emailKind = isFirstAid ? "oncall_first_aid" : "oncall";
     const recipients = await prisma.user.findMany({
-      where: { tenantId, receivesOnCallEmails: true, isActive: true },
+      where: {
+        tenantId,
+        isActive: true,
+        ...(isFirstAid ? { receivesFirstAidEmails: true } : { receivesOnCallEmails: true }),
+      },
       select: { id: true, email: true, fullName: true },
     });
 
@@ -59,7 +65,7 @@ export async function sendOnCallNotification(
 
     await Promise.allSettled(
       recipients.map(async (recipient) => {
-        if (!(await shouldSendUserEmail(recipient.id, "oncall"))) return;
+        if (!(await shouldSendUserEmail(recipient.id, emailKind))) return;
         return sendTemplatedEmail({
           to: recipient.email,
           subject,

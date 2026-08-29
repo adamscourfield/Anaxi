@@ -25,6 +25,7 @@ export default async function ProfilePage() {
       isActive: true,
       canApproveAllLoa: true,
       receivesOnCallEmails: true,
+      receivesFirstAidEmails: true,
       tenant: { select: { name: true } },
       departmentMemberships: {
         include: { department: { select: { name: true } } },
@@ -100,6 +101,12 @@ export default async function ProfilePage() {
             <span className="text-muted">On-call emails</span>
             <span className={`font-medium ${fullUser?.receivesOnCallEmails ? "text-accent" : "text-muted"}`}>
               {fullUser?.receivesOnCallEmails ? "Yes" : "No"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
+            <span className="text-muted">First aid emails</span>
+            <span className={`font-medium ${fullUser?.receivesFirstAidEmails ? "text-accent" : "text-muted"}`}>
+              {fullUser?.receivesFirstAidEmails ? "Yes" : "No"}
             </span>
           </div>
           {hodDepts.length > 0 && (

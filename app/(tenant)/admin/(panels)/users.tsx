@@ -52,6 +52,7 @@ export async function UsersAdminPanel() {
       role: u.role as string,
       isActive: u.isActive as boolean,
       receivesOnCallEmails: u.receivesOnCallEmails as boolean,
+      receivesFirstAidEmails: u.receivesFirstAidEmails as boolean,
       emailObservations: u.emailObservations as boolean,
       emailMeetings: u.emailMeetings as boolean,
       emailLeave: u.emailLeave as boolean,
