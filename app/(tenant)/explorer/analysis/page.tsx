@@ -4,6 +4,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { buildViewerContext } from "@/lib/viewerContext";
+import { pluralLabel } from "@/lib/vocab";
 import {
   canViewExplorer,
   canViewBehaviourExplorer,
@@ -33,14 +34,6 @@ type WindowDays = (typeof VALID_WINDOWS)[number];
 function parseWindow(raw: string | undefined): WindowDays {
   const n = Number(raw);
   return VALID_WINDOWS.includes(n as WindowDays) ? (n as WindowDays) : 21;
-}
-
-/** Avoid double "s" when tenant labels are already plural (e.g. "Detentions"). */
-function pluralLabel(base: string): string {
-  const t = base.trim();
-  if (!t) return base;
-  if (/s$/i.test(t)) return t;
-  return `${t}s`;
 }
 
 function fmtSnapshotDate(d: Date): string {

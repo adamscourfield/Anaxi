@@ -1,19 +1,9 @@
 import { parse } from "csv-parse/sync";
 import { AnaxiField } from "./snapshot-fields";
 
-export type CountScope =
-  | "ROLLING_21_DAYS"
-  | "ROLLING_28_DAYS"
-  | "TERM_TO_DATE"
-  | "YEAR_TO_DATE";
-
 export interface SnapshotMapping {
   /** Maps each AnaxiField to the CSV column header */
   fieldMap: Partial<Record<AnaxiField, string>>;
-  /** CSV column holding CountScope, or null if using fixedCountScope */
-  countScopeColumn?: string | null;
-  /** Fixed CountScope applied to all rows when no column mapped */
-  fixedCountScope?: CountScope | null;
   /** CSV column holding SnapshotDate; if absent, importDate is used */
   snapshotDateColumn?: string | null;
 }
@@ -28,10 +18,8 @@ export interface SnapshotRow {
   internalExclusions: number;
   suspensions: number;
   positivePoints: number;
-  negativePoints: number;
   send: boolean;
   pp: boolean;
-  countScope: CountScope;
   snapshotDate: Date;
 }
 
@@ -77,21 +65,6 @@ function parseIntField(raw: string): number | null {
   const n = parseInt(stripped, 10);
   if (Number.isNaN(n)) return null;
   return n;
-}
-
-const VALID_SCOPES = new Set<string>([
-  "ROLLING_21_DAYS",
-  "ROLLING_28_DAYS",
-  "TERM_TO_DATE",
-  "YEAR_TO_DATE",
-]);
-
-function parseCountScope(raw: string): CountScope | null {
-  const v = String(raw ?? "")
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, "_");
-  return VALID_SCOPES.has(v) ? (v as CountScope) : null;
 }
 
 function parseSnapshotDate(raw: string): Date | null {
@@ -188,7 +161,6 @@ export function parseSnapshotCsv(
       ["internalExclusions", "InternalExclusions"],
       ["suspensions", "Suspensions"],
       ["positivePoints", "PositivePoints"],
-      ["negativePoints", "NegativePoints"],
     ] as [string, AnaxiField][]) {
       const raw = col(record, anaxiKey);
       const parsed = parseIntField(raw);
@@ -199,23 +171,6 @@ export function parseSnapshotCsv(
         );
       }
       numericParsed[field] = parsed;
-    }
-
-    // CountScope
-    let countScope: CountScope | null = null;
-    if (mapping.countScopeColumn) {
-      const raw = (record[mapping.countScopeColumn] ?? "").trim();
-      countScope = parseCountScope(raw);
-      if (!countScope) {
-        addError(
-          "INVALID_COUNTSCOPE",
-          `CountScope '${raw}' is not one of: ROLLING_21_DAYS, ROLLING_28_DAYS, TERM_TO_DATE, YEAR_TO_DATE`
-        );
-      }
-    } else if (mapping.fixedCountScope) {
-      countScope = mapping.fixedCountScope;
-    } else {
-      addError("MISSING_COUNTSCOPE", "CountScope must be supplied via a mapped column or a fixed selection");
     }
 
     // SnapshotDate
@@ -245,10 +200,8 @@ export function parseSnapshotCsv(
         internalExclusions: numericParsed.internalExclusions ?? 0,
         suspensions: numericParsed.suspensions ?? 0,
         positivePoints: numericParsed.positivePoints ?? 0,
-        negativePoints: numericParsed.negativePoints ?? 0,
         send: parseBoolean(col(record, "SEND")),
         pp: parseBoolean(col(record, "PP")),
-        countScope: countScope!,
         snapshotDate,
       });
     }
