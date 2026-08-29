@@ -2,6 +2,14 @@ import { describe, it, expect } from "vitest";
 import {
   canViewObservation,
   canApproveLeave,
+  canViewTeacherAnalysis,
+  canViewCpdDrilldown,
+  canViewStudentAnalysis,
+  canViewExplorer,
+  canExportExplorer,
+  getExplorerTeacherScope,
+  canViewBehaviourExplorer,
+  canViewAssessmentExplorer,
   type ViewerContext,
   type ObservationRecord,
   type LeaveRequestRecord,
@@ -31,6 +39,16 @@ describe("canViewObservation", () => {
     const viewer: ViewerContext = {
       userId: "slt-1",
       role: "SLT",
+      hodDepartmentIds: [],
+      coacheeUserIds: [],
+    };
+    expect(canViewObservation(viewer, obs)).toBe(true);
+  });
+
+  it("SUPER_ADMIN (god mode) can view any observation", () => {
+    const viewer: ViewerContext = {
+      userId: "super-1",
+      role: "SUPER_ADMIN",
       hodDepartmentIds: [],
       coacheeUserIds: [],
     };
@@ -117,6 +135,10 @@ describe("canApproveLeave", () => {
     expect(canApproveLeave("admin-1", "ADMIN", leaveRequest, [])).toBe(true);
   });
 
+  it("SUPER_ADMIN (god mode) can always approve", () => {
+    expect(canApproveLeave("super-1", "SUPER_ADMIN", leaveRequest, [])).toBe(true);
+  });
+
   it("approver in ALL_STAFF group can approve anyone", () => {
     const groups: LeaveApprovalGroupRecord[] = [
       {
@@ -163,5 +185,50 @@ describe("canApproveLeave", () => {
 
   it("returns false with no groups", () => {
     expect(canApproveLeave("hr-1", "HR", leaveRequest, [])).toBe(false);
+  });
+});
+
+// ─── SUPER_ADMIN (god mode) parity with ADMIN ─────────────────────────────────
+
+describe("SUPER_ADMIN has ADMIN-level access everywhere", () => {
+  const superAdmin: ViewerContext = {
+    userId: "super-1",
+    role: "SUPER_ADMIN",
+    hodDepartmentIds: [],
+    coacheeUserIds: [],
+  };
+
+  it("can view teacher analysis for anyone", () => {
+    expect(
+      canViewTeacherAnalysis(superAdmin, { teacherUserId: "teacher-1", teacherDepartmentIds: [] })
+    ).toBe(true);
+  });
+
+  it("can view CPD drilldown", () => {
+    expect(canViewCpdDrilldown(superAdmin)).toBe(true);
+  });
+
+  it("can view student analysis", () => {
+    expect(canViewStudentAnalysis(superAdmin)).toBe(true);
+  });
+
+  it("can view the Explorer", () => {
+    expect(canViewExplorer(superAdmin)).toBe(true);
+  });
+
+  it("can export from the Explorer", () => {
+    expect(canExportExplorer(superAdmin)).toBe(true);
+  });
+
+  it("has no teacher-scope restriction in the Explorer", () => {
+    expect(getExplorerTeacherScope(superAdmin)).toBeUndefined();
+  });
+
+  it("can view the Behaviour Explorer", () => {
+    expect(canViewBehaviourExplorer(superAdmin)).toBe(true);
+  });
+
+  it("can view the Assessment Explorer", () => {
+    expect(canViewAssessmentExplorer(superAdmin)).toBe(true);
   });
 });

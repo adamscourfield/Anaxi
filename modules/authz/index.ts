@@ -44,7 +44,7 @@ export type LeaveApprovalGroupRecord = {
  * Determines whether a viewer can see a given observation.
  *
  * Rules:
- * - ADMIN / SLT → always
+ * - ADMIN / SUPER_ADMIN / SLT → always
  * - Viewer is the observed teacher (own record) → true
  * - Viewer is the observer (conducted the observation) → true
  * - HOD viewing someone in a department they lead → true
@@ -54,7 +54,7 @@ export function canViewObservation(
   viewer: ViewerContext,
   observation: ObservationRecord
 ): boolean {
-  if (viewer.role === "ADMIN" || viewer.role === "SLT") return true;
+  if (viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN" || viewer.role === "SLT") return true;
 
   if (viewer.userId === observation.observedUserId) return true;
 
@@ -78,7 +78,7 @@ export function canViewObservation(
  * Determines whether an approver can approve a leave request.
  *
  * Rules:
- * - ADMIN → can approve all (no group required)
+ * - ADMIN / SUPER_ADMIN → can approve all (no group required)
  * - Other roles: must belong to an approval group that covers the requester:
  *   - appliesTo=ALL_STAFF group → approver membership is sufficient
  *   - appliesTo=SELECTED_MEMBERS group → approver membership + requester in subjectUserIds
@@ -89,7 +89,7 @@ export function canApproveLeave(
   leaveRequest: LeaveRequestRecord,
   groups: LeaveApprovalGroupRecord[]
 ): boolean {
-  if (approverRole === "ADMIN") return true;
+  if (approverRole === "ADMIN" || approverRole === "SUPER_ADMIN") return true;
 
   for (const group of groups) {
     if (!group.approverUserIds.includes(approverUserId)) continue;
@@ -120,7 +120,7 @@ export type TeacherAnalysisTarget = {
  * Determines whether a viewer can see a teacher's risk analysis profile.
  *
  * Rules:
- * - ADMIN / SLT → can view all teachers
+ * - ADMIN / SUPER_ADMIN / SLT → can view all teachers
  * - HOD → can view teachers in their departments
  * - Coach (LEADER role with coachee assignment) → can view assigned coachees
  * - TEACHER → can view only themselves
@@ -130,7 +130,7 @@ export function canViewTeacherAnalysis(
   viewer: ViewerContext,
   target: TeacherAnalysisTarget
 ): boolean {
-  if (viewer.role === "ADMIN" || viewer.role === "SLT") return true;
+  if (viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN" || viewer.role === "SLT") return true;
 
   if (viewer.userId === target.teacherUserId) return true;
 
@@ -153,12 +153,12 @@ export function canViewTeacherAnalysis(
  * drilldown page.
  *
  * Rules:
- * - ADMIN / SLT / HOD → can view teacher lists
+ * - ADMIN / SUPER_ADMIN / SLT / HOD → can view teacher lists
  * - LEADER (Coach) with any coachee assignment → can view teacher lists
  * - TEACHER → cannot view teacher lists (CPD summary only)
  */
 export function canViewCpdDrilldown(viewer: ViewerContext): boolean {
-  if (viewer.role === "ADMIN" || viewer.role === "SLT" || viewer.role === "HOD") return true;
+  if (viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN" || viewer.role === "SLT" || viewer.role === "HOD") return true;
   if (viewer.role === "LEADER" && viewer.coacheeUserIds.length > 0) return true;
   return false;
 }
@@ -169,44 +169,44 @@ export function canViewCpdDrilldown(viewer: ViewerContext): boolean {
  * Determines whether a viewer can access the Student Risk Index.
  *
  * Rules:
- * - ADMIN / SLT → full access
+ * - ADMIN / SUPER_ADMIN / SLT → full access
  * - HOD → can view all students (pastoral priority)
  * - TEACHER → no access by default (requires STUDENT_ANALYSIS feature flag)
  * - Others → no access
  */
 export function canViewStudentAnalysis(viewer: ViewerContext): boolean {
-  return viewer.role === "ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
+  return viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
 }
 
 // ─── Explorer Visibility ───────────────────────────────────────────────────────
 
 /**
  * Whether a user can access the Explorer page at all.
- * ADMIN / SLT / HOD → full access; TEACHER → no access
+ * ADMIN / SUPER_ADMIN / SLT / HOD → full access; TEACHER → no access
  */
 export function canViewExplorer(viewer: ViewerContext): boolean {
-  return viewer.role === "ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
+  return viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
 }
 
 /**
  * Whether a user can export CSV from the Explorer.
- * ADMIN / SLT → can export full-school pivots
+ * ADMIN / SUPER_ADMIN / SLT → can export full-school pivots
  * HOD → can export only department-scoped results
  * Others → no export
  */
 export function canExportExplorer(viewer: ViewerContext): boolean {
-  return viewer.role === "ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
+  return viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
 }
 
 /**
  * Returns the teacher-scope restriction for an Explorer view.
- * ADMIN / SLT → no restriction (undefined = all teachers)
+ * ADMIN / SUPER_ADMIN / SLT → no restriction (undefined = all teachers)
  * HOD → restricted to their department teacher IDs
  * COACH (LEADER with coachees) → restricted to coachee IDs
  * TEACHER → restricted to only themselves
  */
 export function getExplorerTeacherScope(viewer: ViewerContext): string[] | undefined {
-  if (viewer.role === "ADMIN" || viewer.role === "SLT") return undefined;
+  if (viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN" || viewer.role === "SLT") return undefined;
   if (viewer.role === "HOD") return undefined; // dept filter applied separately
   if (viewer.coacheeUserIds.length > 0) return viewer.coacheeUserIds;
   return [viewer.userId];
@@ -214,20 +214,20 @@ export function getExplorerTeacherScope(viewer: ViewerContext): string[] | undef
 
 /**
  * Whether behaviour views are accessible to this viewer.
- * ADMIN / SLT → full access
+ * ADMIN / SUPER_ADMIN / SLT → full access
  * HOD → full access (whole-school pastoral)
  * Others → no access
  */
 export function canViewBehaviourExplorer(viewer: ViewerContext): boolean {
-  return viewer.role === "ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
+  return viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
 }
 
 /**
  * Whether assessment analysis views are accessible to this viewer.
- * ADMIN / SLT → full access
+ * ADMIN / SUPER_ADMIN / SLT → full access
  * HOD → full access (can see attainment in their department context)
  * Others → no access
  */
 export function canViewAssessmentExplorer(viewer: ViewerContext): boolean {
-  return viewer.role === "ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
+  return viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN" || viewer.role === "SLT" || viewer.role === "HOD";
 }
