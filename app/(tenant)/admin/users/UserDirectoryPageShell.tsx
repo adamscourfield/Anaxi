@@ -20,6 +20,8 @@ export function UserDirectoryPageShell({
   updateRoleAction,
   toggleActiveAction,
   resetPasswordAction,
+  deleteUserAction,
+  avatarAction,
 }: {
   users: UserRow[];
   allTeachers: TeacherOption[];
@@ -32,6 +34,8 @@ export function UserDirectoryPageShell({
   updateRoleAction: (formData: FormData) => Promise<ActionResult>;
   toggleActiveAction: (formData: FormData) => Promise<ActionResult>;
   resetPasswordAction: (formData: FormData) => Promise<ActionResult>;
+  deleteUserAction: (formData: FormData) => Promise<ActionResult>;
+  avatarAction: (formData: FormData) => Promise<ActionResult>;
 }) {
   const [addOpen, setAddOpen] = useState(false);
 
@@ -59,6 +63,8 @@ export function UserDirectoryPageShell({
         updateRoleAction={updateRoleAction}
         toggleActiveAction={toggleActiveAction}
         resetPasswordAction={resetPasswordAction}
+        deleteUserAction={deleteUserAction}
+        avatarAction={avatarAction}
       />
     </div>
   );
