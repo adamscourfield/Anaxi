@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { parse } from "csv-parse/browser/esm/sync";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MetaText } from "@/components/ui/typography";
@@ -11,8 +13,11 @@ import {
   computeHeaderSignature,
 } from "@/modules/students/snapshot-fields";
 import type { SnapshotMapping } from "@/modules/students/snapshot-import";
+import { isImportJobFinished } from "@/lib/importJobStatus";
 
 const MAX_FILE_SIZE_BYTES = 24 * 1024 * 1024; // 24MB
+const POLL_INTERVAL_MS = 1500;
+const MAX_POLLS = 200; // ~5 minutes
 
 interface ImportResult {
   importJobId: string;
@@ -26,7 +31,14 @@ export function SnapshotUploader({
   /** Human-readable label for each import field, sourced from the tenant's language settings. */
   fieldLabels: Record<AnaxiField, string>;
 }) {
+  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const [headers, setHeaders] = useState<string[]>([]);
   const [fileName, setFileName] = useState("");
@@ -58,9 +70,14 @@ export function SnapshotUploader({
     setRawCsv(text);
     setFileName(file.name);
 
-    const lines = text.split(/\r?\n/);
-    const headerLine = lines[0] ?? "";
-    const parsedHeaders = headerLine.split(",").map((h) => h.trim()).filter(Boolean);
+    let parsedHeaders: string[];
+    try {
+      const headerRow = parse(text, { to: 1, trim: true, relax_column_count: true }) as string[][];
+      parsedHeaders = (headerRow[0] ?? []).map((h) => h.trim()).filter(Boolean);
+    } catch {
+      setImportError("Could not read this file as CSV. Check it's a valid, comma-separated file.");
+      return;
+    }
     setHeaders(parsedHeaders);
 
     // Auto-suggest mapping
@@ -150,13 +167,41 @@ export function SnapshotUploader({
       const data = await res.json();
       if (!res.ok) {
         setImportError(data.error ?? "Import failed");
-      } else {
-        setResult(data as ImportResult);
+        return;
+      }
+
+      const jobId = data.importJobId as string;
+
+      // The import runs in the background; poll until it finishes, then
+      // refresh so the imported students and history table show up without
+      // the user having to reload the page themselves.
+      for (let i = 0; i < MAX_POLLS; i++) {
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+        if (!mountedRef.current) return;
+
+        const statusRes = await fetch(`/api/import/jobs/${jobId}`);
+        if (!statusRes.ok) break;
+        const job = await statusRes.json();
+        if (isImportJobFinished(job.status)) {
+          if (mountedRef.current) {
+            setResult({
+              importJobId: jobId,
+              rowsProcessed: job.rowsProcessed ?? 0,
+              rowsFailed: job.rowsFailed ?? 0,
+            });
+          }
+          router.refresh();
+          return;
+        }
+      }
+
+      if (mountedRef.current) {
+        setImportError("Still processing — check Recent Import History below for progress.");
       }
     } catch (err: any) {
-      setImportError(String(err?.message ?? err));
+      if (mountedRef.current) setImportError(String(err?.message ?? err));
     } finally {
-      setImporting(false);
+      if (mountedRef.current) setImporting(false);
     }
   };
 

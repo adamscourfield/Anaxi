@@ -46,67 +46,76 @@ export async function runSnapshotImport(input: RunSnapshotImportInput): Promise<
   let rowsProcessed = 0;
   let rowsFailed = errors.length;
 
-  for (const row of rows) {
-    try {
-      const student = await (prisma as any).student.upsert({
-        where: { tenantId_upn: { tenantId, upn: row.upn } },
-        create: {
-          tenantId,
-          upn: row.upn,
-          fullName: row.studentName,
-          yearGroup: row.yearGroup,
-          sendFlag: row.send,
-          ppFlag: row.pp,
-          status: "ACTIVE",
-        },
-        update: {
-          fullName: row.studentName,
-          yearGroup: row.yearGroup,
-          sendFlag: row.send,
-          ppFlag: row.pp,
-        },
-      });
+  const ROW_CONCURRENCY = 10;
 
-      await (prisma as any).studentSnapshot.upsert({
-        where: {
-          tenantId_studentId_snapshotDate: {
-            tenantId,
-            studentId: student.id,
-            snapshotDate: row.snapshotDate,
-          },
-        },
-        create: {
+  async function importRow(row: (typeof rows)[number]): Promise<void> {
+    const student = await (prisma as any).student.upsert({
+      where: { tenantId_upn: { tenantId, upn: row.upn } },
+      create: {
+        tenantId,
+        upn: row.upn,
+        fullName: row.studentName,
+        yearGroup: row.yearGroup,
+        sendFlag: row.send,
+        ppFlag: row.pp,
+        status: "ACTIVE",
+      },
+      update: {
+        fullName: row.studentName,
+        yearGroup: row.yearGroup,
+        sendFlag: row.send,
+        ppFlag: row.pp,
+      },
+    });
+
+    await (prisma as any).studentSnapshot.upsert({
+      where: {
+        tenantId_studentId_snapshotDate: {
           tenantId,
           studentId: student.id,
           snapshotDate: row.snapshotDate,
-          positivePointsTotal: row.positivePoints,
-          detentionsCount: row.detentions,
-          internalExclusionsCount: row.internalExclusions,
-          suspensionsCount: row.suspensions,
-          attendancePct: row.attendancePercent,
-          latenessCount: row.lates,
         },
-        update: {
-          positivePointsTotal: row.positivePoints,
-          detentionsCount: row.detentions,
-          internalExclusionsCount: row.internalExclusions,
-          suspensionsCount: row.suspensions,
-          attendancePct: row.attendancePercent,
-          latenessCount: row.lates,
-        },
-      });
+      },
+      create: {
+        tenantId,
+        studentId: student.id,
+        snapshotDate: row.snapshotDate,
+        positivePointsTotal: row.positivePoints,
+        detentionsCount: row.detentions,
+        internalExclusionsCount: row.internalExclusions,
+        suspensionsCount: row.suspensions,
+        attendancePct: row.attendancePercent,
+        latenessCount: row.lates,
+      },
+      update: {
+        positivePointsTotal: row.positivePoints,
+        detentionsCount: row.detentions,
+        internalExclusionsCount: row.internalExclusions,
+        suspensionsCount: row.suspensions,
+        attendancePct: row.attendancePercent,
+        latenessCount: row.lates,
+      },
+    });
+  }
 
-      rowsProcessed++;
-    } catch (dbErr: unknown) {
-      rowsFailed++;
-      await (prisma as any).importError.create({
-        data: {
-          importJobId,
-          rowNumber: 0,
-          field: "DB_ERROR",
-          message: String(dbErr instanceof Error ? dbErr.message : dbErr),
-        },
-      });
+  for (let i = 0; i < rows.length; i += ROW_CONCURRENCY) {
+    const batch = rows.slice(i, i + ROW_CONCURRENCY);
+    const outcomes = await Promise.allSettled(batch.map(importRow));
+
+    for (const outcome of outcomes) {
+      if (outcome.status === "fulfilled") {
+        rowsProcessed++;
+      } else {
+        rowsFailed++;
+        await (prisma as any).importError.create({
+          data: {
+            importJobId,
+            rowNumber: 0,
+            field: "DB_ERROR",
+            message: String(outcome.reason instanceof Error ? outcome.reason.message : outcome.reason),
+          },
+        });
+      }
     }
   }
 
