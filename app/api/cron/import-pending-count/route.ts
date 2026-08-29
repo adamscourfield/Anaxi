@@ -10,3 +10,6 @@ export async function POST(req: Request) {
   const pendingImports = await prisma.importJob.count({ where: { status: "PENDING" } });
   return NextResponse.json({ pendingImports, checkedAt: new Date().toISOString() });
 }
+
+/** Vercel Cron always triggers via GET. */
+export const GET = POST;

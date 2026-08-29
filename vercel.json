@@ -1,0 +1,28 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/compute-student-flags",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-shadow-super-admins",
+      "schedule": "20 2 * * *"
+    },
+    {
+      "path": "/api/cron/import-storage-cleanup",
+      "schedule": "40 2 * * *"
+    },
+    {
+      "path": "/api/cron/process-pending-imports",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/import-pending-count",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/leave-pending-reminders",
+      "schedule": "15 6 * * *"
+    }
+  ]
+}
