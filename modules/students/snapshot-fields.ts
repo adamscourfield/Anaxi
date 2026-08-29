@@ -1,3 +1,5 @@
+import { pluralLabel } from "@/lib/vocab";
+
 // Anaxi field names used in the import mapping UI
 export const ANAXI_FIELDS = [
   "UPN",
@@ -9,7 +11,6 @@ export const ANAXI_FIELDS = [
   "InternalExclusions",
   "Suspensions",
   "PositivePoints",
-  "NegativePoints",
   "SEND",
   "PP",
 ] as const;
@@ -17,7 +18,7 @@ export const ANAXI_FIELDS = [
 export type AnaxiField = (typeof ANAXI_FIELDS)[number];
 
 // Optional field – may be absent (use import date)
-export const OPTIONAL_FIELDS = ["SnapshotDate", "CountScope"] as const;
+export const OPTIONAL_FIELDS = ["SnapshotDate"] as const;
 export type OptionalField = (typeof OPTIONAL_FIELDS)[number];
 
 export type AnyImportField = AnaxiField | OptionalField;
@@ -33,13 +34,36 @@ export const FIELD_SYNONYMS: Record<AnaxiField, string[]> = {
   InternalExclusions: ["InternalExclusions", "IE", "Internal Exclusion", "Internal Exclusions"],
   Suspensions: ["Suspensions", "FixedTerm", "Suspended", "Suspension"],
   PositivePoints: ["PositivePoints", "Merits", "Praise", "Rewards", "PositivePointsTotal", "Positives"],
-  NegativePoints: ["NegativePoints", "Demerits", "NegativePointsTotal", "Negatives"],
   SEND: ["SEND", "SEN", "send"],
   PP: ["PP", "PupilPremium", "Pupil Premium", "pp"],
 };
 
-export const COUNTSCOPE_SYNONYMS = ["CountScope", "Count Scope", "Scope", "count_scope"];
 export const SNAPSHOTDATE_SYNONYMS = ["SnapshotDate", "Snapshot Date", "Date", "snapshot_date", "ImportDate"];
+
+/** A tenant's customized wording for the behaviour labels that appear in the import mapping UI. */
+export type TenantBehaviourLabels = {
+  positivePointsLabel?: string | null;
+  detentionLabel?: string | null;
+  internalExclusionLabel?: string | null;
+  suspensionLabel?: string | null;
+};
+
+/** Human-readable label for each import field, using the tenant's own terminology where one is set. */
+export function getAnaxiFieldLabels(tenantSettings?: TenantBehaviourLabels | null): Record<AnaxiField, string> {
+  return {
+    UPN: "UPN",
+    StudentName: "Student name",
+    YearGroup: "Year group",
+    AttendancePercent: "Attendance %",
+    Lates: "Lateness",
+    Detentions: pluralLabel(tenantSettings?.detentionLabel || "Detention"),
+    InternalExclusions: pluralLabel(tenantSettings?.internalExclusionLabel || "Internal Exclusion"),
+    Suspensions: pluralLabel(tenantSettings?.suspensionLabel || "Suspension"),
+    PositivePoints: pluralLabel(tenantSettings?.positivePointsLabel || "Positive Points"),
+    SEND: "SEND",
+    PP: "Pupil premium",
+  };
+}
 
 /** Compute a normalised header signature for auto-matching saved mappings */
 export function computeHeaderSignature(headers: string[]): string {
@@ -67,9 +91,6 @@ export function suggestMapping(headers: string[]): Partial<Record<AnyImportField
     const match = findHeader(FIELD_SYNONYMS[field]);
     if (match) result[field] = match;
   }
-
-  const scopeMatch = findHeader(COUNTSCOPE_SYNONYMS);
-  if (scopeMatch) result["CountScope"] = scopeMatch;
 
   const dateMatch = findHeader(SNAPSHOTDATE_SYNONYMS);
   if (dateMatch) result["SnapshotDate"] = dateMatch;

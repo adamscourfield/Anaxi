@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { SnapshotUploader } from "@/components/import/SnapshotUploader";
 import { SnapshotImportHistory } from "@/components/import/SnapshotImportHistory";
 import { PageHeader } from "@/components/ui/page-header";
+import { getAnaxiFieldLabels } from "@/modules/students/snapshot-fields";
 
 export default async function BehaviourImportPage() {
   const user = await getSessionUserOrThrow();
@@ -13,7 +14,7 @@ export default async function BehaviourImportPage() {
   if (!hasPermission(user.role, "import:write")) redirect("/tenant");
 
   /* ── Fetch stats from the database ────────────────────────────── */
-  const [totalRecords, jobs, totalJobs, prevTotalRecords] = await Promise.all([
+  const [totalRecords, jobs, totalJobs, prevTotalRecords, tenantSettings] = await Promise.all([
     // Total student snapshot rows synced for this tenant
     (prisma as any).studentSnapshot.count({
       where: { tenantId: user.tenantId },
@@ -35,7 +36,11 @@ export default async function BehaviourImportPage() {
         createdAt: { lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
       },
     }) as Promise<number>,
+    // Tenant terminology, so the column mapping reflects the school's own language
+    (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } }),
   ]);
+
+  const fieldLabels = getAnaxiFieldLabels(tenantSettings);
 
   // Calculate growth percentage
   const growthPct = prevTotalRecords > 0
@@ -77,7 +82,7 @@ export default async function BehaviourImportPage() {
         }
       />
 
-      <SnapshotUploader />
+      <SnapshotUploader fieldLabels={fieldLabels} />
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="home-hero-glass flex items-center justify-between gap-4 rounded-sm border border-border p-5 shadow-none sm:p-6">

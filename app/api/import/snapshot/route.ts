@@ -66,7 +66,6 @@ export async function POST(req: Request) {
           type: "STUDENT_SNAPSHOT",
           name: mappingName,
           mappingJson: mapping as object,
-          fixedCountScope: mapping.fixedCountScope ?? null,
           headerSignature,
           createdByUserId: user.id,
         },

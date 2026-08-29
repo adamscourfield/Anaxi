@@ -4,7 +4,7 @@ import {
   parseAttendancePct,
   parseSnapshotCsv,
 } from "@/modules/students/snapshot-import";
-import { computeHeaderSignature, suggestMapping } from "@/modules/students/snapshot-fields";
+import { computeHeaderSignature, suggestMapping, getAnaxiFieldLabels } from "@/modules/students/snapshot-fields";
 
 describe("parseBoolean (snapshot-import)", () => {
   it("parses truthy values", () => {
@@ -111,7 +111,6 @@ describe("parseSnapshotCsv", () => {
       SEND: "SEND",
       PP: "PP",
     },
-    fixedCountScope: "TERM_TO_DATE" as const,
   };
 
   const validCsv = [
@@ -128,7 +127,6 @@ describe("parseSnapshotCsv", () => {
     expect(rows[0].attendancePercent).toBe(96.5);
     expect(rows[0].send).toBe(true);
     expect(rows[0].pp).toBe(false);
-    expect(rows[0].countScope).toBe("TERM_TO_DATE");
   });
 
   it("errors on missing UPN", () => {
@@ -159,49 +157,37 @@ describe("parseSnapshotCsv", () => {
     expect(errors.some((e) => e.errorCode === "INVALID_ATTENDANCE")).toBe(true);
   });
 
-  it("errors when no countScope provided", () => {
-    const noScopeMapping = { ...mapping, fixedCountScope: undefined };
-    const { errors } = parseSnapshotCsv(validCsv, noScopeMapping);
-    expect(errors.some((e) => e.errorCode === "MISSING_COUNTSCOPE")).toBe(true);
-  });
-
   it("uses import date when no snapshotDate column", () => {
     const importDate = new Date("2026-01-15T10:00:00Z");
     const { rows } = parseSnapshotCsv(validCsv, mapping, importDate);
     expect(rows[0].snapshotDate.toISOString()).toBe("2026-01-15T00:00:00.000Z");
   });
-
-  it("parses NegativePoints when column is mapped", () => {
-    const mappingWithNeg = {
-      fieldMap: {
-        ...mapping.fieldMap,
-        NegativePoints: "NegativePoints",
-      },
-      fixedCountScope: "TERM_TO_DATE" as const,
-    };
-    const csv = [
-      "UPN,Name,YearGroup,Attendance,Lates,Detentions,InternalExclusions,Suspensions,OnCalls,PositivePoints,NegativePoints,SEND,PP",
-      "U001,Alice Jones,Y10,96.5,1,2,0,0,1,10,5,Yes,No",
-    ].join("\n");
-    const { rows, errors } = parseSnapshotCsv(csv, mappingWithNeg);
-    expect(errors).toHaveLength(0);
-    expect(rows[0].negativePoints).toBe(5);
-  });
-
-  it("defaults negativePoints to 0 when column not mapped", () => {
-    const { rows } = parseSnapshotCsv(validCsv, mapping);
-    expect(rows[0].negativePoints).toBe(0);
-  });
 });
 
-describe("suggestMapping — NegativePoints", () => {
-  it("suggests NegativePoints from 'Demerits'", () => {
-    const result = suggestMapping(["UPN", "Name", "Demerits"]);
-    expect(result.NegativePoints).toBe("Demerits");
+describe("getAnaxiFieldLabels", () => {
+  it("falls back to default labels when no tenant settings are provided", () => {
+    const labels = getAnaxiFieldLabels(null);
+    expect(labels.Detentions).toBe("Detentions");
+    expect(labels.InternalExclusions).toBe("Internal Exclusions");
+    expect(labels.Suspensions).toBe("Suspensions");
+    expect(labels.PositivePoints).toBe("Positive Points");
   });
 
-  it("suggests NegativePoints from 'NegativePoints'", () => {
-    const result = suggestMapping(["UPN", "Name", "NegativePoints"]);
-    expect(result.NegativePoints).toBe("NegativePoints");
+  it("uses the tenant's own terminology when set", () => {
+    const labels = getAnaxiFieldLabels({
+      detentionLabel: "Removal",
+      internalExclusionLabel: "Reflection Room",
+      suspensionLabel: "Fixed-Term Exclusion",
+      positivePointsLabel: "Merit",
+    });
+    expect(labels.Detentions).toBe("Removals");
+    expect(labels.InternalExclusions).toBe("Reflection Rooms");
+    expect(labels.Suspensions).toBe("Fixed-Term Exclusions");
+    expect(labels.PositivePoints).toBe("Merits");
+  });
+
+  it("doesn't double-pluralize a tenant label that is already plural", () => {
+    const labels = getAnaxiFieldLabels({ detentionLabel: "Detentions" });
+    expect(labels.Detentions).toBe("Detentions");
   });
 });

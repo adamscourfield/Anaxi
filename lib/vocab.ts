@@ -16,3 +16,11 @@ export async function getTenantVocab(tenantId: string) {
   }
   return result;
 }
+
+/** Avoid double "s" when a tenant label is already plural (e.g. "Detentions"). */
+export function pluralLabel(base: string): string {
+  const t = base.trim();
+  if (!t) return base;
+  if (/s$/i.test(t)) return t;
+  return `${t}s`;
+}

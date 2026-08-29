@@ -10,16 +10,9 @@ import {
   suggestMapping,
   computeHeaderSignature,
 } from "@/modules/students/snapshot-fields";
-import type { SnapshotMapping, CountScope } from "@/modules/students/snapshot-import";
+import type { SnapshotMapping } from "@/modules/students/snapshot-import";
 
 const MAX_FILE_SIZE_BYTES = 24 * 1024 * 1024; // 24MB
-
-const COUNT_SCOPE_OPTIONS: { value: CountScope; label: string }[] = [
-  { value: "ROLLING_21_DAYS", label: "Rolling 21 days" },
-  { value: "ROLLING_28_DAYS", label: "Rolling 28 days" },
-  { value: "TERM_TO_DATE", label: "Term to date" },
-  { value: "YEAR_TO_DATE", label: "Year to date" },
-];
 
 interface ImportResult {
   importJobId: string;
@@ -27,7 +20,12 @@ interface ImportResult {
   rowsFailed: number;
 }
 
-export function SnapshotUploader() {
+export function SnapshotUploader({
+  fieldLabels,
+}: {
+  /** Human-readable label for each import field, sourced from the tenant's language settings. */
+  fieldLabels: Record<AnaxiField, string>;
+}) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [headers, setHeaders] = useState<string[]>([]);
@@ -37,11 +35,6 @@ export function SnapshotUploader() {
 
   // field → CSV header
   const [fieldMap, setFieldMap] = useState<Partial<Record<AnaxiField, string>>>({});
-
-  // CountScope mode
-  const [countScopeMode, setCountScopeMode] = useState<"column" | "fixed">("fixed");
-  const [countScopeColumn, setCountScopeColumn] = useState<string>("");
-  const [fixedCountScope, setFixedCountScope] = useState<CountScope>("TERM_TO_DATE");
 
   // SnapshotDate mode
   const [snapshotDateMode, setSnapshotDateMode] = useState<"today" | "column">("today");
@@ -78,10 +71,6 @@ export function SnapshotUploader() {
     }
     setFieldMap(newFieldMap);
 
-    if (suggested["CountScope"]) {
-      setCountScopeMode("column");
-      setCountScopeColumn(suggested["CountScope"]);
-    }
     if (suggested["SnapshotDate"]) {
       setSnapshotDateMode("column");
       setSnapshotDateColumn(suggested["SnapshotDate"]);
@@ -97,13 +86,6 @@ export function SnapshotUploader() {
           const saved = data.mappings[0];
           const savedMapping = saved.mappingJson as SnapshotMapping;
           if (savedMapping.fieldMap) setFieldMap(savedMapping.fieldMap as Partial<Record<AnaxiField, string>>);
-          if (savedMapping.countScopeColumn) {
-            setCountScopeMode("column");
-            setCountScopeColumn(savedMapping.countScopeColumn);
-          } else if (savedMapping.fixedCountScope) {
-            setCountScopeMode("fixed");
-            setFixedCountScope(savedMapping.fixedCountScope);
-          }
           if (savedMapping.snapshotDateColumn) {
             setSnapshotDateMode("column");
             setSnapshotDateColumn(savedMapping.snapshotDateColumn);
@@ -154,8 +136,6 @@ export function SnapshotUploader() {
 
     const mapping: SnapshotMapping = {
       fieldMap,
-      countScopeColumn: countScopeMode === "column" ? countScopeColumn || null : null,
-      fixedCountScope: countScopeMode === "fixed" ? fixedCountScope : null,
       snapshotDateColumn: snapshotDateMode === "column" ? snapshotDateColumn || null : null,
     };
 
@@ -280,7 +260,7 @@ export function SnapshotUploader() {
                 {ANAXI_FIELDS.map((field) => (
                   <div key={field} className="flex items-center gap-2">
                     <label className="w-36 shrink-0 text-xs font-medium text-text">
-                      {field}
+                      {fieldLabels[field]}
                       <span className="ml-0.5 text-error">*</span>
                     </label>
                     <select
@@ -297,41 +277,6 @@ export function SnapshotUploader() {
                     </select>
                   </div>
                 ))}
-
-                {/* CountScope */}
-                <div className="flex items-center gap-2 sm:col-span-2">
-                  <label className="w-36 shrink-0 text-xs font-medium text-text">CountScope</label>
-                  <select
-                    value={countScopeMode}
-                    onChange={(e) => setCountScopeMode(e.target.value as "column" | "fixed")}
-                    className="rounded border border-[var(--outline-variant)] bg-[var(--surface-container-highest)] px-2 py-1 text-xs text-text"
-                  >
-                    <option value="fixed">Fixed value</option>
-                    <option value="column">Column</option>
-                  </select>
-                  {countScopeMode === "column" ? (
-                    <select
-                      value={countScopeColumn}
-                      onChange={(e) => setCountScopeColumn(e.target.value)}
-                      className="flex-1 rounded border border-[var(--outline-variant)] bg-[var(--surface-container-highest)] px-2 py-1 text-xs text-text"
-                    >
-                      <option value="">— select —</option>
-                      {headers.map((h) => (
-                        <option key={h} value={h}>{h}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <select
-                      value={fixedCountScope}
-                      onChange={(e) => setFixedCountScope(e.target.value as CountScope)}
-                      className="flex-1 rounded border border-[var(--outline-variant)] bg-[var(--surface-container-highest)] px-2 py-1 text-xs text-text"
-                    >
-                      {COUNT_SCOPE_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
-                  )}
-                </div>
 
                 {/* SnapshotDate */}
                 <div className="flex items-center gap-2 sm:col-span-2">
