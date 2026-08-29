@@ -2,11 +2,14 @@ import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import { adminSectionPath } from "@/lib/admin-sections";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
+import { avatarUrlFor } from "@/lib/avatarUpload";
 import { EmptyState } from "@/components/ui/empty-state";
 import { UserDirectoryPageShell } from "../users/UserDirectoryPageShell";
 import {
   createUser,
+  deleteUser,
   resetPassword,
+  setUserAvatar,
   toggleActive,
   updateUser,
   updateUserRole,
@@ -58,6 +61,7 @@ export async function UsersAdminPanel() {
       emailLeave: u.emailLeave as boolean,
       canApproveAllLoa: u.canApproveAllLoa as boolean,
       loaScopedCount: scoped.length,
+      avatarUrl: avatarUrlFor(u.id as string, u.avatarUpdatedAt),
     };
   });
 
@@ -82,6 +86,8 @@ export async function UsersAdminPanel() {
     updateRoleAction: updateUserRole,
     toggleActiveAction: toggleActive,
     resetPasswordAction: resetPassword,
+    deleteUserAction: deleteUser,
+    avatarAction: setUserAvatar,
   };
 
   if (allUsers.length === 0) {

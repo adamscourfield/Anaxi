@@ -21,6 +21,8 @@ export function UserDirectoryClient({
   updateRoleAction,
   toggleActiveAction,
   resetPasswordAction,
+  deleteUserAction,
+  avatarAction,
 }: {
   users: UserRow[];
   allTeachers: TeacherOption[];
@@ -35,6 +37,8 @@ export function UserDirectoryClient({
   updateRoleAction: (formData: FormData) => Promise<ActionResult>;
   toggleActiveAction: (formData: FormData) => Promise<ActionResult>;
   resetPasswordAction: (formData: FormData) => Promise<ActionResult>;
+  deleteUserAction: (formData: FormData) => Promise<ActionResult>;
+  avatarAction: (formData: FormData) => Promise<ActionResult>;
 }) {
   const [summaryFilter, setSummaryFilter] = useState<SummaryFilter>({ status: "all", roleGroup: "all" });
 
@@ -62,6 +66,8 @@ export function UserDirectoryClient({
         updateRoleAction={updateRoleAction}
         toggleActiveAction={toggleActiveAction}
         resetPasswordAction={resetPasswordAction}
+        deleteUserAction={deleteUserAction}
+        avatarAction={avatarAction}
         canEditSuperUsers={canEditSuperUsers}
         canAssignSuperAdmin={canAssignSuperAdmin}
       />

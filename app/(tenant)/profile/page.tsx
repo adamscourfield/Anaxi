@@ -1,8 +1,11 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { avatarUrlFor } from "@/lib/avatarUpload";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
+import { AvatarUploader } from "@/components/ui/avatar-uploader";
+import { updateOwnAvatar } from "./actions";
 
 const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "Super Admin",
@@ -26,6 +29,7 @@ export default async function ProfilePage() {
       canApproveAllLoa: true,
       receivesOnCallEmails: true,
       receivesFirstAidEmails: true,
+      avatarUpdatedAt: true,
       tenant: { select: { name: true } },
       departmentMemberships: {
         include: { department: { select: { name: true } } },
@@ -43,15 +47,11 @@ export default async function ProfilePage() {
 
       {/* Avatar + name */}
       <Card className="flex items-center gap-5">
-        <span className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-primary text-xl font-bold text-on-primary">
-          {(fullUser?.fullName ?? "?")
-            .split(" ")
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((n: string) => n[0])
-            .join("")
-            .toUpperCase()}
-        </span>
+        <AvatarUploader
+          name={fullUser?.fullName ?? "?"}
+          avatarUrl={avatarUrlFor(user.id, fullUser?.avatarUpdatedAt)}
+          uploadAction={updateOwnAvatar}
+        />
         <div className="min-w-0">
           <p className="text-lg font-semibold text-text">{fullUser?.fullName}</p>
           <p className="text-sm text-muted">{fullUser?.email}</p>

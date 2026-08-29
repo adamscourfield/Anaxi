@@ -31,20 +31,34 @@ export function Avatar({
   name,
   size = "sm",
   tone = "default",
+  avatarUrl,
 }: {
   name: string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   /** Neutral grey circle (dashboard lists) vs hashed accent colors */
   tone?: "default" | "muted";
+  /** When set, renders this image instead of initials. */
+  avatarUrl?: string | null;
 }) {
+  const sizeClass =
+    size === "sm" ? "h-7 w-7 text-[10px]" : size === "md" ? "h-9 w-9 text-[12px]" : "h-16 w-16 text-xl";
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        title={name}
+        className={`inline-block shrink-0 rounded-full object-cover ${sizeClass}`}
+      />
+    );
+  }
+
   const initials = getInitials(name);
   const colorClass =
     tone === "muted"
       ? "bg-[var(--surface-container)] text-text"
       : COLORS[hashName(name) % COLORS.length];
-  const sizeClass = size === "sm"
-    ? "h-7 w-7 text-[10px]"
-    : "h-9 w-9 text-[12px]";
 
   return (
     <span

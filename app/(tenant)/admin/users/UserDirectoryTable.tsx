@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { TableScrollRegion } from "@/components/ui/table-scroll-region";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { toast } from "@/components/toast-provider";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
 import { EditUserModal, TeacherOption } from "./EditUserModal";
 import type { SummaryFilter } from "./UserDirectorySummary";
 import type { ActionResult } from "./actions";
@@ -24,6 +25,7 @@ export type UserRow = {
   emailLeave: boolean;
   canApproveAllLoa: boolean;
   loaScopedCount: number;
+  avatarUrl: string | null;
 };
 
 const ADMIN_ROLES = new Set(["ADMIN", "SLT", "SUPER_ADMIN"]);
@@ -79,6 +81,8 @@ export function UserDirectoryTable({
   updateRoleAction,
   toggleActiveAction,
   resetPasswordAction,
+  deleteUserAction,
+  avatarAction,
   canEditSuperUsers,
   canAssignSuperAdmin,
 }: {
@@ -91,6 +95,8 @@ export function UserDirectoryTable({
   updateRoleAction: (formData: FormData) => Promise<ActionResult>;
   toggleActiveAction: (formData: FormData) => Promise<ActionResult>;
   resetPasswordAction: (formData: FormData) => Promise<ActionResult>;
+  deleteUserAction: (formData: FormData) => Promise<ActionResult>;
+  avatarAction: (formData: FormData) => Promise<ActionResult>;
   canEditSuperUsers: boolean;
   canAssignSuperAdmin: boolean;
 }) {
@@ -100,6 +106,7 @@ export function UserDirectoryTable({
   const [sort, setSort] = useState<SortKey>("name");
   const [page, setPage] = useState(1);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -215,6 +222,12 @@ export function UserDirectoryTable({
     runRowAction(() => resetPasswordAction(fd), "Password reset");
   }
 
+  function handleDeleteUser(u: UserRow) {
+    const fd = new FormData();
+    fd.set("id", u.id);
+    runRowAction(() => deleteUserAction(fd), "Staff member deleted");
+  }
+
   const sortLabel =
     sort === "name" ? "Name (A–Z)" : sort === "role" ? "Role" : "Status (active first)";
 
@@ -320,7 +333,7 @@ export function UserDirectoryTable({
                 className="rounded-sm border border-border bg-surface-container-lowest p-4 shadow-none"
               >
                 <div className="flex items-start gap-3">
-                  <Avatar name={u.fullName} size="md" />
+                  <Avatar name={u.fullName} size="md" avatarUrl={u.avatarUrl} />
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-text">{u.fullName}</p>
                     <p className="truncate text-sm text-muted">{u.email}</p>
@@ -387,7 +400,7 @@ export function UserDirectoryTable({
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <Avatar name={u.fullName} size="md" />
+                          <Avatar name={u.fullName} size="md" avatarUrl={u.avatarUrl} />
                           <div className="min-w-0">
                             <p className="truncate font-semibold text-text">{u.fullName}</p>
                             <p className="truncate text-[0.8125rem] text-muted">{u.email}</p>
@@ -485,6 +498,17 @@ export function UserDirectoryTable({
                                 >
                                   Reset password
                                 </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="block w-full px-3 py-2 text-left text-[0.8125rem] text-error calm-transition hover:bg-error/10"
+                                  onClick={() => {
+                                    setDeleteTarget(u);
+                                    setOpenMenuId(null);
+                                  }}
+                                >
+                                  Delete
+                                </button>
                               </div>
                             ) : null}
                           </div>
@@ -515,10 +539,29 @@ export function UserDirectoryTable({
           scopedLoaTargetIds={scopedLoaByUser[editingUser.id] ?? []}
           onClose={() => setEditingUser(null)}
           saveAction={saveAction}
+          avatarAction={avatarAction}
           readOnly={editingUser.role === "SUPER_ADMIN" && !canEditSuperUsers}
           canAssignSuperAdmin={canAssignSuperAdmin}
         />
       ) : null}
+
+      <DestructiveConfirmDialog
+        open={deleteTarget != null}
+        title="Delete staff member?"
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) handleDeleteUser(deleteTarget);
+        }}
+      >
+        {deleteTarget ? (
+          <>
+            This will permanently remove &ldquo;{deleteTarget.fullName}&rdquo; and cannot be undone. Staff with
+            observations, leave requests, or on-call history can&rsquo;t be deleted — deactivate them instead.
+          </>
+        ) : null}
+      </DestructiveConfirmDialog>
     </div>
   );
 }

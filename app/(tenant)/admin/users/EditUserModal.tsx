@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useState, useMemo, useRef, useEffect, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "@/components/toast-provider";
+import { AvatarUploader } from "@/components/ui/avatar-uploader";
 import type { ActionResult } from "./actions";
 
 export type EditableUser = {
@@ -18,6 +19,7 @@ export type EditableUser = {
   emailMeetings: boolean;
   emailLeave: boolean;
   canApproveAllLoa: boolean;
+  avatarUrl: string | null;
 };
 
 export type TeacherOption = {
@@ -31,6 +33,7 @@ export type EditUserModalProps = {
   scopedLoaTargetIds: string[];
   onClose: () => void;
   saveAction: (formData: FormData) => Promise<ActionResult>;
+  avatarAction: (formData: FormData) => Promise<ActionResult>;
   readOnly?: boolean;
   canAssignSuperAdmin: boolean;
 };
@@ -47,16 +50,6 @@ const ROLE_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const LOA_CAPABLE_ROLES = new Set(["HOD", "SLT", "HR", "ADMIN", "SUPER_ADMIN", "LEADER"]);
-
-function initialsFromName(name: string): string {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-}
 
 function CloseIcon() {
   return (
@@ -300,6 +293,7 @@ export function EditUserModal({
   scopedLoaTargetIds,
   onClose,
   saveAction,
+  avatarAction,
   readOnly = false,
   canAssignSuperAdmin,
 }: EditUserModalProps) {
@@ -380,12 +374,14 @@ export function EditUserModal({
       >
         <div className="flex items-start justify-between gap-4 px-6 pb-5 pt-6">
           <div className="flex min-w-0 flex-1 gap-4">
-            <span
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-[rgba(124,105,239,0.35)] text-lg font-bold text-white shadow-sm ring-1 ring-[rgba(124,105,239,0.2)]"
-              aria-hidden
-            >
-              {initialsFromName(user.fullName)}
-            </span>
+            <AvatarUploader
+              name={user.fullName}
+              avatarUrl={user.avatarUrl}
+              size="lg"
+              targetUserId={user.id}
+              uploadAction={avatarAction}
+              disabled={readOnly}
+            />
             <div className="min-w-0 pt-0.5">
               <h2 id="edit-user-title" className="truncate text-lg font-bold tracking-tight text-text">
                 {user.fullName}
