@@ -200,6 +200,7 @@ export function TaxonomiesAdminView({
           rows={recipientRows}
           valueColumnHeader="Email"
           addItemNoun="recipient"
+          staffOptions={staff}
           updateItem={updateItem}
           toggleActive={toggleActive}
           deleteItem={deleteItem}

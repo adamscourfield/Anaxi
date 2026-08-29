@@ -62,6 +62,8 @@ function MoreVerticalIcon({ className }: { className?: string }) {
   );
 }
 
+export type StaffOption = { id: string; fullName: string; email: string };
+
 export function TaxonomyEditableSection({
   title,
   description,
@@ -70,6 +72,7 @@ export function TaxonomyEditableSection({
   rows: initialRows,
   valueColumnHeader,
   addItemNoun,
+  staffOptions,
   updateItem,
   toggleActive,
   deleteItem,
@@ -83,6 +86,7 @@ export function TaxonomyEditableSection({
   rows: TaxonomyRow[];
   valueColumnHeader: string;
   addItemNoun: string;
+  staffOptions?: StaffOption[];
   updateItem: (formData: FormData) => Promise<void>;
   toggleActive: (formData: FormData) => Promise<void>;
   deleteItem: (formData: FormData) => Promise<void>;
@@ -110,6 +114,7 @@ export function TaxonomyEditableSection({
 
   const activeCount = useMemo(() => rows.filter((r) => r.active).length, [rows]);
   const inactiveCount = rows.length - activeCount;
+  const existingEmails = useMemo(() => new Set(rows.map((r) => r.value.toLowerCase())), [rows]);
 
   async function persistOrder(order: TaxonomyRow[]) {
     const fd = new FormData();
@@ -241,7 +246,7 @@ export function TaxonomyEditableSection({
                               {row.active ? "Deactivate" : "Activate"}
                             </button>
                           </form>
-                          <div className="relative inline-block">
+                          <div className="relative inline-block" ref={menuOpenId === row.id ? menuRef : undefined}>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -257,7 +262,6 @@ export function TaxonomyEditableSection({
                             </button>
                             {menuOpenId === row.id ? (
                               <div
-                                ref={menuRef}
                                 className="absolute right-0 top-full z-20 mt-1 min-w-[10rem] rounded-sm border border-border bg-[var(--surface-container-lowest)] py-1 shadow-none"
                                 role="menu"
                               >
@@ -268,7 +272,6 @@ export function TaxonomyEditableSection({
                                     type="submit"
                                     className="flex w-full px-3 py-2 text-left text-[0.8125rem] font-medium text-error hover:bg-error/10"
                                     role="menuitem"
-                                    onClick={() => setMenuOpenId(null)}
                                   >
                                     Delete
                                   </button>
@@ -295,15 +298,30 @@ export function TaxonomyEditableSection({
             <input type="hidden" name="type" value={type} />
             <label className="min-w-0 flex-1">
               <span className="mb-1.5 block text-[0.8125rem] font-semibold text-[var(--on-surface)]">
-                {field === "email" ? "Email address" : valueColumnHeader}
+                {field === "email" ? "Staff member" : valueColumnHeader}
               </span>
-              <input
-                name="value"
-                className={FIELD}
-                placeholder={field === "email" ? "name@school.org" : `e.g. Annual leave`}
-                required
-                autoComplete={field === "email" ? "email" : "off"}
-              />
+              {field === "email" && staffOptions ? (
+                <select name="value" className={FIELD} required defaultValue="">
+                  <option value="" disabled>
+                    Choose someone…
+                  </option>
+                  {staffOptions
+                    .filter((s) => !existingEmails.has(s.email.toLowerCase()))
+                    .map((s) => (
+                      <option value={s.email} key={s.id}>
+                        {s.fullName} ({s.email})
+                      </option>
+                    ))}
+                </select>
+              ) : (
+                <input
+                  name="value"
+                  className={FIELD}
+                  placeholder={field === "email" ? "name@school.org" : `e.g. Annual leave`}
+                  required
+                  autoComplete={field === "email" ? "email" : "off"}
+                />
+              )}
             </label>
             <button
               type="submit"
