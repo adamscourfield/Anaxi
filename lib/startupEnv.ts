@@ -7,7 +7,7 @@ const PRODUCTION_REQUIRED = [
   "CRON_SECRET",
 ] as const;
 
-const PRODUCTION_RECOMMENDED = ["RESEND_WEBHOOK_SECRET"] as const;
+const PRODUCTION_RECOMMENDED = ["RESEND_WEBHOOK_SECRET", "IMPORT_S3_BUCKET"] as const;
 
 /** Validates required environment variables at process startup (production only). */
 export function validateProductionEnv(): void {
