@@ -97,6 +97,56 @@ export async function batchArchiveYearGroupAction(formData: FormData) {
   redirect("/students/import?cohort=archived");
 }
 
+export async function selectivePromoteYearGroupAction(formData: FormData) {
+  await assertSafeServerAction(formData);
+  const user = await assertStudentWriteAccess();
+  const yearGroup = ensureYearGroupLabel(String(formData.get("yearGroup") || ""));
+
+  if (!yearGroup) throw new Error("yearGroup is required");
+
+  const nextYearGroup = incrementYearGroupLabel(yearGroup);
+  if (!nextYearGroup) throw new Error("This year group cannot be promoted further");
+
+  const continuingIds = formData.getAll("continuingStudentId").map((v) => String(v)).filter(Boolean);
+  const continuingSet = new Set(continuingIds);
+
+  const students = (await (prisma as any).student.findMany({
+    where: { tenantId: user.tenantId, status: "ACTIVE", yearGroup },
+    select: { id: true },
+  })) as Array<{ id: string }>;
+
+  const continuing = students.filter((s) => continuingSet.has(s.id)).map((s) => s.id);
+  const leaving = students.filter((s) => !continuingSet.has(s.id)).map((s) => s.id);
+
+  const updates = [
+    ...(continuing.length > 0
+      ? [
+          (prisma as any).student.updateMany({
+            where: { id: { in: continuing }, tenantId: user.tenantId },
+            data: { yearGroup: nextYearGroup },
+          }),
+        ]
+      : []),
+    ...(leaving.length > 0
+      ? [
+          (prisma as any).student.updateMany({
+            where: { id: { in: leaving }, tenantId: user.tenantId },
+            data: { status: "ARCHIVED" },
+          }),
+        ]
+      : []),
+  ];
+
+  if (updates.length > 0) {
+    await prisma.$transaction(updates);
+  }
+
+  revalidatePath("/explorer/students");
+  revalidatePath("/on-call/new");
+  revalidatePath("/students/import");
+  redirect("/students/import?cohort=promoted");
+}
+
 export async function promoteYearGroupsAction() {
   await assertSafeServerAction();
   const user = await assertStudentWriteAccess();
