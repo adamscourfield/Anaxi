@@ -247,19 +247,19 @@ export function SnapshotUploader({
             className="hidden"
           />
 
-          {/* Column mapping (compact) - shown once file is loaded */}
+          {/* Column mapping - shown once file is loaded */}
           {headers.length > 0 && (
-            <details className="rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4">
-              <summary className="cursor-pointer text-sm font-medium text-text">
-                Column Mapping
+            <details className="rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5">
+              <summary className="cursor-pointer text-sm font-semibold text-text">
+                Column mapping
                 {unmappedRequired.length > 0 && (
-                  <span className="ml-2 text-xs text-error">({unmappedRequired.length} unmapped)</span>
+                  <span className="ml-2 text-xs font-medium text-error">({unmappedRequired.length} unmapped)</span>
                 )}
               </summary>
-              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="mt-4 flex flex-col gap-3">
                 {ANAXI_FIELDS.map((field) => (
-                  <div key={field} className="flex items-center gap-2">
-                    <label className="w-36 shrink-0 text-xs font-medium text-text">
+                  <div key={field} className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+                    <label className="text-sm font-medium text-text sm:w-44 sm:shrink-0">
                       {fieldLabels[field]}
                       <span className="ml-0.5 text-error">*</span>
                     </label>
@@ -268,7 +268,7 @@ export function SnapshotUploader({
                       onChange={(e) =>
                         setFieldMap((prev) => ({ ...prev, [field]: e.target.value || undefined }))
                       }
-                      className="flex-1 rounded border border-[var(--outline-variant)] bg-[var(--surface-container-highest)] px-2 py-1 text-xs text-text"
+                      className="field flex-1"
                     >
                       <option value="">— select —</option>
                       {headers.map((h) => (
@@ -279,40 +279,42 @@ export function SnapshotUploader({
                 ))}
 
                 {/* SnapshotDate */}
-                <div className="flex items-center gap-2 sm:col-span-2">
-                  <label className="w-36 shrink-0 text-xs font-medium text-text">SnapshotDate</label>
-                  <select
-                    value={snapshotDateMode}
-                    onChange={(e) => setSnapshotDateMode(e.target.value as "today" | "column")}
-                    className="rounded border border-[var(--outline-variant)] bg-[var(--surface-container-highest)] px-2 py-1 text-xs text-text"
-                  >
-                    <option value="today">Use today</option>
-                    <option value="column">Column</option>
-                  </select>
-                  {snapshotDateMode === "column" && (
+                <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+                  <label className="text-sm font-medium text-text sm:w-44 sm:shrink-0">Snapshot date</label>
+                  <div className="flex flex-1 flex-col gap-2 sm:flex-row">
                     <select
-                      value={snapshotDateColumn}
-                      onChange={(e) => setSnapshotDateColumn(e.target.value)}
-                      className="flex-1 rounded border border-[var(--outline-variant)] bg-[var(--surface-container-highest)] px-2 py-1 text-xs text-text"
+                      value={snapshotDateMode}
+                      onChange={(e) => setSnapshotDateMode(e.target.value as "today" | "column")}
+                      className="field sm:w-40"
                     >
-                      <option value="">— select —</option>
-                      {headers.map((h) => (
-                        <option key={h} value={h}>{h}</option>
-                      ))}
+                      <option value="today">Use today</option>
+                      <option value="column">Column</option>
                     </select>
-                  )}
+                    {snapshotDateMode === "column" && (
+                      <select
+                        value={snapshotDateColumn}
+                        onChange={(e) => setSnapshotDateColumn(e.target.value)}
+                        className="field flex-1"
+                      >
+                        <option value="">— select —</option>
+                        {headers.map((h) => (
+                          <option key={h} value={h}>{h}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                 </div>
 
                 {/* Save mapping */}
-                <div className="flex items-center gap-2 sm:col-span-2 pt-2 border-t border-[var(--surface-container-low)]">
+                <div className="flex flex-wrap items-center gap-2 border-t border-border/20 pt-4">
                   <input
                     id="saveMapping"
                     type="checkbox"
                     checked={saveMapping}
                     onChange={(e) => setSaveMapping(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-[var(--outline-variant)]"
+                    className="h-4 w-4 rounded border-border"
                   />
-                  <label htmlFor="saveMapping" className="text-xs text-text">
+                  <label htmlFor="saveMapping" className="text-sm text-text">
                     Save mapping for next time
                   </label>
                   {saveMapping && (
@@ -321,7 +323,7 @@ export function SnapshotUploader({
                       value={mappingName}
                       onChange={(e) => setMappingName(e.target.value)}
                       placeholder="Mapping name"
-                      className="ml-auto w-48 rounded border border-[var(--outline-variant)] bg-[var(--surface-container-highest)] px-2 py-1 text-xs text-text"
+                      className="field ml-auto w-48 !py-1.5 text-sm"
                     />
                   )}
                 </div>
