@@ -86,7 +86,9 @@ export function AddUserModal({
             <h2 id="add-user-title" className="text-lg font-bold tracking-tight text-text">
               Add staff member
             </h2>
-            <p className="mt-1 text-[0.8125rem] text-muted">Creates an active account with a temporary password.</p>
+            <p className="mt-1 text-[0.8125rem] text-muted">
+              Creates an active account and emails them a link to set their password.
+            </p>
           </div>
           <button
             type="button"
@@ -146,7 +148,9 @@ export function AddUserModal({
                 className="field w-full rounded-xl border-border/40 bg-background py-2.5 px-3 text-[0.8125rem]"
                 placeholder="Password123!"
               />
-              <p className="mt-1.5 text-[0.75rem] text-muted">Defaults to Password123! if left blank.</p>
+              <p className="mt-1.5 text-[0.75rem] text-muted">
+                Defaults to Password123! if left blank. They&rsquo;ll get an emailed link to set their own password.
+              </p>
             </label>
           </div>
 
