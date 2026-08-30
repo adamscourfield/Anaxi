@@ -26,6 +26,8 @@ function mean(arr: number[]): number | null {
 export type CohortPivotRow = {
   yearGroup: string;
   studentsCovered: number;
+  /** Number of students behind attendanceDelta (only those with both a current and previous snapshot). */
+  pairedCount: number;
   attendanceMean: number | null;
   attendanceDelta: number | null;
   detentionsMean: number | null;
@@ -104,6 +106,7 @@ export async function computeCohortPivot(
     rows.push({
       yearGroup,
       studentsCovered: current.length,
+      pairedCount: paired.length,
       attendanceMean: mean(attendanceCurrent),
       attendanceDelta: mean(attendanceDeltas),
       detentionsMean: mean(detentionsCurrent),

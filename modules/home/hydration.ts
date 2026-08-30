@@ -358,7 +358,7 @@ export async function hydrateLeadershipHomeData({
     attainmentSummary,
     attainmentKpis,
     meetingsTodayCount: meetingsTodayCount as number,
-    watchlistStudents: studentResult.rows,
+    watchlistStudents: studentResult.rows.filter((r) => r.onWatchlist),
   };
 }
 

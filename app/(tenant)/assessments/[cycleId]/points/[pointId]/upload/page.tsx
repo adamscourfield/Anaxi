@@ -23,6 +23,10 @@ function yearGroupStorageKey(cycleId: string) {
   return `anaxi-attainment-yg-${cycleId}`;
 }
 
+function templateSubjectsStorageKey(cycleId: string) {
+  return `anaxi-attainment-template-subjects-${cycleId}`;
+}
+
 type Step = "setup" | "detect" | "done";
 
 type PreviewRecord = {
@@ -57,6 +61,9 @@ export default function UploadSubjectResultsPage() {
   const [hasExistingUpload, setHasExistingUpload] = useState(false);
 
   const [yearGroup, setYearGroup] = useState("");
+  const [templateSubjectChips, setTemplateSubjectChips] = useState<string[]>([]);
+  const [subjectInputValue, setSubjectInputValue] = useState("");
+  const [subjectSuggestions, setSubjectSuggestions] = useState<string[]>([]);
   const [gradeFormat, setGradeFormat] = useState<GradeFormat>("GCSE");
   const [step, setStep] = useState<Step>("setup");
 
@@ -82,6 +89,15 @@ export default function UploadSubjectResultsPage() {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(yearGroupStorageKey(cycleId));
       if (saved) setYearGroup(saved);
+      const savedSubjects = localStorage.getItem(templateSubjectsStorageKey(cycleId));
+      if (savedSubjects) {
+        try {
+          const parsed = JSON.parse(savedSubjects);
+          if (Array.isArray(parsed)) setTemplateSubjectChips(parsed);
+        } catch {
+          // ignore malformed storage from an older version of this field
+        }
+      }
     }
   }, [cycleId]);
 
@@ -90,6 +106,30 @@ export default function UploadSubjectResultsPage() {
       localStorage.setItem(yearGroupStorageKey(cycleId), yearGroup.trim());
     }
   }, [yearGroup, cycleId]);
+
+  useEffect(() => {
+    localStorage.setItem(templateSubjectsStorageKey(cycleId), JSON.stringify(templateSubjectChips));
+  }, [templateSubjectChips, cycleId]);
+
+  useEffect(() => {
+    fetch("/api/assessments/subjects")
+      .then((r) => r.json())
+      .then((data) => setSubjectSuggestions(data.subjects ?? []))
+      .catch(() => {});
+  }, []);
+
+  function addTemplateSubject(raw: string) {
+    const name = raw.trim();
+    if (!name) return;
+    setTemplateSubjectChips((prev) =>
+      prev.some((s) => s.toLowerCase() === name.toLowerCase()) ? prev : [...prev, name]
+    );
+    setSubjectInputValue("");
+  }
+
+  function removeTemplateSubject(name: string) {
+    setTemplateSubjectChips((prev) => prev.filter((s) => s !== name));
+  }
 
   useEffect(() => {
     fetch(`/api/assessments/points/${pointId}`)
@@ -330,6 +370,50 @@ export default function UploadSubjectResultsPage() {
             </div>
           </div>
 
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-[var(--on-surface)]">Subjects for template (optional)</label>
+            {templateSubjectChips.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                {templateSubjectChips.map((s) => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-[var(--surface-container-low)] px-2.5 py-1 text-xs font-medium text-[var(--on-surface)]"
+                  >
+                    {s}
+                    <button
+                      type="button"
+                      onClick={() => removeTemplateSubject(s)}
+                      className="text-[var(--on-surface-muted)] hover:text-[var(--error)]"
+                      aria-label={`Remove ${s}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <input
+              className="field w-full"
+              list="subject-suggestions"
+              placeholder="Type a subject and press Enter (pick from the list to keep names consistent)"
+              value={subjectInputValue}
+              onChange={(e) => setSubjectInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  addTemplateSubject(subjectInputValue);
+                }
+              }}
+              onBlur={() => addTemplateSubject(subjectInputValue)}
+            />
+            <datalist id="subject-suggestions">
+              {subjectSuggestions.map((s) => <option key={s} value={s} />)}
+            </datalist>
+            <p className="text-xs text-[var(--on-surface-muted)]">
+              Pick from previously-used subjects where possible so names stay consistent across cycles. The downloaded template will have one column per subject added above, prefilled with every student in the year group — fill in grades directly under each subject, one row per student.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--on-surface)]">CSV file</label>
             <div className="rounded-xl bg-[var(--surface-container-low)] p-3 text-xs text-[var(--on-surface-muted)] space-y-1">
@@ -343,7 +427,10 @@ export default function UploadSubjectResultsPage() {
               inputRef={fileRef}
             />
             <a
-              href={`/api/assessments/template${yearGroup.trim() ? `?yearGroup=${encodeURIComponent(yearGroup.trim())}` : ""}`}
+              href={`/api/assessments/template?${new URLSearchParams({
+                ...(yearGroup.trim() ? { yearGroup: yearGroup.trim() } : {}),
+                ...(templateSubjectChips.length > 0 ? { subjects: templateSubjectChips.join(",") } : {}),
+              }).toString()}`}
               className="link-accent inline-block text-xs font-medium"
             >
               Download pre-populated attainment template
