@@ -7,7 +7,7 @@ import { withApi } from "@/lib/apiRoute";
 /** GET /api/admin/timetable/import/mappings?headerSignature=... */
 export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
-  requireRole(user, ["ADMIN"]);
+  requireRole(user, ["ADMIN", "SUPER_ADMIN"]);
 
   const { searchParams } = new URL(req.url);
   const headerSignature = searchParams.get("headerSignature") ?? undefined;

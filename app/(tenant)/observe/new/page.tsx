@@ -8,7 +8,7 @@ import { ObservationContextForm } from "../components/ObservationContextForm";
 export default async function NewObservationPage() {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
-  requireRole(user, ["LEADER", "SLT", "ADMIN"]);
+  requireRole(user, ["LEADER", "SLT", "ADMIN", "SUPER_ADMIN"]);
 
   const teachers = await (prisma as any).user.findMany({
     where: { tenantId: user.tenantId, isActive: true, role: "TEACHER" },

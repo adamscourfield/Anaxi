@@ -10,7 +10,7 @@ import { ReviewList } from "../../components/ReviewList";
 export default async function ObservationReviewPage() {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
-  requireRole(user, ["LEADER", "SLT", "ADMIN"]);
+  requireRole(user, ["LEADER", "SLT", "ADMIN", "SUPER_ADMIN"]);
 
   const draftKey = `observation-draft:${user.tenantId}:${user.id}`;
   const labelMap = await getTenantSignalLabels(user.tenantId);

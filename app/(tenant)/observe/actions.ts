@@ -14,7 +14,7 @@ export async function createObservation(formData: FormData) {
   await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
-  requireRole(user, ["LEADER", "SLT", "ADMIN"]);
+  requireRole(user, ["LEADER", "SLT", "ADMIN", "SUPER_ADMIN"]);
 
   const observedTeacherId = String(formData.get("observedTeacherId") || "");
   const observedAt = new Date(String(formData.get("observedAt") || ""));
@@ -78,7 +78,7 @@ export async function submitObservationDraft(formData: FormData) {
   await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
-  requireRole(user, ["LEADER", "SLT", "ADMIN"]);
+  requireRole(user, ["LEADER", "SLT", "ADMIN", "SUPER_ADMIN"]);
 
   const observedTeacherId = String(formData.get("observedTeacherId") || "").trim();
   const yearGroup = String(formData.get("yearGroup") || "").trim();

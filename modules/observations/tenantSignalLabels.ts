@@ -23,7 +23,7 @@ export async function upsertTenantSignalLabel(tenantId: string, signalKey: Signa
   const user = await getSessionUserOrThrow();
   if (user.tenantId !== tenantId) throw new Error("FORBIDDEN");
   await requireFeature(tenantId, "OBSERVATIONS");
-  requireRole(user, ["ADMIN"]);
+  requireRole(user, ["ADMIN", "SUPER_ADMIN"]);
 
   const cleanedName = displayName.trim();
   if (cleanedName.length < 2 || cleanedName.length > 80) throw new Error("INVALID_DISPLAY_NAME");

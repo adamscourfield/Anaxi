@@ -10,7 +10,7 @@ export const GET = withApi(async function GET(
 ) {
   const resolvedParams = await params;
   const user = await getSessionUserOrThrow();
-  requireRole(user, ["ADMIN"]);
+  requireRole(user, ["ADMIN", "SUPER_ADMIN"]);
 
   const job = await (prisma as any).timetableImportJob.findFirst({
     where: { id: resolvedParams.jobId, tenantId: user.tenantId },

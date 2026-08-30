@@ -8,7 +8,7 @@ import { withApi } from "@/lib/apiRoute";
 export const POST = withApi(async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS");
-  requireRole(user, ["LEADER", "SLT", "ADMIN"]);
+  requireRole(user, ["LEADER", "SLT", "ADMIN", "SUPER_ADMIN"]);
 
   const form = await req.formData();
   const csvFile = form.get("file") as File | null;
