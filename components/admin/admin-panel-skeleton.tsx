@@ -106,6 +106,7 @@ const SECTION_LABELS: Partial<Record<AdminSectionId, string>> = {
   signals: "Signals",
   "email-log": "Email log",
   taxonomies: "Taxonomies",
+  subjects: "Subjects",
   timetable: "Timetable",
   imports: "Import jobs",
 };

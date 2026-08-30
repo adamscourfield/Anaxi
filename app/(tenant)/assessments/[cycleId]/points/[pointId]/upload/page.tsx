@@ -12,6 +12,7 @@ import { AttainmentWizardSteps } from "@/components/assessments/AttainmentWizard
 import { CsvFileDropzone } from "@/components/assessments/CsvFileDropzone";
 import { LockedPointBanner } from "@/components/assessments/LockedPointBanner";
 import { toast } from "@/components/toast-provider";
+import { stageForQualificationType } from "@/lib/subjectStages";
 import type { GradeFormat } from "@prisma/client";
 
 const UPLOAD_STEPS = [
@@ -112,19 +113,35 @@ export default function UploadSubjectResultsPage() {
   }, [templateSubjectChips, cycleId]);
 
   useEffect(() => {
-    fetch("/api/assessments/subjects")
+    const stage = stageForQualificationType(qualificationType);
+    fetch(`/api/assessments/subjects${stage ? `?stage=${stage}` : ""}`)
       .then((r) => r.json())
       .then((data) => setSubjectSuggestions(data.subjects ?? []))
       .catch(() => {});
-  }, []);
+  }, [qualificationType]);
 
   function addTemplateSubject(raw: string) {
     const name = raw.trim();
     if (!name) return;
+    const alreadySuggested = subjectSuggestions.some((s) => s.toLowerCase() === name.toLowerCase());
     setTemplateSubjectChips((prev) =>
       prev.some((s) => s.toLowerCase() === name.toLowerCase()) ? prev : [...prev, name]
     );
     setSubjectInputValue("");
+
+    // A name typed that doesn't match an existing suggestion is a genuinely
+    // new subject -- register it as canonical so future uploads/cycles
+    // suggest this exact spelling instead of it staying a one-off.
+    if (!alreadySuggested) {
+      const stage = stageForQualificationType(qualificationType);
+      fetch("/api/assessments/subjects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, stage }),
+      })
+        .then(() => setSubjectSuggestions((prev) => (prev.includes(name) ? prev : [...prev, name].sort())))
+        .catch(() => {});
+    }
   }
 
   function removeTemplateSubject(name: string) {
