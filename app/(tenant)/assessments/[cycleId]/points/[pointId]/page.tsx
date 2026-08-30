@@ -618,6 +618,17 @@ export default function ResultPointPage() {
           </Link>
         </Button>
       )}
+      {point.resultStatus !== "LOCKED" && (
+        <Button asChild variant="secondary">
+          <Link href={`/assessments/${cycleId}/points/${pointId}/enter`}>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <rect x="3" y="4" width="18" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3 10h18M9 10v10" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Enter grades
+          </Link>
+        </Button>
+      )}
       <Button asChild>
         <Link href={`/assessments/${cycleId}/compare?from=${pointId}`}>
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -667,12 +678,20 @@ export default function ResultPointPage() {
             description="Upload a CSV for one or more subjects to unlock distributions, E&M measures, and comparisons."
             action={
               point?.resultStatus !== "LOCKED" ? (
-                <Link
-                  href={`/assessments/${cycleId}/points/${pointId}/upload`}
-                  className="link-accent text-sm font-semibold underline-offset-2"
-                >
-                  Upload subject results
-                </Link>
+                <div className="flex flex-wrap items-center justify-center gap-4">
+                  <Link
+                    href={`/assessments/${cycleId}/points/${pointId}/upload`}
+                    className="link-accent text-sm font-semibold underline-offset-2"
+                  >
+                    Upload subject results
+                  </Link>
+                  <Link
+                    href={`/assessments/${cycleId}/points/${pointId}/enter`}
+                    className="link-accent text-sm font-semibold underline-offset-2"
+                  >
+                    Enter grades directly
+                  </Link>
+                </div>
               ) : undefined
             }
           />
