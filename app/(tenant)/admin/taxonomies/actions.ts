@@ -42,7 +42,15 @@ export async function addTaxonomyItem(formData: FormData) {
       _max: { sortOrder: true },
     });
     const sortOrder = (agg._max.sortOrder ?? -1) + 1;
-    await (prisma as any).onCallRecipient.create({ data: { tenantId: admin.tenantId, email: value, sortOrder } });
+    const notifiesBehaviour = formData.get("notifiesBehaviour") !== null;
+    const notifiesFirstAid = formData.get("notifiesFirstAid") !== null;
+    // value is the selected staff member's userId, not a free-text email --
+    // a recipient must be a real user in the system.
+    await (prisma as any).onCallRecipient.upsert({
+      where: { tenantId_userId: { tenantId: admin.tenantId, userId: value } },
+      update: {},
+      create: { tenantId: admin.tenantId, userId: value, sortOrder, notifiesBehaviour, notifiesFirstAid },
+    });
   }
   if (type === "loa_authoriser") {
     await (prisma as any).lOAAuthoriser.upsert({
@@ -64,7 +72,16 @@ export async function updateTaxonomyItem(formData: FormData) {
   if (type === "loa") await prisma.loaReason.updateMany({ where: { id, tenantId: admin.tenantId }, data: { label } });
   if (type === "reason") await (prisma as any).onCallReason.updateMany({ where: { id, tenantId: admin.tenantId }, data: { label } });
   if (type === "location") await (prisma as any).onCallLocation.updateMany({ where: { id, tenantId: admin.tenantId }, data: { label } });
-  if (type === "recipient") await (prisma as any).onCallRecipient.updateMany({ where: { id, tenantId: admin.tenantId }, data: { email: label } });
+  if (type === "recipient") {
+    // Recipient identity (which user) isn't editable in place -- only which
+    // notification types they receive. Remove and re-add to change the user.
+    const notifiesBehaviour = formData.get("notifiesBehaviour") !== null;
+    const notifiesFirstAid = formData.get("notifiesFirstAid") !== null;
+    await (prisma as any).onCallRecipient.updateMany({
+      where: { id, tenantId: admin.tenantId },
+      data: { notifiesBehaviour, notifiesFirstAid },
+    });
+  }
   revalidateAdmin("taxonomies");
 }
 

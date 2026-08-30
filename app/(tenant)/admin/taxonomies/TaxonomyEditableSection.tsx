@@ -3,7 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 
-export type TaxonomyRow = { id: string; value: string; active: boolean };
+export type TaxonomyRow = {
+  id: string;
+  value: string;
+  active: boolean;
+  /** Recipient rows only: the underlying staff user. */
+  userId?: string;
+  /** Recipient rows only: which on-call request types this user is notified for. */
+  notifiesBehaviour?: boolean;
+  notifiesFirstAid?: boolean;
+};
 
 const CARD =
   "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
@@ -114,7 +123,7 @@ export function TaxonomyEditableSection({
 
   const activeCount = useMemo(() => rows.filter((r) => r.active).length, [rows]);
   const inactiveCount = rows.length - activeCount;
-  const existingEmails = useMemo(() => new Set(rows.map((r) => r.value.toLowerCase())), [rows]);
+  const existingUserIds = useMemo(() => new Set(rows.map((r) => r.userId).filter(Boolean)), [rows]);
 
   async function persistOrder(order: TaxonomyRow[]) {
     const fd = new FormData();
@@ -203,12 +212,32 @@ export function TaxonomyEditableSection({
                         </button>
                       </td>
                       <td className="min-w-0 px-4 py-4 align-middle">
-                        <form id={formId} action={updateItem} className="flex min-w-0 items-center gap-2">
+                        <form id={formId} action={updateItem} className="flex min-w-0 flex-col gap-2">
                           <input type="hidden" name="type" value={type} />
                           <input type="hidden" name="id" value={row.id} />
-                          <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--surface-container)]" aria-hidden />
-                          {field === "email" ? <EnvelopeIcon className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)]" /> : null}
-                          <input name="label" defaultValue={row.value} aria-label={valueInputLabel} className={FIELD} required />
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--surface-container)]" aria-hidden />
+                            {field === "email" ? <EnvelopeIcon className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)]" /> : null}
+                            {type === "recipient" ? (
+                              <span className="min-w-0 truncate text-sm text-[var(--on-surface)]" title={row.value}>
+                                {row.value}
+                              </span>
+                            ) : (
+                              <input name="label" defaultValue={row.value} aria-label={valueInputLabel} className={FIELD} required />
+                            )}
+                          </div>
+                          {type === "recipient" ? (
+                            <div className="flex flex-wrap items-center gap-3 pl-4 text-[0.75rem] text-[var(--on-surface-variant)]">
+                              <label className="inline-flex items-center gap-1.5">
+                                <input type="checkbox" name="notifiesBehaviour" defaultChecked={row.notifiesBehaviour !== false} />
+                                Behaviour
+                              </label>
+                              <label className="inline-flex items-center gap-1.5">
+                                <input type="checkbox" name="notifiesFirstAid" defaultChecked={row.notifiesFirstAid !== false} />
+                                First aid
+                              </label>
+                            </div>
+                          ) : null}
                         </form>
                       </td>
                       <td className="px-4 py-4 align-middle">
@@ -306,9 +335,9 @@ export function TaxonomyEditableSection({
                     Choose someone…
                   </option>
                   {staffOptions
-                    .filter((s) => !existingEmails.has(s.email.toLowerCase()))
+                    .filter((s) => !existingUserIds.has(s.id))
                     .map((s) => (
-                      <option value={s.email} key={s.id}>
+                      <option value={s.id} key={s.id}>
                         {s.fullName} ({s.email})
                       </option>
                     ))}
@@ -323,6 +352,18 @@ export function TaxonomyEditableSection({
                 />
               )}
             </label>
+            {type === "recipient" ? (
+              <div className="flex flex-wrap items-center gap-3 text-[0.8125rem] font-medium text-[var(--on-surface)] sm:pb-2.5">
+                <label className="inline-flex items-center gap-1.5">
+                  <input type="checkbox" name="notifiesBehaviour" defaultChecked />
+                  Behaviour
+                </label>
+                <label className="inline-flex items-center gap-1.5">
+                  <input type="checkbox" name="notifiesFirstAid" defaultChecked />
+                  First aid
+                </label>
+              </div>
+            ) : null}
             <button
               type="submit"
               className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[var(--on-surface)] px-6 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[var(--primary-container)]"

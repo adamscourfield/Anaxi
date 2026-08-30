@@ -531,8 +531,8 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   for (const label of ["Hallway", "Playground", "Canteen", "Classroom 12", "Sports Hall"]) {
     await prisma.onCallLocation.create({ data: { tenantId: tenant.id, label } });
   }
-  for (const email of ["oncall@demo.school", "pastoral@demo.school"]) {
-    await prisma.onCallRecipient.create({ data: { tenantId: tenant.id, email } });
+  for (const recipientUser of [admin, sltUsers[0]]) {
+    await prisma.onCallRecipient.create({ data: { tenantId: tenant.id, userId: recipientUser.id } });
   }
   console.log("  ✓  LOA + OnCall config created");
 

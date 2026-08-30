@@ -32,7 +32,11 @@ export async function TaxonomiesAdminPanel({
     prisma.loaReason.findMany({ where: { tenantId: user.tenantId }, orderBy: [{ sortOrder: "asc" }, { label: "asc" }] }),
     (prisma as any).onCallReason.findMany({ where: { tenantId: user.tenantId }, orderBy: [{ sortOrder: "asc" }, { label: "asc" }] }),
     (prisma as any).onCallLocation.findMany({ where: { tenantId: user.tenantId }, orderBy: [{ sortOrder: "asc" }, { label: "asc" }] }),
-    (prisma as any).onCallRecipient.findMany({ where: { tenantId: user.tenantId }, orderBy: [{ sortOrder: "asc" }, { email: "asc" }] }),
+    (prisma as any).onCallRecipient.findMany({
+      where: { tenantId: user.tenantId },
+      orderBy: [{ sortOrder: "asc" }, { user: { fullName: "asc" } }],
+      include: { user: { select: { id: true, fullName: true, email: true } } },
+    }),
     (prisma as any).user.findMany({ where: { tenantId: user.tenantId, isActive: true }, orderBy: { fullName: "asc" } }),
     (prisma as any).lOAAuthoriser.findMany({ where: { tenantId: user.tenantId }, include: { user: true } }),
     (prisma as any).lOAApprovalScope.findMany({
@@ -71,8 +75,11 @@ export async function TaxonomiesAdminPanel({
   }));
   const recipientRows = (recipients as any[]).map((r) => ({
     id: r.id as string,
-    value: r.email as string,
+    value: r.user ? `${r.user.fullName} (${r.user.email})` : "Unknown user",
+    userId: r.userId as string,
     active: Boolean(r.active),
+    notifiesBehaviour: Boolean(r.notifiesBehaviour),
+    notifiesFirstAid: Boolean(r.notifiesFirstAid),
   }));
 
   const scopedGroups = Array.from(scopesByApprover.entries()).map(([approverId, { approver, targets }]) => ({
