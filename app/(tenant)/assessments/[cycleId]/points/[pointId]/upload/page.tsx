@@ -23,6 +23,10 @@ function yearGroupStorageKey(cycleId: string) {
   return `anaxi-attainment-yg-${cycleId}`;
 }
 
+function templateSubjectsStorageKey(cycleId: string) {
+  return `anaxi-attainment-template-subjects-${cycleId}`;
+}
+
 type Step = "setup" | "detect" | "done";
 
 type PreviewRecord = {
@@ -57,6 +61,7 @@ export default function UploadSubjectResultsPage() {
   const [hasExistingUpload, setHasExistingUpload] = useState(false);
 
   const [yearGroup, setYearGroup] = useState("");
+  const [templateSubjects, setTemplateSubjects] = useState("");
   const [gradeFormat, setGradeFormat] = useState<GradeFormat>("GCSE");
   const [step, setStep] = useState<Step>("setup");
 
@@ -82,6 +87,8 @@ export default function UploadSubjectResultsPage() {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(yearGroupStorageKey(cycleId));
       if (saved) setYearGroup(saved);
+      const savedSubjects = localStorage.getItem(templateSubjectsStorageKey(cycleId));
+      if (savedSubjects) setTemplateSubjects(savedSubjects);
     }
   }, [cycleId]);
 
@@ -90,6 +97,12 @@ export default function UploadSubjectResultsPage() {
       localStorage.setItem(yearGroupStorageKey(cycleId), yearGroup.trim());
     }
   }, [yearGroup, cycleId]);
+
+  useEffect(() => {
+    if (templateSubjects.trim()) {
+      localStorage.setItem(templateSubjectsStorageKey(cycleId), templateSubjects.trim());
+    }
+  }, [templateSubjects, cycleId]);
 
   useEffect(() => {
     fetch(`/api/assessments/points/${pointId}`)
@@ -330,6 +343,19 @@ export default function UploadSubjectResultsPage() {
             </div>
           </div>
 
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-[var(--on-surface)]">Subjects for template (optional)</label>
+            <input
+              className="field w-full"
+              placeholder="e.g. Maths, English Language, Biology"
+              value={templateSubjects}
+              onChange={(e) => setTemplateSubjects(e.target.value)}
+            />
+            <p className="text-xs text-[var(--on-surface-muted)]">
+              Comma-separated. The downloaded template will have one column per subject you list here, prefilled with every student in the year group above — fill in grades directly under each subject, one row per student.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--on-surface)]">CSV file</label>
             <div className="rounded-xl bg-[var(--surface-container-low)] p-3 text-xs text-[var(--on-surface-muted)] space-y-1">
@@ -343,7 +369,10 @@ export default function UploadSubjectResultsPage() {
               inputRef={fileRef}
             />
             <a
-              href={`/api/assessments/template${yearGroup.trim() ? `?yearGroup=${encodeURIComponent(yearGroup.trim())}` : ""}`}
+              href={`/api/assessments/template?${new URLSearchParams({
+                ...(yearGroup.trim() ? { yearGroup: yearGroup.trim() } : {}),
+                ...(templateSubjects.trim() ? { subjects: templateSubjects.trim() } : {}),
+              }).toString()}`}
               className="link-accent inline-block text-xs font-medium"
             >
               Download pre-populated attainment template
