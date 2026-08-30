@@ -79,6 +79,7 @@ model User {
   loaApprovalScopesAsTarget     LOAApprovalScope[]         @relation("ApprovalScopeTarget")
   loaAuthorisers                LOAAuthoriser?
   loaRequests                   LOARequest[]
+  onCallRecipient               OnCallRecipient?
   leaveApprovalGroupMemberships LeaveApprovalGroupMember[] @relation("LeaveApprovalGroupApprover")
   leaveApprovalGroupScopes      LeaveApprovalGroupScope[]  @relation("LeaveApprovalGroupSubject")
   meetingsCreated               Meeting[]                  @relation("MeetingCreator")
@@ -216,14 +217,17 @@ model OnCallLocation {
 }
 
 model OnCallRecipient {
-  id        String @id @default(cuid())
-  tenantId  String
-  email     String
-  active    Boolean @default(true)
-  sortOrder Int    @default(0)
-  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  tenantId          String
+  userId            String
+  active            Boolean @default(true)
+  sortOrder         Int     @default(0)
+  notifiesBehaviour Boolean @default(true)
+  notifiesFirstAid  Boolean @default(true)
+  tenant            Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
 
-  @@unique([tenantId, email])
+  @@unique([tenantId, userId])
 }
 
 model Student {

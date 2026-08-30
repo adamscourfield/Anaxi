@@ -57,6 +57,7 @@ export function SnapshotUploader({
   const [mappingName, setMappingName] = useState("Snapshot import mapping");
 
   const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
 
@@ -150,6 +151,7 @@ export function SnapshotUploader({
     setImporting(true);
     setImportError(null);
     setResult(null);
+    setProgress(null);
 
     const mapping: SnapshotMapping = {
       fieldMap,
@@ -182,8 +184,10 @@ export function SnapshotUploader({
         const statusRes = await fetch(`/api/import/jobs/${jobId}`);
         if (!statusRes.ok) break;
         const job = await statusRes.json();
+
         if (isImportJobFinished(job.status)) {
           if (mountedRef.current) {
+            setProgress(null);
             setResult({
               importJobId: jobId,
               rowsProcessed: job.rowsProcessed ?? 0,
@@ -193,13 +197,21 @@ export function SnapshotUploader({
           router.refresh();
           return;
         }
+
+        if (mountedRef.current && job.rowCount > 0) {
+          setProgress({ done: (job.rowsProcessed ?? 0) + (job.rowsFailed ?? 0), total: job.rowCount });
+        }
       }
 
       if (mountedRef.current) {
+        setProgress(null);
         setImportError("Still processing — check Recent Import History below for progress.");
       }
     } catch (err: any) {
-      if (mountedRef.current) setImportError(String(err?.message ?? err));
+      if (mountedRef.current) {
+        setProgress(null);
+        setImportError(String(err?.message ?? err));
+      }
     } finally {
       if (mountedRef.current) setImporting(false);
     }
@@ -433,6 +445,30 @@ export function SnapshotUploader({
                     Download error report
                   </a>
                 </p>
+              )}
+            </div>
+          )}
+
+          {/* Import progress */}
+          {importing && (
+            <div className="rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3">
+              {progress ? (
+                <>
+                  <div className="flex items-center justify-between text-xs text-muted">
+                    <span>Importing…</span>
+                    <span className="tabular-nums">
+                      {progress.done} of {progress.total} rows
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[var(--surface-container-high)]">
+                    <div
+                      className="h-full rounded-full bg-[var(--primary)] transition-[width] duration-500 ease-out"
+                      style={{ width: `${Math.min(100, Math.round((progress.done / progress.total) * 100))}%` }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-muted">Uploading and queuing your file…</p>
               )}
             </div>
           )}

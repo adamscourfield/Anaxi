@@ -124,8 +124,8 @@ async function main() {
   for (const name of ["Hallway", "Playground", "Canteen"]) {
     await (prisma as any).onCallLocation.upsert({ where: { tenantId_label: { tenantId: tenant.id, label: name } }, update: {}, create: { tenantId: tenant.id, label: name } });
   }
-  for (const email of ["oncall@demo.school", "pastoral@demo.school"]) {
-    await (prisma as any).onCallRecipient.upsert({ where: { tenantId_email: { tenantId: tenant.id, email } }, update: {}, create: { tenantId: tenant.id, email } });
+  for (const userId of [adminUser.id]) {
+    await (prisma as any).onCallRecipient.upsert({ where: { tenantId_userId: { tenantId: tenant.id, userId } }, update: {}, create: { tenantId: tenant.id, userId } });
   }
 
   const labelDefs = [...SIGNAL_DEFINITIONS, ...PRIMARY_SIGNAL_DEFINITIONS];

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { REASON_CATEGORIES, LOCATION_SUGGESTIONS } from "@/modules/oncall/types";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
@@ -18,6 +17,8 @@ interface Student {
 
 interface OnCallRequestFormProps {
   students: Student[];
+  reasons: string[];
+  locations: string[];
   hourlyBuckets: number[];
   todayCount: number;
   yesterdayCount: number;
@@ -27,6 +28,8 @@ interface OnCallRequestFormProps {
 
 export function OnCallRequestForm({
   students,
+  reasons,
+  locations,
   hourlyBuckets,
   todayCount,
   yesterdayCount,
@@ -232,7 +235,7 @@ export function OnCallRequestForm({
                 required
               >
                 <option value="">Select reason...</option>
-                {REASON_CATEGORIES.map((r) => (
+                {reasons.map((r) => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
@@ -261,7 +264,7 @@ export function OnCallRequestForm({
                 required
               />
               <datalist id="location-suggestions">
-                {LOCATION_SUGGESTIONS.map((l) => <option key={l} value={l} />)}
+                {locations.map((l) => <option key={l} value={l} />)}
               </datalist>
             </div>
           </div>

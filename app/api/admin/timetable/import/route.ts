@@ -9,7 +9,7 @@ import { apiErrorResponse } from "@/lib/apiErrors";
 
 export async function POST(req: Request) {
   const user = await getSessionUserOrThrow();
-  requireRole(user, ["ADMIN"]);
+  requireRole(user, ["ADMIN", "SUPER_ADMIN"]);
 
   const form = await req.formData();
   const file = form.get("file") as File | null;

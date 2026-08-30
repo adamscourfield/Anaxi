@@ -10,7 +10,7 @@ type ImportType = "STUDENTS_SNAPSHOT" | "STUDENT_SUBJECT_TEACHERS";
 export async function createImportJob(type: ImportType, fileName: string) {
   await assertSafeServerAction();
   const user = await getSessionUserOrThrow();
-  requireRole(user, ["LEADER", "SLT", "ADMIN"]);
+  requireRole(user, ["LEADER", "SLT", "ADMIN", "SUPER_ADMIN"]);
 
   return prisma.importJob.create({
     data: {

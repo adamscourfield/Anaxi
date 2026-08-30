@@ -46,6 +46,17 @@ export async function runSnapshotImport(input: RunSnapshotImportInput): Promise<
   let rowsProcessed = 0;
   let rowsFailed = errors.length;
 
+  // Record the total up front so a client polling this job mid-run can show
+  // real progress instead of a spinner with no indication of how much is left.
+  await (prisma as any).importJob.update({
+    where: { id: importJobId },
+    data: {
+      rowCount: rows.length + errors.length,
+      rowsProcessed,
+      rowsFailed,
+    },
+  });
+
   const ROW_CONCURRENCY = 10;
 
   async function importRow(row: (typeof rows)[number]): Promise<void> {
@@ -117,6 +128,13 @@ export async function runSnapshotImport(input: RunSnapshotImportInput): Promise<
         });
       }
     }
+
+    // Persist progress after each batch so a client polling this job mid-run
+    // can show a real percentage instead of an indeterminate spinner.
+    await (prisma as any).importJob.update({
+      where: { id: importJobId },
+      data: { rowsProcessed, rowsFailed },
+    });
   }
 
   const errorReportJson = {
