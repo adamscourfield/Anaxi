@@ -4,6 +4,7 @@ import { requireFeature } from "@/lib/guards";
 import { hasOnCallPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { OnCallRequestForm } from "@/components/oncall/OnCallRequestForm";
+import { REASON_CATEGORIES, LOCATION_SUGGESTIONS } from "@/modules/oncall/types";
 
 export default async function OnCallNewPage() {
   const user = await getSessionUserOrThrow();
@@ -18,6 +19,27 @@ export default async function OnCallNewPage() {
     orderBy: { fullName: "asc" },
     select: { id: true, fullName: true, upn: true, yearGroup: true },
   });
+
+  // Tenant-customized reasons/locations from Admin → Taxonomies, falling
+  // back to the defaults for tenants that haven't set any up.
+  const [reasonRows, locationRows] = await Promise.all([
+    (prisma as any).onCallReason.findMany({
+      where: { tenantId: user.tenantId, active: true },
+      orderBy: [{ sortOrder: "asc" }, { label: "asc" }],
+      select: { label: true },
+    }),
+    (prisma as any).onCallLocation.findMany({
+      where: { tenantId: user.tenantId, active: true },
+      orderBy: [{ sortOrder: "asc" }, { label: "asc" }],
+      select: { label: true },
+    }),
+  ]);
+  const reasons = reasonRows.length > 0
+    ? reasonRows.map((r: { label: string }) => r.label)
+    : [...REASON_CATEGORIES];
+  const locations = locationRows.length > 0
+    ? locationRows.map((l: { label: string }) => l.label)
+    : [...LOCATION_SUGGESTIONS];
 
   // ── On-Call Density: hourly counts for the last 8 hours ─────────────────
   const now = new Date();
@@ -69,6 +91,8 @@ export default async function OnCallNewPage() {
   return (
     <OnCallRequestForm
       students={students}
+      reasons={reasons}
+      locations={locations}
       hourlyBuckets={hourlyBuckets}
       todayCount={todayCount as number}
       yesterdayCount={yesterdayCount as number}

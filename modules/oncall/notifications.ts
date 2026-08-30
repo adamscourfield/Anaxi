@@ -27,16 +27,24 @@ export async function sendOnCallNotification(
   try {
     const isFirstAid = request.requestType === "FIRST_AID";
     const emailKind = isFirstAid ? "oncall_first_aid" : "oncall";
-    const recipients = await prisma.user.findMany({
-      where: {
-        tenantId,
-        isActive: true,
-        ...(isFirstAid ? { receivesFirstAidEmails: true } : { receivesOnCallEmails: true }),
-      },
-      select: { id: true, email: true, fullName: true },
-    });
+    const [recipients, extraRecipients] = await Promise.all([
+      prisma.user.findMany({
+        where: {
+          tenantId,
+          isActive: true,
+          ...(isFirstAid ? { receivesFirstAidEmails: true } : { receivesOnCallEmails: true }),
+        },
+        select: { id: true, email: true, fullName: true },
+      }),
+      // Standing recipients configured in Admin → Taxonomies (e.g. a shared
+      // pastoral inbox) who aren't necessarily system users.
+      (prisma as any).onCallRecipient.findMany({
+        where: { tenantId, active: true },
+        select: { email: true },
+      }) as Promise<{ email: string }[]>,
+    ]);
 
-    if (recipients.length === 0) return;
+    if (recipients.length === 0 && extraRecipients.length === 0) return;
 
     const branding = await getTenantEmailBranding(tenantId);
     const requestUrl = `${getAppUrl()}/on-call/${request.id}`;
@@ -63,8 +71,8 @@ export async function sendOnCallNotification(
       ...(request.isEmergency ? ["", "EMERGENCY — please respond urgently."] : []),
     ];
 
-    await Promise.allSettled(
-      recipients.map(async (recipient) => {
+    await Promise.allSettled([
+      ...recipients.map(async (recipient) => {
         if (!(await shouldSendUserEmail(recipient.id, emailKind))) return;
         return sendTemplatedEmail({
           to: recipient.email,
@@ -79,8 +87,23 @@ export async function sendOnCallNotification(
             cta: { label: "View request", href: requestUrl },
           },
         });
-      })
-    );
+      }),
+      ...extraRecipients.map((recipient) =>
+        sendTemplatedEmail({
+          to: recipient.email,
+          subject,
+          schoolName: branding.schoolName,
+          tenantId,
+          template: `oncall_${type}`,
+          metadata: { requestId: request.id },
+          payload: {
+            greeting: "Hi,",
+            lines,
+            cta: { label: "View request", href: requestUrl },
+          },
+        })
+      ),
+    ]);
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error("[OnCall] notification error", { requestId: request.id, error: errorMessage });
