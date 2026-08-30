@@ -295,6 +295,10 @@ model Subject {
   id              String                  @id @default(cuid())
   tenantId        String
   name            String
+  /// Key stages this subject applies to (e.g. "KS3", "GCSE", "A_LEVEL"). Empty = all stages.
+  stages          String[]                @default([])
+  active          Boolean                 @default(true)
+  sortOrder       Int                     @default(0)
   subjectTeachers StudentSubjectTeacher[]
 
   @@unique([tenantId, name])

@@ -10,6 +10,7 @@ import { LanguageAdminPanel } from "@/app/(tenant)/admin/(panels)/language";
 import { SignalsAdminPanel } from "@/app/(tenant)/admin/(panels)/signals";
 import { EmailLogAdminPanel } from "@/app/(tenant)/admin/(panels)/email-log";
 import { TaxonomiesAdminPanel } from "@/app/(tenant)/admin/(panels)/taxonomies";
+import { SubjectsAdminPanel } from "@/app/(tenant)/admin/(panels)/subjects";
 import { TimetableAdminPanel } from "@/app/(tenant)/admin/(panels)/timetable";
 import { ImportsAdminPanel } from "@/app/(tenant)/admin/(panels)/imports";
 import StaffImportPage from "@/app/(tenant)/admin/users/import/page";
@@ -41,6 +42,8 @@ export async function renderAdminPanel(
       return <EmailLogAdminPanel />;
     case "taxonomies":
       return <TaxonomiesAdminPanel searchParams={searchParams} />;
+    case "subjects":
+      return <SubjectsAdminPanel />;
     case "timetable":
       return <TimetableAdminPanel />;
     case "imports":

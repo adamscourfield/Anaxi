@@ -15,6 +15,7 @@ export function revalidateAdmin(...sections: AdminSectionId[]) {
     signals: "/admin/signals",
     "email-log": "/admin/email-log",
     taxonomies: "/admin/taxonomies",
+    subjects: "/admin/subjects",
     timetable: "/admin/timetable",
     imports: "/admin/imports",
   };
