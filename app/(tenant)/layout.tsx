@@ -6,6 +6,7 @@ import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
 import { hasPermission } from "@/lib/rbac";
 import { ALL_FEATURE_KEYS, FeatureKey } from "@/lib/types";
 import { loaPendingApprovalWhere } from "@/modules/leave/leaveQuery";
+import { avatarUrlFor } from "@/lib/avatarUpload";
 
 export default async function TenantLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUserOrThrow();
@@ -16,7 +17,7 @@ export default async function TenantLayout({ children }: { children: React.React
       ? (prisma as any).coachAssignment.count({ where: { coachUserId: user.id } })
       : Promise.resolve(0);
 
-  const [features, tenant, memberships, coacheeCount] = await Promise.all([
+  const [features, tenant, memberships, coacheeCount, avatarOwner] = await Promise.all([
     prisma.tenantFeature.findMany({ where: { tenantId: user.tenantId, enabled: true } }),
     prisma.tenant.findUnique({ where: { id: user.tenantId }, select: { name: true } }),
     isSuperAdmin
@@ -26,6 +27,7 @@ export default async function TenantLayout({ children }: { children: React.React
           select: { tenantId: true, tenant: { select: { name: true } } },
         }),
     coachCountPromise,
+    prisma.user.findUnique({ where: { id: user.id }, select: { avatarUpdatedAt: true } }),
   ]);
 
   const canSeeOnCallBadge = hasPermission(user.role, "oncall:view_all");
@@ -70,6 +72,7 @@ export default async function TenantLayout({ children }: { children: React.React
       userFullName={user.fullName}
       userEmail={user.email}
       userRole={user.role}
+      avatarUrl={avatarUrlFor(user.id, avatarOwner?.avatarUpdatedAt)}
     >
       {children}
     </TenantLayoutClient>

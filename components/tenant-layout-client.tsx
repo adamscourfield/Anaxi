@@ -56,6 +56,7 @@ type TenantLayoutClientProps = {
   userFullName: string | null;
   userEmail: string | null;
   userRole: string;
+  avatarUrl: string | null;
 };
 
 export function TenantLayoutClient({
@@ -70,6 +71,7 @@ export function TenantLayoutClient({
   userFullName,
   userEmail,
   userRole,
+  avatarUrl,
 }: TenantLayoutClientProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -135,12 +137,21 @@ export function TenantLayoutClient({
                 {formatRole(userRole)}
               </span>
             </div>
-            <span
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--on-surface)] text-[11px] font-semibold text-[var(--on-primary)]"
-              title={userFullName || userEmail || undefined}
-            >
-              {initials}
-            </span>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={userFullName || userEmail || ""}
+                title={userFullName || userEmail || undefined}
+                className="h-8 w-8 shrink-0 rounded-md object-cover"
+              />
+            ) : (
+              <span
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--on-surface)] text-[11px] font-semibold text-[var(--on-primary)]"
+                title={userFullName || userEmail || undefined}
+              >
+                {initials}
+              </span>
+            )}
           </Link>
         </header>
         <main id="tenant-main" className="anx-workspace-main min-w-0 flex-1 px-4 py-7 sm:px-6 md:px-8 md:py-10 lg:px-10">
