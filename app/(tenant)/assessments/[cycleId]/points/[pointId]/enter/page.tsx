@@ -49,6 +49,8 @@ export default function EnterGradesPage() {
 
   const [roster, setRoster] = useState<RosterStudent[] | null>(null);
   const [grid, setGrid] = useState<Record<string, Record<string, string>>>({});
+  const [sortKey, setSortKey] = useState<"name" | "upn">("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [loadingRoster, setLoadingRoster] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,12 +131,31 @@ export default function EnterGradesPage() {
     setGrid((prev) => ({ ...prev, [studentId]: { ...prev[studentId], [subject]: value } }));
   }
 
+  const sortedRoster = useMemo(() => {
+    if (!roster) return null;
+    const copy = [...roster];
+    copy.sort((a, b) => {
+      const av = sortKey === "upn" ? (a.upn ?? "") : a.fullName;
+      const bv = sortKey === "upn" ? (b.upn ?? "") : b.fullName;
+      const cmp = av.localeCompare(bv, undefined, { numeric: true, sensitivity: "base" });
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return copy;
+  }, [roster, sortKey, sortDir]);
+
+  function toggleSort(key: "name" | "upn") {
+    setSortKey((prevKey) => {
+      setSortDir((prevDir) => (prevKey === key ? (prevDir === "asc" ? "desc" : "asc") : "asc"));
+      return key;
+    });
+  }
+
   function handlePaste(e: React.ClipboardEvent<HTMLInputElement>, rowIdx: number, colIdx: number) {
     const text = e.clipboardData.getData("text/plain");
     if (!text.includes("\t") && !text.includes("\n")) return; // single value: let the default paste happen
 
     e.preventDefault();
-    if (!roster) return;
+    if (!sortedRoster) return;
     const lines = text.replace(/\r/g, "").split("\n");
     while (lines.length > 0 && lines[lines.length - 1] === "") lines.pop();
 
@@ -142,8 +163,8 @@ export default function EnterGradesPage() {
       const next = { ...prev };
       lines.forEach((line, li) => {
         const r = rowIdx + li;
-        if (r >= roster.length) return;
-        const student = roster[r];
+        if (r >= sortedRoster.length) return;
+        const student = sortedRoster[r];
         const cells = line.split("\t");
         const updatedRow = { ...next[student.id] };
         cells.forEach((val, ci) => {
@@ -392,16 +413,38 @@ export default function EnterGradesPage() {
                 <table className="w-full min-w-[480px] border-collapse text-left text-sm">
                   <thead>
                     <tr className="table-head-row">
-                      <th className="sticky left-0 z-10 min-w-[200px] bg-[var(--surface-container-low)] px-4 py-2.5">Student</th>
+                      <th className="sticky left-0 z-10 min-w-[140px] bg-[var(--surface-container-low)] px-4 py-2.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleSort("upn")}
+                          className="inline-flex items-center gap-1 font-semibold hover:text-[var(--on-surface)]"
+                        >
+                          UPN
+                          {sortKey === "upn" && <span aria-hidden>{sortDir === "asc" ? "▲" : "▼"}</span>}
+                        </button>
+                      </th>
+                      <th className="sticky left-[140px] z-10 min-w-[200px] bg-[var(--surface-container-low)] px-4 py-2.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleSort("name")}
+                          className="inline-flex items-center gap-1 font-semibold hover:text-[var(--on-surface)]"
+                        >
+                          Student
+                          {sortKey === "name" && <span aria-hidden>{sortDir === "asc" ? "▲" : "▼"}</span>}
+                        </button>
+                      </th>
                       {subjectChips.map((subject) => (
                         <th key={subject} className="min-w-[120px] px-3 py-2.5 text-center">{subject}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {roster.map((student, rowIdx) => (
+                    {sortedRoster!.map((student, rowIdx) => (
                       <tr key={student.id} className="table-row">
-                        <td className="sticky left-0 z-10 bg-[var(--surface-container-lowest)] px-4 py-2 font-medium text-[var(--on-surface)]">
+                        <td className="sticky left-0 z-10 bg-[var(--surface-container-lowest)] px-4 py-2 text-[var(--on-surface-muted)] tabular-nums">
+                          {student.upn ?? "—"}
+                        </td>
+                        <td className="sticky left-[140px] z-10 bg-[var(--surface-container-lowest)] px-4 py-2 font-medium text-[var(--on-surface)]">
                           {student.fullName}
                         </td>
                         {subjectChips.map((subject, colIdx) => {
