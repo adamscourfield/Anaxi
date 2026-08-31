@@ -463,6 +463,14 @@ export default async function CycleDetailPage({
                                   </Link>
                                 </Button>
                               )}
+                              {point.resultStatus !== "LOCKED" && (
+                                <Button asChild variant="secondary" className="h-7 py-0 text-[11px]">
+                                  <Link href={`/assessments/${cycle.id}/points/${point.id}/enter`}>
+                                    <IconBarChart />
+                                    Enter grades
+                                  </Link>
+                                </Button>
+                              )}
                               {hasData && (
                                 <Button asChild variant="secondary" className="h-7 py-0 text-[11px]">
                                   <Link href={`/assessments/${cycle.id}/points/${point.id}`}>
