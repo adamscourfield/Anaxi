@@ -79,7 +79,7 @@ export function buildObservationHistoryWhere(ctx: ObservationHistoryWhereContext
 
   let allowedTeacherIds: Set<string> | null = null;
 
-  if (userRole === "TEACHER") {
+  if (userRole === "TEACHER" || userRole === "SUPPORT") {
     where.observedTeacherId = userId;
     allowedTeacherIds = new Set([userId]);
   } else if (userRole === "ADMIN" || userRole === "SLT" || userRole === "SUPER_ADMIN") {

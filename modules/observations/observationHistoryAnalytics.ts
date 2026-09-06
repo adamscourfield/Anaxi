@@ -60,6 +60,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   TEACHER: "Teacher",
   HR: "HR",
   ON_CALL: "On-call",
+  SUPPORT: "Support",
 };
 
 export type ObsAnalyticsRow = {

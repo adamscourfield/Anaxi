@@ -15,6 +15,7 @@ const ROLE_LABELS: Record<string, string> = {
   DEPUTY_HEAD: "Deputy Head",
   HOD: "Head of Department",
   TEACHER: "Teacher",
+  SUPPORT: "Support",
 };
 
 interface User {

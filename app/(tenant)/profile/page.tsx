@@ -14,6 +14,7 @@ const ROLE_LABELS: Record<string, string> = {
   HOD: "Head of Department",
   LEADER: "Leader",
   TEACHER: "Teacher",
+  SUPPORT: "Support",
 };
 
 export default async function ProfilePage() {

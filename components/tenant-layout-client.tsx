@@ -40,6 +40,7 @@ function formatRole(role: string): string {
     TEACHER: "Teacher",
     HR: "HR",
     ON_CALL: "On Call",
+    SUPPORT: "Support",
   };
   return map[role] ?? role;
 }

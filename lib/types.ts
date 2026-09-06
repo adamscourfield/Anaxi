@@ -1,4 +1,4 @@
-export type UserRole = "SUPER_ADMIN" | "TEACHER" | "LEADER" | "HOD" | "SLT" | "ADMIN" | "HR" | "ON_CALL";
+export type UserRole = "SUPER_ADMIN" | "TEACHER" | "LEADER" | "HOD" | "SLT" | "ADMIN" | "HR" | "ON_CALL" | "SUPPORT";
 export type FeatureKey =
   | "OBSERVATIONS"
   | "SIGNALS"

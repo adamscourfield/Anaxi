@@ -45,6 +45,7 @@ const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "HOD", label: "Head of Dept" },
   { value: "LEADER", label: "Leader" },
   { value: "TEACHER", label: "Teacher" },
+  { value: "SUPPORT", label: "Support" },
   { value: "HR", label: "HR Officer" },
   { value: "ON_CALL", label: "On-Call Staff" },
 ];

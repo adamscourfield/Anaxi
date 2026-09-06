@@ -133,10 +133,10 @@ export default async function ObservationHistoryPage({
     : (teachers as any[]);
 
   const scopedFilterWhere: any = { tenantId: user.tenantId };
-  if (user.role === "TEACHER") scopedFilterWhere.observedTeacherId = user.id;
+  if (user.role === "TEACHER" || user.role === "SUPPORT") scopedFilterWhere.observedTeacherId = user.id;
   else if (allowedTeacherIds) scopedFilterWhere.observedTeacherId = { in: Array.from(allowedTeacherIds) };
 
-  const showPairMatrix = user.role !== "TEACHER";
+  const showPairMatrix = (user.role !== "TEACHER" && user.role !== "SUPPORT");
 
   const [totalCount, observations, distinctSubjects, obsRowsForAnalysis, tenantCoachAssignments] =
     await Promise.all([
@@ -327,7 +327,7 @@ export default async function ObservationHistoryPage({
         title="Observation History"
         subtitle="Institutional observation record — filter by teacher, observer, dates, phase, and pedagogical signals."
         actions={
-          user.role !== "TEACHER" ? (
+          (user.role !== "TEACHER" && user.role !== "SUPPORT") ? (
             <Link
               href="/observe/new"
               className="inline-flex items-center gap-2 rounded-md bg-neutral-950 px-5 py-2.5 text-[0.875rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900"
@@ -368,7 +368,7 @@ export default async function ObservationHistoryPage({
         preservedAnalysisPreset={analysisPreset}
         preservedCoachingCoachId={coachingCoachId}
         preservedCoachingCoacheeId={coachingCoacheeId}
-        showTeacherFilters={user.role !== "TEACHER"}
+        showTeacherFilters={(user.role !== "TEACHER" && user.role !== "SUPPORT")}
         hasFilters={hasFilters}
       />
 
@@ -391,7 +391,7 @@ export default async function ObservationHistoryPage({
               <thead>
                 <tr className="table-head-row text-left">
                   <th className="px-5 py-3.5">Teacher</th>
-                  {user.role !== "TEACHER" && <th className="px-4 py-3.5">Observer</th>}
+                  {(user.role !== "TEACHER" && user.role !== "SUPPORT") && <th className="px-4 py-3.5">Observer</th>}
                   <th className="px-4 py-3.5">Subject / Year</th>
                   <th className="px-4 py-3.5">Date</th>
                   <th className="px-4 py-3.5">Phase</th>
@@ -417,7 +417,7 @@ export default async function ObservationHistoryPage({
                       </td>
 
                       {/* Observer */}
-                      {user.role !== "TEACHER" && (
+                      {(user.role !== "TEACHER" && user.role !== "SUPPORT") && (
                         <td className="px-4 py-4 text-muted">
                           {obs.observer?.fullName ?? "—"}
                         </td>
@@ -481,7 +481,7 @@ export default async function ObservationHistoryPage({
                       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-muted">
                         <span>{obs.subject} · {formatYearGroup(obs.yearGroup)}</span>
                         <span className="tabular-nums">{formatLongDate(obs.observedAt)}</span>
-                        {user.role !== "TEACHER" && obs.observer?.fullName && (
+                        {(user.role !== "TEACHER" && user.role !== "SUPPORT") && obs.observer?.fullName && (
                           <span>by {obs.observer.fullName}</span>
                         )}
                       </div>

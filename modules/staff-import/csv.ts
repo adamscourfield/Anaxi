@@ -13,7 +13,7 @@ export const STAFF_TEMPLATE_COLUMNS = [
 
 export type StaffTemplateColumn = (typeof STAFF_TEMPLATE_COLUMNS)[number];
 
-export const VALID_ROLES = ["ADMIN", "SLT", "HOD", "TEACHER", "HR", "ON_CALL"] as const;
+export const VALID_ROLES = ["ADMIN", "SLT", "HOD", "TEACHER", "SUPPORT", "HR", "ON_CALL"] as const;
 export type StaffRole = (typeof VALID_ROLES)[number];
 
 export const VALID_MEMBERSHIP_STATUSES = ["ACTIVE", "ARCHIVED"] as const;
