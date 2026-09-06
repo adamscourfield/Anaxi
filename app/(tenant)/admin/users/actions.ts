@@ -12,7 +12,9 @@ import {
   requireAdminUser,
 } from "@/lib/admin";
 
-export type ActionResult = { ok: true; linked?: boolean } | { ok: false; error: string };
+export type ActionResult =
+  | { ok: true; linked?: boolean; linkedNewPassword?: boolean }
+  | { ok: false; error: string };
 
 function actionError(e: unknown): string {
   if (e instanceof Error) {
@@ -22,12 +24,14 @@ function actionError(e: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-async function runAction(fn: () => Promise<{ linked?: boolean } | void>): Promise<ActionResult> {
+async function runAction(
+  fn: () => Promise<{ linked?: boolean; linkedNewPassword?: boolean } | void>,
+): Promise<ActionResult> {
   try {
     const extra = await fn();
     revalidatePath("/admin/users");
     revalidatePath("/admin");
-    return { ok: true, linked: extra?.linked };
+    return { ok: true, linked: extra?.linked, linkedNewPassword: extra?.linkedNewPassword };
   } catch (e) {
     return { ok: false, error: actionError(e) };
   }
@@ -50,23 +54,40 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     // so the person signs into every school with one email + one password
     // (picking which school at login) rather than juggling a separate
     // account per school. We only ever copy the hash, never the plaintext.
+    //
+    // The other account may not have a password yet at all (e.g. bulk-imported
+    // staff who haven't clicked their "set your password" link) -- in that case
+    // there's nothing to copy, so instead we hash the temporary password entered
+    // here and write it to BOTH rows, so the same credentials unlock either school.
     const wantsLink = formData.get("linkExisting") === "true";
     let passwordHash: string | null = null;
     let linked = false;
+    let linkedNewPassword = false;
+    let existingWithoutPasswordId: string | null = null;
     if (wantsLink) {
       const existing = await prisma.user.findFirst({
-        where: { email, isActive: true, tenantId: { not: admin.tenantId }, passwordHash: { not: null } },
+        where: { email, isActive: true, tenantId: { not: admin.tenantId } },
         orderBy: { id: "asc" },
-        select: { passwordHash: true },
+        select: { id: true, passwordHash: true },
       });
       if (existing?.passwordHash) {
         passwordHash = existing.passwordHash;
         linked = true;
+      } else if (existing) {
+        existingWithoutPasswordId = existing.id;
       }
     }
     if (!passwordHash) {
       const password = String(formData.get("password") || "Password123!");
       passwordHash = await bcrypt.hash(password, 10);
+    }
+    if (existingWithoutPasswordId) {
+      await prisma.user.update({
+        where: { id: existingWithoutPasswordId },
+        data: { passwordHash },
+      });
+      linked = true;
+      linkedNewPassword = true;
     }
 
     const user = await (prisma as any).user.create({
@@ -83,9 +104,11 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       },
     });
 
-    // Someone joining via a linked account already has a working password --
-    // an onboarding "set your password" email would be misleading.
-    if (!linked) {
+    // Someone linked to an account that already had a working password knows
+    // it already -- an onboarding "set your password" email would be misleading.
+    // But if we just set a brand new shared password (linkedNewPassword), they
+    // still need to be told it, same as any other new account.
+    if (!linked || linkedNewPassword) {
       // Fire-and-forget — email failures should not block staff creation.
       sendOnboardingEmail({
         to: email,
@@ -97,7 +120,7 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       });
     }
 
-    return { linked };
+    return { linked, linkedNewPassword };
   });
 }
 
