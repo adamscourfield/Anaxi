@@ -331,6 +331,9 @@ model EmailLog {
   providerId   String?
   errorMessage String?
   metadataJson Json?
+  bodyText     String?
+  bodyHtml     String?
+  attachmentsJson Json?
   createdAt    DateTime            @default(now())
   tenant       Tenant?             @relation(fields: [tenantId], references: [id], onDelete: SetNull)
 
