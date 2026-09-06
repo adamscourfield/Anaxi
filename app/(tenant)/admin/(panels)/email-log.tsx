@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { MetaText } from "@/components/ui/typography";
 import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 import { StatusPill } from "@/components/ui/status-pill";
+import { ResendEmailButton } from "@/app/(tenant)/admin/(panels)/email-log-resend-button";
+import { resendEmail } from "@/app/(tenant)/admin/email-log/actions";
 
 export async function EmailLogAdminPanel() {
   const user = await requireAdminUser();
@@ -81,6 +83,9 @@ export async function EmailLogAdminPanel() {
                       >
                         {log.errorMessage}
                       </div>
+                    ) : null}
+                    {log.status === "FAILED" && log.bodyText != null ? (
+                      <ResendEmailButton id={log.id} resendAction={resendEmail} />
                     ) : null}
                   </td>
                 </tr>

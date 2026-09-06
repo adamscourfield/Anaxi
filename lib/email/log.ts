@@ -10,6 +10,9 @@ export async function logEmailDelivery(options: {
   providerId?: string | null;
   errorMessage?: string | null;
   metadata?: Record<string, unknown>;
+  bodyText?: string | null;
+  bodyHtml?: string | null;
+  attachments?: Array<{ filename: string; content: string }> | null;
 }) {
   try {
     await prisma.emailLog.create({
@@ -22,6 +25,9 @@ export async function logEmailDelivery(options: {
         providerId: options.providerId ?? null,
         errorMessage: options.errorMessage ?? null,
         metadataJson: (options.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
+        bodyText: options.bodyText ?? null,
+        bodyHtml: options.bodyHtml ?? null,
+        attachmentsJson: (options.attachments ?? undefined) as Prisma.InputJsonValue | undefined,
       },
     });
   } catch {

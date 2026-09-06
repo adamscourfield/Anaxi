@@ -42,6 +42,9 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
       providerId: extra?.providerId,
       errorMessage: extra?.errorMessage,
       metadata,
+      bodyText: message,
+      bodyHtml: html,
+      attachments,
     });
   };
 
