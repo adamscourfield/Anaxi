@@ -12,7 +12,7 @@ import {
   requireAdminUser,
 } from "@/lib/admin";
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+export type ActionResult = { ok: true; linked?: boolean } | { ok: false; error: string };
 
 function actionError(e: unknown): string {
   if (e instanceof Error) {
@@ -22,12 +22,12 @@ function actionError(e: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-async function runAction(fn: () => Promise<void>): Promise<ActionResult> {
+async function runAction(fn: () => Promise<{ linked?: boolean } | void>): Promise<ActionResult> {
   try {
-    await fn();
+    const extra = await fn();
     revalidatePath("/admin/users");
     revalidatePath("/admin");
-    return { ok: true };
+    return { ok: true, linked: extra?.linked };
   } catch (e) {
     return { ok: false, error: actionError(e) };
   }
@@ -44,15 +44,38 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     const role = String(formData.get("role") || "TEACHER");
     if (!fullName || !email) throw new Error("Name and email are required.");
     assertAdminCannotAssignSuperAdminRole(admin, role);
-    const password = String(formData.get("password") || "Password123!");
-    const hash = await bcrypt.hash(password, 10);
+
+    // "Link accounts" reuses an existing password hash from another school's
+    // account for this same email, instead of setting a brand new password --
+    // so the person signs into every school with one email + one password
+    // (picking which school at login) rather than juggling a separate
+    // account per school. We only ever copy the hash, never the plaintext.
+    const wantsLink = formData.get("linkExisting") === "true";
+    let passwordHash: string | null = null;
+    let linked = false;
+    if (wantsLink) {
+      const existing = await prisma.user.findFirst({
+        where: { email, isActive: true, tenantId: { not: admin.tenantId }, passwordHash: { not: null } },
+        orderBy: { id: "asc" },
+        select: { passwordHash: true },
+      });
+      if (existing?.passwordHash) {
+        passwordHash = existing.passwordHash;
+        linked = true;
+      }
+    }
+    if (!passwordHash) {
+      const password = String(formData.get("password") || "Password123!");
+      passwordHash = await bcrypt.hash(password, 10);
+    }
+
     const user = await (prisma as any).user.create({
       data: {
         tenantId: admin.tenantId,
         fullName,
         email,
         role,
-        passwordHash: hash,
+        passwordHash,
         isActive: true,
         canApproveAllLoa: false,
         receivesOnCallEmails: false,
@@ -60,15 +83,21 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       },
     });
 
-    // Fire-and-forget — email failures should not block staff creation.
-    sendOnboardingEmail({
-      to: email,
-      fullName,
-      tenantId: admin.tenantId,
-      userId: user.id,
-    }).catch((err) => {
-      console.error("[users] onboarding email failed", email, err);
-    });
+    // Someone joining via a linked account already has a working password --
+    // an onboarding "set your password" email would be misleading.
+    if (!linked) {
+      // Fire-and-forget — email failures should not block staff creation.
+      sendOnboardingEmail({
+        to: email,
+        fullName,
+        tenantId: admin.tenantId,
+        userId: user.id,
+      }).catch((err) => {
+        console.error("[users] onboarding email failed", email, err);
+      });
+    }
+
+    return { linked };
   });
 }
 

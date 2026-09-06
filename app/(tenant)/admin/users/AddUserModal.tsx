@@ -30,6 +30,8 @@ function CloseIcon() {
 
 const FIELD_LABEL = "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
 
+type ExistingAccount = { fullName: string; roleLabel: string; schoolName: string };
+
 export function AddUserModal({
   onClose,
   createAction,
@@ -42,6 +44,9 @@ export function AddUserModal({
   const [mounted, setMounted] = useState(false);
   const [pending, startTransition] = useTransition();
   const nameRef = useRef<HTMLInputElement>(null);
+  const [existingAccounts, setExistingAccounts] = useState<ExistingAccount[]>([]);
+  const [linkExisting, setLinkExisting] = useState(true);
+  const lookupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const roleOptions = canAssignSuperAdmin
     ? [{ value: "SUPER_ADMIN", label: "Super Admin" }, ...ROLE_OPTIONS]
@@ -53,15 +58,39 @@ export function AddUserModal({
     return () => window.clearTimeout(t);
   }, []);
 
+  function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const email = e.target.value.trim();
+    if (lookupTimer.current) clearTimeout(lookupTimer.current);
+    if (!email.includes("@")) {
+      setExistingAccounts([]);
+      return;
+    }
+    lookupTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admin/users/lookup-email?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        setExistingAccounts(data.accounts ?? []);
+      } catch {
+        setExistingAccounts([]);
+      }
+    }, 400);
+  }
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const fd = new FormData(form);
+    fd.set("linkExisting", String(existingAccounts.length > 0 && linkExisting));
 
     startTransition(async () => {
       const result = await createAction(fd);
       if (result.ok) {
-        toast("Staff member added", "success");
+        toast(
+          result.linked
+            ? "Staff member added — they'll sign in with their existing password."
+            : "Staff member added",
+          "success",
+        );
         onClose();
       } else {
         toast(result.error, "error");
@@ -122,10 +151,32 @@ export function AddUserModal({
                 type="email"
                 required
                 autoComplete="email"
+                onChange={handleEmailChange}
                 className="field w-full rounded-xl border-border/40 bg-background py-2.5 px-3 text-[0.8125rem]"
                 placeholder="jane.smith@school.edu"
               />
             </FormField>
+            {existingAccounts.length > 0 && (
+              <div className="rounded-xl border border-[var(--info)]/30 bg-[var(--info)]/10 p-3.5 text-[0.8125rem] text-text">
+                <p>
+                  <strong>{existingAccounts[0].fullName}</strong> already has an account at{" "}
+                  <strong>{existingAccounts[0].schoolName}</strong> ({existingAccounts[0].roleLabel}) with this
+                  email.
+                </p>
+                <label className="mt-2.5 flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={linkExisting}
+                    onChange={(e) => setLinkExisting(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    Link accounts — they&rsquo;ll sign in with their existing password and choose which school to
+                    open, instead of getting a separate password here.
+                  </span>
+                </label>
+              </div>
+            )}
             <label className="block">
               <span className={FIELD_LABEL}>Role</span>
               <select
@@ -140,17 +191,20 @@ export function AddUserModal({
                 ))}
               </select>
             </label>
-            <label className="block">
+            <label className={`block ${existingAccounts.length > 0 && linkExisting ? "opacity-40" : ""}`}>
               <span className={FIELD_LABEL}>Temporary password (optional)</span>
               <input
                 name="password"
                 type="text"
                 autoComplete="new-password"
-                className="field w-full rounded-xl border-border/40 bg-background py-2.5 px-3 text-[0.8125rem]"
+                disabled={existingAccounts.length > 0 && linkExisting}
+                className="field w-full rounded-xl border-border/40 bg-background py-2.5 px-3 text-[0.8125rem] disabled:cursor-not-allowed"
                 placeholder="Password123!"
               />
               <p className="mt-1.5 text-[0.75rem] text-muted">
-                Defaults to Password123! if left blank. They&rsquo;ll get an emailed link to set their own password.
+                {existingAccounts.length > 0 && linkExisting
+                  ? "Not needed — linked accounts reuse the existing password."
+                  : "Defaults to Password123! if left blank. They'll get an emailed link to set their own password."}
               </p>
             </label>
           </div>
