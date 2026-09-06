@@ -17,7 +17,7 @@ export async function toggleWatchlist(studentId: string): Promise<{ onWatchlist:
     hodDepartmentIds: [],
     coacheeUserIds: [],
   });
-  if (!canView && user.role !== "TEACHER" && user.role !== "LEADER") {
+  if (!canView && user.role !== "TEACHER" && user.role !== "LEADER" && user.role !== "SUPPORT") {
     throw new Error("FORBIDDEN");
   }
 
@@ -65,7 +65,7 @@ export async function bulkToggleWatchlist(
     hodDepartmentIds: [],
     coacheeUserIds: [],
   });
-  if (!canView && user.role !== "TEACHER") throw new Error("FORBIDDEN");
+  if (!canView && user.role !== "TEACHER" && user.role !== "SUPPORT") throw new Error("FORBIDDEN");
 
   const unique = [...new Set(studentIds.filter(Boolean))];
   if (unique.length === 0) return { updated: 0 };

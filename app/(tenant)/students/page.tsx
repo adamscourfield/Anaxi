@@ -69,7 +69,7 @@ export default async function StudentsPage({
     redirect(`/explorer/students${explorerQs}`);
   }
 
-  if (user.role === "TEACHER" || user.role === "LEADER") {
+  if (user.role === "TEACHER" || user.role === "LEADER" || user.role === "SUPPORT") {
     redirect(`/students/my${qs ? `?${qs}` : ""}`);
   }
 

@@ -87,7 +87,7 @@ export default async function MyStudentsPage({
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "STUDENTS");
 
-  if (user.role !== "TEACHER" && user.role !== "LEADER") {
+  if (user.role !== "TEACHER" && user.role !== "LEADER" && user.role !== "SUPPORT") {
     redirect("/students");
   }
 

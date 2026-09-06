@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "@/lib/types";
 
-const TEACHER_SCOPED_ROLES = new Set<SessionUser["role"]>(["TEACHER", "LEADER"]);
+const TEACHER_SCOPED_ROLES = new Set<SessionUser["role"]>(["TEACHER", "LEADER", "SUPPORT"]);
 
 export function isTeacherScopedStudentViewer(user: SessionUser): boolean {
   return TEACHER_SCOPED_ROLES.has(user.role);

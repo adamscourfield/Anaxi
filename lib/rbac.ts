@@ -58,6 +58,14 @@ export type AppPermission =
   | AnalysisPermission
   | AdminPermission;
 
+const TEACHER_PERMISSIONS: AppPermission[] = [
+  "oncall:create", "oncall:cancel", "students:read",
+  "meetings:create", "meetings:view_own",
+  "actions:create", "actions:manage", "actions:view_own",
+  "observe:view", "observe:create",
+  "leave:request",
+];
+
 const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
   SUPER_ADMIN: [
     "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:cancel",
@@ -101,13 +109,8 @@ const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     "observe:view", "observe:create",
     "leave:request",
   ],
-  TEACHER: [
-    "oncall:create", "oncall:cancel", "students:read",
-    "meetings:create", "meetings:view_own",
-    "actions:create", "actions:manage", "actions:view_own",
-    "observe:view", "observe:create",
-    "leave:request",
-  ],
+  TEACHER: TEACHER_PERMISSIONS,
+  SUPPORT: TEACHER_PERMISSIONS,
   HR: [
     "oncall:create", "import:write", "students:read",
     "meetings:create", "meetings:view_own",

@@ -37,6 +37,7 @@ const ROLE_LABELS: Record<string, string> = {
   HOD: "Head of Dept",
   LEADER: "Leader",
   TEACHER: "Teacher",
+  SUPPORT: "Support",
   HR: "HR Officer",
   ON_CALL: "On-Call Staff",
 };
