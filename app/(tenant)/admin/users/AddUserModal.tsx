@@ -30,7 +30,7 @@ function CloseIcon() {
 
 const FIELD_LABEL = "mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted";
 
-type ExistingAccount = { fullName: string; roleLabel: string; schoolName: string };
+type ExistingAccount = { fullName: string; roleLabel: string; schoolName: string; hasPassword: boolean };
 
 export function AddUserModal({
   onClose,
@@ -86,9 +86,11 @@ export function AddUserModal({
       const result = await createAction(fd);
       if (result.ok) {
         toast(
-          result.linked
-            ? "Staff member added — they'll sign in with their existing password."
-            : "Staff member added",
+          result.linkedNewPassword
+            ? "Staff member added — the temporary password now works at both schools."
+            : result.linked
+              ? "Staff member added — they'll sign in with their existing password."
+              : "Staff member added",
           "success",
         );
         onClose();
@@ -171,8 +173,17 @@ export function AddUserModal({
                     className="mt-0.5"
                   />
                   <span>
-                    Link accounts — they&rsquo;ll sign in with their existing password and choose which school to
-                    open, instead of getting a separate password here.
+                    {existingAccounts[0].hasPassword ? (
+                      <>
+                        Link accounts — they&rsquo;ll sign in with their existing password and choose which school
+                        to open, instead of getting a separate password here.
+                      </>
+                    ) : (
+                      <>
+                        Link accounts — they haven&rsquo;t set a password at {existingAccounts[0].schoolName} yet,
+                        so the temporary password below will be set on both accounts.
+                      </>
+                    )}
                   </span>
                 </label>
               </div>
@@ -191,22 +202,32 @@ export function AddUserModal({
                 ))}
               </select>
             </label>
-            <label className={`block ${existingAccounts.length > 0 && linkExisting ? "opacity-40" : ""}`}>
-              <span className={FIELD_LABEL}>Temporary password (optional)</span>
-              <input
-                name="password"
-                type="text"
-                autoComplete="new-password"
-                disabled={existingAccounts.length > 0 && linkExisting}
-                className="field w-full rounded-xl border-border/40 bg-background py-2.5 px-3 text-[0.8125rem] disabled:cursor-not-allowed"
-                placeholder="Password123!"
-              />
-              <p className="mt-1.5 text-[0.75rem] text-muted">
-                {existingAccounts.length > 0 && linkExisting
-                  ? "Not needed — linked accounts reuse the existing password."
-                  : "Defaults to Password123! if left blank. They'll get an emailed link to set their own password."}
-              </p>
-            </label>
+            {(() => {
+              const linkingToExistingPassword =
+                existingAccounts.length > 0 && linkExisting && existingAccounts[0].hasPassword;
+              const linkingToUnsetPassword =
+                existingAccounts.length > 0 && linkExisting && !existingAccounts[0].hasPassword;
+              return (
+                <label className={`block ${linkingToExistingPassword ? "opacity-40" : ""}`}>
+                  <span className={FIELD_LABEL}>Temporary password (optional)</span>
+                  <input
+                    name="password"
+                    type="text"
+                    autoComplete="new-password"
+                    disabled={linkingToExistingPassword}
+                    className="field w-full rounded-xl border-border/40 bg-background py-2.5 px-3 text-[0.8125rem] disabled:cursor-not-allowed"
+                    placeholder="Password123!"
+                  />
+                  <p className="mt-1.5 text-[0.75rem] text-muted">
+                    {linkingToExistingPassword
+                      ? "Not needed — linked accounts reuse the existing password."
+                      : linkingToUnsetPassword
+                        ? `Defaults to Password123! if left blank. This will also become their password at ${existingAccounts[0].schoolName}.`
+                        : "Defaults to Password123! if left blank. They'll get an emailed link to set their own password."}
+                  </p>
+                </label>
+              );
+            })()}
           </div>
 
           <div className="flex items-center justify-between gap-3 border-t border-border/20 px-6 py-4">

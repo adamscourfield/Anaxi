@@ -32,9 +32,8 @@ export const GET = withApi(async function GET(req: Request) {
       email,
       isActive: true,
       tenantId: { not: admin.tenantId },
-      passwordHash: { not: null },
     },
-    select: { fullName: true, role: true, tenant: { select: { name: true } } },
+    select: { fullName: true, role: true, passwordHash: true, tenant: { select: { name: true } } },
   });
 
   return NextResponse.json({
@@ -42,6 +41,7 @@ export const GET = withApi(async function GET(req: Request) {
       fullName: u.fullName,
       roleLabel: ROLE_LABELS[u.role] ?? u.role,
       schoolName: u.tenant?.name ?? "another school",
+      hasPassword: u.passwordHash != null,
     })),
   });
 });
