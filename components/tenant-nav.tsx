@@ -190,7 +190,7 @@ export function TenantNav({
     {
       label: "Instruction",
       items: [
-        ...(has("OBSERVATIONS") ? [navItem("New observation", "/observe/new")] : []),
+        ...(has("OBSERVATIONS") && hasPermission(role, "observe:create") ? [navItem("New observation", "/observe/new")] : []),
         ...(has("OBSERVATIONS") ? [navItem("Observation history", "/observe/history")] : []),
         // Priorities has no standalone nav entry any more — it now lives inside Explorer
         // for whoever can see Explorer. Teachers is Explorer's one exception: a shortcut

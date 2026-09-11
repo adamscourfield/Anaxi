@@ -128,12 +128,14 @@ const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     "oncall:create", "import:write", "students:read",
     "meetings:create", "meetings:view_own",
     "actions:view_own",
+    "observe:view", "observe:create",
     "leave:request", "leave:approve",
   ],
   ON_CALL: [
     "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:cancel",
     "meetings:view_own",
     "actions:view_own",
+    "observe:view", "observe:create",
   ],
 };
 

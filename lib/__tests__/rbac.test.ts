@@ -58,6 +58,22 @@ describe("SLT meeting notes scoping", () => {
   });
 });
 
+describe("observe:create is universal", () => {
+  it("every role can log an observation", () => {
+    const allRoles: Parameters<typeof hasPermission>[0][] = [
+      "SUPER_ADMIN", "ADMIN", "SLT", "HOD", "LEADER", "TEACHER", "SUPPORT", "HR", "ON_CALL",
+    ];
+    for (const role of allRoles) {
+      expect(hasPermission(role, "observe:create")).toBe(true);
+    }
+  });
+
+  it("HR and ON_CALL can also view observations they're party to", () => {
+    expect(hasPermission("HR", "observe:view")).toBe(true);
+    expect(hasPermission("ON_CALL", "observe:view")).toBe(true);
+  });
+});
+
 describe("oncall:delete permission", () => {
   it("SLT, ADMIN, and SUPER_ADMIN can delete on-call requests", () => {
     expect(hasOnCallPermission("SLT", "oncall:delete")).toBe(true);

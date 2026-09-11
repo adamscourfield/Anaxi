@@ -163,16 +163,16 @@ export function ObservationContextForm({
 
           {/* Form Fields - 2 Column Grid */}
           <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
-            {/* Teacher Name */}
+            {/* Staff Member Being Observed */}
             <div className="space-y-2">
               <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
-                Teacher Name
+                Staff Member
               </label>
               <SearchableSelect
                 options={teacherOptions}
                 value={context.teacherId}
                 onChange={(value) => setContext((c) => ({ ...c, teacherId: value }))}
-                placeholder="Search teacher profile…"
+                placeholder="Search staff profile…"
                 searchPlaceholder="Search by name or email…"
               />
             </div>

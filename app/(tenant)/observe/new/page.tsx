@@ -1,5 +1,6 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature, requireRole } from "@/lib/guards";
+import { requireFeature } from "@/lib/guards";
+import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { getTenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
@@ -8,10 +9,12 @@ import { ObservationContextForm } from "../components/ObservationContextForm";
 export default async function NewObservationPage() {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
-  requireRole(user, ["LEADER", "SLT", "ADMIN", "SUPER_ADMIN"]);
+  if (!hasPermission(user.role, "observe:create")) throw new Error("FORBIDDEN");
 
+  // Any active member of staff can be observed -- including SLT and other
+  // leaders -- so this is intentionally not filtered to role: "TEACHER".
   const teachers = await (prisma as any).user.findMany({
-    where: { tenantId: user.tenantId, isActive: true, role: "TEACHER" },
+    where: { tenantId: user.tenantId, isActive: true, id: { not: user.id } },
     orderBy: { fullName: "asc" },
     select: { id: true, fullName: true, email: true }
   });
