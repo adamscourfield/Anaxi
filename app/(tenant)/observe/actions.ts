@@ -3,7 +3,8 @@ import { assertSafeServerAction } from "@/lib/serverActionGuard";
 
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { sendObservationEmail } from "@/lib/email";
-import { requireFeature, requireRole } from "@/lib/guards";
+import { requireFeature } from "@/lib/guards";
+import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { getTenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolType";
@@ -14,7 +15,7 @@ export async function createObservation(formData: FormData) {
   await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
-  requireRole(user, ["LEADER", "SLT", "ADMIN", "SUPER_ADMIN"]);
+  if (!hasPermission(user.role, "observe:create")) throw new Error("FORBIDDEN");
 
   const observedTeacherId = String(formData.get("observedTeacherId") || "");
   const observedAt = new Date(String(formData.get("observedAt") || ""));
@@ -27,6 +28,7 @@ export async function createObservation(formData: FormData) {
   if (!observedTeacherId || !yearGroup || !subject || Number.isNaN(observedAt.getTime())) {
     throw new Error("INVALID_OBSERVATION");
   }
+  if (observedTeacherId === user.id) throw new Error("CANNOT_OBSERVE_SELF");
 
   const teacher = await (prisma as any).user.findFirst({ where: { id: observedTeacherId, tenantId: user.tenantId, isActive: true } });
   if (!teacher) throw new Error("INVALID_TEACHER");
@@ -78,7 +80,7 @@ export async function submitObservationDraft(formData: FormData) {
   await assertSafeServerAction(formData);
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
-  requireRole(user, ["LEADER", "SLT", "ADMIN", "SUPER_ADMIN"]);
+  if (!hasPermission(user.role, "observe:create")) throw new Error("FORBIDDEN");
 
   const observedTeacherId = String(formData.get("observedTeacherId") || "").trim();
   const yearGroup = String(formData.get("yearGroup") || "").trim();
@@ -89,6 +91,7 @@ export async function submitObservationDraft(formData: FormData) {
   const observedAtRaw = String(formData.get("observedAt") || "").trim();
 
   if (!observedTeacherId || !yearGroup || !subject) throw new Error("INVALID_OBSERVATION");
+  if (observedTeacherId === user.id) throw new Error("CANNOT_OBSERVE_SELF");
 
   const teacher = await (prisma as any).user.findFirst({ where: { id: observedTeacherId, tenantId: user.tenantId, isActive: true } });
   if (!teacher) throw new Error("INVALID_TEACHER");

@@ -289,7 +289,7 @@ export default async function ObservationDetailPage({ params }: { params: Promis
             <ObservationReviewTeacherCard
               initials={initials(teacherName)}
               name={teacherName}
-              roleUppercase="Teacher"
+              roleUppercase={roleLabel}
               rows={[
                 { icon: capIcon, label: "Role", value: roleLabel },
                 { icon: calendarIcon, label: "Prior observations", value: tenureLabel },

@@ -1,5 +1,6 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireFeature, requireRole } from "@/lib/guards";
+import { requireFeature } from "@/lib/guards";
+import { hasPermission } from "@/lib/rbac";
 import { getTenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
@@ -8,7 +9,7 @@ import { SignalFlowScreen } from "../../components/SignalFlowScreen";
 export default async function ObservationSignalsPage() {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
-  requireRole(user, ["LEADER", "SLT", "ADMIN", "SUPER_ADMIN"]);
+  if (!hasPermission(user.role, "observe:create")) throw new Error("FORBIDDEN");
 
   const draftKey = `observation-draft:${user.tenantId}:${user.id}`;
   const labelMap = await getTenantSignalLabels(user.tenantId);
