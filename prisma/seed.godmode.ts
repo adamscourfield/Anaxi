@@ -75,7 +75,7 @@ async function seedSchool(
     await (prisma as any).loaReason.upsert({
       where: { tenantId_label: { tenantId: tenant.id, label } },
       update: {},
-      create: { tenantId: tenant.id, label },
+      create: { tenantId: tenant.id, label, requiresMedicalEvidence: label === "Sick Leave" },
     });
   }
 

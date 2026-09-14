@@ -14,7 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-function redirectRequestError(code: LeavePolicyViolation | "INVALID_REQUEST" | "INVALID_REASON") {
+function redirectRequestError(code: LeavePolicyViolation | "INVALID_REQUEST" | "INVALID_REASON"): never {
   redirect(`/leave/request?error=${code}`);
 }
 
@@ -67,6 +67,7 @@ export async function createLoaRequest(formData: FormData) {
     startDate,
     endDate,
     medicalEvidenceUrl,
+    reasonRequiresMedicalEvidence: reason.requiresMedicalEvidence,
     existingRequests,
   });
   if (policyError) redirectRequestError(policyError);
@@ -155,6 +156,35 @@ export async function decideLoaRequest(formData: FormData) {
   revalidatePath("/leave");
   revalidatePath("/leave/calendar");
   redirect(`/leave/${requestId}`);
+}
+
+const HR_SYSTEM_FLAG_FIELDS = ["inArbor", "inITrent"] as const;
+type HrSystemFlagField = (typeof HR_SYSTEM_FLAG_FIELDS)[number];
+
+/**
+ * HR bookkeeping only: records that a leave request has been keyed into an
+ * external system (Arbor / iTrent). Purely a saved checkbox -- no
+ * integration with either system.
+ */
+export async function updateLoaHrSystemFlag(formData: FormData) {
+  await assertSafeServerAction(formData);
+  const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "LEAVE");
+  if (user.role !== "HR" && user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
+    throw new Error("FORBIDDEN");
+  }
+
+  const requestId = String(formData.get("requestId") || "");
+  const field = String(formData.get("field") || "") as HrSystemFlagField;
+  const value = String(formData.get("value")) === "true";
+  if (!requestId || !HR_SYSTEM_FLAG_FIELDS.includes(field)) throw new Error("INVALID_REQUEST");
+
+  await prisma.lOARequest.updateMany({
+    where: { id: requestId, tenantId: user.tenantId },
+    data: { [field]: value },
+  });
+
+  revalidatePath("/leave/history");
 }
 
 export async function cancelLoaRequest(formData: FormData) {

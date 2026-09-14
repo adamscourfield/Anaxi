@@ -139,13 +139,15 @@ model TenantSignalLabel {
 }
 
 model LoaReason {
-  id        String       @id @default(cuid())
-  tenantId  String
-  label     String
-  active    Boolean      @default(true)
-  sortOrder Int          @default(0)
-  requests  LOARequest[]
-  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id                      String       @id @default(cuid())
+  tenantId                String
+  label                   String
+  active                  Boolean      @default(true)
+  sortOrder               Int          @default(0)
+  // Only reasons marked medical trigger the medical-evidence requirement for longer absences.
+  requiresMedicalEvidence Boolean      @default(false)
+  requests                LOARequest[]
+  tenant                  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, label])
 }
@@ -189,6 +191,9 @@ model LOARequest {
   decidedById        String?
   decidedAt          DateTime?
   status             String     @default("PENDING")
+  // HR bookkeeping only -- whether this LOA has been keyed into each external system. Not synced.
+  inArbor            Boolean    @default(false)
+  inITrent           Boolean    @default(false)
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
   reason             LoaReason? @relation(fields: [reasonId], references: [id])

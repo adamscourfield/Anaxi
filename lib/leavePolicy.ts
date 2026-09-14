@@ -12,6 +12,8 @@ export type LeavePolicyInput = {
   startDate: Date;
   endDate: Date;
   medicalEvidenceUrl: string | null;
+  /** Whether the selected reason is one that requires medical evidence (e.g. Sick Leave). */
+  reasonRequiresMedicalEvidence: boolean;
   existingRequests: Array<{
     id: string;
     startDate: Date;
@@ -22,7 +24,7 @@ export type LeavePolicyInput = {
 };
 
 export function validateLeavePolicy(input: LeavePolicyInput): LeavePolicyViolation | null {
-  const { startDate, endDate, medicalEvidenceUrl, existingRequests, excludeRequestId } = input;
+  const { startDate, endDate, medicalEvidenceUrl, reasonRequiresMedicalEvidence, existingRequests, excludeRequestId } = input;
 
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
     return "INVALID_DATES";
@@ -30,7 +32,7 @@ export function validateLeavePolicy(input: LeavePolicyInput): LeavePolicyViolati
 
   const businessDays = businessDaysBetween(startDate, endDate);
 
-  if (businessDays >= LEAVE_MEDICAL_MIN_BUSINESS_DAYS && !medicalEvidenceUrl?.trim()) {
+  if (reasonRequiresMedicalEvidence && businessDays >= LEAVE_MEDICAL_MIN_BUSINESS_DAYS && !medicalEvidenceUrl?.trim()) {
     return "MEDICAL_REQUIRED";
   }
 
@@ -61,7 +63,7 @@ export function leavePolicyErrorMessage(code: LeavePolicyViolation): string {
     case "INVALID_DATES":
       return "End date must be on or after the start date.";
     case "MEDICAL_REQUIRED":
-      return `Medical evidence is required for absences of ${LEAVE_MEDICAL_MIN_BUSINESS_DAYS} or more consecutive working days.`;
+      return `Medical evidence is required for medical absences of ${LEAVE_MEDICAL_MIN_BUSINESS_DAYS} or more consecutive working days.`;
     case "OVERLAPPING_LEAVE":
       return "These dates overlap an existing pending or approved leave request.";
     default:

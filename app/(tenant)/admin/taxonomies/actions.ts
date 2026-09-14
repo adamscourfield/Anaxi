@@ -18,7 +18,8 @@ export async function addTaxonomyItem(formData: FormData) {
       _max: { sortOrder: true },
     });
     const sortOrder = (agg._max.sortOrder ?? -1) + 1;
-    await prisma.loaReason.create({ data: { tenantId: admin.tenantId, label: value, sortOrder } });
+    const requiresMedicalEvidence = formData.get("requiresMedicalEvidence") !== null;
+    await prisma.loaReason.create({ data: { tenantId: admin.tenantId, label: value, sortOrder, requiresMedicalEvidence } });
   }
   if (type === "reason") {
     const agg = await (prisma as any).onCallReason.aggregate({
@@ -69,7 +70,10 @@ export async function updateTaxonomyItem(formData: FormData) {
   const id = String(formData.get("id"));
   const label = String(formData.get("label") || "").trim();
   if (!id) return;
-  if (type === "loa") await prisma.loaReason.updateMany({ where: { id, tenantId: admin.tenantId }, data: { label } });
+  if (type === "loa") {
+    const requiresMedicalEvidence = formData.get("requiresMedicalEvidence") !== null;
+    await prisma.loaReason.updateMany({ where: { id, tenantId: admin.tenantId }, data: { label, requiresMedicalEvidence } });
+  }
   if (type === "reason") await (prisma as any).onCallReason.updateMany({ where: { id, tenantId: admin.tenantId }, data: { label } });
   if (type === "location") await (prisma as any).onCallLocation.updateMany({ where: { id, tenantId: admin.tenantId }, data: { label } });
   if (type === "recipient") {

@@ -62,6 +62,7 @@ export async function TaxonomiesAdminPanel({
     id: r.id as string,
     value: r.label as string,
     active: Boolean(r.active),
+    requiresMedicalEvidence: Boolean(r.requiresMedicalEvidence),
   }));
   const reasonRows = (onCallReasons as any[]).map((r) => ({
     id: r.id as string,

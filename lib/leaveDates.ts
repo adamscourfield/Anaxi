@@ -27,15 +27,6 @@ export function businessDaysBetween(start: Date, end: Date): number {
   return count;
 }
 
-/** Whole calendar days from now until start (for notice-period checks). */
-export function calendarDaysUntil(start: Date, from: Date = new Date()): number {
-  const a = new Date(from);
-  a.setHours(0, 0, 0, 0);
-  const b = new Date(start);
-  b.setHours(0, 0, 0, 0);
-  return Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
-}
-
 export function dateRangesOverlap(
   aStart: Date,
   aEnd: Date,
