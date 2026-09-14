@@ -33,6 +33,8 @@ interface OnCallInboxProps {
   resolvedRange: ResolvedHistoryRange;
   canAcknowledge?: boolean;
   canResolve?: boolean;
+  /** SLT/Admin/Super Admin only -- everyone else sees that a request is resolved, not when or how fast. */
+  canViewResolveTime?: boolean;
   totalLogsToday: number;
   avgResponseMs: number;
   resolutionRate: number;
@@ -105,6 +107,7 @@ export function OnCallInbox({
   resolvedRange,
   canAcknowledge,
   canResolve,
+  canViewResolveTime,
   totalLogsToday,
   avgResponseMs,
   resolutionRate,
@@ -482,14 +485,18 @@ export function OnCallInbox({
                     </p>
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
                       <span className="font-medium text-text">{r.responder?.fullName ?? "—"}</span>
-                      <span aria-hidden>·</span>
-                      <span className="font-mono text-text">
-                        {r.resolvedAt ? `${formatDate(r.resolvedAt)} · ${formatTime(r.resolvedAt)}` : "—"}
-                      </span>
-                      {duration > 0 && (
-                        <span className="inline-flex items-center rounded-md bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
-                          {formatDuration(duration)}
-                        </span>
+                      {canViewResolveTime && (
+                        <>
+                          <span aria-hidden>·</span>
+                          <span className="font-mono text-text">
+                            {r.resolvedAt ? `${formatDate(r.resolvedAt)} · ${formatTime(r.resolvedAt)}` : "—"}
+                          </span>
+                          {duration > 0 && (
+                            <span className="inline-flex items-center rounded-md bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
+                              {formatDuration(duration)}
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -503,9 +510,13 @@ export function OnCallInbox({
                     <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Student name</th>
                     <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Type</th>
                     <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Responder</th>
-                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Date</th>
-                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Resolved at</th>
-                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Duration</th>
+                    {canViewResolveTime && (
+                      <>
+                        <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Date</th>
+                        <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Resolved at</th>
+                        <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Duration</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -534,19 +545,23 @@ export function OnCallInbox({
                         <td className="px-4 py-4 text-text">
                           {r.responder?.fullName ?? "—"}
                         </td>
-                        <td className="px-4 py-4 text-text">
-                          {r.resolvedAt ? formatDate(r.resolvedAt) : "—"}
-                        </td>
-                        <td className="px-4 py-4 font-mono text-text">
-                          {r.resolvedAt ? formatTime(r.resolvedAt) : "—"}
-                        </td>
-                        <td className="px-4 py-4">
-                          {duration > 0 && (
-                            <span className="inline-flex items-center rounded-md bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
-                              {formatDuration(duration)}
-                            </span>
-                          )}
-                        </td>
+                        {canViewResolveTime && (
+                          <>
+                            <td className="px-4 py-4 text-text">
+                              {r.resolvedAt ? formatDate(r.resolvedAt) : "—"}
+                            </td>
+                            <td className="px-4 py-4 font-mono text-text">
+                              {r.resolvedAt ? formatTime(r.resolvedAt) : "—"}
+                            </td>
+                            <td className="px-4 py-4">
+                              {duration > 0 && (
+                                <span className="inline-flex items-center rounded-md bg-[var(--pill-info-bg)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--pill-info-text)] ring-1 ring-inset ring-[var(--pill-info-ring)]">
+                                  {formatDuration(duration)}
+                                </span>
+                              )}
+                            </td>
+                          </>
+                        )}
                       </tr>
                     );
                   })}

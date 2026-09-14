@@ -9,7 +9,8 @@ export type OnCallPermission =
   | "oncall:resolve"
   | "oncall:view_all"
   | "oncall:cancel"
-  | "oncall:delete";
+  | "oncall:delete"
+  | "oncall:view_resolve_time";
 
 export type StudentPermission =
   | "students:read"
@@ -70,7 +71,7 @@ const TEACHER_PERMISSIONS: AppPermission[] = [
 
 const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
   SUPER_ADMIN: [
-    "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:cancel", "oncall:delete",
+    "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:cancel", "oncall:delete", "oncall:view_resolve_time",
     "import:write", "students:read", "students:write",
     "meetings:create", "meetings:view_own", "meetings:view_all", "meetings:edit", "meetings:delete",
     "actions:create", "actions:manage", "actions:view_own", "actions:view_all",
@@ -80,7 +81,7 @@ const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     "admin:access", "admin:users", "admin:settings",
   ],
   ADMIN: [
-    "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:cancel", "oncall:delete",
+    "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:cancel", "oncall:delete", "oncall:view_resolve_time",
     "import:write", "students:read", "students:write",
     "meetings:create", "meetings:view_own", "meetings:view_all", "meetings:edit", "meetings:delete",
     "actions:create", "actions:manage", "actions:view_own", "actions:view_all",
@@ -101,7 +102,7 @@ const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
   // other role. "actions:view_all" is kept separately so SLT retains
   // oversight of follow-up action items without also unlocking meeting notes.
   SLT: [
-    "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:delete",
+    "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:delete", "oncall:view_resolve_time",
     "import:write", "students:read", "students:write",
     "meetings:create", "meetings:view_own",
     "actions:create", "actions:manage", "actions:view_own", "actions:view_all",

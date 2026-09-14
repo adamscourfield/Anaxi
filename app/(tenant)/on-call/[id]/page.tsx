@@ -20,6 +20,7 @@ export default async function OnCallDetailPage({ params }: { params: Promise<{ i
   const canCancel =
     hasOnCallPermission(user.role, "oncall:cancel") && request.requesterUserId === user.id;
   const canDelete = hasOnCallPermission(user.role, "oncall:delete");
+  const canViewResolveTime = hasOnCallPermission(user.role, "oncall:view_resolve_time");
 
   const timelineEvents =
     (request as { timelineEvents?: unknown[] }).timelineEvents?.map((e: any) => ({
@@ -39,6 +40,7 @@ export default async function OnCallDetailPage({ params }: { params: Promise<{ i
       canResolve={canResolve}
       canCancel={canCancel}
       canDelete={canDelete}
+      canViewResolveTime={canViewResolveTime}
     />
   );
 }

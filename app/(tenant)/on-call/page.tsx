@@ -20,6 +20,7 @@ export default async function OnCallHomePage({
 
   const canAcknowledge = hasOnCallPermission(user.role, "oncall:acknowledge");
   const canResolve = hasOnCallPermission(user.role, "oncall:resolve");
+  const canViewResolveTime = hasOnCallPermission(user.role, "oncall:view_resolve_time");
 
   const resolvedSearchParams = (await searchParams) ?? {};
   const range = parseResolvedHistoryRange(resolvedSearchParams.range);
@@ -93,6 +94,7 @@ export default async function OnCallHomePage({
         resolvedRange={range}
         canAcknowledge={canAcknowledge}
         canResolve={canResolve}
+        canViewResolveTime={canViewResolveTime}
         totalLogsToday={totalLogsToday}
         avgResponseMs={avgResponseMs}
         resolutionRate={resolutionRate}
