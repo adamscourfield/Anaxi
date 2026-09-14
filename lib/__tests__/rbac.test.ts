@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { hasOnCallPermission, hasPermission, type AppPermission } from "@/lib/rbac";
 
 const ALL_PERMISSIONS: AppPermission[] = [
-  "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:cancel", "oncall:delete",
+  "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:cancel", "oncall:delete", "oncall:view_resolve_time",
   "students:read", "students:write", "import:write",
   "meetings:create", "meetings:view_own", "meetings:view_all", "meetings:edit", "meetings:delete",
   "actions:create", "actions:manage", "actions:view_own", "actions:view_all",
@@ -71,6 +71,23 @@ describe("observe:create is universal", () => {
   it("HR and ON_CALL can also view observations they're party to", () => {
     expect(hasPermission("HR", "observe:view")).toBe(true);
     expect(hasPermission("ON_CALL", "observe:view")).toBe(true);
+  });
+});
+
+describe("oncall:view_resolve_time permission", () => {
+  it("only SLT, ADMIN, and SUPER_ADMIN can see when/how fast a request was resolved", () => {
+    expect(hasOnCallPermission("SLT", "oncall:view_resolve_time")).toBe(true);
+    expect(hasOnCallPermission("ADMIN", "oncall:view_resolve_time")).toBe(true);
+    expect(hasOnCallPermission("SUPER_ADMIN", "oncall:view_resolve_time")).toBe(true);
+  });
+
+  it("everyone else cannot", () => {
+    expect(hasOnCallPermission("TEACHER", "oncall:view_resolve_time")).toBe(false);
+    expect(hasOnCallPermission("SUPPORT", "oncall:view_resolve_time")).toBe(false);
+    expect(hasOnCallPermission("HOD", "oncall:view_resolve_time")).toBe(false);
+    expect(hasOnCallPermission("LEADER", "oncall:view_resolve_time")).toBe(false);
+    expect(hasOnCallPermission("HR", "oncall:view_resolve_time")).toBe(false);
+    expect(hasOnCallPermission("ON_CALL", "oncall:view_resolve_time")).toBe(false);
   });
 });
 

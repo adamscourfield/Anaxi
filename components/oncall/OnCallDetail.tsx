@@ -51,6 +51,8 @@ interface OnCallDetailProps {
   canResolve?: boolean;
   canCancel?: boolean;
   canDelete?: boolean;
+  /** SLT/Admin/Super Admin only -- everyone else sees that a request was resolved, not when. */
+  canViewResolveTime?: boolean;
 }
 
 function fmt(d?: Date | string | null) {
@@ -112,7 +114,7 @@ function DetailLine({
   );
 }
 
-export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, canDelete }: OnCallDetailProps) {
+export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, canDelete, canViewResolveTime }: OnCallDetailProps) {
   const router = useRouter();
   const [actionPending, setActionPending] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -462,9 +464,11 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
                     <p className="text-[0.8125rem] font-bold" style={{ color: SLATE_900 }}>
                       {TIMELINE_LABELS[ev.type]}
                     </p>
-                    <p className="mt-0.5 text-[0.8125rem]" style={{ color: SLATE_600 }}>
-                      {fmt(ev.createdAt)}
-                    </p>
+                    {!(ev.type === "RESOLVED" && !canViewResolveTime) && (
+                      <p className="mt-0.5 text-[0.8125rem]" style={{ color: SLATE_600 }}>
+                        {fmt(ev.createdAt)}
+                      </p>
+                    )}
                     {ev.actor?.fullName ? (
                       <p className="mt-1 text-[0.75rem]" style={{ color: SLATE_600 }}>
                         by {ev.actor.fullName}
