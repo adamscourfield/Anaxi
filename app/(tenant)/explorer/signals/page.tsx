@@ -232,7 +232,7 @@ export default async function SignalsPage({
   }
 
   return (
-    <div className="-mx-4 -mt-4 min-h-[calc(100vh-4rem)] bg-[#F9FAFB] px-4 pb-12 pt-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <div className="-mx-4 -mt-4 min-h-[calc(100vh-4rem)] px-4 pb-12 pt-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       <div className="mx-auto max-w-[1400px] space-y-8">
         <div className="mb-2">
           <Link
