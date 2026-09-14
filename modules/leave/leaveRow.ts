@@ -13,6 +13,9 @@ export type LeaveRow = {
   requesterName: string | null;
   requesterInitials: string | null;
   requesterAvatarColor: string | null;
+  /** HR bookkeeping only -- has this LOA been keyed into each external system. */
+  inArbor: boolean;
+  inITrent: boolean;
 };
 
 function fmt(date: Date) {
@@ -61,6 +64,8 @@ export function mapLoaRequestToLeaveRow(r: {
   status: string;
   reason?: { label: string } | null;
   requester?: { fullName: string | null } | null;
+  inArbor?: boolean;
+  inITrent?: boolean;
 }): LeaveRow {
   const start = new Date(r.startDate);
   const end = new Date(r.endDate);
@@ -77,5 +82,7 @@ export function mapLoaRequestToLeaveRow(r: {
     requesterName: name,
     requesterInitials: name ? initials(name) : null,
     requesterAvatarColor: name ? avatarColor(name) : null,
+    inArbor: Boolean(r.inArbor),
+    inITrent: Boolean(r.inITrent),
   };
 }

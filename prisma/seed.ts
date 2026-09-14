@@ -111,7 +111,12 @@ async function main() {
   }
 
   for (const label of ["Sick Leave", "Personal Leave", "Training"]) {
-    await (prisma as any).loaReason.upsert({ where: { tenantId_label: { tenantId: tenant.id, label } }, update: {}, create: { tenantId: tenant.id, label } });
+    const requiresMedicalEvidence = label === "Sick Leave";
+    await (prisma as any).loaReason.upsert({
+      where: { tenantId_label: { tenantId: tenant.id, label } },
+      update: {},
+      create: { tenantId: tenant.id, label, requiresMedicalEvidence },
+    });
   }
   await (prisma as any).lOAAuthoriser.upsert({
     where: { tenantId_userId: { tenantId: tenant.id, userId: adminUser.id } },

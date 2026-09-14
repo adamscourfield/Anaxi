@@ -510,7 +510,9 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   const loaReasonRecords: { id: string; label: string }[] = [];
   for (const label of loaReasonLabels) {
     loaReasonRecords.push(
-      await prisma.loaReason.create({ data: { tenantId: tenant.id, label } })
+      await prisma.loaReason.create({
+        data: { tenantId: tenant.id, label, requiresMedicalEvidence: label === "Medical" },
+      })
     );
   }
 

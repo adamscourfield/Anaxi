@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TableScrollRegion } from "@/components/ui/table-scroll-region";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -9,6 +9,11 @@ import { buildCsvContent, downloadCsv } from "@/lib/csv";
 import { loaStatusLabel } from "@/lib/leaveStatus";
 import type { LoaStatusUiBucket } from "@/lib/leaveStatus";
 import type { LeaveRow } from "@/modules/leave/leaveRow";
+
+const HR_SYSTEM_FLAGS = [
+  { field: "inArbor" as const, label: "Arbor" },
+  { field: "inITrent" as const, label: "iTrent" },
+];
 
 type HistoryRow = LeaveRow & {
   requestedDates: string;
@@ -29,9 +34,34 @@ function statusBadge(row: HistoryRow) {
   return <StatusPill variant="warning">Pending</StatusPill>;
 }
 
-export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isManager: boolean }) {
+export function LeaveHistoryTable({
+  rows: initialRows,
+  isManager,
+  canTrackHrSystems,
+  updateHrSystemFlag,
+}: {
+  rows: HistoryRow[];
+  isManager: boolean;
+  canTrackHrSystems?: boolean;
+  updateHrSystemFlag?: (formData: FormData) => Promise<void>;
+}) {
+  const [rows, setRows] = useState(initialRows);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | LoaStatusUiBucket>("ALL");
+
+  useEffect(() => {
+    setRows(initialRows);
+  }, [initialRows]);
+
+  function handleHrSystemToggle(rowId: string, field: "inArbor" | "inITrent", checked: boolean) {
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, [field]: checked } : r)));
+    if (!updateHrSystemFlag) return;
+    const fd = new FormData();
+    fd.set("requestId", rowId);
+    fd.set("field", field);
+    fd.set("value", String(checked));
+    void updateHrSystemFlag(fd);
+  }
 
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
@@ -115,12 +145,21 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
                 <th className="px-5 py-3.5">Requested dates</th>
                 <th className="px-5 py-3.5">Reason</th>
                 <th className="px-5 py-3.5 text-right">Status</th>
+                {canTrackHrSystems &&
+                  HR_SYSTEM_FLAGS.map(({ field, label }) => (
+                    <th key={field} className="px-5 py-3.5 text-center">
+                      {label}
+                    </th>
+                  ))}
               </tr>
             </thead>
             <tbody>
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={isManager ? 4 : 3} className="px-5 py-10 text-center text-sm text-muted">
+                  <td
+                    colSpan={(isManager ? 4 : 3) + (canTrackHrSystems ? HR_SYSTEM_FLAGS.length : 0)}
+                    className="px-5 py-10 text-center text-sm text-muted"
+                  >
                     No leave requests match your filter.
                   </td>
                 </tr>
@@ -149,6 +188,18 @@ export function LeaveHistoryTable({ rows, isManager }: { rows: HistoryRow[]; isM
                       <span className="line-clamp-2">{row.reasonLabel}</span>
                     </td>
                     <td className="px-5 py-4 text-right">{statusBadge(row)}</td>
+                    {canTrackHrSystems &&
+                      HR_SYSTEM_FLAGS.map(({ field }) => (
+                        <td key={field} className="px-5 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={row[field]}
+                            onChange={(e) => handleHrSystemToggle(row.id, field, e.target.checked)}
+                            aria-label={`Entered into ${field === "inArbor" ? "Arbor" : "iTrent"} for ${row.requesterName ?? "this request"}`}
+                            className="h-4 w-4 cursor-pointer rounded border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] accent-[var(--on-surface)]"
+                          />
+                        </td>
+                      ))}
                   </tr>
                 ))
               )}

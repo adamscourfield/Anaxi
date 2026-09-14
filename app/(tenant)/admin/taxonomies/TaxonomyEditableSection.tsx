@@ -12,6 +12,8 @@ export type TaxonomyRow = {
   /** Recipient rows only: which on-call request types this user is notified for. */
   notifiesBehaviour?: boolean;
   notifiesFirstAid?: boolean;
+  /** LOA reason rows only: whether this reason triggers the medical-evidence requirement. */
+  requiresMedicalEvidence?: boolean;
 };
 
 const CARD =
@@ -238,6 +240,14 @@ export function TaxonomyEditableSection({
                               </label>
                             </div>
                           ) : null}
+                          {type === "loa" ? (
+                            <div className="flex flex-wrap items-center gap-3 pl-4 text-[0.75rem] text-[var(--on-surface-variant)]">
+                              <label className="inline-flex items-center gap-1.5">
+                                <input type="checkbox" name="requiresMedicalEvidence" defaultChecked={row.requiresMedicalEvidence === true} />
+                                Requires medical evidence for longer absences
+                              </label>
+                            </div>
+                          ) : null}
                         </form>
                       </td>
                       <td className="px-4 py-4 align-middle">
@@ -361,6 +371,14 @@ export function TaxonomyEditableSection({
                 <label className="inline-flex items-center gap-1.5">
                   <input type="checkbox" name="notifiesFirstAid" defaultChecked />
                   First aid
+                </label>
+              </div>
+            ) : null}
+            {type === "loa" ? (
+              <div className="flex flex-wrap items-center gap-3 text-[0.8125rem] font-medium text-[var(--on-surface)] sm:pb-2.5">
+                <label className="inline-flex items-center gap-1.5">
+                  <input type="checkbox" name="requiresMedicalEvidence" />
+                  Requires medical evidence
                 </label>
               </div>
             ) : null}

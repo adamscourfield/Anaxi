@@ -100,11 +100,7 @@ export default async function LeaveRequestPage({
                   id="loa-end"
                   label="End date"
                   required
-                  hint={
-                    LEAVE_MEDICAL_MIN_BUSINESS_DAYS > 0
-                      ? `Medical leave of ${LEAVE_MEDICAL_MIN_BUSINESS_DAYS}+ business days may require documentation.`
-                      : "Last day of absence (inclusive)."
-                  }
+                  hint={`Last day of absence (inclusive). Medical reasons of ${LEAVE_MEDICAL_MIN_BUSINESS_DAYS}+ business days require documentation.`}
                 >
                   <input
                     id="loa-end"
@@ -225,7 +221,7 @@ export default async function LeaveRequestPage({
                   </svg>
                 </div>
                 <p className="text-[0.8125rem] leading-relaxed text-muted">
-                  Medical evidence is required for absences of {LEAVE_MEDICAL_MIN_BUSINESS_DAYS} or more consecutive working days.
+                  Medical evidence is required for medical absences of {LEAVE_MEDICAL_MIN_BUSINESS_DAYS} or more consecutive working days. Not required for other leave types.
                 </p>
               </div>
             </div>

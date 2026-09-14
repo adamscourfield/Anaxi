@@ -6,12 +6,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { LeaveHistoryTable } from "./LeaveHistoryTable";
 import { loaRequestVisibilityWhere } from "@/modules/leave/leaveQuery";
 import { mapLoaRequestToLeaveRow } from "@/modules/leave/leaveRow";
+import { updateLoaHrSystemFlag } from "../actions";
 
 export default async function LeaveHistoryPage() {
   const user = await getSessionUserOrThrow();
   await requireFeatureForPage(user.tenantId, "LEAVE");
   const isManager = await canManageLoa(user);
   const manageableIds = await loaManageableRequesterIds(user);
+  const canTrackHrSystems = user.role === "HR" || user.role === "ADMIN" || user.role === "SUPER_ADMIN";
 
   const requests = await prisma.lOARequest.findMany({
     where: loaRequestVisibilityWhere(user.tenantId, user.id, manageableIds),
@@ -38,7 +40,12 @@ export default async function LeaveHistoryPage() {
         subtitle="Browse every leave request and filter by status or keyword."
       />
 
-      <LeaveHistoryTable rows={rows} isManager={isManager} />
+      <LeaveHistoryTable
+        rows={rows}
+        isManager={isManager}
+        canTrackHrSystems={canTrackHrSystems}
+        updateHrSystemFlag={updateLoaHrSystemFlag}
+      />
     </div>
   );
 }
