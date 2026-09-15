@@ -39,6 +39,16 @@ export function businessDaysBetween(start: Date, end: Date): number {
   return count;
 }
 
+/** An end time of exactly local midnight means "through the end of that day" (all-day leave), not that same instant. */
+function endOfDayIfMidnight(date: Date): Date {
+  if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0) {
+    const d = new Date(date);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }
+  return date;
+}
+
 /** True when the two [start, end] intervals overlap, down to their exact times. */
 export function dateRangesOverlap(
   aStart: Date,
@@ -46,5 +56,5 @@ export function dateRangesOverlap(
   bStart: Date,
   bEnd: Date,
 ): boolean {
-  return aStart <= bEnd && bStart <= aEnd;
+  return aStart <= endOfDayIfMidnight(bEnd) && bStart <= endOfDayIfMidnight(aEnd);
 }
