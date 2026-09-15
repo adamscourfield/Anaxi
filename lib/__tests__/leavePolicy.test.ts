@@ -50,4 +50,21 @@ describe("validateLeavePolicy", () => {
       }),
     ).toBe("OVERLAPPING_LEAVE");
   });
+
+  it("allows a genuinely separate date range with no overlap", () => {
+    expect(
+      validateLeavePolicy({
+        ...base,
+        medicalEvidenceUrl: "/file",
+        existingRequests: [
+          {
+            id: "other",
+            startDate: new Date(2026, 8, 16),
+            endDate: new Date(2026, 8, 16),
+            status: "PENDING",
+          },
+        ],
+      }),
+    ).toBeNull();
+  });
 });
