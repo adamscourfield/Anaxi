@@ -7,7 +7,9 @@ import { canManageLoa } from "@/lib/loa";
 import { businessDaysBetween } from "@/lib/leaveDates";
 import { isPendingStatus, loaStatusLabel, normalizeLoaStatus } from "@/lib/leaveStatus";
 import { prisma } from "@/lib/prisma";
+import { hasPermission } from "@/lib/rbac";
 import { cancelLoaRequest, decideLoaRequest } from "../actions";
+import { DeleteLoaRequestButton } from "../DeleteLoaRequestButton";
 import { PageHeader } from "@/components/ui/page-header";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -16,8 +18,16 @@ import { SubmitButton } from "@/components/ui/submit-button";
 const LEAVE_ELEVATED_CARD =
   "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
 
+/** Requests created before time-of-day support default to local midnight -- don't show a "12:00 am" time for those. */
+function hasTimeOfDay(date: Date) {
+  return date.getHours() !== 0 || date.getMinutes() !== 0;
+}
+
 function fmt(date: Date) {
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const base = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  if (!hasTimeOfDay(date)) return base;
+  const time = date.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+  return `${base}, ${time}`;
 }
 
 function fmtSubmitted(date: Date) {
@@ -208,6 +218,7 @@ export default async function LeaveDetailPage({
   const status = normalizeLoaStatus(request.status) as string;
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.PENDING;
   const canCancel = isOwner && isPendingStatus(request.status);
+  const canDelete = hasPermission(user.role, "leave:delete");
 
   const fromCalendar = query.from === "calendar";
   const calendarMonth = String(query.month || "");
@@ -333,6 +344,20 @@ export default async function LeaveDetailPage({
                 Cancel request
               </button>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {canDelete ? (
+        <div className={surfaceCard}>
+          <div className="flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <div>
+              <h2 className="text-lg font-bold text-text">Delete request</h2>
+              <p className="mt-1 text-[0.8125rem] text-muted">
+                Permanently remove this leave request from the record. This cannot be undone.
+              </p>
+            </div>
+            <DeleteLoaRequestButton requestId={request.id} />
           </div>
         </div>
       ) : null}

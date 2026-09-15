@@ -26,7 +26,7 @@ export default async function LeaveRequestPage({
     orderBy: { label: "asc" },
   });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 16);
 
   const twelveMonthsAgo = new Date();
   twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
@@ -86,11 +86,11 @@ export default async function LeaveRequestPage({
           <form action={createLoaRequest} encType="multipart/form-data" className="space-y-5">
             <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <FormField id="loa-start" label="Start date" required>
+                <FormField id="loa-start" label="Start date & time" required>
                   <input
                     id="loa-start"
                     required
-                    type="date"
+                    type="datetime-local"
                     name="startAt"
                     defaultValue={today}
                     className="field rounded-xl bg-[var(--surface-container-low)]/80"
@@ -98,14 +98,14 @@ export default async function LeaveRequestPage({
                 </FormField>
                 <FormField
                   id="loa-end"
-                  label="End date"
+                  label="End date & time"
                   required
-                  hint={`Last day of absence (inclusive). Medical reasons of ${LEAVE_MEDICAL_MIN_BUSINESS_DAYS}+ business days require documentation.`}
+                  hint={`Last moment of absence (inclusive). Medical reasons of ${LEAVE_MEDICAL_MIN_BUSINESS_DAYS}+ business days require documentation.`}
                 >
                   <input
                     id="loa-end"
                     required
-                    type="date"
+                    type="datetime-local"
                     name="endAt"
                     defaultValue={today}
                     className="field rounded-xl bg-[var(--surface-container-low)]/80"

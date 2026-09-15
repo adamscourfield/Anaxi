@@ -6,7 +6,8 @@ import { sendLeaveDecisionEmail, sendLeaveSubmittedEmail } from "@/lib/email";
 import { notifyLeaveReviewers } from "@/lib/inAppNotifications";
 import { requireFeature } from "@/lib/guards";
 import { canManageLoa, loaApproversForRequest } from "@/lib/loa";
-import { parseLocalDateInput } from "@/lib/leaveDates";
+import { hasPermission } from "@/lib/rbac";
+import { parseLocalDateTimeInput } from "@/lib/leaveDates";
 import { generateEvidenceFileToken, medicalEvidencePublicPath, readMedicalEvidenceFile } from "@/lib/leaveMedicalUpload";
 import { validateLeavePolicy, type LeavePolicyViolation } from "@/lib/leavePolicy";
 import { approvedStatusFilter, isLoaDecisionType, isPendingStatus } from "@/lib/leaveStatus";
@@ -23,8 +24,8 @@ export async function createLoaRequest(formData: FormData) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "LEAVE");
 
-  const startDate = parseLocalDateInput(String(formData.get("startAt") || ""));
-  const endDate = parseLocalDateInput(String(formData.get("endAt") || ""));
+  const startDate = parseLocalDateTimeInput(String(formData.get("startAt") || ""));
+  const endDate = parseLocalDateTimeInput(String(formData.get("endAt") || ""));
   const reasonId = String(formData.get("reasonId") || "");
   const reasonText = String(formData.get("reasonText") || "").trim() || null;
   const coverRequirements = String(formData.get("coverRequirements") || "").trim() || null;
@@ -207,5 +208,25 @@ export async function cancelLoaRequest(formData: FormData) {
   revalidatePath(`/leave/${requestId}`);
   revalidatePath("/leave");
   revalidatePath("/leave/calendar");
+  redirect("/leave");
+}
+
+export async function deleteLoaRequest(formData: FormData) {
+  await assertSafeServerAction(formData);
+  const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "LEAVE");
+  if (!hasPermission(user.role, "leave:delete")) throw new Error("FORBIDDEN");
+
+  const requestId = String(formData.get("requestId") || "");
+  const request = await prisma.lOARequest.findFirst({
+    where: { id: requestId, tenantId: user.tenantId },
+  });
+  if (!request) throw new Error("NOT_FOUND");
+
+  await prisma.lOARequest.delete({ where: { id: requestId } });
+
+  revalidatePath("/leave");
+  revalidatePath("/leave/calendar");
+  revalidatePath("/leave/history");
   redirect("/leave");
 }
