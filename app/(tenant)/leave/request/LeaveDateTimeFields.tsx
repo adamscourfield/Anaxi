@@ -43,7 +43,7 @@ export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) 
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="field rounded-xl bg-[var(--surface-container-low)]/80"
+              className="field min-w-0 flex-1 rounded-xl bg-[var(--surface-container-low)]/80"
             />
             {!allDay ? (
               <input
@@ -52,7 +52,7 @@ export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) 
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="field w-32 shrink-0 rounded-xl bg-[var(--surface-container-low)]/80"
+                className="field !w-32 shrink-0 rounded-xl bg-[var(--surface-container-low)]/80"
               />
             ) : null}
           </div>
@@ -74,7 +74,7 @@ export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) 
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="field rounded-xl bg-[var(--surface-container-low)]/80"
+              className="field min-w-0 flex-1 rounded-xl bg-[var(--surface-container-low)]/80"
             />
             {!allDay ? (
               <input
@@ -83,7 +83,7 @@ export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) 
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="field w-32 shrink-0 rounded-xl bg-[var(--surface-container-low)]/80"
+                className="field !w-32 shrink-0 rounded-xl bg-[var(--surface-container-low)]/80"
               />
             ) : null}
           </div>
