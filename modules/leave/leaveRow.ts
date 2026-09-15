@@ -18,17 +18,28 @@ export type LeaveRow = {
   inITrent: boolean;
 };
 
+/** Requests created before time-of-day support default to local midnight -- don't show a "12:00 am" time for those. */
+function hasTimeOfDay(date: Date) {
+  return date.getHours() !== 0 || date.getMinutes() !== 0;
+}
+
+function fmtTime(date: Date) {
+  return date.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
+}
+
 function fmt(date: Date) {
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const base = date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return hasTimeOfDay(date) ? `${base}, ${fmtTime(date)}` : base;
 }
 
 function fmtShortRange(start: Date, end: Date) {
   const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
-  const a = start.toLocaleDateString("en-GB", opts);
-  if (start.toDateString() === end.toDateString()) return a;
+  const withTime = (date: Date, label: string) => (hasTimeOfDay(date) ? `${label} ${fmtTime(date)}` : label);
+  const a = withTime(start, start.toLocaleDateString("en-GB", opts));
+  if (start.toDateString() === end.toDateString() && !hasTimeOfDay(start) && !hasTimeOfDay(end)) return a;
   const sameMonth =
     start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth();
-  const b = end.toLocaleDateString("en-GB", sameMonth ? { day: "numeric" } : opts);
+  const b = withTime(end, end.toLocaleDateString("en-GB", sameMonth ? { day: "numeric" } : opts));
   return `${a} — ${b}`;
 }
 

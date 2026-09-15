@@ -39,7 +39,8 @@ export type ObservePermission =
 export type LeavePermission =
   | "leave:request"
   | "leave:approve"
-  | "leave:approve_all";
+  | "leave:approve_all"
+  | "leave:delete";
 
 export type AnalysisPermission =
   | "analysis:view"
@@ -76,7 +77,7 @@ const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     "meetings:create", "meetings:view_own", "meetings:view_all", "meetings:edit", "meetings:delete",
     "actions:create", "actions:manage", "actions:view_own", "actions:view_all",
     "observe:view", "observe:view_all", "observe:create", "observe:configure",
-    "leave:request", "leave:approve", "leave:approve_all",
+    "leave:request", "leave:approve", "leave:approve_all", "leave:delete",
     "analysis:view", "analysis:view_behaviour", "analysis:export",
     "admin:access", "admin:users", "admin:settings",
   ],
@@ -86,7 +87,7 @@ const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     "meetings:create", "meetings:view_own", "meetings:view_all", "meetings:edit", "meetings:delete",
     "actions:create", "actions:manage", "actions:view_own", "actions:view_all",
     "observe:view", "observe:view_all", "observe:create", "observe:configure",
-    "leave:request", "leave:approve", "leave:approve_all",
+    "leave:request", "leave:approve", "leave:approve_all", "leave:delete",
     "analysis:view", "analysis:view_behaviour", "analysis:export",
     "admin:access", "admin:users", "admin:settings",
   ],
@@ -130,7 +131,7 @@ const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     "meetings:create", "meetings:view_own",
     "actions:view_own",
     "observe:view", "observe:create",
-    "leave:request", "leave:approve",
+    "leave:request", "leave:approve", "leave:delete",
   ],
   ON_CALL: [
     "oncall:create", "oncall:acknowledge", "oncall:resolve", "oncall:view_all", "oncall:cancel",
