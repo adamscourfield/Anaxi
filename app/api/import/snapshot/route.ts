@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parse } from "csv-parse/sync";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { apiErrorResponse } from "@/lib/apiErrors";
 import { requireFeature } from "@/lib/guards";
@@ -36,8 +37,13 @@ export async function POST(req: Request) {
     }
 
     const text = await file.text();
-    const firstLine = text.split("\n")[0] ?? "";
-    const headers = firstLine.split(",").map((h) => h.trim());
+    let headers: string[];
+    try {
+      const headerRow = parse(text, { to: 1, trim: true, relax_column_count: true }) as string[][];
+      headers = (headerRow[0] ?? []).map((h) => h.trim()).filter(Boolean);
+    } catch {
+      return NextResponse.json({ error: "Could not read this file as CSV" }, { status: 400 });
+    }
     const headerSignature = computeHeaderSignature(headers);
 
     const importJob = await prisma.importJob.create({
