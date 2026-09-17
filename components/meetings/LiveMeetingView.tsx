@@ -43,6 +43,7 @@ interface LiveMeetingViewProps {
   canEdit: boolean;
   canStartMeeting: boolean;
   canAddActions: boolean;
+  canDelete: boolean;
   avgActionsForType?: number;
 }
 
@@ -336,6 +337,7 @@ export function LiveMeetingView({
   canEdit,
   canStartMeeting,
   canAddActions,
+  canDelete,
   avgActionsForType = 0,
 }: LiveMeetingViewProps) {
   const router = useRouter();
@@ -359,6 +361,8 @@ export function LiveMeetingView({
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [endMeetingOpen, setEndMeetingOpen] = useState(false);
+  const [deleteMeetingOpen, setDeleteMeetingOpen] = useState(false);
+  const [deletingMeeting, setDeletingMeeting] = useState(false);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const linkInsertRef = useRef<{ start: number; end: number; selected: string } | null>(null);
 
@@ -480,6 +484,32 @@ export function LiveMeetingView({
       window.location.href = "/meetings";
     } catch {
       toast("Network error while ending the meeting.", "error");
+    }
+  }
+
+  /* ── Delete meeting ────────────────────────────────────────────── */
+  async function handleDeleteMeeting() {
+    setDeleteMeetingOpen(false);
+    setDeletingMeeting(true);
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}`, { method: "DELETE" });
+      if (!res.ok) {
+        let message = "Could not delete the meeting.";
+        try {
+          const json = await res.json();
+          if (json?.error && typeof json.error === "string") message = json.error;
+        } catch {
+          /* ignore */
+        }
+        toast(message, "error");
+        setDeletingMeeting(false);
+        return;
+      }
+      toast("Meeting deleted", "success");
+      window.location.href = "/meetings";
+    } catch {
+      toast("Network error while deleting the meeting.", "error");
+      setDeletingMeeting(false);
     }
   }
 
@@ -685,6 +715,17 @@ export function LiveMeetingView({
                   <rect x="7" y="7" width="10" height="10" rx="1" />
                 </svg>
                 End Meeting
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="rounded-xl px-4 py-2.5 text-error hover:bg-error/10"
+                disabled={deletingMeeting}
+                onClick={() => setDeleteMeetingOpen(true)}
+              >
+                {deletingMeeting ? "Deleting…" : "Delete meeting"}
               </Button>
             )}
           </div>
@@ -918,6 +959,16 @@ export function LiveMeetingView({
         onConfirm={() => void handleEndMeeting()}
       >
         This will mark the session as completed and return you to the meetings list.
+      </DestructiveConfirmDialog>
+      <DestructiveConfirmDialog
+        open={deleteMeetingOpen}
+        title="Delete this meeting?"
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onClose={() => setDeleteMeetingOpen(false)}
+        onConfirm={() => void handleDeleteMeeting()}
+      >
+        This will permanently remove this meeting, its notes, and its actions. This cannot be undone.
       </DestructiveConfirmDialog>
     </div>
   );

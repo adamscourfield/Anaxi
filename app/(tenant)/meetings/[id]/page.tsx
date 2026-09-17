@@ -29,6 +29,7 @@ export default async function MeetingDetailPage({ params }: { params: Promise<{ 
 
   const canEdit = isCreator || user.role === "ADMIN";
   const canAddActions = hasPermission(user.role, "actions:create") && (isCreator || isAttendee);
+  const canDelete = isCreator || hasPermission(user.role, "meetings:delete");
 
   const typeLabel = MEETING_TYPE_LABELS[meeting.type] ?? meeting.type;
 
@@ -94,6 +95,7 @@ export default async function MeetingDetailPage({ params }: { params: Promise<{ 
         canEdit={canEdit}
         canStartMeeting={isCreator}
         canAddActions={canAddActions}
+        canDelete={canDelete}
         avgActionsForType={avgActionsForType}
       />
     </div>
