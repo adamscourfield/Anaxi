@@ -10,6 +10,7 @@ import {
 } from "@/modules/students/explorerList";
 import { triangulationPpClass, triangulationSendClass } from "@/modules/assessments/attainmentColours";
 import { bulkToggleWatchlist } from "@/app/(tenant)/analysis/students/actions";
+import { bulkSetStudentStatus } from "@/app/(tenant)/students/actions";
 import { WatchlistToggle } from "./WatchlistToggle";
 
 function getInitials(name: string | null | undefined): string {
@@ -69,6 +70,8 @@ type Props = {
   pageEnd: number;
   totalFiltered: number;
   pagination: React.ReactNode;
+  canManageStudents?: boolean;
+  showStatusColumn?: boolean;
 };
 
 export function StudentsListSection({
@@ -80,9 +83,18 @@ export function StudentsListSection({
   pageEnd,
   totalFiltered,
   pagination,
+  canManageStudents = false,
+  showStatusColumn = false,
 }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
+
+  const selectedActiveCount = pageRows.filter(
+    (r) => selected.has(r.studentId) && r.status === "ACTIVE",
+  ).length;
+  const selectedArchivedCount = pageRows.filter(
+    (r) => selected.has(r.studentId) && r.status === "ARCHIVED",
+  ).length;
 
   const allOnPageSelected =
     pageRows.length > 0 && pageRows.every((r) => selected.has(r.studentId));
@@ -112,6 +124,17 @@ export function StudentsListSection({
     });
   };
 
+  const runBulkStatus = (status: "ACTIVE" | "ARCHIVED") => {
+    const ids = pageRows
+      .filter((r) => selected.has(r.studentId) && r.status !== status)
+      .map((r) => r.studentId);
+    if (ids.length === 0) return;
+    startTransition(async () => {
+      await bulkSetStudentStatus(ids, status);
+      setSelected(new Set());
+    });
+  };
+
   return (
     <div className="mt-4 table-shell">
       {selected.size > 0 && (
@@ -135,6 +158,26 @@ export function StudentsListSection({
           >
             Remove from watchlist
           </button>
+          {canManageStudents && selectedActiveCount > 0 && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => runBulkStatus("ARCHIVED")}
+              className="btn-filter-secondary text-[0.8125rem]"
+            >
+              Archive {selectedActiveCount === selected.size ? "selected" : `${selectedActiveCount} active`}
+            </button>
+          )}
+          {canManageStudents && selectedArchivedCount > 0 && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => runBulkStatus("ACTIVE")}
+              className="btn-filter-secondary text-[0.8125rem]"
+            >
+              Unarchive {selectedArchivedCount === selected.size ? "selected" : `${selectedArchivedCount} archived`}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setSelected(new Set())}
@@ -165,11 +208,17 @@ export function StudentsListSection({
                     <p className="text-xs text-muted">{row.yearGroup ?? "—"}</p>
                   </div>
                 </div>
-                <span
-                  className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${bandPillClass(row.band)}`}
-                >
-                  {BAND_LABELS[row.band]}
-                </span>
+                {row.status === "ARCHIVED" ? (
+                  <span className="shrink-0 rounded-md bg-surface-container-high px-2 py-0.5 text-[10px] font-bold uppercase text-muted">
+                    Archived
+                  </span>
+                ) : (
+                  <span
+                    className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${bandPillClass(row.band)}`}
+                  >
+                    {BAND_LABELS[row.band]}
+                  </span>
+                )}
               </div>
               {row.drivers.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
@@ -232,6 +281,7 @@ export function StudentsListSection({
               <th className="w-10 px-2 py-3" aria-label="Watchlist" />
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Year</th>
+              {showStatusColumn && <th className="px-4 py-3">Status</th>}
               <th className="px-4 py-3">Why</th>
               <th className="px-4 py-3">Flags</th>
               <th className="px-4 py-3">Band</th>
@@ -277,6 +327,19 @@ export function StudentsListSection({
                     </Link>
                   </td>
                   <td className="px-4 py-4 text-muted">{row.yearGroup ?? "—"}</td>
+                  {showStatusColumn && (
+                    <td className="px-4 py-4">
+                      <span
+                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                          row.status === "ARCHIVED"
+                            ? "bg-surface-container-high text-muted"
+                            : "bg-[var(--pill-success-bg)] text-[var(--pill-success-text)]"
+                        }`}
+                      >
+                        {row.status === "ARCHIVED" ? "Archived" : "Active"}
+                      </span>
+                    </td>
+                  )}
                   <td className="px-4 py-4">
                     <div className="flex max-w-[200px] flex-wrap gap-1">
                       {row.drivers.length > 0 ? (
@@ -316,11 +379,15 @@ export function StudentsListSection({
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <span
-                      className={`inline-flex items-center rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${bandPillClass(row.band)}`}
-                    >
-                      {BAND_LABELS[row.band]}
-                    </span>
+                    {row.status === "ARCHIVED" ? (
+                      <span className="text-xs text-muted">Not scored</span>
+                    ) : (
+                      <span
+                        className={`inline-flex items-center rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${bandPillClass(row.band)}`}
+                      >
+                        {BAND_LABELS[row.band]}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">

@@ -40,6 +40,7 @@ export type StudentRiskRow = {
   studentId: string;
   studentName: string;
   yearGroup: string | null;
+  status: "ACTIVE" | "ARCHIVED";
   sendFlag: boolean;
   ppFlag: boolean;
   band: RiskBand;
@@ -236,16 +237,27 @@ function toSnapshotSummary(snap: any): SnapshotSummary {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+export type StudentStatusFilter = "ACTIVE" | "ARCHIVED" | "ALL";
+
 /**
- * Compute the Student Risk Index for all active students in a tenant.
+ * Compute the Student Risk Index for a tenant's students.
+ *
+ * Archived students aren't risk-scored (they're no longer being tracked, so
+ * deltas between snapshots are meaningless) -- when included, they're
+ * returned as flat, unscored rows showing whatever their last known
+ * snapshot said, purely for browsing/unarchiving purposes.
  */
 export async function computeStudentRiskIndex(
   tenantId: string,
   windowDays: number = DEFAULT_WINDOW_DAYS,
-  viewerUserId: string
+  viewerUserId: string,
+  statusFilter: StudentStatusFilter = "ACTIVE"
 ): Promise<{ rows: StudentRiskRow[]; computedAt: Date }> {
   const { currentStart, currentEnd, prevStart, prevEnd } = windowBounds(windowDays);
 
+  const rows: StudentRiskRow[] = [];
+
+  if (statusFilter === "ACTIVE" || statusFilter === "ALL") {
   const students = await (prisma as any).student.findMany({
     where: { tenantId, status: "ACTIVE" },
     include: {
@@ -258,8 +270,6 @@ export async function computeStudentRiskIndex(
       },
     },
   });
-
-  const rows: StudentRiskRow[] = [];
 
   for (const student of students as any[]) {
     const snapshots: any[] = student.snapshots ?? [];
@@ -313,6 +323,7 @@ export async function computeStudentRiskIndex(
       studentId: student.id,
       studentName: student.fullName,
       yearGroup: student.yearGroup,
+      status: "ACTIVE",
       sendFlag: student.sendFlag,
       ppFlag: student.ppFlag,
       band,
@@ -330,6 +341,43 @@ export async function computeStudentRiskIndex(
       positivePointsTotal: currentSnap.positivePointsTotal ?? 0,
       onWatchlist: (student.watchlistEntries ?? []).length > 0,
     });
+  }
+  }
+
+  if (statusFilter === "ARCHIVED" || statusFilter === "ALL") {
+    const archivedStudents = await (prisma as any).student.findMany({
+      where: { tenantId, status: "ARCHIVED" },
+      include: {
+        snapshots: { orderBy: { snapshotDate: "desc" }, take: 1 },
+        watchlistEntries: { where: { tenantId, createdByUserId: viewerUserId } },
+      },
+    });
+
+    for (const student of archivedStudents as any[]) {
+      const latest = (student.snapshots ?? [])[0] ?? null;
+      rows.push({
+        studentId: student.id,
+        studentName: student.fullName,
+        yearGroup: student.yearGroup,
+        status: "ARCHIVED",
+        sendFlag: student.sendFlag,
+        ppFlag: student.ppFlag,
+        band: "STABLE",
+        riskScore: 0,
+        confidence: "LOW",
+        lastSnapshotDate: latest?.snapshotDate ?? null,
+        drivers: [],
+        attendancePct: latest ? Number(latest.attendancePct) : null,
+        detentionsDelta: null,
+        onCallsDelta: null,
+        latenessDelta: null,
+        suspensionsDelta: null,
+        internalExclusionsDelta: null,
+        attendanceDelta: null,
+        positivePointsTotal: latest?.positivePointsTotal ?? null,
+        onWatchlist: (student.watchlistEntries ?? []).length > 0,
+      });
+    }
   }
 
   // Sort: URGENT → PRIORITY → WATCH → STABLE, then by riskScore desc

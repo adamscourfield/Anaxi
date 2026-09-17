@@ -79,6 +79,28 @@ export async function unarchiveStudentAction(formData: FormData) {
   redirect(returnTo);
 }
 
+export async function bulkSetStudentStatus(
+  studentIds: string[],
+  status: "ACTIVE" | "ARCHIVED",
+): Promise<{ updated: number }> {
+  await assertSafeServerAction();
+  const user = await assertStudentWriteAccess();
+
+  const ids = [...new Set(studentIds)].filter(Boolean);
+  if (ids.length === 0) return { updated: 0 };
+
+  const result = await (prisma as any).student.updateMany({
+    where: { id: { in: ids }, tenantId: user.tenantId },
+    data: { status },
+  });
+
+  revalidatePath("/explorer/students");
+  revalidatePath("/students/my");
+  revalidatePath("/on-call/new");
+
+  return { updated: result.count };
+}
+
 export async function batchArchiveYearGroupAction(formData: FormData) {
   await assertSafeServerAction(formData);
   const user = await assertStudentWriteAccess();
