@@ -436,8 +436,9 @@ export function OnCallInbox({
               )}
             </div>
             {/* Download icon */}
-            <button
-              type="button"
+            <a
+              href={`/api/oncall/report?scope=resolved&range=${resolvedRange}`}
+              download
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-surface text-muted calm-transition hover:bg-[var(--surface-container-low)]"
               aria-label="Download resolved requests"
             >
@@ -446,7 +447,7 @@ export function OnCallInbox({
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-            </button>
+            </a>
           </div>
         </div>
 
