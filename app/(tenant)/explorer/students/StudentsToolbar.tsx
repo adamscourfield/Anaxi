@@ -5,10 +5,27 @@ import { useRouter } from "next/navigation";
 import { FormSelect } from "@/components/ui/form-select";
 import {
   buildStudentsListUrl,
+  DEFAULT_SORT_MODE,
+  DEFAULT_STATUS_FILTER,
   DEFAULT_VIEW_MODE,
+  type StudentsSortMode,
+  type StudentsStatusFilter,
   type StudentsUrlParams,
   type StudentsViewMode,
 } from "@/modules/students/explorerList";
+
+const SORT_OPTIONS: { value: StudentsSortMode; label: string }[] = [
+  { value: "risk", label: "Risk (default)" },
+  { value: "attendance_asc", label: "Attendance: lowest first" },
+  { value: "attendance_desc", label: "Attendance: highest first" },
+  { value: "name", label: "Name (A–Z)" },
+];
+
+const STATUS_OPTIONS: { value: StudentsStatusFilter; label: string }[] = [
+  { value: "active", label: "Active students" },
+  { value: "archived", label: "Archived students" },
+  { value: "all", label: "Active + archived" },
+];
 
 const BANDS = [
   { value: "", label: "All risk bands" },
@@ -44,6 +61,7 @@ type Props = {
   yearGroups: string[];
   urlBase: StudentsUrlParams;
   activeChips: { key: string; label: string; removeHref: string }[];
+  canManageStudents?: boolean;
 };
 
 export function StudentsToolbar({
@@ -51,6 +69,7 @@ export function StudentsToolbar({
   yearGroups,
   urlBase,
   activeChips,
+  canManageStudents = false,
 }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -67,6 +86,10 @@ export function StudentsToolbar({
   const [view, setView] = useState<StudentsViewMode>(
     urlBase.view ?? DEFAULT_VIEW_MODE,
   );
+  const [status, setStatus] = useState<StudentsStatusFilter>(
+    urlBase.status ?? DEFAULT_STATUS_FILTER,
+  );
+  const [sort, setSort] = useState<StudentsSortMode>(urlBase.sort ?? DEFAULT_SORT_MODE);
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [saveName, setSaveName] = useState("");
 
@@ -80,6 +103,8 @@ export function StudentsToolbar({
     setConfidence(urlBase.confidence ?? "");
     setWatchlist(urlBase.watchlist === "1");
     setView(urlBase.view ?? DEFAULT_VIEW_MODE);
+    setStatus(urlBase.status ?? DEFAULT_STATUS_FILTER);
+    setSort(urlBase.sort ?? DEFAULT_SORT_MODE);
   }, [urlBase]);
 
   useEffect(() => {
@@ -105,6 +130,8 @@ export function StudentsToolbar({
         watchlist: watchlist ? "1" : undefined,
         attendanceBelow: urlBase.attendanceBelow,
         scope: urlBase.scope,
+        status,
+        sort,
         page: undefined,
         ...overrides,
       });
@@ -118,6 +145,8 @@ export function StudentsToolbar({
       router,
       search,
       send,
+      sort,
+      status,
       view,
       watchlist,
       windowDays,
@@ -162,6 +191,8 @@ export function StudentsToolbar({
         watchlist: watchlist ? "1" : undefined,
         attendanceBelow: urlBase.attendanceBelow,
         scope: urlBase.scope,
+        status,
+        sort,
       },
     };
     persistSavedViews([...savedViews, entry]);
@@ -357,6 +388,46 @@ export function StudentsToolbar({
               }}
             />
           </label>
+
+          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[160px]">
+            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+              Sort by
+            </span>
+            <FormSelect
+              name="sort"
+              defaultValue={sort}
+              key={`sort-${sort}`}
+              placeholder="Risk (default)"
+              triggerClassName={triggerWhite}
+              options={SORT_OPTIONS}
+              onChange={(v) => {
+                const next = v as StudentsSortMode;
+                setSort(next);
+                pushParams({ sort: next });
+              }}
+            />
+          </label>
+
+          {canManageStudents && (
+            <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[160px]">
+              <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                Status
+              </span>
+              <FormSelect
+                name="status"
+                defaultValue={status}
+                key={`status-${status}`}
+                placeholder="Active students"
+                triggerClassName={triggerWhite}
+                options={STATUS_OPTIONS}
+                onChange={(v) => {
+                  const next = v as StudentsStatusFilter;
+                  setStatus(next);
+                  pushParams({ status: next });
+                }}
+              />
+            </label>
+          )}
 
           <label className="flex items-end gap-2 pb-2.5 lg:pb-0">
             <input

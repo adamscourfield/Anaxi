@@ -320,6 +320,9 @@ export default async function ObservationHistoryPage({
   if (coachingCoacheeId) historyFilterQuery.set("coachingCoachee", coachingCoacheeId);
   const historyFilterQueryString = historyFilterQuery.toString();
 
+  // Preserve the current filters/page so "Back" from an observation returns to the same view.
+  const detailBackFrom = encodeURIComponent(pageUrl(page));
+
   return (
     <div className="obs-history-scope space-y-6">
       {/* ── Header ──────────────────────────────────────────────────────── */}
@@ -405,7 +408,7 @@ export default async function ObservationHistoryPage({
                   const phaseBadge = PHASE_BADGE[phase] ?? PHASE_BADGE.UNKNOWN;
 
                   return (
-                    <ClickableRow key={obs.id} href={`/observe/${obs.id}`} className="group table-row calm-transition cursor-pointer">
+                    <ClickableRow key={obs.id} href={`/observe/${obs.id}?from=${detailBackFrom}`} className="group table-row calm-transition cursor-pointer">
                       {/* Teacher */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3 min-w-0">
@@ -467,7 +470,7 @@ export default async function ObservationHistoryPage({
               return (
                 <Link
                   key={obs.id}
-                  href={`/observe/${obs.id}`}
+                  href={`/observe/${obs.id}?from=${detailBackFrom}`}
                   className="group block px-4 py-3.5 calm-transition hover:bg-accent/[0.04]"
                 >
                   <div className="flex items-start justify-between gap-3">

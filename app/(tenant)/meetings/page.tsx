@@ -50,6 +50,13 @@ export default async function MeetingsPage({
     resolvedSearchParams?.type && validTypes.includes(resolvedSearchParams.type) ? resolvedSearchParams.type : undefined;
   const statsUserId = showAll ? undefined : user.id;
 
+  // Preserve the list's filter state so "Back" from a meeting returns to the same view.
+  const currentQuery = new URLSearchParams();
+  if (scope === "mine") currentQuery.set("scope", "mine");
+  if (type) currentQuery.set("type", type);
+  const currentQueryString = currentQuery.toString();
+  const from = encodeURIComponent(`/meetings${currentQueryString ? `?${currentQueryString}` : ""}`);
+
   const [meetings, stats] = await Promise.all([
     listMeetings(user.tenantId, {
       type,
@@ -226,7 +233,7 @@ export default async function MeetingsPage({
                   return (
                     <tr key={m.id} className="table-row calm-transition">
                       <td className="px-5 py-4">
-                        <Link href={`/meetings/${m.id}`} className="link-subtle font-semibold text-text">
+                        <Link href={`/meetings/${m.id}?from=${from}`} className="link-subtle font-semibold text-text">
                           <p className="font-semibold text-text">{m.title}</p>
                           <p className="text-xs text-muted">{typeLabel}</p>
                         </Link>
@@ -274,7 +281,7 @@ export default async function MeetingsPage({
       {/* ── Past Meetings ───────────────────────────────────────────────── */}
       <section>
         <h2 className="mb-5 text-lg font-bold tracking-[-0.02em] text-text">Past Meetings</h2>
-        <PastMeetingsList meetings={past} />
+        <PastMeetingsList meetings={past} from={from} />
       </section>
     </div>
   );

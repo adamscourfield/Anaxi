@@ -11,10 +11,16 @@ export const BAND_LABELS: Record<RiskBand, string> = {
 
 export type StudentsViewMode = "attention" | "all" | "watch" | "stable";
 
-export const DEFAULT_VIEW_MODE: StudentsViewMode = "attention";
+export const DEFAULT_VIEW_MODE: StudentsViewMode = "all";
 
 export const PER_PAGE_ALL = 25;
 export const PER_PAGE_ATTENTION_MAX = 50;
+
+export type StudentsStatusFilter = "active" | "archived" | "all";
+export const DEFAULT_STATUS_FILTER: StudentsStatusFilter = "active";
+
+export type StudentsSortMode = "risk" | "attendance_asc" | "attendance_desc" | "name";
+export const DEFAULT_SORT_MODE: StudentsSortMode = "risk";
 
 export type StudentsListFilters = {
   view: StudentsViewMode;
@@ -26,6 +32,7 @@ export type StudentsListFilters = {
   confidence: string;
   watchlistOnly: boolean;
   attendanceBelow80: boolean;
+  sort?: StudentsSortMode;
 };
 
 export function parseViewMode(
@@ -62,17 +69,30 @@ export function effectiveBandFilter(
   }
 }
 
+export function parseStatusFilter(statusParam: string | undefined): StudentsStatusFilter {
+  if (statusParam === "archived" || statusParam === "all") return statusParam;
+  return DEFAULT_STATUS_FILTER;
+}
+
+export function parseSortMode(sortParam: string | undefined): StudentsSortMode {
+  if (sortParam === "attendance_asc" || sortParam === "attendance_desc" || sortParam === "name") {
+    return sortParam;
+  }
+  return DEFAULT_SORT_MODE;
+}
+
 export function filterStudentRows(
   rows: StudentRiskRow[],
   filters: StudentsListFilters,
 ): StudentRiskRow[] {
   let result = rows;
 
+  // Archived students aren't risk-scored, so band-based filters never match them.
   const bandFilter = effectiveBandFilter(filters.view, filters.band);
   if (bandFilter === "NEEDS_ATTENTION") {
-    result = result.filter((r) => r.band === "URGENT" || r.band === "PRIORITY");
+    result = result.filter((r) => r.status === "ACTIVE" && (r.band === "URGENT" || r.band === "PRIORITY"));
   } else if (bandFilter) {
-    result = result.filter((r) => r.band === bandFilter);
+    result = result.filter((r) => r.status === "ACTIVE" && r.band === bandFilter);
   }
 
   if (filters.yearGroup) {
@@ -96,7 +116,25 @@ export function filterStudentRows(
     );
   }
 
-  result.sort((a, b) => {
+  const sortMode = filters.sort ?? DEFAULT_SORT_MODE;
+  result = [...result].sort((a, b) => {
+    if (sortMode === "attendance_asc" || sortMode === "attendance_desc") {
+      // Students with no attendance data sort last regardless of direction.
+      if (a.attendancePct === null && b.attendancePct === null) {
+        return a.studentName.localeCompare(b.studentName);
+      }
+      if (a.attendancePct === null) return 1;
+      if (b.attendancePct === null) return -1;
+      const diff =
+        sortMode === "attendance_asc"
+          ? a.attendancePct - b.attendancePct
+          : b.attendancePct - a.attendancePct;
+      if (diff !== 0) return diff;
+      return a.studentName.localeCompare(b.studentName);
+    }
+    if (sortMode === "name") {
+      return a.studentName.localeCompare(b.studentName);
+    }
     const bandDiff = BAND_ORDER.indexOf(a.band) - BAND_ORDER.indexOf(b.band);
     if (bandDiff !== 0) return bandDiff;
     return b.riskScore - a.riskScore;
@@ -112,7 +150,11 @@ export function countBands(rows: StudentRiskRow[]): Record<RiskBand, number> {
     WATCH: 0,
     STABLE: 0,
   };
-  for (const r of rows) counts[r.band]++;
+  // Archived students aren't risk-scored -- don't let their placeholder band inflate "Stable".
+  for (const r of rows) {
+    if (r.status === "ARCHIVED") continue;
+    counts[r.band]++;
+  }
   return counts;
 }
 
@@ -141,6 +183,8 @@ export type StudentsUrlParams = {
   attendanceBelow?: string;
   page?: number;
   scope?: string;
+  status?: StudentsStatusFilter;
+  sort?: StudentsSortMode;
 };
 
 export function buildStudentsListUrl(
@@ -162,6 +206,8 @@ export function buildStudentsListUrl(
   if (params.watchlist === "1") merged.set("watchlist", "1");
   if (params.attendanceBelow === "1") merged.set("attendanceBelow", "1");
   if (params.scope === "my") merged.set("scope", "my");
+  if (params.status && params.status !== DEFAULT_STATUS_FILTER) merged.set("status", params.status);
+  if (params.sort && params.sort !== DEFAULT_SORT_MODE) merged.set("sort", params.sort);
   if (params.page && params.page > 1) merged.set("page", String(params.page));
 
   const qs = merged.toString();

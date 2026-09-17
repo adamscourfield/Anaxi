@@ -22,7 +22,7 @@ function formatDay(date: Date): string {
   return String(date.getDate());
 }
 
-export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
+export function PastMeetingsList({ meetings, from }: { meetings: PastMeeting[]; from?: string }) {
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY);
 
   const visible = meetings.slice(0, displayCount);
@@ -72,7 +72,7 @@ export function PastMeetingsList({ meetings }: { meetings: PastMeeting[] }) {
             {/* Action buttons */}
             <div className="flex flex-shrink-0 gap-2">
               <Link
-                href={`/meetings/${m.id}`}
+                href={from ? `/meetings/${m.id}?from=${from}` : `/meetings/${m.id}`}
                 className="calm-transition flex h-9 w-9 items-center justify-center rounded-sm bg-[var(--surface-container-low)] text-muted hover:bg-[var(--surface-container)] hover:text-text"
                 title="View meeting"
               >

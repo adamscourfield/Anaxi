@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
+import { hasPermission } from "@/lib/rbac";
 import { buildViewerContext } from "@/lib/viewerContext";
 import { parseWindow } from "@/lib/explorerUtils";
 import {
@@ -19,6 +20,8 @@ import {
   DEFAULT_VIEW_MODE,
   filterStudentRows,
   getPageSize,
+  parseSortMode,
+  parseStatusFilter,
   parseViewMode,
   type StudentsListFilters,
   type StudentsUrlParams,
@@ -115,6 +118,11 @@ function buildActiveChips(
       removeHref: omit({ attendanceBelow: undefined }),
     });
   }
+  if (urlBase.status === "archived") {
+    chips.push({ key: "status", label: "Archived students", removeHref: omit({ status: undefined }) });
+  } else if (urlBase.status === "all") {
+    chips.push({ key: "status", label: "Active + archived", removeHref: omit({ status: undefined }) });
+  }
   if (urlBase.windowDays !== 21) {
     chips.push({
       key: "window",
@@ -155,6 +163,9 @@ export default async function StudentsPage({
   const watchlistFilter = firstParam(params, "watchlist") === "1";
   const attendanceBelow = firstParam(params, "attendanceBelow") === "1";
   const viewMode = parseViewMode(firstParam(params, "view"), bandFilter);
+  const canManageStudents = hasPermission(user.role, "students:write");
+  const statusFilter = canManageStudents ? parseStatusFilter(firstParam(params, "status")) : "active";
+  const sortMode = parseSortMode(firstParam(params, "sort"));
   const hasExplicitParams =
     firstParam(params, "view") ||
     bandFilter ||
@@ -178,7 +189,16 @@ export default async function StudentsPage({
     user.tenantId,
     windowDays,
     user.id,
+    statusFilter === "archived" ? "ARCHIVED" : statusFilter === "all" ? "ALL" : "ACTIVE",
   );
+
+  // Headline KPIs always summarise the live (active) cohort, even when browsing
+  // archived students -- when the list itself excludes active students, fetch
+  // them separately so the KPI strip doesn't read as "no data".
+  const activeRows =
+    statusFilter === "archived"
+      ? (await computeStudentRiskIndex(user.tenantId, windowDays, user.id, "ACTIVE")).rows
+      : allRows.filter((r) => r.status === "ACTIVE");
 
   const yearGroups = Array.from(
     new Set(allRows.map((r) => r.yearGroup).filter(Boolean)),
@@ -194,10 +214,11 @@ export default async function StudentsPage({
     confidence: confidenceFilter,
     watchlistOnly: watchlistFilter,
     attendanceBelow80: attendanceBelow,
+    sort: sortMode,
   };
 
   const rows = filterStudentRows(allRows, filters);
-  const bandCounts = countBands(allRows);
+  const bandCounts = countBands(statusFilter === "archived" ? activeRows : allRows);
 
   const urlBase: StudentsUrlParams = {
     windowDays,
@@ -210,6 +231,8 @@ export default async function StudentsPage({
     confidence: confidenceFilter || undefined,
     watchlist: watchlistFilter ? "1" : undefined,
     attendanceBelow: attendanceBelow ? "1" : undefined,
+    status: statusFilter,
+    sort: sortMode,
   };
 
   const listPath = buildStudentsListUrl(BASE_PATH, urlBase);
@@ -224,11 +247,11 @@ export default async function StudentsPage({
   const pageRows = rows.slice(pageStart, pageEnd);
 
   const avgAttendance =
-    allRows.length > 0
-      ? allRows.reduce((sum, r) => sum + (r.attendancePct ?? 0), 0) / allRows.length
+    activeRows.length > 0
+      ? activeRows.reduce((sum, r) => sum + (r.attendancePct ?? 0), 0) / activeRows.length
       : 0;
   const priorityCount = bandCounts.PRIORITY + bandCounts.URGENT;
-  const lowAttendanceCount = allRows.filter(
+  const lowAttendanceCount = activeRows.filter(
     (r) => r.attendancePct !== null && r.attendancePct < 80,
   ).length;
 
@@ -279,7 +302,7 @@ export default async function StudentsPage({
       <StudentsKpiStrip
         basePath={BASE_PATH}
         urlBase={urlBase}
-        cohortCount={allRows.length}
+        cohortCount={activeRows.length}
         avgAttendance={avgAttendance}
         priorityCount={priorityCount}
         lowAttendanceCount={lowAttendanceCount}
@@ -307,6 +330,7 @@ export default async function StudentsPage({
         yearGroups={yearGroups}
         urlBase={urlBase}
         activeChips={activeChips}
+        canManageStudents={canManageStudents}
       />
 
       {rows.length === 0 ? (
@@ -335,6 +359,8 @@ export default async function StudentsPage({
           pageEnd={pageEnd}
           totalFiltered={totalFiltered}
           pagination={pagination}
+          canManageStudents={canManageStudents}
+          showStatusColumn={statusFilter === "all"}
         />
       )}
 

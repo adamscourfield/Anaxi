@@ -10,10 +10,21 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { prisma } from "@/lib/prisma";
 
-export default async function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MeetingDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ from?: string }>;
+}) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "MEETINGS");
   const resolvedParams = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const backHref =
+    resolvedSearchParams.from && resolvedSearchParams.from.startsWith("/")
+      ? resolvedSearchParams.from
+      : "/meetings";
 
   let meeting: any;
   try {
@@ -29,6 +40,7 @@ export default async function MeetingDetailPage({ params }: { params: Promise<{ 
 
   const canEdit = isCreator || user.role === "ADMIN";
   const canAddActions = hasPermission(user.role, "actions:create") && (isCreator || isAttendee);
+  const canDelete = isCreator || hasPermission(user.role, "meetings:delete");
 
   const typeLabel = MEETING_TYPE_LABELS[meeting.type] ?? meeting.type;
 
@@ -69,7 +81,7 @@ export default async function MeetingDetailPage({ params }: { params: Promise<{ 
         eyebrow={
           <Breadcrumb
             items={[
-              { label: "Meetings", href: "/meetings" },
+              { label: "Meetings", href: backHref },
               { label: meeting.title },
             ]}
           />
@@ -94,6 +106,7 @@ export default async function MeetingDetailPage({ params }: { params: Promise<{ 
         canEdit={canEdit}
         canStartMeeting={isCreator}
         canAddActions={canAddActions}
+        canDelete={canDelete}
         avgActionsForType={avgActionsForType}
       />
     </div>
