@@ -53,6 +53,8 @@ interface OnCallDetailProps {
   canDelete?: boolean;
   /** SLT/Admin/Super Admin only -- everyone else sees that a request was resolved, not when. */
   canViewResolveTime?: boolean;
+  /** Where "Back to on call inbox" returns to -- preserves the inbox's filter state when set. */
+  backHref?: string;
 }
 
 function fmt(d?: Date | string | null) {
@@ -114,7 +116,7 @@ function DetailLine({
   );
 }
 
-export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, canDelete, canViewResolveTime }: OnCallDetailProps) {
+export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, canDelete, canViewResolveTime, backHref = "/on-call" }: OnCallDetailProps) {
   const router = useRouter();
   const [actionPending, setActionPending] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -185,7 +187,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
       const res = await fetch(`/api/oncall/${request.id}`, { method: "DELETE" });
       if (res.ok) {
         toast("Request deleted", "success");
-        router.push("/on-call");
+        router.push(backHref);
         router.refresh();
       } else {
         let message = "Something went wrong.";
@@ -268,7 +270,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
         </div>
 
         <Link
-          href="/on-call"
+          href={backHref}
           className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold shadow-sm calm-transition hover:bg-[#F9FAFB] lg:self-auto"
           style={{ color: SLATE_900 }}
         >

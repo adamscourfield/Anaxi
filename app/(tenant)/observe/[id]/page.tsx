@@ -35,9 +35,20 @@ function formatRole(role: string) {
   return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export default async function ObservationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ObservationDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ from?: string }>;
+}) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "OBSERVATIONS");
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const backHref =
+    resolvedSearchParams.from && resolvedSearchParams.from.startsWith("/")
+      ? resolvedSearchParams.from
+      : "/observe/history";
   const resolvedParams = await params;
 
   const observation = await (prisma as any).observation.findFirst({
@@ -191,7 +202,7 @@ export default async function ObservationDetailPage({ params }: { params: Promis
           eyebrow={
             <Breadcrumb
               items={[
-                { label: "Observations", href: "/observe/history" },
+                { label: "Observations", href: backHref },
                 { label: dateLabel },
               ]}
             />

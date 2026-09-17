@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   REQUEST_TYPE_LABELS,
   RESOLVED_HISTORY_RANGE_LABELS,
@@ -113,12 +113,21 @@ export function OnCallInbox({
   resolutionRate,
 }: OnCallInboxProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [actionPending, setActionPending] = useState<string | null>(null);
   const [rangeMenuOpen, setRangeMenuOpen] = useState(false);
 
   function handleRangeChange(next: ResolvedHistoryRange) {
     router.push(next === "today" ? "/on-call" : `/on-call?range=${next}`);
     setRangeMenuOpen(false);
+  }
+
+  /** Preserve the inbox's current filter state so "Back" returns to the same view. */
+  function detailHref(requestId: string): string {
+    const qs = searchParams.toString();
+    const from = encodeURIComponent(qs ? `${pathname}?${qs}` : pathname);
+    return `/on-call/${requestId}?from=${from}`;
   }
 
   const openCount = openRequests.filter((r) => r.status === "OPEN").length;
@@ -211,11 +220,11 @@ export function OnCallInbox({
                     key={r.id}
                     role="button"
                     tabIndex={0}
-                    onClick={() => router.push(`/on-call/${r.id}`)}
+                    onClick={() => router.push(detailHref(r.id))}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        router.push(`/on-call/${r.id}`);
+                        router.push(detailHref(r.id));
                       }
                     }}
                     className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-ambient calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
@@ -310,7 +319,7 @@ export function OnCallInbox({
                       <tr
                         key={r.id}
                         className="table-row cursor-pointer calm-transition"
-                        onClick={() => router.push(`/on-call/${r.id}`)}
+                        onClick={() => router.push(detailHref(r.id))}
                       >
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
@@ -470,11 +479,11 @@ export function OnCallInbox({
                     key={r.id}
                     role="button"
                     tabIndex={0}
-                    onClick={() => router.push(`/on-call/${r.id}`)}
+                    onClick={() => router.push(detailHref(r.id))}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        router.push(`/on-call/${r.id}`);
+                        router.push(detailHref(r.id));
                       }
                     }}
                     className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-ambient calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
@@ -530,7 +539,7 @@ export function OnCallInbox({
                       <tr
                         key={r.id}
                         className="table-row cursor-pointer calm-transition"
-                        onClick={() => router.push(`/on-call/${r.id}`)}
+                        onClick={() => router.push(detailHref(r.id))}
                       >
                         <td className="px-5 py-4 font-bold uppercase text-text">
                           {r.student.fullName}

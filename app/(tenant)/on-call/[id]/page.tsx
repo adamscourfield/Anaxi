@@ -4,9 +4,20 @@ import { getRequestDetail } from "@/modules/oncall/service";
 import { OnCallDetail } from "@/components/oncall/OnCallDetail";
 import { notFound } from "next/navigation";
 
-export default async function OnCallDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function OnCallDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ from?: string }>;
+}) {
   const user = await getSessionUserOrThrow();
   const resolvedParams = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const backHref =
+    resolvedSearchParams.from && resolvedSearchParams.from.startsWith("/")
+      ? resolvedSearchParams.from
+      : "/on-call";
 
   let request: Awaited<ReturnType<typeof getRequestDetail>>;
   try {
@@ -41,6 +52,7 @@ export default async function OnCallDetailPage({ params }: { params: Promise<{ i
       canCancel={canCancel}
       canDelete={canDelete}
       canViewResolveTime={canViewResolveTime}
+      backHref={backHref}
     />
   );
 }

@@ -10,10 +10,21 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { prisma } from "@/lib/prisma";
 
-export default async function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MeetingDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ from?: string }>;
+}) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "MEETINGS");
   const resolvedParams = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const backHref =
+    resolvedSearchParams.from && resolvedSearchParams.from.startsWith("/")
+      ? resolvedSearchParams.from
+      : "/meetings";
 
   let meeting: any;
   try {
@@ -70,7 +81,7 @@ export default async function MeetingDetailPage({ params }: { params: Promise<{ 
         eyebrow={
           <Breadcrumb
             items={[
-              { label: "Meetings", href: "/meetings" },
+              { label: "Meetings", href: backHref },
               { label: meeting.title },
             ]}
           />
