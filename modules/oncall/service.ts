@@ -209,10 +209,26 @@ export async function getOpenRequests(tenantId: string) {
   });
 }
 
+export interface OnCallRequestFilters {
+  yearGroup?: string;
+  reasonCategory?: string;
+}
+
+function filtersWhere(filters: OnCallRequestFilters): Record<string, unknown> {
+  return {
+    ...(filters.yearGroup ? { student: { yearGroup: filters.yearGroup } } : {}),
+    ...(filters.reasonCategory ? { behaviourReasonCategory: filters.reasonCategory } : {}),
+  };
+}
+
 /** Currently active requests, regardless of when they were raised -- safety-critical, never date-limited. */
-export async function getOpenAndAcknowledgedRequests(tenantId: string, take = 200) {
+export async function getOpenAndAcknowledgedRequests(
+  tenantId: string,
+  filters: OnCallRequestFilters = {},
+  take = 200
+) {
   return (prisma as any).onCallRequest.findMany({
-    where: { tenantId, status: { in: ["OPEN", "ACKNOWLEDGED"] } },
+    where: { tenantId, status: { in: ["OPEN", "ACKNOWLEDGED"] }, ...filtersWhere(filters) },
     include: REQUEST_INCLUDE,
     orderBy: { createdAt: "desc" },
     take,
@@ -220,12 +236,18 @@ export async function getOpenAndAcknowledgedRequests(tenantId: string, take = 20
 }
 
 /** Resolved requests, optionally scoped to a resolvedAt window (omit resolvedAfter for all time). */
-export async function getResolvedRequests(tenantId: string, resolvedAfter?: Date, take = 200) {
+export async function getResolvedRequests(
+  tenantId: string,
+  resolvedAfter?: Date,
+  filters: OnCallRequestFilters = {},
+  take = 200
+) {
   return (prisma as any).onCallRequest.findMany({
     where: {
       tenantId,
       status: "RESOLVED",
       ...(resolvedAfter ? { resolvedAt: { gte: resolvedAfter } } : {}),
+      ...filtersWhere(filters),
     },
     include: REQUEST_INCLUDE,
     orderBy: { resolvedAt: "desc" },

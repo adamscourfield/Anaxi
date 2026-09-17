@@ -119,7 +119,11 @@ export function OnCallInbox({
   const [rangeMenuOpen, setRangeMenuOpen] = useState(false);
 
   function handleRangeChange(next: ResolvedHistoryRange) {
-    router.push(next === "today" ? "/on-call" : `/on-call?range=${next}`);
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "today") params.delete("range");
+    else params.set("range", next);
+    const qs = params.toString();
+    router.push(qs ? `/on-call?${qs}` : "/on-call");
     setRangeMenuOpen(false);
   }
 
@@ -306,6 +310,7 @@ export function OnCallInbox({
                     <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Incident type</th>
                     <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Location</th>
                     <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Raised by</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Time of report</th>
                     {(canAcknowledge || canResolve) && (
                       <th className="px-4 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Actions</th>
                     )}
@@ -353,6 +358,9 @@ export function OnCallInbox({
                         </td>
                         <td className="px-4 py-4 text-text">
                           {r.requester.fullName}
+                        </td>
+                        <td className="px-4 py-4 font-mono text-text">
+                          {formatTime(r.createdAt)}
                         </td>
                         {(canAcknowledge || canResolve) && (
                           <td className="px-4 py-4 text-right" onClick={(e) => e.stopPropagation()}>
@@ -446,7 +454,12 @@ export function OnCallInbox({
             </div>
             {/* Download icon */}
             <a
-              href={`/api/oncall/report?scope=resolved&range=${resolvedRange}`}
+              href={(() => {
+                const params = new URLSearchParams(searchParams.toString());
+                params.set("scope", "resolved");
+                params.set("range", resolvedRange);
+                return `/api/oncall/report?${params.toString()}`;
+              })()}
               download
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-surface text-muted calm-transition hover:bg-[var(--surface-container-low)]"
               aria-label="Download resolved requests"
@@ -488,12 +501,23 @@ export function OnCallInbox({
                     }}
                     className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-ambient calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
                   >
-                    <p className="font-bold uppercase text-text">{r.student.fullName}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-bold uppercase text-text">{r.student.fullName}</p>
+                      <span className="text-[11px] font-medium uppercase text-muted">
+                        {formatYearGroup(r.student.yearGroup)}
+                      </span>
+                    </div>
                     <p className="mt-1 text-xs uppercase tracking-wide text-muted">
                       {REQUEST_TYPE_LABELS[r.requestType]}
                       {r.isEmergency && <span className="text-[var(--pill-error-text)]"> · Emergency</span>}
                     </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+                    <p className="mt-2 text-xs text-muted">
+                      Raised by <span className="font-medium text-text">{r.requester.fullName}</span>
+                      {" · "}
+                      {formatTime(r.createdAt)}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
+                      <span>Responder:</span>
                       <span className="font-medium text-text">{r.responder?.fullName ?? "—"}</span>
                       {canViewResolveTime && (
                         <>
@@ -518,7 +542,10 @@ export function OnCallInbox({
                 <thead>
                   <tr className="table-head-row">
                     <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Student name</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Year</th>
                     <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Type</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Reporter</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Time of report</th>
                     <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Responder</th>
                     {canViewResolveTime && (
                       <>
@@ -544,6 +571,9 @@ export function OnCallInbox({
                         <td className="px-5 py-4 font-bold uppercase text-text">
                           {r.student.fullName}
                         </td>
+                        <td className="px-4 py-4 font-medium uppercase text-text">
+                          {formatYearGroup(r.student.yearGroup)}
+                        </td>
                         <td className="px-4 py-4 text-muted uppercase tracking-wide">
                           <span className="inline-flex flex-wrap items-center gap-1.5">
                             {REQUEST_TYPE_LABELS[r.requestType]}
@@ -551,6 +581,12 @@ export function OnCallInbox({
                               <span className="text-[var(--pill-error-text)]">· Emergency</span>
                             )}
                           </span>
+                        </td>
+                        <td className="px-4 py-4 text-text">
+                          {r.requester.fullName}
+                        </td>
+                        <td className="px-4 py-4 font-mono text-text">
+                          {formatTime(r.createdAt)}
                         </td>
                         <td className="px-4 py-4 text-text">
                           {r.responder?.fullName ?? "—"}

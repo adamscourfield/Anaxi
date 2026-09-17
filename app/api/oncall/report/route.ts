@@ -24,10 +24,14 @@ export async function GET(req: Request) {
     const range = parseResolvedHistoryRange(searchParams.get("range") ?? undefined);
     const resolvedAfter = resolvedHistoryRangeStart(range, new Date());
     const scope = searchParams.get("scope") === "resolved" ? "resolved" : "all";
+    const filters = {
+      yearGroup: searchParams.get("yearGroup") || undefined,
+      reasonCategory: searchParams.get("reason") || undefined,
+    };
 
     const [openRequests, resolvedRequests] = await Promise.all([
-      scope === "all" ? getOpenAndAcknowledgedRequests(user.tenantId) : Promise.resolve([]),
-      getResolvedRequests(user.tenantId, resolvedAfter ?? undefined),
+      scope === "all" ? getOpenAndAcknowledgedRequests(user.tenantId, filters) : Promise.resolve([]),
+      getResolvedRequests(user.tenantId, resolvedAfter ?? undefined, filters),
     ]);
 
     const header = [

@@ -420,6 +420,34 @@ describe("getOpenAndAcknowledgedRequests", () => {
       })
     );
   });
+
+  it("adds a nested student.yearGroup filter when yearGroup is provided", async () => {
+    (prisma as any).onCallRequest.findMany.mockResolvedValue([]);
+    await getOpenAndAcknowledgedRequests("tenant_1", { yearGroup: "10" });
+    expect((prisma as any).onCallRequest.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          tenantId: "tenant_1",
+          status: { in: ["OPEN", "ACKNOWLEDGED"] },
+          student: { yearGroup: "10" },
+        },
+      })
+    );
+  });
+
+  it("adds a behaviourReasonCategory filter when reasonCategory is provided", async () => {
+    (prisma as any).onCallRequest.findMany.mockResolvedValue([]);
+    await getOpenAndAcknowledgedRequests("tenant_1", { reasonCategory: "Disruption" });
+    expect((prisma as any).onCallRequest.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          tenantId: "tenant_1",
+          status: { in: ["OPEN", "ACKNOWLEDGED"] },
+          behaviourReasonCategory: "Disruption",
+        },
+      })
+    );
+  });
 });
 
 describe("getResolvedRequests", () => {
@@ -442,6 +470,23 @@ describe("getResolvedRequests", () => {
     expect((prisma as any).onCallRequest.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { tenantId: "tenant_1", status: "RESOLVED", resolvedAt: { gte: after } },
+      })
+    );
+  });
+
+  it("combines resolvedAfter with yearGroup and reasonCategory filters", async () => {
+    (prisma as any).onCallRequest.findMany.mockResolvedValue([]);
+    const after = new Date("2026-01-01T00:00:00Z");
+    await getResolvedRequests("tenant_1", after, { yearGroup: "13", reasonCategory: "Refusal" });
+    expect((prisma as any).onCallRequest.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          tenantId: "tenant_1",
+          status: "RESOLVED",
+          resolvedAt: { gte: after },
+          student: { yearGroup: "13" },
+          behaviourReasonCategory: "Refusal",
+        },
       })
     );
   });
