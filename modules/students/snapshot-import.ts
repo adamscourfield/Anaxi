@@ -1,9 +1,9 @@
 import { parse } from "csv-parse/sync";
-import { AnaxiField } from "./snapshot-fields";
+import type { MappableField } from "./snapshot-fields";
 
 export interface SnapshotMapping {
-  /** Maps each AnaxiField to the CSV column header */
-  fieldMap: Partial<Record<AnaxiField, string>>;
+  /** Maps each Anaxi field (required, plus optional KS2 scores) to the CSV column header */
+  fieldMap: Partial<Record<MappableField, string>>;
   /** CSV column holding SnapshotDate; if absent, importDate is used */
   snapshotDateColumn?: string | null;
 }
@@ -20,6 +20,9 @@ export interface SnapshotRow {
   positivePoints: number;
   send: boolean;
   pp: boolean;
+  /** null = column unmapped or cell blank; the stored score is left untouched */
+  ks2ReadingScaledScore: number | null;
+  ks2MathsScaledScore: number | null;
   snapshotDate: Date;
 }
 
@@ -67,6 +70,15 @@ function parseIntField(raw: string): number | null {
   return n;
 }
 
+/** KS2 scaled scores run 80–120. Blank → null (leave stored value); invalid → NaN. */
+export function parseScaledScore(raw: string): number | null {
+  const stripped = String(raw ?? "").trim();
+  if (!stripped) return null;
+  const n = Number(stripped);
+  if (!Number.isInteger(n) || n < 80 || n > 120) return Number.NaN;
+  return n;
+}
+
 function parseSnapshotDate(raw: string): Date | null {
   const stripped = String(raw ?? "").trim();
   if (!stripped) return null;
@@ -97,7 +109,7 @@ export function parseSnapshotCsv(
   // Duplicate UPN detection
   const seenUpns = new Map<string, number>(); // upn → first rowNumber
 
-  const col = (record: Record<string, string>, anaxiField: AnaxiField) =>
+  const col = (record: Record<string, string>, anaxiField: MappableField) =>
     record[mapping.fieldMap[anaxiField] ?? ""] ?? "";
 
   // Normalise importDate to midnight UTC
@@ -161,7 +173,7 @@ export function parseSnapshotCsv(
       ["internalExclusions", "InternalExclusions"],
       ["suspensions", "Suspensions"],
       ["positivePoints", "PositivePoints"],
-    ] as [string, AnaxiField][]) {
+    ] as [string, MappableField][]) {
       const raw = col(record, anaxiKey);
       const parsed = parseIntField(raw);
       if (parsed === null) {
@@ -171,6 +183,23 @@ export function parseSnapshotCsv(
         );
       }
       numericParsed[field] = parsed;
+    }
+
+    // KS2 scaled scores (optional)
+    const scaledScores: Record<string, number | null> = {};
+    for (const [field, anaxiKey] of [
+      ["ks2ReadingScaledScore", "KS2ReadingScaledScore"],
+      ["ks2MathsScaledScore", "KS2MathsScaledScore"],
+    ] as [string, MappableField][]) {
+      const raw = col(record, anaxiKey);
+      const parsed = parseScaledScore(raw);
+      if (Number.isNaN(parsed)) {
+        addError(
+          "INVALID_SCALED_SCORE",
+          `Field '${anaxiKey}' value '${raw}' must be a whole number between 80 and 120`
+        );
+      }
+      scaledScores[field] = parsed;
     }
 
     // SnapshotDate
@@ -202,6 +231,8 @@ export function parseSnapshotCsv(
         positivePoints: numericParsed.positivePoints ?? 0,
         send: parseBoolean(col(record, "SEND")),
         pp: parseBoolean(col(record, "PP")),
+        ks2ReadingScaledScore: scaledScores.ks2ReadingScaledScore,
+        ks2MathsScaledScore: scaledScores.ks2MathsScaledScore,
         snapshotDate,
       });
     }

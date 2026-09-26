@@ -17,11 +17,22 @@ export const ANAXI_FIELDS = [
 
 export type AnaxiField = (typeof ANAXI_FIELDS)[number];
 
+/**
+ * Optional columns. A student's KS2 scaled scores live on the Student record (they feed
+ * Progress 8 and assessment analysis), so they only overwrite what's stored when the
+ * column is mapped and the cell has a value — a blank never wipes an existing score.
+ */
+export const OPTIONAL_SCORE_FIELDS = ["KS2ReadingScaledScore", "KS2MathsScaledScore"] as const;
+export type ScoreField = (typeof OPTIONAL_SCORE_FIELDS)[number];
+
+/** Every column the mapping UI can bind to a CSV header. */
+export type MappableField = AnaxiField | ScoreField;
+
 // Optional field – may be absent (use import date)
 export const OPTIONAL_FIELDS = ["SnapshotDate"] as const;
 export type OptionalField = (typeof OPTIONAL_FIELDS)[number];
 
-export type AnyImportField = AnaxiField | OptionalField;
+export type AnyImportField = MappableField | OptionalField;
 
 /** Common synonyms for fuzzy pre-fill of column mapping */
 export const FIELD_SYNONYMS: Record<AnaxiField, string[]> = {
@@ -38,6 +49,26 @@ export const FIELD_SYNONYMS: Record<AnaxiField, string[]> = {
   PP: ["PP", "PupilPremium", "Pupil Premium", "pp"],
 };
 
+export const SCORE_FIELD_SYNONYMS: Record<ScoreField, string[]> = {
+  KS2ReadingScaledScore: [
+    "KS2ReadingScaledScore",
+    "KS2 Reading Scaled Score",
+    "KS2 Reading",
+    "KS2Reading",
+    "Reading Scaled Score",
+    "ReadingScaledScore",
+  ],
+  KS2MathsScaledScore: [
+    "KS2MathsScaledScore",
+    "KS2 Maths Scaled Score",
+    "KS2 Maths",
+    "KS2Maths",
+    "Maths Scaled Score",
+    "MathsScaledScore",
+    "KS2 Math",
+  ],
+};
+
 export const SNAPSHOTDATE_SYNONYMS = ["SnapshotDate", "Snapshot Date", "Date", "snapshot_date", "ImportDate"];
 
 /** A tenant's customized wording for the behaviour labels that appear in the import mapping UI. */
@@ -49,7 +80,7 @@ export type TenantBehaviourLabels = {
 };
 
 /** Human-readable label for each import field, using the tenant's own terminology where one is set. */
-export function getAnaxiFieldLabels(tenantSettings?: TenantBehaviourLabels | null): Record<AnaxiField, string> {
+export function getAnaxiFieldLabels(tenantSettings?: TenantBehaviourLabels | null): Record<MappableField, string> {
   return {
     UPN: "UPN",
     StudentName: "Student name",
@@ -62,6 +93,8 @@ export function getAnaxiFieldLabels(tenantSettings?: TenantBehaviourLabels | nul
     PositivePoints: pluralLabel(tenantSettings?.positivePointsLabel || "Positive Points"),
     SEND: "SEND",
     PP: "Pupil premium",
+    KS2ReadingScaledScore: "KS2 reading scaled score",
+    KS2MathsScaledScore: "KS2 maths scaled score",
   };
 }
 
@@ -89,6 +122,11 @@ export function suggestMapping(headers: string[]): Partial<Record<AnyImportField
 
   for (const field of ANAXI_FIELDS) {
     const match = findHeader(FIELD_SYNONYMS[field]);
+    if (match) result[field] = match;
+  }
+
+  for (const field of OPTIONAL_SCORE_FIELDS) {
+    const match = findHeader(SCORE_FIELD_SYNONYMS[field]);
     if (match) result[field] = match;
   }
 

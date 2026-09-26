@@ -60,6 +60,13 @@ export async function runSnapshotImport(input: RunSnapshotImportInput): Promise<
   const ROW_CONCURRENCY = 10;
 
   async function importRow(row: (typeof rows)[number]): Promise<void> {
+    // Only write a KS2 score the file actually supplies, so a behaviour file without
+    // the column (or with a blank cell) never erases a score loaded from elsewhere.
+    const scaledScores = {
+      ...(row.ks2ReadingScaledScore !== null && { ks2ReadingScaledScore: row.ks2ReadingScaledScore }),
+      ...(row.ks2MathsScaledScore !== null && { ks2MathsScaledScore: row.ks2MathsScaledScore }),
+    };
+
     const student = await (prisma as any).student.upsert({
       where: { tenantId_upn: { tenantId, upn: row.upn } },
       create: {
@@ -69,6 +76,7 @@ export async function runSnapshotImport(input: RunSnapshotImportInput): Promise<
         yearGroup: row.yearGroup,
         sendFlag: row.send,
         ppFlag: row.pp,
+        ...scaledScores,
         status: "ACTIVE",
       },
       update: {
@@ -76,6 +84,7 @@ export async function runSnapshotImport(input: RunSnapshotImportInput): Promise<
         yearGroup: row.yearGroup,
         sendFlag: row.send,
         ppFlag: row.pp,
+        ...scaledScores,
       },
     });
 
