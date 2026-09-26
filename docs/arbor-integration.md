@@ -40,6 +40,47 @@ sync can be built.
   field names in `types.ts` are guesses, not verified against Arbor's real API, and
   every `ArborClient` method throws rather than pretending to work. Do not wire this
   into a real sync yet.
+- **`IntegrationSyncChange`** — one row per record a sync run creates, updates, or
+  deletes, storing a before/after snapshot (mirrors `AuditLog`'s `beforeJson`/
+  `afterJson` shape). This is what a future "undo this run" or "undo everything from
+  today" admin action would read from and write `revertedAt` to. **Nothing writes to
+  this yet** — no sync exists to populate it, and no rollback action exists to read it.
+- **`BehaviourIncident`** — one row per individual behaviour event (a detention, a
+  suspension, an award of positive points), alongside `StudentSnapshot`'s existing
+  daily totals rather than replacing them (decision: keep both — see below).
+  **Nothing writes to or reads from this yet.** Category names and what `reasonCode`
+  should hold are guesses pending Arbor's real incident shape.
+
+## Decisions made (2026-09-26)
+
+- **Field ownership: block the edit.** Once a field is synced from Arbor, Arbor is the
+  source of truth — a manual edit to that field in Anaxi should be rejected outright,
+  not silently overwritten later or excluded from future syncs. `dataSource` on each
+  row is what a future edit action checks before allowing a write.
+  **Not yet enforced anywhere.** `updateUser` (the admin staff-edit action, in the
+  separate name-editing PR) doesn't check `dataSource` yet — it can't, since that
+  branch was written before `dataSource` existed on `User`. Once both PRs are on
+  `main`, add the check there: reject a `fullName`/role edit when
+  `user.dataSource === "ARBOR"`. There's no student edit screen yet at all, so nothing
+  to guard there yet either.
+- **Behaviour: store both totals and incidents.** `StudentSnapshot`'s daily totals stay
+  exactly as every existing screen (Progress 8, assessment analysis, the behaviour
+  import) already reads them. `BehaviourIncident` is additive, for the detail totals
+  throw away. **Not yet wired up**: nothing recomputes `StudentSnapshot` totals from
+  `BehaviourIncident` rows, since that logic depends on Arbor's real incident shape.
+- **New staff/students created by a sync get the same onboarding email** an admin
+  creating them by hand triggers today (`sendOnboardingEmail`, see
+  `app/(tenant)/admin/users/actions.ts`). Not yet wired to anything, since there's no
+  sync to trigger it.
+- **Arbor connection is opt-in per school**, gated the same way every other feature
+  already is (`TenantFeature` / `requireFeature`, not a new mechanism). **Not yet
+  built** — there's no "connect Arbor" screen to gate yet.
+- **Sync activity gets an audit trail**, same principle as `AuditLog` already gives
+  every admin action. Decided *not* to force sync writes through `AuditLog` itself:
+  its `actorUserId` is a required field pointing at a real `User`, and a
+  scheduled/cron-triggered sync has no human actor to attach to one. `IntegrationSyncRun`
+  (`triggeredBy`: a user id or `"CRON"`) plus the new `IntegrationSyncChange` serve as
+  the sync-specific equivalent instead.
 
 ## What's still needed before building the real sync
 
@@ -53,15 +94,10 @@ sync can be built.
    covers many schools, or one school's own approval under their
    *System > Partner Apps (API Users)*? This decides how credentials get stored and
    whether onboarding a new school needs its own approval step.
-4. **A decision on field ownership.** Once a field syncs from Arbor (e.g. a student's
-   name), should a manual edit in Anaxi be blocked, allowed but overwritten on the next
-   sync, or allowed and excluded from future syncs for that record? `dataSource` on
-   each row gives us what we need to build whichever rule is chosen — the rule itself
-   still needs deciding, per entity type.
-5. **A modelling decision for behaviour.** Arbor stores individual incidents; Anaxi's
-   `StudentSnapshot` stores totals per student per date. Either compute the totals from
-   Arbor's incidents on sync, or move Anaxi to storing incidents directly (a bigger
-   change, but keeps more detail).
+4. **Whether Arbor's API supports incremental sync** ("what changed since X") or only
+   a full pull each time. Decides how often a sync can realistically run, and how the
+   sync orchestrator (below) diffs what it gets back against what Anaxi already has.
+5. (resolved — see Decisions above)
 6. **Per-school assessment mapping.** Every school sets up its assessments differently
    in Arbor, so pulling assessment points for every subject (beyond KS2 scaled scores,
    which map directly onto the existing `Student.ks2ReadingScaledScore` /
@@ -87,6 +123,20 @@ sync can be built.
    Arbor's own notion of the current week. Worth a short follow-up ticket once
    timetable sync exists and we can see real `weekPattern` values; not schema
    groundwork, since the fields it needs already exist.
+9. **The sync orchestrator itself.** Nothing today actually calls Arbor and writes
+   the results in. `IntegrationSyncRun`/`IntegrationSyncChange` are just the places a
+   sync would log to. Needs: how a large school's worth of records gets batched
+   without one giant transaction, what happens when it dies partway through (resume,
+   or restart clean?), and retry/backoff on a failed request (try again, waiting a bit
+   longer each time, rather than either giving up on the first blip or hammering
+   Arbor's API). Blocked on item 4 above — incremental vs full-pull changes this
+   design significantly.
+10. **An admin-facing screen for connecting Arbor and viewing sync history.** Doesn't
+    exist yet. The data for it (`TenantIntegration`, `IntegrationSyncRun`) does.
+11. **The actual rollback action** ("undo this run" / "undo everything from today"),
+    reading `IntegrationSyncChange` and writing each row's `beforeJson` back,
+    recording `revertedAt` as it goes. The storage for this exists now; the action
+    doesn't.
 
 ## Suggested build order
 
