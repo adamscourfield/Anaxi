@@ -23,6 +23,8 @@ model Tenant {
   importJobs           ImportJob[]
   importMappings       ImportMappingConfig[]
   insights             Insight[]
+  integrations         TenantIntegration[]
+  integrationSyncRuns  IntegrationSyncRun[]
   loaApprovalScopes    LOAApprovalScope[]
   loaAuthorisers       LOAAuthoriser[]
   loaRequests          LOARequest[]
@@ -69,6 +71,10 @@ model User {
   emailMeetings                 Boolean                    @default(true)
   emailLeave                    Boolean                    @default(true)
   passwordHash                  String?
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own staff ID.
+  /// Null means the record only exists because it was created or imported inside Anaxi.
+  externalId                    String?
+  dataSource                    DataSource                 @default(MANUAL)
   auditLogs                     AuditLog[]                 @relation("AuditActor")
   coachAssignmentsAsCoach       CoachAssignment[]          @relation("CoachAssignmentCoach")
   coachAssignmentsAsCoachee     CoachAssignment[]          @relation("CoachAssignmentCoachee")
@@ -104,6 +110,7 @@ model User {
 
   @@unique([tenantId, email])
   @@unique([tenantId, id])
+  @@unique([tenantId, dataSource, externalId])
 }
 
 model TenantFeature {
@@ -248,6 +255,10 @@ model Student {
   sendFlag          Boolean                 @default(false)
   ppFlag            Boolean                 @default(false)
   status            StudentStatus           @default(ACTIVE)
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own student ID.
+  /// Null means the record only exists because it was created or imported inside Anaxi.
+  externalId        String?
+  dataSource        DataSource              @default(MANUAL)
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
   assessmentResults AssessmentResult[]
@@ -260,6 +271,7 @@ model Student {
 
   @@unique([tenantId, upn])
   @@unique([tenantId, id])
+  @@unique([tenantId, dataSource, externalId])
 }
 
 model StudentSnapshot {
@@ -631,6 +643,56 @@ model TenantSettings {
   updatedAt                DateTime   @updatedAt
 }
 
+/// A school's connection to an external MIS (e.g. Arbor), used to pull staff, students,
+/// class lists, behaviour and assessment data on a schedule instead of a manual CSV upload.
+/// Credentials are stored encrypted (see lib/integrationSecrets.ts) — never in plaintext.
+model TenantIntegration {
+  id                    String                  @id @default(cuid())
+  tenantId              String
+  provider              IntegrationProvider
+  status                IntegrationStatus       @default(DISCONNECTED)
+  /// AES-256-GCM ciphertext of the provider credentials (JSON), base64-encoded.
+  /// Produced by lib/integrationSecrets.ts; never store plaintext here.
+  credentialsCiphertext String?
+  /// Non-secret provider config, e.g. the Arbor site ID this connection targets.
+  config                Json?
+  connectedByUserId     String?
+  connectedAt           DateTime?
+  lastSyncedAt          DateTime?
+  lastSyncStatus        IntegrationSyncStatus?
+  lastSyncError         String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  tenant                Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  syncRuns              IntegrationSyncRun[]
+
+  @@unique([tenantId, provider])
+}
+
+/// One run of syncing a single entity type (staff, students, ...) from an external MIS.
+/// Kept so admins and support can see what changed and when, and so a sync can resume
+/// or be re-run without guessing what the last attempt actually did.
+model IntegrationSyncRun {
+  id               String                @id @default(cuid())
+  tenantId         String
+  integrationId    String
+  entityType       IntegrationEntityType
+  status           IntegrationSyncStatus @default(RUNNING)
+  recordsProcessed Int                   @default(0)
+  recordsCreated   Int                   @default(0)
+  recordsUpdated   Int                   @default(0)
+  recordsFailed    Int                   @default(0)
+  errorSummary     String?
+  /// "CRON" for a scheduled run, or the id of the admin who triggered it manually.
+  triggeredBy      String?
+  startedAt        DateTime              @default(now())
+  finishedAt       DateTime?
+  tenant           Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  integration      TenantIntegration     @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, integrationId, startedAt])
+}
+
 model TimetableEntry {
   id              String   @id @default(cuid())
   tenantId        String
@@ -646,10 +708,14 @@ model TimetableEntry {
   startTime       String?
   endTime         String?
   slotKey         String?
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own timetable slot ID.
+  externalId      String?
+  dataSource      DataSource @default(MANUAL)
   createdAt       DateTime @default(now())
   teacher         User?    @relation("TimetableTeacher", fields: [teacherUserId], references: [id])
 
   @@unique([tenantId, classCode, slotKey])
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId, yearGroup, subject, classCode])
 }
 
@@ -1019,6 +1085,39 @@ enum TenantStatus {
 enum StudentStatus {
   ACTIVE
   ARCHIVED
+}
+
+/// Where a record's data currently comes from — used to decide whether a scheduled
+/// sync is allowed to overwrite it, and to warn an admin editing a field the sync owns.
+enum DataSource {
+  MANUAL
+  CSV_IMPORT
+  ARBOR
+}
+
+enum IntegrationProvider {
+  ARBOR
+}
+
+enum IntegrationStatus {
+  DISCONNECTED
+  CONNECTED
+  ERROR
+}
+
+enum IntegrationSyncStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum IntegrationEntityType {
+  STAFF
+  STUDENTS
+  CLASSES
+  BEHAVIOUR
+  ASSESSMENTS
 }
 
 enum ImportJobType {
