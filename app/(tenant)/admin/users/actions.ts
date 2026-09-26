@@ -11,6 +11,7 @@ import {
   assertAdminCannotAssignSuperAdminRole,
   requireAdminUser,
 } from "@/lib/admin";
+import { fullNameSchema } from "@/lib/validation/schemas";
 
 export type ActionResult =
   | { ok: true; linked?: boolean; linkedNewPassword?: boolean }
@@ -281,6 +282,15 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
     const scopedLoaRaw = String(formData.get("scopedLoaTargetIds") || "");
     const scopedLoaTargetIds = scopedLoaRaw ? scopedLoaRaw.split(",").filter(Boolean) : [];
 
+    // Name is optional in the payload so older clients that don't send it leave it unchanged.
+    const fullNameRaw = formData.get("fullName");
+    let fullName: string | undefined;
+    if (fullNameRaw !== null) {
+      const parsed = fullNameSchema.safeParse(String(fullNameRaw));
+      if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid name.");
+      fullName = parsed.data;
+    }
+
     if (!userId) throw new Error("User is required.");
 
     await assertAdminCanMutateUser(admin, userId, admin.tenantId);
@@ -289,6 +299,7 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
     await (prisma as any).user.updateMany({
       where: { id: userId, tenantId: admin.tenantId },
       data: {
+        ...(fullName !== undefined && { fullName }),
         role,
         receivesOnCallEmails,
         receivesFirstAidEmails,

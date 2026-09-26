@@ -2,6 +2,17 @@ import { z } from "zod";
 
 export const emailSchema = z.string().email().transform((v) => v.toLowerCase().trim());
 
+/** A person's display name: whitespace collapsed, 1–120 characters. */
+export const fullNameSchema = z
+  .string()
+  .transform((v) => v.trim().replace(/\s+/g, " "))
+  .pipe(
+    z
+      .string()
+      .min(1, "Name is required.")
+      .max(120, "Name must be 120 characters or fewer."),
+  );
+
 export const passwordSchema = z.string().min(8, "Password must be at least 8 characters");
 
 export const forgotPasswordBodySchema = z.object({
