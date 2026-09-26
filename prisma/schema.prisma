@@ -259,6 +259,14 @@ model Student {
   /// Null means the record only exists because it was created or imported inside Anaxi.
   externalId        String?
   dataSource        DataSource              @default(MANUAL)
+  /// Mirrors User.avatarImage/avatarMimeType/avatarUpdatedAt. Pupil photos are more
+  /// sensitive than staff ones (safeguarding, image rights, leaver retention/deletion
+  /// duties) — confirm this is covered by the school's data sharing agreement before
+  /// a sync actually writes to these, and delete them when a student's status moves
+  /// to ARCHIVED rather than keeping them indefinitely.
+  avatarImage       Bytes?
+  avatarMimeType    String?
+  avatarUpdatedAt   DateTime?
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
   assessmentResults AssessmentResult[]
@@ -288,6 +296,11 @@ model StudentSnapshot {
   onCallsCount            Int        @default(0)
   attendancePct           Decimal    @default(0)
   latenessCount           Int        @default(0)
+  /// Where this date's totals came from. The (tenantId, studentId, snapshotDate) key
+  /// is already unique, so this exists to stop one source silently overwriting
+  /// another's totals for the same date (e.g. a CSV import re-running after Arbor
+  /// has already supplied that date) rather than to find the row.
+  dataSource              DataSource @default(MANUAL)
   createdAt               DateTime   @default(now())
   student                 Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
@@ -917,12 +930,18 @@ model AssessmentCycle {
   endDate           DateTime
   isActive          Boolean           @default(true)
   status            String            @default("active")
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own ID for
+  /// this assessment cycle/marksheet grouping. Matching on this rather than `label`
+  /// survives Arbor-side renames.
+  externalId        String?
+  dataSource        DataSource        @default(MANUAL)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   points            AssessmentPoint[]
 
   @@unique([tenantId, label])
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId])
 }
 
@@ -940,6 +959,10 @@ model AssessmentPoint {
   comparisonEligible Boolean         @default(true)
   dateTaken          DateTime?
   assessedAt         DateTime
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own ID for
+  /// this assessment point. Matching on this rather than `label` survives renames.
+  externalId         String?
+  dataSource         DataSource      @default(MANUAL)
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   assessments        Assessment[]
@@ -947,6 +970,7 @@ model AssessmentPoint {
   tenant             Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, cycleId, label])
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId, cycleId])
 }
 
@@ -966,6 +990,10 @@ model Assessment {
   expectedStudentCount Int?
   notes                String?
   createdByUserId      String
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own ID for
+  /// this subject's marksheet within a point.
+  externalId           String?
+  dataSource           DataSource                  @default(MANUAL)
   createdAt            DateTime                    @default(now())
   updatedAt            DateTime                    @updatedAt
   point                AssessmentPoint             @relation(fields: [pointId], references: [id], onDelete: Cascade)
@@ -973,6 +1001,7 @@ model Assessment {
   results              AssessmentResult[]
   subTopicMappings     AssessmentSubTopicMapping[]
 
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId, pointId])
   @@index([tenantId, subject, yearGroup])
 }
@@ -999,6 +1028,10 @@ model AssessmentResult {
   status          AssessmentResultStatus    @default(PRESENT)
   isValid         Boolean                   @default(true)
   validationNotes String?
+  /// Where this result came from. The (tenantId, assessmentId, studentId) key is
+  /// already unique, so this exists to stop one source silently overwriting another's
+  /// result for the same student, not to find the row.
+  dataSource      DataSource                @default(MANUAL)
   createdAt       DateTime                  @default(now())
   updatedAt       DateTime                  @updatedAt
   assessment      Assessment                @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
