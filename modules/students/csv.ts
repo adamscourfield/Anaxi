@@ -66,6 +66,20 @@ function parseOptionalScaledScore(raw: string): number | null {
   return n;
 }
 
+/**
+ * The KS2 score fields to write on an existing student. A null score means the file had no
+ * value for it, so it's left out and the stored score survives — imports never wipe KS2 data.
+ */
+export function ks2ScoreUpdate(row: {
+  ks2ReadingScaledScore: number | null;
+  ks2MathsScaledScore: number | null;
+}): { ks2ReadingScaledScore?: number; ks2MathsScaledScore?: number } {
+  return {
+    ...(row.ks2ReadingScaledScore !== null && { ks2ReadingScaledScore: row.ks2ReadingScaledScore }),
+    ...(row.ks2MathsScaledScore !== null && { ks2MathsScaledScore: row.ks2MathsScaledScore }),
+  };
+}
+
 export function parseStudentsCsv(input: string, mapping: Record<string, string>) {
   const rows = parse(input, { columns: true, skip_empty_lines: true, trim: true }) as Record<string, string>[];
   const parsed: StudentCsvRecord[] = [];

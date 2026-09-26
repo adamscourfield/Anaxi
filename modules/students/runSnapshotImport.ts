@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { parseSnapshotCsv, type SnapshotMapping } from "@/modules/students/snapshot-import";
+import { ks2ScoreUpdate } from "@/modules/students/csv";
 
 export type RunSnapshotImportInput = {
   tenantId: string;
@@ -62,10 +63,7 @@ export async function runSnapshotImport(input: RunSnapshotImportInput): Promise<
   async function importRow(row: (typeof rows)[number]): Promise<void> {
     // Only write a KS2 score the file actually supplies, so a behaviour file without
     // the column (or with a blank cell) never erases a score loaded from elsewhere.
-    const scaledScores = {
-      ...(row.ks2ReadingScaledScore !== null && { ks2ReadingScaledScore: row.ks2ReadingScaledScore }),
-      ...(row.ks2MathsScaledScore !== null && { ks2MathsScaledScore: row.ks2MathsScaledScore }),
-    };
+    const scaledScores = ks2ScoreUpdate(row);
 
     const student = await (prisma as any).student.upsert({
       where: { tenantId_upn: { tenantId, upn: row.upn } },

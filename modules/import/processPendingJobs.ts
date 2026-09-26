@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger";
 import { notifyImportFinished } from "@/lib/inAppNotifications";
 import { runSnapshotImport } from "@/modules/students/runSnapshotImport";
 import type { SnapshotMapping } from "@/modules/students/snapshot-import";
-import { parseStudentsCsv } from "@/modules/students/csv";
+import { ks2ScoreUpdate, parseStudentsCsv } from "@/modules/students/csv";
 import type { ImportJob } from "@prisma/client";
 
 const BATCH_SIZE = 5;
@@ -70,8 +70,7 @@ async function processStudentsSnapshotJob(job: ImportJob): Promise<void> {
         update: {
           fullName: row.fullName,
           yearGroup: row.yearGroup,
-          ks2ReadingScaledScore: row.ks2ReadingScaledScore,
-          ks2MathsScaledScore: row.ks2MathsScaledScore,
+          ...ks2ScoreUpdate(row),
           sendFlag: row.sendFlag,
           ppFlag: row.ppFlag,
           status: row.status,
