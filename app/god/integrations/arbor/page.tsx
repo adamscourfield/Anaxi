@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[] }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -87,6 +87,20 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         </Card>
       ) : null}
 
+      {params?.comparison === "success" ? (
+        <Card className="border-success/30 bg-[var(--pill-success-bg)]">
+          <div className="font-medium text-success">Student comparison complete.</div>
+          <MetaText className="mt-1">{previewCount(params.alreadyLinked)} already linked to Arbor, {previewCount(params.possibleMatch)} possible existing Anaxi matches, {previewCount(params.ambiguousMatch)} ambiguous matches, and {previewCount(params.newStudent)} potentially new students. Nothing has been changed.</MetaText>
+        </Card>
+      ) : null}
+
+      {params?.comparison === "failed" || params?.comparison === "not-connected" ? (
+        <Card className="border-danger/30 bg-[var(--pill-danger-bg)]">
+          <div className="font-medium text-danger">Student comparison could not run.</div>
+          <MetaText className="mt-1">{params?.comparison === "not-connected" ? "Check the Arbor connection before comparing students." : "Anaxi could not compare Arbor students with the existing Anaxi records. No data was changed."}</MetaText>
+        </Card>
+      ) : null}
+
       <Card className="space-y-3">
         <div className="font-medium">How this works</div>
         <MetaText>
@@ -108,16 +122,28 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       ) : null}
 
       {integration?.status === "CONNECTED" ? (
-        <Card className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="font-medium">Preview student routing</div>
-            <MetaText className="mt-1">Nursery–Year 6 routes to Primary; Years 7–13 routes to Secondary; no year group is treated as off-roll. This preview imports nothing.</MetaText>
-          </div>
-          <form method="post" action="/api/god/integrations/arbor/preview/students">
-            <CsrfInput token={csrfToken} />
-            <Button type="submit" variant="secondary">Preview students</Button>
-          </form>
-        </Card>
+        <>
+          <Card className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-medium">Preview student routing</div>
+              <MetaText className="mt-1">Nursery–Year 6 routes to Primary; Years 7–13 routes to Secondary; no year group is treated as off-roll. This preview imports nothing.</MetaText>
+            </div>
+            <form method="post" action="/api/god/integrations/arbor/preview/students">
+              <CsrfInput token={csrfToken} />
+              <Button type="submit" variant="secondary">Preview students</Button>
+            </form>
+          </Card>
+          <Card className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-medium">Compare with existing Anaxi students</div>
+              <MetaText className="mt-1">This looks for exact name-and-year matches only. It does not merge, add, or change any student.</MetaText>
+            </div>
+            <form method="post" action="/api/god/integrations/arbor/preview/students/compare">
+              <CsrfInput token={csrfToken} />
+              <Button type="submit" variant="secondary">Compare students</Button>
+            </form>
+          </Card>
+        </>
       ) : null}
 
       <Card>

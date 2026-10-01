@@ -50,6 +50,12 @@ sync can be built.
   Nursery Y2 levels)–Year 6 routes to the Primary tenant, Years 7–13 to
   the Secondary tenant, and missing academic levels are treated as off-roll records
   and skipped. Unexpected non-empty labels are held for review.
+- **Read-only Anaxi comparison** — God Mode can compare routed Arbor students with
+  existing Anaxi students before any import. Existing Arbor IDs are recognised as
+  already linked. Otherwise, only an exact normalised name-and-year match is reported
+  as a *possible* match; it is never merged automatically. Multiple matching Anaxi
+  rows are reported as ambiguous. This keeps the first sync from silently duplicating
+  or overwriting a manually imported student.
 - **`IntegrationSyncRun`** — a log row per sync attempt per entity type (staff,
   students, classes, behaviour, assessments), with counts of records processed,
   created, updated and failed, and an error summary. Lets an admin or support see what
