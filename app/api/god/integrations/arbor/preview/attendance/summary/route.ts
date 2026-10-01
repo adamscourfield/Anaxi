@@ -15,7 +15,9 @@ export const POST = withApi(async function POST(req: Request) {
   try {
     const end = new Date(); const start = new Date(end); start.setDate(start.getDate() - 7);
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
-    const records = await client.listAttendanceRecords(500, 0, start.toISOString(), end.toISOString());
+    // Arbor's documented filters accept calendar dates; a smaller page avoids a
+    // large register response while this remains a read-only preview.
+    const records = await client.listAttendanceRecords(100, 0, start.toISOString().slice(0, 10), end.toISOString().slice(0, 10));
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
     const linked = new Set((await db.student.findMany({ where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", externalId: { not: null } }, select: { externalId: true } })).map((student: { externalId: string }) => student.externalId));
     const students = new Set<string>(); let possible = 0, present = 0, late = 0, unmatched = 0;
