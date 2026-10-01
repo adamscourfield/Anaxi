@@ -10,7 +10,7 @@ function londonHour(): number {
   return Number(hour);
 }
 
-/** Called hourly by Vercel; only the 2am Europe/London invocation performs a sync. */
+/** Called by GitHub Actions; only the 2am Europe/London invocation performs a sync. */
 export async function GET(req: Request) {
   const denied = assertCronAuthorized(req);
   if (denied) return denied;
