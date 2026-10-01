@@ -36,14 +36,32 @@ sync can be built.
   students, classes, behaviour, assessments), with counts of records processed,
   created, updated and failed, and an error summary. Lets an admin or support see what
   a sync actually did, the same way `ImportJob` already does for CSV imports.
-- **`lib/integrations/arbor/`** — `entities.ts` lists the 54 entities Anaxi's Arbor app
-  actually has read access to, confirmed from Anaxi's permission grant in the
-  Developer Portal (captured 2026-10-01) — not a guess. Anaxi has **read-only** access
-  everywhere (no write, no delete on anything), which matches the field-ownership
-  decision below for a reason stronger than "we chose to be read-only": there was
-  never a write path to build. `types.ts` and `client.ts` are still placeholders —
-  entity *names* are confirmed, entity *fields* are not, and every `ArborClient`
-  method throws rather than pretending to work. Do not wire this into a real sync yet.
+- **`lib/integrations/arbor/`** — now has a real (if unverified) transport layer, not
+  just placeholders, built from Arbor's own Developer Portal docs (REST and GraphQL
+  reference pages, captured 2026-10-01):
+  - `entities.ts`: the 54 entities Anaxi's Arbor app actually has read access to,
+    confirmed from the permission grant screen — not a guess. **Read-only everywhere**
+    (no write, no delete on anything), which matches the field-ownership decision
+    below for a reason stronger than "we chose to be read-only": there was never a
+    write path to build.
+  - `graphqlClient.ts`: `runArborGraphqlQuery()` — POSTs to
+    `https://{schoolHostname}.uk.arbor.sc/graphql/query` with HTTP Basic auth (Arbor's
+    confirmed auth method for both REST and GraphQL — not an API key or OAuth token),
+    parses the standard GraphQL `{data, errors}` envelope, and retries once on a 5xx.
+    This part is genuinely implemented, with unit tests (mocked `fetch`) — not a
+    placeholder — but **unverified against a live Arbor instance**: no sandbox
+    credentials or network access yet to confirm it actually works end to end.
+  - `client.ts`: `ArborClient.listStaff()` / `listStudents()` / `listTeachingGroups()`
+    build real GraphQL queries using field names Arbor's own docs showed for these
+    three entities. Also genuinely implemented, also unverified live. Chose GraphQL
+    over REST: it nests related data in one request (REST needs a follow-up call per
+    related object's `href`), gives explicit per-field permission errors instead of
+    REST's silent empty object on no access, and its `page_size`/`page_num` filters
+    are simpler than REST's `filters.x.y.operator=value` for what a sync needs.
+  - `types.ts`: field shapes for `ArborStaffRecord`/`ArborStudentRecord`/
+    `ArborTeachingGroupRecord` are copied from Arbor's docs examples for those three
+    entities specifically — real field names, not guesses — but every other granted
+    entity (the other ~50) still has no confirmed field list at all.
 - **`IntegrationSyncChange`** — one row per record a sync run creates, updates, or
   deletes, storing a before/after snapshot (mirrors `AuditLog`'s `beforeJson`/
   `afterJson` shape). This is what a future "undo this run" or "undo everything from
@@ -88,23 +106,37 @@ sync can be built.
 
 ## What's still needed before building the real sync
 
-1. **Arbor's REST API / GraphQL reference** (same Developer Portal, under DOCS →
-   "Rest API" / "GraphQL") — field names within each entity in `entities.ts`,
-   pagination, auth method (the portal shows a logged-in user, not an API key/OAuth
-   flow, so how a *server* authenticates as the app is still unknown), and rate
-   limits. The entity names we already have; this is what's inside them.
-2. **A sandbox school or test credentials**, stored in this environment's secrets
-   settings (never in chat or committed to the repo), to run real requests against.
-   The portal has a "Sandboxes (testing)" page under APPS/DOCS — same place the
-   permission grant came from.
-3. **Which access level we've been granted** — Developer Portal/partner access that
+1. **Field lists for the other ~50 granted entities.** Arbor's docs confirmed auth,
+   transport, and fields for `Staff`/`Student`/`TeachingGroup` specifically (now
+   built — see above), but nothing for `detention`, `internalExclusion`,
+   `fixedPeriodExclusion`, `pointAward`, any of the five assessment subsystems,
+   `senStatus`/`ukDfe_PupilPremiumRecipient`/`ukDfe_UpnAssignment`,
+   `timetableSlot`/`timetablePeriod`, or the rest. The GraphQL editor's "DOCS" sidebar
+   (in-browser, needs a login) or an introspection query against a reachable Arbor
+   instance would give the real field list per entity — better than guessing from the
+   generic docs examples, several of which reference entities Anaxi doesn't have
+   (`Guardian`, `Demographic`, `medicalConditions`, `profilePicture` — see below).
+2. **Sandbox credentials and network access**, stored in this environment's secrets
+   settings (never in chat or committed to the repo), to actually run
+   `ArborClient.listStaff()` etc. and confirm the transport layer built above works
+   end to end — right now it's built correctly against the documented contract, but
+   literally never been run. The portal has a "Sandboxes (testing)" page under
+   APPS/DOCS — same place the permission grant and REST/GraphQL docs came from.
+   Sandbox hostname is `api-sandbox` per the REST docs' own examples.
+3. **Student and staff avatar photos need a permission added in the Developer
+   Portal, not more code.** Arbor's GraphQL docs example for `Staff` shows a
+   `profilePicture { thumbnailFile { base64 } }` field — exactly what the photo
+   requirement needs — but `profilePicture` is not among Anaxi's 54 granted entities.
+   Add it in the Developer Portal's permission-set screen before building this; the
+   `avatarImage`/`avatarMimeType`/`avatarUpdatedAt` columns already exist on `Student`
+   and `User` to receive it once that's done.
+4. **Which access level we've been granted** — Developer Portal/partner access that
    covers many schools, or one school's own approval under their
    *System > Partner Apps (API Users)*? This decides how credentials get stored and
    whether onboarding a new school needs its own approval step.
-4. **Whether Arbor's API supports incremental sync** ("what changed since X") or only
+5. **Whether Arbor's API supports incremental sync** ("what changed since X") or only
    a full pull each time. Decides how often a sync can realistically run, and how the
    sync orchestrator (below) diffs what it gets back against what Anaxi already has.
-5. (resolved — see Decisions above)
 6. **Per-school assessment mapping — now known to be bigger than one mapping step.**
    Arbor's permission grant shows five largely separate assessment subsystems, not
    one: `adHocAssessment*` (one-off marks), `standardizedAssessment*` (likely where
