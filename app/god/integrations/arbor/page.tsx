@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; review?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -70,7 +70,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       {params?.preview === "success" ? (
         <Card className="border-success/30 bg-[var(--pill-success-bg)]">
           <div className="font-medium text-success">Student preview complete.</div>
-          <MetaText className="mt-1">{previewCount(params.total)} students found: {previewCount(params.primary)} for Primary, {previewCount(params.secondary)} for Secondary, and {previewCount(params.review)} needing review. Nothing has been imported.</MetaText>
+          <MetaText className="mt-1">{previewCount(params.total)} students found: {previewCount(params.primary)} for Primary, {previewCount(params.secondary)} for Secondary, {previewCount(params.offRoll)} off-roll records skipped, and {previewCount(params.review)} needing review. Nothing has been imported.</MetaText>
         </Card>
       ) : null}
 
@@ -105,7 +105,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         <Card className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="font-medium">Preview student routing</div>
-            <MetaText className="mt-1">Reception–Year 6 routes to Primary; Years 7–13 routes to Secondary. This preview imports nothing.</MetaText>
+            <MetaText className="mt-1">Reception–Year 6 routes to Primary; Years 7–13 routes to Secondary; no year group is treated as off-roll. This preview imports nothing.</MetaText>
           </div>
           <form method="post" action="/api/god/integrations/arbor/preview/students">
             <CsrfInput token={csrfToken} />

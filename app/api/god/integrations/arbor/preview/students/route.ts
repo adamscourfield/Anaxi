@@ -41,11 +41,13 @@ export const POST = withApi(async function POST(req: Request) {
         school.tenant.tenantSettings?.schoolType
       )
     );
-    const counts = { primary: 0, secondary: 0, needsReview: 0 };
+    const counts = { primary: 0, secondary: 0, skippedOffRoll: 0, needsReview: 0 };
 
     for (const student of students) {
       const destination = routeArborStudentByAcademicLevel(student.displayAcademicLevel?.displayName);
-      if (!destination || !destinations.has(destination)) {
+      if (destination === "SKIP_OFF_ROLL") {
+        counts.skippedOffRoll++;
+      } else if (destination === "REVIEW" || !destinations.has(destination)) {
         counts.needsReview++;
       } else if (destination === "PRIMARY") {
         counts.primary++;
@@ -70,6 +72,7 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("total", String(students.length));
     url.searchParams.set("primary", String(counts.primary));
     url.searchParams.set("secondary", String(counts.secondary));
+    url.searchParams.set("offRoll", String(counts.skippedOffRoll));
     url.searchParams.set("review", String(counts.needsReview));
     return NextResponse.redirect(url);
   } catch {

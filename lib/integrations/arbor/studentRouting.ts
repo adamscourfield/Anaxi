@@ -1,4 +1,5 @@
 export type ArborStudentDestination = "PRIMARY" | "SECONDARY";
+export type ArborStudentRouting = ArborStudentDestination | "SKIP_OFF_ROLL" | "REVIEW";
 
 /**
  * Goresbrook's agreed routing rule: Reception to Year 6 belongs to Primary,
@@ -6,15 +7,16 @@ export type ArborStudentDestination = "PRIMARY" | "SECONDARY";
  */
 export function routeArborStudentByAcademicLevel(
   academicLevel: string | null | undefined
-): ArborStudentDestination | null {
+): ArborStudentRouting {
   const value = academicLevel?.trim().toLowerCase() ?? "";
+  if (!value) return "SKIP_OFF_ROLL";
   if (value === "reception") return "PRIMARY";
 
   const match = value.match(/^(?:year|y)\s*0?([1-9]|1[0-3])$/);
-  if (!match) return null;
+  if (!match) return "REVIEW";
 
   const year = Number(match[1]);
   if (year >= 1 && year <= 6) return "PRIMARY";
   if (year >= 7 && year <= 13) return "SECONDARY";
-  return null;
+  return "REVIEW";
 }

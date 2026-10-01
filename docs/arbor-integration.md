@@ -47,7 +47,8 @@ sync can be built.
   saved application credentials with a one-record `Staff { id }` read, then preview
   every student without writing to Anaxi. Goresbrook's agreed rule is explicit in
   `studentRouting.ts`: Reception–Year 6 routes to the Primary tenant, Years 7–13 to
-  the Secondary tenant, and any other/missing academic level is held for review.
+  the Secondary tenant, and missing academic levels are treated as off-roll records
+  and skipped. Unexpected non-empty labels are held for review.
 - **`IntegrationSyncRun`** — a log row per sync attempt per entity type (staff,
   students, classes, behaviour, assessments), with counts of records processed,
   created, updated and failed, and an error summary. Lets an admin or support see what
@@ -118,8 +119,9 @@ sync can be built.
   one Arbor instance without merging the two schools' records. A future sync must
   still confirm the source-school routing rule before it writes any data.
 - **Goresbrook student routing uses academic level, not name matching.** Reception
-  through Year 6 belong to Primary; Years 7 through 13 belong to Secondary. Nursery,
-  missing levels, and unexpected labels are not imported until reviewed. Staff cannot
+  through Year 6 belong to Primary; Years 7 through 13 belong to Secondary. Students
+  with no academic level are treated as off-roll and skipped; Nursery and unexpected
+  non-empty labels are not imported until reviewed. Staff cannot
   use this rule because they have no year group, so staff routing needs its own
   explicit decision before import is enabled.
 - **Sync activity gets an audit trail**, same principle as `AuditLog` already gives

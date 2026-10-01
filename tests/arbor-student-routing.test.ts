@@ -10,7 +10,11 @@ describe("Arbor student routing", () => {
     expect(routeArborStudentByAcademicLevel(yearGroup)).toBe("SECONDARY");
   });
 
-  it.each([null, "Nursery", "Year 14", "Sixth form"])("leaves %s for review", (yearGroup) => {
-    expect(routeArborStudentByAcademicLevel(yearGroup)).toBeNull();
+  it.each([null, "", "   "])("skips %s as off-roll", (yearGroup) => {
+    expect(routeArborStudentByAcademicLevel(yearGroup)).toBe("SKIP_OFF_ROLL");
+  });
+
+  it.each(["Nursery", "Year 14", "Sixth form"])("leaves %s for review", (yearGroup) => {
+    expect(routeArborStudentByAcademicLevel(yearGroup)).toBe("REVIEW");
   });
 });
