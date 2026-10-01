@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; review?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -27,6 +27,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
 
   const selected = new Set<string>(integration?.schools.map((school: { tenantId: string }) => school.tenantId) ?? []);
   const hostname = typeof integration?.config?.schoolHostname === "string" ? integration.config.schoolHostname : "";
+  const previewCount = (value: string | undefined) => (/^\d+$/.test(value ?? "") ? Number(value) : 0);
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 p-6">
@@ -66,6 +67,20 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         </Card>
       ) : null}
 
+      {params?.preview === "success" ? (
+        <Card className="border-success/30 bg-[var(--pill-success-bg)]">
+          <div className="font-medium text-success">Student preview complete.</div>
+          <MetaText className="mt-1">{previewCount(params.total)} students found: {previewCount(params.primary)} for Primary, {previewCount(params.secondary)} for Secondary, and {previewCount(params.review)} needing review. Nothing has been imported.</MetaText>
+        </Card>
+      ) : null}
+
+      {params?.preview === "failed" || params?.preview === "not-connected" ? (
+        <Card className="border-danger/30 bg-[var(--pill-danger-bg)]">
+          <div className="font-medium text-danger">Student preview could not run.</div>
+          <MetaText className="mt-1">{params?.preview === "not-connected" ? "Check the Arbor connection before previewing students." : "Anaxi could not read the student fields needed for the preview. No data was imported."}</MetaText>
+        </Card>
+      ) : null}
+
       <Card className="space-y-3">
         <div className="font-medium">How this works</div>
         <MetaText>
@@ -82,6 +97,19 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
           <form method="post" action="/api/god/integrations/arbor/test">
             <CsrfInput token={csrfToken} />
             <Button type="submit" variant="secondary">Check connection</Button>
+          </form>
+        </Card>
+      ) : null}
+
+      {integration?.status === "CONNECTED" ? (
+        <Card className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="font-medium">Preview student routing</div>
+            <MetaText className="mt-1">Reception–Year 6 routes to Primary; Years 7–13 routes to Secondary. This preview imports nothing.</MetaText>
+          </div>
+          <form method="post" action="/api/god/integrations/arbor/preview/students">
+            <CsrfInput token={csrfToken} />
+            <Button type="submit" variant="secondary">Preview students</Button>
           </form>
         </Card>
       ) : null}
