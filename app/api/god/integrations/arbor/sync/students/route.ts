@@ -38,14 +38,15 @@ export const POST = withApi(async function POST(req: Request) {
     if (schoolType === "SECONDARY") tenantIdBySchoolType.SECONDARY = school.tenantId;
   }
 
-  const run = await db.sharedIntegrationSyncRun.create({
-    data: { integrationId: integration.id, entityType: "STUDENTS", triggeredBy: actor.id },
-  });
+  let run: { id: string } | null = null;
   let created = 0;
   let updated = 0;
   let adopted = 0;
 
   try {
+    run = await db.sharedIntegrationSyncRun.create({
+      data: { integrationId: integration.id, entityType: "STUDENTS", triggeredBy: actor.id },
+    });
     const tenantIds = Object.values(tenantIdBySchoolType);
     const [arborStudents, existingStudents] = await Promise.all([
       new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAllStudents(),
@@ -104,11 +105,14 @@ export const POST = withApi(async function POST(req: Request) {
     return NextResponse.redirect(url);
   } catch (error) {
     const errorSummary = error instanceof Error ? error.message.slice(0, 500) : "Student sync failed.";
-    await db.sharedIntegrationSyncRun.update({
-      where: { id: run.id },
-      data: { status: created || updated ? "PARTIAL" : "FAILED", recordsProcessed: created + updated, recordsCreated: created, recordsUpdated: updated, recordsFailed: 1, errorSummary, finishedAt: new Date() },
-    });
+    if (run) {
+      await db.sharedIntegrationSyncRun.update({
+        where: { id: run.id },
+        data: { status: created || updated ? "PARTIAL" : "FAILED", recordsProcessed: created + updated, recordsCreated: created, recordsUpdated: updated, recordsFailed: 1, errorSummary, finishedAt: new Date() },
+      });
+    }
     await db.sharedIntegration.update({ where: { id: integration.id }, data: { lastSyncStatus: "FAILED", lastSyncError: "Student sync did not complete. Check the God Mode audit log." } });
-    return NextResponse.redirect(new URL("/god/integrations/arbor?sync=failed", req.url));
+    const reason = errorSummary.includes("SharedIntegrationSyncRun") ? "migration-required" : "failed";
+    return NextResponse.redirect(new URL(`/god/integrations/arbor?sync=${reason}`, req.url));
   }
 });

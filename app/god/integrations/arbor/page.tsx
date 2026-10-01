@@ -108,10 +108,10 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         </Card>
       ) : null}
 
-      {params?.sync === "failed" || params?.sync === "not-connected" || params?.sync === "confirmation-required" ? (
+      {params?.sync === "failed" || params?.sync === "not-connected" || params?.sync === "confirmation-required" || params?.sync === "migration-required" ? (
         <Card className="border-danger/30 bg-[var(--pill-danger-bg)]">
           <div className="font-medium text-danger">Student sync did not run.</div>
-          <MetaText className="mt-1">{params?.sync === "confirmation-required" ? "Confirm that you want to apply the student sync before it can run." : params?.sync === "not-connected" ? "Check the Arbor connection before syncing students." : "No further changes were made after the issue was detected. Check the God Mode audit log."}</MetaText>
+          <MetaText className="mt-1">{params?.sync === "confirmation-required" ? "Confirm that you want to apply the student sync before it can run." : params?.sync === "not-connected" ? "Check the Arbor connection before syncing students." : params?.sync === "migration-required" ? "Anaxi is updating its database for student-sync audit records. Wait for the latest deployment to finish, then try again." : "No further changes were made after the issue was detected. Check the God Mode audit log."}</MetaText>
         </Card>
       ) : null}
 
