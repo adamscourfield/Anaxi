@@ -34,6 +34,14 @@ import type {
 export class ArborClient {
   constructor(private readonly credentials: ArborCredentials) {}
 
+  private restUrl(path: string): string {
+    return `https://${this.credentials.schoolHostname}.uk.arbor.sc/rest-v2${path}`;
+  }
+
+  private basicAuthorization(): string {
+    return `Basic ${Buffer.from(`${this.credentials.username}:${this.credentials.password}`).toString("base64")}`;
+  }
+
   /**
    * Verifies the saved application credentials with the smallest confirmed read:
    * one staff ID. This deliberately does not retain or import any Arbor data.
@@ -43,6 +51,17 @@ export class ArborClient {
       this.credentials,
       "{ Staff(page_size: 1, page_num: 0) { id } }"
     );
+  }
+
+  /**
+   * Arbor documents this separately from GraphQL's entity permissions. The response
+   * body is deliberately not read or retained: this is only an authorisation check.
+   */
+  async verifyStudentPhotoAccess(studentId: string): Promise<void> {
+    const response = await fetch(this.restUrl(`/profile-picture/student/${encodeURIComponent(studentId)}`), {
+      headers: { Authorization: this.basicAuthorization() },
+    });
+    if (!response.ok) throw new Error(`Arbor photo endpoint returned HTTP ${response.status}.`);
   }
 
   async listStaff(pageSize = 500, pageNum = 0): Promise<ArborStaffRecord[]> {

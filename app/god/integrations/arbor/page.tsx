@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -70,6 +70,14 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
           <div className="font-medium text-danger">Arbor connection needs attention.</div>
           <MetaText className="mt-1">{params?.test === "not-configured" ? "Save the Arbor application credentials before checking the connection." : integration?.lastSyncError ?? "Try saving the Arbor application credentials again."}</MetaText>
         </Card>
+      ) : null}
+
+      {params?.photo === "success" ? (
+        <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">Arbor photo access verified.</div><MetaText className="mt-1">Anaxi can request a photo from Arbor. No image has been imported or stored yet.</MetaText></Card>
+      ) : null}
+
+      {params?.photo === "unavailable" || params?.photo === "not-connected" || params?.photo === "no-student" ? (
+        <Card className="border-danger/30 bg-[var(--pill-danger-bg)]"><div className="font-medium text-danger">Arbor photo access is not available yet.</div><MetaText className="mt-1">No image was imported. Check that Arbor has enabled photo API access for the Anaxi app.</MetaText></Card>
       ) : null}
 
       {params?.preview === "success" ? (
@@ -157,6 +165,13 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
             <CsrfInput token={csrfToken} />
             <Button type="submit" variant="secondary">Check connection</Button>
           </form>
+        </Card>
+      ) : null}
+
+      {integration?.status === "CONNECTED" ? (
+        <Card className="flex flex-wrap items-center justify-between gap-3">
+          <div><div className="font-medium">Check Arbor photo access</div><MetaText className="mt-1">This makes one read-only request for a linked student. It does not display, import, or store a photo.</MetaText></div>
+          <form method="post" action="/api/god/integrations/arbor/test-photos"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check photo access</Button></form>
         </Card>
       ) : null}
 

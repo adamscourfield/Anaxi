@@ -99,3 +99,16 @@ describe("ArborClient.verifyConnection", () => {
     );
   });
 });
+
+describe("ArborClient.verifyStudentPhotoAccess", () => {
+  it("uses Arbor's documented REST photo endpoint without reading the image", async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200 });
+
+    await new ArborClient(credentials).verifyStudentPhotoAccess("student/123");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api-sandbox.uk.arbor.sc/rest-v2/profile-picture/student/student%2F123",
+      { headers: { Authorization: `Basic ${Buffer.from("app-user:app-pass").toString("base64")}` } },
+    );
+  });
+});
