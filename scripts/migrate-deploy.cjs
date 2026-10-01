@@ -1,7 +1,9 @@
 const { spawnSync } = require("node:child_process");
 
-const attempts = 5;
-const retryDelayMs = 15_000;
+// Deployments can overlap on Vercel. PostgreSQL permits only one Prisma migration
+// at a time, so wait long enough for the earlier deployment to release its lock.
+const attempts = 12;
+const retryDelayMs = 20_000;
 
 async function wait(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
