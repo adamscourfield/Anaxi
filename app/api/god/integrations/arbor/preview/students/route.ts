@@ -42,6 +42,7 @@ export const POST = withApi(async function POST(req: Request) {
       )
     );
     const counts = { primary: 0, secondary: 0, skippedOffRoll: 0, needsReview: 0 };
+    const unrecognisedLevels = new Map<string, number>();
 
     for (const student of students) {
       const destination = routeArborStudentByAcademicLevel(student.displayAcademicLevel?.displayName);
@@ -49,6 +50,8 @@ export const POST = withApi(async function POST(req: Request) {
         counts.skippedOffRoll++;
       } else if (destination === "REVIEW" || !destinations.has(destination)) {
         counts.needsReview++;
+        const label = student.displayAcademicLevel?.displayName?.trim() || "No matching Anaxi school";
+        unrecognisedLevels.set(label, (unrecognisedLevels.get(label) ?? 0) + 1);
       } else if (destination === "PRIMARY") {
         counts.primary++;
       } else {
@@ -74,6 +77,9 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("secondary", String(counts.secondary));
     url.searchParams.set("offRoll", String(counts.skippedOffRoll));
     url.searchParams.set("review", String(counts.needsReview));
+    for (const [label, count] of [...unrecognisedLevels.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(0, 10)) {
+      url.searchParams.append("unrecognised", `${label}: ${count}`);
+    }
     return NextResponse.redirect(url);
   } catch {
     return NextResponse.redirect(new URL("/god/integrations/arbor?preview=failed", req.url));

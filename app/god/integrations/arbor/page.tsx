@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[] }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -28,6 +28,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
   const selected = new Set<string>(integration?.schools.map((school: { tenantId: string }) => school.tenantId) ?? []);
   const hostname = typeof integration?.config?.schoolHostname === "string" ? integration.config.schoolHostname : "";
   const previewCount = (value: string | undefined) => (/^\d+$/.test(value ?? "") ? Number(value) : 0);
+  const unrecognisedLevels = Array.isArray(params?.unrecognised)
+    ? params.unrecognised
+    : params?.unrecognised
+      ? [params.unrecognised]
+      : [];
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 p-6">
@@ -71,6 +76,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         <Card className="border-success/30 bg-[var(--pill-success-bg)]">
           <div className="font-medium text-success">Student preview complete.</div>
           <MetaText className="mt-1">{previewCount(params.total)} students found: {previewCount(params.primary)} for Primary, {previewCount(params.secondary)} for Secondary, {previewCount(params.offRoll)} off-roll records skipped, and {previewCount(params.review)} needing review. Nothing has been imported.</MetaText>
+          {unrecognisedLevels.length > 0 ? <MetaText className="mt-1">Unrecognised levels: {unrecognisedLevels.join("; ")}.</MetaText> : null}
         </Card>
       ) : null}
 
