@@ -111,7 +111,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         <Card className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="font-medium">Preview student routing</div>
-            <MetaText className="mt-1">Reception–Year 6 routes to Primary; Years 7–13 routes to Secondary; no year group is treated as off-roll. This preview imports nothing.</MetaText>
+            <MetaText className="mt-1">Nursery–Year 6 routes to Primary; Years 7–13 routes to Secondary; no year group is treated as off-roll. This preview imports nothing.</MetaText>
           </div>
           <form method="post" action="/api/god/integrations/arbor/preview/students">
             <CsrfInput token={csrfToken} />

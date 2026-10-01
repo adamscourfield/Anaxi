@@ -10,7 +10,7 @@ export function routeArborStudentByAcademicLevel(
 ): ArborStudentRouting {
   const value = academicLevel?.trim().toLowerCase() ?? "";
   if (!value) return "SKIP_OFF_ROLL";
-  if (value === "reception") return "PRIMARY";
+  if (value === "nursery" || value === "reception") return "PRIMARY";
 
   const match = value.match(/^(?:year|y)\s*0?([1-9]|1[0-3])$/);
   if (!match) return "REVIEW";

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { routeArborStudentByAcademicLevel } from "@/lib/integrations/arbor/studentRouting";
 
 describe("Arbor student routing", () => {
-  it.each(["Reception", "Year 1", "Y6", "year 06"])("routes %s to Primary", (yearGroup) => {
+  it.each(["Nursery", "Reception", "Year 1", "Y6", "year 06"])("routes %s to Primary", (yearGroup) => {
     expect(routeArborStudentByAcademicLevel(yearGroup)).toBe("PRIMARY");
   });
 
@@ -14,7 +14,7 @@ describe("Arbor student routing", () => {
     expect(routeArborStudentByAcademicLevel(yearGroup)).toBe("SKIP_OFF_ROLL");
   });
 
-  it.each(["Nursery", "Year 14", "Sixth form"])("leaves %s for review", (yearGroup) => {
+  it.each(["Year 14", "Sixth form"])("leaves %s for review", (yearGroup) => {
     expect(routeArborStudentByAcademicLevel(yearGroup)).toBe("REVIEW");
   });
 });

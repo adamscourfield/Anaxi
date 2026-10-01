@@ -46,7 +46,7 @@ sync can be built.
 - **Read-only connection and student-routing previews** — God Mode can verify the
   saved application credentials with a one-record `Staff { id }` read, then preview
   every student without writing to Anaxi. Goresbrook's agreed rule is explicit in
-  `studentRouting.ts`: Reception–Year 6 routes to the Primary tenant, Years 7–13 to
+  `studentRouting.ts`: Nursery–Year 6 routes to the Primary tenant, Years 7–13 to
   the Secondary tenant, and missing academic levels are treated as off-roll records
   and skipped. Unexpected non-empty labels are held for review.
 - **`IntegrationSyncRun`** — a log row per sync attempt per entity type (staff,
@@ -118,7 +118,7 @@ sync can be built.
   Anaxi schools receive it. This supports Goresbrook Primary and Secondary sharing
   one Arbor instance without merging the two schools' records. A future sync must
   still confirm the source-school routing rule before it writes any data.
-- **Goresbrook student routing uses academic level, not name matching.** Reception
+- **Goresbrook student routing uses academic level, not name matching.** Nursery
   through Year 6 belong to Primary; Years 7 through 13 belong to Secondary. Students
   with no academic level are treated as off-roll and skipped; Nursery and unexpected
   non-empty labels are not imported until reviewed. Staff cannot
