@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendanceRecords?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -81,6 +81,8 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       ) : null}
 
       {params?.photoSync === "success" ? <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">Arbor photo sync batch complete.</div><MetaText className="mt-1">{previewCount(params.studentPhotos)} student and {previewCount(params.staffPhotos)} staff photos were copied; {previewCount(params.unavailable)} people had no available Arbor photo, and {previewCount(params.failed)} could not be downloaded. The nightly sync continues in small batches.</MetaText></Card> : null}
+      {params?.attendance === "success" ? <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">Arbor attendance access verified.</div><MetaText className="mt-1">Anaxi read {previewCount(params.attendanceRecords)} attendance record without importing anything. The next step is a read-only attendance summary preview.</MetaText></Card> : null}
+      {params?.attendance === "failed" || params?.attendance === "not-connected" ? <Card className="border-danger/30 bg-[var(--pill-danger-bg)]"><div className="font-medium text-danger">Arbor attendance access needs attention.</div><MetaText className="mt-1">No attendance data was imported.</MetaText></Card> : null}
 
       {params?.preview === "success" ? (
         <Card className="border-success/30 bg-[var(--pill-success-bg)]">
@@ -175,6 +177,10 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
           <div><div className="font-medium">Check Arbor photo access</div><MetaText className="mt-1">This makes one read-only request for a linked student. It does not display, import, or store a photo.</MetaText></div>
           <form method="post" action="/api/god/integrations/arbor/test-photos"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check photo access</Button></form>
         </Card>
+      ) : null}
+
+      {integration?.status === "CONNECTED" ? (
+        <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Check Arbor attendance access</div><MetaText className="mt-1">Reads one attendance record to verify the fields Anaxi needs. It does not import a register or create new data.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/attendance"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check attendance access</Button></form></Card>
       ) : null}
 
       {integration?.status === "CONNECTED" ? (

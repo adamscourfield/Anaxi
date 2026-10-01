@@ -70,6 +70,24 @@ export class ArborClient {
     return this.getPhoto(`/profile-picture/staff/${encodeURIComponent(staffId)}`);
   }
 
+  /** A one-page, read-only attendance check. It intentionally does not retain marks. */
+  async listAttendanceRecords(pageSize = 1, pageNum = 0): Promise<Array<{ id: string }>> {
+    const query = `{
+      AttendanceRecord(page_size: ${pageSize}, page_num: ${pageNum}) {
+        id
+        student { id }
+        attendanceMark { code isStatisticalPresent isStatisticalPossibleAttendance isDefaultLate }
+        startDatetime
+        endDatetime
+        minutesLate
+        isRedundant
+        modifiedDatetime
+      }
+    }`;
+    const data = await runArborGraphqlQuery<{ AttendanceRecord: Array<{ id: string }> }>(this.credentials, query);
+    return data.AttendanceRecord;
+  }
+
   private async getPhoto(path: string): Promise<{ bytes: Buffer; mimeType: string } | null> {
     const response = await fetch(this.restUrl(path), { headers: { Authorization: this.basicAuthorization() } });
     if (response.status === 404) return null;
