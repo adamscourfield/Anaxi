@@ -69,6 +69,18 @@ export class ArborClient {
     return data.Staff;
   }
 
+  /** Retrieves every staff page so a preview never silently shows only the first 500. */
+  async listAllStaff(): Promise<ArborStaffRecord[]> {
+    const pageSize = 500;
+    const staff: ArborStaffRecord[] = [];
+    for (let pageNum = 0; pageNum < 200; pageNum++) {
+      const page = await this.listStaff(pageSize, pageNum);
+      staff.push(...page);
+      if (page.length < pageSize) return staff;
+    }
+    throw new Error("Arbor returned more than 100,000 staff records; preview stopped safely.");
+  }
+
   async listStudents(pageSize = 500, pageNum = 0): Promise<ArborStudentRecord[]> {
     const query = `{
       Student(page_size: ${pageSize}, page_num: ${pageNum}) {

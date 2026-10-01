@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -115,6 +115,17 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         </Card>
       ) : null}
 
+      {params?.staff === "success" ? (
+        <Card className="border-success/30 bg-[var(--pill-success-bg)]">
+          <div className="font-medium text-success">Staff comparison complete.</div>
+          <MetaText className="mt-1">{previewCount(params.activeInArbor)} active Arbor staff: {previewCount(params.linkedPrimaryOnly)} already linked to Primary, {previewCount(params.linkedSecondaryOnly)} to Secondary, {previewCount(params.linkedBoth)} to both schools; {previewCount(params.possiblePrimaryOnly)} possible Primary-only matches, {previewCount(params.possibleSecondaryOnly)} possible Secondary-only matches, {previewCount(params.possibleBoth)} possible cross-school matches, {previewCount(params.unmatched)} unmatched, and {previewCount(params.ambiguous)} ambiguous. Nothing has been changed.</MetaText>
+        </Card>
+      ) : null}
+
+      {params?.staff === "failed" || params?.staff === "not-connected" ? (
+        <Card className="border-danger/30 bg-[var(--pill-danger-bg)]"><div className="font-medium text-danger">Staff comparison could not run.</div><MetaText className="mt-1">No staff records were changed.</MetaText></Card>
+      ) : null}
+
       <Card className="space-y-3">
         <div className="font-medium">How this works</div>
         <MetaText>
@@ -156,6 +167,10 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               <CsrfInput token={csrfToken} />
               <Button type="submit" variant="secondary">Compare students</Button>
             </form>
+          </Card>
+          <Card className="flex flex-wrap items-center justify-between gap-3">
+            <div><div className="font-medium">Compare staff</div><MetaText className="mt-1">This uses existing Anaxi school links and exact name matches only. It does not change any staff record.</MetaText></div>
+            <form method="post" action="/api/god/integrations/arbor/preview/staff"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Compare staff</Button></form>
           </Card>
         </>
       ) : null}
