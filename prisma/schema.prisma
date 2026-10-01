@@ -8,53 +8,53 @@ datasource db {
 }
 
 model Tenant {
-  id                   String                   @id @default(cuid())
-  name                 String
-  slug                 String?                  @unique
-  status               TenantStatus             @default(ACTIVE)
-  analysisRuns         AnalysisRun[]
-  assessments          Assessment[]
-  assessmentCycles     AssessmentCycle[]
-  assessmentPoints     AssessmentPoint[]
-  assessmentResults    AssessmentResult[]
-  attainmentPresets    AttainmentMetricPreset[]
-  auditLogs            AuditLog[]
-  departments          Department[]
-  importJobs           ImportJob[]
-  importMappings       ImportMappingConfig[]
-  insights             Insight[]
-  integrations         TenantIntegration[]
+  id                     String                    @id @default(cuid())
+  name                   String
+  slug                   String?                   @unique
+  status                 TenantStatus              @default(ACTIVE)
+  analysisRuns           AnalysisRun[]
+  assessments            Assessment[]
+  assessmentCycles       AssessmentCycle[]
+  assessmentPoints       AssessmentPoint[]
+  assessmentResults      AssessmentResult[]
+  attainmentPresets      AttainmentMetricPreset[]
+  auditLogs              AuditLog[]
+  departments            Department[]
+  importJobs             ImportJob[]
+  importMappings         ImportMappingConfig[]
+  insights               Insight[]
+  integrations           TenantIntegration[]
   sharedIntegrationLinks SharedIntegrationSchool[]
-  integrationSyncRuns  IntegrationSyncRun[]
+  integrationSyncRuns    IntegrationSyncRun[]
   integrationSyncChanges IntegrationSyncChange[]
-  behaviourIncidents   BehaviourIncident[]
-  loaApprovalScopes    LOAApprovalScope[]
-  loaAuthorisers       LOAAuthoriser[]
-  loaRequests          LOARequest[]
-  loaReasons           LoaReason[]
-  meetings             Meeting[]
-  meetingActions       MeetingAction[]
-  meetingAttendees     MeetingAttendee[]
-  observations         Observation[]
-  onCallLocations      OnCallLocation[]
-  onCallReasons        OnCallReason[]
-  onCallRecipients     OnCallRecipient[]
-  onCallRequests       OnCallRequest[]
-  onCallTimelineEvents OnCallTimelineEvent[]
-  emailLogs            EmailLog[]
-  inAppNotifications   InAppNotification[]
-  adminInvites         SchoolAdminInvite[]
-  strategyAreas        StrategyArea[]
-  strategyNotes        StrategyNote[]
-  students             Student[]
-  studentWatchlist     StudentWatchlist[]
-  subTopics            SubTopic[]
-  features             TenantFeature[]
-  tenantImportMappings TenantImportMapping[]
-  tenantSignalLabels   TenantSignalLabel[]
-  tenantSettings       TenantSettings?
-  vocab                TenantVocab[]
-  users                User[]
+  behaviourIncidents     BehaviourIncident[]
+  loaApprovalScopes      LOAApprovalScope[]
+  loaAuthorisers         LOAAuthoriser[]
+  loaRequests            LOARequest[]
+  loaReasons             LoaReason[]
+  meetings               Meeting[]
+  meetingActions         MeetingAction[]
+  meetingAttendees       MeetingAttendee[]
+  observations           Observation[]
+  onCallLocations        OnCallLocation[]
+  onCallReasons          OnCallReason[]
+  onCallRecipients       OnCallRecipient[]
+  onCallRequests         OnCallRequest[]
+  onCallTimelineEvents   OnCallTimelineEvent[]
+  emailLogs              EmailLog[]
+  inAppNotifications     InAppNotification[]
+  adminInvites           SchoolAdminInvite[]
+  strategyAreas          StrategyArea[]
+  strategyNotes          StrategyNote[]
+  students               Student[]
+  studentWatchlist       StudentWatchlist[]
+  subTopics              SubTopic[]
+  features               TenantFeature[]
+  tenantImportMappings   TenantImportMapping[]
+  tenantSignalLabels     TenantSignalLabel[]
+  tenantSettings         TenantSettings?
+  vocab                  TenantVocab[]
+  users                  User[]
 }
 
 model User {
@@ -187,50 +187,50 @@ model LOAApprovalScope {
 }
 
 model LOARequest {
-  id                 String     @id @default(cuid())
-  tenantId           String
-  requesterId        String
-  reasonId           String?
-  startDate          DateTime
-  endDate            DateTime
-  reasonText         String?
-  coverRequirements  String?
-  medicalEvidenceUrl String?
-  medicalEvidenceData Bytes?
+  id                      String     @id @default(cuid())
+  tenantId                String
+  requesterId             String
+  reasonId                String?
+  startDate               DateTime
+  endDate                 DateTime
+  reasonText              String?
+  coverRequirements       String?
+  medicalEvidenceUrl      String?
+  medicalEvidenceData     Bytes?
   medicalEvidenceMimeType String?
-  notes              String?
-  decisionNotes      String?
-  decidedById        String?
-  decidedAt          DateTime?
-  status             String     @default("PENDING")
+  notes                   String?
+  decisionNotes           String?
+  decidedById             String?
+  decidedAt               DateTime?
+  status                  String     @default("PENDING")
   // HR bookkeeping only -- whether this LOA has been keyed into each external system. Not synced.
-  inArbor            Boolean    @default(false)
-  inITrent           Boolean    @default(false)
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  reason             LoaReason? @relation(fields: [reasonId], references: [id])
-  tenant             Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  requester          User       @relation(fields: [tenantId, requesterId], references: [tenantId, id])
+  inArbor                 Boolean    @default(false)
+  inITrent                Boolean    @default(false)
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+  reason                  LoaReason? @relation(fields: [reasonId], references: [id])
+  tenant                  Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requester               User       @relation(fields: [tenantId, requesterId], references: [tenantId, id])
 }
 
 model OnCallReason {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   tenantId  String
   label     String
   active    Boolean @default(true)
-  sortOrder Int    @default(0)
-  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sortOrder Int     @default(0)
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, label])
 }
 
 model OnCallLocation {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   tenantId  String
   label     String
   active    Boolean @default(true)
-  sortOrder Int    @default(0)
-  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sortOrder Int     @default(0)
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, label])
 }
@@ -250,40 +250,40 @@ model OnCallRecipient {
 }
 
 model Student {
-  id                String                  @id @default(cuid())
-  tenantId          String
-  upn               String?
-  fullName          String
-  yearGroup         String?
+  id                    String                  @id @default(cuid())
+  tenantId              String
+  upn                   String?
+  fullName              String
+  yearGroup             String?
   ks2ReadingScaledScore Int?
   ks2MathsScaledScore   Int?
-  sendFlag          Boolean                 @default(false)
-  ppFlag            Boolean                 @default(false)
-  status            StudentStatus           @default(ACTIVE)
+  sendFlag              Boolean                 @default(false)
+  ppFlag                Boolean                 @default(false)
+  status                StudentStatus           @default(ACTIVE)
   /// The external MIS record this row is kept in sync with, e.g. Arbor's own student ID.
   /// Null means the record only exists because it was created or imported inside Anaxi.
-  externalId        String?
-  dataSource        DataSource              @default(MANUAL)
+  externalId            String?
+  dataSource            DataSource              @default(MANUAL)
   /// Mirrors User.avatarImage/avatarMimeType/avatarUpdatedAt. Pupil photos are more
   /// sensitive than staff ones (safeguarding, image rights, leaver retention/deletion
   /// duties) — confirm this is covered by the school's data sharing agreement before
   /// a sync actually writes to these, and delete them when a student's status moves
   /// to ARCHIVED rather than keeping them indefinitely.
-  avatarImage       Bytes?
-  avatarMimeType    String?
-  avatarUpdatedAt   DateTime?
+  avatarImage           Bytes?
+  avatarMimeType        String?
+  avatarUpdatedAt       DateTime?
   /// Prevents an Arbor photo refresh from overwriting a picture uploaded in Anaxi.
-  avatarDataSource  DataSource?
-  createdAt         DateTime                @default(now())
-  updatedAt         DateTime                @updatedAt
-  assessmentResults AssessmentResult[]
-  behaviourIncidents BehaviourIncident[]
-  onCallRequests    OnCallRequest[]
-  tenant            Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  changeFlags       StudentChangeFlag[]
-  snapshots         StudentSnapshot[]
-  subjectTeachers   StudentSubjectTeacher[]
-  watchlistEntries  StudentWatchlist[]
+  avatarDataSource      DataSource?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  assessmentResults     AssessmentResult[]
+  behaviourIncidents    BehaviourIncident[]
+  onCallRequests        OnCallRequest[]
+  tenant                Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  changeFlags           StudentChangeFlag[]
+  snapshots             StudentSnapshot[]
+  subjectTeachers       StudentSubjectTeacher[]
+  watchlistEntries      StudentWatchlist[]
 
   @@unique([tenantId, upn])
   @@unique([tenantId, id])
@@ -303,6 +303,10 @@ model StudentSnapshot {
   suspensionsCount        Int        @default(0)
   onCallsCount            Int        @default(0)
   attendancePct           Decimal    @default(0)
+  /// Internal totals used to calculate an accurate academic-year attendance rate.
+  /// They are not a copy of Arbor's individual register marks.
+  attendancePossibleCount Int        @default(0)
+  attendancePresentCount  Int        @default(0)
   latenessCount           Int        @default(0)
   /// Where this date's totals came from. The (tenantId, studentId, snapshotDate) key
   /// is already unique, so this exists to stop one source silently overwriting
@@ -324,20 +328,20 @@ model StudentSnapshot {
 /// and whatever `reasonCode` should actually hold are guesses pending Arbor's real
 /// incident shape — do not build real ingestion against this as-is.
 model BehaviourIncident {
-  id           String                    @id @default(cuid())
-  tenantId     String
-  studentId    String
-  category     BehaviourIncidentCategory
+  id         String                    @id @default(cuid())
+  tenantId   String
+  studentId  String
+  category   BehaviourIncidentCategory
   /// Points value for a POSITIVE_POINTS award; otherwise unused for now.
-  points       Int?
+  points     Int?
   /// Free-text or code for what the incident was for, when the source supplies one.
-  reasonCode   String?
-  occurredAt   DateTime
-  externalId   String?
-  dataSource   DataSource                @default(MANUAL)
-  createdAt    DateTime                  @default(now())
-  student      Student                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  tenant       Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reasonCode String?
+  occurredAt DateTime
+  externalId String?
+  dataSource DataSource                @default(MANUAL)
+  createdAt  DateTime                  @default(now())
+  student    Student                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tenant     Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, dataSource, externalId])
   @@index([tenantId, studentId, category, occurredAt])
@@ -390,20 +394,20 @@ model StudentSubjectTeacher {
 }
 
 model EmailLog {
-  id           String              @id @default(cuid())
-  tenantId     String?
-  template     String
-  toEmail      String
-  subject      String
-  status       EmailDeliveryStatus
-  providerId   String?
-  errorMessage String?
-  metadataJson Json?
-  bodyText     String?
-  bodyHtml     String?
+  id              String              @id @default(cuid())
+  tenantId        String?
+  template        String
+  toEmail         String
+  subject         String
+  status          EmailDeliveryStatus
+  providerId      String?
+  errorMessage    String?
+  metadataJson    Json?
+  bodyText        String?
+  bodyHtml        String?
   attachmentsJson Json?
-  createdAt    DateTime            @default(now())
-  tenant       Tenant?             @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  createdAt       DateTime            @default(now())
+  tenant          Tenant?             @relation(fields: [tenantId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, createdAt])
   @@index([status, createdAt])
@@ -489,25 +493,25 @@ model ImportError {
 }
 
 model OnCallRequest {
-  id                      String            @id @default(cuid())
+  id                      String                @id @default(cuid())
   tenantId                String
   requesterUserId         String
   studentId               String
   requestType             OnCallRequestType
-  isEmergency             Boolean           @default(false)
+  isEmergency             Boolean               @default(false)
   location                String
   behaviourReasonCategory String?
   notes                   String?
-  status                  OnCallStatus      @default(OPEN)
+  status                  OnCallStatus          @default(OPEN)
   responderUserId         String?
-  createdAt               DateTime          @default(now())
+  createdAt               DateTime              @default(now())
   acknowledgedAt          DateTime?
   resolvedAt              DateTime?
-  updatedAt               DateTime          @updatedAt
-  tenant                  Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  requester               User              @relation("OnCallRequester", fields: [tenantId, requesterUserId], references: [tenantId, id])
-  responder               User?             @relation("OnCallResponder", fields: [tenantId, responderUserId], references: [tenantId, id], onDelete: SetNull)
-  student                 Student           @relation(fields: [tenantId, studentId], references: [tenantId, id])
+  updatedAt               DateTime              @updatedAt
+  tenant                  Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requester               User                  @relation("OnCallRequester", fields: [tenantId, requesterUserId], references: [tenantId, id])
+  responder               User?                 @relation("OnCallResponder", fields: [tenantId, responderUserId], references: [tenantId, id], onDelete: SetNull)
+  student                 Student               @relation(fields: [tenantId, studentId], references: [tenantId, id])
   timelineEvents          OnCallTimelineEvent[]
 
   @@index([tenantId])
@@ -518,15 +522,15 @@ model OnCallRequest {
 }
 
 model OnCallTimelineEvent {
-  id           String                  @id @default(cuid())
-  tenantId     String
-  requestId    String
-  type         OnCallTimelineEventType
-  actorUserId  String?
-  createdAt    DateTime                @default(now())
-  tenant       Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  request      OnCallRequest           @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  actor        User?                   @relation(fields: [tenantId, actorUserId], references: [tenantId, id], onDelete: SetNull)
+  id          String                  @id @default(cuid())
+  tenantId    String
+  requestId   String
+  type        OnCallTimelineEventType
+  actorUserId String?
+  createdAt   DateTime                @default(now())
+  tenant      Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  request     OnCallRequest           @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor       User?                   @relation(fields: [tenantId, actorUserId], references: [tenantId, id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([requestId])
@@ -696,10 +700,10 @@ model TenantSettings {
 /// class lists, behaviour and assessment data on a schedule instead of a manual CSV upload.
 /// Credentials are stored encrypted (see lib/integrationSecrets.ts) — never in plaintext.
 model TenantIntegration {
-  id                    String                  @id @default(cuid())
+  id                    String                 @id @default(cuid())
   tenantId              String
   provider              IntegrationProvider
-  status                IntegrationStatus       @default(DISCONNECTED)
+  status                IntegrationStatus      @default(DISCONNECTED)
   /// AES-256-GCM ciphertext of the provider credentials (JSON), base64-encoded.
   /// Produced by lib/integrationSecrets.ts; never store plaintext here.
   credentialsCiphertext String?
@@ -710,9 +714,9 @@ model TenantIntegration {
   lastSyncedAt          DateTime?
   lastSyncStatus        IntegrationSyncStatus?
   lastSyncError         String?
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  tenant                Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   syncRuns              IntegrationSyncRun[]
 
   @@unique([tenantId, provider])
@@ -722,9 +726,9 @@ model TenantIntegration {
 /// individual school tenants: one Arbor instance can supply data to more than one
 /// Anaxi school (for example, a primary and secondary school in the same trust).
 model SharedIntegration {
-  id                    String                    @id @default(cuid())
+  id                    String                     @id @default(cuid())
   provider              IntegrationProvider
-  status                IntegrationStatus         @default(DISCONNECTED)
+  status                IntegrationStatus          @default(DISCONNECTED)
   /// AES-256-GCM ciphertext, produced by lib/integrationSecrets.ts.
   credentialsCiphertext String?
   config                Json?
@@ -733,8 +737,8 @@ model SharedIntegration {
   lastSyncedAt          DateTime?
   lastSyncStatus        IntegrationSyncStatus?
   lastSyncError         String?
-  createdAt             DateTime                  @default(now())
-  updatedAt             DateTime                  @updatedAt
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
   schools               SharedIntegrationSchool[]
   syncRuns              SharedIntegrationSyncRun[]
 
@@ -745,19 +749,19 @@ model SharedIntegration {
 /// Audit trail for a run from a platform-managed integration. Kept separate from
 /// TenantIntegration's run table because one Arbor source can update many tenants.
 model SharedIntegrationSyncRun {
-  id               String                @id @default(cuid())
+  id               String                        @id @default(cuid())
   integrationId    String
   entityType       IntegrationEntityType
-  status           IntegrationSyncStatus @default(RUNNING)
-  recordsProcessed Int                   @default(0)
-  recordsCreated   Int                   @default(0)
-  recordsUpdated   Int                   @default(0)
-  recordsFailed    Int                   @default(0)
+  status           IntegrationSyncStatus         @default(RUNNING)
+  recordsProcessed Int                           @default(0)
+  recordsCreated   Int                           @default(0)
+  recordsUpdated   Int                           @default(0)
+  recordsFailed    Int                           @default(0)
   errorSummary     String?
   triggeredBy      String?
-  startedAt        DateTime              @default(now())
+  startedAt        DateTime                      @default(now())
   finishedAt       DateTime?
-  integration      SharedIntegration     @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  integration      SharedIntegration             @relation(fields: [integrationId], references: [id], onDelete: Cascade)
   changes          SharedIntegrationSyncChange[]
 
   @@index([integrationId, startedAt])
@@ -765,16 +769,16 @@ model SharedIntegrationSyncRun {
 
 /// Per-record before/after snapshots for a shared integration run.
 model SharedIntegrationSyncChange {
-  id          String                   @id @default(cuid())
-  syncRunId   String
-  tenantId    String
-  entityType  String
-  entityId    String
-  changeType  IntegrationChangeType
-  beforeJson  Json?
-  afterJson   Json?
-  createdAt   DateTime                 @default(now())
-  syncRun     SharedIntegrationSyncRun @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
+  id         String                   @id @default(cuid())
+  syncRunId  String
+  tenantId   String
+  entityType String
+  entityId   String
+  changeType IntegrationChangeType
+  beforeJson Json?
+  afterJson  Json?
+  createdAt  DateTime                 @default(now())
+  syncRun    SharedIntegrationSyncRun @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
 
   @@index([syncRunId])
   @@index([tenantId, entityType, entityId, createdAt])
@@ -801,22 +805,22 @@ model SharedIntegrationSchool {
 /// Kept so admins and support can see what changed and when, and so a sync can resume
 /// or be re-run without guessing what the last attempt actually did.
 model IntegrationSyncRun {
-  id               String                @id @default(cuid())
+  id               String                  @id @default(cuid())
   tenantId         String
   integrationId    String
   entityType       IntegrationEntityType
-  status           IntegrationSyncStatus @default(RUNNING)
-  recordsProcessed Int                   @default(0)
-  recordsCreated   Int                   @default(0)
-  recordsUpdated   Int                   @default(0)
-  recordsFailed    Int                   @default(0)
+  status           IntegrationSyncStatus   @default(RUNNING)
+  recordsProcessed Int                     @default(0)
+  recordsCreated   Int                     @default(0)
+  recordsUpdated   Int                     @default(0)
+  recordsFailed    Int                     @default(0)
   errorSummary     String?
   /// "CRON" for a scheduled run, or the id of the admin who triggered it manually.
   triggeredBy      String?
-  startedAt        DateTime              @default(now())
+  startedAt        DateTime                @default(now())
   finishedAt       DateTime?
-  tenant           Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  integration      TenantIntegration     @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  tenant           Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  integration      TenantIntegration       @relation(fields: [integrationId], references: [id], onDelete: Cascade)
   changes          IntegrationSyncChange[]
 
   @@index([tenantId, integrationId, startedAt])
@@ -831,29 +835,29 @@ model IntegrationSyncRun {
 /// Nothing writes to this yet, and there is no rollback action built on it yet — this
 /// is the storage a future one would read from and write revertedAt to.
 model IntegrationSyncChange {
-  id          String                @id @default(cuid())
-  tenantId    String
-  syncRunId   String
+  id         String                @id @default(cuid())
+  tenantId   String
+  syncRunId  String
   /// The Prisma model name the change was made to, e.g. "Student", "StudentSnapshot".
-  entityType  String
-  entityId    String
-  changeType  IntegrationChangeType
+  entityType String
+  entityId   String
+  changeType IntegrationChangeType
   /// Null for a CREATE.
-  beforeJson  Json?
+  beforeJson Json?
   /// Null for a DELETE.
-  afterJson   Json?
+  afterJson  Json?
   /// Set once an admin has reverted this specific change.
-  revertedAt  DateTime?
-  createdAt   DateTime              @default(now())
-  tenant      Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  syncRun     IntegrationSyncRun    @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
+  revertedAt DateTime?
+  createdAt  DateTime              @default(now())
+  tenant     Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  syncRun    IntegrationSyncRun    @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, syncRunId])
   @@index([tenantId, entityType, entityId, createdAt])
 }
 
 model TimetableEntry {
-  id              String   @id @default(cuid())
+  id              String     @id @default(cuid())
   tenantId        String
   classCode       String
   subject         String
@@ -870,8 +874,8 @@ model TimetableEntry {
   /// The external MIS record this row is kept in sync with, e.g. Arbor's own timetable slot ID.
   externalId      String?
   dataSource      DataSource @default(MANUAL)
-  createdAt       DateTime @default(now())
-  teacher         User?    @relation("TimetableTeacher", fields: [teacherUserId], references: [id])
+  createdAt       DateTime   @default(now())
+  teacher         User?      @relation("TimetableTeacher", fields: [teacherUserId], references: [id])
 
   @@unique([tenantId, classCode, slotKey])
   @@unique([tenantId, dataSource, externalId])
@@ -1153,12 +1157,12 @@ model Assessment {
 }
 
 model Progress8Benchmark {
-  id                              String   @id @default(cuid())
-  ks2AverageScaledScore           Int      @unique
-  expectedAttainment8             Float
-  zeroProgress8GradeEquivalent    Float
-  createdAt                       DateTime @default(now())
-  updatedAt                       DateTime @updatedAt
+  id                           String   @id @default(cuid())
+  ks2AverageScaledScore        Int      @unique
+  expectedAttainment8          Float
+  zeroProgress8GradeEquivalent Float
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
 }
 
 model AssessmentResult {
@@ -1294,6 +1298,7 @@ enum IntegrationSyncStatus {
 enum IntegrationEntityType {
   STAFF
   STUDENTS
+  ATTENDANCE
   CLASSES
   BEHAVIOUR
   ASSESSMENTS

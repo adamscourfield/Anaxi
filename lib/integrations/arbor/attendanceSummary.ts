@@ -3,6 +3,7 @@ export type ArborAttendanceRecord = {
   attendanceMark: { isStatisticalPresent: boolean; isStatisticalPossibleAttendance: boolean; isDefaultLate: boolean } | null;
   minutesLate: number | null;
   isRedundant: boolean;
+  startDatetime?: string | null;
 };
 
 export function summariseAttendance(records: ArborAttendanceRecord[], linkedStudentIds: Set<string>) {

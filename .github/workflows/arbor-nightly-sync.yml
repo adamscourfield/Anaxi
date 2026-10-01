@@ -1,4 +1,4 @@
-name: Arbor nightly student sync
+name: Arbor nightly sync
 
 on:
   # London is UTC+1 in summer and UTC in winter. The endpoint below only runs
@@ -30,3 +30,15 @@ jobs:
             --retry 2 \
             --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
             "${ANAXI_APP_URL%/}/api/cron/arbor-photos"
+          # Each call imports at most seven completed days. Repeating it lets the
+          # first run catch up the academic year without requiring a larger plan.
+          for _ in $(seq 1 8); do
+            curl --fail --silent --show-error \
+              --retry 2 \
+              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+              "${ANAXI_APP_URL%/}/api/cron/arbor-attendance"
+          done
+          curl --fail --silent --show-error \
+            --retry 2 \
+            --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+            "${ANAXI_APP_URL%/}/api/cron/compute-student-flags"
