@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { ArborClient } from "@/lib/integrations/arbor/client";
 import { ArborGraphqlError, runArborGraphqlQuery } from "@/lib/integrations/arbor/graphqlClient";
 
 const fetchMock = vi.fn();
@@ -80,5 +81,21 @@ describe("runArborGraphqlQuery", () => {
 
     await expect(runArborGraphqlQuery(credentials, "{ Staff { id } }")).rejects.toThrow(/HTTP 400/);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ArborClient.verifyConnection", () => {
+  it("uses a minimal, read-only Staff query", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { Staff: [] } }),
+    });
+
+    await new ArborClient(credentials).verifyConnection();
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).query).toBe(
+      "{ Staff(page_size: 1, page_num: 0) { id } }"
+    );
   });
 });

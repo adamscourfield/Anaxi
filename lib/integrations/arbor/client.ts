@@ -34,6 +34,17 @@ import type {
 export class ArborClient {
   constructor(private readonly credentials: ArborCredentials) {}
 
+  /**
+   * Verifies the saved application credentials with the smallest confirmed read:
+   * one staff ID. This deliberately does not retain or import any Arbor data.
+   */
+  async verifyConnection(): Promise<void> {
+    await runArborGraphqlQuery<{ Staff: Array<{ id: string }> }>(
+      this.credentials,
+      "{ Staff(page_size: 1, page_num: 0) { id } }"
+    );
+  }
+
   async listStaff(pageSize = 500, pageNum = 0): Promise<ArborStaffRecord[]> {
     const query = `{
       Staff(page_size: ${pageSize}, page_num: ${pageNum}) {

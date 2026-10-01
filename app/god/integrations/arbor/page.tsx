@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -52,12 +52,39 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         </Card>
       ) : null}
 
+      {params?.test === "success" ? (
+        <Card className="border-success/30 bg-[var(--pill-success-bg)]">
+          <div className="font-medium text-success">Arbor connection verified.</div>
+          <MetaText className="mt-1">Anaxi can securely read Arbor. No school data has been imported yet.</MetaText>
+        </Card>
+      ) : null}
+
+      {params?.test === "failed" || params?.test === "not-configured" ? (
+        <Card className="border-danger/30 bg-[var(--pill-danger-bg)]">
+          <div className="font-medium text-danger">Arbor connection needs attention.</div>
+          <MetaText className="mt-1">{params?.test === "not-configured" ? "Save the Arbor application credentials before checking the connection." : integration?.lastSyncError ?? "Try saving the Arbor application credentials again."}</MetaText>
+        </Card>
+      ) : null}
+
       <Card className="space-y-3">
         <div className="font-medium">How this works</div>
         <MetaText>
           Goresbrook Primary and Goresbrook Secondary can share one Arbor connection while remaining separate Anaxi schools. Before the first sync is enabled, we will confirm the Arbor field that distinguishes the two, so no record is guessed into the wrong school.
         </MetaText>
       </Card>
+
+      {integration?.credentialsCiphertext ? (
+        <Card className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="font-medium">Check the Arbor connection</div>
+            <MetaText className="mt-1">This makes one read-only request to Arbor. It does not import or change data.</MetaText>
+          </div>
+          <form method="post" action="/api/god/integrations/arbor/test">
+            <CsrfInput token={csrfToken} />
+            <Button type="submit" variant="secondary">Check connection</Button>
+          </form>
+        </Card>
+      ) : null}
 
       <Card>
         <form method="post" action="/api/god/integrations/arbor" className="space-y-5">
