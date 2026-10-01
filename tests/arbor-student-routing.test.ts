@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { routeArborStudentByAcademicLevel } from "@/lib/integrations/arbor/studentRouting";
 
 describe("Arbor student routing", () => {
-  it.each(["Nursery", "Reception", "Year 1", "Y6", "year 06"])("routes %s to Primary", (yearGroup) => {
+  it.each(["Nursery", "Nursery Pre-school", "Nursery Y1", "Nursery Y2", "Reception", "Year 1", "Y6", "year 06"])("routes %s to Primary", (yearGroup) => {
     expect(routeArborStudentByAcademicLevel(yearGroup)).toBe("PRIMARY");
   });
 
