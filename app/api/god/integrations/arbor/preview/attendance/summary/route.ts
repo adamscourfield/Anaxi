@@ -20,7 +20,8 @@ export const POST = withApi(async function POST(req: Request) {
     // large register response while this remains a read-only preview.
     const records = await client.listAttendanceRecords(100, 0, start.toISOString().slice(0, 10), end.toISOString().slice(0, 10));
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
-    const linked = new Set((await db.student.findMany({ where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", externalId: { not: null } }, select: { externalId: true } })).map((student: { externalId: string }) => student.externalId));
+    const linkedStudents: Array<{ externalId: string | null }> = await db.student.findMany({ where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", externalId: { not: null } }, select: { externalId: true } });
+    const linked = new Set<string>(linkedStudents.flatMap((student) => student.externalId ? [student.externalId] : []));
     const summary = summariseAttendance(records, linked); let possible = 0, present = 0, late = 0;
     for (const item of summary.byStudent.values()) { possible += item.possible; present += item.present; late += item.late; }
     const url = new URL("/god/integrations/arbor", req.url); for (const [key, value] of Object.entries({ attendancePreview: "success", attendanceRecords: records.length, attendanceStudents: summary.byStudent.size, attendancePct: possible ? Math.round((present / possible) * 1000) / 10 : 0, attendanceLate: late, attendanceUnmatched: summary.unmatched })) url.searchParams.set(key, String(value)); return NextResponse.redirect(url);
