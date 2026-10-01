@@ -74,13 +74,13 @@ export class ArborClient {
     const response = await fetch(this.restUrl(path), { headers: { Authorization: this.basicAuthorization() } });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`Arbor photo endpoint returned HTTP ${response.status}.`);
-    const mimeType = (response.headers.get("content-type") ?? "").split(";")[0].toLowerCase();
-    if (!["image/jpeg", "image/png", "image/webp"].includes(mimeType)) throw new Error("Arbor returned a photo in an unsupported format.");
     const declaredSize = Number(response.headers.get("content-length") ?? "0");
     if (declaredSize > 2 * 1024 * 1024) throw new Error("Arbor returned a photo larger than 2MB.");
     const bytes = Buffer.from(await response.arrayBuffer());
     if (bytes.length === 0) return null;
     if (bytes.length > 2 * 1024 * 1024) throw new Error("Arbor returned a photo larger than 2MB.");
+    const mimeType = photoMimeType(bytes);
+    if (!mimeType) throw new Error("Arbor returned a photo in an unsupported format.");
     return { bytes, mimeType };
   }
 
@@ -179,4 +179,12 @@ export class ArborClient {
     );
     return data.TeachingGroup;
   }
+}
+
+/** Arbor's REST endpoint may use a generic content type, so validate the actual file. */
+function photoMimeType(bytes: Buffer): "image/jpeg" | "image/png" | "image/webp" | null {
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  if (bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
+  if (bytes.length >= 12 && bytes.subarray(0, 4).toString("ascii") === "RIFF" && bytes.subarray(8, 12).toString("ascii") === "WEBP") return "image/webp";
+  return null;
 }

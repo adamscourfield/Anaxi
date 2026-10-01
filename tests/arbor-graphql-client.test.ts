@@ -111,4 +111,13 @@ describe("ArborClient.verifyStudentPhotoAccess", () => {
       { headers: { Authorization: `Basic ${Buffer.from("app-user:app-pass").toString("base64")}` } },
     );
   });
+
+  it("accepts a valid photo even when Arbor uses a generic content type", async () => {
+    const jpeg = Uint8Array.from([0xff, 0xd8, 0xff, 0xdb]);
+    fetchMock.mockResolvedValue({ ok: true, status: 200, headers: new Headers({ "content-type": "application/octet-stream" }), arrayBuffer: async () => jpeg.buffer });
+
+    const photo = await new ArborClient(credentials).getStudentPhoto("student-1");
+
+    expect(photo?.mimeType).toBe("image/jpeg");
+  });
 });
