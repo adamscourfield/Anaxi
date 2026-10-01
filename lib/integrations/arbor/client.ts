@@ -89,6 +89,16 @@ export class ArborClient {
     return data.AttendanceRecord;
   }
 
+  async listAllAttendanceRecords(startAfter: string, startBefore: string) {
+    const records = [] as Awaited<ReturnType<typeof this.listAttendanceRecords>>;
+    for (let pageNum = 0; pageNum < 200; pageNum++) {
+      const page = await this.listAttendanceRecords(500, pageNum, startAfter, startBefore);
+      records.push(...page);
+      if (page.length < 500) return records;
+    }
+    throw new Error("Attendance preview exceeded 100,000 records and stopped safely.");
+  }
+
   private async getPhoto(path: string): Promise<{ bytes: Buffer; mimeType: string } | null> {
     const response = await fetch(this.restUrl(path), { headers: { Authorization: this.basicAuthorization() } });
     if (response.status === 404) return null;
