@@ -57,8 +57,8 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
           <CsrfInput token={csrfToken} />
           <div className="space-y-3">
             <div>
-              <div className="font-medium">Arbor login</div>
-              <MetaText className="mt-1">These details are stored encrypted and are never shown again after saving.</MetaText>
+              <div className="font-medium">Arbor application credentials</div>
+              <MetaText className="mt-1">Use the dedicated credentials for the Anaxi app in Arbor's Developer Portal, not a staff member's Arbor email and password. These details are stored encrypted and are never shown again after saving.</MetaText>
             </div>
             <label className="block text-sm font-medium">
               Arbor school name
@@ -67,12 +67,14 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
             </label>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="text-sm font-medium">
-                Arbor username
+                Arbor API username
                 <input name="username" required className="field mt-1 w-full" autoComplete="off" />
+                <MetaText className="mt-1">The Anaxi app username from Arbor's Developer Portal.</MetaText>
               </label>
               <label className="text-sm font-medium">
-                Arbor password
+                Arbor API password
                 <input name="password" required type="password" className="field mt-1 w-full" autoComplete="new-password" />
+                <MetaText className="mt-1">The matching app password or secret from Arbor's Developer Portal.</MetaText>
               </label>
             </div>
           </div>
