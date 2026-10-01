@@ -36,10 +36,14 @@ sync can be built.
   students, classes, behaviour, assessments), with counts of records processed,
   created, updated and failed, and an error summary. Lets an admin or support see what
   a sync actually did, the same way `ImportJob` already does for CSV imports.
-- **`lib/integrations/arbor/`** — `types.ts` and `client.ts` are placeholders. The
-  field names in `types.ts` are guesses, not verified against Arbor's real API, and
-  every `ArborClient` method throws rather than pretending to work. Do not wire this
-  into a real sync yet.
+- **`lib/integrations/arbor/`** — `entities.ts` lists the 54 entities Anaxi's Arbor app
+  actually has read access to, confirmed from Anaxi's permission grant in the
+  Developer Portal (captured 2026-10-01) — not a guess. Anaxi has **read-only** access
+  everywhere (no write, no delete on anything), which matches the field-ownership
+  decision below for a reason stronger than "we chose to be read-only": there was
+  never a write path to build. `types.ts` and `client.ts` are still placeholders —
+  entity *names* are confirmed, entity *fields* are not, and every `ArborClient`
+  method throws rather than pretending to work. Do not wire this into a real sync yet.
 - **`IntegrationSyncChange`** — one row per record a sync run creates, updates, or
   deletes, storing a before/after snapshot (mirrors `AuditLog`'s `beforeJson`/
   `afterJson` shape). This is what a future "undo this run" or "undo everything from
@@ -84,12 +88,15 @@ sync can be built.
 
 ## What's still needed before building the real sync
 
-1. **Arbor's actual API docs**, from the Developer Portal
-   (https://developers-portal.arbor.sc) or pasted sections covering staff, students,
-   class lists/timetable, behaviour and assessment endpoints — field names, pagination,
-   auth method (API key vs OAuth), and rate limits.
+1. **Arbor's REST API / GraphQL reference** (same Developer Portal, under DOCS →
+   "Rest API" / "GraphQL") — field names within each entity in `entities.ts`,
+   pagination, auth method (the portal shows a logged-in user, not an API key/OAuth
+   flow, so how a *server* authenticates as the app is still unknown), and rate
+   limits. The entity names we already have; this is what's inside them.
 2. **A sandbox school or test credentials**, stored in this environment's secrets
    settings (never in chat or committed to the repo), to run real requests against.
+   The portal has a "Sandboxes (testing)" page under APPS/DOCS — same place the
+   permission grant came from.
 3. **Which access level we've been granted** — Developer Portal/partner access that
    covers many schools, or one school's own approval under their
    *System > Partner Apps (API Users)*? This decides how credentials get stored and
@@ -98,31 +105,42 @@ sync can be built.
    a full pull each time. Decides how often a sync can realistically run, and how the
    sync orchestrator (below) diffs what it gets back against what Anaxi already has.
 5. (resolved — see Decisions above)
-6. **Per-school assessment mapping.** Every school sets up its assessments differently
-   in Arbor, so pulling assessment points for every subject (beyond KS2 scaled scores,
-   which map directly onto the existing `Student.ks2ReadingScaledScore` /
-   `ks2MathsScaledScore` fields) needs a mapping step per school, similar to the CSV
-   import's column mapping.
-7. **A class-roster model.** Nothing in Anaxi currently records which students sit in
-   which class. `TimetableEntry` has a `classCode` string and `StudentSubjectTeacher`
-   links a student to a subject and teacher over a date range, but neither is "this
-   list of students is Ms Patel's Year 10 English class." Arbor's own class/group
-   concept should decide the shape here — likely a `TeachingGroup` (id, classCode,
-   subject, yearGroup, `dataSource`/`externalId`) with a `TeachingGroupMembership` join
-   table (student, group, effective dates, `dataSource`/`externalId`) — but building
-   that blind risks guessing wrong about how Arbor's classes relate to timetable slots
-   (one class → many weekly slots is the likely shape, but unconfirmed). Design this
-   once we've seen a real "class" response from Arbor.
+6. **Per-school assessment mapping — now known to be bigger than one mapping step.**
+   Arbor's permission grant shows five largely separate assessment subsystems, not
+   one: `adHocAssessment*` (one-off marks), `standardizedAssessment*` (likely where
+   KS2 scaled scores and other standardised tests live), `progressAssessment*` /
+   `progressMeasurementPeriod*` (ongoing tracking against a defined period, closest
+   analogue to Anaxi's `AssessmentCycle`/`AssessmentPoint`), `qualification*`
+   (GCSE/A-level-shaped results and forecasts), and `grade*`/`assessmentGradeSet`
+   (the grading scales the others reference). Anaxi's single
+   `AssessmentCycle → Point → Assessment → Result` chain does not map onto this 1:1.
+   Before building this, decide per subsystem: sync it at all, and if so onto which
+   existing Anaxi model (or a new one) — this needs the field-level docs (item 1) to
+   do properly, since the subsystems' exact relationships to each other are still
+   unconfirmed from entity names alone.
+7. **A class-roster model — shape now confirmed, fields still not.** Arbor has its own
+   `teachingGroup`, `teachingGroupMembership`, and `teachingGroupTutor` entities
+   (confirmed in `entities.ts`), which is exactly the shape guessed at in an earlier
+   version of this doc: a `TeachingGroup` (id, classCode, subject, yearGroup,
+   `dataSource`/`externalId`) with a `TeachingGroupMembership` join table (student,
+   group, effective dates, `dataSource`/`externalId`). **Not yet built as Prisma
+   models** — waiting on the field-level docs (item 1) so the columns aren't another
+   guess, and on confirming how a teaching group relates to `timetableSlot` (one group
+   → many weekly slots is the likely shape, per `timetableSlot` referencing
+   `timetablePeriod`, but unconfirmed).
 8. **A "what lesson is on now" resolver, for observations.** `TimetableEntry` already
    carries `dayOfWeek`, `period`, `weekPattern`, `startTime` and `endTime` per slot, so
    the raw data to answer "what is this teacher teaching right now" is there once
-   synced. What's missing is the resolution logic: matching the current date/time
-   against a slot, and — for any school running a fortnightly (Week A/B) timetable —
-   knowing which week the school is currently on, which isn't derivable from the
-   timetable data alone and needs either an admin-set "today is Week A" toggle or
-   Arbor's own notion of the current week. Worth a short follow-up ticket once
-   timetable sync exists and we can see real `weekPattern` values; not schema
-   groundwork, since the fields it needs already exist.
+   synced — and Arbor's own `timetablePeriod` entity (confirmed) is almost certainly
+   the bell-times definition each `timetableSlot` references, which is better than
+   Anaxi repeating start/end times on every row as it does today. What's still missing
+   is the resolution logic: matching the current date/time against a slot, and — for
+   any school running a fortnightly (Week A/B) timetable — knowing which week the
+   school is currently on, which isn't derivable from the timetable data alone and
+   needs either an admin-set "today is Week A" toggle or Arbor's own notion of the
+   current week (unconfirmed whether one exists). Worth a short follow-up ticket once
+   timetable sync exists and we can see real `timetablePeriod`/`weekPattern` values;
+   not schema groundwork, since the fields it needs already exist.
 9. **The sync orchestrator itself.** Nothing today actually calls Arbor and writes
    the results in. `IntegrationSyncRun`/`IntegrationSyncChange` are just the places a
    sync would log to. Needs: how a large school's worth of records gets batched
@@ -137,6 +155,20 @@ sync can be built.
     reading `IntegrationSyncChange` and writing each row's `beforeJson` back,
     recording `revertedAt` as it goes. The storage for this exists now; the action
     doesn't.
+12. **SEND and Pupil Premium are their own entities in Arbor, not flags** —
+    `senStatus`/`senStatusAssignment` and `ukDfe_PupilPremiumRecipient` — and UPN is
+    assigned via `ukDfe_UpnAssignment` rather than being a plain field either. Syncing
+    `Student.sendFlag`/`ppFlag`/`upn` needs its own small sync step per entity (read
+    the assignment, derive the boolean/value), not just reading them off the student
+    record. Low effort once the field docs exist, but worth planning for rather than
+    assuming these come free with the student sync.
+13. **Behaviour syncs per entity type, not from one unified feed.** `detention`,
+    `internalExclusion`, `fixedPeriodExclusion`, and `pointAward` are four separate
+    Arbor entities (confirmed), each presumably with its own fields — not one
+    "incident" endpoint with a category field. `BehaviourIncident.category` can still
+    hold the mapped value, but the sync step needs to call (or query) each entity type
+    separately and map it to the right category, rather than one generic incident
+    reader.
 
 ## Suggested build order
 
