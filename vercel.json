@@ -1,3 +1,9 @@
 {
-  "buildCommand": "node scripts/migrate-deploy.cjs && npm run build"
+  "buildCommand": "node scripts/migrate-deploy.cjs && npm run build",
+  "crons": [
+    {
+      "path": "/api/cron/arbor-students",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

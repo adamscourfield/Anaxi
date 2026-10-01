@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { withApi } from "@/lib/apiRoute";
+import { assertCronAuthorized } from "@/lib/cronAuth";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
@@ -11,15 +12,20 @@ import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
 export const POST = withApi(async function POST(req: Request) {
-  const actor = await requireSuperAdminUser();
-  const form = await req.formData();
-  try {
-    await assertCsrfFromForm(form);
-  } catch {
-    return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
-  }
-  if (form.get("confirm") !== "SYNC_STUDENTS") {
-    return NextResponse.redirect(new URL("/god/integrations/arbor?sync=confirmation-required", req.url));
+  const cronDenied = assertCronAuthorized(req);
+  const isScheduledRun = !cronDenied && req.headers.get("x-arbor-scheduled-sync") === "1";
+  const actor = isScheduledRun ? null : await requireSuperAdminUser();
+
+  if (!isScheduledRun) {
+    const form = await req.formData();
+    try {
+      await assertCsrfFromForm(form);
+    } catch {
+      return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
+    }
+    if (form.get("confirm") !== "SYNC_STUDENTS") {
+      return NextResponse.redirect(new URL("/god/integrations/arbor?sync=confirmation-required", req.url));
+    }
   }
 
   const db = prisma as any;
@@ -45,7 +51,7 @@ export const POST = withApi(async function POST(req: Request) {
 
   try {
     const run = await db.sharedIntegrationSyncRun.create({
-      data: { integrationId: integration.id, entityType: "STUDENTS", triggeredBy: actor.id },
+      data: { integrationId: integration.id, entityType: "STUDENTS", triggeredBy: isScheduledRun ? "CRON" : actor!.id },
     });
     runId = run.id;
     const tenantIds = Object.values(tenantIdBySchoolType);
@@ -57,12 +63,12 @@ export const POST = withApi(async function POST(req: Request) {
       }),
     ]);
     const plan = buildStudentSyncPlan(arborStudents, tenantIdBySchoolType, existingStudents);
-    if (plan.some((item) => item.action === "REVIEW")) {
+    if (!isScheduledRun && plan.some((item) => item.action === "REVIEW")) {
       throw new Error("Student routing or matching changed since the comparison. Run the comparison again before syncing.");
     }
 
     for (const item of plan) {
-      if (item.action === "SKIP") continue;
+      if (item.action === "SKIP" || (isScheduledRun && (item.action === "ADOPT" || item.action === "REVIEW"))) continue;
       const yearGroup = arborYearGroupCode(item.arborStudent.displayAcademicLevel?.displayName);
       if (!item.tenantId || !yearGroup) throw new Error("A student could not be routed safely.");
       const data = {
@@ -96,9 +102,12 @@ export const POST = withApi(async function POST(req: Request) {
       data: { status: "SUCCESS", recordsProcessed: created + updated, recordsCreated: created, recordsUpdated: updated, finishedAt: new Date() },
     });
     await db.sharedIntegration.update({ where: { id: integration.id }, data: { lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null } });
-    await db.auditLog.create({
-      data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.students_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { created, updated, adopted } },
-    });
+    if (actor) {
+      await db.auditLog.create({
+        data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.students_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { created, updated, adopted } },
+      });
+    }
+    if (isScheduledRun) return NextResponse.json({ created, updated, adopted, skippedForReview: plan.filter((item) => item.action === "ADOPT" || item.action === "REVIEW").length });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("sync", "success");
     url.searchParams.set("created", String(created));
