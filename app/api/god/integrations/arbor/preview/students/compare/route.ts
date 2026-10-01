@@ -31,7 +31,8 @@ export const POST = withApi(async function POST(req: Request) {
     const tenantIdBySchoolType: { PRIMARY?: string; SECONDARY?: string } = {};
     for (const school of integration.schools) {
       const schoolType = school.tenant.tenantSettings?.schoolType;
-      if (schoolType === "PRIMARY" || schoolType === "SECONDARY") tenantIdBySchoolType[schoolType] = school.tenantId;
+      if (schoolType === "PRIMARY") tenantIdBySchoolType.PRIMARY = school.tenantId;
+      if (schoolType === "SECONDARY") tenantIdBySchoolType.SECONDARY = school.tenantId;
     }
     const tenantIds = Object.values(tenantIdBySchoolType);
     const [arborStudents, existingStudents] = await Promise.all([
