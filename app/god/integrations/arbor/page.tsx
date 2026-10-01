@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -101,6 +101,20 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         </Card>
       ) : null}
 
+      {params?.sync === "success" ? (
+        <Card className="border-success/30 bg-[var(--pill-success-bg)]">
+          <div className="font-medium text-success">Student sync complete.</div>
+          <MetaText className="mt-1">{previewCount(params.created)} new students were added and {previewCount(params.adopted)} existing Anaxi students were linked to Arbor. Future syncs can update these records safely.</MetaText>
+        </Card>
+      ) : null}
+
+      {params?.sync === "failed" || params?.sync === "not-connected" || params?.sync === "confirmation-required" ? (
+        <Card className="border-danger/30 bg-[var(--pill-danger-bg)]">
+          <div className="font-medium text-danger">Student sync did not run.</div>
+          <MetaText className="mt-1">{params?.sync === "confirmation-required" ? "Confirm that you want to apply the student sync before it can run." : params?.sync === "not-connected" ? "Check the Arbor connection before syncing students." : "No further changes were made after the issue was detected. Check the God Mode audit log."}</MetaText>
+        </Card>
+      ) : null}
+
       <Card className="space-y-3">
         <div className="font-medium">How this works</div>
         <MetaText>
@@ -144,6 +158,23 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
             </form>
           </Card>
         </>
+      ) : null}
+
+      {params?.comparison === "success" && previewCount(params.ambiguousMatch) === 0 && previewCount(params.needsReview) === 0 ? (
+        <Card className="border-warning/30 bg-[var(--pill-warning-bg)]">
+          <form method="post" action="/api/god/integrations/arbor/sync/students" className="space-y-3">
+            <CsrfInput token={csrfToken} />
+            <div>
+              <div className="font-medium">Apply the first student sync</div>
+              <MetaText className="mt-1">This will link {previewCount(params.possibleMatch)} existing Anaxi students to Arbor and add {previewCount(params.newStudent)} new students. Off-roll records stay untouched. Every change is recorded in the God Mode audit trail.</MetaText>
+            </div>
+            <label className="flex items-start gap-2 text-sm">
+              <input required type="checkbox" name="confirm" value="SYNC_STUDENTS" className="mt-1 accent-accent" />
+              <span>I have reviewed the comparison and want to apply this student sync.</span>
+            </label>
+            <Button type="submit">Apply student sync</Button>
+          </form>
+        </Card>
       ) : null}
 
       <Card>

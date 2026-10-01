@@ -732,9 +732,48 @@ model SharedIntegration {
   createdAt             DateTime                  @default(now())
   updatedAt             DateTime                  @updatedAt
   schools               SharedIntegrationSchool[]
+  syncRuns              SharedIntegrationSyncRun[]
 
   /// There is one shared connection for each provider at platform level.
   @@unique([provider])
+}
+
+/// Audit trail for a run from a platform-managed integration. Kept separate from
+/// TenantIntegration's run table because one Arbor source can update many tenants.
+model SharedIntegrationSyncRun {
+  id               String                @id @default(cuid())
+  integrationId    String
+  entityType       IntegrationEntityType
+  status           IntegrationSyncStatus @default(RUNNING)
+  recordsProcessed Int                   @default(0)
+  recordsCreated   Int                   @default(0)
+  recordsUpdated   Int                   @default(0)
+  recordsFailed    Int                   @default(0)
+  errorSummary     String?
+  triggeredBy      String?
+  startedAt        DateTime              @default(now())
+  finishedAt       DateTime?
+  integration      SharedIntegration     @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  changes          SharedIntegrationSyncChange[]
+
+  @@index([integrationId, startedAt])
+}
+
+/// Per-record before/after snapshots for a shared integration run.
+model SharedIntegrationSyncChange {
+  id          String                   @id @default(cuid())
+  syncRunId   String
+  tenantId    String
+  entityType  String
+  entityId    String
+  changeType  IntegrationChangeType
+  beforeJson  Json?
+  afterJson   Json?
+  createdAt   DateTime                 @default(now())
+  syncRun     SharedIntegrationSyncRun @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
+
+  @@index([syncRunId])
+  @@index([tenantId, entityType, entityId, createdAt])
 }
 
 /// An explicit destination for data from a platform-managed integration. Keeping
