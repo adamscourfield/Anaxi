@@ -70,6 +70,8 @@ model User {
   avatarImage                   Bytes?
   avatarMimeType                String?
   avatarUpdatedAt               DateTime?
+  /// Prevents an Arbor photo refresh from overwriting a picture uploaded in Anaxi.
+  avatarDataSource              DataSource?
   emailObservations             Boolean                    @default(true)
   emailMeetings                 Boolean                    @default(true)
   emailLeave                    Boolean                    @default(true)
@@ -270,6 +272,8 @@ model Student {
   avatarImage       Bytes?
   avatarMimeType    String?
   avatarUpdatedAt   DateTime?
+  /// Prevents an Arbor photo refresh from overwriting a picture uploaded in Anaxi.
+  avatarDataSource  DataSource?
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
   assessmentResults AssessmentResult[]

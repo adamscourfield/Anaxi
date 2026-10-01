@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -79,6 +79,8 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       {params?.photo === "unavailable" || params?.photo === "not-connected" || params?.photo === "no-student" ? (
         <Card className="border-danger/30 bg-[var(--pill-danger-bg)]"><div className="font-medium text-danger">Arbor photo access is not available yet.</div><MetaText className="mt-1">No image was imported. Check that Arbor has enabled photo API access for the Anaxi app.</MetaText></Card>
       ) : null}
+
+      {params?.photoSync === "success" ? <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">Arbor photo sync started.</div><MetaText className="mt-1">{previewCount(params.studentPhotos)} student and {previewCount(params.staffPhotos)} staff photos were securely copied in this batch. The nightly sync continues in small batches.</MetaText></Card> : null}
 
       {params?.preview === "success" ? (
         <Card className="border-success/30 bg-[var(--pill-success-bg)]">
@@ -172,6 +174,17 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         <Card className="flex flex-wrap items-center justify-between gap-3">
           <div><div className="font-medium">Check Arbor photo access</div><MetaText className="mt-1">This makes one read-only request for a linked student. It does not display, import, or store a photo.</MetaText></div>
           <form method="post" action="/api/god/integrations/arbor/test-photos"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check photo access</Button></form>
+        </Card>
+      ) : null}
+
+      {params?.photo === "success" ? (
+        <Card className="border-warning/30 bg-[var(--pill-warning-bg)]">
+          <form method="post" action="/api/god/integrations/arbor/sync/photos" className="space-y-3">
+            <CsrfInput token={csrfToken} />
+            <div><div className="font-medium">Start Arbor photo sync</div><MetaText className="mt-1">Copies up to 25 linked active student and 25 linked active staff photos per batch. Manually uploaded Anaxi photos are never replaced.</MetaText></div>
+            <label className="flex items-start gap-2 text-sm"><input required type="checkbox" name="confirm" value="SYNC_PHOTOS" className="mt-1 accent-accent" /><span>I confirm that Anaxi may securely store linked active student and staff photos from Arbor.</span></label>
+            <Button type="submit">Start photo sync</Button>
+          </form>
         </Card>
       ) : null}
 

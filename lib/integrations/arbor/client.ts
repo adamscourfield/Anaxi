@@ -58,10 +58,30 @@ export class ArborClient {
    * body is deliberately not read or retained: this is only an authorisation check.
    */
   async verifyStudentPhotoAccess(studentId: string): Promise<void> {
-    const response = await fetch(this.restUrl(`/profile-picture/student/${encodeURIComponent(studentId)}`), {
-      headers: { Authorization: this.basicAuthorization() },
-    });
+    const response = await fetch(this.restUrl(`/profile-picture/student/${encodeURIComponent(studentId)}`), { headers: { Authorization: this.basicAuthorization() } });
     if (!response.ok) throw new Error(`Arbor photo endpoint returned HTTP ${response.status}.`);
+  }
+
+  async getStudentPhoto(studentId: string): Promise<{ bytes: Buffer; mimeType: string } | null> {
+    return this.getPhoto(`/profile-picture/student/${encodeURIComponent(studentId)}`);
+  }
+
+  async getStaffPhoto(staffId: string): Promise<{ bytes: Buffer; mimeType: string } | null> {
+    return this.getPhoto(`/profile-picture/staff/${encodeURIComponent(staffId)}`);
+  }
+
+  private async getPhoto(path: string): Promise<{ bytes: Buffer; mimeType: string } | null> {
+    const response = await fetch(this.restUrl(path), { headers: { Authorization: this.basicAuthorization() } });
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`Arbor photo endpoint returned HTTP ${response.status}.`);
+    const mimeType = (response.headers.get("content-type") ?? "").split(";")[0].toLowerCase();
+    if (!["image/jpeg", "image/png", "image/webp"].includes(mimeType)) throw new Error("Arbor returned a photo in an unsupported format.");
+    const declaredSize = Number(response.headers.get("content-length") ?? "0");
+    if (declaredSize > 2 * 1024 * 1024) throw new Error("Arbor returned a photo larger than 2MB.");
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (bytes.length === 0) return null;
+    if (bytes.length > 2 * 1024 * 1024) throw new Error("Arbor returned a photo larger than 2MB.");
+    return { bytes, mimeType };
   }
 
   async listStaff(pageSize = 500, pageNum = 0): Promise<ArborStaffRecord[]> {

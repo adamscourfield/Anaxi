@@ -174,7 +174,7 @@ export async function setUserAvatar(formData: FormData): Promise<ActionResult> {
     if (String(formData.get("remove")) === "true") {
       await (prisma as any).user.updateMany({
         where: { id, tenantId: admin.tenantId },
-        data: { avatarImage: null, avatarMimeType: null, avatarUpdatedAt: null },
+        data: { avatarImage: null, avatarMimeType: null, avatarUpdatedAt: null, avatarDataSource: "MANUAL" },
       });
       return;
     }
@@ -191,7 +191,7 @@ export async function setUserAvatar(formData: FormData): Promise<ActionResult> {
 
     await (prisma as any).user.updateMany({
       where: { id, tenantId: admin.tenantId },
-      data: { avatarImage: bytes, avatarMimeType: mimeType, avatarUpdatedAt: new Date() },
+      data: { avatarImage: bytes, avatarMimeType: mimeType, avatarUpdatedAt: new Date(), avatarDataSource: "MANUAL" },
     });
   });
 }
