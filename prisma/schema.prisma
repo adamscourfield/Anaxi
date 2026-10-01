@@ -23,6 +23,10 @@ model Tenant {
   importJobs           ImportJob[]
   importMappings       ImportMappingConfig[]
   insights             Insight[]
+  integrations         TenantIntegration[]
+  integrationSyncRuns  IntegrationSyncRun[]
+  integrationSyncChanges IntegrationSyncChange[]
+  behaviourIncidents   BehaviourIncident[]
   loaApprovalScopes    LOAApprovalScope[]
   loaAuthorisers       LOAAuthoriser[]
   loaRequests          LOARequest[]
@@ -69,6 +73,10 @@ model User {
   emailMeetings                 Boolean                    @default(true)
   emailLeave                    Boolean                    @default(true)
   passwordHash                  String?
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own staff ID.
+  /// Null means the record only exists because it was created or imported inside Anaxi.
+  externalId                    String?
+  dataSource                    DataSource                 @default(MANUAL)
   auditLogs                     AuditLog[]                 @relation("AuditActor")
   coachAssignmentsAsCoach       CoachAssignment[]          @relation("CoachAssignmentCoach")
   coachAssignmentsAsCoachee     CoachAssignment[]          @relation("CoachAssignmentCoachee")
@@ -104,6 +112,7 @@ model User {
 
   @@unique([tenantId, email])
   @@unique([tenantId, id])
+  @@unique([tenantId, dataSource, externalId])
 }
 
 model TenantFeature {
@@ -248,9 +257,22 @@ model Student {
   sendFlag          Boolean                 @default(false)
   ppFlag            Boolean                 @default(false)
   status            StudentStatus           @default(ACTIVE)
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own student ID.
+  /// Null means the record only exists because it was created or imported inside Anaxi.
+  externalId        String?
+  dataSource        DataSource              @default(MANUAL)
+  /// Mirrors User.avatarImage/avatarMimeType/avatarUpdatedAt. Pupil photos are more
+  /// sensitive than staff ones (safeguarding, image rights, leaver retention/deletion
+  /// duties) — confirm this is covered by the school's data sharing agreement before
+  /// a sync actually writes to these, and delete them when a student's status moves
+  /// to ARCHIVED rather than keeping them indefinitely.
+  avatarImage       Bytes?
+  avatarMimeType    String?
+  avatarUpdatedAt   DateTime?
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
   assessmentResults AssessmentResult[]
+  behaviourIncidents BehaviourIncident[]
   onCallRequests    OnCallRequest[]
   tenant            Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   changeFlags       StudentChangeFlag[]
@@ -260,6 +282,7 @@ model Student {
 
   @@unique([tenantId, upn])
   @@unique([tenantId, id])
+  @@unique([tenantId, dataSource, externalId])
 }
 
 model StudentSnapshot {
@@ -276,10 +299,43 @@ model StudentSnapshot {
   onCallsCount            Int        @default(0)
   attendancePct           Decimal    @default(0)
   latenessCount           Int        @default(0)
+  /// Where this date's totals came from. The (tenantId, studentId, snapshotDate) key
+  /// is already unique, so this exists to stop one source silently overwriting
+  /// another's totals for the same date (e.g. a CSV import re-running after Arbor
+  /// has already supplied that date) rather than to find the row.
+  dataSource              DataSource @default(MANUAL)
   createdAt               DateTime   @default(now())
   student                 Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, studentId, snapshotDate])
+}
+
+/// A single behaviour event (one detention, one suspension, one award of positive
+/// points...), as distinct from StudentSnapshot's daily totals. Decided need: once
+/// Arbor is connected, Anaxi keeps both — the totals every existing screen already
+/// reads, and this incident-level detail, which totals throw away (what an incident
+/// was for, exactly when it happened). Nothing writes to or reads from this yet; nor
+/// does anything recompute StudentSnapshot's totals from these rows. Category names
+/// and whatever `reasonCode` should actually hold are guesses pending Arbor's real
+/// incident shape — do not build real ingestion against this as-is.
+model BehaviourIncident {
+  id           String                    @id @default(cuid())
+  tenantId     String
+  studentId    String
+  category     BehaviourIncidentCategory
+  /// Points value for a POSITIVE_POINTS award; otherwise unused for now.
+  points       Int?
+  /// Free-text or code for what the incident was for, when the source supplies one.
+  reasonCode   String?
+  occurredAt   DateTime
+  externalId   String?
+  dataSource   DataSource                @default(MANUAL)
+  createdAt    DateTime                  @default(now())
+  student      Student                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tenant       Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, dataSource, externalId])
+  @@index([tenantId, studentId, category, occurredAt])
 }
 
 model StudentChangeFlag {
@@ -631,6 +687,87 @@ model TenantSettings {
   updatedAt                DateTime   @updatedAt
 }
 
+/// A school's connection to an external MIS (e.g. Arbor), used to pull staff, students,
+/// class lists, behaviour and assessment data on a schedule instead of a manual CSV upload.
+/// Credentials are stored encrypted (see lib/integrationSecrets.ts) — never in plaintext.
+model TenantIntegration {
+  id                    String                  @id @default(cuid())
+  tenantId              String
+  provider              IntegrationProvider
+  status                IntegrationStatus       @default(DISCONNECTED)
+  /// AES-256-GCM ciphertext of the provider credentials (JSON), base64-encoded.
+  /// Produced by lib/integrationSecrets.ts; never store plaintext here.
+  credentialsCiphertext String?
+  /// Non-secret provider config, e.g. the Arbor site ID this connection targets.
+  config                Json?
+  connectedByUserId     String?
+  connectedAt           DateTime?
+  lastSyncedAt          DateTime?
+  lastSyncStatus        IntegrationSyncStatus?
+  lastSyncError         String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  tenant                Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  syncRuns              IntegrationSyncRun[]
+
+  @@unique([tenantId, provider])
+}
+
+/// One run of syncing a single entity type (staff, students, ...) from an external MIS.
+/// Kept so admins and support can see what changed and when, and so a sync can resume
+/// or be re-run without guessing what the last attempt actually did.
+model IntegrationSyncRun {
+  id               String                @id @default(cuid())
+  tenantId         String
+  integrationId    String
+  entityType       IntegrationEntityType
+  status           IntegrationSyncStatus @default(RUNNING)
+  recordsProcessed Int                   @default(0)
+  recordsCreated   Int                   @default(0)
+  recordsUpdated   Int                   @default(0)
+  recordsFailed    Int                   @default(0)
+  errorSummary     String?
+  /// "CRON" for a scheduled run, or the id of the admin who triggered it manually.
+  triggeredBy      String?
+  startedAt        DateTime              @default(now())
+  finishedAt       DateTime?
+  tenant           Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  integration      TenantIntegration     @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  changes          IntegrationSyncChange[]
+
+  @@index([tenantId, integrationId, startedAt])
+}
+
+/// One row per record a sync run created, updated, or deleted — the before/after
+/// snapshot an admin's "undo this run" or "undo everything from today" action needs
+/// to actually revert data, not just see that something changed (which
+/// IntegrationSyncRun's counts already show). Mirrors AuditLog's beforeJson/afterJson
+/// shape rather than inventing a new one.
+///
+/// Nothing writes to this yet, and there is no rollback action built on it yet — this
+/// is the storage a future one would read from and write revertedAt to.
+model IntegrationSyncChange {
+  id          String                @id @default(cuid())
+  tenantId    String
+  syncRunId   String
+  /// The Prisma model name the change was made to, e.g. "Student", "StudentSnapshot".
+  entityType  String
+  entityId    String
+  changeType  IntegrationChangeType
+  /// Null for a CREATE.
+  beforeJson  Json?
+  /// Null for a DELETE.
+  afterJson   Json?
+  /// Set once an admin has reverted this specific change.
+  revertedAt  DateTime?
+  createdAt   DateTime              @default(now())
+  tenant      Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  syncRun     IntegrationSyncRun    @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, syncRunId])
+  @@index([tenantId, entityType, entityId, createdAt])
+}
+
 model TimetableEntry {
   id              String   @id @default(cuid())
   tenantId        String
@@ -646,10 +783,14 @@ model TimetableEntry {
   startTime       String?
   endTime         String?
   slotKey         String?
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own timetable slot ID.
+  externalId      String?
+  dataSource      DataSource @default(MANUAL)
   createdAt       DateTime @default(now())
   teacher         User?    @relation("TimetableTeacher", fields: [teacherUserId], references: [id])
 
   @@unique([tenantId, classCode, slotKey])
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId, yearGroup, subject, classCode])
 }
 
@@ -851,12 +992,18 @@ model AssessmentCycle {
   endDate           DateTime
   isActive          Boolean           @default(true)
   status            String            @default("active")
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own ID for
+  /// this assessment cycle/marksheet grouping. Matching on this rather than `label`
+  /// survives Arbor-side renames.
+  externalId        String?
+  dataSource        DataSource        @default(MANUAL)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   points            AssessmentPoint[]
 
   @@unique([tenantId, label])
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId])
 }
 
@@ -874,6 +1021,10 @@ model AssessmentPoint {
   comparisonEligible Boolean         @default(true)
   dateTaken          DateTime?
   assessedAt         DateTime
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own ID for
+  /// this assessment point. Matching on this rather than `label` survives renames.
+  externalId         String?
+  dataSource         DataSource      @default(MANUAL)
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   assessments        Assessment[]
@@ -881,6 +1032,7 @@ model AssessmentPoint {
   tenant             Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, cycleId, label])
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId, cycleId])
 }
 
@@ -900,6 +1052,10 @@ model Assessment {
   expectedStudentCount Int?
   notes                String?
   createdByUserId      String
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own ID for
+  /// this subject's marksheet within a point.
+  externalId           String?
+  dataSource           DataSource                  @default(MANUAL)
   createdAt            DateTime                    @default(now())
   updatedAt            DateTime                    @updatedAt
   point                AssessmentPoint             @relation(fields: [pointId], references: [id], onDelete: Cascade)
@@ -907,6 +1063,7 @@ model Assessment {
   results              AssessmentResult[]
   subTopicMappings     AssessmentSubTopicMapping[]
 
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId, pointId])
   @@index([tenantId, subject, yearGroup])
 }
@@ -933,6 +1090,10 @@ model AssessmentResult {
   status          AssessmentResultStatus    @default(PRESENT)
   isValid         Boolean                   @default(true)
   validationNotes String?
+  /// Where this result came from. The (tenantId, assessmentId, studentId) key is
+  /// already unique, so this exists to stop one source silently overwriting another's
+  /// result for the same student, not to find the row.
+  dataSource      DataSource                @default(MANUAL)
   createdAt       DateTime                  @default(now())
   updatedAt       DateTime                  @updatedAt
   assessment      Assessment                @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
@@ -1019,6 +1180,53 @@ enum TenantStatus {
 enum StudentStatus {
   ACTIVE
   ARCHIVED
+}
+
+/// Where a record's data currently comes from — used to decide whether a scheduled
+/// sync is allowed to overwrite it, and to warn an admin editing a field the sync owns.
+enum DataSource {
+  MANUAL
+  CSV_IMPORT
+  ARBOR
+}
+
+enum IntegrationProvider {
+  ARBOR
+}
+
+enum IntegrationStatus {
+  DISCONNECTED
+  CONNECTED
+  ERROR
+}
+
+enum IntegrationSyncStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum IntegrationEntityType {
+  STAFF
+  STUDENTS
+  CLASSES
+  BEHAVIOUR
+  ASSESSMENTS
+}
+
+enum IntegrationChangeType {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum BehaviourIncidentCategory {
+  DETENTION
+  INTERNAL_EXCLUSION
+  SUSPENSION
+  POSITIVE_POINTS
+  LATENESS
 }
 
 enum ImportJobType {
