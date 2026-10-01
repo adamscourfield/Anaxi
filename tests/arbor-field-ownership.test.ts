@@ -17,7 +17,7 @@ describe("Arbor field ownership", () => {
     expect(getBlockedArborOwnedStaffFields(arborStaffUser, { fullName: "Ada Byron" })).toEqual([
       "fullName",
     ]);
-    expect(getBlockedArborOwnedStaffFields(arborStaffUser, { role: "ADMIN" })).toEqual(["role"]);
+    expect(getBlockedArborOwnedStaffFields(arborStaffUser, { role: "ADMIN" })).toEqual([]);
   });
 
   it("allows no-op saves for Arbor-owned staff fields", () => {

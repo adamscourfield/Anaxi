@@ -1,4 +1,6 @@
-const ARBOR_OWNED_STAFF_FIELDS = ["fullName", "role"] as const;
+// Arbor supplies a staff name, but Anaxi roles are configured locally and are not
+// inferred from an Arbor job title.
+const ARBOR_OWNED_STAFF_FIELDS = ["fullName"] as const;
 
 type ArborOwnedStaffField = (typeof ARBOR_OWNED_STAFF_FIELDS)[number];
 

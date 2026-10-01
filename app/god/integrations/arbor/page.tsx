@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -126,6 +126,20 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         <Card className="border-danger/30 bg-[var(--pill-danger-bg)]"><div className="font-medium text-danger">Staff comparison could not run.</div><MetaText className="mt-1">No staff records were changed.</MetaText></Card>
       ) : null}
 
+      {params?.staffSync === "success" ? (
+        <Card className="border-success/30 bg-[var(--pill-success-bg)]">
+          <div className="font-medium text-success">Staff sync complete.</div>
+          <MetaText className="mt-1">{previewCount(params.linked)} existing Anaxi staff accounts were linked to Arbor. Their roles and access were not changed. Future nightly syncs can keep their names up to date safely.</MetaText>
+        </Card>
+      ) : null}
+
+      {params?.staffSync === "failed" || params?.staffSync === "not-connected" || params?.staffSync === "confirmation-required" ? (
+        <Card className="border-danger/30 bg-[var(--pill-danger-bg)]">
+          <div className="font-medium text-danger">Staff sync did not run.</div>
+          <MetaText className="mt-1">{params?.staffSync === "confirmation-required" ? "Confirm that you want to apply the staff sync before it can run." : params?.staffSync === "not-connected" ? "Check the Arbor connection before syncing staff." : "No further changes were made after the issue was detected. Check the God Mode audit log."}</MetaText>
+        </Card>
+      ) : null}
+
       <Card className="space-y-3">
         <div className="font-medium">How this works</div>
         <MetaText>
@@ -188,6 +202,23 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               <span>I have reviewed the comparison and want to apply this student sync.</span>
             </label>
             <Button type="submit">Apply student sync</Button>
+          </form>
+        </Card>
+      ) : null}
+
+      {params?.staff === "success" && previewCount(params.ambiguous) === 0 && (previewCount(params.possiblePrimaryOnly) + previewCount(params.possibleSecondaryOnly) + previewCount(params.possibleBoth)) > 0 ? (
+        <Card className="border-warning/30 bg-[var(--pill-warning-bg)]">
+          <form method="post" action="/api/god/integrations/arbor/sync/staff" className="space-y-3">
+            <CsrfInput token={csrfToken} />
+            <div>
+              <div className="font-medium">Apply the first staff sync</div>
+              <MetaText className="mt-1">This will link {previewCount(params.possiblePrimaryOnly) + previewCount(params.possibleSecondaryOnly) + previewCount(params.possibleBoth)} existing Anaxi staff accounts to Arbor, including cross-school staff. It does not change roles, permissions, passwords, or create the {previewCount(params.unmatched)} unmatched staff accounts.</MetaText>
+            </div>
+            <label className="flex items-start gap-2 text-sm">
+              <input required type="checkbox" name="confirm" value="SYNC_STAFF" className="mt-1 accent-accent" />
+              <span>I have reviewed the comparison and want to link these existing staff accounts to Arbor.</span>
+            </label>
+            <Button type="submit">Apply staff sync</Button>
           </form>
         </Card>
       ) : null}

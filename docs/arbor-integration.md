@@ -91,9 +91,9 @@ sync can be built.
   `afterJson` shape). This is what a future "undo this run" or "undo everything from
   today" admin action would read from and write `revertedAt` to. **Nothing writes to
   this yet** — no sync exists to populate it, and no rollback action exists to read it.
-- **Field ownership guard for staff edits** — `updateUser` and the quick role-change
-  action now reject changes to `fullName` or `role` when the `User` row is sourced
-  from Arbor (`dataSource === "ARBOR"`). No-op saves are allowed, and non-Arbor staff
+- **Field ownership guard for staff edits** — `updateUser` rejects changes to `fullName`
+  when the `User` row is sourced from Arbor (`dataSource === "ARBOR"`). Roles remain
+  Anaxi-managed: Arbor job titles are not Anaxi permission levels. No-op saves are allowed, and non-Arbor staff
   records remain manually editable. This is deliberately narrow: it protects the
   confirmed Arbor-owned fields without blocking unrelated Anaxi-only settings like
   email preferences.
@@ -116,10 +116,12 @@ sync can be built.
   import) already reads them. `BehaviourIncident` is additive, for the detail totals
   throw away. **Not yet wired up**: nothing recomputes `StudentSnapshot` totals from
   `BehaviourIncident` rows, since that logic depends on Arbor's real incident shape.
-- **New staff/students created by a sync get the same onboarding email** an admin
-  creating them by hand triggers today (`sendOnboardingEmail`, see
-  `app/(tenant)/admin/users/actions.ts`). Not yet wired to anything, since there's no
-  sync to trigger it.
+- **First staff sync links existing accounts only.** An active Arbor staff member with
+  one exact existing Anaxi name match per school can be linked after a God Mode
+  confirmation; linked staff are refreshed nightly. Unmatched Arbor staff are not
+  turned into Anaxi accounts because an account needs a confirmed email address and a
+  locally assigned Anaxi role. This avoids accidentally granting access to someone
+  based on a job title or an unverified address.
 - **Arbor connection is platform-managed but has explicit school destinations.** A
   super admin configures one encrypted Arbor source in God Mode and selects which
   Anaxi schools receive it. This supports Goresbrook Primary and Secondary sharing

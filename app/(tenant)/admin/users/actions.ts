@@ -266,8 +266,6 @@ export async function updateUserRole(formData: FormData): Promise<ActionResult> 
       select: { dataSource: true, fullName: true, role: true },
     });
     if (!existingUser) throw new Error("User not found.");
-    assertCanEditArborOwnedStaffFields(existingUser, { role });
-
     await (prisma as any).user.updateMany({
       where: { id: userId, tenantId: admin.tenantId },
       data: { role },
@@ -310,7 +308,6 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
     if (!existingUser) throw new Error("User not found.");
     assertCanEditArborOwnedStaffFields(existingUser, {
       ...(fullName !== undefined && { fullName }),
-      role,
     });
 
     await (prisma as any).user.updateMany({
