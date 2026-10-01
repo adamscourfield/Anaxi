@@ -29,6 +29,13 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
             >
               Audit log
             </Link>
+            <Link
+              href="/god/integrations/arbor"
+              className="px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:bg-surface-container"
+              style={{ color: "var(--on-surface-variant)" }}
+            >
+              Arbor
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">

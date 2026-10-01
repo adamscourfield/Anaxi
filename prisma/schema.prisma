@@ -24,6 +24,7 @@ model Tenant {
   importMappings       ImportMappingConfig[]
   insights             Insight[]
   integrations         TenantIntegration[]
+  sharedIntegrationLinks SharedIntegrationSchool[]
   integrationSyncRuns  IntegrationSyncRun[]
   integrationSyncChanges IntegrationSyncChange[]
   behaviourIncidents   BehaviourIncident[]
@@ -711,6 +712,46 @@ model TenantIntegration {
   syncRuns              IntegrationSyncRun[]
 
   @@unique([tenantId, provider])
+}
+
+/// A platform-managed connection to one external MIS. This deliberately sits above
+/// individual school tenants: one Arbor instance can supply data to more than one
+/// Anaxi school (for example, a primary and secondary school in the same trust).
+model SharedIntegration {
+  id                    String                    @id @default(cuid())
+  provider              IntegrationProvider
+  status                IntegrationStatus         @default(DISCONNECTED)
+  /// AES-256-GCM ciphertext, produced by lib/integrationSecrets.ts.
+  credentialsCiphertext String?
+  config                Json?
+  connectedByUserId     String?
+  connectedAt           DateTime?
+  lastSyncedAt          DateTime?
+  lastSyncStatus        IntegrationSyncStatus?
+  lastSyncError         String?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  schools               SharedIntegrationSchool[]
+
+  /// There is one shared connection for each provider at platform level.
+  @@unique([provider])
+}
+
+/// An explicit destination for data from a platform-managed integration. Keeping
+/// these links as rows, rather than a JSON list, prevents a removed school from
+/// silently remaining a sync target.
+model SharedIntegrationSchool {
+  id            String            @id @default(cuid())
+  integrationId String
+  tenantId      String
+  enabled       Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  integration   SharedIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, tenantId])
+  @@index([tenantId])
 }
 
 /// One run of syncing a single entity type (staff, students, ...) from an external MIS.

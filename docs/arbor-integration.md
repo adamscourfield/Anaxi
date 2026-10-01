@@ -27,11 +27,22 @@ sync can be built.
   staff ones: confirm image rights and retention are covered in the school's data
   sharing agreement before a sync actually populates these, and delete them when a
   student's `status` moves to `ARCHIVED` rather than keeping them indefinitely.
-- **`TenantIntegration`** — one row per school per provider (`IntegrationProvider`,
-  currently just `ARBOR`). Holds connection status, non-secret config (e.g. the Arbor
-  site ID), and the encrypted credentials blob. `credentialsCiphertext` is never
-  plaintext — see `lib/integrationSecrets.ts` (AES-256-GCM, keyed by
-  `INTEGRATION_ENCRYPTION_KEY`).
+- **`TenantIntegration`** — the original per-school integration storage. It remains
+  available for integrations that genuinely belong to one Anaxi school, but is not
+  the right owner for Goresbrook's shared Arbor system.
+- **`SharedIntegration` + `SharedIntegrationSchool`** — a platform-managed source
+  connection with an explicit list of receiving Anaxi schools. This is the Arbor
+  design for Goresbrook: enter Arbor credentials once in God Mode, select both
+  Goresbrook Primary and Goresbrook Secondary, and retain separate data boundaries
+  once syncing starts. Credentials are AES-256-GCM encrypted by
+  `lib/integrationSecrets.ts`, keyed by `INTEGRATION_ENCRYPTION_KEY`; the God Mode
+  audit entry intentionally contains no username or password.
+- **God Mode Arbor connection screen** — `/god/integrations/arbor` now lets a super
+  admin save the encrypted connection details and select all recipient schools. It
+  validates that the Arbor hostname is only a subdomain (not a URL), so credentials
+  cannot later be sent to an arbitrary host. Saving a connection does **not** start a
+  sync or claim that Arbor has accepted the credentials: live verification remains a
+  separate, auditable action to build with the first sync.
 - **`IntegrationSyncRun`** — a log row per sync attempt per entity type (staff,
   students, classes, behaviour, assessments), with counts of records processed,
   created, updated and failed, and an error summary. Lets an admin or support see what
@@ -67,6 +78,12 @@ sync can be built.
   `afterJson` shape). This is what a future "undo this run" or "undo everything from
   today" admin action would read from and write `revertedAt` to. **Nothing writes to
   this yet** — no sync exists to populate it, and no rollback action exists to read it.
+- **Field ownership guard for staff edits** — `updateUser` and the quick role-change
+  action now reject changes to `fullName` or `role` when the `User` row is sourced
+  from Arbor (`dataSource === "ARBOR"`). No-op saves are allowed, and non-Arbor staff
+  records remain manually editable. This is deliberately narrow: it protects the
+  confirmed Arbor-owned fields without blocking unrelated Anaxi-only settings like
+  email preferences.
 - **`BehaviourIncident`** — one row per individual behaviour event (a detention, a
   suspension, an award of positive points), alongside `StudentSnapshot`'s existing
   daily totals rather than replacing them (decision: keep both — see below).
@@ -78,13 +95,9 @@ sync can be built.
 - **Field ownership: block the edit.** Once a field is synced from Arbor, Arbor is the
   source of truth — a manual edit to that field in Anaxi should be rejected outright,
   not silently overwritten later or excluded from future syncs. `dataSource` on each
-  row is what a future edit action checks before allowing a write.
-  **Not yet enforced anywhere.** `updateUser` (the admin staff-edit action, in the
-  separate name-editing PR) doesn't check `dataSource` yet — it can't, since that
-  branch was written before `dataSource` existed on `User`. Once both PRs are on
-  `main`, add the check there: reject a `fullName`/role edit when
-  `user.dataSource === "ARBOR"`. There's no student edit screen yet at all, so nothing
-  to guard there yet either.
+  row is what edit actions check before allowing a write. This is now enforced for
+  staff `fullName` and `role` edits in the admin user directory. There's no student
+  edit screen yet at all, so nothing to guard there yet.
 - **Behaviour: store both totals and incidents.** `StudentSnapshot`'s daily totals stay
   exactly as every existing screen (Progress 8, assessment analysis, the behaviour
   import) already reads them. `BehaviourIncident` is additive, for the detail totals
@@ -94,9 +107,11 @@ sync can be built.
   creating them by hand triggers today (`sendOnboardingEmail`, see
   `app/(tenant)/admin/users/actions.ts`). Not yet wired to anything, since there's no
   sync to trigger it.
-- **Arbor connection is opt-in per school**, gated the same way every other feature
-  already is (`TenantFeature` / `requireFeature`, not a new mechanism). **Not yet
-  built** — there's no "connect Arbor" screen to gate yet.
+- **Arbor connection is platform-managed but has explicit school destinations.** A
+  super admin configures one encrypted Arbor source in God Mode and selects which
+  Anaxi schools receive it. This supports Goresbrook Primary and Secondary sharing
+  one Arbor instance without merging the two schools' records. A future sync must
+  still confirm the source-school routing rule before it writes any data.
 - **Sync activity gets an audit trail**, same principle as `AuditLog` already gives
   every admin action. Decided *not* to force sync writes through `AuditLog` itself:
   its `actorUserId` is a required field pointing at a real `User`, and a
@@ -116,11 +131,13 @@ sync can be built.
    instance would give the real field list per entity — better than guessing from the
    generic docs examples, several of which reference entities Anaxi doesn't have
    (`Guardian`, `Demographic`, `medicalConditions`, `profilePicture` — see below).
-2. **Sandbox credentials and network access**, stored in this environment's secrets
-   settings (never in chat or committed to the repo), to actually run
+2. **Sandbox credentials and network access**, to actually run
    `ArborClient.listStaff()` etc. and confirm the transport layer built above works
    end to end — right now it's built correctly against the documented contract, but
-   literally never been run. The portal has a "Sandboxes (testing)" page under
+   literally never been run. Production credentials can now be stored through the
+   encrypted God Mode connection screen; sandbox credentials should use the same
+   path in a non-production environment, never chat or source control. The portal
+   has a "Sandboxes (testing)" page under
    APPS/DOCS — same place the permission grant and REST/GraphQL docs came from.
    Sandbox hostname is `api-sandbox` per the REST docs' own examples.
 3. **Student and staff avatar photos need a permission added in the Developer
@@ -181,8 +198,10 @@ sync can be built.
    longer each time, rather than either giving up on the first blip or hammering
    Arbor's API). Blocked on item 4 above — incremental vs full-pull changes this
    design significantly.
-10. **An admin-facing screen for connecting Arbor and viewing sync history.** Doesn't
-    exist yet. The data for it (`TenantIntegration`, `IntegrationSyncRun`) does.
+10. **Sync history and review screens.** God Mode can now configure the shared Arbor
+    connection and its school destinations, but there is not yet a record of real
+    runs, a pre-sync change preview, or an undo screen. Those will read from
+    `IntegrationSyncRun` and `IntegrationSyncChange` once a sync exists.
 11. **The actual rollback action** ("undo this run" / "undo everything from today"),
     reading `IntegrationSyncChange` and writing each row's `beforeJson` back,
     recording `revertedAt` as it goes. The storage for this exists now; the action

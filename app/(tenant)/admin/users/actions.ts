@@ -11,6 +11,7 @@ import {
   assertAdminCannotAssignSuperAdminRole,
   requireAdminUser,
 } from "@/lib/admin";
+import { assertCanEditArborOwnedStaffFields } from "@/lib/integrations/arbor/fieldOwnership";
 import { fullNameSchema } from "@/lib/validation/schemas";
 
 export type ActionResult =
@@ -260,6 +261,13 @@ export async function updateUserRole(formData: FormData): Promise<ActionResult> 
     if (!userId || !role) throw new Error("User and role are required.");
     await assertAdminCanMutateUser(admin, userId, admin.tenantId);
     assertAdminCannotAssignSuperAdminRole(admin, role);
+    const existingUser = await (prisma as any).user.findFirst({
+      where: { id: userId, tenantId: admin.tenantId },
+      select: { dataSource: true, fullName: true, role: true },
+    });
+    if (!existingUser) throw new Error("User not found.");
+    assertCanEditArborOwnedStaffFields(existingUser, { role });
+
     await (prisma as any).user.updateMany({
       where: { id: userId, tenantId: admin.tenantId },
       data: { role },
@@ -295,6 +303,15 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
 
     await assertAdminCanMutateUser(admin, userId, admin.tenantId);
     assertAdminCannotAssignSuperAdminRole(admin, role);
+    const existingUser = await (prisma as any).user.findFirst({
+      where: { id: userId, tenantId: admin.tenantId },
+      select: { dataSource: true, fullName: true, role: true },
+    });
+    if (!existingUser) throw new Error("User not found.");
+    assertCanEditArborOwnedStaffFields(existingUser, {
+      ...(fullName !== undefined && { fullName }),
+      role,
+    });
 
     await (prisma as any).user.updateMany({
       where: { id: userId, tenantId: admin.tenantId },
