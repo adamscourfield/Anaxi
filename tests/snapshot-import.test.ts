@@ -3,6 +3,7 @@ import {
   parseBoolean,
   parseAttendancePct,
   parseSnapshotCsv,
+  parseScaledScore,
 } from "@/modules/students/snapshot-import";
 import { computeHeaderSignature, suggestMapping, getAnaxiFieldLabels } from "@/modules/students/snapshot-fields";
 
@@ -86,6 +87,12 @@ describe("suggestMapping", () => {
     expect(result.AttendancePercent).toBe("Attendance");
   });
 
+  it("suggests KS2 scaled score columns", () => {
+    const result = suggestMapping(["UPN", "KS2 Reading Scaled Score", "KS2 Maths"]);
+    expect(result.KS2ReadingScaledScore).toBe("KS2 Reading Scaled Score");
+    expect(result.KS2MathsScaledScore).toBe("KS2 Maths");
+  });
+
   it("handles alternative synonyms", () => {
     const result = suggestMapping(["Unique Pupil Number", "Pupil Name", "Year Group", "Attendance%"]);
     expect(result.UPN).toBe("Unique Pupil Number");
@@ -161,6 +168,64 @@ describe("parseSnapshotCsv", () => {
     const importDate = new Date("2026-01-15T10:00:00Z");
     const { rows } = parseSnapshotCsv(validCsv, mapping, importDate);
     expect(rows[0].snapshotDate.toISOString()).toBe("2026-01-15T00:00:00.000Z");
+  });
+
+  describe("KS2 scaled scores", () => {
+    const scoreMapping = {
+      fieldMap: {
+        ...mapping.fieldMap,
+        KS2ReadingScaledScore: "KS2 Reading",
+        KS2MathsScaledScore: "KS2 Maths",
+      },
+    };
+    const header =
+      "UPN,Name,YearGroup,Attendance,Lates,Detentions,InternalExclusions,Suspensions,OnCalls,PositivePoints,SEND,PP,KS2 Reading,KS2 Maths";
+
+    it("leaves scores null when the columns aren't mapped", () => {
+      const { rows } = parseSnapshotCsv(validCsv, mapping);
+      expect(rows[0].ks2ReadingScaledScore).toBeNull();
+      expect(rows[0].ks2MathsScaledScore).toBeNull();
+    });
+
+    it("parses mapped reading and maths scores", () => {
+      const csv = [header, "U001,Alice,Y10,96.5,1,2,0,0,1,10,No,No,104,98"].join("\n");
+      const { rows, errors } = parseSnapshotCsv(csv, scoreMapping);
+      expect(errors).toHaveLength(0);
+      expect(rows[0].ks2ReadingScaledScore).toBe(104);
+      expect(rows[0].ks2MathsScaledScore).toBe(98);
+    });
+
+    it("treats a blank cell as 'no value' rather than an error", () => {
+      const csv = [header, "U001,Alice,Y10,96.5,1,2,0,0,1,10,No,No,,110"].join("\n");
+      const { rows, errors } = parseSnapshotCsv(csv, scoreMapping);
+      expect(errors).toHaveLength(0);
+      expect(rows[0].ks2ReadingScaledScore).toBeNull();
+      expect(rows[0].ks2MathsScaledScore).toBe(110);
+    });
+
+    it("rejects scores outside 80–120 or non-integers", () => {
+      const csv = [
+        header,
+        "U001,Alice,Y10,96.5,1,2,0,0,1,10,No,No,121,100",
+        "U002,Bob,Y10,96.5,1,2,0,0,1,10,No,No,100,99.5",
+      ].join("\n");
+      const { rows, errors } = parseSnapshotCsv(csv, scoreMapping);
+      expect(rows).toHaveLength(0);
+      expect(errors.filter((e) => e.errorCode === "INVALID_SCALED_SCORE")).toHaveLength(2);
+    });
+  });
+});
+
+describe("parseScaledScore", () => {
+  it("accepts the 80–120 range inclusive", () => {
+    expect(parseScaledScore("80")).toBe(80);
+    expect(parseScaledScore(" 120 ")).toBe(120);
+  });
+
+  it("returns null for blank input and NaN for invalid input", () => {
+    expect(parseScaledScore("")).toBeNull();
+    expect(parseScaledScore("79")).toBeNaN();
+    expect(parseScaledScore("abc")).toBeNaN();
   });
 });
 

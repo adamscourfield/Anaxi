@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { MetaText } from "@/components/ui/typography";
 import {
   ANAXI_FIELDS,
-  AnaxiField,
+  OPTIONAL_SCORE_FIELDS,
+  MappableField,
   suggestMapping,
   computeHeaderSignature,
 } from "@/modules/students/snapshot-fields";
@@ -29,7 +30,7 @@ export function SnapshotUploader({
   fieldLabels,
 }: {
   /** Human-readable label for each import field, sourced from the tenant's language settings. */
-  fieldLabels: Record<AnaxiField, string>;
+  fieldLabels: Record<MappableField, string>;
 }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -46,7 +47,7 @@ export function SnapshotUploader({
   const [dragging, setDragging] = useState(false);
 
   // field → CSV header
-  const [fieldMap, setFieldMap] = useState<Partial<Record<AnaxiField, string>>>({});
+  const [fieldMap, setFieldMap] = useState<Partial<Record<MappableField, string>>>({});
 
   // SnapshotDate mode
   const [snapshotDateMode, setSnapshotDateMode] = useState<"today" | "column">("today");
@@ -83,8 +84,8 @@ export function SnapshotUploader({
 
     // Auto-suggest mapping
     const suggested = suggestMapping(parsedHeaders);
-    const newFieldMap: Partial<Record<AnaxiField, string>> = {};
-    for (const f of ANAXI_FIELDS) {
+    const newFieldMap: Partial<Record<MappableField, string>> = {};
+    for (const f of [...ANAXI_FIELDS, ...OPTIONAL_SCORE_FIELDS]) {
       if (suggested[f]) newFieldMap[f] = suggested[f];
     }
     setFieldMap(newFieldMap);
@@ -103,7 +104,7 @@ export function SnapshotUploader({
         if (data.mappings?.length > 0) {
           const saved = data.mappings[0];
           const savedMapping = saved.mappingJson as SnapshotMapping;
-          if (savedMapping.fieldMap) setFieldMap(savedMapping.fieldMap as Partial<Record<AnaxiField, string>>);
+          if (savedMapping.fieldMap) setFieldMap(savedMapping.fieldMap as Partial<Record<MappableField, string>>);
           if (savedMapping.snapshotDateColumn) {
             setSnapshotDateMode("column");
             setSnapshotDateColumn(savedMapping.snapshotDateColumn);
@@ -328,6 +329,28 @@ export function SnapshotUploader({
                       className="field flex-1"
                     >
                       <option value="">— select —</option>
+                      {headers.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+
+                {/* Optional KS2 scaled scores — blank cells keep the student's stored score */}
+                {OPTIONAL_SCORE_FIELDS.map((field) => (
+                  <div key={field} className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+                    <label className="text-sm font-medium text-text sm:w-44 sm:shrink-0">
+                      {fieldLabels[field]}
+                      <span className="ml-1 text-xs font-normal text-muted">(optional)</span>
+                    </label>
+                    <select
+                      value={fieldMap[field] ?? ""}
+                      onChange={(e) =>
+                        setFieldMap((prev) => ({ ...prev, [field]: e.target.value || undefined }))
+                      }
+                      className="field flex-1"
+                    >
+                      <option value="">— not in this file —</option>
                       {headers.map((h) => (
                         <option key={h} value={h}>{h}</option>
                       ))}

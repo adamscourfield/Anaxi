@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAttendancePct, parseStudentsCsv } from "@/modules/students/csv";
+import { ks2ScoreUpdate, parseAttendancePct, parseStudentsCsv } from "@/modules/students/csv";
 
 describe("students csv", () => {
   it("parses attendance variants", () => {
@@ -17,5 +17,21 @@ describe("students csv", () => {
     expect(result.errors).toHaveLength(0);
     expect(result.parsed[0].upn).toBe("U1");
     expect(result.parsed[0].sendFlag).toBe(true);
+  });
+});
+
+describe("ks2ScoreUpdate", () => {
+  it("omits scores the file didn't supply so stored values survive an update", () => {
+    expect(ks2ScoreUpdate({ ks2ReadingScaledScore: null, ks2MathsScaledScore: null })).toEqual({});
+  });
+
+  it("writes only the scores that are present", () => {
+    expect(ks2ScoreUpdate({ ks2ReadingScaledScore: 104, ks2MathsScaledScore: null })).toEqual({
+      ks2ReadingScaledScore: 104,
+    });
+    expect(ks2ScoreUpdate({ ks2ReadingScaledScore: 99, ks2MathsScaledScore: 101 })).toEqual({
+      ks2ReadingScaledScore: 99,
+      ks2MathsScaledScore: 101,
+    });
   });
 });
