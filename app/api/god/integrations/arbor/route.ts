@@ -42,9 +42,16 @@ export const POST = withApi(async function POST(req: Request) {
 
   const db = prisma as any;
   const existing = await db.sharedIntegration.findUnique({ where: { provider: "ARBOR" } });
+  let credentialsCiphertext: string;
+  try {
+    credentialsCiphertext = encryptCredentials(credentials);
+  } catch {
+    // Never accept credentials when production secure storage is unavailable.
+    return NextResponse.redirect(new URL("/god/integrations/arbor?error=secure-storage", req.url));
+  }
   const data = {
     status: "DISCONNECTED",
-    credentialsCiphertext: encryptCredentials(credentials),
+    credentialsCiphertext,
     config: { schoolHostname: credentials.schoolHostname },
     connectedByUserId: actor.id,
     connectedAt: new Date(),

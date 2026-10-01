@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetaText } from "@/components/ui/typography";
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, params] = await Promise.all([
     getCsrfToken(),
@@ -42,6 +42,13 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         <Card className="border-success/30 bg-[var(--pill-success-bg)]">
           <div className="font-medium text-success">Arbor connection saved.</div>
           <MetaText className="mt-1">Its login details are encrypted. The connection will remain inactive until the first sync is built and verified.</MetaText>
+        </Card>
+      ) : null}
+
+      {params?.error === "secure-storage" ? (
+        <Card className="border-danger/30 bg-[var(--pill-danger-bg)]">
+          <div className="font-medium text-danger">Arbor details were not saved.</div>
+          <MetaText className="mt-1">Secure credential storage has not been configured for this Anaxi environment. Add the integration encryption key in the hosting environment, then try again.</MetaText>
         </Card>
       ) : null}
 
