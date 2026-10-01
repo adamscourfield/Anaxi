@@ -29,14 +29,14 @@ export const POST = withApi(async function POST(req: Request) {
     db.user.findMany({ where: { tenantId: { in: tenantIds }, isActive: true, dataSource: "ARBOR", externalId: { not: null }, OR: [{ avatarDataSource: null, avatarUpdatedAt: null }, { avatarDataSource: "ARBOR" }] }, select: { id: true, externalId: true }, orderBy: { avatarUpdatedAt: "asc" }, take: BATCH_SIZE }),
   ]);
   const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
-  let studentPhotos = 0, staffPhotos = 0, failed = 0;
+  let studentPhotos = 0, staffPhotos = 0, unavailable = 0, failed = 0;
   for (const student of students) {
-    try { const photo = await client.getStudentPhoto(student.externalId); if (photo) { await db.student.update({ where: { id: student.id }, data: { avatarImage: photo.bytes, avatarMimeType: photo.mimeType, avatarUpdatedAt: new Date(), avatarDataSource: "ARBOR" } }); studentPhotos++; } } catch { failed++; }
+    try { const photo = await client.getStudentPhoto(student.externalId); if (photo) { await db.student.update({ where: { id: student.id }, data: { avatarImage: photo.bytes, avatarMimeType: photo.mimeType, avatarUpdatedAt: new Date(), avatarDataSource: "ARBOR" } }); studentPhotos++; } else unavailable++; } catch { failed++; }
   }
   for (const user of staff) {
-    try { const photo = await client.getStaffPhoto(user.externalId); if (photo) { await db.user.update({ where: { id: user.id }, data: { avatarImage: photo.bytes, avatarMimeType: photo.mimeType, avatarUpdatedAt: new Date(), avatarDataSource: "ARBOR" } }); staffPhotos++; } } catch { failed++; }
+    try { const photo = await client.getStaffPhoto(user.externalId); if (photo) { await db.user.update({ where: { id: user.id }, data: { avatarImage: photo.bytes, avatarMimeType: photo.mimeType, avatarUpdatedAt: new Date(), avatarDataSource: "ARBOR" } }); staffPhotos++; } else unavailable++; } catch { failed++; }
   }
-  if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.photos_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { studentPhotos, staffPhotos, failed } } });
-  if (scheduled) return NextResponse.json({ studentPhotos, staffPhotos, failed, batchesRemaining: students.length === BATCH_SIZE || staff.length === BATCH_SIZE });
-  const url = new URL("/god/integrations/arbor", req.url); url.searchParams.set("photoSync", "success"); url.searchParams.set("studentPhotos", String(studentPhotos)); url.searchParams.set("staffPhotos", String(staffPhotos)); return NextResponse.redirect(url);
+  if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.photos_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { studentPhotos, staffPhotos, unavailable, failed } } });
+  if (scheduled) return NextResponse.json({ studentPhotos, staffPhotos, unavailable, failed, batchesRemaining: students.length === BATCH_SIZE || staff.length === BATCH_SIZE });
+  const url = new URL("/god/integrations/arbor", req.url); url.searchParams.set("photoSync", "success"); url.searchParams.set("studentPhotos", String(studentPhotos)); url.searchParams.set("staffPhotos", String(staffPhotos)); url.searchParams.set("unavailable", String(unavailable)); url.searchParams.set("failed", String(failed)); return NextResponse.redirect(url);
 });
