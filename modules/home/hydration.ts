@@ -57,6 +57,13 @@ export type AttendanceHeadline = {
   asOf: Date | null;
 };
 
+type AttendanceSnapshot = {
+  attendancePct: unknown;
+  attendancePossibleCount: number;
+  attendancePresentCount: number;
+  snapshotDate: Date;
+};
+
 /**
  * The leadership attendance card is an academic-year headline, not a comparison
  * window metric. Arbor snapshots retain only the aggregate counts needed to weight
@@ -74,7 +81,9 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
       },
     },
   });
-  const snapshots = students.flatMap((student: { snapshots: Array<{ attendancePct: unknown; attendancePossibleCount: number; attendancePresentCount: number; snapshotDate: Date }> }) => student.snapshots);
+  const snapshots: AttendanceSnapshot[] = students.flatMap(
+    (student: { snapshots: AttendanceSnapshot[] }) => student.snapshots,
+  );
   if (!snapshots.length) return { attendancePct: null, studentsCovered: 0, asOf: null };
   const possible = snapshots.reduce((total, snapshot) => total + snapshot.attendancePossibleCount, 0);
   const present = snapshots.reduce((total, snapshot) => total + snapshot.attendancePresentCount, 0);
