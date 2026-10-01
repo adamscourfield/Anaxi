@@ -72,7 +72,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         </Card>
       ) : null}
 
-      {params?.photo === "success" ? (
+      {integration?.status === "CONNECTED" ? (
         <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">Arbor photo access verified.</div><MetaText className="mt-1">Anaxi can request a photo from Arbor. No image has been imported or stored yet.</MetaText></Card>
       ) : null}
 
