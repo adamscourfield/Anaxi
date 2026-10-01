@@ -38,15 +38,16 @@ export const POST = withApi(async function POST(req: Request) {
     if (schoolType === "SECONDARY") tenantIdBySchoolType.SECONDARY = school.tenantId;
   }
 
-  let run: { id: string } | null = null;
+  let runId: string | null = null;
   let created = 0;
   let updated = 0;
   let adopted = 0;
 
   try {
-    run = await db.sharedIntegrationSyncRun.create({
+    const run = await db.sharedIntegrationSyncRun.create({
       data: { integrationId: integration.id, entityType: "STUDENTS", triggeredBy: actor.id },
     });
+    runId = run.id;
     const tenantIds = Object.values(tenantIdBySchoolType);
     const [arborStudents, existingStudents] = await Promise.all([
       new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAllStudents(),
@@ -105,9 +106,9 @@ export const POST = withApi(async function POST(req: Request) {
     return NextResponse.redirect(url);
   } catch (error) {
     const errorSummary = error instanceof Error ? error.message.slice(0, 500) : "Student sync failed.";
-    if (run) {
+    if (runId) {
       await db.sharedIntegrationSyncRun.update({
-        where: { id: run.id },
+        where: { id: runId },
         data: { status: created || updated ? "PARTIAL" : "FAILED", recordsProcessed: created + updated, recordsCreated: created, recordsUpdated: updated, recordsFailed: 1, errorSummary, finishedAt: new Date() },
       });
     }
