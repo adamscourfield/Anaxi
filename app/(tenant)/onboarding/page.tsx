@@ -13,7 +13,6 @@ const ALL_MODULES = [
   { key: "OBSERVATIONS", label: "Observations" },
   { key: "SIGNALS", label: "Signals" },
   { key: "STUDENTS", label: "Students" },
-  { key: "BEHAVIOUR_IMPORT", label: "Behaviour Import" },
   { key: "ON_CALL", label: "On Call" },
   { key: "MEETINGS", label: "Meetings" },
   { key: "LEAVE", label: "Leave of Absence" },

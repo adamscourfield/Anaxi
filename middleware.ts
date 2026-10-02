@@ -44,7 +44,6 @@ export const config = {
     "/admin/:path*",
     "/analysis/:path*",
     "/assessments/:path*",
-    "/behaviour/:path*",
     "/explorer",
     "/leave/:path*",
     "/meetings/:path*",

@@ -22,7 +22,7 @@ import { PRIMARY_SIGNAL_DEFINITIONS } from "../modules/observations/signalDefini
 const prisma = new PrismaClient();
 
 const ALL_FEATURES = [
-  "OBSERVATIONS", "SIGNALS", "STUDENTS", "STUDENTS_IMPORT", "BEHAVIOUR_IMPORT",
+  "OBSERVATIONS", "SIGNALS", "STUDENTS", "STUDENTS_IMPORT",
   "LEAVE", "ON_CALL", "MEETINGS", "TIMETABLE", "ADMIN",
   "ADMIN_SETTINGS", "ANALYSIS", "ASSESSMENTS",
 ] as const;

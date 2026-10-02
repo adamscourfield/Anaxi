@@ -470,7 +470,7 @@ export default async function StudentDetailPage({
         </div>
       ) : (
         <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none">
-          <BodyText className="text-muted">No behaviour snapshot imported yet for this student.</BodyText>
+          <BodyText className="text-muted">No behaviour data recorded yet for this student.</BodyText>
         </div>
       )}
 
