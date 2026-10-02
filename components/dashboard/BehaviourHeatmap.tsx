@@ -230,14 +230,6 @@ export function BehaviourHeatmap({
             <p className="mt-0.5 text-xs text-muted">{subtitle}</p>
           </div>
         </div>
-        {!hideCta ? (
-          <Link
-            href={ctaHref}
-            className="shrink-0 text-xs font-semibold text-muted calm-transition hover:text-text"
-          >
-            View full map →
-          </Link>
-        ) : null}
       </div>
 
       <p className="text-[11px] font-medium text-muted">

@@ -25,6 +25,8 @@ function row(overrides: Partial<StudentRiskRow>): StudentRiskRow {
     lastSnapshotDate: null,
     drivers: [],
     attendancePct: 90,
+    detentionsCount: null,
+    onCallsCount: null,
     detentionsDelta: null,
     onCallsDelta: null,
     latenessDelta: null,

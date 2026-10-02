@@ -274,13 +274,22 @@ export async function computeBehaviourAnalysis(
   if (filters.ppOnly) studentWhere.ppFlag = true;
   if (filters.sendOnly) studentWhere.sendFlag = true;
 
-  // Fetch students with latest snapshot + watchlist status
+  // Fetch students with latest snapshot + watchlist status.
+  // Not bounded below by `start`: the daily sync always lags a day behind, so on a
+  // short window (7 days) a student whose last sync fell just outside it would
+  // otherwise have no snapshot at all here, making every headline stat for them --
+  // and often the whole cohort's averages -- silently blank. The "current state"
+  // figures below (attendance, positive/negative points, detentions...) use each
+  // student's single latest known snapshot regardless of window; only
+  // window-scoped figures (suspension incidents in the period) filter back down to
+  // `windowSnapshots`.
   const students = await (prisma as any).student.findMany({
     where: studentWhere,
     include: {
       snapshots: {
-        where: { snapshotDate: { gte: start, lte: end } },
+        where: { snapshotDate: { lte: end } },
         orderBy: { snapshotDate: "desc" },
+        take: 60,
       },
     },
   });
@@ -335,8 +344,11 @@ export async function computeBehaviourAnalysis(
       // Arbor behaviour totals are cumulative. A newer attendance update can
       // temporarily carry zero behaviour values, so retain the highest confirmed
       // cumulative suspension count in the selected period.
-      const suspensionSnapshot = student.snapshots.find((snapshot: { suspensionsCount: number }) => snapshot.suspensionsCount > 0);
-      const suspensionsCount = Math.max(0, ...(student.snapshots as Array<{ suspensionsCount: number }>).map((snapshot) => snapshot.suspensionsCount));
+      const windowSnapshots = (student.snapshots as Array<{ snapshotDate: Date; suspensionsCount: number }>).filter(
+        (snapshot) => snapshot.snapshotDate >= start && snapshot.snapshotDate <= end,
+      );
+      const suspensionSnapshot = windowSnapshots.find((snapshot) => snapshot.suspensionsCount > 0);
+      const suspensionsCount = Math.max(0, ...windowSnapshots.map((snapshot) => snapshot.suspensionsCount));
       totalSuspensions += suspensionsCount;
       totalOnCalls += snap.onCallsCount as number;
       attendanceValues.push(Number(snap.attendancePct));

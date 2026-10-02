@@ -14,7 +14,7 @@ import { computeCohortPivot, CohortPivotRow } from "@/modules/analysis/cohortPiv
 import { getProgress8DashboardSummary, type Progress8DashboardSummary } from "@/modules/assessments/progress8";
 import { computeStudentRiskIndex, StudentRiskRow } from "@/modules/analysis/studentRisk";
 import { HomeAssembly } from "@/modules/home/assembler";
-import { addDays, attendancePercentage, dateKey } from "@/lib/integrations/arbor/attendanceSync";
+import { addDays, attendancePercentage } from "@/lib/integrations/arbor/attendanceSync";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- Prisma dynamic model access */
 
@@ -123,12 +123,15 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
     yearPresent += latest.attendancePresentCount;
     if (!asOf || latest.snapshotDate > asOf) asOf = latest.snapshotDate;
 
-    if (dateKey(new Date(latest.snapshotDate)) === dateKey(today)) {
-      const previous = rows[1];
-      if (previous) {
-        todayPossible += latest.attendancePossibleCount - previous.attendancePossibleCount;
-        todayPresent += latest.attendancePresentCount - previous.attendancePresentCount;
-      }
+    // "Today" is really the most recently completed school day's attendance --
+    // the overnight sync always lags by one full day, so during school hours the
+    // latest snapshot is never actually dated today. Requiring an exact match to
+    // today's date here meant this figure was permanently blank; use whatever the
+    // latest single-day figure is instead.
+    const previous = rows[1];
+    if (previous) {
+      todayPossible += latest.attendancePossibleCount - previous.attendancePossibleCount;
+      todayPresent += latest.attendancePresentCount - previous.attendancePresentCount;
     }
 
     if (new Date(latest.snapshotDate) >= weekStart) {
@@ -381,16 +384,34 @@ export async function hydrateLeadershipHomeData({
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
 
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
+  // Use Europe/London's actual day boundary, not the server's local time (production
+  // runs in UTC) -- during British Summer Time a plain server-local midnight cutoff
+  // is an hour off from the school's real day boundary, clipping or including
+  // meetings from the wrong day.
+  const londonOffsetMinutes = (date: Date): number => {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      hour12: false,
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+    }).formatToParts(date);
+    const value = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+    const asIfUTC = Date.UTC(value("year"), value("month") - 1, value("day"), value("hour") % 24, value("minute"), value("second"));
+    return Math.round((asIfUTC - date.getTime()) / 60000);
+  };
+  const now = new Date();
+  const offsetMinutes = londonOffsetMinutes(now);
+  const londonNow = new Date(now.getTime() + offsetMinutes * 60000);
+  const startOfToday = new Date(
+    Date.UTC(londonNow.getUTCFullYear(), londonNow.getUTCMonth(), londonNow.getUTCDate()) - offsetMinutes * 60000,
+  );
+  const endOfToday = addDays(startOfToday, 1);
 
   const meetingsTodayPromise = safe(
     (prisma as any).meeting.count({
       where: {
         tenantId: user.tenantId,
-        startDateTime: { gte: startOfToday, lte: endOfToday },
+        startDateTime: { gte: startOfToday, lt: endOfToday },
       },
     }),
     0 as number

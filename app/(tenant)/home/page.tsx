@@ -47,6 +47,7 @@ import {
   BehaviourHeatmapData,
 } from "@/modules/home/hydration";
 import { BehaviourHeatmap } from "@/components/dashboard/BehaviourHeatmap";
+import { DepartmentSwitcher } from "@/components/home/department-switcher";
 import { Button } from "@/components/ui/button";
 import {
   HomeCardHeading,
@@ -812,17 +813,7 @@ function HodHome({
       <ExplorerPromoBand windowDays={windowDays} />
       {/* Dept switcher — navigation control, sits at top */}
       {allDepts.length > 1 && (
-        <div className="segmented-toggle">
-          {allDepts.map((d) => (
-            <Link
-              key={d.id}
-              href={`/home?dept=${d.id}&window=${windowDays}`}
-              className={`segmented-toggle-btn ${d.id === activeDeptId ? "segmented-toggle-btn-active" : ""}`}
-            >
-              {d.name}
-            </Link>
-          ))}
-        </div>
+        <DepartmentSwitcher depts={allDepts} activeDeptId={activeDeptId} windowDays={windowDays} />
       )}
 
       {/* ═══ Dept staff signals ═══ */}

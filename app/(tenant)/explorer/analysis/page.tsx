@@ -305,7 +305,7 @@ export default async function AnalysisPage({
             <p className="mt-1 text-[2rem] font-bold tabular-nums leading-none tracking-tight text-text sm:text-[2.35rem]">
               {summary.attendanceMean !== null ? `${summary.attendanceMean.toFixed(1)}%` : "—"}
             </p>
-            <p className="mt-1.5 text-[0.8125rem] text-muted">Mean on latest snapshot in window</p>
+            <p className="mt-1.5 text-[0.8125rem] text-muted">Mean on each student&apos;s latest known snapshot</p>
           </div>
         </div>
 
