@@ -53,20 +53,38 @@ export const POST = withApi(async function POST(req: Request) {
   }
 
   const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
-  const latest = await db.studentSnapshot.findFirst({
-    where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", countScope: "YEAR_TO_DATE" },
-    orderBy: { snapshotDate: "desc" },
-    select: { snapshotDate: true },
-  });
   const end = londonYesterday();
   const startOfYear = academicYearStart(end);
-  const start = latest?.snapshotDate && latest.snapshotDate >= startOfYear ? addDays(new Date(latest.snapshotDate), 1) : startOfYear;
-  const batchEnd = addDays(start, DAYS_PER_BATCH - 1) < end ? addDays(start, DAYS_PER_BATCH - 1) : end;
+  // Existing Anaxi students can be linked to Arbor without changing their source.
+  // Their external ID, not how they were first created, is what makes them eligible.
+  const students: Array<{ id: string; tenantId: string; externalId: string }> = await db.student.findMany({
+    where: { tenantId: { in: tenantIds }, status: "ACTIVE", externalId: { not: null } },
+    select: { id: true, tenantId: true, externalId: true },
+  });
+  const existingCoverage = await db.studentSnapshot.findMany({
+    where: { studentId: { in: students.map((student) => student.id) }, snapshotDate: { gte: startOfYear, lte: end } },
+    select: { studentId: true, snapshotDate: true },
+  });
+  const coveredStudentsByDay = new Map<string, Set<string>>();
+  for (const snapshot of existingCoverage) {
+    const key = dateKey(new Date(snapshot.snapshotDate));
+    const covered = coveredStudentsByDay.get(key) ?? new Set<string>();
+    covered.add(snapshot.studentId);
+    coveredStudentsByDay.set(key, covered);
+  }
+  let start: Date | null = null;
+  for (let day = startOfYear; day <= end; day = addDays(day, 1)) {
+    if ((coveredStudentsByDay.get(dateKey(day))?.size ?? 0) < students.length) {
+      start = day;
+      break;
+    }
+  }
 
-  if (start > end) {
+  if (!start) {
     if (isScheduledRun) return NextResponse.json({ upToDate: true });
     return NextResponse.redirect(new URL("/god/integrations/arbor?attendanceSync=up-to-date", req.url));
   }
+  const batchEnd = addDays(start, DAYS_PER_BATCH - 1) < end ? addDays(start, DAYS_PER_BATCH - 1) : end;
 
   let runId: string | null = null;
   let created = 0;
@@ -77,10 +95,6 @@ export const POST = withApi(async function POST(req: Request) {
       data: { integrationId: integration.id, entityType: "ATTENDANCE", triggeredBy: isScheduledRun ? "CRON" : actor!.id },
     });
     runId = run.id;
-    const students: Array<{ id: string; tenantId: string; externalId: string }> = await db.student.findMany({
-      where: { tenantId: { in: tenantIds }, status: "ACTIVE", dataSource: "ARBOR", externalId: { not: null } },
-      select: { id: true, tenantId: true, externalId: true },
-    });
     const studentByExternalId = new Map(students.map((student) => [student.externalId, student]));
     const linkedExternalIds = new Set(studentByExternalId.keys());
     const existingBefore = await db.studentSnapshot.findMany({
