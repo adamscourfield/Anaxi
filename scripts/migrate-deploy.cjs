@@ -30,7 +30,7 @@ async function main() {
     if (!output.includes("P1002")) process.exit(result.status ?? 1);
     if (attempt === attempts) process.exit(result.status ?? 1);
 
-    console.log(`Migration attempt ${attempt} did not complete; retrying in 15 seconds.`);
+    console.log(`Migration attempt ${attempt} did not complete; retrying in 20 seconds.`);
     await wait(retryDelayMs);
   }
 }

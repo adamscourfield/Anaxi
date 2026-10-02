@@ -351,7 +351,8 @@ export class ArborClient {
    * relationship and assigning a teacher to the wrong student or subject.
    */
   async inspectTimetableMappingFields(): Promise<Record<string, string[]>> {
-    const data = await runArborGraphqlQuery<{ __type: { name: string; fields: Array<{ name: string }> } | null }>(this.credentials, `{
+    type IntrospectionType = { name: string; fields: Array<{ name: string }> } | null;
+    const data = await runArborGraphqlQuery<{ membership: IntrospectionType; group: IntrospectionType; tutor: IntrospectionType; unit: IntrospectionType }>(this.credentials, `{
       membership: __type(name: "TeachingGroupMembership") { name fields { name } }
       group: __type(name: "TeachingGroup") { name fields { name } }
       tutor: __type(name: "TeachingGroupTutor") { name fields { name } }
