@@ -25,19 +25,17 @@ function academicYearFor(date: Date): string {
 }
 
 function periodFor(name: string, finalResult: boolean, assessmentDate?: string | null): { label: string; ordinal: number } | null {
-  if (finalResult) return { label: "August final results", ordinal: 90 };
-  if (/autumn\s+term\s*1/i.test(name)) return { label: "Autumn term 1", ordinal: 10 };
-  if (/autumn\s+term\s*2/i.test(name)) return { label: "Autumn term 2", ordinal: 20 };
-  if (/\bautumn\b/i.test(name)) return { label: "Autumn", ordinal: 15 };
-  if (/spring\s+term\s*1/i.test(name)) return { label: "Spring term 1", ordinal: 30 };
-  if (/spring\s+term\s*2/i.test(name)) return { label: "Spring term 2", ordinal: 40 };
-  if (/\bspring\b/i.test(name)) return { label: "Spring", ordinal: 35 };
+  if (finalResult) return { label: "Final", ordinal: 90 };
+  if (/\bautumn\b/i.test(name)) return { label: "Autumn", ordinal: 10 };
+  if (/\bspring\b/i.test(name)) return { label: "Spring", ordinal: 20 };
+  if (/\bsummer\b/i.test(name)) return { label: "Summer", ordinal: 30 };
   // Catalogue definitions can omit the period; use the dated mark when available.
   const date = assessmentDate ? new Date(assessmentDate) : new Date();
   if (Number.isNaN(date.getTime())) return null;
   const month = date.getUTCMonth();
-  if (month >= 8 || month <= 11) return { label: "Autumn", ordinal: 15 };
-  if (month >= 0 && month <= 3) return { label: "Spring", ordinal: 35 };
+  if (month >= 8 || month <= 11) return { label: "Autumn", ordinal: 10 };
+  if (month >= 0 && month <= 3) return { label: "Spring", ordinal: 20 };
+  if (month >= 4 && month <= 6) return { label: "Summer", ordinal: 30 };
   return null;
 }
 
@@ -62,23 +60,37 @@ export function mapArborAssessment(name: string, assessmentDate?: string | null)
   const academicYear = Number.isNaN(date.getTime()) ? academicYearFor(new Date()) : academicYearFor(date);
 
   const details = family === "GCSE"
-    ? { cycleLabel: `${academicYear} Year 11 GCSE tracking`, cohortLabel: "Year 11", qualificationType: "GCSE" as QualificationType, gradeFormat: "GCSE" as GradeFormat, yearGroups: ["Y11"] }
+    ? { cycleLabel: `${academicYear} - Year 11 - GCSE - ${period.label}`, cohortLabel: "Year 11", qualificationType: "GCSE" as QualificationType, gradeFormat: "GCSE" as GradeFormat, yearGroups: ["Y11"] }
     : family === "A_LEVEL"
-      ? { cycleLabel: `${academicYear} A-Level tracking`, cohortLabel: "Years 12–13", qualificationType: "A_LEVEL" as QualificationType, gradeFormat: "A_LEVEL" as GradeFormat, yearGroups: ["Y12", "Y13"] }
+      ? { cycleLabel: `${academicYear} - A-Level - ${period.label}`, cohortLabel: "Years 12–13", qualificationType: "A_LEVEL" as QualificationType, gradeFormat: "A_LEVEL" as GradeFormat, yearGroups: ["Y12", "Y13"] }
       : family === "KS3_PERCENTAGE"
-        ? { cycleLabel: `${academicYear} KS3 percentage tracking`, cohortLabel: "Years 7–9", qualificationType: "PERCENTAGE" as QualificationType, gradeFormat: "PERCENTAGE" as GradeFormat, yearGroups: ["Y7", "Y8", "Y9"] }
-        : { cycleLabel: `${academicYear} Year 10 percentage tracking`, cohortLabel: "Year 10", qualificationType: "PERCENTAGE" as QualificationType, gradeFormat: "PERCENTAGE" as GradeFormat, yearGroups: ["Y10"] };
+        ? { cycleLabel: `${academicYear} - KS3 - % - ${period.label}`, cohortLabel: "Years 7–9", qualificationType: "PERCENTAGE" as QualificationType, gradeFormat: "PERCENTAGE" as GradeFormat, yearGroups: ["Y7", "Y8", "Y9"] }
+        : { cycleLabel: `${academicYear} - Year 10 - % - ${period.label}`, cohortLabel: "Year 10", qualificationType: "PERCENTAGE" as QualificationType, gradeFormat: "PERCENTAGE" as GradeFormat, yearGroups: ["Y10"] };
 
   return {
     family,
     academicYear,
     ...details,
-    cycleExternalId: `ARBOR:assessment-cycle:${academicYear}:${family}`,
+    cycleExternalId: `ARBOR:assessment-cycle:${academicYear}:${family}:${period.ordinal}`,
     pointLabel: period.label,
     pointExternalId: `ARBOR:assessment-point:${academicYear}:${family}:${period.ordinal}`,
     pointOrdinal: period.ordinal,
     pointType: finalResult ? "EXTERNAL_FINAL" : "INTERNAL_ASSESSMENT",
     isFinalPoint: finalResult,
+  };
+}
+
+/** Splits shared Arbor families into the requested per-year-group Anaxi cycles. */
+export function mapArborAssessmentForYearGroup(mapping: ArborAssessmentMapping, yearGroup: string | null): ArborAssessmentMapping | null {
+  if (!yearGroup || !mapping.yearGroups.includes(yearGroup)) return null;
+  const year = yearGroup.replace(/^Y/i, "Year ");
+  const phase = mapping.family === "GCSE" ? "GCSE" : mapping.family === "A_LEVEL" ? "A-Level" : "%";
+  return {
+    ...mapping,
+    cycleLabel: `${mapping.academicYear} - ${year} - ${phase} - ${mapping.pointLabel}`,
+    cycleExternalId: `${mapping.cycleExternalId}:${yearGroup}`,
+    cohortLabel: year,
+    pointExternalId: `${mapping.pointExternalId}:${yearGroup}`,
   };
 }
 

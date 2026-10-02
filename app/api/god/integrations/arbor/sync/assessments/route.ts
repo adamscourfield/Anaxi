@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertCronAuthorized } from "@/lib/cronAuth";
 import { decryptCredentials } from "@/lib/integrationSecrets";
-import { arborAssessmentLabel, mapArborAssessment, type ArborAssessmentMapping } from "@/lib/integrations/arbor/assessmentPolicy";
+import { arborAssessmentLabel, mapArborAssessment, mapArborAssessmentForYearGroup, type ArborAssessmentMapping } from "@/lib/integrations/arbor/assessmentPolicy";
 import { ArborClient } from "@/lib/integrations/arbor/client";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
@@ -80,8 +80,9 @@ export async function POST(req: Request) {
     let imported = 0;
     for (const mark of marks) {
       const student = studentByExternalId.get(mark.student.id); const value = markValue(mark);
-      const mapping = mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: definition.label, assessmentName: definition.label, assessmentShortName: null }), mark.assessmentDate) ?? provisionalMapping;
-      if (!student || !value || !mapping.yearGroups.includes(student.yearGroup ?? "") || !ownerByTenantId.has(student.tenantId)) continue;
+      const baseMapping = mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: definition.label, assessmentName: definition.label, assessmentShortName: null }), mark.assessmentDate) ?? provisionalMapping;
+      const mapping = mapArborAssessmentForYearGroup(baseMapping, student?.yearGroup ?? null);
+      if (!student || !value || !mapping || !ownerByTenantId.has(student.tenantId)) continue;
       const assessment = await ensureAssessment(db, student.tenantId, ownerByTenantId.get(student.tenantId)!, definition, mapping);
       const normalizedScore = normalizeGrade(value, mapping.gradeFormat);
       await db.assessmentResult.upsert({
