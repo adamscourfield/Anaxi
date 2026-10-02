@@ -48,6 +48,7 @@ export const POST = withApi(async function POST(req: Request) {
   let created = 0;
   let updated = 0;
   let adopted = 0;
+  let archived = 0;
 
   try {
     const run = await db.sharedIntegrationSyncRun.create({
@@ -65,6 +66,19 @@ export const POST = withApi(async function POST(req: Request) {
     const plan = buildStudentSyncPlan(arborStudents, tenantIdBySchoolType, existingStudents);
     if (!isScheduledRun && plan.some((item) => item.action === "REVIEW")) {
       throw new Error("Student routing or matching changed since the comparison. Run the comparison again before syncing.");
+    }
+
+    // Arbor keeps historic leavers in its response without a current academic level.
+    // Archive only records already owned by Arbor and explicitly identified this way.
+    const offRollExternalIds = new Set(plan.filter((item) => item.action === "SKIP").map((item) => item.arborStudent.id));
+    for (const student of existingStudents) {
+      if (student.status !== "ACTIVE" || student.dataSource !== "ARBOR" || !student.externalId || !offRollExternalIds.has(student.externalId)) continue;
+      const before = student;
+      await db.student.update({ where: { id: student.id }, data: { status: "ARCHIVED" } });
+      await db.sharedIntegrationSyncChange.create({
+        data: { syncRunId: run.id, tenantId: student.tenantId, entityType: "Student", entityId: student.id, changeType: "UPDATE", beforeJson: before, afterJson: { ...before, status: "ARCHIVED" } },
+      });
+      archived++;
     }
 
     for (const item of plan) {
@@ -99,19 +113,20 @@ export const POST = withApi(async function POST(req: Request) {
 
     await db.sharedIntegrationSyncRun.update({
       where: { id: run.id },
-      data: { status: "SUCCESS", recordsProcessed: created + updated, recordsCreated: created, recordsUpdated: updated, finishedAt: new Date() },
+      data: { status: "SUCCESS", recordsProcessed: created + updated + archived, recordsCreated: created, recordsUpdated: updated + archived, finishedAt: new Date() },
     });
     await db.sharedIntegration.update({ where: { id: integration.id }, data: { lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null } });
     if (actor) {
       await db.auditLog.create({
-        data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.students_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { created, updated, adopted } },
+        data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.students_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { created, updated, adopted, archived } },
       });
     }
-    if (isScheduledRun) return NextResponse.json({ created, updated, adopted, skippedForReview: plan.filter((item) => item.action === "ADOPT" || item.action === "REVIEW").length });
+    if (isScheduledRun) return NextResponse.json({ created, updated, adopted, archived, skippedForReview: plan.filter((item) => item.action === "ADOPT" || item.action === "REVIEW").length });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("sync", "success");
     url.searchParams.set("created", String(created));
     url.searchParams.set("adopted", String(adopted));
+    url.searchParams.set("archived", String(archived));
     return NextResponse.redirect(url);
   } catch (error) {
     const errorSummary = error instanceof Error ? error.message.slice(0, 500) : "Student sync failed.";

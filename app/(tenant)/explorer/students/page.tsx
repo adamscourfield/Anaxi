@@ -339,8 +339,8 @@ export default async function StudentsPage({
             {allRows.length === 0 ? "No student data" : "No matches"}
           </p>
           <p className="mt-1 text-[0.8125rem] text-muted">
-            {allRows.length === 0
-              ? "Try widening the window period or import a behaviour snapshot."
+          {allRows.length === 0
+              ? "Try widening the window period or adjusting your filters."
               : "Try adjusting your filters."}
           </p>
           {activeChips.length > 0 && (
@@ -366,10 +366,6 @@ export default async function StudentsPage({
 
       <p className="text-[0.75rem] text-muted">
         {windowDays}-day window · Updated {computedAt.toLocaleDateString("en-GB")}
-        {" · "}
-        <Link href="/students/import" className="text-muted underline hover:text-text">
-          Import data
-        </Link>
       </p>
     </div>
   );
