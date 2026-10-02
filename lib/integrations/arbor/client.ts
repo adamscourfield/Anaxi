@@ -369,17 +369,24 @@ export class ArborClient {
   /** Reads a small timetable sample after confirming the exact relationship names. */
   async listTimetableTeacherAssignmentsPreview(): Promise<Array<{ studentId: string; teachingGroupId: string; subject: string; staffIds: string[] }>> {
     const fields = await this.inspectTimetableMappingFields();
-    const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["group", "academicUnit"], ["tutor", "teachingGroup"], ["tutor", "staff"], ["academic unit", "subject"]];
+    // Arbor nests a group's subject through its automatic enrolments, rather than
+    // directly on TeachingGroup. This is the relationship in Arbor's domain model.
+    const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["group", "academicUnitAutomaticEnrolments"], ["tutor", "teachingGroup"], ["tutor", "staff"], ["academic unit", "subject"]];
     const unavailable = required.filter(([entity, field]) => !fields[entity]?.includes(field));
     if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
 
     const data = await runArborGraphqlQuery<{
-      TeachingGroupMembership: Array<{ student: { id: string }; teachingGroup: { id: string; academicUnit: { subject: { displayName: string } | null } | null } | null }>;
+      TeachingGroupMembership: Array<{ student: { id: string }; teachingGroup: { id: string; academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null } | null }> }> } | null }>;
       TeachingGroupTutor: Array<{ teachingGroup: { id: string } | null; staff: { id: string } | null }>;
     }>(this.credentials, `{
       TeachingGroupMembership(page_size: 100, page_num: 0) {
         student { id }
-        teachingGroup { id academicUnit { subject { displayName } } }
+        teachingGroup {
+          id
+          academicUnitAutomaticEnrolments {
+            academicUnitEnrolments { academicUnit { subject { displayName } } }
+          }
+        }
       }
       TeachingGroupTutor(page_size: 500, page_num: 0) {
         teachingGroup { id }
@@ -395,9 +402,11 @@ export class ArborClient {
     }
     return data.TeachingGroupMembership.flatMap((membership) => {
       const group = membership.teachingGroup;
-      const subject = group?.academicUnit?.subject?.displayName;
+      const subjects = group?.academicUnitAutomaticEnrolments
+        .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
+        .flatMap((enrolment) => enrolment.academicUnit?.subject?.displayName ? [enrolment.academicUnit.subject.displayName] : []) ?? [];
       const staffIds = group ? staffByGroup.get(group.id) ?? [] : [];
-      return group && subject && staffIds.length ? [{ studentId: membership.student.id, teachingGroupId: group.id, subject, staffIds }] : [];
+      return group && staffIds.length ? [...new Set(subjects)].map((subject) => ({ studentId: membership.student.id, teachingGroupId: group.id, subject, staffIds })) : [];
     });
   }
 }
