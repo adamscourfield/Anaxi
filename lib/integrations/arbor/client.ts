@@ -140,6 +140,14 @@ export class ArborClient {
     return data.__type?.fields.map((field) => field.name) ?? [];
   }
 
+  /** Discovers the documented query arguments before filtering assessment marks. */
+  async inspectProgressAssessmentMarkFilters(): Promise<string[]> {
+    const data = await runArborGraphqlQuery<{ __schema: { queryType: { fields: Array<{ name: string; args: Array<{ name: string }> }> } } }>(this.credentials, `{
+      __schema { queryType { fields { name args { name } } } }
+    }`);
+    return data.__schema.queryType.fields.find((field) => field.name === "StudentProgressAssessmentMark")?.args.map((arg) => arg.name) ?? [];
+  }
+
   /** One read-only page of the four behaviour sources Anaxi currently measures. */
   async listBehaviourRecords(pageSize = 100, pageNum = 0, startAfter?: string, startBefore?: string): Promise<ArborBehaviourRecords> {
     const pointFilters = startAfter && startBefore ? `, awardedDatetime_after: "${startAfter}", awardedDatetime_before: "${startBefore}"` : "";
