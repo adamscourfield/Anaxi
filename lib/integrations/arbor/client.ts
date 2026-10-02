@@ -100,6 +100,17 @@ export class ArborClient {
     return data.StudentProgressAssessmentMark;
   }
 
+  /** Reads every page of recorded progress marks, stopping safely at 100,000 rows. */
+  async listAllAssessmentMarks(): Promise<Awaited<ReturnType<typeof this.listAssessmentMarks>>> {
+    const marks: Awaited<ReturnType<typeof this.listAssessmentMarks>> = [];
+    for (let pageNum = 0; pageNum < 200; pageNum++) {
+      const page = await this.listAssessmentMarks(500, pageNum);
+      marks.push(...page);
+      if (page.length < 500) return marks;
+    }
+    throw new Error("Arbor returned more than 100,000 progress assessment marks; preview stopped safely.");
+  }
+
   /** Lists the assessment catalogue itself, independently of mark pagination. */
   async listAllAssessmentDefinitions(): Promise<Array<{ id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null }>> {
     const assessments: Array<{ id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null }> = [];
