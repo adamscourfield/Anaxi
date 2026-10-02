@@ -77,6 +77,33 @@ export class ArborClient {
     };
   }
 
+  /** One read-only page of the four behaviour sources Anaxi currently measures. */
+  async listBehaviourRecords(pageSize = 100, pageNum = 0, startAfter?: string, startBefore?: string): Promise<ArborBehaviourRecords> {
+    const pointFilters = startAfter && startBefore ? `, awardedDatetime_after: "${startAfter}", awardedDatetime_before: "${startBefore}"` : "";
+    const detentionFilters = startAfter && startBefore ? `, decisionDatetime_after: "${startAfter}", decisionDatetime_before: "${startBefore}"` : "";
+    const internalExclusionFilters = startAfter && startBefore ? `, issuedDatetime_after: "${startAfter}", issuedDatetime_before: "${startBefore}"` : "";
+    const suspensionFilters = startAfter && startBefore ? `, fromDatetime_after: "${startAfter}", fromDatetime_before: "${startBefore}"` : "";
+    return runArborGraphqlQuery<ArborBehaviourRecords>(this.credentials, `{
+      PointAward(page_size: ${pageSize}, page_num: ${pageNum}${pointFilters}) { id student { id } points awardedDatetime }
+      Detention(page_size: ${pageSize}, page_num: ${pageNum}${detentionFilters}) { id student { id } decisionDatetime }
+      InternalExclusion(page_size: ${pageSize}, page_num: ${pageNum}${internalExclusionFilters}) { id student { id } issuedDatetime }
+      FixedPeriodExclusion(page_size: ${pageSize}, page_num: ${pageNum}${suspensionFilters}) { id student { id } fromDatetime }
+    }`);
+  }
+
+  async listAllBehaviourRecords(startAfter: string, startBefore: string): Promise<ArborBehaviourRecords> {
+    const all: ArborBehaviourRecords = { PointAward: [], Detention: [], InternalExclusion: [], FixedPeriodExclusion: [] };
+    for (let pageNum = 0; pageNum < 200; pageNum++) {
+      const page = await this.listBehaviourRecords(500, pageNum, startAfter, startBefore);
+      all.PointAward.push(...page.PointAward);
+      all.Detention.push(...page.Detention);
+      all.InternalExclusion.push(...page.InternalExclusion);
+      all.FixedPeriodExclusion.push(...page.FixedPeriodExclusion);
+      if (page.PointAward.length < 500 && page.Detention.length < 500 && page.InternalExclusion.length < 500 && page.FixedPeriodExclusion.length < 500) return all;
+    }
+    throw new Error("Behaviour preview exceeded 100,000 records for one source and stopped safely.");
+  }
+
   /**
    * Arbor documents this separately from GraphQL's entity permissions. The response
    * body is deliberately not read or retained: this is only an authorisation check.
@@ -233,6 +260,13 @@ export class ArborClient {
     return data.TeachingGroup;
   }
 }
+
+export type ArborBehaviourRecords = {
+  PointAward: Array<{ id: string; student: { id: string }; points: number; awardedDatetime: string | null }>;
+  Detention: Array<{ id: string; student: { id: string }; decisionDatetime: string | null }>;
+  InternalExclusion: Array<{ id: string; student: { id: string }; issuedDatetime: string | null }>;
+  FixedPeriodExclusion: Array<{ id: string; student: { id: string }; fromDatetime: string | null }>;
+};
 
 /** Arbor's REST endpoint may use a generic content type, so validate the actual file. */
 function photoMimeType(bytes: Buffer): "image/jpeg" | "image/png" | "image/webp" | null {
