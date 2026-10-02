@@ -283,7 +283,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
 
       {params?.assessmentActive === "prepared" ? (
         <StatusBanner variant="success" title="Assessment sync prepared.">
-          {previewCount(params.assessmentActiveDefinitions)} agreed assessment definitions are queued. Anaxi will inspect them one at a time overnight, without importing results until their mappings are safe.
+          {previewCount(params.assessmentActiveDefinitions)} agreed assessment definitions are queued. Anaxi will import linked Secondary results one paced page at a time overnight, using the agreed GCSE, A-Level, KS3 percentage, and Year 10 percentage mappings.
         </StatusBanner>
       ) : null}
 
@@ -442,7 +442,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </Card>
               <Card>
                 <H3>Assessment data</H3>
-                <MetaText className="mt-1">The agreed assessment families are being checked gradually. No assessment results will be imported until their mappings are confirmed.</MetaText>
+                <MetaText className="mt-1">Agreed Secondary assessment families import gradually: P8 GCSE, A-Level, KS3 percentage, Year 10 percentage, and final August GCSE/A-Level results. Other assessment types remain paused.</MetaText>
               </Card>
             </div>
           </section>

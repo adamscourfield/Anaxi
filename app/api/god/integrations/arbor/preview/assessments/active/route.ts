@@ -4,23 +4,9 @@ import { withApi } from "@/lib/apiRoute";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
+import { arborAssessmentLabel, mapArborAssessment } from "@/lib/integrations/arbor/assessmentPolicy";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
-
-type AssessmentDefinition = { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null };
-
-function label(assessment: AssessmentDefinition): string {
-  return assessment.assessmentName || assessment.assessmentShortName || assessment.displayName || "Untitled assessment";
-}
-
-/** The agreed attainment families. Effort grades and rankings deliberately stay out. */
-function isApprovedAssessment(name: string): boolean {
-  return /^(P8|A Level|%)/i.test(name)
-    || /^UL-/i.test(name)
-    || name === "UL Writing"
-    || /^KS2 SATs/i.test(name)
-    || name === "Year 1 Phonics Tracking";
-}
 
 export const POST = withApi(async function POST(req: Request) {
   await requireSuperAdminUser();
@@ -38,8 +24,8 @@ export const POST = withApi(async function POST(req: Request) {
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
     const definitions = await client.listAllAssessmentDefinitions();
     const approved = definitions
-      .map((definition) => ({ id: definition.id, label: label(definition) }))
-      .filter((definition) => isApprovedAssessment(definition.label))
+      .map((definition) => ({ id: definition.id, label: arborAssessmentLabel(definition) }))
+      .filter((definition) => mapArborAssessment(definition.label))
       .sort((a, b) => a.label.localeCompare(b.label));
     const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
     await db.sharedIntegration.update({

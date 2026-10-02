@@ -51,7 +51,7 @@ jobs:
             "${ANAXI_APP_URL%/}/api/cron/arbor-behaviour"
           done
           # One small, targeted request at a time keeps Arbor assessment reads paced.
-          for _ in $(seq 1 4); do
+          for _ in $(seq 1 8); do
             curl --fail --silent --show-error \
               --retry 1 \
               --header "Authorization: Bearer $ANAXI_CRON_SECRET" \

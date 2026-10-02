@@ -1,0 +1,87 @@
+import type { GradeFormat, PointType, QualificationType } from "@prisma/client";
+
+export type ArborAssessmentFamily = "GCSE" | "A_LEVEL" | "KS3_PERCENTAGE" | "Y10_PERCENTAGE";
+
+export type ArborAssessmentMapping = {
+  family: ArborAssessmentFamily;
+  academicYear: string;
+  cycleLabel: string;
+  cycleExternalId: string;
+  cohortLabel: string;
+  qualificationType: QualificationType;
+  gradeFormat: GradeFormat;
+  yearGroups: string[];
+  pointLabel: string;
+  pointExternalId: string;
+  pointOrdinal: number;
+  pointType: PointType;
+  isFinalPoint: boolean;
+};
+
+function academicYearFor(date: Date): string {
+  const year = date.getUTCFullYear();
+  const startsIn = date.getUTCMonth() >= 8 ? year : year - 1;
+  return `${startsIn}/${startsIn + 1}`;
+}
+
+function periodFor(name: string, finalResult: boolean, assessmentDate?: string | null): { label: string; ordinal: number } | null {
+  if (finalResult) return { label: "August final results", ordinal: 90 };
+  if (/autumn\s+term\s*1/i.test(name)) return { label: "Autumn term 1", ordinal: 10 };
+  if (/autumn\s+term\s*2/i.test(name)) return { label: "Autumn term 2", ordinal: 20 };
+  if (/\bautumn\b/i.test(name)) return { label: "Autumn", ordinal: 15 };
+  if (/spring\s+term\s*1/i.test(name)) return { label: "Spring term 1", ordinal: 30 };
+  if (/spring\s+term\s*2/i.test(name)) return { label: "Spring term 2", ordinal: 40 };
+  if (/\bspring\b/i.test(name)) return { label: "Spring", ordinal: 35 };
+  // Catalogue definitions can omit the period; use the dated mark when available.
+  const date = assessmentDate ? new Date(assessmentDate) : new Date();
+  if (Number.isNaN(date.getTime())) return null;
+  const month = date.getUTCMonth();
+  if (month >= 8 || month <= 11) return { label: "Autumn", ordinal: 15 };
+  if (month >= 0 && month <= 3) return { label: "Spring", ordinal: 35 };
+  return null;
+}
+
+/** Maps only the agreed Goresbrook Secondary assessment families. */
+export function mapArborAssessment(name: string, assessmentDate?: string | null): ArborAssessmentMapping | null {
+  const label = name.trim();
+  if (!label || /\b(predicted|prediction|target|baseline|meg)\b/i.test(label)) return null;
+
+  const finalResult = /\b(actual|exam\s*board|final\s*result|results?)\b/i.test(label);
+  let family: ArborAssessmentFamily | null = null;
+  if (/\bP8\b|\bGCSE\b/i.test(label)) family = "GCSE";
+  else if (/\bA[- ]?Level\b/i.test(label)) family = "A_LEVEL";
+  else if (/%\s*KS\s*3\b|\bKS\s*3\b.*%/i.test(label)) family = "KS3_PERCENTAGE";
+  else if (/%\s*(?:Y\s*10|Year\s*10)\b|\b(?:Y\s*10|Year\s*10)\b.*%/i.test(label)) family = "Y10_PERCENTAGE";
+  if (!family) return null;
+
+  // Final external outcomes are intentionally limited to GCSE and A-Level.
+  if (finalResult && family !== "GCSE" && family !== "A_LEVEL") return null;
+  const period = periodFor(label, finalResult, assessmentDate);
+  if (!period) return null;
+  const date = assessmentDate ? new Date(assessmentDate) : new Date();
+  const academicYear = Number.isNaN(date.getTime()) ? academicYearFor(new Date()) : academicYearFor(date);
+
+  const details = family === "GCSE"
+    ? { cycleLabel: `${academicYear} Year 11 GCSE tracking`, cohortLabel: "Year 11", qualificationType: "GCSE" as QualificationType, gradeFormat: "GCSE" as GradeFormat, yearGroups: ["Y11"] }
+    : family === "A_LEVEL"
+      ? { cycleLabel: `${academicYear} A-Level tracking`, cohortLabel: "Years 12–13", qualificationType: "A_LEVEL" as QualificationType, gradeFormat: "A_LEVEL" as GradeFormat, yearGroups: ["Y12", "Y13"] }
+      : family === "KS3_PERCENTAGE"
+        ? { cycleLabel: `${academicYear} KS3 percentage tracking`, cohortLabel: "Years 7–9", qualificationType: "PERCENTAGE" as QualificationType, gradeFormat: "PERCENTAGE" as GradeFormat, yearGroups: ["Y7", "Y8", "Y9"] }
+        : { cycleLabel: `${academicYear} Year 10 percentage tracking`, cohortLabel: "Year 10", qualificationType: "PERCENTAGE" as QualificationType, gradeFormat: "PERCENTAGE" as GradeFormat, yearGroups: ["Y10"] };
+
+  return {
+    family,
+    academicYear,
+    ...details,
+    cycleExternalId: `ARBOR:assessment-cycle:${academicYear}:${family}`,
+    pointLabel: period.label,
+    pointExternalId: `ARBOR:assessment-point:${academicYear}:${family}:${period.ordinal}`,
+    pointOrdinal: period.ordinal,
+    pointType: finalResult ? "EXTERNAL_FINAL" : "INTERNAL_ASSESSMENT",
+    isFinalPoint: finalResult,
+  };
+}
+
+export function arborAssessmentLabel(assessment: { displayName: string | null; assessmentName: string | null; assessmentShortName: string | null }): string {
+  return assessment.assessmentName || assessment.assessmentShortName || assessment.displayName || "Untitled assessment";
+}
