@@ -26,10 +26,12 @@ jobs:
             --retry 2 \
             --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
             "${ANAXI_APP_URL%/}/api/cron/arbor-staff"
-          curl --fail --silent --show-error \
-            --retry 2 \
-            --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
-            "${ANAXI_APP_URL%/}/api/cron/arbor-photos"
+          for _ in $(seq 1 8); do
+            curl --fail --silent --show-error \
+              --retry 2 \
+              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+              "${ANAXI_APP_URL%/}/api/cron/arbor-photos"
+          done
           # Each call imports at most seven completed days. Repeating it lets the
           # first run catch up the academic year without requiring a larger plan.
           for _ in $(seq 1 8); do
