@@ -36,7 +36,11 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("assessmentActiveDefinitions", String(assessments.size));
     url.searchParams.set("assessmentActiveLabels", [...assessments.values()].sort((a, b) => a.localeCompare(b)).slice(0, 12).join(" | "));
     return NextResponse.redirect(url);
-  } catch {
-    return NextResponse.redirect(new URL("/god/integrations/arbor?assessmentActive=failed", req.url));
+  } catch (error) {
+    const message = error instanceof Error ? error.message.slice(0, 180) : "Arbor did not complete the preview.";
+    const url = new URL("/god/integrations/arbor", req.url);
+    url.searchParams.set("assessmentActive", "failed");
+    url.searchParams.set("assessmentActiveError", message);
+    return NextResponse.redirect(url);
   }
 });
