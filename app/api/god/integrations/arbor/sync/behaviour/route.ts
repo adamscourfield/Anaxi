@@ -12,6 +12,9 @@ import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
 const DAYS_PER_BATCH = 7;
+// Incrementing this deliberately replays one academic year once, repairing totals
+// written while attendance and behaviour batches were arriving independently.
+const BEHAVIOUR_SYNC_VERSION = 2;
 
 function londonYesterday(): Date {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
@@ -39,7 +42,8 @@ export const POST = withApi(async function POST(req: Request) {
   const end = londonYesterday(); const academicStart = academicYearStart(end);
   const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
   const storedDate = typeof config.behaviourLastSyncedDate === "string" ? new Date(config.behaviourLastSyncedDate) : null;
-  const start = storedDate && !Number.isNaN(storedDate.getTime()) && storedDate >= academicStart ? addDays(storedDate, 1) : academicStart;
+  const versionIsCurrent = config.behaviourSyncVersion === BEHAVIOUR_SYNC_VERSION;
+  const start = versionIsCurrent && storedDate && !Number.isNaN(storedDate.getTime()) && storedDate >= academicStart ? addDays(storedDate, 1) : academicStart;
   if (start > end) return scheduled ? NextResponse.json({ upToDate: true }) : NextResponse.redirect(new URL("/god/integrations/arbor?behaviourSync=up-to-date", req.url));
   const batchEnd = addDays(start, DAYS_PER_BATCH - 1) < end ? addDays(start, DAYS_PER_BATCH - 1) : end;
   let runId: string | null = null, created = 0, updated = 0, preservedManual = 0;
@@ -68,7 +72,7 @@ export const POST = withApi(async function POST(req: Request) {
       if (creates.length) await db.studentSnapshot.createMany({ data: creates }); await updateInChunks(updates);
     }
     await db.sharedIntegrationSyncRun.update({ where: { id: run.id }, data: { status: "SUCCESS", recordsProcessed: created + updated, recordsCreated: created, recordsUpdated: updated, finishedAt: new Date() } });
-    await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, behaviourLastSyncedDate: dateKey(batchEnd) }, lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null } });
+    await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, behaviourLastSyncedDate: dateKey(batchEnd), behaviourSyncVersion: BEHAVIOUR_SYNC_VERSION }, lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null } });
     if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.behaviour_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { from: dateKey(start), to: dateKey(batchEnd), created, updated, preservedManual } } });
     if (scheduled) return NextResponse.json({ from: dateKey(start), to: dateKey(batchEnd), created, updated });
     const url = new URL("/god/integrations/arbor", req.url); for (const [key, value] of Object.entries({ behaviourSync: "success", behaviourFrom: dateKey(start), behaviourTo: dateKey(batchEnd), behaviourCreated: created, behaviourUpdated: updated, behaviourPreserved: preservedManual })) url.searchParams.set(key, String(value)); return NextResponse.redirect(url);

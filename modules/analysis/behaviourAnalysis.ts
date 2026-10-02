@@ -281,7 +281,6 @@ export async function computeBehaviourAnalysis(
       snapshots: {
         where: { snapshotDate: { gte: start, lte: end } },
         orderBy: { snapshotDate: "desc" },
-        take: 1,
       },
     },
   });
@@ -333,17 +332,22 @@ export async function computeBehaviourAnalysis(
       totalNegativePoints += snap.negativePointsTotal as number;
       totalDetentions += snap.detentionsCount as number;
       totalInternalExclusions += snap.internalExclusionsCount as number;
-      totalSuspensions += snap.suspensionsCount as number;
+      // Arbor behaviour totals are cumulative. A newer attendance update can
+      // temporarily carry zero behaviour values, so retain the highest confirmed
+      // cumulative suspension count in the selected period.
+      const suspensionSnapshot = student.snapshots.find((snapshot: { suspensionsCount: number }) => snapshot.suspensionsCount > 0);
+      const suspensionsCount = Math.max(0, ...(student.snapshots as Array<{ suspensionsCount: number }>).map((snapshot) => snapshot.suspensionsCount));
+      totalSuspensions += suspensionsCount;
       totalOnCalls += snap.onCallsCount as number;
       attendanceValues.push(Number(snap.attendancePct));
 
-      if ((snap.suspensionsCount as number) > 0) {
+      if (suspensionSnapshot) {
         suspensionIncidents.push({
           studentId: student.id,
           studentName: student.fullName,
           yearGroup: student.yearGroup ?? null,
-          suspensionsCount: snap.suspensionsCount as number,
-          snapshotDate: snap.snapshotDate as Date,
+          suspensionsCount,
+          snapshotDate: suspensionSnapshot.snapshotDate as Date,
         });
       }
 

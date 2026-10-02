@@ -236,6 +236,10 @@ function toSnapshotSummary(snap: any): SnapshotSummary {
   };
 }
 
+function highestCumulative(snapshots: any[], field: "suspensionsCount"): number {
+  return snapshots.reduce((highest, snapshot) => Math.max(highest, Number(snapshot[field] ?? 0)), 0);
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export type StudentStatusFilter = "ACTIVE" | "ARCHIVED" | "ALL";
@@ -314,8 +318,10 @@ export async function computeStudentRiskIndex(
     const onCallsDelta = usablePrevious ? currentSnap.onCallsCount - usablePrevious.onCallsCount : null;
     const detentionsDelta = usablePrevious ? currentSnap.detentionsCount - usablePrevious.detentionsCount : null;
     const latenessDelta = usablePrevious ? currentSnap.latenessCount - usablePrevious.latenessCount : null;
+    const currentSuspensions = highestCumulative(currentWindowSnap ? snapshots.filter((s: any) => s.snapshotDate >= currentStart && s.snapshotDate <= currentEnd) : [currentSnap]);
+    const previousSuspensions = highestCumulative(usablePrevious ? snapshots.filter((s: any) => s.snapshotDate >= prevStart && s.snapshotDate < currentStart) : []);
     const suspensionsDelta = usablePrevious
-      ? currentSnap.suspensionsCount - usablePrevious.suspensionsCount
+      ? currentSuspensions - previousSuspensions
       : null;
     const internalExclusionsDelta = usablePrevious
       ? currentSnap.internalExclusionsCount - usablePrevious.internalExclusionsCount
@@ -466,8 +472,12 @@ export async function computeStudentRiskProfile(
   const latenessDelta = prevSnap && currentSnap
     ? currentSnap.latenessCount - prevSnap.latenessCount
     : null;
+  const currentWindowSnapshots = snapshots.filter((s: any) => s.snapshotDate >= currentStart && s.snapshotDate <= currentEnd);
+  const previousWindowSnapshots = snapshots.filter((s: any) => s.snapshotDate >= prevStart && s.snapshotDate < currentStart);
+  const currentSuspensions = highestCumulative(currentWindowSnapshots, "suspensionsCount");
+  const previousSuspensions = highestCumulative(previousWindowSnapshots, "suspensionsCount");
   const suspensionsDelta = prevSnap && currentSnap
-    ? currentSnap.suspensionsCount - prevSnap.suspensionsCount
+    ? currentSuspensions - previousSuspensions
     : null;
   const internalExclusionsDelta = prevSnap && currentSnap
     ? currentSnap.internalExclusionsCount - prevSnap.internalExclusionsCount
@@ -509,7 +519,7 @@ export async function computeStudentRiskProfile(
     confidence,
     lastSnapshotDate: currentSnap?.snapshotDate ?? null,
     drivers,
-    currentSnapshot: currentSnap ? toSnapshotSummary(currentSnap) : null,
+    currentSnapshot: currentSnap ? { ...toSnapshotSummary(currentSnap), suspensionsCount: currentSuspensions } : null,
     attendanceDelta,
     onCallsDelta,
     detentionsDelta,
