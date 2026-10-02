@@ -467,54 +467,42 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
 
       {integration?.status === "CONNECTED" ? (
         <>
-          <Card className="overflow-hidden border-accent/25 bg-[linear-gradient(110deg,var(--surface-container-lowest),var(--surface-container-low))]">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-2xl">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-                  <span className="h-1.5 w-1.5 rounded-full bg-success" /> Connected and syncing
-                </div>
-                <H3 className="text-xl">Arbor is now the source of truth for your school data.</H3>
-                <MetaText className="mt-2">Students, staff, attendance, behaviour, and profile photos update automatically. Goresbrook Primary and Secondary stay separate in Anaxi throughout.</MetaText>
-              </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4 lg:text-right">
-                <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Schools</div><div className="mt-1 font-semibold">2 connected</div></div>
-                <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Schedule</div><div className="mt-1 font-semibold">Nightly</div></div>
-                <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Assessments</div><div className="mt-1 font-semibold">{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} approved` : "Awaiting review"}</div></div>
-                <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Connection</div><div className="mt-1 font-semibold text-success">Healthy</div></div>
-              </div>
+          <Card className="border-success/25">
+            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-success">Connected and syncing nightly</div>
+            <H3 className="mt-2 text-xl">Arbor is the source of truth for Goresbrook data.</H3>
+            <MetaText className="mt-2 max-w-3xl">Students, staff, attendance, behaviour, and profile photos update automatically. Primary and Secondary remain separate inside Anaxi.</MetaText>
+            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-border/70 pt-4 text-sm">
+              <span><span className="text-muted">Schools:</span> <strong>2 connected</strong></span>
+              <span><span className="text-muted">Assessment cycles:</span> <strong>{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} approved` : "awaiting review"}</strong></span>
+              <span><span className="text-muted">Connection:</span> <strong className="text-success">healthy</strong></span>
             </div>
           </Card>
 
           <section className="space-y-3">
             <SectionHeader title="Automatic data sync" subtitle="These areas update without staff needing to upload a spreadsheet or maintain a separate list." />
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <Card className="min-h-36 border-t-2 border-t-accent/60">
-                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">People</div>
-                <H3 className="mt-3">Students and staff</H3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Card>
+                <H3>Students and staff</H3>
                 <MetaText className="mt-2">New active students, off-roll changes, and linked staff details are kept current.</MetaText>
               </Card>
-              <Card className="min-h-36 border-t-2 border-t-accent/60">
-                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Pastoral</div>
-                <H3 className="mt-3">Attendance and behaviour</H3>
+              <Card>
+                <H3>Attendance and behaviour</H3>
                 <MetaText className="mt-2">Academic-year attendance and Anaxi&apos;s existing behaviour measures refresh overnight.</MetaText>
               </Card>
-              <Card className="min-h-36 border-t-2 border-t-accent/60">
-                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Identity</div>
-                <H3 className="mt-3">Profile photos</H3>
+              <Card>
+                <H3>Profile photos</H3>
                 <MetaText className="mt-2">Photos continue in secure small batches. Manually added Anaxi images stay untouched.</MetaText>
               </Card>
-              <Card className="min-h-36 border-t-2 border-t-warning/70">
-                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Pending permission</div>
-                <H3 className="mt-3">Subject teachers</H3>
-                <MetaText className="mt-2">Ready to connect when Arbor grants the timetable enrolment permission.</MetaText>
+              <Card>
+                <H3>Assessment results</H3>
+                <MetaText className="mt-2">Assessment cycles stay paused until you review their source records and approve them below.</MetaText>
               </Card>
             </div>
           </section>
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
-            <div className="space-y-3">
+          <section className="space-y-3">
               <SectionHeader title="Assessment review" subtitle="This is the only data area that requires a decision before it appears in Anaxi." />
-              <Card className="space-y-5 border-accent/25">
+              <Card className="space-y-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Controlled import</div>
@@ -530,18 +518,21 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 {assessmentCycles.length ? (
                   <form method="post" action="/api/god/integrations/arbor/assessments/approval" className="space-y-4">
                     <CsrfInput token={csrfToken} />
-                    <div className="divide-y divide-border/70 rounded-sm border border-border/70 bg-[var(--surface-container-lowest)]">
+                    <div className="divide-y divide-border/70 rounded-sm border border-border/70">
                       {assessmentCycles.map((cycle) => {
                         const students = studentCountByYearGroup.get(cycle.yearGroup) ?? 0;
                         return (
-                          <label key={cycle.key} className="flex cursor-pointer items-start gap-3 px-4 py-4 calm-transition hover:bg-[var(--surface-container-low)]">
-                            <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} className="mt-1 accent-accent" />
-                            <span className="min-w-0">
-                              <span className="block font-medium">{cycle.label}</span>
-                              <MetaText className="mt-1">{cycle.gradeFormat} · {students} active {students === 1 ? "student" : "students"} · {cycle.definitions.length} Arbor {cycle.definitions.length === 1 ? "definition" : "definitions"}</MetaText>
-                              <MetaText className="mt-1 truncate">{cycle.definitions.slice(0, 3).join(" · ")}{cycle.definitions.length > 3 ? ` +${cycle.definitions.length - 3} more` : ""}</MetaText>
-                            </span>
-                          </label>
+                          <div key={cycle.key} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+                            <label className="flex min-w-0 cursor-pointer items-start gap-3">
+                              <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} className="mt-1 accent-accent" />
+                              <span className="min-w-0">
+                                <span className="block font-medium">{cycle.label}</span>
+                                <MetaText className="mt-1">{cycle.gradeFormat} · {students} active {students === 1 ? "student" : "students"} · {cycle.definitions.length} Arbor {cycle.definitions.length === 1 ? "definition" : "definitions"}</MetaText>
+                                <MetaText className="mt-1 break-words">{cycle.definitions.slice(0, 3).join(" · ")}{cycle.definitions.length > 3 ? ` +${cycle.definitions.length - 3} more` : ""}</MetaText>
+                              </span>
+                            </label>
+                            <Link href={`/god/integrations/arbor/assessments/${encodeURIComponent(cycle.key)}`} className="shrink-0 text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
+                          </div>
                         );
                       })}
                     </div>
@@ -565,28 +556,26 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                   </form>
                 ) : null}
               </Card>
-            </div>
+          </section>
 
-            <div className="space-y-3">
-              <SectionHeader title="Timetable mapping" subtitle="A final connection still needs Arbor access." />
-              <Card className="space-y-4 border-warning/30 bg-[var(--pill-warning-bg)]">
+          <section className="space-y-3">
+            <SectionHeader title="Timetable mapping" subtitle="A final connection still needs Arbor access." />
+            <Card className="space-y-4">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-warning">Waiting for Arbor</div>
-                  <H3 className="mt-2">Subject teachers</H3>
+                  <H3>Subject teachers</H3>
                   <MetaText className="mt-1">Once `AcademicUnitAutomaticEnrolment` access is granted, Anaxi can show each student&apos;s teachers by subject.</MetaText>
                 </div>
-                <div className="grid gap-2">
+                <div className="flex flex-wrap gap-2">
                   <form method="post" action="/api/god/integrations/arbor/preview/timetable">
                     <CsrfInput token={csrfToken} />
-                    <SubmitButton variant="secondary" className="w-full">Check timetable access</SubmitButton>
+                    <SubmitButton variant="secondary">Check timetable access</SubmitButton>
                   </form>
                   <form method="post" action="/api/god/integrations/arbor/preview/timetable/summary">
                     <CsrfInput token={csrfToken} />
-                    <SubmitButton variant="ghost" className="w-full">Preview subject links</SubmitButton>
+                    <SubmitButton variant="ghost">Preview subject links</SubmitButton>
                   </form>
                 </div>
-              </Card>
-            </div>
+            </Card>
           </section>
 
           <CollapsibleCard title="Maintenance and connection checks" defaultOpen={false}>
