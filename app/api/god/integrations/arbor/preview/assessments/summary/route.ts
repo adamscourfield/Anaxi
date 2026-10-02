@@ -14,7 +14,9 @@ export const POST = withApi(async function POST(req: Request) {
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.redirect(new URL("/god/integrations/arbor?assessmentPreview=not-connected", req.url));
   try {
     const marks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks();
-    const ids = new Set((await db.student.findMany({ where: { tenantId: { in: integration.schools.map((s: { tenantId: string }) => s.tenantId) }, dataSource: "ARBOR", externalId: { not: null } }, select: { externalId: true } })).flatMap((s: { externalId: string | null }) => s.externalId ? [s.externalId] : []));
+    // A student may have been created in Anaxi and linked to Arbor afterwards.
+    // The external ID is the integration link; the original data source is not.
+    const ids = new Set((await db.student.findMany({ where: { tenantId: { in: integration.schools.map((s: { tenantId: string }) => s.tenantId) }, externalId: { not: null } }, select: { externalId: true } })).flatMap((s: { externalId: string | null }) => s.externalId ? [s.externalId] : []));
     const linked = marks.filter((mark) => ids.has(mark.student.id));
     const assessments = new Set(linked.flatMap((mark) => mark.adHocAssessment ? [mark.adHocAssessment.id] : []));
     const url = new URL("/god/integrations/arbor", req.url); for (const [key, value] of Object.entries({ assessmentPreview: "success", assessmentMarks: marks.length, assessmentLinked: linked.length, assessmentDefinitions: assessments.size })) url.searchParams.set(key, String(value)); return NextResponse.redirect(url);
