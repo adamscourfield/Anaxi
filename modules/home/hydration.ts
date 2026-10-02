@@ -14,6 +14,7 @@ import { computeCohortPivot, CohortPivotRow } from "@/modules/analysis/cohortPiv
 import { getProgress8DashboardSummary, type Progress8DashboardSummary } from "@/modules/assessments/progress8";
 import { computeStudentRiskIndex, StudentRiskRow } from "@/modules/analysis/studentRisk";
 import { HomeAssembly } from "@/modules/home/assembler";
+import { addDays, attendancePercentage, dateKey } from "@/lib/integrations/arbor/attendanceSync";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- Prisma dynamic model access */
 
@@ -52,47 +53,98 @@ export type AttainmentSummary = {
 };
 
 export type AttendanceHeadline = {
+  /** Academic-year-to-date attendance. */
   attendancePct: number | null;
+  /** Just today's attendance, derived from today's cumulative total minus the previous school day's. */
+  todayPct: number | null;
+  /** This week's attendance so far (Monday to today), derived the same way. */
+  weekPct: number | null;
   studentsCovered: number;
   asOf: Date | null;
 };
 
 type AttendanceSnapshot = {
-  attendancePct: unknown;
   attendancePossibleCount: number;
   attendancePresentCount: number;
   snapshotDate: Date;
 };
 
+export function londonToday(): Date {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" })
+    .formatToParts(new Date());
+  const value = (type: string) => Number(parts.find((part) => part.type === type)?.value);
+  return new Date(Date.UTC(value("year"), value("month") - 1, value("day")));
+}
+
+export function mondayOnOrBefore(date: Date): Date {
+  const weekday = date.getUTCDay(); // 0 = Sunday .. 6 = Saturday
+  const daysSinceMonday = weekday === 0 ? 6 : weekday - 1;
+  return addDays(date, -daysSinceMonday);
+}
+
 /**
- * The leadership attendance card is an academic-year headline, not a comparison
- * window metric. Arbor snapshots retain only the aggregate counts needed to weight
- * the school figure correctly.
+ * The leadership attendance card shows three figures: an academic-year headline,
+ * today, and the week so far. Arbor snapshots only store one row per student per day
+ * with YEAR_TO_DATE cumulative totals, so "today" and "week so far" are derived by
+ * diffing the latest cumulative total against an earlier day's — never by reading
+ * individual register marks.
  */
 async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHeadline> {
+  const today = londonToday();
+  const weekStart = mondayOnOrBefore(today);
+  // Go back far enough to find the previous school day's cumulative total even across
+  // a half-term-length gap, so "today" still resolves on the first day back.
+  const rangeStart = addDays(weekStart, -14);
+
   const students = await (prisma as any).student.findMany({
     where: { tenantId, status: "ACTIVE" },
     select: {
       snapshots: {
         // Attendance and behaviour can arrive in separate same-day sync batches.
         // Only an attendance-bearing snapshot may supply the attendance headline.
-        where: { countScope: "YEAR_TO_DATE", attendancePossibleCount: { gt: 0 } },
+        where: { countScope: "YEAR_TO_DATE", attendancePossibleCount: { gt: 0 }, snapshotDate: { gte: rangeStart } },
         orderBy: { snapshotDate: "desc" },
-        take: 1,
-        select: { attendancePct: true, attendancePossibleCount: true, attendancePresentCount: true, snapshotDate: true },
+        select: { attendancePossibleCount: true, attendancePresentCount: true, snapshotDate: true },
       },
     },
   });
-  const snapshots: AttendanceSnapshot[] = students.flatMap(
-    (student: { snapshots: AttendanceSnapshot[] }) => student.snapshots,
-  );
-  if (!snapshots.length) return { attendancePct: null, studentsCovered: 0, asOf: null };
-  const possible = snapshots.reduce((total, snapshot) => total + snapshot.attendancePossibleCount, 0);
-  const present = snapshots.reduce((total, snapshot) => total + snapshot.attendancePresentCount, 0);
-  const attendancePct = possible > 0
-    ? Math.round((present / possible) * 1000) / 10
-    : snapshots.reduce((total, snapshot) => total + Number(snapshot.attendancePct), 0) / snapshots.length;
-  return { attendancePct, studentsCovered: snapshots.length, asOf: snapshots.reduce((latest, snapshot) => snapshot.snapshotDate > latest ? snapshot.snapshotDate : latest, snapshots[0].snapshotDate) };
+
+  let yearPossible = 0, yearPresent = 0, studentsCovered = 0;
+  let todayPossible = 0, todayPresent = 0;
+  let weekPossible = 0, weekPresent = 0;
+  let asOf: Date | null = null;
+
+  for (const student of students as Array<{ snapshots: AttendanceSnapshot[] }>) {
+    const rows = student.snapshots;
+    const latest = rows[0];
+    if (!latest) continue;
+    studentsCovered += 1;
+    yearPossible += latest.attendancePossibleCount;
+    yearPresent += latest.attendancePresentCount;
+    if (!asOf || latest.snapshotDate > asOf) asOf = latest.snapshotDate;
+
+    if (dateKey(new Date(latest.snapshotDate)) === dateKey(today)) {
+      const previous = rows[1];
+      if (previous) {
+        todayPossible += latest.attendancePossibleCount - previous.attendancePossibleCount;
+        todayPresent += latest.attendancePresentCount - previous.attendancePresentCount;
+      }
+    }
+
+    if (new Date(latest.snapshotDate) >= weekStart) {
+      const beforeWeek = rows.find((row) => new Date(row.snapshotDate) < weekStart);
+      weekPossible += latest.attendancePossibleCount - (beforeWeek?.attendancePossibleCount ?? 0);
+      weekPresent += latest.attendancePresentCount - (beforeWeek?.attendancePresentCount ?? 0);
+    }
+  }
+
+  return {
+    attendancePct: studentsCovered > 0 ? attendancePercentage({ possible: yearPossible, present: yearPresent, late: 0 }) : null,
+    todayPct: todayPossible > 0 ? attendancePercentage({ possible: todayPossible, present: todayPresent, late: 0 }) : null,
+    weekPct: weekPossible > 0 ? attendancePercentage({ possible: weekPossible, present: weekPresent, late: 0 }) : null,
+    studentsCovered,
+    asOf,
+  };
 }
 
 export type PendingLeaveDetail = {
@@ -345,26 +397,29 @@ export async function hydrateLeadershipHomeData({
   );
 
   const weekObsPromise = safe(
-    (prisma as any).observation
-      .findMany({
+    Promise.all([
+      (prisma as any).observation.count({
+        where: { tenantId: user.tenantId, observedAt: { gte: weekAgo } },
+      }),
+      (prisma as any).observation.findMany({
         where: { tenantId: user.tenantId, observedAt: { gte: weekAgo } },
         include: { observedTeacher: { select: { fullName: true } } },
         orderBy: { observedAt: "desc" },
         take: 20,
-      })
-      .then((rows: any[]) => {
-        const seen = new Set<string>();
-        const recentTeachers: { id: string; name: string }[] = [];
-        for (const r of rows) {
-          const tid = r.observedTeacherId as string;
-          if (!seen.has(tid)) {
-            seen.add(tid);
-            recentTeachers.push({ id: tid, name: (r.observedTeacher?.fullName ?? "Unknown") as string });
-          }
-          if (recentTeachers.length >= 5) break;
-        }
-        return { count: rows.length, recentTeachers };
       }),
+    ]).then(([count, rows]: [number, any[]]) => {
+      const seen = new Set<string>();
+      const recentTeachers: { id: string; name: string }[] = [];
+      for (const r of rows) {
+        const tid = r.observedTeacherId as string;
+        if (!seen.has(tid)) {
+          seen.add(tid);
+          recentTeachers.push({ id: tid, name: (r.observedTeacher?.fullName ?? "Unknown") as string });
+        }
+        if (recentTeachers.length >= 5) break;
+      }
+      return { count, recentTeachers };
+    }),
     { count: 0, recentTeachers: [] as { id: string; name: string }[] }
   );
 
@@ -384,7 +439,7 @@ export async function hydrateLeadershipHomeData({
     attainmentPromise,
     meetingsTodayPromise,
     hasAssessmentsFeature ? fetchDashboardAttainmentKPIs(user.tenantId) : Promise.resolve([] as DashboardAttainmentKPIRow[]),
-    safe(fetchAttendanceHeadline(user.tenantId), { attendancePct: null, studentsCovered: 0, asOf: null } as AttendanceHeadline),
+    safe(fetchAttendanceHeadline(user.tenantId), { attendancePct: null, todayPct: null, weekPct: null, studentsCovered: 0, asOf: null } as AttendanceHeadline),
   ]);
 
   return {
