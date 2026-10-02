@@ -191,83 +191,34 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         </MetaText>
       </Card>
 
-      {integration?.credentialsCiphertext ? (
-        <Card className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="font-medium">Check the Arbor connection</div>
-            <MetaText className="mt-1">This makes one read-only request to Arbor. It does not import or change data.</MetaText>
-          </div>
-          <form method="post" action="/api/god/integrations/arbor/test">
-            <CsrfInput token={csrfToken} />
-            <Button type="submit" variant="secondary">Check connection</Button>
-          </form>
-        </Card>
-      ) : null}
-
-      {integration?.status === "CONNECTED" ? (
-        <Card className="flex flex-wrap items-center justify-between gap-3">
-          <div><div className="font-medium">Check Arbor photo access</div><MetaText className="mt-1">This makes one read-only request for a linked student. It does not display, import, or store a photo.</MetaText></div>
-          <form method="post" action="/api/god/integrations/arbor/test-photos"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check photo access</Button></form>
-        </Card>
-      ) : null}
-
-      {integration?.status === "CONNECTED" ? (
-        <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Check Arbor attendance access</div><MetaText className="mt-1">Reads one attendance record to verify the fields Anaxi needs. It does not import a register or create new data.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/attendance"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check attendance access</Button></form></Card>
-      ) : null}
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Preview attendance summary</div><MetaText className="mt-1">Calculates the last seven days from Arbor into Anaxi’s existing attendance and lateness measures. It imports nothing.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/attendance/summary"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Preview attendance</Button></form></Card> : null}
-
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Check Arbor behaviour access</div><MetaText className="mt-1">Reads at most one positive point, detention, internal exclusion, and suspension from Arbor. It does not import, display, or change behaviour data.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/behaviour"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check behaviour access</Button></form></Card> : null}
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Check priority assessment access</div><MetaText className="mt-1">Reads one Arbor progress-assessment mark to confirm the fields Anaxi needs. It does not import or create an assessment result.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/assessments"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check assessment access</Button></form></Card> : null}
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Preview priority assessment mapping</div><MetaText className="mt-1">Reads a small sample of progress-assessment marks and identifies definitions starting P8 or A-Level, plus KS1 and KS2. It does not create cycles, points, subjects, or results.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/assessments/summary"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Preview assessment mapping</Button></form></Card> : null}
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Preview priority assessment catalogue</div><MetaText className="mt-1">Finds all Arbor assessment definitions matching P8, A-Level, KS1, or KS2, even when their marks are not on the first page. It does not import anything.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/assessments/catalogue"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Preview assessment catalogue</Button></form></Card> : null}
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Prepare assessment sync</div><MetaText className="mt-1">Queues only the agreed P8, A-Level, percentage, KS1, and KS2 assessment families. Anaxi then checks one definition at a time overnight, avoiding Arbor rate limits. It does not import results yet.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/assessments/active"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Prepare assessment sync</Button></form></Card> : null}
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Check assessment filters</div><MetaText className="mt-1">Confirms Arbor’s supported filters so Anaxi can request only the approved assessment families in small batches.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/assessments/filters"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check assessment filters</Button></form></Card> : null}
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Check assessment definition</div><MetaText className="mt-1">Confirms the fields Arbor provides for the assessment name, subject, scale, and dates. It does not import anything.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/assessments/definition"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check assessment definition</Button></form></Card> : null}
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Preview assessment values</div><MetaText className="mt-1">Checks a small sample of linked marks to identify their grade or score format. It does not import anything.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/assessments/values"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Preview assessment values</Button></form></Card> : null}
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Check assessment grade fields</div><MetaText className="mt-1">Confirms the label field Arbor uses when marks are stored as categorical grades. It does not import anything.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/assessments/grades"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check grade fields</Button></form></Card> : null}
-      {integration?.status === "CONNECTED" ? <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Preview behaviour summary</div><MetaText className="mt-1">Calculates the latest seven days into Anaxi’s existing points, detention, internal-exclusion, and suspension measures. It imports nothing.</MetaText></div><form method="post" action="/api/god/integrations/arbor/preview/behaviour/summary"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Preview behaviour</Button></form></Card> : null}
-      {integration?.status === "CONNECTED" ? <Card className="border-warning/30 bg-[var(--pill-warning-bg)]"><form method="post" action="/api/god/integrations/arbor/sync/behaviour" className="space-y-3"><CsrfInput token={csrfToken} /><div><div className="font-medium">Start academic-year behaviour sync</div><MetaText className="mt-1">Anaxi will update only its existing positive-points, detention, internal-exclusion, and suspension totals. Individual Arbor incident records are not stored. The first run imports up to seven completed days; nightly catch-up continues automatically.</MetaText></div><label className="flex items-start gap-2 text-sm"><input required type="checkbox" name="confirm" value="SYNC_BEHAVIOUR" className="mt-1 accent-accent" /><span>I confirm that Anaxi may update its behaviour measures from Arbor.</span></label><Button type="submit">Start behaviour sync</Button></form></Card> : null}
-
-      {integration?.status === "CONNECTED" ? <Card className="border-warning/30 bg-[var(--pill-warning-bg)]"><form method="post" action="/api/god/integrations/arbor/sync/attendance" className="space-y-3"><CsrfInput token={csrfToken} /><div><div className="font-medium">Start academic-year attendance sync</div><MetaText className="mt-1">Anaxi will store only its attendance percentage, lateness count, and the small totals needed to calculate them accurately. It does not retain Arbor’s individual register marks. The first run imports up to seven completed days; the nightly sync continues in the same small batches until this academic year is caught up.</MetaText></div><label className="flex items-start gap-2 text-sm"><input required type="checkbox" name="confirm" value="SYNC_ATTENDANCE" className="mt-1 accent-accent" /><span>I confirm that Anaxi may update its attendance and lateness measures from Arbor.</span></label><Button type="submit">Start attendance sync</Button></form></Card> : null}
-
-      {integration?.status === "CONNECTED" ? (
-        <Card className="border-warning/30 bg-[var(--pill-warning-bg)]">
-          <form method="post" action="/api/god/integrations/arbor/sync/photos" className="space-y-3">
-            <CsrfInput token={csrfToken} />
-            <div><div className="font-medium">Start Arbor photo sync</div><MetaText className="mt-1">Copies up to 25 linked active student and 25 linked active staff photos per batch. Manually uploaded Anaxi photos are never replaced.</MetaText></div>
-            <label className="flex items-start gap-2 text-sm"><input required type="checkbox" name="confirm" value="SYNC_PHOTOS" className="mt-1 accent-accent" /><span>I confirm that Anaxi may securely store linked active student and staff photos from Arbor.</span></label>
-            <Button type="submit">Start photo sync</Button>
-          </form>
-        </Card>
-      ) : null}
-
       {integration?.status === "CONNECTED" ? (
         <>
-          <Card className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="font-medium">Preview student routing</div>
-              <MetaText className="mt-1">Nursery–Year 6 routes to Primary; Years 7–13 routes to Secondary; no year group is treated as off-roll. This preview imports nothing.</MetaText>
+          <Card className="border-success/30 bg-[var(--pill-success-bg)]">
+            <div className="font-medium text-success">Arbor is connected and updating automatically.</div>
+            <MetaText className="mt-1">Students, staff, attendance, behaviour and photos run overnight. Primary and Secondary remain separate inside Anaxi.</MetaText>
+          </Card>
+
+          <section className="space-y-3">
+            <div><div className="text-sm font-semibold uppercase tracking-[0.12em] text-muted">Daily data</div><MetaText className="mt-1">These areas are already connected. No regular action is needed.</MetaText></div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Card><div className="font-medium">Students and staff</div><MetaText className="mt-1">New active students and linked staff are kept up to date from Arbor.</MetaText></Card>
+              <Card><div className="font-medium">Attendance and behaviour</div><MetaText className="mt-1">Academic-year attendance and Anaxi&apos;s existing behaviour totals update nightly.</MetaText></Card>
+              <Card><div className="font-medium">Profile photos</div><MetaText className="mt-1">Photos continue in small batches. Manually uploaded Anaxi photos are never replaced.</MetaText></Card>
+              <Card><div className="font-medium">Assessment data</div><MetaText className="mt-1">The agreed assessment families are being checked gradually. No assessment results will be imported until their mappings are confirmed.</MetaText></Card>
             </div>
-            <form method="post" action="/api/god/integrations/arbor/preview/students">
-              <CsrfInput token={csrfToken} />
-              <Button type="submit" variant="secondary">Preview students</Button>
-            </form>
-          </Card>
-          <Card className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="font-medium">Compare with existing Anaxi students</div>
-              <MetaText className="mt-1">This looks for exact name-and-year matches only. It does not merge, add, or change any student.</MetaText>
+          </section>
+
+          <details className="rounded-xl border border-border bg-card p-4">
+            <summary className="cursor-pointer font-medium">Connection checks and troubleshooting</summary>
+            <div className="mt-4 grid gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3"><MetaText>Use these only if something stops updating or a new school is added.</MetaText><form method="post" action="/api/god/integrations/arbor/test"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check connection</Button></form></div>
+              <div className="flex flex-wrap items-center justify-between gap-3"><MetaText>Run a read-only check that Arbor still allows Anaxi to retrieve photos.</MetaText><form method="post" action="/api/god/integrations/arbor/test-photos"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check photo access</Button></form></div>
+              <div className="flex flex-wrap items-center justify-between gap-3"><MetaText>Re-check student routing or staff links without making changes.</MetaText><div className="flex gap-2"><form method="post" action="/api/god/integrations/arbor/preview/students"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check students</Button></form><form method="post" action="/api/god/integrations/arbor/preview/staff"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check staff</Button></form></div></div>
             </div>
-            <form method="post" action="/api/god/integrations/arbor/preview/students/compare">
-              <CsrfInput token={csrfToken} />
-              <Button type="submit" variant="secondary">Compare students</Button>
-            </form>
-          </Card>
-          <Card className="flex flex-wrap items-center justify-between gap-3">
-            <div><div className="font-medium">Compare staff</div><MetaText className="mt-1">This uses existing Anaxi school links and exact name matches only. It does not change any staff record.</MetaText></div>
-            <form method="post" action="/api/god/integrations/arbor/preview/staff"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Compare staff</Button></form>
-          </Card>
+          </details>
         </>
+      ) : integration?.credentialsCiphertext ? (
+        <Card className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-medium">Check the Arbor connection</div><MetaText className="mt-1">This makes one read-only request to Arbor. It does not import or change data.</MetaText></div><form method="post" action="/api/god/integrations/arbor/test"><CsrfInput token={csrfToken} /><Button type="submit" variant="secondary">Check connection</Button></form></Card>
       ) : null}
 
       {params?.comparison === "success" && previewCount(params.ambiguousMatch) === 0 && previewCount(params.needsReview) === 0 ? (
