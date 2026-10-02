@@ -9,7 +9,6 @@ const ALLOWED_MODULES = new Set([
   "SIGNALS",
   "STUDENTS",
   "STUDENTS_IMPORT",
-  "BEHAVIOUR_IMPORT",
   "LEAVE",
   "ON_CALL",
   "MEETINGS",

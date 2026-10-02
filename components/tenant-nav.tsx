@@ -104,7 +104,6 @@ function iconFor(href: string) {
   if (href.includes("/explorer")) return "grid";
   if (href.includes("/assessments")) return "chart";
   if (href.includes("/students")) return "users";
-  if (href.includes("/behaviour/import")) return "upload";
   if (href.includes("/on-call")) return "flag";
   if (href.includes("/meetings")) return "calendar";
   if (href.includes("/leave")) return "moon";

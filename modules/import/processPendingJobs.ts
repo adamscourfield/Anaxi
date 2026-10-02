@@ -3,26 +3,10 @@ import { readImportFile } from "@/lib/importStorage";
 import { failedImportStatus, successImportStatus } from "@/lib/importJobStatus";
 import { logger } from "@/lib/logger";
 import { notifyImportFinished } from "@/lib/inAppNotifications";
-import { runSnapshotImport } from "@/modules/students/runSnapshotImport";
-import type { SnapshotMapping } from "@/modules/students/snapshot-import";
 import { ks2ScoreUpdate, parseStudentsCsv } from "@/modules/students/csv";
 import type { ImportJob } from "@prisma/client";
 
 const BATCH_SIZE = 5;
-
-async function processStudentSnapshotJob(job: ImportJob): Promise<void> {
-  if (!job.storagePath) {
-    throw new Error("Import job missing storagePath");
-  }
-  const csvText = await readImportFile(job.storagePath);
-  const mapping = (job.mappingJson ?? {}) as unknown as SnapshotMapping;
-  await runSnapshotImport({
-    tenantId: job.tenantId,
-    importJobId: job.id,
-    csvText,
-    mapping,
-  });
-}
 
 async function processStudentsSnapshotJob(job: ImportJob): Promise<void> {
   if (!job.storagePath) {
@@ -131,9 +115,7 @@ export async function processImportJob(jobId: string): Promise<void> {
   });
 
   try {
-    if (job.type === "STUDENT_SNAPSHOT") {
-      await processStudentSnapshotJob(job);
-    } else if (job.type === "STUDENTS_SNAPSHOT") {
+    if (job.type === "STUDENTS_SNAPSHOT") {
       await processStudentsSnapshotJob(job);
     } else {
       await prisma.importJob.update({

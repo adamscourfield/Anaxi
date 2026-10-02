@@ -888,7 +888,7 @@ async function StudentsTab({
             description={
               hasStudentFilters
                 ? "Relax filters or reset the table to see students in this window."
-                : "Behaviour snapshots may still be importing. Check back after the next sync or widen the window."
+                : "Behaviour data may still be syncing. Check back after the next sync or widen the window."
             }
             action={
               hasStudentFilters ? (

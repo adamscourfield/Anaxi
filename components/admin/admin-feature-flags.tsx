@@ -52,15 +52,6 @@ function featureVisual(key: string): FeatureVisual {
         </svg>
       ),
     },
-    BEHAVIOUR_IMPORT: {
-      well: "bg-[rgba(59,130,246,0.12)] text-[#2563eb]",
-      icon: (
-        <svg className={iconClass} viewBox="0 0 24 24" {...stroke}>
-          <path d="M12 3v12M8 11l4 4 4-4" />
-          <path d="M4 21h16" />
-        </svg>
-      ),
-    },
     LEAVE: {
       well: "bg-[rgba(99,102,241,0.12)] text-[#4f46e5]",
       icon: (
@@ -167,7 +158,6 @@ const FEATURE_FRIENDLY_NAMES: Record<string, string> = {
   SIGNALS: "Signals & Analysis",
   STUDENTS: "Students",
   STUDENTS_IMPORT: "Student Import",
-  BEHAVIOUR_IMPORT: "Behaviour Import",
   LEAVE: "Leave of Absence",
   ON_CALL: "On Call",
   MEETINGS: "Meetings",
@@ -184,7 +174,6 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
   SIGNALS: "Signal definitions and signal-based analysis capabilities.",
   STUDENTS: "Student directory, student views, and related workflows.",
   STUDENTS_IMPORT: "Student import tooling and mapping workflows.",
-  BEHAVIOUR_IMPORT: "Behaviour snapshot and attendance import workflows.",
   LEAVE: "Leave request and approval workflows.",
   ON_CALL: "On-call request, inbox, and response workflows.",
   MEETINGS: "Meeting agendas, attendees, and actions.",
