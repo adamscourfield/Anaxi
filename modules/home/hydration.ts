@@ -74,7 +74,9 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
     where: { tenantId, status: "ACTIVE" },
     select: {
       snapshots: {
-        where: { countScope: "YEAR_TO_DATE" },
+        // Attendance and behaviour can arrive in separate same-day sync batches.
+        // Only an attendance-bearing snapshot may supply the attendance headline.
+        where: { countScope: "YEAR_TO_DATE", attendancePossibleCount: { gt: 0 } },
         orderBy: { snapshotDate: "desc" },
         take: 1,
         select: { attendancePct: true, attendancePossibleCount: true, attendancePresentCount: true, snapshotDate: true },
