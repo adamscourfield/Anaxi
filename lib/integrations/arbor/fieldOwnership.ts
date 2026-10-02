@@ -10,7 +10,10 @@ type StaffEditCandidate = {
   role: string;
 };
 
-type StaffEditPayload = Partial<Pick<StaffEditCandidate, ArborOwnedStaffField>>;
+// The caller's proposed new values — realistically every editable field on the
+// staff edit form (name AND role), not just the Arbor-owned ones. Only the
+// Arbor-owned fields are actually checked; see getBlockedArborOwnedStaffFields.
+type StaffEditPayload = Partial<Omit<StaffEditCandidate, "dataSource">>;
 
 export const ARBOR_STAFF_FIELD_OWNERSHIP_MESSAGE =
   "This staff member is managed by Arbor. Change their name or role in Arbor, then run a sync.";
