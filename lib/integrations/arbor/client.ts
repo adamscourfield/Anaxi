@@ -100,6 +100,19 @@ export class ArborClient {
     return data.StudentProgressAssessmentMark;
   }
 
+  /** Lists the assessment catalogue itself, independently of mark pagination. */
+  async listAllAssessmentDefinitions(): Promise<Array<{ id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null }>> {
+    const assessments: Array<{ id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null }> = [];
+    for (let pageNum = 0; pageNum < 200; pageNum++) {
+      const data = await runArborGraphqlQuery<{ Assessment: Array<{ id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null }> }>(this.credentials, `{
+        Assessment(page_size: 500, page_num: ${pageNum}) { id displayName assessmentName assessmentShortName }
+      }`);
+      assessments.push(...data.Assessment);
+      if (data.Assessment.length < 500) return assessments;
+    }
+    throw new Error("Arbor returned more than 100,000 assessment definitions; catalogue preview stopped safely.");
+  }
+
   /** Reads the schema only, so assessment mapping can use confirmed Arbor fields. */
   async inspectAdHocAssessmentFields(): Promise<string[]> {
     const data = await runArborGraphqlQuery<{ __type: { fields: Array<{ name: string }> } | null }>(this.credentials, `{
