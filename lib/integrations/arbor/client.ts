@@ -99,6 +99,14 @@ export class ArborClient {
     return data.StudentAdHocAssessmentMark;
   }
 
+  /** Reads the schema only, so assessment mapping can use confirmed Arbor fields. */
+  async inspectAdHocAssessmentFields(): Promise<string[]> {
+    const data = await runArborGraphqlQuery<{ __type: { fields: Array<{ name: string }> } | null }>(this.credentials, `{
+      __type(name: "AdHocAssessment") { fields { name } }
+    }`);
+    return data.__type?.fields.map((field) => field.name) ?? [];
+  }
+
   /** One read-only page of the four behaviour sources Anaxi currently measures. */
   async listBehaviourRecords(pageSize = 100, pageNum = 0, startAfter?: string, startBefore?: string): Promise<ArborBehaviourRecords> {
     const pointFilters = startAfter && startBefore ? `, awardedDatetime_after: "${startAfter}", awardedDatetime_before: "${startBefore}"` : "";
