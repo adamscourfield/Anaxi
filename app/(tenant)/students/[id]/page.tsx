@@ -86,9 +86,13 @@ type AttainmentRow = {
   }>;
 };
 
-function DeltaCell({ value }: { value: number | null }) {
+function DeltaCell({ value, invert = false }: { value: number | null; invert?: boolean }) {
   if (value === null) return <span className="text-muted">—</span>;
-  const color = value > 0 ? "text-scale-limited-text" : value < 0 ? "text-scale-strong-text" : "text-muted";
+  // By default a rise is bad (more detentions, more lateness...) and a fall is good.
+  // `invert` flips that for metrics where more is better, e.g. positive points.
+  const rose = invert ? value < 0 : value > 0;
+  const fell = invert ? value > 0 : value < 0;
+  const color = rose ? "text-scale-limited-text" : fell ? "text-scale-strong-text" : "text-muted";
   return (
     <span className={`tabular-nums font-medium ${color}`}>
       {value > 0 ? `+${value}` : String(value)}
@@ -172,6 +176,12 @@ export default async function StudentDetailPage({
     where: { tenantId_key: { tenantId: user.tenantId, key: "ASSESSMENTS" } },
     select: { enabled: true },
   });
+
+  const tenantSettings = await (prisma as any).tenantSettings.findUnique({
+    where: { tenantId: user.tenantId },
+    select: { positivePointsLabel: true },
+  });
+  const positivePointsLabel = tenantSettings?.positivePointsLabel ?? "Positive Points";
 
   const student = await (prisma as any).student.findFirst({
     where: { id: resolvedParams.id, tenantId: user.tenantId },
@@ -532,16 +542,25 @@ export default async function StudentDetailPage({
                     scope="col"
                     className="border-l border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] bg-surface-container-low px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.06em] text-muted"
                   >
-                    <span className="block normal-case font-semibold tracking-[0.06em] text-text">Latest snapshot</span>
+                    <span className="block normal-case font-semibold tracking-[0.06em] text-text">Latest update</span>
                     <span className="mt-0.5 block font-normal normal-case tracking-normal text-[11px] text-muted">
                       {analysisProfile.currentSnapshot
                         ? fmtDate(analysisProfile.currentSnapshot.snapshotDate)
-                        : "No snapshot in this window"}
+                        : "No update in this window"}
                     </span>
                   </th>
                 </tr>
               </thead>
               <tbody>
+                <tr className="table-row">
+                  <td className="px-5 py-3 text-muted">{positivePointsLabel}</td>
+                  <td className="px-4 py-3 text-right">
+                    <DeltaCell value={analysisProfile.positivePointsDelta} invert />
+                  </td>
+                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
+                    {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.positivePointsTotal : "—"}
+                  </td>
+                </tr>
                 <tr className="table-row">
                   <td className="px-5 py-3 text-muted">Attendance</td>
                   <td className="px-4 py-3 text-right">
@@ -618,7 +637,7 @@ export default async function StudentDetailPage({
           </div>
           {!analysisProfile.currentSnapshot ? (
             <MetaText className="mt-2">
-              No snapshot in this window — the change column may still show movement across the period.
+              No update in this window — the change column may still show movement across the period.
             </MetaText>
           ) : null}
 
