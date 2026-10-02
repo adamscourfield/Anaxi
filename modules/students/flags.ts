@@ -13,14 +13,21 @@ export function avg(values: number[]) {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-export function pickWindows(snapshots: SnapshotMetric[]) {
+/** Default rolling window (days) used when the caller doesn't specify one. */
+export const DEFAULT_FLAG_WINDOW_DAYS = 7;
+
+/** Rolling windows offered for "who's changed the most" comparisons. */
+export const FLAG_WINDOW_OPTIONS_DAYS = [7, 21, 28] as const;
+export type FlagWindowDays = (typeof FLAG_WINDOW_OPTIONS_DAYS)[number];
+
+export function pickWindows(snapshots: SnapshotMetric[], windowDays: number = DEFAULT_FLAG_WINDOW_DAYS) {
   const sorted = [...snapshots].sort((a, b) => +new Date(a.snapshotDate) - +new Date(b.snapshotDate));
   if (sorted.length < 2) return null;
 
   const latest = sorted[sorted.length - 1].snapshotDate;
-  const currentStart = new Date(+new Date(latest) - 7 * 24 * 3600 * 1000);
-  const baselineStart = new Date(+new Date(latest) - 35 * 24 * 3600 * 1000);
-  const baselineEnd = new Date(+new Date(latest) - 8 * 24 * 3600 * 1000);
+  const currentStart = new Date(+new Date(latest) - windowDays * 24 * 3600 * 1000);
+  const baselineStart = new Date(+new Date(latest) - 5 * windowDays * 24 * 3600 * 1000);
+  const baselineEnd = new Date(+new Date(latest) - (windowDays + 1) * 24 * 3600 * 1000);
 
   const current = sorted.filter((s) => new Date(s.snapshotDate) >= currentStart);
   const baseline = sorted.filter((s) => new Date(s.snapshotDate) >= baselineStart && new Date(s.snapshotDate) <= baselineEnd);
@@ -36,8 +43,8 @@ export function pickWindows(snapshots: SnapshotMetric[]) {
   return { sparse: false, current, baseline };
 }
 
-export function computeFlags(snapshots: SnapshotMetric[]) {
-  const windows = pickWindows(snapshots);
+export function computeFlags(snapshots: SnapshotMetric[], windowDays: number = DEFAULT_FLAG_WINDOW_DAYS) {
+  const windows = pickWindows(snapshots, windowDays);
   if (!windows) return [];
 
   const b = windows.baseline;
