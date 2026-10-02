@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { FormSelect } from "@/components/ui/form-select";
-import { BehaviourFilterPresets } from "@/components/explorer/behaviour-filter-presets";
 
 const VALID_WINDOWS = [7, 21, 28] as const;
 
@@ -117,14 +116,6 @@ export function BehaviourAnalysisFilters({
           )}
         </div>
       </form>
-      <BehaviourFilterPresets
-        current={{
-          windowDays: defaults.windowDays,
-          yearGroup: defaults.yearGroup,
-          pp: defaults.pp,
-          send: defaults.send,
-        }}
-      />
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
   getTopImprovingSignals,
 } from "@/modules/analysis/cpdPriorities";
 import { computeStudentRiskIndex, RiskBand, Confidence, BAND_ORDER } from "@/modules/analysis/studentRisk";
+import { getTenantVocab } from "@/lib/vocab";
 
 const TABS = ["teachers", "cpd", "students"] as const;
 type Tab = (typeof TABS)[number];
@@ -767,11 +768,10 @@ async function StudentsTab({
   const rawStudentDir = typeof searchParams?.dir === "string" ? searchParams.dir : "desc";
   const sortDir = rawStudentDir === "asc" ? "asc" : "desc";
 
-  const { rows: allRows, computedAt } = await computeStudentRiskIndex(
-    user.tenantId,
-    windowDays,
-    user.id
-  );
+  const [{ rows: allRows, computedAt }, vocab] = await Promise.all([
+    computeStudentRiskIndex(user.tenantId, windowDays, user.id),
+    getTenantVocab(user.tenantId),
+  ]);
 
   let rows = allRows;
   if (filterYearGroup) rows = rows.filter((r) => r.yearGroup === filterYearGroup);
@@ -875,8 +875,7 @@ async function StudentsTab({
         </summary>
         <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[#6B7280]">
           <li><strong>Band</strong>: Overall risk priority based on recent trend signals.</li>
-          <li><strong>Score</strong>: Composite risk score used to sort support priorities.</li>
-          <li><strong>Detentions / On calls</strong>: Change from baseline window (positive means increase).</li>
+          <li><strong>{vocab.detentions.plural} / {vocab.on_calls.plural}</strong>: Current count in the selected window.</li>
           <li><strong>Confidence</strong>: Data confidence based on recency and coverage quality.</li>
         </ul>
       </details>
@@ -914,12 +913,6 @@ async function StudentsTab({
                   </th>
                   <th>Year</th>
                   <th>Band</th>
-                  <th className="text-right">
-                    <Link href={studentSortHref("score")} className="anx-priorities-sort-link justify-end">
-                      Score
-                      {ICON_SORT}
-                    </Link>
-                  </th>
                   <th>
                     <span className="inline-flex items-center gap-1">
                       Key drivers
@@ -929,8 +922,8 @@ async function StudentsTab({
                     </span>
                   </th>
                   <th className="text-right">Attendance (%)</th>
-                  <th className="text-right">Detentions Δ</th>
-                  <th className="text-right">On calls Δ</th>
+                  <th className="text-right">{vocab.detentions.plural}</th>
+                  <th className="text-right">{vocab.on_calls.plural}</th>
                   <th>Flags</th>
                   <th>Confidence</th>
                   <th className="w-10" aria-hidden />
@@ -961,7 +954,6 @@ async function StudentsTab({
                         {BAND_LABELS[row.band]}
                       </span>
                     </td>
-                    <td className="text-right tabular-nums text-[#6B7280]">{row.riskScore}</td>
                     <td>
                       <div className="flex flex-wrap gap-1">
                         {row.drivers.map((d) => (
@@ -985,18 +977,10 @@ async function StudentsTab({
                       )}
                     </td>
                     <td className="text-right tabular-nums text-[#6B7280]">
-                      {row.detentionsDelta !== null
-                        ? row.detentionsDelta > 0
-                          ? `+${row.detentionsDelta}`
-                          : String(row.detentionsDelta)
-                        : "—"}
+                      {row.detentionsCount !== null ? row.detentionsCount : "—"}
                     </td>
                     <td className="text-right tabular-nums text-[#6B7280]">
-                      {row.onCallsDelta !== null
-                        ? row.onCallsDelta > 0
-                          ? `+${row.onCallsDelta}`
-                          : String(row.onCallsDelta)
-                        : "—"}
+                      {row.onCallsCount !== null ? row.onCallsCount : "—"}
                     </td>
                     <td>
                       <div className="flex flex-wrap gap-1">

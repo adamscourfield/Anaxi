@@ -19,6 +19,7 @@ import { computeStudentRiskProfile, RiskBand, Confidence } from "@/modules/analy
 import { canAccessStudentRecord } from "@/modules/students/access";
 import { toggleWatchlist } from "@/app/(tenant)/analysis/students/actions";
 import { archiveStudentAction, unarchiveStudentAction } from "../actions";
+import { getTenantVocab } from "@/lib/vocab";
 
 const WINDOW_OPTIONS = [7, 21, 28] as const;
 
@@ -86,17 +87,47 @@ type AttainmentRow = {
   }>;
 };
 
-function DeltaCell({ value, invert = false }: { value: number | null; invert?: boolean }) {
-  if (value === null) return <span className="text-muted">—</span>;
+/**
+ * One row of the pastoral risk table: a plain "then vs now" pair of values, with a
+ * small coloured delta next to "now" so a leader can tell at a glance whether this
+ * metric moved in a direction that needs attention -- without the table being just
+ * an abstract delta column.
+ */
+function MetricRow({
+  label,
+  baseline,
+  current,
+  delta,
+  invert = false,
+  deltaSuffix = "",
+}: {
+  label: string;
+  baseline: string | number | null;
+  current: string | number | null;
+  delta: number | null;
+  invert?: boolean;
+  deltaSuffix?: string;
+}) {
   // By default a rise is bad (more detentions, more lateness...) and a fall is good.
   // `invert` flips that for metrics where more is better, e.g. positive points.
-  const rose = invert ? value < 0 : value > 0;
-  const fell = invert ? value > 0 : value < 0;
-  const color = rose ? "text-scale-limited-text" : fell ? "text-scale-strong-text" : "text-muted";
+  const rose = delta !== null && (invert ? delta < 0 : delta > 0);
+  const fell = delta !== null && (invert ? delta > 0 : delta < 0);
+  const deltaColor = rose ? "text-scale-limited-text" : fell ? "text-scale-strong-text" : "text-muted";
   return (
-    <span className={`tabular-nums font-medium ${color}`}>
-      {value > 0 ? `+${value}` : String(value)}
-    </span>
+    <tr className="table-row">
+      <td className="px-5 py-3 text-muted">{label}</td>
+      <td className="px-4 py-3 text-right tabular-nums text-muted">{baseline === null ? "—" : baseline}</td>
+      <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right">
+        <span className="tabular-nums font-medium text-text">{current === null ? "—" : current}</span>
+        {delta !== null ? (
+          <span className={`ml-2 tabular-nums text-xs font-medium ${deltaColor}`}>
+            ({delta > 0 ? "+" : ""}
+            {delta}
+            {deltaSuffix})
+          </span>
+        ) : null}
+      </td>
+    </tr>
   );
 }
 
@@ -177,11 +208,7 @@ export default async function StudentDetailPage({
     select: { enabled: true },
   });
 
-  const tenantSettings = await (prisma as any).tenantSettings.findUnique({
-    where: { tenantId: user.tenantId },
-    select: { positivePointsLabel: true },
-  });
-  const positivePointsLabel = tenantSettings?.positivePointsLabel ?? "Positive Points";
+  const vocab = await getTenantVocab(user.tenantId);
 
   const student = await (prisma as any).student.findFirst({
     where: { id: resolvedParams.id, tenantId: user.tenantId },
@@ -448,7 +475,7 @@ export default async function StudentDetailPage({
       <div id="overview" className="scroll-mt-24 space-y-8">
       {/* Latest behaviour snapshot */}
       {latestSnapshot && attDisplay !== null ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
             <p className="anx-label-micro">Attendance</p>
             <div className="mt-2 flex items-end justify-between gap-3">
@@ -463,11 +490,15 @@ export default async function StudentDetailPage({
             </div>
           </div>
           <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
-            <p className="anx-label-micro">On calls</p>
+            <p className="anx-label-micro">{vocab.positive_points.plural}</p>
+            <p className="mt-2 text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{latestSnapshot.positivePointsTotal}</p>
+          </div>
+          <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
+            <p className="anx-label-micro">{vocab.on_calls.plural}</p>
             <p className="mt-2 text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{latestSnapshot.onCallsCount}</p>
           </div>
           <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
-            <p className="anx-label-micro">Detentions</p>
+            <p className="anx-label-micro">{vocab.detentions.plural}</p>
             <p className="mt-2 text-2xl font-bold tabular-nums tracking-[-0.03em] text-text">{latestSnapshot.detentionsCount}</p>
           </div>
           <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
@@ -485,7 +516,7 @@ export default async function StudentDetailPage({
         <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] pb-4">
             <div>
-              <H2>Pastoral risk (analysis)</H2>
+              <H2>Pastoral risk</H2>
               <MetaText>
                 Window: {windowDays} days · Risk score: {analysisProfile.riskScore}
                 {computedAtStr ? ` · Updated ${computedAtStr}` : ""}
@@ -529,116 +560,70 @@ export default async function StudentDetailPage({
                   <th scope="col" className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-[0.06em] text-muted">
                     Metric
                   </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.06em] text-muted"
-                  >
-                    <span className="block normal-case font-semibold tracking-[0.06em] text-text">Change</span>
-                    <span className="mt-0.5 block font-normal normal-case tracking-normal text-[11px] text-muted">
-                      vs start of {windowDays}-day window
-                    </span>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.06em] text-muted">
+                    {windowDays} days ago
                   </th>
                   <th
                     scope="col"
                     className="border-l border-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)] bg-surface-container-low px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.06em] text-muted"
                   >
-                    <span className="block normal-case font-semibold tracking-[0.06em] text-text">Latest update</span>
-                    <span className="mt-0.5 block font-normal normal-case tracking-normal text-[11px] text-muted">
-                      {analysisProfile.currentSnapshot
-                        ? fmtDate(analysisProfile.currentSnapshot.snapshotDate)
-                        : "No update in this window"}
-                    </span>
+                    Now
                   </th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="table-row">
-                  <td className="px-5 py-3 text-muted">{positivePointsLabel}</td>
-                  <td className="px-4 py-3 text-right">
-                    <DeltaCell value={analysisProfile.positivePointsDelta} invert />
-                  </td>
-                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
-                    {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.positivePointsTotal : "—"}
-                  </td>
-                </tr>
-                <tr className="table-row">
-                  <td className="px-5 py-3 text-muted">Attendance</td>
-                  <td className="px-4 py-3 text-right">
-                    {analysisProfile.attendanceDelta !== null ? (
-                      <span
-                        className={`tabular-nums font-medium ${
-                          analysisProfile.attendanceDelta < 0 ? "text-scale-limited-text" : "text-scale-strong-text"
-                        }`}
-                        title="Change in attendance rate (percentage points)"
-                      >
-                        {analysisProfile.attendanceDelta > 0 ? "+" : ""}
-                        {analysisProfile.attendanceDelta.toFixed(1)} pp
-                      </span>
-                    ) : (
-                      <span className="text-muted">—</span>
-                    )}
-                  </td>
-                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
-                    {analysisProfile.currentSnapshot
-                      ? `${analysisProfile.currentSnapshot.attendancePct.toFixed(1)}%`
-                      : "—"}
-                  </td>
-                </tr>
-                <tr className="table-row">
-                  <td className="px-5 py-3 text-muted">On calls</td>
-                  <td className="px-4 py-3 text-right">
-                    <DeltaCell value={analysisProfile.onCallsDelta} />
-                  </td>
-                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
-                    {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.onCallsCount : "—"}
-                  </td>
-                </tr>
-                <tr className="table-row">
-                  <td className="px-5 py-3 text-muted">Detentions</td>
-                  <td className="px-4 py-3 text-right">
-                    <DeltaCell value={analysisProfile.detentionsDelta} />
-                  </td>
-                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
-                    {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.detentionsCount : "—"}
-                  </td>
-                </tr>
-                <tr className="table-row">
-                  <td className="px-5 py-3 text-muted">Lateness</td>
-                  <td className="px-4 py-3 text-right">
-                    <DeltaCell value={analysisProfile.latenessDelta} />
-                  </td>
-                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
-                    {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.latenessCount : "—"}
-                  </td>
-                </tr>
-                <tr className="table-row">
-                  <td className="px-5 py-3 text-muted">Internal exclusions</td>
-                  <td className="px-4 py-3 text-right">
-                    <DeltaCell value={analysisProfile.internalExclusionsDelta} />
-                  </td>
-                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
-                    {analysisProfile.currentSnapshot
-                      ? analysisProfile.currentSnapshot.internalExclusionsCount
-                      : "—"}
-                  </td>
-                </tr>
-                <tr className="table-row">
-                  <td className="px-5 py-3 text-muted">Suspensions</td>
-                  <td className="px-4 py-3 text-right">
-                    <DeltaCell value={analysisProfile.suspensionsDelta} />
-                  </td>
-                  <td className="border-l border-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)] bg-[color-mix(in_srgb,var(--surface-container-low)_42%,var(--surface-container-lowest))] px-4 py-3 text-right tabular-nums font-medium text-text">
-                    {analysisProfile.currentSnapshot ? analysisProfile.currentSnapshot.suspensionsCount : "—"}
-                  </td>
-                </tr>
+                <MetricRow
+                  label={vocab.positive_points.plural}
+                  baseline={analysisProfile.baselineSnapshot?.positivePointsTotal ?? null}
+                  current={analysisProfile.currentSnapshot?.positivePointsTotal ?? null}
+                  delta={analysisProfile.positivePointsDelta}
+                  invert
+                />
+                <MetricRow
+                  label="Attendance"
+                  baseline={analysisProfile.baselineSnapshot ? `${analysisProfile.baselineSnapshot.attendancePct.toFixed(1)}%` : null}
+                  current={analysisProfile.currentSnapshot ? `${analysisProfile.currentSnapshot.attendancePct.toFixed(1)}%` : null}
+                  delta={analysisProfile.attendanceDelta !== null ? Number(analysisProfile.attendanceDelta.toFixed(1)) : null}
+                  deltaSuffix=" pp"
+                />
+                <MetricRow
+                  label={vocab.on_calls.plural}
+                  baseline={analysisProfile.baselineSnapshot?.onCallsCount ?? null}
+                  current={analysisProfile.currentSnapshot?.onCallsCount ?? null}
+                  delta={analysisProfile.onCallsDelta}
+                />
+                <MetricRow
+                  label={vocab.detentions.plural}
+                  baseline={analysisProfile.baselineSnapshot?.detentionsCount ?? null}
+                  current={analysisProfile.currentSnapshot?.detentionsCount ?? null}
+                  delta={analysisProfile.detentionsDelta}
+                />
+                <MetricRow
+                  label="Lateness"
+                  baseline={analysisProfile.baselineSnapshot?.latenessCount ?? null}
+                  current={analysisProfile.currentSnapshot?.latenessCount ?? null}
+                  delta={analysisProfile.latenessDelta}
+                />
+                <MetricRow
+                  label={vocab.internal_exclusions.plural}
+                  baseline={analysisProfile.baselineSnapshot?.internalExclusionsCount ?? null}
+                  current={analysisProfile.currentSnapshot?.internalExclusionsCount ?? null}
+                  delta={analysisProfile.internalExclusionsDelta}
+                />
+                <MetricRow
+                  label={vocab.suspensions.plural}
+                  baseline={analysisProfile.baselineSnapshot?.suspensionsCount ?? null}
+                  current={analysisProfile.currentSnapshot?.suspensionsCount ?? null}
+                  delta={analysisProfile.suspensionsDelta}
+                />
               </tbody>
             </table>
             </div>
           </div>
           {!analysisProfile.currentSnapshot ? (
-            <MetaText className="mt-2">
-              No update in this window — the change column may still show movement across the period.
-            </MetaText>
+            <MetaText className="mt-2">No update in this window.</MetaText>
+          ) : !analysisProfile.baselineSnapshot ? (
+            <MetaText className="mt-2">No update from {windowDays} days ago to compare against yet.</MetaText>
           ) : null}
 
           <div className="mt-4 flex flex-wrap items-center gap-3">

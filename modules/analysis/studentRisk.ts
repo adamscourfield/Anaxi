@@ -50,6 +50,8 @@ export type StudentRiskRow = {
   drivers: MetricDriver[];
   // Current absolute values
   attendancePct: number | null;
+  detentionsCount: number | null;
+  onCallsCount: number | null;
   detentionsDelta: number | null;
   onCallsDelta: number | null;
   latenessDelta: number | null;
@@ -74,6 +76,10 @@ export type StudentRiskProfile = {
   drivers: MetricDriver[];
   // Current absolute values
   currentSnapshot: SnapshotSummary | null;
+  // The comparison point from the start of the window -- what the metrics looked
+  // like `windowDays` ago, shown alongside currentSnapshot so a leader can read
+  // "then vs now" directly instead of only an abstract delta.
+  baselineSnapshot: SnapshotSummary | null;
   // Deltas
   attendanceDelta: number | null;
   onCallsDelta: number | null;
@@ -360,6 +366,8 @@ export async function computeStudentRiskIndex(
       lastSnapshotDate: currentSnap.snapshotDate,
       drivers,
       attendancePct: attendanceCurrent ? Number(attendanceCurrent.attendancePct) : null,
+      detentionsCount: currentSnap.detentionsCount ?? null,
+      onCallsCount: currentSnap.onCallsCount ?? null,
       detentionsDelta,
       onCallsDelta,
       latenessDelta,
@@ -396,6 +404,8 @@ export async function computeStudentRiskIndex(
         lastSnapshotDate: latest?.snapshotDate ?? null,
         drivers: [],
         attendancePct: latest ? Number(latest.attendancePct) : null,
+        detentionsCount: latest?.detentionsCount ?? null,
+        onCallsCount: latest?.onCallsCount ?? null,
         detentionsDelta: null,
         onCallsDelta: null,
         latenessDelta: null,
@@ -520,6 +530,7 @@ export async function computeStudentRiskProfile(
     lastSnapshotDate: currentSnap?.snapshotDate ?? null,
     drivers,
     currentSnapshot: currentSnap ? { ...toSnapshotSummary(currentSnap), suspensionsCount: currentSuspensions } : null,
+    baselineSnapshot: prevSnap ? { ...toSnapshotSummary(prevSnap), suspensionsCount: previousSuspensions } : null,
     attendanceDelta,
     onCallsDelta,
     detentionsDelta,
