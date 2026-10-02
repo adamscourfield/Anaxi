@@ -46,7 +46,7 @@ export const POST = withApi(async function POST(req: Request) {
   try {
     const run = await db.sharedIntegrationSyncRun.create({ data: { integrationId: integration.id, entityType: "BEHAVIOUR", triggeredBy: scheduled ? "CRON" : actor!.id } }); runId = run.id;
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
-    const students: Array<{ id: string; tenantId: string; externalId: string }> = await db.student.findMany({ where: { tenantId: { in: tenantIds }, status: "ACTIVE", dataSource: "ARBOR", externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true } });
+    const students: Array<{ id: string; tenantId: string; externalId: string }> = await db.student.findMany({ where: { tenantId: { in: tenantIds }, status: "ACTIVE", externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true } });
     const externalIds = new Set(students.map((student) => student.externalId));
     const existing = await db.studentSnapshot.findMany({ where: { studentId: { in: students.map((student) => student.id) }, snapshotDate: { gte: start, lte: batchEnd } }, select: { id: true, studentId: true, snapshotDate: true, dataSource: true } });
     const existingByKey = new Map<string, { id: string; dataSource: string }>(existing.map((snapshot: { id: string; studentId: string; snapshotDate: Date; dataSource: string }) => [`${snapshot.studentId}:${dateKey(snapshot.snapshotDate)}`, { id: snapshot.id, dataSource: snapshot.dataSource }]));
