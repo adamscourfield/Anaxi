@@ -54,6 +54,30 @@ export class ArborClient {
   }
 
   /**
+   * Confirms the four incident sources that map to Anaxi's existing behaviour
+   * measures. This is deliberately a one-record read from each source only.
+   */
+  async verifyBehaviourAccess(): Promise<{ pointAwards: number; detentions: number; internalExclusions: number; suspensions: number }> {
+    const data = await runArborGraphqlQuery<{
+      PointAward: Array<{ id: string }>;
+      Detention: Array<{ id: string }>;
+      InternalExclusion: Array<{ id: string }>;
+      FixedPeriodExclusion: Array<{ id: string }>;
+    }>(this.credentials, `{
+      PointAward(page_size: 1, page_num: 0) { id student { id } points awardedDatetime }
+      Detention(page_size: 1, page_num: 0) { id student { id } decisionDatetime }
+      InternalExclusion(page_size: 1, page_num: 0) { id student { id } issuedDatetime }
+      FixedPeriodExclusion(page_size: 1, page_num: 0) { id student { id } fromDatetime }
+    }`);
+    return {
+      pointAwards: data.PointAward.length,
+      detentions: data.Detention.length,
+      internalExclusions: data.InternalExclusion.length,
+      suspensions: data.FixedPeriodExclusion.length,
+    };
+  }
+
+  /**
    * Arbor documents this separately from GraphQL's entity permissions. The response
    * body is deliberately not read or retained: this is only an authorisation check.
    */
