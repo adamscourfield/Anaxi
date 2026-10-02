@@ -318,8 +318,8 @@ export async function computeStudentRiskIndex(
     const onCallsDelta = usablePrevious ? currentSnap.onCallsCount - usablePrevious.onCallsCount : null;
     const detentionsDelta = usablePrevious ? currentSnap.detentionsCount - usablePrevious.detentionsCount : null;
     const latenessDelta = usablePrevious ? currentSnap.latenessCount - usablePrevious.latenessCount : null;
-    const currentSuspensions = highestCumulative(currentWindowSnap ? snapshots.filter((s: any) => s.snapshotDate >= currentStart && s.snapshotDate <= currentEnd) : [currentSnap]);
-    const previousSuspensions = highestCumulative(usablePrevious ? snapshots.filter((s: any) => s.snapshotDate >= prevStart && s.snapshotDate < currentStart) : []);
+    const currentSuspensions = highestCumulative(currentWindowSnap ? snapshots.filter((s: any) => s.snapshotDate >= currentStart && s.snapshotDate <= currentEnd) : [currentSnap], "suspensionsCount");
+    const previousSuspensions = highestCumulative(usablePrevious ? snapshots.filter((s: any) => s.snapshotDate >= prevStart && s.snapshotDate < currentStart) : [], "suspensionsCount");
     const suspensionsDelta = usablePrevious
       ? currentSuspensions - previousSuspensions
       : null;
