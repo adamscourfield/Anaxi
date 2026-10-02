@@ -50,6 +50,9 @@ export async function POST(req: Request) {
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.json({ skipped: "not connected" });
 
   const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
+  // Assessment outcomes are high-impact data. Discovery may continue, but no
+  // results are written until a super admin has reviewed and approved the mapping.
+  if (config.assessmentImportApproved !== true) return NextResponse.json({ skipped: "awaiting assessment mapping approval" });
   const state = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
   const queuedDefinitions = Array.isArray(state.definitions) ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string") : [];
   // Replace the earlier broad discovery queue with the agreed Secondary-only policy.
