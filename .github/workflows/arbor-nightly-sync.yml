@@ -44,7 +44,15 @@ jobs:
             curl --fail --silent --show-error \
               --retry 2 \
               --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
-              "${ANAXI_APP_URL%/}/api/cron/arbor-behaviour"
+            "${ANAXI_APP_URL%/}/api/cron/arbor-behaviour"
+          done
+          # One small, targeted request at a time keeps Arbor assessment reads paced.
+          for _ in $(seq 1 4); do
+            curl --fail --silent --show-error \
+              --retry 1 \
+              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+              "${ANAXI_APP_URL%/}/api/cron/arbor-assessments"
+            sleep 20
           done
           curl --fail --silent --show-error \
             --retry 2 \
