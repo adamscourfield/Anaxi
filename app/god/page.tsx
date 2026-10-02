@@ -29,6 +29,9 @@ export default async function GodDashboardPage() {
         subtitle="Platform-level school provisioning and module control."
         actions={
           <>
+            <Link href="/god/integrations/arbor">
+              <Button variant="secondary">Arbor connection</Button>
+            </Link>
             <Link href="/god/audit">
               <Button variant="secondary">Audit log</Button>
             </Link>

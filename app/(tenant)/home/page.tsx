@@ -222,6 +222,7 @@ function LeadershipHome({
   topImproving,
   meetingsTodayCount,
   attainmentKpis,
+  attendanceHeadline,
 }: {
   windowDays: number;
   cpdRows: CpdPriorityRow[];
@@ -241,6 +242,7 @@ function LeadershipHome({
   topImproving: CpdPriorityRow[];
   meetingsTodayCount: number;
   attainmentKpis: Awaited<ReturnType<typeof fetchDashboardAttainmentKPIs>>;
+  attendanceHeadline: { attendancePct: number | null; studentsCovered: number; asOf: Date | null };
 }) {
   const allDriftingCpd = cpdRows.filter((r) => r.teachersDriftingDown > 0);
   const topCpd = allDriftingCpd.slice(0, 3);
@@ -248,12 +250,7 @@ function LeadershipHome({
   // Attendance: school-wide average weighted by how many students each year
   // group's mean is based on -- an unweighted average-of-averages would let
   // a small sixth form pull the figure as hard as a full-size year group.
-  const cohortWithAttendance = cohortRows.filter((r) => r.attendanceMean !== null);
-  const attendanceStudentTotal = cohortWithAttendance.reduce((sum, r) => sum + r.studentsCovered, 0);
-  const attendancePct =
-    attendanceStudentTotal > 0
-      ? cohortWithAttendance.reduce((sum, r) => sum + (r.attendanceMean ?? 0) * r.studentsCovered, 0) / attendanceStudentTotal
-      : null;
+  const attendancePct = attendanceHeadline.attendancePct;
 
   const cohortWithAttendanceDelta = cohortRows.filter((r) => r.attendanceDelta !== null);
   const attendanceDeltaStudentTotal = cohortWithAttendanceDelta.reduce((sum, r) => sum + r.pairedCount, 0);
@@ -1469,6 +1466,7 @@ export default async function HomePage({
           topImproving={leadershipData.topImproving}
           meetingsTodayCount={leadershipData.meetingsTodayCount}
           attainmentKpis={leadershipData.attainmentKpis}
+          attendanceHeadline={leadershipData.attendanceHeadline}
         />
       );
     }

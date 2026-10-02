@@ -16,7 +16,7 @@ export async function updateOwnAvatar(formData: FormData): Promise<ActionResult>
     if (String(formData.get("remove")) === "true") {
       await (prisma as any).user.update({
         where: { id: user.id },
-        data: { avatarImage: null, avatarMimeType: null, avatarUpdatedAt: null },
+        data: { avatarImage: null, avatarMimeType: null, avatarUpdatedAt: null, avatarDataSource: "MANUAL" },
       });
       revalidatePath("/profile");
       return { ok: true };
@@ -28,7 +28,7 @@ export async function updateOwnAvatar(formData: FormData): Promise<ActionResult>
 
     await (prisma as any).user.update({
       where: { id: user.id },
-      data: { avatarImage: bytes, avatarMimeType: mimeType, avatarUpdatedAt: new Date() },
+      data: { avatarImage: bytes, avatarMimeType: mimeType, avatarUpdatedAt: new Date(), avatarDataSource: "MANUAL" },
     });
     revalidatePath("/profile");
     return { ok: true };

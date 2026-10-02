@@ -7,6 +7,11 @@ export function avatarUrlFor(userId: string, updatedAt: Date | string | null | u
   return `/api/users/${userId}/avatar?v=${v}`;
 }
 
+export function studentAvatarUrlFor(studentId: string, updatedAt: Date | string | null | undefined): string | null {
+  if (!updatedAt) return null;
+  return `/api/students/${studentId}/avatar?v=${new Date(updatedAt).getTime()}`;
+}
+
 export async function readAvatarFile(file: File): Promise<{ bytes: Buffer; mimeType: string }> {
   if (!file || file.size <= 0) throw new Error("EMPTY_FILE");
   if (file.size > MAX_BYTES) throw new Error("FILE_TOO_LARGE");

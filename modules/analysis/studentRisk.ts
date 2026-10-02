@@ -262,7 +262,15 @@ export async function computeStudentRiskIndex(
     where: { tenantId, status: "ACTIVE" },
     include: {
       snapshots: {
-        where: { snapshotDate: { gte: prevStart, lte: currentEnd } },
+        // Keep the latest academic-year snapshot visible while an Arbor catch-up is
+        // still filling the selected comparison window. Movement remains blank until
+        // there are snapshots inside both comparison periods.
+        where: {
+          OR: [
+            { snapshotDate: { gte: prevStart, lte: currentEnd } },
+            { countScope: "YEAR_TO_DATE" },
+          ],
+        },
         orderBy: { snapshotDate: "desc" },
       },
       watchlistEntries: {
@@ -273,30 +281,43 @@ export async function computeStudentRiskIndex(
 
   for (const student of students as any[]) {
     const snapshots: any[] = student.snapshots ?? [];
+    // Behaviour and attendance may be delivered in separate same-day snapshots.
+    // Attendance must therefore only ever be read from a record with its own
+    // possible-attendance total, never from a behaviour-only record with a zero.
+    const attendanceSnapshots = snapshots.filter((s: any) => (s.attendancePossibleCount ?? 0) > 0);
+    const attendanceCurrent = attendanceSnapshots[0] ?? null;
+    const attendanceBaseline = attendanceCurrent
+      ? attendanceSnapshots.find((s: any) => new Date(s.snapshotDate).getTime() <= new Date(attendanceCurrent.snapshotDate).getTime() - windowDays * 24 * 60 * 60 * 1000) ?? null
+      : null;
 
-    const currentSnap = snapshots.find(
+    const currentWindowSnap = snapshots.find(
       (s: any) => s.snapshotDate >= currentStart && s.snapshotDate <= currentEnd
     );
+    const latestYearToDateSnap = snapshots.find((s: any) => s.countScope === "YEAR_TO_DATE");
+    const currentSnap = currentWindowSnap ?? latestYearToDateSnap;
     const prevSnap = snapshots.find(
       (s: any) => s.snapshotDate >= prevStart && s.snapshotDate < currentStart
     );
 
-    // Exclude students with no recent data
+    // A student can be shown from the latest year-to-date Arbor snapshot before
+    // the selected comparison window has caught up. In that case we do not infer a
+    // movement trend from an older snapshot.
     if (!currentSnap) continue;
 
-    const confidence: Confidence = prevSnap ? "HIGH" : "LOW";
+    const usablePrevious = currentWindowSnap ? prevSnap : null;
+    const confidence: Confidence = usablePrevious ? "HIGH" : "LOW";
 
-    const attendanceDelta = prevSnap
-      ? Number(currentSnap.attendancePct) - Number(prevSnap.attendancePct)
+    const attendanceDelta = attendanceCurrent && attendanceBaseline
+      ? Number(attendanceCurrent.attendancePct) - Number(attendanceBaseline.attendancePct)
       : null;
-    const onCallsDelta = prevSnap ? currentSnap.onCallsCount - prevSnap.onCallsCount : null;
-    const detentionsDelta = prevSnap ? currentSnap.detentionsCount - prevSnap.detentionsCount : null;
-    const latenessDelta = prevSnap ? currentSnap.latenessCount - prevSnap.latenessCount : null;
-    const suspensionsDelta = prevSnap
-      ? currentSnap.suspensionsCount - prevSnap.suspensionsCount
+    const onCallsDelta = usablePrevious ? currentSnap.onCallsCount - usablePrevious.onCallsCount : null;
+    const detentionsDelta = usablePrevious ? currentSnap.detentionsCount - usablePrevious.detentionsCount : null;
+    const latenessDelta = usablePrevious ? currentSnap.latenessCount - usablePrevious.latenessCount : null;
+    const suspensionsDelta = usablePrevious
+      ? currentSnap.suspensionsCount - usablePrevious.suspensionsCount
       : null;
-    const internalExclusionsDelta = prevSnap
-      ? currentSnap.internalExclusionsCount - prevSnap.internalExclusionsCount
+    const internalExclusionsDelta = usablePrevious
+      ? currentSnap.internalExclusionsCount - usablePrevious.internalExclusionsCount
       : null;
 
     const riskScore = computeRiskScore({
@@ -331,7 +352,7 @@ export async function computeStudentRiskIndex(
       confidence,
       lastSnapshotDate: currentSnap.snapshotDate,
       drivers,
-      attendancePct: Number(currentSnap.attendancePct),
+      attendancePct: attendanceCurrent ? Number(attendanceCurrent.attendancePct) : null,
       detentionsDelta,
       onCallsDelta,
       latenessDelta,

@@ -45,15 +45,6 @@ function bandPillClass(band: RiskBand): string {
   }
 }
 
-function fmtDate(date: Date | null): string {
-  if (!date) return "—";
-  return new Date(date).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 function deltaClass(value: number | null, invert = false): string {
   if (value === null) return "text-muted";
   if (value === 0) return "text-muted";
@@ -293,7 +284,6 @@ export function StudentsListSection({
                   <th className="px-4 py-3 text-right">Susp Δ</th>
                 </>
               )}
-              <th className="px-4 py-3">Updated</th>
             </tr>
           </thead>
           <tbody>
@@ -421,7 +411,6 @@ export function StudentsListSection({
                       </td>
                     </>
                   )}
-                  <td className="px-4 py-4 text-muted">{fmtDate(row.lastSnapshotDate)}</td>
                 </tr>
               );
             })}
@@ -443,4 +432,3 @@ export function StudentsListSection({
     </div>
   );
 }
-

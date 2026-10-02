@@ -51,6 +51,50 @@ export type AttainmentSummary = {
   topDualFlagged: DualFlaggedStudent[];
 };
 
+export type AttendanceHeadline = {
+  attendancePct: number | null;
+  studentsCovered: number;
+  asOf: Date | null;
+};
+
+type AttendanceSnapshot = {
+  attendancePct: unknown;
+  attendancePossibleCount: number;
+  attendancePresentCount: number;
+  snapshotDate: Date;
+};
+
+/**
+ * The leadership attendance card is an academic-year headline, not a comparison
+ * window metric. Arbor snapshots retain only the aggregate counts needed to weight
+ * the school figure correctly.
+ */
+async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHeadline> {
+  const students = await (prisma as any).student.findMany({
+    where: { tenantId, status: "ACTIVE" },
+    select: {
+      snapshots: {
+        // Attendance and behaviour can arrive in separate same-day sync batches.
+        // Only an attendance-bearing snapshot may supply the attendance headline.
+        where: { countScope: "YEAR_TO_DATE", attendancePossibleCount: { gt: 0 } },
+        orderBy: { snapshotDate: "desc" },
+        take: 1,
+        select: { attendancePct: true, attendancePossibleCount: true, attendancePresentCount: true, snapshotDate: true },
+      },
+    },
+  });
+  const snapshots: AttendanceSnapshot[] = students.flatMap(
+    (student: { snapshots: AttendanceSnapshot[] }) => student.snapshots,
+  );
+  if (!snapshots.length) return { attendancePct: null, studentsCovered: 0, asOf: null };
+  const possible = snapshots.reduce((total, snapshot) => total + snapshot.attendancePossibleCount, 0);
+  const present = snapshots.reduce((total, snapshot) => total + snapshot.attendancePresentCount, 0);
+  const attendancePct = possible > 0
+    ? Math.round((present / possible) * 1000) / 10
+    : snapshots.reduce((total, snapshot) => total + Number(snapshot.attendancePct), 0) / snapshots.length;
+  return { attendancePct, studentsCovered: snapshots.length, asOf: snapshots.reduce((latest, snapshot) => snapshot.snapshotDate > latest ? snapshot.snapshotDate : latest, snapshots[0].snapshotDate) };
+}
+
 export type PendingLeaveDetail = {
   id: string;
   requesterName: string;
@@ -324,7 +368,7 @@ export async function hydrateLeadershipHomeData({
     { count: 0, recentTeachers: [] as { id: string; name: string }[] }
   );
 
-  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentKpis] = await Promise.all([
+  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentKpis, attendanceHeadline] = await Promise.all([
     safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]),
     safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]),
     safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }),
@@ -340,6 +384,7 @@ export async function hydrateLeadershipHomeData({
     attainmentPromise,
     meetingsTodayPromise,
     hasAssessmentsFeature ? fetchDashboardAttainmentKPIs(user.tenantId) : Promise.resolve([] as DashboardAttainmentKPIRow[]),
+    safe(fetchAttendanceHeadline(user.tenantId), { attendancePct: null, studentsCovered: 0, asOf: null } as AttendanceHeadline),
   ]);
 
   return {
@@ -357,6 +402,7 @@ export async function hydrateLeadershipHomeData({
     weekObsTeachers: weekObs.recentTeachers,
     attainmentSummary,
     attainmentKpis,
+    attendanceHeadline,
     meetingsTodayCount: meetingsTodayCount as number,
     watchlistStudents: studentResult.rows.filter((r) => r.onWatchlist),
   };

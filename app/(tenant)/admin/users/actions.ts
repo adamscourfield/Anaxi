@@ -11,6 +11,8 @@ import {
   assertAdminCannotAssignSuperAdminRole,
   requireAdminUser,
 } from "@/lib/admin";
+import { assertCanEditArborOwnedStaffFields } from "@/lib/integrations/arbor/fieldOwnership";
+import { fullNameSchema } from "@/lib/validation/schemas";
 
 export type ActionResult =
   | { ok: true; linked?: boolean; linkedNewPassword?: boolean }
@@ -172,7 +174,7 @@ export async function setUserAvatar(formData: FormData): Promise<ActionResult> {
     if (String(formData.get("remove")) === "true") {
       await (prisma as any).user.updateMany({
         where: { id, tenantId: admin.tenantId },
-        data: { avatarImage: null, avatarMimeType: null, avatarUpdatedAt: null },
+        data: { avatarImage: null, avatarMimeType: null, avatarUpdatedAt: null, avatarDataSource: "MANUAL" },
       });
       return;
     }
@@ -189,7 +191,7 @@ export async function setUserAvatar(formData: FormData): Promise<ActionResult> {
 
     await (prisma as any).user.updateMany({
       where: { id, tenantId: admin.tenantId },
-      data: { avatarImage: bytes, avatarMimeType: mimeType, avatarUpdatedAt: new Date() },
+      data: { avatarImage: bytes, avatarMimeType: mimeType, avatarUpdatedAt: new Date(), avatarDataSource: "MANUAL" },
     });
   });
 }
@@ -259,6 +261,11 @@ export async function updateUserRole(formData: FormData): Promise<ActionResult> 
     if (!userId || !role) throw new Error("User and role are required.");
     await assertAdminCanMutateUser(admin, userId, admin.tenantId);
     assertAdminCannotAssignSuperAdminRole(admin, role);
+    const existingUser = await (prisma as any).user.findFirst({
+      where: { id: userId, tenantId: admin.tenantId },
+      select: { dataSource: true, fullName: true, role: true },
+    });
+    if (!existingUser) throw new Error("User not found.");
     await (prisma as any).user.updateMany({
       where: { id: userId, tenantId: admin.tenantId },
       data: { role },
@@ -281,14 +288,32 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
     const scopedLoaRaw = String(formData.get("scopedLoaTargetIds") || "");
     const scopedLoaTargetIds = scopedLoaRaw ? scopedLoaRaw.split(",").filter(Boolean) : [];
 
+    // Name is optional in the payload so older clients that don't send it leave it unchanged.
+    const fullNameRaw = formData.get("fullName");
+    let fullName: string | undefined;
+    if (fullNameRaw !== null) {
+      const parsed = fullNameSchema.safeParse(String(fullNameRaw));
+      if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid name.");
+      fullName = parsed.data;
+    }
+
     if (!userId) throw new Error("User is required.");
 
     await assertAdminCanMutateUser(admin, userId, admin.tenantId);
     assertAdminCannotAssignSuperAdminRole(admin, role);
+    const existingUser = await (prisma as any).user.findFirst({
+      where: { id: userId, tenantId: admin.tenantId },
+      select: { dataSource: true, fullName: true, role: true },
+    });
+    if (!existingUser) throw new Error("User not found.");
+    assertCanEditArborOwnedStaffFields(existingUser, {
+      ...(fullName !== undefined && { fullName }),
+    });
 
     await (prisma as any).user.updateMany({
       where: { id: userId, tenantId: admin.tenantId },
       data: {
+        ...(fullName !== undefined && { fullName }),
         role,
         receivesOnCallEmails,
         receivesFirstAidEmails,

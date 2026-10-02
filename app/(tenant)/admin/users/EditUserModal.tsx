@@ -301,6 +301,7 @@ export function EditUserModal({
   const [pending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
 
+  const [fullName, setFullName] = useState(user.fullName);
   const [role, setRole] = useState(user.role);
   const [onCallRequests, setOnCallRequests] = useState(user.receivesOnCallEmails);
   const [firstAidEmails, setFirstAidEmails] = useState(user.receivesFirstAidEmails);
@@ -321,19 +322,25 @@ export function EditUserModal({
     return map;
   }, [allTeachers]);
 
-  const roleSelectRef = useRef<HTMLSelectElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const showLoaSettings = LOA_CAPABLE_ROLES.has(role);
 
   useEffect(() => {
     setMounted(true);
-    const t = window.setTimeout(() => roleSelectRef.current?.focus({ preventScroll: true }), 0);
+    const t = window.setTimeout(() => nameInputRef.current?.focus({ preventScroll: true }), 0);
     return () => window.clearTimeout(t);
   }, []);
 
   function handleSave() {
     if (readOnly) return;
+    const trimmedName = fullName.trim().replace(/\s+/g, " ");
+    if (!trimmedName) {
+      toast("Name is required.", "error");
+      return;
+    }
     const fd = new FormData();
     fd.set("userId", user.id);
+    fd.set("fullName", trimmedName);
     fd.set("role", role);
     fd.set("receivesOnCallEmails", String(onCallRequests));
     fd.set("receivesFirstAidEmails", String(firstAidEmails));
@@ -407,6 +414,27 @@ export function EditUserModal({
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 pb-2">
+          <div className="mb-6">
+            <label htmlFor="edit-user-name" className={SECTION_LABEL}>
+              Full name
+            </label>
+            <input
+              ref={nameInputRef}
+              id="edit-user-name"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              disabled={readOnly}
+              maxLength={120}
+              autoComplete="off"
+              aria-invalid={!fullName.trim()}
+              className="field w-full rounded-xl border-border/40 bg-background py-2.5 px-3.5 text-[0.8125rem] font-medium text-text disabled:cursor-not-allowed disabled:opacity-60"
+            />
+            {!fullName.trim() && !readOnly ? (
+              <p className="mt-1.5 text-xs text-error">Name is required.</p>
+            ) : null}
+          </div>
+
           <div>
             <label htmlFor="edit-user-role" className={SECTION_LABEL}>
               Institutional role
@@ -416,7 +444,6 @@ export function EditUserModal({
                 <RoleBadgeIcon className="h-5 w-5" />
               </span>
               <select
-                ref={roleSelectRef}
                 id="edit-user-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
@@ -533,7 +560,7 @@ export function EditUserModal({
             <button
               type="button"
               onClick={handleSave}
-              disabled={pending}
+              disabled={pending || !fullName.trim()}
               className="inline-flex items-center justify-center rounded-xl bg-neutral-950 px-6 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900 disabled:opacity-50"
             >
               {pending ? "Saving…" : "Save changes"}

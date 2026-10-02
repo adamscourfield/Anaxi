@@ -8,48 +8,53 @@ datasource db {
 }
 
 model Tenant {
-  id                   String                   @id @default(cuid())
-  name                 String
-  slug                 String?                  @unique
-  status               TenantStatus             @default(ACTIVE)
-  analysisRuns         AnalysisRun[]
-  assessments          Assessment[]
-  assessmentCycles     AssessmentCycle[]
-  assessmentPoints     AssessmentPoint[]
-  assessmentResults    AssessmentResult[]
-  attainmentPresets    AttainmentMetricPreset[]
-  auditLogs            AuditLog[]
-  departments          Department[]
-  importJobs           ImportJob[]
-  importMappings       ImportMappingConfig[]
-  insights             Insight[]
-  loaApprovalScopes    LOAApprovalScope[]
-  loaAuthorisers       LOAAuthoriser[]
-  loaRequests          LOARequest[]
-  loaReasons           LoaReason[]
-  meetings             Meeting[]
-  meetingActions       MeetingAction[]
-  meetingAttendees     MeetingAttendee[]
-  observations         Observation[]
-  onCallLocations      OnCallLocation[]
-  onCallReasons        OnCallReason[]
-  onCallRecipients     OnCallRecipient[]
-  onCallRequests       OnCallRequest[]
-  onCallTimelineEvents OnCallTimelineEvent[]
-  emailLogs            EmailLog[]
-  inAppNotifications   InAppNotification[]
-  adminInvites         SchoolAdminInvite[]
-  strategyAreas        StrategyArea[]
-  strategyNotes        StrategyNote[]
-  students             Student[]
-  studentWatchlist     StudentWatchlist[]
-  subTopics            SubTopic[]
-  features             TenantFeature[]
-  tenantImportMappings TenantImportMapping[]
-  tenantSignalLabels   TenantSignalLabel[]
-  tenantSettings       TenantSettings?
-  vocab                TenantVocab[]
-  users                User[]
+  id                     String                    @id @default(cuid())
+  name                   String
+  slug                   String?                   @unique
+  status                 TenantStatus              @default(ACTIVE)
+  analysisRuns           AnalysisRun[]
+  assessments            Assessment[]
+  assessmentCycles       AssessmentCycle[]
+  assessmentPoints       AssessmentPoint[]
+  assessmentResults      AssessmentResult[]
+  attainmentPresets      AttainmentMetricPreset[]
+  auditLogs              AuditLog[]
+  departments            Department[]
+  importJobs             ImportJob[]
+  importMappings         ImportMappingConfig[]
+  insights               Insight[]
+  integrations           TenantIntegration[]
+  sharedIntegrationLinks SharedIntegrationSchool[]
+  integrationSyncRuns    IntegrationSyncRun[]
+  integrationSyncChanges IntegrationSyncChange[]
+  behaviourIncidents     BehaviourIncident[]
+  loaApprovalScopes      LOAApprovalScope[]
+  loaAuthorisers         LOAAuthoriser[]
+  loaRequests            LOARequest[]
+  loaReasons             LoaReason[]
+  meetings               Meeting[]
+  meetingActions         MeetingAction[]
+  meetingAttendees       MeetingAttendee[]
+  observations           Observation[]
+  onCallLocations        OnCallLocation[]
+  onCallReasons          OnCallReason[]
+  onCallRecipients       OnCallRecipient[]
+  onCallRequests         OnCallRequest[]
+  onCallTimelineEvents   OnCallTimelineEvent[]
+  emailLogs              EmailLog[]
+  inAppNotifications     InAppNotification[]
+  adminInvites           SchoolAdminInvite[]
+  strategyAreas          StrategyArea[]
+  strategyNotes          StrategyNote[]
+  students               Student[]
+  studentWatchlist       StudentWatchlist[]
+  subTopics              SubTopic[]
+  features               TenantFeature[]
+  tenantImportMappings   TenantImportMapping[]
+  tenantSignalLabels     TenantSignalLabel[]
+  tenantSettings         TenantSettings?
+  vocab                  TenantVocab[]
+  users                  User[]
 }
 
 model User {
@@ -65,10 +70,16 @@ model User {
   avatarImage                   Bytes?
   avatarMimeType                String?
   avatarUpdatedAt               DateTime?
+  /// Prevents an Arbor photo refresh from overwriting a picture uploaded in Anaxi.
+  avatarDataSource              DataSource?
   emailObservations             Boolean                    @default(true)
   emailMeetings                 Boolean                    @default(true)
   emailLeave                    Boolean                    @default(true)
   passwordHash                  String?
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own staff ID.
+  /// Null means the record only exists because it was created or imported inside Anaxi.
+  externalId                    String?
+  dataSource                    DataSource                 @default(MANUAL)
   auditLogs                     AuditLog[]                 @relation("AuditActor")
   coachAssignmentsAsCoach       CoachAssignment[]          @relation("CoachAssignmentCoach")
   coachAssignmentsAsCoachee     CoachAssignment[]          @relation("CoachAssignmentCoachee")
@@ -104,6 +115,7 @@ model User {
 
   @@unique([tenantId, email])
   @@unique([tenantId, id])
+  @@unique([tenantId, dataSource, externalId])
 }
 
 model TenantFeature {
@@ -175,50 +187,50 @@ model LOAApprovalScope {
 }
 
 model LOARequest {
-  id                 String     @id @default(cuid())
-  tenantId           String
-  requesterId        String
-  reasonId           String?
-  startDate          DateTime
-  endDate            DateTime
-  reasonText         String?
-  coverRequirements  String?
-  medicalEvidenceUrl String?
-  medicalEvidenceData Bytes?
+  id                      String     @id @default(cuid())
+  tenantId                String
+  requesterId             String
+  reasonId                String?
+  startDate               DateTime
+  endDate                 DateTime
+  reasonText              String?
+  coverRequirements       String?
+  medicalEvidenceUrl      String?
+  medicalEvidenceData     Bytes?
   medicalEvidenceMimeType String?
-  notes              String?
-  decisionNotes      String?
-  decidedById        String?
-  decidedAt          DateTime?
-  status             String     @default("PENDING")
+  notes                   String?
+  decisionNotes           String?
+  decidedById             String?
+  decidedAt               DateTime?
+  status                  String     @default("PENDING")
   // HR bookkeeping only -- whether this LOA has been keyed into each external system. Not synced.
-  inArbor            Boolean    @default(false)
-  inITrent           Boolean    @default(false)
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  reason             LoaReason? @relation(fields: [reasonId], references: [id])
-  tenant             Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  requester          User       @relation(fields: [tenantId, requesterId], references: [tenantId, id])
+  inArbor                 Boolean    @default(false)
+  inITrent                Boolean    @default(false)
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+  reason                  LoaReason? @relation(fields: [reasonId], references: [id])
+  tenant                  Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requester               User       @relation(fields: [tenantId, requesterId], references: [tenantId, id])
 }
 
 model OnCallReason {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   tenantId  String
   label     String
   active    Boolean @default(true)
-  sortOrder Int    @default(0)
-  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sortOrder Int     @default(0)
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, label])
 }
 
 model OnCallLocation {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   tenantId  String
   label     String
   active    Boolean @default(true)
-  sortOrder Int    @default(0)
-  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sortOrder Int     @default(0)
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, label])
 }
@@ -238,28 +250,44 @@ model OnCallRecipient {
 }
 
 model Student {
-  id                String                  @id @default(cuid())
-  tenantId          String
-  upn               String?
-  fullName          String
-  yearGroup         String?
+  id                    String                  @id @default(cuid())
+  tenantId              String
+  upn                   String?
+  fullName              String
+  yearGroup             String?
   ks2ReadingScaledScore Int?
   ks2MathsScaledScore   Int?
-  sendFlag          Boolean                 @default(false)
-  ppFlag            Boolean                 @default(false)
-  status            StudentStatus           @default(ACTIVE)
-  createdAt         DateTime                @default(now())
-  updatedAt         DateTime                @updatedAt
-  assessmentResults AssessmentResult[]
-  onCallRequests    OnCallRequest[]
-  tenant            Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  changeFlags       StudentChangeFlag[]
-  snapshots         StudentSnapshot[]
-  subjectTeachers   StudentSubjectTeacher[]
-  watchlistEntries  StudentWatchlist[]
+  sendFlag              Boolean                 @default(false)
+  ppFlag                Boolean                 @default(false)
+  status                StudentStatus           @default(ACTIVE)
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own student ID.
+  /// Null means the record only exists because it was created or imported inside Anaxi.
+  externalId            String?
+  dataSource            DataSource              @default(MANUAL)
+  /// Mirrors User.avatarImage/avatarMimeType/avatarUpdatedAt. Pupil photos are more
+  /// sensitive than staff ones (safeguarding, image rights, leaver retention/deletion
+  /// duties) — confirm this is covered by the school's data sharing agreement before
+  /// a sync actually writes to these, and delete them when a student's status moves
+  /// to ARCHIVED rather than keeping them indefinitely.
+  avatarImage           Bytes?
+  avatarMimeType        String?
+  avatarUpdatedAt       DateTime?
+  /// Prevents an Arbor photo refresh from overwriting a picture uploaded in Anaxi.
+  avatarDataSource      DataSource?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  assessmentResults     AssessmentResult[]
+  behaviourIncidents    BehaviourIncident[]
+  onCallRequests        OnCallRequest[]
+  tenant                Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  changeFlags           StudentChangeFlag[]
+  snapshots             StudentSnapshot[]
+  subjectTeachers       StudentSubjectTeacher[]
+  watchlistEntries      StudentWatchlist[]
 
   @@unique([tenantId, upn])
   @@unique([tenantId, id])
+  @@unique([tenantId, dataSource, externalId])
 }
 
 model StudentSnapshot {
@@ -275,11 +303,48 @@ model StudentSnapshot {
   suspensionsCount        Int        @default(0)
   onCallsCount            Int        @default(0)
   attendancePct           Decimal    @default(0)
+  /// Internal totals used to calculate an accurate academic-year attendance rate.
+  /// They are not a copy of Arbor's individual register marks.
+  attendancePossibleCount Int        @default(0)
+  attendancePresentCount  Int        @default(0)
   latenessCount           Int        @default(0)
+  /// Where this date's totals came from. The (tenantId, studentId, snapshotDate) key
+  /// is already unique, so this exists to stop one source silently overwriting
+  /// another's totals for the same date (e.g. a CSV import re-running after Arbor
+  /// has already supplied that date) rather than to find the row.
+  dataSource              DataSource @default(MANUAL)
   createdAt               DateTime   @default(now())
   student                 Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, studentId, snapshotDate])
+}
+
+/// A single behaviour event (one detention, one suspension, one award of positive
+/// points...), as distinct from StudentSnapshot's daily totals. Decided need: once
+/// Arbor is connected, Anaxi keeps both — the totals every existing screen already
+/// reads, and this incident-level detail, which totals throw away (what an incident
+/// was for, exactly when it happened). Nothing writes to or reads from this yet; nor
+/// does anything recompute StudentSnapshot's totals from these rows. Category names
+/// and whatever `reasonCode` should actually hold are guesses pending Arbor's real
+/// incident shape — do not build real ingestion against this as-is.
+model BehaviourIncident {
+  id         String                    @id @default(cuid())
+  tenantId   String
+  studentId  String
+  category   BehaviourIncidentCategory
+  /// Points value for a POSITIVE_POINTS award; otherwise unused for now.
+  points     Int?
+  /// Free-text or code for what the incident was for, when the source supplies one.
+  reasonCode String?
+  occurredAt DateTime
+  externalId String?
+  dataSource DataSource                @default(MANUAL)
+  createdAt  DateTime                  @default(now())
+  student    Student                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tenant     Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, dataSource, externalId])
+  @@index([tenantId, studentId, category, occurredAt])
 }
 
 model StudentChangeFlag {
@@ -329,20 +394,20 @@ model StudentSubjectTeacher {
 }
 
 model EmailLog {
-  id           String              @id @default(cuid())
-  tenantId     String?
-  template     String
-  toEmail      String
-  subject      String
-  status       EmailDeliveryStatus
-  providerId   String?
-  errorMessage String?
-  metadataJson Json?
-  bodyText     String?
-  bodyHtml     String?
+  id              String              @id @default(cuid())
+  tenantId        String?
+  template        String
+  toEmail         String
+  subject         String
+  status          EmailDeliveryStatus
+  providerId      String?
+  errorMessage    String?
+  metadataJson    Json?
+  bodyText        String?
+  bodyHtml        String?
   attachmentsJson Json?
-  createdAt    DateTime            @default(now())
-  tenant       Tenant?             @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  createdAt       DateTime            @default(now())
+  tenant          Tenant?             @relation(fields: [tenantId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, createdAt])
   @@index([status, createdAt])
@@ -428,25 +493,25 @@ model ImportError {
 }
 
 model OnCallRequest {
-  id                      String            @id @default(cuid())
+  id                      String                @id @default(cuid())
   tenantId                String
   requesterUserId         String
   studentId               String
   requestType             OnCallRequestType
-  isEmergency             Boolean           @default(false)
+  isEmergency             Boolean               @default(false)
   location                String
   behaviourReasonCategory String?
   notes                   String?
-  status                  OnCallStatus      @default(OPEN)
+  status                  OnCallStatus          @default(OPEN)
   responderUserId         String?
-  createdAt               DateTime          @default(now())
+  createdAt               DateTime              @default(now())
   acknowledgedAt          DateTime?
   resolvedAt              DateTime?
-  updatedAt               DateTime          @updatedAt
-  tenant                  Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  requester               User              @relation("OnCallRequester", fields: [tenantId, requesterUserId], references: [tenantId, id])
-  responder               User?             @relation("OnCallResponder", fields: [tenantId, responderUserId], references: [tenantId, id], onDelete: SetNull)
-  student                 Student           @relation(fields: [tenantId, studentId], references: [tenantId, id])
+  updatedAt               DateTime              @updatedAt
+  tenant                  Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requester               User                  @relation("OnCallRequester", fields: [tenantId, requesterUserId], references: [tenantId, id])
+  responder               User?                 @relation("OnCallResponder", fields: [tenantId, responderUserId], references: [tenantId, id], onDelete: SetNull)
+  student                 Student               @relation(fields: [tenantId, studentId], references: [tenantId, id])
   timelineEvents          OnCallTimelineEvent[]
 
   @@index([tenantId])
@@ -457,15 +522,15 @@ model OnCallRequest {
 }
 
 model OnCallTimelineEvent {
-  id           String                  @id @default(cuid())
-  tenantId     String
-  requestId    String
-  type         OnCallTimelineEventType
-  actorUserId  String?
-  createdAt    DateTime                @default(now())
-  tenant       Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  request      OnCallRequest           @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  actor        User?                   @relation(fields: [tenantId, actorUserId], references: [tenantId, id], onDelete: SetNull)
+  id          String                  @id @default(cuid())
+  tenantId    String
+  requestId   String
+  type        OnCallTimelineEventType
+  actorUserId String?
+  createdAt   DateTime                @default(now())
+  tenant      Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  request     OnCallRequest           @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor       User?                   @relation(fields: [tenantId, actorUserId], references: [tenantId, id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([requestId])
@@ -631,8 +696,168 @@ model TenantSettings {
   updatedAt                DateTime   @updatedAt
 }
 
+/// A school's connection to an external MIS (e.g. Arbor), used to pull staff, students,
+/// class lists, behaviour and assessment data on a schedule instead of a manual CSV upload.
+/// Credentials are stored encrypted (see lib/integrationSecrets.ts) — never in plaintext.
+model TenantIntegration {
+  id                    String                 @id @default(cuid())
+  tenantId              String
+  provider              IntegrationProvider
+  status                IntegrationStatus      @default(DISCONNECTED)
+  /// AES-256-GCM ciphertext of the provider credentials (JSON), base64-encoded.
+  /// Produced by lib/integrationSecrets.ts; never store plaintext here.
+  credentialsCiphertext String?
+  /// Non-secret provider config, e.g. the Arbor site ID this connection targets.
+  config                Json?
+  connectedByUserId     String?
+  connectedAt           DateTime?
+  lastSyncedAt          DateTime?
+  lastSyncStatus        IntegrationSyncStatus?
+  lastSyncError         String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  syncRuns              IntegrationSyncRun[]
+
+  @@unique([tenantId, provider])
+}
+
+/// A platform-managed connection to one external MIS. This deliberately sits above
+/// individual school tenants: one Arbor instance can supply data to more than one
+/// Anaxi school (for example, a primary and secondary school in the same trust).
+model SharedIntegration {
+  id                    String                     @id @default(cuid())
+  provider              IntegrationProvider
+  status                IntegrationStatus          @default(DISCONNECTED)
+  /// AES-256-GCM ciphertext, produced by lib/integrationSecrets.ts.
+  credentialsCiphertext String?
+  config                Json?
+  connectedByUserId     String?
+  connectedAt           DateTime?
+  lastSyncedAt          DateTime?
+  lastSyncStatus        IntegrationSyncStatus?
+  lastSyncError         String?
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+  schools               SharedIntegrationSchool[]
+  syncRuns              SharedIntegrationSyncRun[]
+
+  /// There is one shared connection for each provider at platform level.
+  @@unique([provider])
+}
+
+/// Audit trail for a run from a platform-managed integration. Kept separate from
+/// TenantIntegration's run table because one Arbor source can update many tenants.
+model SharedIntegrationSyncRun {
+  id               String                        @id @default(cuid())
+  integrationId    String
+  entityType       IntegrationEntityType
+  status           IntegrationSyncStatus         @default(RUNNING)
+  recordsProcessed Int                           @default(0)
+  recordsCreated   Int                           @default(0)
+  recordsUpdated   Int                           @default(0)
+  recordsFailed    Int                           @default(0)
+  errorSummary     String?
+  triggeredBy      String?
+  startedAt        DateTime                      @default(now())
+  finishedAt       DateTime?
+  integration      SharedIntegration             @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  changes          SharedIntegrationSyncChange[]
+
+  @@index([integrationId, startedAt])
+}
+
+/// Per-record before/after snapshots for a shared integration run.
+model SharedIntegrationSyncChange {
+  id         String                   @id @default(cuid())
+  syncRunId  String
+  tenantId   String
+  entityType String
+  entityId   String
+  changeType IntegrationChangeType
+  beforeJson Json?
+  afterJson  Json?
+  createdAt  DateTime                 @default(now())
+  syncRun    SharedIntegrationSyncRun @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
+
+  @@index([syncRunId])
+  @@index([tenantId, entityType, entityId, createdAt])
+}
+
+/// An explicit destination for data from a platform-managed integration. Keeping
+/// these links as rows, rather than a JSON list, prevents a removed school from
+/// silently remaining a sync target.
+model SharedIntegrationSchool {
+  id            String            @id @default(cuid())
+  integrationId String
+  tenantId      String
+  enabled       Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  integration   SharedIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, tenantId])
+  @@index([tenantId])
+}
+
+/// One run of syncing a single entity type (staff, students, ...) from an external MIS.
+/// Kept so admins and support can see what changed and when, and so a sync can resume
+/// or be re-run without guessing what the last attempt actually did.
+model IntegrationSyncRun {
+  id               String                  @id @default(cuid())
+  tenantId         String
+  integrationId    String
+  entityType       IntegrationEntityType
+  status           IntegrationSyncStatus   @default(RUNNING)
+  recordsProcessed Int                     @default(0)
+  recordsCreated   Int                     @default(0)
+  recordsUpdated   Int                     @default(0)
+  recordsFailed    Int                     @default(0)
+  errorSummary     String?
+  /// "CRON" for a scheduled run, or the id of the admin who triggered it manually.
+  triggeredBy      String?
+  startedAt        DateTime                @default(now())
+  finishedAt       DateTime?
+  tenant           Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  integration      TenantIntegration       @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  changes          IntegrationSyncChange[]
+
+  @@index([tenantId, integrationId, startedAt])
+}
+
+/// One row per record a sync run created, updated, or deleted — the before/after
+/// snapshot an admin's "undo this run" or "undo everything from today" action needs
+/// to actually revert data, not just see that something changed (which
+/// IntegrationSyncRun's counts already show). Mirrors AuditLog's beforeJson/afterJson
+/// shape rather than inventing a new one.
+///
+/// Nothing writes to this yet, and there is no rollback action built on it yet — this
+/// is the storage a future one would read from and write revertedAt to.
+model IntegrationSyncChange {
+  id         String                @id @default(cuid())
+  tenantId   String
+  syncRunId  String
+  /// The Prisma model name the change was made to, e.g. "Student", "StudentSnapshot".
+  entityType String
+  entityId   String
+  changeType IntegrationChangeType
+  /// Null for a CREATE.
+  beforeJson Json?
+  /// Null for a DELETE.
+  afterJson  Json?
+  /// Set once an admin has reverted this specific change.
+  revertedAt DateTime?
+  createdAt  DateTime              @default(now())
+  tenant     Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  syncRun    IntegrationSyncRun    @relation(fields: [syncRunId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, syncRunId])
+  @@index([tenantId, entityType, entityId, createdAt])
+}
+
 model TimetableEntry {
-  id              String   @id @default(cuid())
+  id              String     @id @default(cuid())
   tenantId        String
   classCode       String
   subject         String
@@ -646,10 +871,14 @@ model TimetableEntry {
   startTime       String?
   endTime         String?
   slotKey         String?
-  createdAt       DateTime @default(now())
-  teacher         User?    @relation("TimetableTeacher", fields: [teacherUserId], references: [id])
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own timetable slot ID.
+  externalId      String?
+  dataSource      DataSource @default(MANUAL)
+  createdAt       DateTime   @default(now())
+  teacher         User?      @relation("TimetableTeacher", fields: [teacherUserId], references: [id])
 
   @@unique([tenantId, classCode, slotKey])
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId, yearGroup, subject, classCode])
 }
 
@@ -851,12 +1080,18 @@ model AssessmentCycle {
   endDate           DateTime
   isActive          Boolean           @default(true)
   status            String            @default("active")
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own ID for
+  /// this assessment cycle/marksheet grouping. Matching on this rather than `label`
+  /// survives Arbor-side renames.
+  externalId        String?
+  dataSource        DataSource        @default(MANUAL)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   points            AssessmentPoint[]
 
   @@unique([tenantId, label])
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId])
 }
 
@@ -874,6 +1109,10 @@ model AssessmentPoint {
   comparisonEligible Boolean         @default(true)
   dateTaken          DateTime?
   assessedAt         DateTime
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own ID for
+  /// this assessment point. Matching on this rather than `label` survives renames.
+  externalId         String?
+  dataSource         DataSource      @default(MANUAL)
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   assessments        Assessment[]
@@ -881,6 +1120,7 @@ model AssessmentPoint {
   tenant             Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, cycleId, label])
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId, cycleId])
 }
 
@@ -900,6 +1140,10 @@ model Assessment {
   expectedStudentCount Int?
   notes                String?
   createdByUserId      String
+  /// The external MIS record this row is kept in sync with, e.g. Arbor's own ID for
+  /// this subject's marksheet within a point.
+  externalId           String?
+  dataSource           DataSource                  @default(MANUAL)
   createdAt            DateTime                    @default(now())
   updatedAt            DateTime                    @updatedAt
   point                AssessmentPoint             @relation(fields: [pointId], references: [id], onDelete: Cascade)
@@ -907,17 +1151,18 @@ model Assessment {
   results              AssessmentResult[]
   subTopicMappings     AssessmentSubTopicMapping[]
 
+  @@unique([tenantId, dataSource, externalId])
   @@index([tenantId, pointId])
   @@index([tenantId, subject, yearGroup])
 }
 
 model Progress8Benchmark {
-  id                              String   @id @default(cuid())
-  ks2AverageScaledScore           Int      @unique
-  expectedAttainment8             Float
-  zeroProgress8GradeEquivalent    Float
-  createdAt                       DateTime @default(now())
-  updatedAt                       DateTime @updatedAt
+  id                           String   @id @default(cuid())
+  ks2AverageScaledScore        Int      @unique
+  expectedAttainment8          Float
+  zeroProgress8GradeEquivalent Float
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
 }
 
 model AssessmentResult {
@@ -933,6 +1178,10 @@ model AssessmentResult {
   status          AssessmentResultStatus    @default(PRESENT)
   isValid         Boolean                   @default(true)
   validationNotes String?
+  /// Where this result came from. The (tenantId, assessmentId, studentId) key is
+  /// already unique, so this exists to stop one source silently overwriting another's
+  /// result for the same student, not to find the row.
+  dataSource      DataSource                @default(MANUAL)
   createdAt       DateTime                  @default(now())
   updatedAt       DateTime                  @updatedAt
   assessment      Assessment                @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
@@ -1019,6 +1268,54 @@ enum TenantStatus {
 enum StudentStatus {
   ACTIVE
   ARCHIVED
+}
+
+/// Where a record's data currently comes from — used to decide whether a scheduled
+/// sync is allowed to overwrite it, and to warn an admin editing a field the sync owns.
+enum DataSource {
+  MANUAL
+  CSV_IMPORT
+  ARBOR
+}
+
+enum IntegrationProvider {
+  ARBOR
+}
+
+enum IntegrationStatus {
+  DISCONNECTED
+  CONNECTED
+  ERROR
+}
+
+enum IntegrationSyncStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum IntegrationEntityType {
+  STAFF
+  STUDENTS
+  ATTENDANCE
+  CLASSES
+  BEHAVIOUR
+  ASSESSMENTS
+}
+
+enum IntegrationChangeType {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum BehaviourIncidentCategory {
+  DETENTION
+  INTERNAL_EXCLUSION
+  SUSPENSION
+  POSITIVE_POINTS
+  LATENESS
 }
 
 enum ImportJobType {
