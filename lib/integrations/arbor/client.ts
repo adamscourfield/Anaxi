@@ -77,6 +77,19 @@ export class ArborClient {
     };
   }
 
+  /** Confirms the assessment-mark source that most closely maps to Anaxi results. */
+  async verifyAssessmentAccess(): Promise<number> {
+    const data = await runArborGraphqlQuery<{ StudentAdHocAssessmentMark: Array<{ id: string }> }>(this.credentials, `{
+      StudentAdHocAssessmentMark(page_size: 1, page_num: 0) {
+        id
+        student { id }
+        assessmentReferenceDate
+        markDisplayValue
+      }
+    }`);
+    return data.StudentAdHocAssessmentMark.length;
+  }
+
   /** One read-only page of the four behaviour sources Anaxi currently measures. */
   async listBehaviourRecords(pageSize = 100, pageNum = 0, startAfter?: string, startBefore?: string): Promise<ArborBehaviourRecords> {
     const pointFilters = startAfter && startBefore ? `, awardedDatetime_after: "${startAfter}", awardedDatetime_before: "${startBefore}"` : "";
