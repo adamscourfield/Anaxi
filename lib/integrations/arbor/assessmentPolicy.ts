@@ -24,6 +24,14 @@ function academicYearFor(date: Date): string {
   return `${startsIn}/${startsIn + 1}`;
 }
 
+function academicYearFromLabel(label: string): string | null {
+  const match = label.match(/\b(20\d{2})\s*[-/]\s*(20\d{2})\b/);
+  if (!match) return null;
+  const start = Number(match[1]);
+  const end = Number(match[2]);
+  return end === start + 1 ? `${start}/${end}` : null;
+}
+
 function periodFor(name: string, finalResult: boolean, assessmentDate?: string | null): { label: string; ordinal: number } | null {
   if (finalResult) return { label: "Final", ordinal: 90 };
   if (/\bautumn\b/i.test(name)) return { label: "Autumn", ordinal: 10 };
@@ -57,7 +65,9 @@ export function mapArborAssessment(name: string, assessmentDate?: string | null)
   const period = periodFor(label, finalResult, assessmentDate);
   if (!period) return null;
   const date = assessmentDate ? new Date(assessmentDate) : new Date();
-  const academicYear = Number.isNaN(date.getTime()) ? academicYearFor(new Date()) : academicYearFor(date);
+  // Markbooks commonly include the academic year in their name. Prefer that
+  // stable source value so historic definitions cannot be named as this year.
+  const academicYear = academicYearFromLabel(label) ?? (Number.isNaN(date.getTime()) ? academicYearFor(new Date()) : academicYearFor(date));
 
   const details = family === "GCSE"
     ? { cycleLabel: `${academicYear} - Year 11 - GCSE - ${period.label}`, cohortLabel: "Year 11", qualificationType: "GCSE" as QualificationType, gradeFormat: "GCSE" as GradeFormat, yearGroups: ["Y11"] }

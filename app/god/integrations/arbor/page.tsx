@@ -13,6 +13,46 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
 import { FormField } from "@/components/ui/form-field";
 import { H3, MetaText } from "@/components/ui/typography";
+import { mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
+
+type PreparedAssessmentDefinition = { id: string; label: string };
+type ProposedAssessmentCycle = {
+  key: string;
+  label: string;
+  yearGroup: string;
+  gradeFormat: string;
+  definitions: string[];
+};
+
+function proposedAssessmentCycles(config: unknown): ProposedAssessmentCycle[] {
+  const record = config && typeof config === "object" ? config as Record<string, unknown> : {};
+  const sync = record.assessmentSync && typeof record.assessmentSync === "object" ? record.assessmentSync as Record<string, unknown> : {};
+  const definitions = Array.isArray(sync.definitions)
+    ? sync.definitions.filter((item): item is PreparedAssessmentDefinition => Boolean(item) && typeof (item as PreparedAssessmentDefinition).id === "string" && typeof (item as PreparedAssessmentDefinition).label === "string")
+    : [];
+  const cycles = new Map<string, ProposedAssessmentCycle>();
+  for (const definition of definitions) {
+    const mapping = mapArborAssessment(definition.label);
+    if (!mapping) continue;
+    for (const yearGroup of mapping.yearGroups) {
+      const cycle = mapArborAssessmentForYearGroup(mapping, yearGroup);
+      if (!cycle) continue;
+      const existing = cycles.get(cycle.cycleExternalId);
+      if (existing) {
+        if (!existing.definitions.includes(definition.label)) existing.definitions.push(definition.label);
+      } else {
+        cycles.set(cycle.cycleExternalId, {
+          key: cycle.cycleExternalId,
+          label: cycle.cycleLabel,
+          yearGroup,
+          gradeFormat: cycle.gradeFormat === "PERCENTAGE" ? "Percentage" : cycle.gradeFormat === "A_LEVEL" ? "A-Level grades" : "GCSE grades",
+          definitions: [definition.label],
+        });
+      }
+    }
+  }
+  return [...cycles.values()].sort((a, b) => a.label.localeCompare(b.label));
+}
 
 // ─── Status banner ────────────────────────────────────────────────────────────
 // Every Arbor action (connect, preview, sync...) redirects back here with query
@@ -48,7 +88,7 @@ function StatusBanner({
   );
 }
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableAssignments?: string; timetableLinkable?: string; timetableError?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentApproval?: string; assessmentApproved?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableAssignments?: string; timetableLinkable?: string; timetableError?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, latestBehaviourRun, staffProvisioningRequests, params] = await Promise.all([
     getCsrfToken(),
@@ -72,6 +112,23 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
 
   const selected = new Set<string>(integration?.schools.map((school: { tenantId: string }) => school.tenantId) ?? []);
   const hostname = typeof integration?.config?.schoolHostname === "string" ? integration.config.schoolHostname : "";
+  const assessmentCycles = proposedAssessmentCycles(integration?.config);
+  const approvedAssessmentCycles = new Set<string>(
+    Array.isArray(integration?.config?.assessmentApprovedCycleKeys)
+      ? integration.config.assessmentApprovedCycleKeys.filter((key: unknown): key is string => typeof key === "string")
+      : [],
+  );
+  const secondaryTenantIds = schools
+    .filter((school) => school.tenantSettings?.schoolType === "SECONDARY")
+    .map((school) => school.id);
+  const activeStudentsByYearGroup = secondaryTenantIds.length
+    ? await prisma.student.groupBy({
+      by: ["yearGroup"],
+      where: { tenantId: { in: secondaryTenantIds }, status: "ACTIVE" },
+      _count: { _all: true },
+    })
+    : [];
+  const studentCountByYearGroup = new Map(activeStudentsByYearGroup.map((row) => [row.yearGroup, row._count._all]));
   const previewCount = (value: string | undefined) => (/^\d+$/.test(value ?? "") ? Number(value) : 0);
   const unrecognisedLevels = Array.isArray(params?.unrecognised)
     ? params.unrecognised
@@ -283,7 +340,19 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
 
       {params?.assessmentActive === "prepared" ? (
         <StatusBanner variant="success" title="Assessment sync prepared.">
-          {previewCount(params.assessmentActiveDefinitions)} agreed assessment definitions are queued. Anaxi will import linked Secondary results one paced page at a time overnight, using the agreed GCSE, A-Level, KS3 percentage, and Year 10 percentage mappings.
+          {previewCount(params.assessmentActiveDefinitions)} agreed assessment definitions are ready for review. No results will import until individual cycles have been approved below.
+        </StatusBanner>
+      ) : null}
+
+      {params?.assessmentApproval === "success" ? (
+        <StatusBanner variant="success" title="Assessment cycles approved.">
+          {previewCount(params.assessmentApproved)} cycle(s) can now import linked Arbor results gradually overnight. All unselected cycles remain paused.
+        </StatusBanner>
+      ) : null}
+
+      {params?.assessmentApproval === "paused" ? (
+        <StatusBanner variant="success" title="Assessment imports paused.">
+          No new Arbor assessment results will be imported until cycles are approved again.
         </StatusBanner>
       ) : null}
 
@@ -445,6 +514,60 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 <MetaText className="mt-1">Agreed Secondary assessment families import gradually: P8 GCSE, A-Level, KS3 percentage, Year 10 percentage, and final August GCSE/A-Level results. Other assessment types remain paused.</MetaText>
               </Card>
             </div>
+          </section>
+
+          <section className="space-y-3">
+            <SectionHeader title="Assessment review" subtitle="Approve only the proposed cycles you want Anaxi to create and populate from Arbor." />
+            <Card className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <H3>Proposed assessment cycles</H3>
+                  <MetaText className="mt-1">Each cycle follows the agreed format: academic year, year group, phase, then term or final result. Nothing is imported until you save an approval.</MetaText>
+                </div>
+                <form method="post" action="/api/god/integrations/arbor/preview/assessments/active" className="shrink-0">
+                  <CsrfInput token={csrfToken} />
+                  <SubmitButton variant="secondary">Refresh from Arbor</SubmitButton>
+                </form>
+              </div>
+
+              {assessmentCycles.length ? (
+                <form method="post" action="/api/god/integrations/arbor/assessments/approval" className="space-y-3">
+                  <CsrfInput token={csrfToken} />
+                  <div className="divide-y divide-border/70 rounded-sm border border-border/70">
+                    {assessmentCycles.map((cycle) => {
+                      const students = studentCountByYearGroup.get(cycle.yearGroup) ?? 0;
+                      return (
+                        <label key={cycle.key} className="flex cursor-pointer items-start gap-3 px-4 py-3 hover:bg-muted/30">
+                          <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} className="mt-1 accent-accent" />
+                          <span className="min-w-0">
+                            <span className="block font-medium">{cycle.label}</span>
+                            <MetaText className="mt-1">{cycle.gradeFormat} · {students} active {students === 1 ? "student" : "students"} · {cycle.definitions.length} Arbor {cycle.definitions.length === 1 ? "definition" : "definitions"}</MetaText>
+                            <MetaText className="mt-1 truncate">{cycle.definitions.slice(0, 3).join(" · ")}{cycle.definitions.length > 3 ? ` +${cycle.definitions.length - 3} more` : ""}</MetaText>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <SubmitButton>Save approved cycles</SubmitButton>
+                    <MetaText>{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} cycle(s) are currently approved.` : "All assessment imports are currently paused."}</MetaText>
+                  </div>
+                </form>
+              ) : (
+                <div className="rounded-sm border border-dashed border-border p-4">
+                  <H3>No assessment cycles are ready to review yet</H3>
+                  <MetaText className="mt-1">Refresh the Arbor catalogue to find the agreed P8 GCSE, A-Level, KS3 percentage, Year 10 percentage, and final-result definitions. This is read-only.</MetaText>
+                </div>
+              )}
+
+              {approvedAssessmentCycles.size ? (
+                <form method="post" action="/api/god/integrations/arbor/assessments/approval">
+                  <CsrfInput token={csrfToken} />
+                  <input type="hidden" name="action" value="pause" />
+                  <SubmitButton variant="secondary">Pause all assessment imports</SubmitButton>
+                </form>
+              ) : null}
+            </Card>
           </section>
 
           <CollapsibleCard title="Connection checks and troubleshooting" defaultOpen={false}>

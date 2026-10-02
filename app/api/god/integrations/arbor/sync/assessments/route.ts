@@ -51,8 +51,14 @@ export async function POST(req: Request) {
 
   const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
   // Assessment outcomes are high-impact data. Discovery may continue, but no
-  // results are written until a super admin has reviewed and approved the mapping.
-  if (config.assessmentImportApproved !== true) return NextResponse.json({ skipped: "awaiting assessment mapping approval" });
+  // results are written until a super admin has reviewed and approved each
+  // proposed Anaxi cycle individually.
+  const approvedCycleKeys = new Set(
+    Array.isArray(config.assessmentApprovedCycleKeys)
+      ? config.assessmentApprovedCycleKeys.filter((value): value is string => typeof value === "string")
+      : [],
+  );
+  if (!approvedCycleKeys.size) return NextResponse.json({ skipped: "awaiting assessment cycle approval" });
   const state = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
   const queuedDefinitions = Array.isArray(state.definitions) ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string") : [];
   // Replace the earlier broad discovery queue with the agreed Secondary-only policy.
@@ -82,7 +88,7 @@ export async function POST(req: Request) {
       const student = studentByExternalId.get(mark.student.id); const value = markValue(mark);
       const baseMapping = mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: definition.label, assessmentName: definition.label, assessmentShortName: null }), mark.assessmentDate) ?? provisionalMapping;
       const mapping = mapArborAssessmentForYearGroup(baseMapping, student?.yearGroup ?? null);
-      if (!student || !value || !mapping || !ownerByTenantId.has(student.tenantId)) continue;
+      if (!student || !value || !mapping || !approvedCycleKeys.has(mapping.cycleExternalId) || !ownerByTenantId.has(student.tenantId)) continue;
       const assessment = await ensureAssessment(db, student.tenantId, ownerByTenantId.get(student.tenantId)!, definition, mapping);
       const normalizedScore = normalizeGrade(value, mapping.gradeFormat);
       await db.assessmentResult.upsert({
