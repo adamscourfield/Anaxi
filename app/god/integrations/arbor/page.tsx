@@ -137,7 +137,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       : [];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 p-6">
+    <div className="mx-auto max-w-5xl space-y-6 p-6">
       <PageHeader
         variant="ledger"
         eyebrow="God Mode"
@@ -465,139 +465,156 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       {params?.staffProvisioning === "provisioned" ? <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">Staff account created.</div><MetaText className="mt-1">The selected school account(s) were created or linked, and an invitation was sent.</MetaText></Card> : null}
       {params?.staffProvisioning === "failed" || params?.staffProvisioning === "invalid" || params?.staffProvisioning === "not-found" || params?.staffProvisioning === "not-connected" ? <Card className="border-danger/30 bg-[var(--pill-danger-bg)]"><div className="font-medium text-danger">Staff provisioning needs attention.</div><MetaText className="mt-1">No new staff access was granted.</MetaText></Card> : null}
 
-      <Card>
-        <H3>How this works</H3>
-        <MetaText className="mt-2">
-          Goresbrook Primary and Goresbrook Secondary can share one Arbor connection while remaining separate Anaxi schools. Before the first sync is enabled, we will confirm the Arbor field that distinguishes the two, so no record is guessed into the wrong school.
-        </MetaText>
-      </Card>
-
       {integration?.status === "CONNECTED" ? (
         <>
-          <StatusBanner variant="success" title="Arbor is connected and updating automatically.">
-            Students, staff, attendance, behaviour and photos run overnight. Primary and Secondary remain separate inside Anaxi.
-          </StatusBanner>
+          <Card className="overflow-hidden border-accent/25 bg-[linear-gradient(110deg,var(--surface-container-lowest),var(--surface-container-low))]">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" /> Connected and syncing
+                </div>
+                <H3 className="text-xl">Arbor is now the source of truth for your school data.</H3>
+                <MetaText className="mt-2">Students, staff, attendance, behaviour, and profile photos update automatically. Goresbrook Primary and Secondary stay separate in Anaxi throughout.</MetaText>
+              </div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4 lg:text-right">
+                <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Schools</div><div className="mt-1 font-semibold">2 connected</div></div>
+                <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Schedule</div><div className="mt-1 font-semibold">Nightly</div></div>
+                <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Assessments</div><div className="mt-1 font-semibold">{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} approved` : "Awaiting review"}</div></div>
+                <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Connection</div><div className="mt-1 font-semibold text-success">Healthy</div></div>
+              </div>
+            </div>
+          </Card>
 
           <section className="space-y-3">
-            <SectionHeader title="Daily data" subtitle="These areas are already connected. No regular action is needed." />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Card>
-                <H3>Students and staff</H3>
-                <MetaText className="mt-1">New active students and linked staff are kept up to date from Arbor.</MetaText>
+            <SectionHeader title="Automatic data sync" subtitle="These areas update without staff needing to upload a spreadsheet or maintain a separate list." />
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <Card className="min-h-36 border-t-2 border-t-accent/60">
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">People</div>
+                <H3 className="mt-3">Students and staff</H3>
+                <MetaText className="mt-2">New active students, off-roll changes, and linked staff details are kept current.</MetaText>
               </Card>
-              <Card className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <H3>Subject teachers</H3>
-                  <MetaText className="mt-1">Link each student&apos;s subjects to their Arbor teachers automatically.</MetaText>
-                </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <form method="post" action="/api/god/integrations/arbor/preview/timetable">
-                    <CsrfInput token={csrfToken} />
-                    <SubmitButton variant="secondary">Check timetable</SubmitButton>
-                  </form>
-                  <form method="post" action="/api/god/integrations/arbor/preview/timetable/summary">
-                    <CsrfInput token={csrfToken} />
-                    <SubmitButton variant="secondary">Preview links</SubmitButton>
-                  </form>
-                </div>
+              <Card className="min-h-36 border-t-2 border-t-accent/60">
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Pastoral</div>
+                <H3 className="mt-3">Attendance and behaviour</H3>
+                <MetaText className="mt-2">Academic-year attendance and Anaxi&apos;s existing behaviour measures refresh overnight.</MetaText>
               </Card>
-              <Card>
-                <H3>Attendance and behaviour</H3>
-                <MetaText className="mt-1">Academic-year attendance and Anaxi&apos;s existing behaviour totals update nightly.</MetaText>
+              <Card className="min-h-36 border-t-2 border-t-accent/60">
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Identity</div>
+                <H3 className="mt-3">Profile photos</H3>
+                <MetaText className="mt-2">Photos continue in secure small batches. Manually added Anaxi images stay untouched.</MetaText>
               </Card>
-              <Card>
-                <H3>Profile photos</H3>
-                <MetaText className="mt-1">Photos continue in small batches. Manually uploaded Anaxi photos are never replaced.</MetaText>
-              </Card>
-              <Card>
-                <H3>Assessment data</H3>
-                <MetaText className="mt-1">Agreed Secondary assessment families import gradually: P8 GCSE, A-Level, KS3 percentage, Year 10 percentage, and final August GCSE/A-Level results. Other assessment types remain paused.</MetaText>
+              <Card className="min-h-36 border-t-2 border-t-warning/70">
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Pending permission</div>
+                <H3 className="mt-3">Subject teachers</H3>
+                <MetaText className="mt-2">Ready to connect when Arbor grants the timetable enrolment permission.</MetaText>
               </Card>
             </div>
           </section>
 
-          <section className="space-y-3">
-            <SectionHeader title="Assessment review" subtitle="Approve only the proposed cycles you want Anaxi to create and populate from Arbor." />
-            <Card className="space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
+            <div className="space-y-3">
+              <SectionHeader title="Assessment review" subtitle="This is the only data area that requires a decision before it appears in Anaxi." />
+              <Card className="space-y-5 border-accent/25">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Controlled import</div>
+                    <H3 className="mt-2">Proposed assessment cycles</H3>
+                    <MetaText className="mt-1">Review and approve only the cycles you want to bring in. Each uses the agreed year group, phase, and term naming convention.</MetaText>
+                  </div>
+                  <form method="post" action="/api/god/integrations/arbor/preview/assessments/active" className="shrink-0">
+                    <CsrfInput token={csrfToken} />
+                    <SubmitButton variant="secondary">Refresh from Arbor</SubmitButton>
+                  </form>
+                </div>
+
+                {assessmentCycles.length ? (
+                  <form method="post" action="/api/god/integrations/arbor/assessments/approval" className="space-y-4">
+                    <CsrfInput token={csrfToken} />
+                    <div className="divide-y divide-border/70 rounded-sm border border-border/70 bg-[var(--surface-container-lowest)]">
+                      {assessmentCycles.map((cycle) => {
+                        const students = studentCountByYearGroup.get(cycle.yearGroup) ?? 0;
+                        return (
+                          <label key={cycle.key} className="flex cursor-pointer items-start gap-3 px-4 py-4 calm-transition hover:bg-[var(--surface-container-low)]">
+                            <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} className="mt-1 accent-accent" />
+                            <span className="min-w-0">
+                              <span className="block font-medium">{cycle.label}</span>
+                              <MetaText className="mt-1">{cycle.gradeFormat} · {students} active {students === 1 ? "student" : "students"} · {cycle.definitions.length} Arbor {cycle.definitions.length === 1 ? "definition" : "definitions"}</MetaText>
+                              <MetaText className="mt-1 truncate">{cycle.definitions.slice(0, 3).join(" · ")}{cycle.definitions.length > 3 ? ` +${cycle.definitions.length - 3} more` : ""}</MetaText>
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 border-t border-border/70 pt-4">
+                      <SubmitButton>Save approved cycles</SubmitButton>
+                      <MetaText>{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} cycle(s) are currently approved.` : "All assessment imports are currently paused."}</MetaText>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="rounded-sm border border-dashed border-border bg-[var(--surface-container-low)] p-5">
+                    <H3>No assessment cycles are ready to review yet</H3>
+                    <MetaText className="mt-1">Refresh the Arbor catalogue to find the agreed P8 GCSE, A-Level, KS3 percentage, Year 10 percentage, and final-result definitions. This is read-only.</MetaText>
+                  </div>
+                )}
+
+                {approvedAssessmentCycles.size ? (
+                  <form method="post" action="/api/god/integrations/arbor/assessments/approval">
+                    <CsrfInput token={csrfToken} />
+                    <input type="hidden" name="action" value="pause" />
+                    <SubmitButton variant="ghost">Pause all assessment imports</SubmitButton>
+                  </form>
+                ) : null}
+              </Card>
+            </div>
+
+            <div className="space-y-3">
+              <SectionHeader title="Timetable mapping" subtitle="A final connection still needs Arbor access." />
+              <Card className="space-y-4 border-warning/30 bg-[var(--pill-warning-bg)]">
                 <div>
-                  <H3>Proposed assessment cycles</H3>
-                  <MetaText className="mt-1">Each cycle follows the agreed format: academic year, year group, phase, then term or final result. Nothing is imported until you save an approval.</MetaText>
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-warning">Waiting for Arbor</div>
+                  <H3 className="mt-2">Subject teachers</H3>
+                  <MetaText className="mt-1">Once `AcademicUnitAutomaticEnrolment` access is granted, Anaxi can show each student&apos;s teachers by subject.</MetaText>
                 </div>
-                <form method="post" action="/api/god/integrations/arbor/preview/assessments/active" className="shrink-0">
-                  <CsrfInput token={csrfToken} />
-                  <SubmitButton variant="secondary">Refresh from Arbor</SubmitButton>
-                </form>
-              </div>
-
-              {assessmentCycles.length ? (
-                <form method="post" action="/api/god/integrations/arbor/assessments/approval" className="space-y-3">
-                  <CsrfInput token={csrfToken} />
-                  <div className="divide-y divide-border/70 rounded-sm border border-border/70">
-                    {assessmentCycles.map((cycle) => {
-                      const students = studentCountByYearGroup.get(cycle.yearGroup) ?? 0;
-                      return (
-                        <label key={cycle.key} className="flex cursor-pointer items-start gap-3 px-4 py-3 hover:bg-muted/30">
-                          <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} className="mt-1 accent-accent" />
-                          <span className="min-w-0">
-                            <span className="block font-medium">{cycle.label}</span>
-                            <MetaText className="mt-1">{cycle.gradeFormat} · {students} active {students === 1 ? "student" : "students"} · {cycle.definitions.length} Arbor {cycle.definitions.length === 1 ? "definition" : "definitions"}</MetaText>
-                            <MetaText className="mt-1 truncate">{cycle.definitions.slice(0, 3).join(" · ")}{cycle.definitions.length > 3 ? ` +${cycle.definitions.length - 3} more` : ""}</MetaText>
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <SubmitButton>Save approved cycles</SubmitButton>
-                    <MetaText>{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} cycle(s) are currently approved.` : "All assessment imports are currently paused."}</MetaText>
-                  </div>
-                </form>
-              ) : (
-                <div className="rounded-sm border border-dashed border-border p-4">
-                  <H3>No assessment cycles are ready to review yet</H3>
-                  <MetaText className="mt-1">Refresh the Arbor catalogue to find the agreed P8 GCSE, A-Level, KS3 percentage, Year 10 percentage, and final-result definitions. This is read-only.</MetaText>
+                <div className="grid gap-2">
+                  <form method="post" action="/api/god/integrations/arbor/preview/timetable">
+                    <CsrfInput token={csrfToken} />
+                    <SubmitButton variant="secondary" className="w-full">Check timetable access</SubmitButton>
+                  </form>
+                  <form method="post" action="/api/god/integrations/arbor/preview/timetable/summary">
+                    <CsrfInput token={csrfToken} />
+                    <SubmitButton variant="ghost" className="w-full">Preview subject links</SubmitButton>
+                  </form>
                 </div>
-              )}
-
-              {approvedAssessmentCycles.size ? (
-                <form method="post" action="/api/god/integrations/arbor/assessments/approval">
-                  <CsrfInput token={csrfToken} />
-                  <input type="hidden" name="action" value="pause" />
-                  <SubmitButton variant="secondary">Pause all assessment imports</SubmitButton>
-                </form>
-              ) : null}
-            </Card>
+              </Card>
+            </div>
           </section>
 
-          <CollapsibleCard title="Connection checks and troubleshooting" defaultOpen={false}>
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <MetaText>Use these only if something stops updating or a new school is added.</MetaText>
-                <form method="post" action="/api/god/integrations/arbor/test">
-                  <CsrfInput token={csrfToken} />
-                  <SubmitButton variant="secondary">Check connection</SubmitButton>
-                </form>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <MetaText>Run a read-only check that Arbor still allows Anaxi to retrieve photos.</MetaText>
-                <form method="post" action="/api/god/integrations/arbor/test-photos">
-                  <CsrfInput token={csrfToken} />
-                  <SubmitButton variant="secondary">Check photo access</SubmitButton>
-                </form>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <MetaText>Re-check student routing or staff links without making changes.</MetaText>
-                <div className="flex flex-wrap gap-2">
-                  <form method="post" action="/api/god/integrations/arbor/preview/students">
-                    <CsrfInput token={csrfToken} />
-                    <SubmitButton variant="secondary">Check students</SubmitButton>
-                  </form>
-                  <form method="post" action="/api/god/integrations/arbor/preview/staff">
-                    <CsrfInput token={csrfToken} />
-                    <SubmitButton variant="secondary">Check staff</SubmitButton>
-                  </form>
+          <CollapsibleCard title="Maintenance and connection checks" defaultOpen={false}>
+            <div className="space-y-4">
+              <MetaText>Use these read-only checks only when something stops updating, a new school is added, or Arbor changes its permissions.</MetaText>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-sm border border-border/70 p-4">
+                  <H3>Connection</H3>
+                  <MetaText className="mt-1">Confirm that Anaxi can still read Arbor.</MetaText>
+                  <form method="post" action="/api/god/integrations/arbor/test" className="mt-3"><CsrfInput token={csrfToken} /><SubmitButton variant="secondary">Check connection</SubmitButton></form>
                 </div>
+                <div className="rounded-sm border border-border/70 p-4">
+                  <H3>Photo access</H3>
+                  <MetaText className="mt-1">Confirm that Arbor still permits photo retrieval.</MetaText>
+                  <form method="post" action="/api/god/integrations/arbor/test-photos" className="mt-3"><CsrfInput token={csrfToken} /><SubmitButton variant="secondary">Check photo access</SubmitButton></form>
+                </div>
+                <div className="rounded-sm border border-border/70 p-4">
+                  <H3>People matching</H3>
+                  <MetaText className="mt-1">Re-check student routing or staff links without changes.</MetaText>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <form method="post" action="/api/god/integrations/arbor/preview/students"><CsrfInput token={csrfToken} /><SubmitButton variant="secondary">Students</SubmitButton></form>
+                    <form method="post" action="/api/god/integrations/arbor/preview/staff"><CsrfInput token={csrfToken} /><SubmitButton variant="secondary">Staff</SubmitButton></form>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-border/70 pt-4">
+                <H3>How the shared connection works</H3>
+                <MetaText className="mt-1">Goresbrook Primary and Goresbrook Secondary share one Arbor connection while remaining separate Anaxi schools. Records are always routed to their existing school rather than guessed.</MetaText>
               </div>
             </div>
           </CollapsibleCard>
