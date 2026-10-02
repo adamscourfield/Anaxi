@@ -62,8 +62,6 @@ import {
   IconPhone,
   IconSparkles,
   IconStar,
-  IconTrendDown,
-  IconTrendUp,
   IconUmbrella,
   IconUsersTwo,
 } from "@/components/home/home-chrome";
@@ -242,7 +240,7 @@ function LeadershipHome({
   topImproving: CpdPriorityRow[];
   meetingsTodayCount: number;
   attainmentKpis: Awaited<ReturnType<typeof fetchDashboardAttainmentKPIs>>;
-  attendanceHeadline: { attendancePct: number | null; studentsCovered: number; asOf: Date | null };
+  attendanceHeadline: { attendancePct: number | null; todayPct: number | null; weekPct: number | null; studentsCovered: number; asOf: Date | null };
 }) {
   const allDriftingCpd = cpdRows.filter((r) => r.teachersDriftingDown > 0);
   const topCpd = allDriftingCpd.slice(0, 3);
@@ -251,6 +249,8 @@ function LeadershipHome({
   // group's mean is based on -- an unweighted average-of-averages would let
   // a small sixth form pull the figure as hard as a full-size year group.
   const attendancePct = attendanceHeadline.attendancePct;
+  const attendanceTodayPct = attendanceHeadline.todayPct;
+  const attendanceWeekPct = attendanceHeadline.weekPct;
 
   const cohortWithAttendanceDelta = cohortRows.filter((r) => r.attendanceDelta !== null);
   const attendanceDeltaStudentTotal = cohortWithAttendanceDelta.reduce((sum, r) => sum + r.pairedCount, 0);
@@ -427,17 +427,20 @@ function LeadershipHome({
                 />
               </div>
             )}
-            {attendanceDelta !== null && (
-              <p className="flex flex-wrap items-center gap-1 text-[13px]">
-                <span className={attendanceDelta >= 0 ? "text-positive" : "text-negative"}>
-                  {attendanceDelta >= 0 ? <IconTrendUp className="inline h-3.5 w-3.5" /> : <IconTrendDown className="inline h-3.5 w-3.5" />}
-                </span>
-                <span className={`font-medium tabular-nums ${attendanceDelta >= 0 ? "text-positive" : "text-negative"}`}>
-                  {attendanceDelta >= 0 ? "+" : ""}{attendanceDelta.toFixed(1)}%
-                </span>
-                <span className="text-muted">from last week</span>
-              </p>
-            )}
+            <div className="mt-1 grid grid-cols-2 gap-3 border-t border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] pt-3">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Today</p>
+                <p className="mt-0.5 text-base font-semibold tabular-nums text-text">
+                  {attendanceTodayPct !== null ? `${attendanceTodayPct.toFixed(1)}%` : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">This week</p>
+                <p className="mt-0.5 text-base font-semibold tabular-nums text-text">
+                  {attendanceWeekPct !== null ? `${attendanceWeekPct.toFixed(1)}%` : "—"}
+                </p>
+              </div>
+            </div>
           </Card>
 
           {/* Observations this week */}

@@ -69,3 +69,24 @@ export const PATCH = withApi(async function PATCH(
 
   return NextResponse.json({ cycle: updated });
 });
+
+export const DELETE = withApi(async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ cycleId: string }> }
+) {
+  const resolvedParams = await params;
+  const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "ASSESSMENTS");
+  requireAssessmentWrite(user);
+
+  const cycle = await prisma.assessmentCycle.findFirst({
+    where: { id: resolvedParams.cycleId, tenantId: user.tenantId },
+  });
+  if (!cycle) return NextResponse.json({ error: "Cycle not found" }, { status: 404 });
+
+  // Points, assessments, results and sub-topic scores all cascade from the cycle,
+  // so one delete removes the whole tree.
+  await prisma.assessmentCycle.delete({ where: { id: resolvedParams.cycleId } });
+
+  return NextResponse.json({ ok: true });
+});

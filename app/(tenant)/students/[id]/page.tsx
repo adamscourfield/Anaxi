@@ -217,9 +217,6 @@ export default async function StudentDetailPage({
     positivePointsTotal: number;
   }>;
   const latestSnapshot = snapshots[0] ?? null;
-  const chronSnapshots = [...snapshots].sort(
-    (a, b) => new Date(a.snapshotDate).getTime() - new Date(b.snapshotDate).getTime(),
-  );
 
   let activeCycle: { id: string; label: string } | null = null;
   let attainmentBySubject: AttainmentRow[] = [];
@@ -866,56 +863,6 @@ export default async function StudentDetailPage({
       </div>
 
       </div>
-
-      {/* Snapshot history */}
-      <Card id="snapshots" className="scroll-mt-24">
-        <SectionHeader title="Snapshot history" subtitle="Imported behaviour and attendance over time" />
-        {chronSnapshots.length === 0 ? (
-          <BodyText className="mt-4 text-muted">No rows to show.</BodyText>
-        ) : (
-          <div className="table-shell mt-4">
-            <p className="sr-only" id="student-profile-snapshots-scroll-hint">
-              This table scrolls horizontally on small screens. Use touch or trackpad to see all columns.
-            </p>
-            <div className="overflow-x-auto" aria-describedby="student-profile-snapshots-scroll-hint">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="table-head-row">
-                  <th className="px-4 py-3 text-left font-semibold tracking-[0.08em]">Date</th>
-                  <th className="px-4 py-3 text-right font-semibold tracking-[0.08em]">Attendance</th>
-                  <th className="px-4 py-3 text-right font-semibold tracking-[0.08em]">On calls</th>
-                  <th className="px-4 py-3 text-right font-semibold tracking-[0.08em]">Detentions</th>
-                  <th className="px-4 py-3 text-right font-semibold tracking-[0.08em]">Lateness</th>
-                  <th className="px-4 py-3 text-right font-semibold tracking-[0.08em]">Int. excl.</th>
-                  <th className="px-4 py-3 text-right font-semibold tracking-[0.08em]">Susp.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chronSnapshots.map((s) => {
-                  const pct = Number(s.attendancePct);
-                  const pctOk = !Number.isNaN(pct);
-                  return (
-                    <tr key={s.id} className="table-row calm-transition">
-                      <td className="px-4 py-3.5 text-muted">{fmtDate(s.snapshotDate)}</td>
-                      <td className="px-4 py-3.5 text-right tabular-nums font-medium text-text">
-                        {pctOk ? `${pct.toFixed(1)}%` : "—"}
-                      </td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-text">{s.onCallsCount}</td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-text">{s.detentionsCount}</td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-text">{s.latenessCount}</td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-text">
-                        {s.internalExclusionsCount}
-                      </td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-text">{s.suspensionsCount}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            </div>
-          </div>
-        )}
-      </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
