@@ -744,22 +744,6 @@ export default async function StudentDetailPage({
             </div>
           )}
 
-          <Link
-            href="/students/import-subject-teachers"
-            className="mt-5 flex items-start gap-3 rounded-xl border border-dashed border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-low)]/50 p-4 calm-transition hover:border-[color-mix(in_srgb,var(--outline-variant)_65%,transparent)] hover:bg-[var(--surface-container-low)]/80 sm:p-5"
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] bg-[var(--surface-container-lowest)] text-muted">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </span>
-            <span className="min-w-0 text-left">
-              <span className="block text-sm font-semibold text-text">Assign teachers to more subjects</span>
-              <span className="mt-0.5 block text-xs leading-relaxed text-muted">
-                Link teachers to additional subjects via CSV import to see their impact.
-              </span>
-            </span>
-          </Link>
         </div>
 
         {/* Assessments */}
