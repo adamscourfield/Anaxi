@@ -344,6 +344,26 @@ export class ArborClient {
     );
     return data.TeachingGroup;
   }
+
+  /**
+   * Reads schema names only before timetable data is mapped. Arbor exposes the
+   * membership and teacher relations separately, so this prevents us guessing a
+   * relationship and assigning a teacher to the wrong student or subject.
+   */
+  async inspectTimetableMappingFields(): Promise<Record<string, string[]>> {
+    const data = await runArborGraphqlQuery<{ __type: { name: string; fields: Array<{ name: string }> } | null }>(this.credentials, `{
+      membership: __type(name: "TeachingGroupMembership") { name fields { name } }
+      group: __type(name: "TeachingGroup") { name fields { name } }
+      tutor: __type(name: "TeachingGroupTutor") { name fields { name } }
+      unit: __type(name: "AcademicUnit") { name fields { name } }
+    }`);
+    return Object.fromEntries([
+      ["membership", data.membership?.fields.map((field) => field.name) ?? []],
+      ["group", data.group?.fields.map((field) => field.name) ?? []],
+      ["tutor", data.tutor?.fields.map((field) => field.name) ?? []],
+      ["academic unit", data.unit?.fields.map((field) => field.name) ?? []],
+    ]);
+  }
 }
 
 export type ArborBehaviourRecords = {
