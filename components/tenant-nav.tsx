@@ -207,7 +207,6 @@ export function TenantNav({
       items: [
         ...(has("ASSESSMENTS") ? [navItem("Attainment", "/assessments")] : []),
       ...(has("STUDENTS") ? [navItem("Students", "/students")] : []),
-        ...(has("STUDENTS_IMPORT") && canImport ? [navItem("Behaviour import", "/behaviour/import")] : []),
         navItem("On call", "/on-call", onCallCount),
       ],
     },
