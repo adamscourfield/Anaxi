@@ -31,12 +31,7 @@ export const POST = withApi(async function POST(req: Request) {
     const marks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks();
     const linkedIds = new Set((await db.student.findMany({ where: { tenantId: { in: integration.schools.map((school: { tenantId: string }) => school.tenantId) }, externalId: { not: null } }, select: { externalId: true } })).flatMap((student: { externalId: string | null }) => student.externalId ? [student.externalId] : []));
     const values = Array.from(new Set(marks.filter((mark) => linkedIds.has(mark.student.id)).flatMap((mark) => {
-      const value = mark.markDisplayValue?.trim()
-        || mark.grade?.displayName?.trim()
-        || mark.text?.trim()
-        || mark.rawPropertyValue?.trim()
-        || mark.studentAdHocAssessmentMark?.trim()
-        || (mark.number !== null ? String(mark.number) : "");
+      const value = mark.grade?.displayName?.trim() || mark.displayName?.trim() || "";
       return value ? [value] : [];
     }))).slice(0, 12);
     const url = new URL("/god/integrations/arbor", req.url);

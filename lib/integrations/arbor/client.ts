@@ -77,32 +77,33 @@ export class ArborClient {
     };
   }
 
-  /** Confirms the assessment-mark source that most closely maps to Anaxi results. */
+  /** Confirms Arbor's progress-assessment marks, rather than empty ad-hoc placeholders. */
   async verifyAssessmentAccess(): Promise<number> {
-    const data = await runArborGraphqlQuery<{ StudentAdHocAssessmentMark: Array<{ id: string }> }>(this.credentials, `{
-      StudentAdHocAssessmentMark(page_size: 1, page_num: 0) {
+    const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<{ id: string }> }>(this.credentials, `{
+      StudentProgressAssessmentMark(page_size: 1, page_num: 0) {
         id
         student { id }
-        assessmentReferenceDate
-        markDisplayValue
+        assessment { id displayName assessmentName assessmentShortName }
+        assessmentDate
+        grade { displayName }
       }
     }`);
-    return data.StudentAdHocAssessmentMark.length;
+    return data.StudentProgressAssessmentMark.length;
   }
 
-  async listAssessmentMarks(pageSize = 100, pageNum = 0): Promise<Array<{ id: string; student: { id: string }; assessmentReferenceDate: string | null; markDisplayValue: string | null; number: number | null; text: string | null; rawPropertyValue: string | null; studentAdHocAssessmentMark: string | null; grade: { displayName: string | null } | null; adHocAssessment: { id: string } | null }>> {
-    const data = await runArborGraphqlQuery<{ StudentAdHocAssessmentMark: Array<{ id: string; student: { id: string }; assessmentReferenceDate: string | null; markDisplayValue: string | null; number: number | null; text: string | null; rawPropertyValue: string | null; studentAdHocAssessmentMark: string | null; grade: { displayName: string | null } | null; adHocAssessment: { id: string } | null }> }>(this.credentials, `{
-      StudentAdHocAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}) {
-        id student { id } assessmentReferenceDate markDisplayValue number text rawPropertyValue studentAdHocAssessmentMark grade { displayName } adHocAssessment { id }
+  async listAssessmentMarks(pageSize = 100, pageNum = 0): Promise<Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
+    const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
+      StudentProgressAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}) {
+        id student { id } assessmentDate displayName grade { displayName } assessment { id displayName assessmentName assessmentShortName }
       }
     }`);
-    return data.StudentAdHocAssessmentMark;
+    return data.StudentProgressAssessmentMark;
   }
 
   /** Reads the schema only, so assessment mapping can use confirmed Arbor fields. */
   async inspectAdHocAssessmentFields(): Promise<string[]> {
     const data = await runArborGraphqlQuery<{ __type: { fields: Array<{ name: string }> } | null }>(this.credentials, `{
-      __type(name: "AdHocAssessment") { fields { name } }
+      __type(name: "Assessment") { fields { name } }
     }`);
     return data.__type?.fields.map((field) => field.name) ?? [];
   }

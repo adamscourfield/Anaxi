@@ -7,6 +7,10 @@ import { ArborClient } from "@/lib/integrations/arbor/client";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
+function isPriorityAssessment(name: string): boolean {
+  return /^(P8|A-Level)\b/i.test(name) || /\b(KS ?[12]|Key Stage ?[12])\b/i.test(name);
+}
+
 export const POST = withApi(async function POST(req: Request) {
   await requireSuperAdminUser(); const form = await req.formData();
   try { await assertCsrfFromForm(form); } catch { return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 }); }
@@ -18,7 +22,8 @@ export const POST = withApi(async function POST(req: Request) {
     // The external ID is the integration link; the original data source is not.
     const ids = new Set((await db.student.findMany({ where: { tenantId: { in: integration.schools.map((s: { tenantId: string }) => s.tenantId) }, externalId: { not: null } }, select: { externalId: true } })).flatMap((s: { externalId: string | null }) => s.externalId ? [s.externalId] : []));
     const linked = marks.filter((mark) => ids.has(mark.student.id));
-    const assessments = new Set(linked.flatMap((mark) => mark.adHocAssessment ? [mark.adHocAssessment.id] : []));
-    const url = new URL("/god/integrations/arbor", req.url); for (const [key, value] of Object.entries({ assessmentPreview: "success", assessmentMarks: marks.length, assessmentLinked: linked.length, assessmentDefinitions: assessments.size })) url.searchParams.set(key, String(value)); return NextResponse.redirect(url);
+    const assessments = new Map(linked.flatMap((mark) => mark.assessment ? [[mark.assessment.id, mark.assessment.assessmentName || mark.assessment.assessmentShortName || mark.assessment.displayName || ""]] : []));
+    const priorityDefinitions = [...assessments.values()].filter(isPriorityAssessment).length;
+    const url = new URL("/god/integrations/arbor", req.url); for (const [key, value] of Object.entries({ assessmentPreview: "success", assessmentMarks: marks.length, assessmentLinked: linked.length, assessmentDefinitions: assessments.size, assessmentPriorityDefinitions: priorityDefinitions })) url.searchParams.set(key, String(value)); return NextResponse.redirect(url);
   } catch { return NextResponse.redirect(new URL("/god/integrations/arbor?assessmentPreview=failed", req.url)); }
 });
