@@ -365,6 +365,41 @@ export class ArborClient {
       ["academic unit", data.unit?.fields.map((field) => field.name) ?? []],
     ]);
   }
+
+  /** Reads a small timetable sample after confirming the exact relationship names. */
+  async listTimetableTeacherAssignmentsPreview(): Promise<Array<{ studentId: string; teachingGroupId: string; subject: string; staffIds: string[] }>> {
+    const fields = await this.inspectTimetableMappingFields();
+    const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["group", "academicUnit"], ["tutor", "teachingGroup"], ["tutor", "staff"], ["academic unit", "subject"]];
+    const unavailable = required.filter(([entity, field]) => !fields[entity]?.includes(field));
+    if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
+
+    const data = await runArborGraphqlQuery<{
+      TeachingGroupMembership: Array<{ student: { id: string }; teachingGroup: { id: string; academicUnit: { subject: { displayName: string } | null } | null } | null }>;
+      TeachingGroupTutor: Array<{ teachingGroup: { id: string } | null; staff: { id: string } | null }>;
+    }>(this.credentials, `{
+      TeachingGroupMembership(page_size: 100, page_num: 0) {
+        student { id }
+        teachingGroup { id academicUnit { subject { displayName } } }
+      }
+      TeachingGroupTutor(page_size: 500, page_num: 0) {
+        teachingGroup { id }
+        staff { id }
+      }
+    }`);
+    const staffByGroup = new Map<string, string[]>();
+    for (const tutor of data.TeachingGroupTutor) {
+      if (!tutor.teachingGroup || !tutor.staff) continue;
+      const staff = staffByGroup.get(tutor.teachingGroup.id) ?? [];
+      staff.push(tutor.staff.id);
+      staffByGroup.set(tutor.teachingGroup.id, staff);
+    }
+    return data.TeachingGroupMembership.flatMap((membership) => {
+      const group = membership.teachingGroup;
+      const subject = group?.academicUnit?.subject?.displayName;
+      const staffIds = group ? staffByGroup.get(group.id) ?? [] : [];
+      return group && subject && staffIds.length ? [{ studentId: membership.student.id, teachingGroupId: group.id, subject, staffIds }] : [];
+    });
+  }
 }
 
 export type ArborBehaviourRecords = {
