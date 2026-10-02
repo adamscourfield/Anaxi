@@ -81,6 +81,7 @@ export type StudentRiskProfile = {
   latenessDelta: number | null;
   suspensionsDelta: number | null;
   internalExclusionsDelta: number | null;
+  positivePointsDelta: number | null;
   // Recent trend (last 3 snapshots)
   recentSnapshots: SnapshotSummary[];
   // Watchlist
@@ -426,8 +427,13 @@ export async function computeStudentRiskProfile(
     where: { id: studentId, tenantId },
     include: {
       snapshots: {
+        // Fetch the full comparison range (both the current and the prior window) by
+        // date, not a fixed row count -- a `take` cap here silently stops the prior
+        // window's snapshot from ever being reached once windowDays is large enough
+        // that two windows' worth of daily snapshots exceeds the cap, making every
+        // delta in this profile show as "no change" even when the data moved.
+        where: { snapshotDate: { gte: prevStart, lte: currentEnd } },
         orderBy: { snapshotDate: "desc" },
-        take: 10,
       },
       watchlistEntries: {
         where: { tenantId, createdByUserId: viewerUserId },
@@ -465,6 +471,9 @@ export async function computeStudentRiskProfile(
     : null;
   const internalExclusionsDelta = prevSnap && currentSnap
     ? currentSnap.internalExclusionsCount - prevSnap.internalExclusionsCount
+    : null;
+  const positivePointsDelta = prevSnap && currentSnap
+    ? (currentSnap.positivePointsTotal ?? 0) - (prevSnap.positivePointsTotal ?? 0)
     : null;
 
   const riskScore = computeRiskScore({
@@ -507,6 +516,7 @@ export async function computeStudentRiskProfile(
     latenessDelta,
     suspensionsDelta,
     internalExclusionsDelta,
+    positivePointsDelta,
     recentSnapshots,
     onWatchlist: (student.watchlistEntries ?? []).length > 0,
     computedAt: new Date(),
