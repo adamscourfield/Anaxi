@@ -91,10 +91,11 @@ export class ArborClient {
     return data.StudentProgressAssessmentMark.length;
   }
 
-  async listAssessmentMarks(pageSize = 100, pageNum = 0): Promise<Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
-    const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
-      StudentProgressAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}) {
-        id student { id } assessmentDate displayName grade { displayName } assessment { id displayName assessmentName assessmentShortName }
+  async listAssessmentMarks(pageSize = 100, pageNum = 0, assessmentIds?: string[]): Promise<Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
+    const assessmentFilter = assessmentIds?.length ? `, assessment__id_in: [${assessmentIds.map((id) => JSON.stringify(id)).join(", ")}]` : "";
+    const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
+      StudentProgressAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}${assessmentFilter}) {
+        id student { id } assessmentDate displayName grade { displayName shortName code } assessment { id displayName assessmentName assessmentShortName }
       }
     }`);
     return data.StudentProgressAssessmentMark;
@@ -109,6 +110,19 @@ export class ArborClient {
       if (page.length < 100) return marks;
     }
     throw new Error("Arbor returned more than 100,000 progress assessment marks; preview stopped safely.");
+  }
+
+  async listAssessmentMarksForDefinitions(assessmentIds: string[]): Promise<Awaited<ReturnType<typeof this.listAssessmentMarks>>> {
+    const marks: Awaited<ReturnType<typeof this.listAssessmentMarks>> = [];
+    for (let offset = 0; offset < assessmentIds.length; offset += 20) {
+      const ids = assessmentIds.slice(offset, offset + 20);
+      for (let pageNum = 0; pageNum < 200; pageNum++) {
+        const page = await this.listAssessmentMarks(100, pageNum, ids);
+        marks.push(...page);
+        if (page.length < 100) break;
+      }
+    }
+    return marks;
   }
 
   /** Lists the assessment catalogue itself, independently of mark pagination. */

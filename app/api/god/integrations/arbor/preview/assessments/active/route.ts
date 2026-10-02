@@ -12,7 +12,7 @@ function label(assessment: { displayName: string | null; assessmentName: string 
 }
 
 function isPriorityAssessment(name: string): boolean {
-  return /^(P8|A-Level)\b/i.test(name) || /\b(KS ?[12]|Key Stage ?[12])\b/i.test(name);
+  return /^(P8|A Level|%)/i.test(name) || /^UL-/i.test(name) || name === "UL Writing" || /^KS2 SATs/i.test(name) || name === "Year 1 Phonics Tracking";
 }
 
 export const POST = withApi(async function POST(req: Request) {
@@ -23,12 +23,15 @@ export const POST = withApi(async function POST(req: Request) {
   const integration = await db.sharedIntegration.findUnique({ where: { provider: "ARBOR" }, include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.redirect(new URL("/god/integrations/arbor?assessmentActive=not-connected", req.url));
   try {
-    const [marks, linkedStudents] = await Promise.all([
-      new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAllAssessmentMarks(),
+    const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
+    const [definitions, linkedStudents] = await Promise.all([
+      client.listAllAssessmentDefinitions(),
       db.student.findMany({ where: { tenantId: { in: integration.schools.map((school: { tenantId: string }) => school.tenantId) }, status: "ACTIVE", externalId: { not: null } }, select: { externalId: true } }),
     ]);
+    const assessmentIds = definitions.filter((definition) => isPriorityAssessment(label(definition))).map((definition) => definition.id);
+    const marks = await client.listAssessmentMarksForDefinitions(assessmentIds);
     const linkedIds = new Set(linkedStudents.flatMap((student: { externalId: string | null }) => student.externalId ? [student.externalId] : []));
-    const matching = marks.filter((mark) => mark.assessment && linkedIds.has(mark.student.id) && isPriorityAssessment(label(mark.assessment)));
+    const matching = marks.filter((mark) => mark.assessment && linkedIds.has(mark.student.id));
     const assessments = new Map(matching.flatMap((mark) => mark.assessment ? [[mark.assessment.id, label(mark.assessment)]] : []));
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("assessmentActive", "success");
