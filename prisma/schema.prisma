@@ -741,9 +741,30 @@ model SharedIntegration {
   updatedAt             DateTime                   @updatedAt
   schools               SharedIntegrationSchool[]
   syncRuns              SharedIntegrationSyncRun[]
+  staffProvisioningRequests StaffProvisioningRequest[]
 
   /// There is one shared connection for each provider at platform level.
   @@unique([provider])
+}
+
+/// A new Arbor staff record waiting for a super admin to choose its Anaxi access.
+/// It is intentionally not a User yet: Arbor does not define Anaxi roles or scope.
+model StaffProvisioningRequest {
+  id              String                  @id @default(cuid())
+  integrationId   String
+  arborStaffId    String
+  fullName        String
+  email           String?
+  isTeachingStaff Boolean                 @default(false)
+  status          StaffProvisioningStatus @default(PENDING)
+  provisionedAt   DateTime?
+  dismissedAt     DateTime?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  integration     SharedIntegration       @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, arborStaffId])
+  @@index([integrationId, status, createdAt])
 }
 
 /// Audit trail for a run from a platform-managed integration. Kept separate from
@@ -1302,6 +1323,12 @@ enum IntegrationEntityType {
   CLASSES
   BEHAVIOUR
   ASSESSMENTS
+}
+
+enum StaffProvisioningStatus {
+  PENDING
+  PROVISIONED
+  DISMISSED
 }
 
 enum IntegrationChangeType {
