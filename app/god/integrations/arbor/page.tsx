@@ -11,7 +11,7 @@ import { MetaText } from "@/components/ui/typography";
 
 export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
   await requireSuperAdminUser();
-  const [csrfToken, schools, integration, params] = await Promise.all([
+  const [csrfToken, schools, integration, latestBehaviourRun, params] = await Promise.all([
     getCsrfToken(),
     prisma.tenant.findMany({
       where: { id: { not: PLATFORM_TENANT_ID }, status: { not: "ARCHIVED" } },
@@ -21,6 +21,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
     (prisma as any).sharedIntegration.findUnique({
       where: { provider: "ARBOR" },
       include: { schools: { where: { enabled: true }, select: { tenantId: true } } },
+    }),
+    (prisma as any).sharedIntegrationSyncRun.findFirst({
+      where: { integration: { provider: "ARBOR" }, entityType: "BEHAVIOUR" },
+      orderBy: { startedAt: "desc" },
+      select: { status: true, recordsCreated: true, recordsUpdated: true, startedAt: true, finishedAt: true, errorSummary: true },
     }),
     searchParams,
   ]);
@@ -92,6 +97,8 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       {params?.behaviour === "failed" || params?.behaviour === "not-connected" ? <Card className="border-danger/30 bg-[var(--pill-danger-bg)]"><div className="font-medium text-danger">Arbor behaviour access needs attention.</div><MetaText className="mt-1">No behaviour data was imported. Anaxi will adjust the read-only check from Arbor’s confirmed response before enabling a sync.</MetaText></Card> : null}
       {params?.behaviourPreview === "success" ? <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">Behaviour summary preview complete.</div><MetaText className="mt-1">From the latest seven days, {previewCount(params.behaviourStudents)} linked students had {previewCount(params.behaviourPoints)} positive points, {previewCount(params.behaviourDetentions)} detentions, {previewCount(params.behaviourInternalExclusions)} internal exclusions, and {previewCount(params.behaviourSuspensions)} suspensions. {previewCount(params.behaviourUnmatched)} records could not be linked. {params.behaviourCapped === "1" ? "This is the first 100 records from one or more sources, so it is a safe sample rather than a full period total." : "Nothing has been imported."}</MetaText></Card> : null}
       {params?.behaviourPreview === "failed" || params?.behaviourPreview === "not-connected" || params?.behaviourPreview === "range-mismatch" ? <Card className="border-danger/30 bg-[var(--pill-danger-bg)]"><div className="font-medium text-danger">Behaviour summary preview could not run.</div><MetaText className="mt-1">{params.behaviourPreview === "range-mismatch" ? "Arbor returned behaviour records outside the requested seven-day period. No data was imported; Anaxi will not enable the sync until the date filter is corrected." : "No behaviour data was imported. Anaxi will use the confirmed Arbor response details to adjust the read-only query safely."}</MetaText></Card> : null}
+      {latestBehaviourRun?.status === "SUCCESS" ? <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">Latest behaviour sync completed.</div><MetaText className="mt-1">{previewCount(String(latestBehaviourRun.recordsCreated))} new daily snapshots and {previewCount(String(latestBehaviourRun.recordsUpdated))} existing snapshots were updated. Nightly catch-up will continue automatically.</MetaText></Card> : null}
+      {latestBehaviourRun?.status === "FAILED" || latestBehaviourRun?.status === "PARTIAL" ? <Card className="border-danger/30 bg-[var(--pill-danger-bg)]"><div className="font-medium text-danger">Latest behaviour sync needs attention.</div><MetaText className="mt-1">{latestBehaviourRun.errorSummary ?? "No further behaviour changes were made after the issue was detected."}</MetaText></Card> : null}
 
       {params?.preview === "success" ? (
         <Card className="border-success/30 bg-[var(--pill-success-bg)]">
