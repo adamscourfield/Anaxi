@@ -90,6 +90,15 @@ export class ArborClient {
     return data.StudentAdHocAssessmentMark.length;
   }
 
+  async listAssessmentMarks(pageSize = 100, pageNum = 0): Promise<Array<{ id: string; student: { id: string }; assessmentReferenceDate: string | null; markDisplayValue: string | null; adHocAssessment: { id: string } | null }>> {
+    const data = await runArborGraphqlQuery<{ StudentAdHocAssessmentMark: Array<{ id: string; student: { id: string }; assessmentReferenceDate: string | null; markDisplayValue: string | null; adHocAssessment: { id: string } | null }> }>(this.credentials, `{
+      StudentAdHocAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}) {
+        id student { id } assessmentReferenceDate markDisplayValue adHocAssessment { id }
+      }
+    }`);
+    return data.StudentAdHocAssessmentMark;
+  }
+
   /** One read-only page of the four behaviour sources Anaxi currently measures. */
   async listBehaviourRecords(pageSize = 100, pageNum = 0, startAfter?: string, startBefore?: string): Promise<ArborBehaviourRecords> {
     const pointFilters = startAfter && startBefore ? `, awardedDatetime_after: "${startAfter}", awardedDatetime_before: "${startBefore}"` : "";
