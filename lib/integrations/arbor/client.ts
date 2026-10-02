@@ -90,10 +90,10 @@ export class ArborClient {
     return data.StudentAdHocAssessmentMark.length;
   }
 
-  async listAssessmentMarks(pageSize = 100, pageNum = 0): Promise<Array<{ id: string; student: { id: string }; assessmentReferenceDate: string | null; markDisplayValue: string | null; number: number | null; grade: { displayName: string | null } | null; adHocAssessment: { id: string } | null }>> {
-    const data = await runArborGraphqlQuery<{ StudentAdHocAssessmentMark: Array<{ id: string; student: { id: string }; assessmentReferenceDate: string | null; markDisplayValue: string | null; number: number | null; grade: { displayName: string | null } | null; adHocAssessment: { id: string } | null }> }>(this.credentials, `{
+  async listAssessmentMarks(pageSize = 100, pageNum = 0): Promise<Array<{ id: string; student: { id: string }; assessmentReferenceDate: string | null; markDisplayValue: string | null; number: number | null; text: string | null; rawPropertyValue: string | null; studentAdHocAssessmentMark: string | null; grade: { displayName: string | null } | null; adHocAssessment: { id: string } | null }>> {
+    const data = await runArborGraphqlQuery<{ StudentAdHocAssessmentMark: Array<{ id: string; student: { id: string }; assessmentReferenceDate: string | null; markDisplayValue: string | null; number: number | null; text: string | null; rawPropertyValue: string | null; studentAdHocAssessmentMark: string | null; grade: { displayName: string | null } | null; adHocAssessment: { id: string } | null }> }>(this.credentials, `{
       StudentAdHocAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}) {
-        id student { id } assessmentReferenceDate markDisplayValue number grade { displayName } adHocAssessment { id }
+        id student { id } assessmentReferenceDate markDisplayValue number text rawPropertyValue studentAdHocAssessmentMark grade { displayName } adHocAssessment { id }
       }
     }`);
     return data.StudentAdHocAssessmentMark;
