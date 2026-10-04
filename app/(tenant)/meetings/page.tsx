@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PastMeetingsList } from "@/components/meetings/PastMeetingsList";
 import { MeetingsFilters } from "@/components/meetings/MeetingsFilters";
+import { Avatar } from "@/components/ui/avatar";
 
 function getInitials(name: string): string {
   return name
@@ -259,9 +260,7 @@ export default async function MeetingsPage({
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--secondary-container)] text-xs font-semibold text-text">
-                            {getInitials(m.createdBy.fullName)}
-                          </div>
+                          <Avatar name={m.createdBy.fullName} userId={m.createdBy.id} size="md" />
                           <span className="text-sm text-text">{m.createdBy.fullName}</span>
                         </div>
                       </td>

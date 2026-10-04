@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
+import { Avatar } from "@/components/ui/avatar";
 import { MEETING_TYPE_LABELS } from "@/modules/meetings/types";
 
 const MEETING_TYPES = Object.keys(MEETING_TYPE_LABELS) as Array<keyof typeof MEETING_TYPE_LABELS>;
@@ -433,9 +434,7 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
                     }`}
                   >
                     {/* Avatar */}
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container)] text-[11px] font-bold text-text">
-                      {getInitials(u.fullName)}
-                    </div>
+                    <Avatar name={u.fullName} userId={u.id} size="md" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-text">{u.fullName}</p>
                       <p className="truncate text-[11px] text-muted">

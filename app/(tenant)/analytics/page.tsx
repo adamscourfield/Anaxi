@@ -6,6 +6,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@/lib/types";
 import { PageHeader } from "@/components/ui/page-header";
+import { Avatar } from "@/components/ui/avatar";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { StudentPrioritiesFilters } from "./StudentPrioritiesFilters";
 import { PrioritiesExportButton } from "./PrioritiesExportButton";
@@ -431,11 +432,7 @@ async function TeachersTab({
                         href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
                         className="flex min-w-0 items-center gap-3"
                       >
-                        <span
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-xs font-semibold ${avatarTintClass(row.teacherMembershipId)}`}
-                        >
-                          {teacherInitials(row.teacherName)}
-                        </span>
+                        <Avatar name={row.teacherName} userId={row.teacherMembershipId} size="md" />
                         <span className="min-w-0 truncate font-semibold text-[#111827] underline decoration-[color-mix(in_srgb,#111827_35%,transparent)] underline-offset-2 hover:decoration-[#111827]">
                           {row.teacherName}
                         </span>
@@ -937,11 +934,7 @@ async function StudentsTab({
                         href={`/analysis/students/${row.studentId}?window=${windowDays}`}
                         className="group flex min-w-0 items-center gap-3"
                       >
-                        <span
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-xs font-semibold ${avatarTintClass(row.studentId)}`}
-                        >
-                          {teacherInitials(row.studentName)}
-                        </span>
+                        <Avatar name={row.studentName} studentId={row.studentId} size="md" tone="muted" />
                         <span className="min-w-0 truncate font-semibold text-[#111827] underline decoration-[color-mix(in_srgb,#111827_35%,transparent)] underline-offset-2 group-hover:decoration-[#111827]">
                           {row.onWatchlist ? "★ " : ""}
                           {row.studentName}

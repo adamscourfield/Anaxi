@@ -179,7 +179,7 @@ export function DepartmentsAdminTable({
                   <div className="flex min-w-0 max-w-full items-center gap-3">
                     {hod ? (
                       <>
-                        <Avatar name={hod.user?.fullName ?? "?"} size="md" />
+                        <Avatar name={hod.user?.fullName ?? "?"} userId={hod.userId} size="md" />
                         <div className="min-w-0 leading-tight">
                           <p className="truncate text-[0.9375rem] font-bold text-[var(--on-surface)]">{hod.user?.fullName}</p>
                           <p className="text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Head of department</p>
@@ -223,7 +223,7 @@ export function DepartmentsAdminTable({
                   <div className="mt-3 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-3.5">
                     {hod ? (
                       <div className="flex items-center gap-3">
-                        <Avatar name={hod.user?.fullName ?? "?"} size="md" />
+                        <Avatar name={hod.user?.fullName ?? "?"} userId={hod.userId} size="md" />
                         <div className="min-w-0">
                           <p className="font-bold text-[var(--on-surface)]">{hod.user?.fullName}</p>
                           <p className="text-[0.8125rem] text-[var(--on-surface-variant)]">Head of Department</p>
@@ -261,7 +261,7 @@ export function DepartmentsAdminTable({
                           <tr key={m.userId} className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] last:border-b-0">
                             <td className="px-4 py-3.5">
                               <div className="flex min-w-0 items-center gap-3">
-                                <Avatar name={m.user?.fullName ?? "?"} size="sm" />
+                                <Avatar name={m.user?.fullName ?? "?"} userId={m.userId} size="sm" />
                                 <span className="truncate text-[0.8125rem] font-semibold text-[var(--on-surface)]">{m.user?.fullName}</span>
                               </div>
                             </td>

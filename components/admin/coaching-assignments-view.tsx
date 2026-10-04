@@ -83,7 +83,7 @@ export function CoachingAssignmentsView({
                   >
                     <td className="px-6 py-5 align-middle sm:px-8">
                       <div className="flex min-w-0 items-center gap-3">
-                        <Avatar name={a.coachName} size="md" />
+                        <Avatar name={a.coachName} userId={a.coachUserId} size="md" />
                         <span className="truncate text-[0.8125rem] font-semibold text-[var(--on-surface)]">{a.coachName}</span>
                       </div>
                     </td>
@@ -95,7 +95,7 @@ export function CoachingAssignmentsView({
                     </td>
                     <td className="px-6 py-5 align-middle sm:px-8">
                       <div className="flex min-w-0 items-center gap-3">
-                        <Avatar name={a.coacheeName} size="md" />
+                        <Avatar name={a.coacheeName} userId={a.coacheeUserId} size="md" />
                         <span className="truncate text-[0.8125rem] font-medium text-[var(--on-surface)]">{a.coacheeName}</span>
                       </div>
                     </td>

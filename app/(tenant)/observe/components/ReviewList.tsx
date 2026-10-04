@@ -256,8 +256,8 @@ export function ReviewList({
 
               <aside className="min-w-0 space-y-8">
                 <ObservationReviewTeacherCard
-                  initials={initials(teacherName)}
                   name={teacherName}
+                  userId={teacher?.id ?? null}
                   roleUppercase={teacher ? roleLabel : "Staff"}
                   rows={[
                     { icon: capIcon, label: "Role", value: roleLabel },

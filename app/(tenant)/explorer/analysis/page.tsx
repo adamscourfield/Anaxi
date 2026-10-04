@@ -417,7 +417,7 @@ export default async function AnalysisPage({
                               <tr key={row.teacherId} className="table-row calm-transition">
                                 <td className="px-5 py-3.5">
                                   <div className="flex items-center gap-2.5">
-                                    <Avatar name={row.teacherName} size="sm" />
+                                    <Avatar name={row.teacherName} userId={row.teacherId} size="sm" />
                                     <span className="font-medium text-text">{row.teacherName}</span>
                                   </div>
                                 </td>
@@ -480,7 +480,7 @@ export default async function AnalysisPage({
                       <tr key={`${row.studentId}-${row.snapshotDate.toISOString()}`}>
                         <td>
                           <div className="flex min-w-0 items-center gap-2.5">
-                            <Avatar name={row.studentName} size="sm" />
+                            <Avatar name={row.studentName} studentId={row.studentId} size="sm" />
                             <Link
                               href={`/students/${row.studentId}`}
                               className="truncate font-medium text-text underline underline-offset-2 calm-transition hover:text-muted"
@@ -574,7 +574,7 @@ export default async function AnalysisPage({
                       <tr key={student.studentId}>
                         <td>
                           <div className="flex min-w-0 items-center gap-2.5">
-                            <Avatar name={student.studentName} size="sm" />
+                            <Avatar name={student.studentName} studentId={student.studentId} size="sm" />
                             <Link
                               href={`/analysis/students/${student.studentId}?window=${windowDays}`}
                               className="truncate font-medium text-text underline underline-offset-2 calm-transition hover:text-muted"

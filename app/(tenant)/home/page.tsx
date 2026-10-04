@@ -680,7 +680,7 @@ function LeadershipHome({
                   href={studentAnalysisHref(s.studentId, windowDays)}
                   className="home-row-link flex items-center gap-3 rounded-lg px-3 py-3"
                 >
-                  <Avatar name={s.studentName} size="md" tone="muted" />
+                  <Avatar name={s.studentName} studentId={s.studentId} size="md" tone="muted" />
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <span className="truncate text-sm font-semibold text-text">{s.studentName}</span>
@@ -735,7 +735,7 @@ function LeadershipHome({
                           href={`/leave/${leave.id}`}
                           className="home-row-link flex min-w-0 flex-1 items-start gap-3 sm:items-center"
                         >
-                          <Avatar name={leave.requesterName} size="md" />
+                          <Avatar name={leave.requesterName} userId={leave.requesterUserId} size="md" />
                           <div className="min-w-0 flex-1">
                             <div className="flex min-w-0 flex-wrap items-center gap-2">
                               <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{leave.requesterName}</p>

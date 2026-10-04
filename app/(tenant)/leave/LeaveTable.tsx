@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { loaStatusLabel } from "@/lib/leaveStatus";
 import type { LeaveRow } from "@/modules/leave/leaveRow";
 import type { LoaStatusUiBucket } from "@/lib/leaveStatus";
+import { Avatar } from "@/components/ui/avatar";
 
 export type { LeaveRow };
 
@@ -74,13 +75,7 @@ function PendingTable({
                     {isManager && (
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          {row.requesterAvatarColor && (
-                            <div
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold ${row.requesterAvatarColor}`}
-                            >
-                              {row.requesterInitials}
-                            </div>
-                          )}
+                          <Avatar name={row.requesterName ?? "?"} userId={row.requesterUserId} size="md" />
                           <span className="font-semibold text-text">{row.requesterName ?? "—"}</span>
                         </div>
                       </td>
@@ -189,13 +184,7 @@ function CompletedTable({
                     {isManager && (
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          {row.requesterAvatarColor && (
-                            <div
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold ${row.requesterAvatarColor}`}
-                            >
-                              {row.requesterInitials}
-                            </div>
-                          )}
+                          <Avatar name={row.requesterName ?? "?"} userId={row.requesterUserId} size="md" />
                           <span className="font-semibold text-text">{row.requesterName ?? "—"}</span>
                         </div>
                       </td>

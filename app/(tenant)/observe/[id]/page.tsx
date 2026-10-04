@@ -11,6 +11,7 @@ import { ClearDraftOnSuccess } from "../components/ClearDraftOnSuccess";
 import { PrintExportButtons } from "../components/PrintExportButtons";
 import { PageHeader } from "@/components/ui/page-header";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Avatar } from "@/components/ui/avatar";
 import {
   OBS_REVIEW_MUTED,
   OBS_REVIEW_TEXT,
@@ -278,12 +279,7 @@ export default async function ObservationDetailPage({
 
                   <div className="flex flex-col gap-4 border-t border-[#F3F4F6] px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-8">
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container)] text-[0.6875rem] font-bold ${OBS_REVIEW_TEXT}`}
-                        aria-hidden
-                      >
-                        {initials(observerName)}
-                      </div>
+                      <Avatar name={observerName} userId={observation.observerId} size="lg" tone="muted" />
                       <div>
                         <p className={`text-[0.8125rem] font-semibold ${OBS_REVIEW_TEXT}`}>{observerName}</p>
                         <p className={`text-[0.75rem] ${OBS_REVIEW_MUTED}`}>Observed &amp; authenticated</p>
@@ -298,8 +294,8 @@ export default async function ObservationDetailPage({
 
           <aside className="min-w-0 space-y-8">
             <ObservationReviewTeacherCard
-              initials={initials(teacherName)}
               name={teacherName}
+              userId={observation.observedTeacherId}
               roleUppercase={roleLabel}
               rows={[
                 { icon: capIcon, label: "Role", value: roleLabel },

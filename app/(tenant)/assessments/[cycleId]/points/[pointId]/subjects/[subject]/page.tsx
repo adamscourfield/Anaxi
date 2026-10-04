@@ -17,6 +17,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Avatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/section-header";
 import { MetaText } from "@/components/ui/typography";
@@ -655,9 +656,7 @@ export default async function SubjectDetailPage({
                         {/* Name */}
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-container-low text-xs font-semibold text-on-surface-variant">
-                              {getInitials(student.name)}
-                            </div>
+                            <Avatar name={student.name} studentId={student.id} size="md" tone="muted" />
                             <Link href={`/students/${student.id}${fromParam}`}
                                   className="link-to-accent font-medium">
                               {student.name}

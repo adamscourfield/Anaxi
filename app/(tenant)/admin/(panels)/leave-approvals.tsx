@@ -196,7 +196,7 @@ export async function LeaveApprovalsAdminPanel() {
                     {(group.approvers as any[]).length > 0 ? (
                       <div className="flex items-center gap-1">
                         {(group.approvers as any[]).slice(0, 3).map((a: any) => (
-                          <Avatar key={a.approverUserId} name={a.approver?.fullName ?? "?"} size="sm" />
+                          <Avatar key={a.approverUserId} name={a.approver?.fullName ?? "?"} userId={a.approverUserId} size="sm" />
                         ))}
                         {(group.approvers as any[]).length > 3 && (
                           <span className="text-xs text-muted ml-1">+{(group.approvers as any[]).length - 3}</span>
@@ -235,7 +235,7 @@ export async function LeaveApprovalsAdminPanel() {
                         {(group.approvers as any[]).map((a: any) => (
                           <li key={a.approverUserId} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-sm">
                             <div className="flex items-center gap-2">
-                              <Avatar name={a.approver?.fullName ?? "?"} size="sm" />
+                              <Avatar name={a.approver?.fullName ?? "?"} userId={a.approverUserId} size="sm" />
                               <span className="text-text">{a.approver?.fullName}</span>
                             </div>
                             <form action={removeApprover}>
@@ -276,7 +276,7 @@ export async function LeaveApprovalsAdminPanel() {
                           {(group.scopes as any[]).map((s: any) => (
                             <li key={s.subjectUserId} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--surface-container-low)] px-3 py-2 text-sm">
                               <div className="flex items-center gap-2">
-                                <Avatar name={s.subject?.fullName ?? "?"} size="sm" />
+                                <Avatar name={s.subject?.fullName ?? "?"} userId={s.subjectUserId} size="sm" />
                                 <span className="text-text">{s.subject?.fullName}</span>
                               </div>
                               <form action={removeScope}>

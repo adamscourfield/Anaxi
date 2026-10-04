@@ -11,6 +11,7 @@ export type LeaveRow = {
   statusRaw: string;
   reasonLabel: string | null;
   requesterName: string | null;
+  requesterUserId: string | null;
   requesterInitials: string | null;
   requesterAvatarColor: string | null;
   /** HR bookkeeping only -- has this LOA been keyed into each external system. */
@@ -74,7 +75,7 @@ export function mapLoaRequestToLeaveRow(r: {
   endDate: Date;
   status: string;
   reason?: { label: string } | null;
-  requester?: { fullName: string | null } | null;
+  requester?: { id: string; fullName: string | null } | null;
   inArbor?: boolean;
   inITrent?: boolean;
 }): LeaveRow {
@@ -91,6 +92,7 @@ export function mapLoaRequestToLeaveRow(r: {
     statusRaw: r.status,
     reasonLabel: r.reason?.label ?? null,
     requesterName: name,
+    requesterUserId: r.requester?.id ?? null,
     requesterInitials: name ? initials(name) : null,
     requesterAvatarColor: name ? avatarColor(name) : null,
     inArbor: Boolean(r.inArbor),

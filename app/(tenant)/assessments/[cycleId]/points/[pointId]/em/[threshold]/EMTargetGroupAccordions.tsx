@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { Avatar } from "@/components/ui/avatar";
 import {
   gcseGradeBadgeClass,
   ppTableBadgeClass,
@@ -111,9 +112,7 @@ function StudentRows({ rows }: { rows: EMStudentRow[] }) {
         <tr key={row.id} className="group table-row calm-transition">
           <td className="px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-surface-container-low text-[11px] font-semibold text-on-surface-variant">
-                {getInitials(row.name)}
-              </div>
+              <Avatar name={row.name} studentId={row.id} size="lg" tone="muted" />
               <div className="flex min-w-0 flex-col">
                 <Link href={`/students/${row.id}`} className="link-to-accent font-semibold text-text">
                   {row.name}

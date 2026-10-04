@@ -412,7 +412,7 @@ export default async function ObservationHistoryPage({
                       {/* Teacher */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3 min-w-0">
-                          <Avatar name={obs.observedTeacher?.fullName ?? "?"} size="sm" />
+                          <Avatar name={obs.observedTeacher?.fullName ?? "?"} userId={obs.observedTeacherId} size="sm" />
                           <span className="truncate font-semibold text-text group-hover:text-accent calm-transition">
                             {obs.observedTeacher?.fullName ?? "—"}
                           </span>
@@ -476,7 +476,7 @@ export default async function ObservationHistoryPage({
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2.5">
-                        <Avatar name={obs.observedTeacher?.fullName ?? "?"} size="sm" />
+                        <Avatar name={obs.observedTeacher?.fullName ?? "?"} userId={obs.observedTeacherId} size="sm" />
                         <span className="truncate text-[0.875rem] font-semibold text-text">
                           {obs.observedTeacher?.fullName ?? "—"}
                         </span>

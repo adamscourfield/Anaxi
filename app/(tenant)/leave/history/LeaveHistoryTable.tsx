@@ -9,6 +9,7 @@ import { buildCsvContent, downloadCsv } from "@/lib/csv";
 import { loaStatusLabel } from "@/lib/leaveStatus";
 import type { LoaStatusUiBucket } from "@/lib/leaveStatus";
 import type { LeaveRow } from "@/modules/leave/leaveRow";
+import { Avatar } from "@/components/ui/avatar";
 
 const HR_SYSTEM_FLAGS = [
   { field: "inArbor" as const, label: "Arbor" },
@@ -169,11 +170,7 @@ export function LeaveHistoryTable({
                     {isManager && (
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-2xs font-semibold ${row.requesterAvatarColor}`}
-                          >
-                            {row.requesterInitials}
-                          </div>
+                          <Avatar name={row.requesterName ?? "?"} userId={row.requesterUserId} size="md" />
                           <span className="font-semibold text-text">{row.requesterName}</span>
                         </div>
                       </td>

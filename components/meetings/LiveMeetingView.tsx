@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
 import { MetaText } from "@/components/ui/typography";
 import { toast } from "@/components/toast-provider";
+import { Avatar } from "@/components/ui/avatar";
 
 const MEETING_CARD =
   "rounded-sm border border-border bg-[var(--surface-container-lowest)] p-5 sm:p-6 shadow-none";
@@ -147,12 +148,8 @@ function AvatarStack({ attendees }: { attendees: Attendee[] }) {
     <div className="flex items-center">
           <div className="flex -space-x-2">
         {shown.map((a, i) => (
-          <div
-            key={a.id}
-            title={a.user.fullName}
-            className={`flex h-8 w-8 items-center justify-center rounded-md border-2 border-[var(--surface-container-lowest)] text-[11px] font-bold ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
-          >
-            {getInitials(a.user.fullName)}
+          <div key={a.id} className="rounded-full border-2 border-[var(--surface-container-lowest)]">
+            <Avatar name={a.user.fullName} userId={a.user.id} size="md" />
           </div>
         ))}
         {overflow > 0 && (

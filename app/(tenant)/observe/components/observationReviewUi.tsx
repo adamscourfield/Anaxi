@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { Avatar } from "@/components/ui/avatar";
 
 /** Observation review read-only / wizard styling (semantic tokens — UX-011). */
 
@@ -82,24 +83,21 @@ export function ObservationReviewSignalRow({
 }
 
 export function ObservationReviewTeacherCard({
-  initials,
   name,
+  userId,
   roleUppercase,
   rows,
 }: {
-  initials: string;
   name: string;
+  userId?: string | null;
   roleUppercase: string;
   rows: { icon: ReactNode; label: string; value: string }[];
 }) {
   return (
     <div className={`overflow-hidden rounded-xl ${OBS_REVIEW_CARD_DARK} shadow-sm`}>
       <div className="px-5 pb-6 pt-7 text-center">
-        <div
-          className="mx-auto flex h-[4.25rem] w-[4.25rem] items-center justify-center rounded-md bg-[#374151] text-lg font-bold text-white"
-          aria-hidden
-        >
-          {initials}
+        <div className="mx-auto">
+          <Avatar name={name} userId={userId} size="lg" />
         </div>
         <h3 className="mt-4 text-[1.125rem] font-bold leading-snug text-white">{name}</h3>
         <p className={`mt-1 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] ${OBS_REVIEW_SIDEBAR_LABEL}`}>

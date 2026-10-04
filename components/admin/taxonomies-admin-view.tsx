@@ -225,7 +225,7 @@ export function TaxonomiesAdminView({
                   className="flex flex-col gap-3 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <Avatar name={row.user?.fullName ?? "?"} size="md" />
+                    <Avatar name={row.user?.fullName ?? "?"} userId={row.userId} size="md" />
                     <div className="min-w-0">
                       <p className="font-semibold text-[var(--on-surface)]">{row.user?.fullName}</p>
                       <p className="truncate text-xs text-[var(--on-surface-variant)]">{row.user?.email}</p>
@@ -305,7 +305,7 @@ export function TaxonomiesAdminView({
                 >
                   <div className="flex flex-col gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                      <Avatar name={approver?.fullName ?? "?"} size="md" />
+                      <Avatar name={approver?.fullName ?? "?"} userId={approverId} size="md" />
                       <div className="min-w-0">
                         <p className="font-semibold text-[var(--on-surface)]">{approver?.fullName}</p>
                         <p className="truncate text-xs text-[var(--on-surface-variant)]">{approver?.email}</p>

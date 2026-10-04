@@ -5,6 +5,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { buildViewerContext } from "@/lib/viewerContext";
 import { PageHeader } from "@/components/ui/page-header";
+import { Avatar } from "@/components/ui/avatar";
 import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import {
   canViewExplorer,
@@ -286,9 +287,7 @@ export default async function AssessmentStudentsPage({
                     <tr key={row.studentId} className={`group table-row calm-transition ${mvLabel === "DECLINING" ? "bg-[color-mix(in_srgb,var(--scale-limited-light,#FEE2E2)_12%,transparent)]" : ""}`}>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-container-low text-xs font-semibold text-on-surface-variant">
-                            {getInitials(row.studentName)}
-                          </div>
+                          <Avatar name={row.studentName} studentId={row.studentId} size="md" tone="muted" />
                           <span className="font-medium text-text">{row.studentName}</span>
                         </div>
                       </td>

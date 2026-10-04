@@ -371,7 +371,7 @@ export default async function ExplorerObservationsPage({
                           href={`/observe/${obs.id}`}
                           className="flex items-center gap-2 min-w-0"
                         >
-                          <Avatar name={obs.observedTeacher?.fullName ?? "?"} size="sm" />
+                          <Avatar name={obs.observedTeacher?.fullName ?? "?"} userId={obs.observedTeacherId} size="sm" />
                           <span className="truncate font-semibold text-text calm-transition group-hover:text-accent">
                             {obs.observedTeacher?.fullName ?? "—"}
                           </span>

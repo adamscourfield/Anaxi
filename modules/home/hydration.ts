@@ -152,6 +152,7 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
 
 export type PendingLeaveDetail = {
   id: string;
+  requesterUserId: string | null;
   requesterName: string;
   reasonLabel: string | null;
   startDate: string;
@@ -238,12 +239,13 @@ export async function hydrateLeadershipHomeData({
           const manageableIds = await loaManageableRequesterIds(user);
           const rows = await (prisma as any).lOARequest.findMany({
             where: loaPendingApprovalWhere(user.tenantId, user.id, manageableIds),
-            include: { requester: { select: { fullName: true } }, reason: { select: { label: true } } },
+            include: { requester: { select: { id: true, fullName: true } }, reason: { select: { label: true } } },
             orderBy: { createdAt: "desc" },
             take: 3,
           });
           return rows.map((r: any) => ({
             id: r.id as string,
+            requesterUserId: (r.requester?.id ?? null) as string | null,
             requesterName: (r.requester?.fullName ?? "Unknown") as string,
             reasonLabel: (r.reason?.label ?? null) as string | null,
             startDate: (r.startDate as Date).toISOString(),
