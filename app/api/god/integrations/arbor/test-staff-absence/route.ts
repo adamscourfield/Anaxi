@@ -25,6 +25,15 @@ export const POST = withApi(async function POST(req: Request) {
 
   try {
     const result = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).inspectStaffAbsenceAccess();
+    await db.sharedIntegration.update({
+      where: { id: integration.id },
+      data: {
+        config: {
+          ...(integration.config ?? {}),
+          leaveAbsenceAccess: { status: "VERIFIED", checkedAt: new Date().toISOString() },
+        },
+      },
+    });
     await db.auditLog.create({
       data: {
         tenantId: PLATFORM_TENANT_ID,
@@ -39,6 +48,16 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("leaveWriteOperations", String(result.writeOperations.length));
     return NextResponse.redirect(url);
   } catch {
+    // Keep the warning visible after the redirect query parameters have gone.
+    await db.sharedIntegration.update({
+      where: { id: integration.id },
+      data: {
+        config: {
+          ...(integration.config ?? {}),
+          leaveAbsenceAccess: { status: "NEEDS_ATTENTION", checkedAt: new Date().toISOString() },
+        },
+      },
+    });
     return NextResponse.redirect(new URL("/god/integrations/arbor?leaveAccess=failed", req.url));
   }
 });

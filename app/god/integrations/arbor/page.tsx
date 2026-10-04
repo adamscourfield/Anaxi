@@ -150,7 +150,12 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
   const behaviourNeedsAttention = latestBehaviourRun?.status === "FAILED" || latestBehaviourRun?.status === "PARTIAL";
   const assessmentNeedsReview = assessmentCycles.some((cycle) => !approvedAssessmentCycles.has(cycle.key));
   const assessmentNeedsAttention = assessmentNeedsReview || params?.assessmentHistory === "failed";
-  const leaveNeedsAttention = params?.leaveAccess === "failed" || params?.leaveAccess === "not-connected";
+  const savedLeaveAccess = integration?.config?.leaveAbsenceAccess && typeof integration.config.leaveAbsenceAccess === "object"
+    ? integration.config.leaveAbsenceAccess as { status?: unknown }
+    : null;
+  const leaveNeedsAttention = params?.leaveAccess === "failed"
+    || params?.leaveAccess === "not-connected"
+    || savedLeaveAccess?.status === "NEEDS_ATTENTION";
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
