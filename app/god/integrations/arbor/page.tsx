@@ -19,6 +19,7 @@ type PreparedAssessmentDefinition = { id: string; label: string; assessmentDate?
 type ProposedAssessmentCycle = {
   key: string;
   label: string;
+  academicYear: string;
   yearGroup: string;
   gradeFormat: string;
   definitions: string[];
@@ -44,6 +45,7 @@ function proposedAssessmentCycles(config: unknown): ProposedAssessmentCycle[] {
         cycles.set(cycle.cycleExternalId, {
           key: cycle.cycleExternalId,
           label: cycle.cycleLabel,
+          academicYear: cycle.academicYear,
           yearGroup,
           gradeFormat: cycle.gradeFormat === "PERCENTAGE" ? "Percentage" : cycle.gradeFormat === "A_LEVEL" ? "A-Level grades" : "GCSE grades",
           definitions: [definition.label],
@@ -113,6 +115,13 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
   const selected = new Set<string>(integration?.schools.map((school: { tenantId: string }) => school.tenantId) ?? []);
   const hostname = typeof integration?.config?.schoolHostname === "string" ? integration.config.schoolHostname : "";
   const assessmentCycles = proposedAssessmentCycles(integration?.config);
+  const assessmentCyclesByYear = new Map<string, ProposedAssessmentCycle[]>();
+  for (const cycle of assessmentCycles) {
+    const current = assessmentCyclesByYear.get(cycle.academicYear) ?? [];
+    current.push(cycle);
+    assessmentCyclesByYear.set(cycle.academicYear, current);
+  }
+  const assessmentYears = [...assessmentCyclesByYear.keys()].sort((a, b) => b.localeCompare(a));
   const assessmentSync = integration?.config?.assessmentSync && typeof integration.config.assessmentSync === "object"
     ? integration.config.assessmentSync as { historicPage?: number; historicComplete?: boolean; historicalDefinitions?: PreparedAssessmentDefinition[] }
     : {};
@@ -538,21 +547,35 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 {assessmentCycles.length ? (
                   <form method="post" action="/api/god/integrations/arbor/assessments/approval" className="space-y-4">
                     <CsrfInput token={csrfToken} />
-                    <div className="divide-y divide-border/70 rounded-sm border border-border/70">
-                      {assessmentCycles.map((cycle) => {
-                        const students = studentCountByYearGroup.get(cycle.yearGroup) ?? 0;
+                    <div className="space-y-3">
+                      {assessmentYears.map((academicYear, index) => {
+                        const cycles = assessmentCyclesByYear.get(academicYear) ?? [];
+                        const approved = cycles.filter((cycle) => approvedAssessmentCycles.has(cycle.key)).length;
                         return (
-                          <div key={cycle.key} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
-                            <label className="flex min-w-0 cursor-pointer items-start gap-3">
-                              <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} className="mt-1 accent-accent" />
-                              <span className="min-w-0">
-                                <span className="block font-medium">{cycle.label}</span>
-                                <MetaText className="mt-1">{cycle.gradeFormat} · {students} active {students === 1 ? "student" : "students"} · {cycle.definitions.length} Arbor {cycle.definitions.length === 1 ? "definition" : "definitions"}</MetaText>
-                                <MetaText className="mt-1 break-words">{cycle.definitions.slice(0, 3).join(" · ")}{cycle.definitions.length > 3 ? ` +${cycle.definitions.length - 3} more` : ""}</MetaText>
-                              </span>
-                            </label>
-                            <Link href={`/god/integrations/arbor/assessments/${encodeURIComponent(cycle.key)}`} className="shrink-0 text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
-                          </div>
+                          <details key={academicYear} open={index === 0} className="overflow-hidden rounded-sm border border-border/70 bg-[var(--surface-container-lowest)]">
+                            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 font-semibold [&::-webkit-details-marker]:hidden">
+                              <span>{academicYear}</span>
+                              <MetaText>{cycles.length} proposed {cycles.length === 1 ? "cycle" : "cycles"}{approved ? ` · ${approved} approved` : ""}</MetaText>
+                            </summary>
+                            <div className="divide-y divide-border/70 border-t border-border/70">
+                              {cycles.map((cycle) => {
+                                const students = studentCountByYearGroup.get(cycle.yearGroup) ?? 0;
+                                return (
+                                  <div key={cycle.key} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <label className="flex min-w-0 cursor-pointer items-start gap-3">
+                                      <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} className="mt-1 accent-accent" />
+                                      <span className="min-w-0">
+                                        <span className="block font-medium">{cycle.label}</span>
+                                        <MetaText className="mt-1">{cycle.gradeFormat} · {students} active {students === 1 ? "student" : "students"} · {cycle.definitions.length} Arbor {cycle.definitions.length === 1 ? "definition" : "definitions"}</MetaText>
+                                        <MetaText className="mt-1 break-words">{cycle.definitions.slice(0, 3).join(" · ")}{cycle.definitions.length > 3 ? ` +${cycle.definitions.length - 3} more` : ""}</MetaText>
+                                      </span>
+                                    </label>
+                                    <Link href={`/god/integrations/arbor/assessments/${encodeURIComponent(cycle.key)}`} className="shrink-0 text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </details>
                         );
                       })}
                     </div>
