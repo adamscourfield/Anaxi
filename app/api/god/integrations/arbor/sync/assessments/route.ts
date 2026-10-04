@@ -7,8 +7,8 @@ import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string };
-type AssessmentSyncState = { definitions?: PreparedDefinition[]; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
+type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicPage?: number; historicComplete?: boolean; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 2;
 
 async function ensureAssessment(db: any, tenantId: string, createdByUserId: string, definition: PreparedDefinition, mapping: ArborAssessmentMapping) {
@@ -50,6 +50,7 @@ export async function POST(req: Request) {
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.json({ skipped: "not connected" });
 
   const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
+  const state = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
   // Assessment outcomes are high-impact data. Discovery may continue, but no
   // results are written until a super admin has reviewed and approved each
   // proposed Anaxi cycle individually.
@@ -58,8 +59,32 @@ export async function POST(req: Request) {
       ? config.assessmentApprovedCycleKeys.filter((value): value is string => typeof value === "string")
       : [],
   );
-  if (!approvedCycleKeys.size) return NextResponse.json({ skipped: "awaiting assessment cycle approval" });
-  const state = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
+  if (!approvedCycleKeys.size) {
+    // While imports are paused, use the scheduled calls to discover dated
+    // historic cycles in small pages. This makes prior years reviewable before
+    // anyone approves the first live import.
+    if (state.historicComplete) return NextResponse.json({ skipped: "awaiting assessment cycle approval" });
+    try {
+      const historicPage = typeof state.historicPage === "number" && state.historicPage >= 0 ? state.historicPage : 0;
+      const marks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks(100, historicPage);
+      const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
+      const historicalDefinitions = new Map<string, PreparedDefinition>();
+      for (const item of known) {
+        const mapping = mapArborAssessment(item.label, item.assessmentDate);
+        if (mapping) historicalDefinitions.set(`${item.id}:${mapping.cycleExternalId}`, item);
+      }
+      for (const mark of marks) {
+        if (!mark.assessment) continue;
+        const label = arborAssessmentLabel(mark.assessment);
+        const mapping = mapArborAssessment(label, mark.assessmentDate);
+        if (mapping) historicalDefinitions.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
+      }
+      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicalDefinitions: [...historicalDefinitions.values()], historicPage: marks.length === 100 ? historicPage + 1 : historicPage, historicComplete: marks.length < 100 } } } });
+      return NextResponse.json({ discovered: historicalDefinitions.size, page: historicPage, complete: marks.length < 100 });
+    } catch (error) {
+      return NextResponse.json({ skipped: "historic assessment discovery paused", error: error instanceof Error ? error.message.slice(0, 180) : "Arbor did not complete historic discovery." }, { status: 503 });
+    }
+  }
   const queuedDefinitions = Array.isArray(state.definitions) ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string") : [];
   // Replace the earlier broad discovery queue with the agreed Secondary-only policy.
   const definitions = state.policyVersion === ASSESSMENT_POLICY_VERSION ? queuedDefinitions : queuedDefinitions.filter((definition) => mapArborAssessment(definition.label));

@@ -6,19 +6,19 @@ import { assertCsrfFromForm } from "@/lib/csrf";
 import { mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string };
-type AssessmentSyncState = { definitions?: PreparedDefinition[] };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
+type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[] };
 
 function proposedCycleKeys(config: Record<string, unknown>): Set<string> {
   const state = config.assessmentSync && typeof config.assessmentSync === "object"
     ? config.assessmentSync as AssessmentSyncState
     : {};
-  const definitions = Array.isArray(state.definitions)
-    ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string")
-    : [];
+  const definitions = [state.definitions, state.historicalDefinitions].flatMap((items) => Array.isArray(items)
+    ? items.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string")
+    : []);
   const keys = new Set<string>();
   for (const definition of definitions) {
-    const mapping = mapArborAssessment(definition.label);
+    const mapping = mapArborAssessment(definition.label, definition.assessmentDate);
     if (!mapping) continue;
     for (const yearGroup of mapping.yearGroups) {
       const cycle = mapArborAssessmentForYearGroup(mapping, yearGroup);

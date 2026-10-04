@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { H3, MetaText } from "@/components/ui/typography";
 
-type PreparedDefinition = { id: string; label: string };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
 
 function gradeValue(mark: { displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null }): string {
   return [mark.grade?.displayName, mark.grade?.shortName, mark.grade?.code, mark.displayName].find((value): value is string => Boolean(value?.trim())) ?? "No recorded grade";
@@ -26,16 +26,16 @@ export default async function ArborAssessmentCycleReviewPage({ params }: { param
 
   const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
   const sync = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as Record<string, unknown> : {};
-  const definitions = Array.isArray(sync.definitions)
-    ? sync.definitions.filter((item): item is PreparedDefinition => Boolean(item) && typeof (item as PreparedDefinition).id === "string" && typeof (item as PreparedDefinition).label === "string")
-    : [];
+  const definitions = [sync.definitions, sync.historicalDefinitions].flatMap((items) => Array.isArray(items)
+    ? items.filter((item): item is PreparedDefinition => Boolean(item) && typeof (item as PreparedDefinition).id === "string" && typeof (item as PreparedDefinition).label === "string")
+    : []);
   const matchingDefinitions = definitions.filter((definition) => {
-    const mapping = mapArborAssessment(definition.label);
+    const mapping = mapArborAssessment(definition.label, definition.assessmentDate);
     return mapping?.yearGroups.some((yearGroup) => mapArborAssessmentForYearGroup(mapping, yearGroup)?.cycleExternalId === cycleKey);
   });
   if (!matchingDefinitions.length) notFound();
 
-  const firstMapping = mapArborAssessment(matchingDefinitions[0].label)!;
+  const firstMapping = mapArborAssessment(matchingDefinitions[0].label, matchingDefinitions[0].assessmentDate)!;
   const yearGroup = firstMapping.yearGroups.find((value) => mapArborAssessmentForYearGroup(firstMapping, value)?.cycleExternalId === cycleKey)!;
   const cycle = mapArborAssessmentForYearGroup(firstMapping, yearGroup)!;
   const [marks, students] = await Promise.all([
