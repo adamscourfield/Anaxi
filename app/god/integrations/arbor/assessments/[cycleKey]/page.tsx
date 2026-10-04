@@ -42,7 +42,9 @@ export default async function ArborAssessmentCycleReviewPage({ params }: { param
     new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks(100, 0, matchingDefinitions.slice(0, 20).map((definition) => definition.id)),
     db.student.findMany({ where: { externalId: { not: null } }, select: { externalId: true, fullName: true, yearGroup: true } }),
   ]);
-  const studentsByExternalId = new Map(students.map((student: { externalId: string; fullName: string; yearGroup: string | null }) => [student.externalId, student]));
+  const studentsByExternalId = new Map<string, { externalId: string; fullName: string; yearGroup: string | null }>(
+    (students as Array<{ externalId: string; fullName: string; yearGroup: string | null }>).map((student) => [student.externalId, student]),
+  );
   const visibleMarks = marks
     .filter((mark) => mapArborAssessmentForYearGroup(mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: null, assessmentName: null, assessmentShortName: null }), mark.assessmentDate) ?? firstMapping, yearGroup)?.cycleExternalId === cycleKey)
     .slice(0, 50);

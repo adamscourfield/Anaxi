@@ -263,7 +263,7 @@ export async function createAssessmentPoint(input: CreatePointInput) {
  * assessment, ordered by normalizedScore descending, and persists them.
  * Results with a null normalizedScore receive a null rank.
  */
-async function computeAndStoreRanks(tenantId: string, assessmentId: string) {
+export async function computeAndStoreRanks(tenantId: string, assessmentId: string) {
   const results = await prisma.assessmentResult.findMany({
     where: { tenantId, assessmentId, status: "PRESENT" },
     select: { id: true, normalizedScore: true },

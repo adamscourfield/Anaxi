@@ -137,6 +137,7 @@ type PointData = {
   pointType: PointType;
   resultStatus: ResultStatus;
   isFinalPoint: boolean;
+  dataSource: "MANUAL" | "ARBOR";
   cycle: { id: string; label: string; qualificationType: string };
 };
 
@@ -603,6 +604,13 @@ export default function ResultPointPage() {
   const headerActions = point ? (
     <div className="flex flex-wrap items-center gap-2">
       <AttainmentExplorerLink cycleId={cycleId} />
+      {point.resultStatus !== "LOCKED" && (
+        point.dataSource === "ARBOR" ? (
+          <Button asChild variant="secondary">
+            <Link href={`/assessments/${cycleId}/points/${pointId}/corrections`}>Correct Arbor marks</Link>
+          </Button>
+        ) : null
+      )}
       {point.resultStatus !== "LOCKED" && (
         <Button asChild variant="secondary">
           <Link href={`/assessments/${cycleId}/points/${pointId}/upload`}>

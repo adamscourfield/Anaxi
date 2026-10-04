@@ -91,11 +91,20 @@ export async function POST(req: Request) {
       if (!student || !value || !mapping || !approvedCycleKeys.has(mapping.cycleExternalId) || !ownerByTenantId.has(student.tenantId)) continue;
       const assessment = await ensureAssessment(db, student.tenantId, ownerByTenantId.get(student.tenantId)!, definition, mapping);
       const normalizedScore = normalizeGrade(value, mapping.gradeFormat);
-      await db.assessmentResult.upsert({
-        where: { tenantId_assessmentId_studentId: { tenantId: student.tenantId, assessmentId: assessment.id, studentId: student.id } },
-        create: { tenantId: student.tenantId, assessmentId: assessment.id, studentId: student.id, rawValue: value, normalizedScore, normalisedGrade: value, status: "PRESENT", isValid: normalizedScore !== null, dataSource: "ARBOR" },
-        update: { rawValue: value, normalizedScore, normalisedGrade: value, status: "PRESENT", isValid: normalizedScore !== null, dataSource: "ARBOR" },
-      });
+      const key = { tenantId_assessmentId_studentId: { tenantId: student.tenantId, assessmentId: assessment.id, studentId: student.id } };
+      const existingResult = await db.assessmentResult.findUnique({ where: key, select: { id: true, isManuallyOverridden: true } });
+      const arborValues = { arborRawValue: value, arborNormalizedScore: normalizedScore, arborNormalisedGrade: value, arborSyncedAt: new Date() };
+      if (existingResult?.isManuallyOverridden) {
+        // Keep the latest MIS value for comparison, but never overwrite an
+        // explicitly recorded Anaxi correction without a human decision.
+        await db.assessmentResult.update({ where: { id: existingResult.id }, data: arborValues });
+      } else {
+        await db.assessmentResult.upsert({
+          where: key,
+          create: { tenantId: student.tenantId, assessmentId: assessment.id, studentId: student.id, rawValue: value, normalizedScore, normalisedGrade: value, status: "PRESENT", isValid: normalizedScore !== null, dataSource: "ARBOR", ...arborValues },
+          update: { rawValue: value, normalizedScore, normalisedGrade: value, status: "PRESENT", isValid: normalizedScore !== null, dataSource: "ARBOR", ...arborValues },
+        });
+      }
       imported++;
     }
     const nextPage = marks.length === 100 ? markPage + 1 : 0;

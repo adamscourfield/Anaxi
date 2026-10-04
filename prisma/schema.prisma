@@ -1203,6 +1203,15 @@ model AssessmentResult {
   /// already unique, so this exists to stop one source silently overwriting another's
   /// result for the same student, not to find the row.
   dataSource      DataSource                @default(MANUAL)
+  /// Arbor values are retained when a school corrects a mark in Anaxi, so the
+  /// correction can be reviewed or removed without losing the MIS source value.
+  arborRawValue           String?
+  arborNormalizedScore    Float?
+  arborNormalisedGrade    String?
+  arborSyncedAt           DateTime?
+  isManuallyOverridden    Boolean             @default(false)
+  manualOverrideAt        DateTime?
+  manualOverrideByUserId  String?
   createdAt       DateTime                  @default(now())
   updatedAt       DateTime                  @updatedAt
   assessment      Assessment                @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
