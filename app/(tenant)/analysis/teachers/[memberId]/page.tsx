@@ -12,6 +12,8 @@ import { computeTeacherSignalProfile, type RiskStatus, type SignalProfileEntry }
 import { canViewObservation, canViewTeacherAnalysis } from "@/modules/authz";
 import { formatPhaseLabel } from "@/modules/observations/phaseLabel";
 import { formatYearGroup } from "@/modules/observations/yearGroup";
+import { avatarUrlFor } from "@/lib/avatarUpload";
+import { Avatar } from "@/components/ui/avatar";
 
 const WINDOW_OPTIONS = [7, 21, 28, 90] as const;
 
@@ -182,13 +184,17 @@ export default async function TeacherProfilePage({
 
   const teacherId = resolvedParams.memberId;
 
-  const [hodMemberships, coachAssignments, teacherDeptMemberships, settings] = await Promise.all([
+  const [hodMemberships, coachAssignments, teacherDeptMemberships, settings, teacher] = await Promise.all([
     (prisma as any).departmentMembership.findMany({
       where: { userId: user.id, isHeadOfDepartment: true },
     }),
     (prisma as any).coachAssignment.findMany({ where: { coachUserId: user.id } }),
     (prisma as any).departmentMembership.findMany({ where: { userId: teacherId } }),
     (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } }),
+    (prisma as any).user.findFirst({
+      where: { id: teacherId, tenantId: user.tenantId },
+      select: { id: true, avatarUpdatedAt: true },
+    }),
   ]);
 
   const hodDepartmentIds = (hodMemberships as any[]).map((m: any) => m.departmentId);
@@ -313,6 +319,7 @@ export default async function TeacherProfilePage({
       <PageHeader
         variant="ledger"
         title={profile.teacherName}
+        avatar={<Avatar name={profile.teacherName} size="lg" tone="muted" avatarUrl={teacher ? avatarUrlFor(teacher.id, teacher.avatarUpdatedAt) : null} />}
         subtitle={departmentNames.length > 0 ? departmentNames.join(", ") : undefined}
         meta={
           <StatusPill

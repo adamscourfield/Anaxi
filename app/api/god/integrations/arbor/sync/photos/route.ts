@@ -10,6 +10,8 @@ import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
 const BATCH_SIZE = 25;
+// Refresh Arbor-sourced photos monthly, while allowing the initial backlog to clear first.
+const REFRESH_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const POST = withApi(async function POST(req: Request) {
   const denied = assertCronAuthorized(req);
@@ -24,9 +26,10 @@ export const POST = withApi(async function POST(req: Request) {
   const integration = await db.sharedIntegration.findUnique({ where: { provider: "ARBOR" }, include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.redirect(new URL("/god/integrations/arbor?photoSync=not-connected", req.url));
   const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
+  const refreshBefore = new Date(Date.now() - REFRESH_AFTER_MS);
   const [students, staff] = await Promise.all([
-    db.student.findMany({ where: { tenantId: { in: tenantIds }, status: "ACTIVE", dataSource: "ARBOR", externalId: { not: null }, OR: [{ avatarDataSource: null, avatarUpdatedAt: null }, { avatarDataSource: "ARBOR" }] }, select: { id: true, externalId: true }, orderBy: { avatarUpdatedAt: "asc" }, take: BATCH_SIZE }),
-    db.user.findMany({ where: { tenantId: { in: tenantIds }, isActive: true, dataSource: "ARBOR", externalId: { not: null }, OR: [{ avatarDataSource: null, avatarUpdatedAt: null }, { avatarDataSource: "ARBOR" }] }, select: { id: true, externalId: true }, orderBy: { avatarUpdatedAt: "asc" }, take: BATCH_SIZE }),
+    db.student.findMany({ where: { tenantId: { in: tenantIds }, status: "ACTIVE", dataSource: "ARBOR", externalId: { not: null }, OR: [{ avatarDataSource: null, avatarUpdatedAt: null }, { avatarDataSource: "ARBOR", avatarUpdatedAt: { lt: refreshBefore } }] }, select: { id: true, externalId: true }, orderBy: { avatarUpdatedAt: "asc" }, take: BATCH_SIZE }),
+    db.user.findMany({ where: { tenantId: { in: tenantIds }, isActive: true, dataSource: "ARBOR", externalId: { not: null }, OR: [{ avatarDataSource: null, avatarUpdatedAt: null }, { avatarDataSource: "ARBOR", avatarUpdatedAt: { lt: refreshBefore } }] }, select: { id: true, externalId: true }, orderBy: { avatarUpdatedAt: "asc" }, take: BATCH_SIZE }),
   ]);
   const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
   let studentPhotos = 0, staffPhotos = 0, unavailable = 0, failed = 0;

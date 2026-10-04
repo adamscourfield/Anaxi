@@ -19,10 +19,10 @@ export const GET = withApi(async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return new NextResponse(user.avatarImage, {
+  return new NextResponse(new Uint8Array(user.avatarImage), {
     headers: {
       "Content-Type": user.avatarMimeType,
-      "Cache-Control": "private, max-age=31536000, immutable",
+      "Cache-Control": "private, max-age=3600",
     },
   });
 });

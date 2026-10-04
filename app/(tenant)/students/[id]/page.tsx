@@ -20,6 +20,8 @@ import { canAccessStudentRecord } from "@/modules/students/access";
 import { toggleWatchlist } from "@/app/(tenant)/analysis/students/actions";
 import { archiveStudentAction, unarchiveStudentAction } from "../actions";
 import { getTenantVocab } from "@/lib/vocab";
+import { studentAvatarUrlFor } from "@/lib/avatarUpload";
+import { Avatar } from "@/components/ui/avatar";
 
 const WINDOW_OPTIONS = [7, 21, 28] as const;
 
@@ -412,12 +414,12 @@ export default async function StudentDetailPage({
       <header className="anx-page-header-shell">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 flex-1 items-start gap-4">
-            <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface-container-high)] text-base font-bold tracking-tight text-text ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)]"
-              aria-hidden
-            >
-              {getInitials(student.fullName)}
-            </div>
+            <Avatar
+              name={student.fullName}
+              size="lg"
+              tone="muted"
+              avatarUrl={studentAvatarUrlFor(student.id, student.avatarUpdatedAt)}
+            />
             <div className="min-w-0">
               <h1 className="anx-page-title break-words">{student.fullName}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">

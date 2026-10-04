@@ -12,6 +12,7 @@ export function PageHeader({
   actions,
   eyebrow,
   meta,
+  avatar,
   /** Default is ledger (institutional shell) — use across tenant app for consistency. */
   variant = "ledger",
   className,
@@ -24,6 +25,8 @@ export function PageHeader({
   actions?: ReactNode;
   eyebrow?: ReactNode;
   meta?: ReactNode;
+  /** Optional person or organisation image displayed beside the title. */
+  avatar?: ReactNode;
   /** `ledger`: institutional shell + scaled title (use across tenant app). */
   variant?: PageHeaderVariant;
   className?: string;
@@ -52,15 +55,18 @@ export function PageHeader({
   return (
     <div className={rootClass}>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 space-y-2">
-          {eyebrow ? (
-            <div className={eyebrowClassName ?? eyebrowDefault}>{eyebrow}</div>
-          ) : null}
-          <h1 className={titleClassName ?? titleDefault}>{title}</h1>
-          {subtitle ? (
-            <p className={subtitleClassName ?? subtitleDefault}>{subtitle}</p>
-          ) : null}
-          {meta ? <div className="flex flex-wrap items-center gap-2 pt-0.5">{meta}</div> : null}
+        <div className="flex min-w-0 items-start gap-4">
+          {avatar ? <div className="pt-0.5">{avatar}</div> : null}
+          <div className="min-w-0 space-y-2">
+            {eyebrow ? (
+              <div className={eyebrowClassName ?? eyebrowDefault}>{eyebrow}</div>
+            ) : null}
+            <h1 className={titleClassName ?? titleDefault}>{title}</h1>
+            {subtitle ? (
+              <p className={subtitleClassName ?? subtitleDefault}>{subtitle}</p>
+            ) : null}
+            {meta ? <div className="flex flex-wrap items-center gap-2 pt-0.5">{meta}</div> : null}
+          </div>
         </div>
         {actions ? (
           <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
