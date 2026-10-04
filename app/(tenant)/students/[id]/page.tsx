@@ -22,6 +22,7 @@ import { archiveStudentAction, unarchiveStudentAction } from "../actions";
 import { getTenantVocab } from "@/lib/vocab";
 import { studentAvatarUrlFor } from "@/lib/avatarUpload";
 import { Avatar } from "@/components/ui/avatar";
+import { formatYearGroup } from "@/modules/observations/yearGroup";
 
 const WINDOW_OPTIONS = [7, 21, 28] as const;
 
@@ -425,7 +426,7 @@ export default async function StudentDetailPage({
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {student.yearGroup ? (
                   <span className="rounded-md bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-                    Year {student.yearGroup}
+                    {formatYearGroup(student.yearGroup)}
                   </span>
                 ) : null}
                 <span className="rounded-md bg-[var(--surface-container-high)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">

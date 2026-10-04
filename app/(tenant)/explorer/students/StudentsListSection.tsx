@@ -13,6 +13,7 @@ import { bulkToggleWatchlist } from "@/app/(tenant)/analysis/students/actions";
 import { bulkSetStudentStatus } from "@/app/(tenant)/students/actions";
 import { WatchlistToggle } from "./WatchlistToggle";
 import { Avatar } from "@/components/ui/avatar";
+import { formatYearGroup } from "@/modules/observations/yearGroup";
 
 function attendanceBarColor(pct: number | null): string {
   if (pct === null) return "bg-surface-container-high";
@@ -183,7 +184,7 @@ export function StudentsListSection({
                   <Avatar name={row.studentName} size="md" tone="muted" avatarUrl={row.avatarUrl} />
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-text">{row.studentName}</p>
-                    <p className="text-xs text-muted">{row.yearGroup ?? "—"}</p>
+                    <p className="text-xs text-muted">{formatYearGroup(row.yearGroup)}</p>
                   </div>
                 </div>
                 {row.status === "ARCHIVED" ? (
@@ -301,7 +302,7 @@ export function StudentsListSection({
                       </span>
                     </Link>
                   </td>
-                  <td className="px-4 py-4 text-muted">{row.yearGroup ?? "—"}</td>
+                  <td className="px-4 py-4 text-muted">{formatYearGroup(row.yearGroup)}</td>
                   {showStatusColumn && (
                     <td className="px-4 py-4">
                       <span
