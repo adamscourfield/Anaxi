@@ -15,8 +15,13 @@ jobs:
           test -n "$ANAXI_APP_URL"
           test -n "$ANAXI_CRON_SECRET"
           for _ in $(seq 1 8); do
-            curl --fail --silent --show-error \
+            response=$(curl --silent --show-error \
               --retry 2 \
+              --write-out '\n%{http_code}' \
               --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
               "${ANAXI_APP_URL%/}/api/cron/arbor-photos?force=1"
+            )
+            printf '%s\n' "$response"
+            status=$(printf '%s\n' "$response" | tail -n 1)
+            test "$status" -ge 200 -a "$status" -lt 300
           done

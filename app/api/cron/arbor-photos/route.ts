@@ -11,5 +11,5 @@ export async function GET(req: Request) {
   const result = await response.json().catch(() => null);
   return response.ok
     ? NextResponse.json({ scheduled: true, ...(result && typeof result === "object" ? result : {}) })
-    : NextResponse.json({ error: "Arbor photo sync failed" }, { status: 500 });
+    : NextResponse.json({ error: "Arbor photo sync failed", code: result && typeof result === "object" && "code" in result ? result.code : "UNKNOWN" }, { status: 500 });
 }
