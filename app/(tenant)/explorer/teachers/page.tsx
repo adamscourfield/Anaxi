@@ -13,6 +13,7 @@ import { canAccessTeacherDirectory } from "@/lib/analysisNav";
 import { canExportExplorer, canViewTeacherAnalysis, getExplorerTeacherScope } from "@/modules/authz";
 import { StatusPill, type PillVariant } from "@/components/ui/status-pill";
 import { Avatar } from "@/components/ui/avatar";
+import { avatarUrlFor } from "@/lib/avatarUpload";
 import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import {
   computeTeacherPivot,
@@ -228,6 +229,16 @@ export default async function ExplorerTeachersPage({
 
   const pagedPivotRows = mode === "pivot" ? pivotRows.slice(startIdx, endIdx) : [];
   const pagedRiskRows = mode === "priorities" ? riskRows.slice(startIdx, endIdx) : [];
+  const visibleTeacherIds = [...new Set([...pagedPivotRows, ...pagedRiskRows].map((row) => row.teacherMembershipId))];
+  const visibleTeacherAvatars = visibleTeacherIds.length
+    ? await (prisma as any).user.findMany({
+      where: { tenantId: user.tenantId, id: { in: visibleTeacherIds } },
+      select: { id: true, avatarUpdatedAt: true },
+    })
+    : [];
+  const teacherAvatarUrlById = new Map<string, string | null>(
+    visibleTeacherAvatars.map((teacher: { id: string; avatarUpdatedAt: Date | null }) => [teacher.id, avatarUrlFor(teacher.id, teacher.avatarUpdatedAt)]),
+  );
   const pivotSignalByTeacherId = new Map(
     pivotRows.map((row) => [row.teacherMembershipId, row.signalData]),
   );
@@ -388,7 +399,7 @@ export default async function ExplorerTeachersPage({
                               href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}&ref=explorer`}
                               className="flex items-center gap-3.5 calm-transition group-hover:text-accent"
                             >
-                              <Avatar name={row.teacherName} size="md" />
+                              <Avatar name={row.teacherName} size="md" avatarUrl={teacherAvatarUrlById.get(row.teacherMembershipId)} />
                               <div className="min-w-0">
                                 <p className="truncate font-semibold text-[var(--text)]">{row.teacherName}</p>
                                 <p className="truncate text-xs text-muted">Teacher</p>
@@ -534,7 +545,7 @@ export default async function ExplorerTeachersPage({
                               href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}&ref=explorer`}
                               className="flex items-center gap-3.5 calm-transition group-hover:text-accent"
                             >
-                              <Avatar name={row.teacherName} size="md" />
+                              <Avatar name={row.teacherName} size="md" avatarUrl={teacherAvatarUrlById.get(row.teacherMembershipId)} />
                               <div className="min-w-0">
                                 <p className="truncate font-semibold text-[var(--text)]">{row.teacherName}</p>
                                 <p className="truncate text-xs text-muted">Teacher</p>

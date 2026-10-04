@@ -12,18 +12,7 @@ import { triangulationPpClass, triangulationSendClass } from "@/modules/assessme
 import { bulkToggleWatchlist } from "@/app/(tenant)/analysis/students/actions";
 import { bulkSetStudentStatus } from "@/app/(tenant)/students/actions";
 import { WatchlistToggle } from "./WatchlistToggle";
-
-function getInitials(name: string | null | undefined): string {
-  const n = (name ?? "").trim();
-  if (!n) return "—";
-  const parts = n.split(" ").filter(Boolean);
-  if (parts.length >= 2) {
-    const a = parts[0][0];
-    const b = parts[parts.length - 1][0];
-    if (a && b) return (a + b).toUpperCase();
-  }
-  return n.substring(0, 2).toUpperCase();
-}
+import { Avatar } from "@/components/ui/avatar";
 
 function attendanceBarColor(pct: number | null): string {
   if (pct === null) return "bg-surface-container-high";
@@ -191,9 +180,7 @@ export function StudentsListSection({
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-container-low text-xs font-semibold">
-                    {getInitials(row.studentName)}
-                  </div>
+                  <Avatar name={row.studentName} size="md" tone="muted" avatarUrl={row.avatarUrl} />
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-text">{row.studentName}</p>
                     <p className="text-xs text-muted">{row.yearGroup ?? "—"}</p>
@@ -308,9 +295,7 @@ export function StudentsListSection({
                   </td>
                   <td className="px-4 py-4">
                     <Link href={href} className="flex items-center gap-3 calm-transition hover:opacity-90">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-container-low text-xs font-semibold text-on-surface-variant">
-                        {getInitials(row.studentName)}
-                      </div>
+                      <Avatar name={row.studentName} size="sm" tone="muted" avatarUrl={row.avatarUrl} />
                       <span className="font-medium text-text underline decoration-transparent underline-offset-2 group-hover:decoration-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)]">
                         {row.studentName}
                       </span>

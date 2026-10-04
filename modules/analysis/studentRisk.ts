@@ -39,6 +39,8 @@ export type SnapshotSummary = {
 export type StudentRiskRow = {
   studentId: string;
   studentName: string;
+  /** Resolved by the list page, rather than exposing image bytes to risk calculations. */
+  avatarUrl?: string | null;
   yearGroup: string | null;
   status: "ACTIVE" | "ARCHIVED";
   sendFlag: boolean;

@@ -32,6 +32,7 @@ import { StudentsBandChips } from "./StudentsBandChips";
 import { StudentsCriticalBanner } from "./StudentsCriticalBanner";
 import { StudentsListSection } from "./StudentsListSection";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { studentAvatarUrlFor } from "@/lib/avatarUpload";
 
 const BASE_PATH = "/explorer/students";
 
@@ -245,6 +246,16 @@ export default async function StudentsPage({
   const pageStart = (safePage - 1) * perPage;
   const pageEnd = Math.min(pageStart + perPage, totalFiltered);
   const pageRows = rows.slice(pageStart, pageEnd);
+  const visibleStudentAvatars = pageRows.length
+    ? await (prisma as any).student.findMany({
+      where: { tenantId: user.tenantId, id: { in: pageRows.map((row) => row.studentId) } },
+      select: { id: true, avatarUpdatedAt: true },
+    })
+    : [];
+  const studentAvatarUrlById = new Map<string, string | null>(
+    visibleStudentAvatars.map((student: { id: string; avatarUpdatedAt: Date | null }) => [student.id, studentAvatarUrlFor(student.id, student.avatarUpdatedAt)]),
+  );
+  const pageRowsWithAvatars = pageRows.map((row) => ({ ...row, avatarUrl: studentAvatarUrlById.get(row.studentId) ?? null }));
 
   const avgAttendance =
     activeRows.length > 0
@@ -351,7 +362,7 @@ export default async function StudentsPage({
         </div>
       ) : (
         <StudentsListSection
-          pageRows={pageRows}
+          pageRows={pageRowsWithAvatars}
           windowDays={windowDays}
           listPath={listPath}
           showBehaviourColumns={showBehaviourColumns}
