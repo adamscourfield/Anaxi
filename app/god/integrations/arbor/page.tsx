@@ -548,11 +548,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                   <form method="post" action="/api/god/integrations/arbor/assessments/approval" className="space-y-4">
                     <CsrfInput token={csrfToken} />
                     <div className="space-y-3">
-                      {assessmentYears.map((academicYear, index) => {
+                      {assessmentYears.map((academicYear) => {
                         const cycles = assessmentCyclesByYear.get(academicYear) ?? [];
                         const approved = cycles.filter((cycle) => approvedAssessmentCycles.has(cycle.key)).length;
                         return (
-                          <details key={academicYear} open={index === 0} className="overflow-hidden rounded-sm border border-border/70 bg-[var(--surface-container-lowest)]">
+                          <details key={academicYear} className="overflow-hidden rounded-sm border border-border/70 bg-[var(--surface-container-lowest)]">
                             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 font-semibold [&::-webkit-details-marker]:hidden">
                               <span>{academicYear}</span>
                               <MetaText>{cycles.length} proposed {cycles.length === 1 ? "cycle" : "cycles"}{approved ? ` · ${approved} approved` : ""}</MetaText>
