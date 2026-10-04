@@ -72,8 +72,10 @@ export default async function OnCallHomePage({
 
   // The inbox is a separate client view, so pass the same signed-in avatar
   // route used by student profiles rather than falling back to initials.
-  const withStudentAvatars = <T extends { student: { id: string; avatarUpdatedAt: Date | null } }>(requests: T[]) =>
-    requests.map((request) => ({
+  const withStudentAvatars = <T extends { student: { id: string; avatarUpdatedAt: Date | null } }>(
+    requests: T[]
+  ): Array<T & { student: T["student"] & { avatarUrl: string | null } }> =>
+    requests.map<T & { student: T["student"] & { avatarUrl: string | null } }>((request) => ({
       ...request,
       student: {
         ...request.student,
