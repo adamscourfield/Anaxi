@@ -65,7 +65,9 @@ export const config = {
     "/api/explorer/:path*",
     "/api/admin/:path*",
     "/god/:path*",
-    "/api/god/:path*",
+    // The photo worker authenticates scheduled calls with CRON_SECRET itself.
+    // Let that internal job reach the route instead of redirecting it to login.
+    "/api/god/((?!integrations/arbor/sync/photos).*)",
     "/api/auth/switch-tenant",
     "/api/((?!auth|cron|webhooks|invite|health).*)",
   ],
