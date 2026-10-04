@@ -44,6 +44,7 @@ export type TopDriver = {
 export type TeacherRiskRow = {
   teacherMembershipId: string;
   teacherName: string;
+  avatarUpdatedAt: Date | null;
   teacherRole: string;
   departmentNames: string[];
   teacherCoverage: number;
@@ -211,10 +212,10 @@ export async function computeTeacherRiskIndex(
 
   const teachers = await (prisma as any).user.findMany({
     where: { tenantId, id: { in: teacherIds } },
-    select: { id: true, fullName: true, role: true },
+    select: { id: true, fullName: true, role: true, avatarUpdatedAt: true },
   });
-  const teacherById = new Map<string, { id: string; fullName: string; role: string | null }>(
-    teachers.map((teacher: { id: string; fullName: string; role: string | null }) => [teacher.id, teacher]),
+  const teacherById = new Map<string, { id: string; fullName: string; role: string | null; avatarUpdatedAt: Date | null }>(
+    teachers.map((teacher: { id: string; fullName: string; role: string | null; avatarUpdatedAt: Date | null }) => [teacher.id, teacher]),
   );
 
   const rows: TeacherRiskRow[] = [];
@@ -259,6 +260,7 @@ export async function computeTeacherRiskIndex(
     rows.push({
       teacherMembershipId: teacherId,
       teacherName: teacher.fullName,
+      avatarUpdatedAt: teacher.avatarUpdatedAt,
       teacherRole: teacher.role ?? "",
       departmentNames: teacherDepts.get(teacherId) ?? [],
       teacherCoverage,

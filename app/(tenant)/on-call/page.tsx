@@ -8,6 +8,7 @@ import { OnCallInbox } from "@/components/oncall/OnCallInbox";
 import { OnCallFilters } from "@/components/oncall/OnCallFilters";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { studentAvatarUrlFor } from "@/lib/avatarUpload";
 
 // On Call is a safety-critical feature: unlike other modules, it is never
 // gated behind a tenant feature flag -- every school can always log and
@@ -68,6 +69,17 @@ export default async function OnCallHomePage({
     getResolvedRequests(user.tenantId, resolvedAfter ?? undefined, filters),
     getTodayActivity(user.tenantId, todayStart),
   ]);
+
+  // The inbox is a separate client view, so pass the same signed-in avatar
+  // route used by student profiles rather than falling back to initials.
+  const withStudentAvatars = <T extends { student: { id: string; avatarUpdatedAt: Date | null } }>(requests: T[]) =>
+    requests.map((request) => ({
+      ...request,
+      student: {
+        ...request.student,
+        avatarUrl: studentAvatarUrlFor(request.student.id, request.student.avatarUpdatedAt),
+      },
+    }));
 
   const totalLogsToday = todayActivity.length;
 
@@ -135,8 +147,8 @@ export default async function OnCallHomePage({
       />
 
       <OnCallInbox
-        openRequests={openRequests}
-        resolvedRequests={resolvedRequests}
+        openRequests={withStudentAvatars(openRequests)}
+        resolvedRequests={withStudentAvatars(resolvedRequests)}
         resolvedRange={range}
         canAcknowledge={canAcknowledge}
         canResolve={canResolve}

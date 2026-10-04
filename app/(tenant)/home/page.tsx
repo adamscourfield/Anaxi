@@ -67,6 +67,7 @@ import {
   IconUsersTwo,
 } from "@/components/home/home-chrome";
 import { ppTableBadgeClass, sendTableBadgeClass } from "@/modules/assessments/attainmentColours";
+import { avatarUrlFor } from "@/lib/avatarUpload";
 
 const DEFAULT_WINDOW_DAYS = 21;
 const ALLOWED_WINDOW_DAYS = [7, 14, 21, 28];
@@ -233,7 +234,7 @@ function LeadershipHome({
   pendingLeaveDetails: PendingLeaveDetail[];
   liveOnCallBanner: { count: number; latest: OnCallDetail | null };
   weekObsCount: number;
-  weekObsTeachers: { id: string; name: string }[];
+  weekObsTeachers: { id: string; name: string; avatarUpdatedAt: Date | null }[];
   attainmentSummary: AttainmentSummary | null;
   hasStudentAnalysisFeature?: boolean;
   watchlistStudents?: StudentRiskRow[];
@@ -377,7 +378,7 @@ function LeadershipHome({
                           className="home-row-link flex items-center justify-between gap-2 p-2"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <Avatar name={row.teacherName} />
+                            <Avatar name={row.teacherName} avatarUrl={avatarUrlFor(row.teacherMembershipId, row.avatarUpdatedAt)} />
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
                               <p className="text-[11px] text-muted">{row.departmentNames.join(", ") || "No dept"}</p>
@@ -461,7 +462,7 @@ function LeadershipHome({
             {weekObsTeachers.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5">
                 {weekObsTeachers.slice(0, 4).map((t) => (
-                  <Avatar key={t.id} name={t.name} size="sm" />
+                  <Avatar key={t.id} name={t.name} avatarUrl={avatarUrlFor(t.id, t.avatarUpdatedAt)} size="sm" />
                 ))}
                 {weekObsTeachers.length > 4 && (
                   <span className="inline-flex h-7 w-auto min-w-[28px] items-center justify-center rounded-md bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-on-primary shadow-sm">
@@ -883,7 +884,7 @@ function HodHome({
                         className="home-row-link flex items-center justify-between gap-3 p-2"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <Avatar name={row.teacherName} />
+                          <Avatar name={row.teacherName} avatarUrl={avatarUrlFor(row.teacherMembershipId, row.avatarUpdatedAt)} />
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
                             <p className="text-[11px] text-muted">{row.teacherCoverage} obs</p>

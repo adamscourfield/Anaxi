@@ -5,6 +5,7 @@ import { StatusPill, PillVariant } from "@/components/ui/status-pill";
 import { HomeCardHeading, HomePrimaryLink } from "@/components/home/home-chrome";
 import { TeacherRiskRow, RiskStatus } from "@/modules/analysis/teacherRisk";
 import { IconUsersTwo } from "@/components/home/home-chrome";
+import { avatarUrlFor } from "@/lib/avatarUpload";
 
 const RISK_STATUS_LABELS: Record<RiskStatus, string> = {
   SIGNIFICANT_DRIFT: "Significant",
@@ -56,7 +57,7 @@ export function CoacheePrioritiesCard({
                 className="home-row-link flex items-center justify-between gap-2 p-2"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <Avatar name={row.teacherName} />
+                  <Avatar name={row.teacherName} avatarUrl={avatarUrlFor(row.teacherMembershipId, row.avatarUpdatedAt)} />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
                     <p className="text-[11px] text-muted">{row.teacherCoverage} obs</p>

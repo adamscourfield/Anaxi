@@ -11,7 +11,7 @@ const TIMELINE_ORDERED = {
 
 const REQUEST_INCLUDE = {
   requester: { select: { id: true, fullName: true, email: true } },
-  student: { select: { id: true, fullName: true, upn: true, yearGroup: true } },
+  student: { select: { id: true, fullName: true, upn: true, yearGroup: true, avatarUpdatedAt: true } },
   responder: { select: { id: true, fullName: true } },
   timelineEvents: TIMELINE_ORDERED,
 };

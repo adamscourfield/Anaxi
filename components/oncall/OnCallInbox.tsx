@@ -10,6 +10,7 @@ import {
 } from "@/modules/oncall/types";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 
 type Status = "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED";
 type RequestType = "BEHAVIOUR" | "FIRST_AID";
@@ -23,7 +24,7 @@ interface InboxRequest {
   createdAt: Date | string;
   resolvedAt?: Date | string | null;
   requester: { fullName: string };
-  student: { fullName: string; yearGroup?: string | null };
+  student: { fullName: string; yearGroup?: string | null; avatarUrl?: string | null };
   responder?: { fullName: string } | null;
 }
 
@@ -38,17 +39,6 @@ interface OnCallInboxProps {
   totalLogsToday: number;
   avgResponseMs: number;
   resolutionRate: number;
-}
-
-function getInitials(name: string): string {
-  const initials = name
-    .split(" ")
-    .map((w) => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-  return initials || "?";
 }
 
 function timeAgo(dateVal: Date | string): string {
@@ -234,9 +224,7 @@ export function OnCallInbox({
                     className="w-full cursor-pointer rounded-2xl border border-border/50 bg-[var(--surface-container-lowest)] p-4 text-left shadow-ambient calm-transition hover:border-border hover:bg-[var(--surface-container-low)]"
                   >
                     <div className="flex items-start gap-3">
-                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-high)] text-xs font-semibold text-muted">
-                        {getInitials(r.student.fullName)}
-                      </span>
+                      <Avatar name={r.student.fullName} avatarUrl={r.student.avatarUrl} size="lg" tone="muted" />
                       <div className="min-w-0 flex-1 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-semibold text-text">{r.student.fullName}</span>
@@ -328,9 +316,7 @@ export function OnCallInbox({
                       >
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-high)] text-xs font-semibold text-muted">
-                              {getInitials(r.student.fullName)}
-                            </span>
+                            <Avatar name={r.student.fullName} avatarUrl={r.student.avatarUrl} size="md" tone="muted" />
                             <span className="font-semibold text-text">
                               {r.student.fullName}
                             </span>

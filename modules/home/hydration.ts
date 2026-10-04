@@ -424,24 +424,28 @@ export async function hydrateLeadershipHomeData({
       }),
       (prisma as any).observation.findMany({
         where: { tenantId: user.tenantId, observedAt: { gte: weekAgo } },
-        include: { observedTeacher: { select: { fullName: true } } },
+        include: { observedTeacher: { select: { fullName: true, avatarUpdatedAt: true } } },
         orderBy: { observedAt: "desc" },
         take: 20,
       }),
     ]).then(([count, rows]: [number, any[]]) => {
       const seen = new Set<string>();
-      const recentTeachers: { id: string; name: string }[] = [];
+      const recentTeachers: { id: string; name: string; avatarUpdatedAt: Date | null }[] = [];
       for (const r of rows) {
         const tid = r.observedTeacherId as string;
         if (!seen.has(tid)) {
           seen.add(tid);
-          recentTeachers.push({ id: tid, name: (r.observedTeacher?.fullName ?? "Unknown") as string });
+          recentTeachers.push({
+            id: tid,
+            name: (r.observedTeacher?.fullName ?? "Unknown") as string,
+            avatarUpdatedAt: (r.observedTeacher?.avatarUpdatedAt ?? null) as Date | null,
+          });
         }
         if (recentTeachers.length >= 5) break;
       }
       return { count, recentTeachers };
     }),
-    { count: 0, recentTeachers: [] as { id: string; name: string }[] }
+    { count: 0, recentTeachers: [] as { id: string; name: string; avatarUpdatedAt: Date | null }[] }
   );
 
   const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentKpis, attendanceHeadline] = await Promise.all([
