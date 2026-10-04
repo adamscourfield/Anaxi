@@ -142,6 +142,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
     : [];
   const studentCountByYearGroup = new Map(activeStudentsByYearGroup.map((row) => [row.yearGroup, row._count._all]));
   const previewCount = (value: string | undefined) => (/^\d+$/.test(value ?? "") ? Number(value) : 0);
+  const actionButtonClass = "w-full sm:w-64";
   const unrecognisedLevels = Array.isArray(params?.unrecognised)
     ? params.unrecognised
     : params?.unrecognised
@@ -155,7 +156,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         eyebrow="God Mode"
         title="Arbor connection"
         subtitle="Connect one Arbor system and choose every Anaxi school that should receive its data."
-        actions={<Link href="/god"><Button variant="secondary">Back to schools</Button></Link>}
+        actions={<Link href="/god"><Button variant="secondary" className="w-full sm:w-64">Back to schools</Button></Link>}
       />
 
       {params?.saved === "1" ? (
@@ -534,11 +535,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                     <MetaText className="mt-1">Review and approve only the cycles you want to bring in. Each uses the agreed year group, phase, and term naming convention.</MetaText>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <form method="post" action="/api/god/integrations/arbor/preview/assessments/active">
+                    <form method="post" action="/api/god/integrations/arbor/preview/assessments/active" className={actionButtonClass}>
                       <CsrfInput token={csrfToken} />
-                      <SubmitButton variant="secondary">Refresh catalogue</SubmitButton>
+                      <SubmitButton variant="secondary" className="w-full">Refresh catalogue</SubmitButton>
                     </form>
-                    {!assessmentSync.historicComplete ? <form method="post" action="/api/god/integrations/arbor/preview/assessments/history"><CsrfInput token={csrfToken} /><SubmitButton variant="secondary">Find historic cycles</SubmitButton></form> : null}
+                    {!assessmentSync.historicComplete ? <form method="post" action="/api/god/integrations/arbor/preview/assessments/history" className={actionButtonClass}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Find historic cycles</SubmitButton></form> : null}
                   </div>
                 </div>
 
@@ -580,7 +581,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                       })}
                     </div>
                     <div className="flex flex-wrap items-center gap-3 border-t border-border/70 pt-4">
-                      <SubmitButton>Save approved cycles</SubmitButton>
+                      <SubmitButton className={actionButtonClass}>Save approved cycles</SubmitButton>
                       <MetaText>{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} cycle(s) are currently approved.` : "All assessment imports are currently paused."}</MetaText>
                     </div>
                   </form>
@@ -592,10 +593,10 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 )}
 
                 {approvedAssessmentCycles.size ? (
-                  <form method="post" action="/api/god/integrations/arbor/assessments/approval">
+                  <form method="post" action="/api/god/integrations/arbor/assessments/approval" className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
                     <input type="hidden" name="action" value="pause" />
-                    <SubmitButton variant="ghost">Pause all assessment imports</SubmitButton>
+                    <SubmitButton variant="ghost" className="w-full">Pause all assessment imports</SubmitButton>
                   </form>
                 ) : null}
               </Card>
@@ -609,13 +610,13 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                   <MetaText className="mt-1">Once `AcademicUnitAutomaticEnrolment` access is granted, Anaxi can show each student&apos;s teachers by subject.</MetaText>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <form method="post" action="/api/god/integrations/arbor/preview/timetable">
+                  <form method="post" action="/api/god/integrations/arbor/preview/timetable" className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
-                    <SubmitButton variant="secondary">Check timetable access</SubmitButton>
+                    <SubmitButton variant="secondary" className="w-full">Check timetable access</SubmitButton>
                   </form>
-                  <form method="post" action="/api/god/integrations/arbor/preview/timetable/summary">
+                  <form method="post" action="/api/god/integrations/arbor/preview/timetable/summary" className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
-                    <SubmitButton variant="ghost">Preview subject links</SubmitButton>
+                    <SubmitButton variant="ghost" className="w-full">Preview subject links</SubmitButton>
                   </form>
                 </div>
             </Card>
@@ -628,19 +629,19 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 <div className="rounded-sm border border-border/70 p-4">
                   <H3>Connection</H3>
                   <MetaText className="mt-1">Confirm that Anaxi can still read Arbor.</MetaText>
-                  <form method="post" action="/api/god/integrations/arbor/test" className="mt-3"><CsrfInput token={csrfToken} /><SubmitButton variant="secondary">Check connection</SubmitButton></form>
+                  <form method="post" action="/api/god/integrations/arbor/test" className={`mt-3 ${actionButtonClass}`}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Check connection</SubmitButton></form>
                 </div>
                 <div className="rounded-sm border border-border/70 p-4">
                   <H3>Photo access</H3>
                   <MetaText className="mt-1">Confirm that Arbor still permits photo retrieval.</MetaText>
-                  <form method="post" action="/api/god/integrations/arbor/test-photos" className="mt-3"><CsrfInput token={csrfToken} /><SubmitButton variant="secondary">Check photo access</SubmitButton></form>
+                  <form method="post" action="/api/god/integrations/arbor/test-photos" className={`mt-3 ${actionButtonClass}`}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Check photo access</SubmitButton></form>
                 </div>
                 <div className="rounded-sm border border-border/70 p-4">
                   <H3>People matching</H3>
                   <MetaText className="mt-1">Re-check student routing or staff links without changes.</MetaText>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <form method="post" action="/api/god/integrations/arbor/preview/students"><CsrfInput token={csrfToken} /><SubmitButton variant="secondary">Students</SubmitButton></form>
-                    <form method="post" action="/api/god/integrations/arbor/preview/staff"><CsrfInput token={csrfToken} /><SubmitButton variant="secondary">Staff</SubmitButton></form>
+                    <form method="post" action="/api/god/integrations/arbor/preview/students" className={actionButtonClass}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Check students</SubmitButton></form>
+                    <form method="post" action="/api/god/integrations/arbor/preview/staff" className={actionButtonClass}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Check staff</SubmitButton></form>
                   </div>
                 </div>
               </div>
@@ -657,9 +658,9 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
             <H3>Check the Arbor connection</H3>
             <MetaText className="mt-1">This makes one read-only request to Arbor. It does not import or change data.</MetaText>
           </div>
-          <form method="post" action="/api/god/integrations/arbor/test">
+          <form method="post" action="/api/god/integrations/arbor/test" className={actionButtonClass}>
             <CsrfInput token={csrfToken} />
-            <SubmitButton variant="secondary">Check connection</SubmitButton>
+            <SubmitButton variant="secondary" className="w-full">Check connection</SubmitButton>
           </form>
         </Card>
       ) : null}
@@ -676,7 +677,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               <input required type="checkbox" name="confirm" value="SYNC_STUDENTS" className="mt-1 accent-accent" />
               <span>I have reviewed the comparison and want to apply this student sync.</span>
             </label>
-            <SubmitButton>Apply student sync</SubmitButton>
+            <SubmitButton className={actionButtonClass}>Apply student sync</SubmitButton>
           </form>
         </Card>
       ) : null}
@@ -693,7 +694,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               <input required type="checkbox" name="confirm" value="SYNC_STAFF" className="mt-1 accent-accent" />
               <span>I have reviewed the comparison and want to link these existing staff accounts to Arbor.</span>
             </label>
-            <SubmitButton>Apply staff sync</SubmitButton>
+            <SubmitButton className={actionButtonClass}>Apply staff sync</SubmitButton>
           </form>
         </Card>
       ) : null}
@@ -737,7 +738,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
             </div>
           </fieldset>
 
-          <SubmitButton>Save Arbor connection</SubmitButton>
+          <SubmitButton className={actionButtonClass}>Save Arbor connection</SubmitButton>
         </form>
       </Card>
     </div>
