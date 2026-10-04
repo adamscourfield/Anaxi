@@ -25,7 +25,11 @@ function scheduledFailureCode(error: unknown): string {
 
 export const POST = withApi(async function POST(req: Request) {
   const denied = assertCronAuthorized(req);
-  const scheduled = !denied && req.headers.get("x-arbor-scheduled-sync") === "1";
+  if (denied) return denied;
+  // Query marker is required because internal fetches can drop non-standard
+  // headers in some hosting runtimes. Authorization remains mandatory above.
+  const scheduled = req.headers.get("x-arbor-scheduled-sync") === "1"
+    || new URL(req.url).searchParams.get("scheduled") === "1";
   const actor = scheduled ? null : await requireSuperAdminUser();
   if (!scheduled) {
     const form = await req.formData();
@@ -35,7 +39,10 @@ export const POST = withApi(async function POST(req: Request) {
   try {
     const db = prisma as any;
     const integration = await db.sharedIntegration.findUnique({ where: { provider: "ARBOR" }, include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
-    if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.redirect(new URL("/god/integrations/arbor?photoSync=not-connected", req.url));
+    if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") {
+      if (scheduled) return NextResponse.json({ error: "Arbor connection is not ready for photos", code: "NOT_CONNECTED" }, { status: 503 });
+      return NextResponse.redirect(new URL("/god/integrations/arbor?photoSync=not-connected", req.url));
+    }
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
     const refreshBefore = new Date(Date.now() - REFRESH_AFTER_MS);
     const [students, staff] = await Promise.all([
