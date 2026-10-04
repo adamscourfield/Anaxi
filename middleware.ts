@@ -69,6 +69,8 @@ export const config = {
     // Let that internal job reach the route instead of redirecting it to login.
     "/api/god/((?!integrations/arbor/sync/photos).*)",
     "/api/auth/switch-tenant",
-    "/api/((?!auth|cron|webhooks|invite|health).*)",
+    // The secure Arbor photo worker is excluded above and here; the broader
+    // API matcher would otherwise still send its internal job to sign-in.
+    "/api/((?!auth|cron|webhooks|invite|health|god/integrations/arbor/sync/photos).*)",
   ],
 };
