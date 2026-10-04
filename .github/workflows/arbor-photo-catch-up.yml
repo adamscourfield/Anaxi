@@ -14,7 +14,9 @@ jobs:
         run: |
           test -n "$ANAXI_APP_URL"
           test -n "$ANAXI_CRON_SECRET"
-          for _ in $(seq 1 8); do
+          # Arbor rate-limits profile image downloads. Space batches out so the
+          # backlog progresses instead of repeatedly retrying a throttled batch.
+          for batch in $(seq 1 8); do
             response=$(curl --silent --show-error \
               --retry 2 \
               --write-out '\n%{http_code}' \
@@ -24,4 +26,5 @@ jobs:
             printf '%s\n' "$response"
             status=$(printf '%s\n' "$response" | tail -n 1)
             test "$status" -ge 200 -a "$status" -lt 300
+            if [ "$batch" -lt 8 ]; then sleep 45; fi
           done
