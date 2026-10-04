@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { buildViewerContext } from "@/lib/viewerContext";
