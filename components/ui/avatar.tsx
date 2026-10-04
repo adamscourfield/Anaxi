@@ -58,7 +58,7 @@ export function Avatar({
   }, [resolvedAvatarUrl]);
 
   const sizeClass =
-    size === "sm" ? "h-7 w-7 text-[10px]" : size === "md" ? "h-9 w-9 text-[12px]" : "h-16 w-16 text-xl";
+    size === "sm" ? "h-8 w-8 text-[10px]" : size === "md" ? "h-10 w-10 text-[12px]" : "h-[4.5rem] w-[4.5rem] text-xl";
 
   if (resolvedAvatarUrl && failedAvatarUrl !== resolvedAvatarUrl) {
     return (
@@ -66,7 +66,7 @@ export function Avatar({
         src={resolvedAvatarUrl}
         alt={name}
         title={name}
-        className={`inline-block shrink-0 rounded-full object-cover ${sizeClass}`}
+        className={`inline-block shrink-0 rounded-[10px] object-cover ${sizeClass}`}
         onError={() => setFailedAvatarUrl(resolvedAvatarUrl)}
       />
     );
@@ -80,7 +80,7 @@ export function Avatar({
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold ${colorClass} ${sizeClass}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-[10px] font-semibold ${colorClass} ${sizeClass}`}
       title={name}
     >
       {initials}
