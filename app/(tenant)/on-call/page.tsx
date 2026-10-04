@@ -4,7 +4,7 @@ import { hasOnCallPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { getOpenAndAcknowledgedRequests, getResolvedRequests, getTodayActivity } from "@/modules/oncall/service";
 import { parseResolvedHistoryRange, resolvedHistoryRangeStart } from "@/modules/oncall/types";
-import { OnCallInbox } from "@/components/oncall/OnCallInbox";
+import { OnCallInbox, type InboxRequest } from "@/components/oncall/OnCallInbox";
 import { OnCallFilters } from "@/components/oncall/OnCallFilters";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -70,17 +70,25 @@ export default async function OnCallHomePage({
     getTodayActivity(user.tenantId, todayStart),
   ]);
 
-  // The inbox is a separate client view, so pass the same signed-in avatar
-  // route used by student profiles rather than falling back to initials.
-  const withStudentAvatars = <T extends { student: { id: string; avatarUpdatedAt: Date | null } }>(
-    requests: T[]
-  ): Array<T & { student: T["student"] & { avatarUrl: string | null } }> =>
-    requests.map<T & { student: T["student"] & { avatarUrl: string | null } }>((request) => ({
-      ...request,
+  // Prisma's dynamically-shaped integration rows do not retain their full
+  // TypeScript shape here. Convert them at the server boundary into the exact
+  // client inbox contract, including the authenticated student avatar URL.
+  const toInboxRequests = (requests: any[]): InboxRequest[] =>
+    requests.map((request) => ({
+      id: request.id,
+      requestType: request.requestType,
+      isEmergency: request.isEmergency,
+      location: request.location,
+      status: request.status,
+      createdAt: request.createdAt,
+      resolvedAt: request.resolvedAt,
+      requester: { fullName: request.requester.fullName },
       student: {
-        ...request.student,
+        fullName: request.student.fullName,
+        yearGroup: request.student.yearGroup,
         avatarUrl: studentAvatarUrlFor(request.student.id, request.student.avatarUpdatedAt),
       },
+      responder: request.responder ? { fullName: request.responder.fullName } : null,
     }));
 
   const totalLogsToday = todayActivity.length;
@@ -149,8 +157,8 @@ export default async function OnCallHomePage({
       />
 
       <OnCallInbox
-        openRequests={withStudentAvatars(openRequests)}
-        resolvedRequests={withStudentAvatars(resolvedRequests)}
+        openRequests={toInboxRequests(openRequests)}
+        resolvedRequests={toInboxRequests(resolvedRequests)}
         resolvedRange={range}
         canAcknowledge={canAcknowledge}
         canResolve={canResolve}

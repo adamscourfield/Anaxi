@@ -15,7 +15,7 @@ import { Avatar } from "@/components/ui/avatar";
 type Status = "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED";
 type RequestType = "BEHAVIOUR" | "FIRST_AID";
 
-interface InboxRequest {
+export interface InboxRequest {
   id: string;
   requestType: RequestType;
   isEmergency?: boolean;
