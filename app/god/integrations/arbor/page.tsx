@@ -89,7 +89,7 @@ function StatusBanner({
   );
 }
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentApproval?: string; assessmentApproved?: string; assessmentHistory?: string; assessmentHistoryCycles?: string; assessmentHistoryError?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableAssignments?: string; timetableLinkable?: string; timetableError?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentApproval?: string; assessmentApproved?: string; assessmentHistory?: string; assessmentHistoryCycles?: string; assessmentHistoryError?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableAssignments?: string; timetableLinkable?: string; timetableError?: string; leaveAccess?: string; leaveWriteOperations?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, latestBehaviourRun, staffProvisioningRequests, params] = await Promise.all([
     getCsrfToken(),
@@ -150,6 +150,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
   const behaviourNeedsAttention = latestBehaviourRun?.status === "FAILED" || latestBehaviourRun?.status === "PARTIAL";
   const assessmentNeedsReview = assessmentCycles.some((cycle) => !approvedAssessmentCycles.has(cycle.key));
   const assessmentNeedsAttention = assessmentNeedsReview || params?.assessmentHistory === "failed";
+  const leaveNeedsAttention = params?.leaveAccess === "failed" || params?.leaveAccess === "not-connected";
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
@@ -558,7 +559,30 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="7. Assessment syncing" defaultOpen={false} attention={assessmentNeedsAttention}>
+            <CollapsibleCard title="7. Leave of absence syncing" defaultOpen={false} attention={leaveNeedsAttention}>
+              <div className="space-y-4">
+                <div>
+                  <H3>Check Arbor staff-absence access</H3>
+                  <MetaText className="mt-1">Before Anaxi sends an approved leave request to Arbor, confirm that the Anaxi application can read the staff-absence area and whether Arbor advertises a relevant write operation. This check is read-only and never creates or changes an absence.</MetaText>
+                </div>
+                {params?.leaveAccess === "success" ? (
+                  <StatusBanner variant="success" title="Arbor staff-absence read access verified.">
+                    Anaxi can read the staff-absence area. Arbor reported {previewCount(params.leaveWriteOperations)} relevant write operation{previewCount(params.leaveWriteOperations) === 1 ? "" : "s"}; this is not permission to write yet. We will confirm the exact create/update contract before enabling an approved-leave sync.
+                  </StatusBanner>
+                ) : null}
+                {leaveNeedsAttention ? (
+                  <StatusBanner variant="danger" title="Arbor staff-absence access needs attention.">
+                    {params?.leaveAccess === "not-connected" ? "Check the main Arbor connection first." : "Arbor did not allow the read-only staff-absence check. No leave data was changed."}
+                  </StatusBanner>
+                ) : null}
+                <form method="post" action="/api/god/integrations/arbor/test-staff-absence" className={actionButtonClass}>
+                  <CsrfInput token={csrfToken} />
+                  <SubmitButton variant="secondary" className="w-full">Check leave access</SubmitButton>
+                </form>
+              </div>
+            </CollapsibleCard>
+
+            <CollapsibleCard title="8. Assessment syncing" defaultOpen={false} attention={assessmentNeedsAttention}>
               <div className="space-y-5">
                 <div>
                   <H3>Assessment review</H3>

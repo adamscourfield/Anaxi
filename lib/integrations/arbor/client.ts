@@ -54,6 +54,38 @@ export class ArborClient {
   }
 
   /**
+   * Checks the staff-absence capability without reading personal absence details
+   * or attempting a mutation. Arbor exposes its mutation catalogue separately,
+   * so a listed operation is useful evidence for the next design step, not an
+   * authorisation to create an absence.
+   */
+  async inspectStaffAbsenceAccess(): Promise<{ fields: string[]; writeOperations: string[] }> {
+    const read = await runArborGraphqlQuery<{
+      StaffAbsence: Array<{ id: string }>;
+      type: { fields: Array<{ name: string }> } | null;
+    }>(this.credentials, `{
+      StaffAbsence(page_size: 1, page_num: 0) { id }
+      type: __type(name: "StaffAbsence") { fields { name } }
+    }`);
+
+    let writeOperations: string[] = [];
+    try {
+      const schema = await runArborGraphqlQuery<{
+        __schema: { mutationType: { fields: Array<{ name: string }> } | null };
+      }>(this.credentials, `{
+        __schema { mutationType { fields { name } } }
+      }`);
+      writeOperations = (schema.__schema.mutationType?.fields ?? [])
+        .map((field) => field.name)
+        .filter((name) => /staff.*absence|absence.*staff/i.test(name));
+    } catch {
+      // Read access is still useful. A locked-down schema should not obscure it.
+    }
+
+    return { fields: read.type?.fields.map((field) => field.name) ?? [], writeOperations };
+  }
+
+  /**
    * Confirms the four incident sources that map to Anaxi's existing behaviour
    * measures. This is deliberately a one-record read from each source only.
    */
