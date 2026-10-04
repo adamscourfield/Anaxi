@@ -1,0 +1,22 @@
+name: Arbor photo catch-up
+
+on:
+  workflow_dispatch:
+
+jobs:
+  photos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run protected photo batches
+        env:
+          ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
+          ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
+        run: |
+          test -n "$ANAXI_APP_URL"
+          test -n "$ANAXI_CRON_SECRET"
+          for _ in $(seq 1 8); do
+            curl --fail --silent --show-error \
+              --retry 2 \
+              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+              "${ANAXI_APP_URL%/}/api/cron/arbor-photos?force=1"
+          done
