@@ -12,11 +12,14 @@ export function CollapsibleCard({
   title,
   children,
   defaultOpen = true,
+  attention = false,
   className = "",
 }: {
   title: string;
   children: ReactNode;
   defaultOpen?: boolean;
+  /** Marks a collapsed section when it needs an administrator's attention. */
+  attention?: boolean;
   className?: string;
 }) {
   return (
@@ -25,7 +28,10 @@ export function CollapsibleCard({
       open={defaultOpen}
     >
       <summary className="group flex cursor-pointer list-none items-center justify-between px-5 py-4 text-[14px] font-semibold tracking-[-0.01em] text-text [&::-webkit-details-marker]:hidden">
-        <span>{title}</span>
+        <span className="flex items-center gap-2">
+          {title}
+          {attention ? <span className="h-2 w-2 rounded-full bg-danger" title="Needs attention" aria-label="Needs attention" /> : null}
+        </span>
         <span className="calm-transition text-muted group-open:rotate-180">
           <ChevronDown />
         </span>

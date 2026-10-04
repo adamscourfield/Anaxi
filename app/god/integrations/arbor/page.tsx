@@ -147,6 +147,9 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
     : params?.unrecognised
       ? [params.unrecognised]
       : [];
+  const behaviourNeedsAttention = latestBehaviourRun?.status === "FAILED" || latestBehaviourRun?.status === "PARTIAL";
+  const assessmentNeedsReview = assessmentCycles.some((cycle) => !approvedAssessmentCycles.has(cycle.key));
+  const assessmentNeedsAttention = assessmentNeedsReview || params?.assessmentHistory === "failed";
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
@@ -266,18 +269,6 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         </StatusBanner>
       ) : null}
 
-      {latestBehaviourRun?.status === "SUCCESS" ? (
-        <StatusBanner variant="success" title="Latest behaviour sync completed.">
-          {previewCount(String(latestBehaviourRun.recordsCreated))} new daily snapshots and {previewCount(String(latestBehaviourRun.recordsUpdated))} existing snapshots were updated. Nightly catch-up will continue automatically.
-        </StatusBanner>
-      ) : null}
-
-      {latestBehaviourRun?.status === "FAILED" || latestBehaviourRun?.status === "PARTIAL" ? (
-        <StatusBanner variant="danger" title="Latest behaviour sync needs attention.">
-          {latestBehaviourRun.errorSummary ?? "No further behaviour changes were made after the issue was detected."}
-        </StatusBanner>
-      ) : null}
-
       {params?.assessment === "success" ? (
         <StatusBanner variant="success" title="Arbor priority-assessment access verified.">
           Anaxi read {previewCount(params.assessmentRecords)} progress assessment mark without importing anything. The next step is a read-only mapping preview.
@@ -365,18 +356,6 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       {params?.assessmentApproval === "paused" ? (
         <StatusBanner variant="success" title="Assessment imports paused.">
           No new Arbor assessment results will be imported until cycles are approved again.
-        </StatusBanner>
-      ) : null}
-
-      {params?.assessmentHistory === "progress" || params?.assessmentHistory === "complete" ? (
-        <StatusBanner variant="success" title={params.assessmentHistory === "complete" ? "Historic assessment discovery complete." : "Historic assessment discovery updated."}>
-          {previewCount(params.assessmentHistoryCycles)} dated Arbor cycle(s) are now available for review. {params.assessmentHistory === "complete" ? "No results have been imported." : "The next safe batch will run overnight, or you can run another batch now."}
-        </StatusBanner>
-      ) : null}
-
-      {params?.assessmentHistory === "failed" ? (
-        <StatusBanner variant="danger" title="Historic assessment discovery could not run.">
-          {params.assessmentHistoryError || "No assessment data was imported."}
         </StatusBanner>
       ) : null}
 
@@ -563,10 +542,12 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="5. Behaviour syncing" defaultOpen={false}>
-              <div>
+            <CollapsibleCard title="5. Behaviour syncing" defaultOpen={false} attention={behaviourNeedsAttention}>
+              <div className="space-y-3">
                 <H3>Behaviour data updates nightly</H3>
                 <MetaText className="mt-1">Positive points, detentions, internal exclusions, and suspensions are imported into Anaxi&apos;s existing behaviour measures. No manual behaviour upload is needed.</MetaText>
+                {latestBehaviourRun?.status === "SUCCESS" ? <MetaText>Last sync: {previewCount(String(latestBehaviourRun.recordsCreated))} new and {previewCount(String(latestBehaviourRun.recordsUpdated))} refreshed daily snapshots. Nightly catch-up continues automatically.</MetaText> : null}
+                {behaviourNeedsAttention ? <StatusBanner variant="danger" title="Latest behaviour sync needs attention.">{latestBehaviourRun?.errorSummary ?? "No further behaviour changes were made after the issue was detected."}</StatusBanner> : null}
               </div>
             </CollapsibleCard>
 
@@ -577,12 +558,22 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="7. Assessment syncing" defaultOpen={false}>
+            <CollapsibleCard title="7. Assessment syncing" defaultOpen={false} attention={assessmentNeedsAttention}>
               <div className="space-y-5">
                 <div>
                   <H3>Assessment review</H3>
                   <MetaText className="mt-1">This is the only data area that requires a decision before it appears in Anaxi.</MetaText>
                 </div>
+                {params?.assessmentHistory === "progress" || params?.assessmentHistory === "complete" ? (
+                  <StatusBanner variant="success" title={params.assessmentHistory === "complete" ? "Historic assessment discovery complete." : "Historic assessment discovery updated."}>
+                    {previewCount(params.assessmentHistoryCycles)} dated Arbor cycle(s) are now available for review. {params.assessmentHistory === "complete" ? "No results have been imported." : "The next safe batch will run overnight, or you can run another batch now."}
+                  </StatusBanner>
+                ) : null}
+                {params?.assessmentHistory === "failed" ? (
+                  <StatusBanner variant="danger" title="Historic assessment discovery could not run.">
+                    {params.assessmentHistoryError || "No assessment data was imported."}
+                  </StatusBanner>
+                ) : null}
                 <Card className="space-y-5" tone="inset">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
