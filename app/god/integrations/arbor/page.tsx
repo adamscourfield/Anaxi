@@ -150,12 +150,21 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
   const behaviourNeedsAttention = latestBehaviourRun?.status === "FAILED" || latestBehaviourRun?.status === "PARTIAL";
   const assessmentNeedsReview = assessmentCycles.some((cycle) => !approvedAssessmentCycles.has(cycle.key));
   const assessmentNeedsAttention = assessmentNeedsReview || params?.assessmentHistory === "failed";
+  const savedAttention = integration?.config?.attention && typeof integration.config.attention === "object"
+    ? integration.config.attention as Record<string, unknown>
+    : {};
   const savedLeaveAccess = integration?.config?.leaveAbsenceAccess && typeof integration.config.leaveAbsenceAccess === "object"
     ? integration.config.leaveAbsenceAccess as { status?: unknown }
     : null;
   const leaveNeedsAttention = params?.leaveAccess === "failed"
     || params?.leaveAccess === "not-connected"
-    || savedLeaveAccess?.status === "NEEDS_ATTENTION";
+    || savedLeaveAccess?.status === "NEEDS_ATTENTION"
+    || Boolean(savedAttention.leave);
+  const connectionNeedsAttention = params?.error === "secure-storage" || params?.test === "failed" || params?.test === "not-configured" || Boolean(savedAttention.connection);
+  const photoNeedsAttention = params?.photo === "unavailable" || params?.photo === "not-connected" || params?.photo === "no-student" || Boolean(savedAttention.photos);
+  const timetableNeedsAttention = params?.timetable === "failed" || params?.timetablePreview === "failed" || Boolean(params?.timetableError) || Boolean(savedAttention.timetable);
+  const peopleNeedsAttention = params?.staff === "failed" || params?.staffSync === "failed" || params?.sync === "failed" || Boolean(savedAttention.people);
+  const attendanceNeedsAttention = params?.attendance === "failed" || params?.attendancePreview === "failed" || params?.attendanceSync === "failed" || Boolean(savedAttention.attendance);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
@@ -488,7 +497,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
           </Card>
 
           <div className="space-y-3">
-            <CollapsibleCard title="1. Connection" defaultOpen={false}>
+            <CollapsibleCard title="1. Connection" defaultOpen={false} attention={connectionNeedsAttention} attentionKey="connection" csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Shared Goresbrook connection</H3>
@@ -503,7 +512,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="2. Photo access" defaultOpen={false}>
+            <CollapsibleCard title="2. Photo access" defaultOpen={false} attention={photoNeedsAttention} attentionKey="photos" csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Profile photos update automatically</H3>
@@ -516,7 +525,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="3. Timetable access" defaultOpen={false}>
+            <CollapsibleCard title="3. Timetable access" defaultOpen={false} attention={timetableNeedsAttention} attentionKey="timetable" csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Subject teachers</H3>
@@ -535,7 +544,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="4. Staff and student syncing" defaultOpen={false}>
+            <CollapsibleCard title="4. Staff and student syncing" defaultOpen={false} attention={peopleNeedsAttention} attentionKey="people" csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>People records update nightly</H3>
@@ -548,7 +557,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="5. Behaviour syncing" defaultOpen={false} attention={behaviourNeedsAttention}>
+            <CollapsibleCard title="5. Behaviour syncing" defaultOpen={false} attention={behaviourNeedsAttention || Boolean(savedAttention.behaviour)} attentionKey="behaviour" csrfToken={csrfToken}>
               <div className="space-y-3">
                 <H3>Behaviour data updates nightly</H3>
                 <MetaText className="mt-1">Positive points, detentions, internal exclusions, and suspensions are imported into Anaxi&apos;s existing behaviour measures. No manual behaviour upload is needed.</MetaText>
@@ -557,14 +566,14 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="6. Attendance syncing" defaultOpen={false}>
+            <CollapsibleCard title="6. Attendance syncing" defaultOpen={false} attention={attendanceNeedsAttention} attentionKey="attendance" csrfToken={csrfToken}>
               <div>
                 <H3>Attendance updates nightly</H3>
                 <MetaText className="mt-1">Academic-year attendance totals and daily snapshots refresh automatically. Anaxi then compares the selected 7, 14, 21, or 28-day period with the previous period.</MetaText>
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="7. Leave of absence syncing" defaultOpen={false} attention={leaveNeedsAttention}>
+            <CollapsibleCard title="7. Leave of absence syncing" defaultOpen={false} attention={leaveNeedsAttention} attentionKey="leave" csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Check Arbor staff-absence access</H3>
@@ -587,7 +596,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="8. Assessment syncing" defaultOpen={false} attention={assessmentNeedsAttention}>
+            <CollapsibleCard title="8. Assessment syncing" defaultOpen={false} attention={assessmentNeedsAttention || Boolean(savedAttention.assessments)} attentionKey="assessments" csrfToken={csrfToken}>
               <div className="space-y-5">
                 <div>
                   <H3>Assessment review</H3>

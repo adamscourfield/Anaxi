@@ -1,4 +1,6 @@
-import { ReactNode } from "react";
+"use client";
+
+import { ReactNode, useState } from "react";
 
 function ChevronDown() {
   return (
@@ -13,6 +15,8 @@ export function CollapsibleCard({
   children,
   defaultOpen = true,
   attention = false,
+  attentionKey,
+  csrfToken,
   className = "",
 }: {
   title: string;
@@ -20,17 +24,38 @@ export function CollapsibleCard({
   defaultOpen?: boolean;
   /** Marks a collapsed section when it needs an administrator's attention. */
   attention?: boolean;
+  /** The Arbor section whose persistent alert should be acknowledged on opening. */
+  attentionKey?: string;
+  csrfToken?: string;
   className?: string;
 }) {
+  const [showAttention, setShowAttention] = useState(attention);
+
+  async function acknowledgeAttention(open: boolean) {
+    if (!open || !showAttention || !attentionKey || !csrfToken) return;
+    // Remove the signal immediately, then restore it only if acknowledgement fails.
+    setShowAttention(false);
+    const form = new FormData();
+    form.set("csrfToken", csrfToken);
+    form.set("section", attentionKey);
+    const response = await fetch("/api/god/integrations/arbor/attention", { method: "POST", body: form });
+    if (!response.ok) setShowAttention(true);
+  }
+
   return (
     <details
       className={`h-full overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none ${className}`}
       open={defaultOpen}
+      onToggle={(event) => { void acknowledgeAttention(event.currentTarget.open); }}
     >
       <summary className="group flex cursor-pointer list-none items-center justify-between px-5 py-4 text-[14px] font-semibold tracking-[-0.01em] text-text [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-2">
           {title}
-          {attention ? <span className="h-2 w-2 rounded-full bg-danger" title="Needs attention" aria-label="Needs attention" /> : null}
+          {showAttention ? (
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#dc2626] text-[11px] font-bold text-white" title="Needs attention" aria-label="Needs attention">
+              !
+            </span>
+          ) : null}
         </span>
         <span className="calm-transition text-muted group-open:rotate-180">
           <ChevronDown />

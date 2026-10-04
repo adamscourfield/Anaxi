@@ -31,6 +31,7 @@ export const POST = withApi(async function POST(req: Request) {
         config: {
           ...(integration.config ?? {}),
           leaveAbsenceAccess: { status: "VERIFIED", checkedAt: new Date().toISOString() },
+          attention: { ...(integration.config?.attention ?? {}), leave: null },
         },
       },
     });
@@ -55,6 +56,7 @@ export const POST = withApi(async function POST(req: Request) {
         config: {
           ...(integration.config ?? {}),
           leaveAbsenceAccess: { status: "NEEDS_ATTENTION", checkedAt: new Date().toISOString() },
+          attention: { ...(integration.config?.attention ?? {}), leave: { raisedAt: new Date().toISOString() } },
         },
       },
     });
