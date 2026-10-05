@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
 import { assertCronAuthorized } from "@/lib/cronAuth";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { arborAssessmentLabel, mapArborAssessment, mapArborAssessmentForYearGroup, type ArborAssessmentMapping } from "@/lib/integrations/arbor/assessmentPolicy";
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
   const denied = assertCronAuthorized(req);
   if (denied) return denied;
   const db = prisma as any;
-  const integration = await db.sharedIntegration.findUnique({ where: { provider: "ARBOR" }, include: { schools: { where: { enabled: true }, include: { tenant: { include: { tenantSettings: true } } } } } });
+  const integration = await db.sharedIntegration.findFirst({ where: arborConnectionWhere(req), include: { schools: { where: { enabled: true }, include: { tenant: { include: { tenantSettings: true } } } } } });
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.json({ skipped: "not connected" });
 
   const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { withApi } from "@/lib/apiRoute";
 import { assertCsrfFromForm } from "@/lib/csrf";
@@ -19,8 +20,8 @@ export const POST = withApi(async function POST(req: Request) {
   }
 
   const db = prisma as any;
-  const integration = await db.sharedIntegration.findUnique({
-    where: { provider: "ARBOR" },
+  const integration = await db.sharedIntegration.findFirst({
+    where: arborConnectionWhere(req),
     include: {
       schools: {
         where: { enabled: true },

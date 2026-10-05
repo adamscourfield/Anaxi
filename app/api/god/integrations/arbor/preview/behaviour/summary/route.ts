@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { withApi } from "@/lib/apiRoute";
 import { assertCsrfFromForm } from "@/lib/csrf";
@@ -14,7 +15,7 @@ export const POST = withApi(async function POST(req: Request) {
   const form = await req.formData();
   try { await assertCsrfFromForm(form); } catch { return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 }); }
   const db = prisma as any;
-  const integration = await db.sharedIntegration.findUnique({ where: { provider: "ARBOR" }, include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
+  const integration = await db.sharedIntegration.findFirst({ where: arborConnectionWhere(req), include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.redirect(new URL("/god/integrations/arbor?behaviourPreview=not-connected", req.url));
   try {
     const end = new Date(); const start = new Date(end); start.setDate(start.getDate() - 7);

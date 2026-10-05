@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { FormField } from "@/components/ui/form-field";
 import { H3, MetaText } from "@/components/ui/typography";
 import { mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
+import { arborConnectionHref } from "@/lib/integrations/arbor/connectionScope";
 
 type PreparedAssessmentDefinition = { id: string; label: string; assessmentDate?: string | null };
 type ProposedAssessmentCycle = {
@@ -57,10 +58,10 @@ function proposedAssessmentCycles(config: unknown): ProposedAssessmentCycle[] {
   return [...cycles.values()].sort((a, b) => a.label.localeCompare(b.label));
 }
 
-function assessmentReviewHref(cycleKey: string): string {
+function assessmentReviewHref(cycleKey: string, connectionId: string): string {
   // Cycle keys include academic-year slashes. Encode the whole key so a reverse
   // proxy cannot split it into multiple URL path segments.
-  return `/god/integrations/arbor/assessments/${Buffer.from(cycleKey).toString("base64url")}`;
+  return arborConnectionHref(`/god/integrations/arbor/assessments/${Buffer.from(cycleKey).toString("base64url")}`, connectionId);
 }
 
 // ─── Status banner ────────────────────────────────────────────────────────────
@@ -97,29 +98,38 @@ function StatusBanner({
   );
 }
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentApproval?: string; assessmentApproved?: string; assessmentHistory?: string; assessmentHistoryCycles?: string; assessmentHistoryError?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableSync?: string; timetablePage?: string; timetableAssignments?: string; timetableLinkable?: string; timetableMemberships?: string; timetableSubjects?: string; timetableTeachers?: string; timetableError?: string; leaveAccess?: string; leaveWriteOperations?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ connectionId?: string; new?: string; saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentApproval?: string; assessmentApproved?: string; assessmentHistory?: string; assessmentHistoryCycles?: string; assessmentHistoryError?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableSync?: string; timetablePage?: string; timetableAssignments?: string; timetableLinkable?: string; timetableMemberships?: string; timetableSubjects?: string; timetableTeachers?: string; timetableError?: string; leaveAccess?: string; leaveWriteOperations?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
   await requireSuperAdminUser();
-  const [csrfToken, schools, integration, latestBehaviourRun, staffProvisioningRequests, params] = await Promise.all([
+  const [csrfToken, schools, integrations, params] = await Promise.all([
     getCsrfToken(),
     prisma.tenant.findMany({
       where: { id: { not: PLATFORM_TENANT_ID }, status: { not: "ARCHIVED" } },
       orderBy: { name: "asc" },
       select: { id: true, name: true, status: true, tenantSettings: { select: { schoolType: true } } },
     }),
-    (prisma as any).sharedIntegration.findUnique({
+    (prisma as any).sharedIntegration.findMany({
       where: { provider: "ARBOR" },
-      include: { schools: { where: { enabled: true }, select: { tenantId: true } } },
+      include: { schools: { where: { enabled: true }, select: { tenantId: true, tenant: { select: { name: true } } } } },
+      orderBy: { createdAt: "asc" },
     }),
-    (prisma as any).sharedIntegrationSyncRun.findFirst({
-      where: { integration: { provider: "ARBOR" }, entityType: "BEHAVIOUR" },
-      orderBy: { startedAt: "desc" },
-      select: { status: true, recordsCreated: true, recordsUpdated: true, startedAt: true, finishedAt: true, errorSummary: true },
-    }),
-    (prisma as any).staffProvisioningRequest.findMany({ where: { integration: { provider: "ARBOR" }, status: "PENDING" }, orderBy: { createdAt: "asc" }, take: 50 }),
     searchParams,
   ]);
 
+  const integration = params?.new === "1"
+    ? null
+    : integrations.find((item: { id: string }) => item.id === params?.connectionId) ?? integrations[0] ?? null;
   const selected = new Set<string>(integration?.schools.map((school: { tenantId: string }) => school.tenantId) ?? []);
+  const connectionAction = (path: string) => integration ? arborConnectionHref(path, integration.id) : path;
+  const [latestBehaviourRun, staffProvisioningRequests] = integration
+    ? await Promise.all([
+      (prisma as any).sharedIntegrationSyncRun.findFirst({
+        where: { integrationId: integration.id, entityType: "BEHAVIOUR" },
+        orderBy: { startedAt: "desc" },
+        select: { status: true, recordsCreated: true, recordsUpdated: true, startedAt: true, finishedAt: true, errorSummary: true },
+      }),
+      (prisma as any).staffProvisioningRequest.findMany({ where: { integrationId: integration.id, status: "PENDING" }, orderBy: { createdAt: "asc" }, take: 50 }),
+    ])
+    : [null, []];
   const hostname = typeof integration?.config?.schoolHostname === "string" ? integration.config.schoolHostname : "";
   const assessmentCycles = proposedAssessmentCycles(integration?.config);
   const assessmentCyclesByYear = new Map<string, ProposedAssessmentCycle[]>();
@@ -139,6 +149,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       : [],
   );
   const secondaryTenantIds = schools
+    .filter((school) => selected.has(school.id))
     .filter((school) => school.tenantSettings?.schoolType === "SECONDARY")
     .map((school) => school.id);
   const activeStudentsByYearGroup = secondaryTenantIds.length
@@ -181,9 +192,29 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         variant="ledger"
         eyebrow="God Mode"
         title="Arbor connection"
-        subtitle="Connect one Arbor system and choose every Anaxi school that should receive its data."
+        subtitle="Select a real school’s Arbor connection before reviewing or syncing its data."
         actions={<Link href="/god"><Button variant="secondary" className="w-full sm:w-64">Back to schools</Button></Link>}
       />
+
+      <Card className="space-y-4" tone="inset">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Arbor connections</div>
+            <H3 className="mt-1">Choose a school connection</H3>
+          </div>
+          <MetaText>Each connection has separate credentials, sync state, alerts, and approvals.</MetaText>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {integrations.map((item: { id: string; label: string; status: string; schools: Array<{ tenant: { name: string } }> }) => {
+            const active = item.id === integration?.id;
+            return <Link key={item.id} href={arborConnectionHref("/god/integrations/arbor", item.id)} className={`rounded-sm border p-4 calm-transition ${active ? "border-accent bg-[var(--surface-container-lowest)] ring-1 ring-accent/30" : "border-border/70 bg-[var(--surface-container-lowest)] hover:border-accent/60"}`}>
+              <div className="flex items-center justify-between gap-3"><span className="font-semibold">{item.label}</span><span className={item.status === "CONNECTED" ? "text-xs font-semibold text-success" : "text-xs font-semibold text-muted"}>{item.status.toLowerCase()}</span></div>
+              <MetaText className="mt-1">{item.schools.map((school) => school.tenant.name).join(" · ") || "No Anaxi schools linked"}</MetaText>
+            </Link>;
+          })}
+          <Link href="/god/integrations/arbor?new=1" className="rounded-sm border border-dashed border-border px-4 py-4 text-sm font-semibold text-accent hover:border-accent">+ Add another Arbor connection</Link>
+        </div>
+      </Card>
 
       {params?.saved === "1" ? (
         <StatusBanner variant="success" title="Arbor connection saved.">
@@ -519,10 +550,10 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         <>
           <Card className="border-success/25">
             <div className="text-xs font-semibold uppercase tracking-[0.12em] text-success">Connected and syncing nightly</div>
-            <H3 className="mt-2 text-xl">Arbor is the source of truth for Goresbrook data.</H3>
-            <MetaText className="mt-2 max-w-3xl">Students, staff, attendance, behaviour, and profile photos update automatically. Primary and Secondary remain separate inside Anaxi.</MetaText>
+            <H3 className="mt-2 text-xl">Arbor is the source of truth for {integration.label}.</H3>
+            <MetaText className="mt-2 max-w-3xl">Students, staff, attendance, behaviour, and profile photos update automatically for the schools attached to this connection.</MetaText>
             <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-border/70 pt-4 text-sm">
-              <span><span className="text-muted">Schools:</span> <strong>2 connected</strong></span>
+              <span><span className="text-muted">Schools:</span> <strong>{selected.size} connected</strong></span>
               <span><span className="text-muted">Assessment cycles:</span> <strong>{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} approved` : "awaiting review"}</strong></span>
               <span><span className="text-muted">Connection:</span> <strong className="text-success">healthy</strong></span>
             </div>
@@ -532,11 +563,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
             <CollapsibleCard title="1. Connection" defaultOpen={false} attention={connectionNeedsAttention} attentionKey="connection" csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
-                  <H3>Shared Goresbrook connection</H3>
-                  <MetaText className="mt-1">Goresbrook Primary and Goresbrook Secondary share one Arbor connection while remaining separate Anaxi schools. Records are always routed to their existing school rather than guessed.</MetaText>
+                  <H3>{integration.label}</H3>
+                  <MetaText className="mt-1">{integration.schools.map((school: { tenant: { name: string } }) => school.tenant.name).join(" and ")} share this Arbor connection while remaining separate Anaxi schools. Records are always routed to their existing school rather than guessed.</MetaText>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <form method="post" action="/api/god/integrations/arbor/test" className={actionButtonClass}>
+                  <form method="post" action={connectionAction("/api/god/integrations/arbor/test")} className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
                     <SubmitButton variant="secondary" className="w-full">Check connection</SubmitButton>
                   </form>
@@ -550,7 +581,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                   <H3>Profile photos update automatically</H3>
                   <MetaText className="mt-1">Photos are copied from Arbor securely in small batches. Manually added Anaxi images remain untouched.</MetaText>
                 </div>
-                <form method="post" action="/api/god/integrations/arbor/test-photos" className={actionButtonClass}>
+                <form method="post" action={connectionAction("/api/god/integrations/arbor/test-photos")} className={actionButtonClass}>
                   <CsrfInput token={csrfToken} />
                   <SubmitButton variant="secondary" className="w-full">Check photo access</SubmitButton>
                 </form>
@@ -564,15 +595,15 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                   <MetaText className="mt-1">Current Arbor teaching groups map each linked student to their teachers and subjects. Arbor-managed links update nightly; manually entered Anaxi links remain untouched.</MetaText>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <form method="post" action="/api/god/integrations/arbor/preview/timetable" className={actionButtonClass}>
+                  <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/timetable")} className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
                     <SubmitButton variant="secondary" className="w-full">Check timetable access</SubmitButton>
                   </form>
-                  <form method="post" action="/api/god/integrations/arbor/preview/timetable/summary" className={actionButtonClass}>
+                  <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/timetable/summary")} className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
                     <SubmitButton variant="ghost" className="w-full">Preview subject links</SubmitButton>
                   </form>
-                  <form method="post" action="/api/god/integrations/arbor/sync/timetable" className={actionButtonClass}>
+                  <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/timetable")} className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
                     <input type="hidden" name="confirm" value="SYNC_TIMETABLE" />
                     <SubmitButton variant="primary" className="w-full">Sync next subject-teacher page</SubmitButton>
@@ -588,8 +619,8 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                   <MetaText className="mt-1">New active students, off-roll changes, linked staff details, and cross-school staff links are kept current automatically.</MetaText>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <form method="post" action="/api/god/integrations/arbor/preview/students" className={actionButtonClass}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Check students</SubmitButton></form>
-                  <form method="post" action="/api/god/integrations/arbor/preview/staff" className={actionButtonClass}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Check staff</SubmitButton></form>
+                  <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/students")} className={actionButtonClass}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Check students</SubmitButton></form>
+                  <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/staff")} className={actionButtonClass}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Check staff</SubmitButton></form>
                 </div>
               </div>
             </CollapsibleCard>
@@ -626,7 +657,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                     {params?.leaveAccess === "not-connected" ? "Check the main Arbor connection first." : "Arbor did not allow the read-only staff-absence check. No leave data was changed."}
                   </StatusBanner>
                 ) : null}
-                <form method="post" action="/api/god/integrations/arbor/test-staff-absence" className={actionButtonClass}>
+                <form method="post" action={connectionAction("/api/god/integrations/arbor/test-staff-absence")} className={actionButtonClass}>
                   <CsrfInput token={csrfToken} />
                   <SubmitButton variant="secondary" className="w-full">Check leave access</SubmitButton>
                 </form>
@@ -657,11 +688,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                     <MetaText className="mt-1">Review and approve only the cycles you want to bring in. Each uses the agreed year group, phase, and term naming convention.</MetaText>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <form method="post" action="/api/god/integrations/arbor/preview/assessments/active" className={actionButtonClass}>
+                    <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/assessments/active")} className={actionButtonClass}>
                       <CsrfInput token={csrfToken} />
                       <SubmitButton variant="secondary" className="w-full">Refresh catalogue</SubmitButton>
                     </form>
-                    <form method="post" action="/api/god/integrations/arbor/preview/assessments/history" className={actionButtonClass}>
+                    <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/assessments/history")} className={actionButtonClass}>
                       <CsrfInput token={csrfToken} />
                       <SubmitButton variant="secondary" className="w-full">{assessmentSync.historicComplete ? "Recheck historic cycles" : "Find historic cycles"}</SubmitButton>
                     </form>
@@ -673,7 +704,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                   : `Historic assessment discovery is in progress: it is rotating through P8 GCSE, A-Level, Year 10 percentage, and KS3 percentage marks for ${["2025/2026", "2024/2025", "2026/2027"][typeof assessmentSync.historicYearCursor === "number" ? assessmentSync.historicYearCursor : 0] ?? "the remaining academic years"}. Each pass reads up to 6,000 marks and groups every matching subject in the same cycle.`}</MetaText>
 
                 {assessmentCycles.length ? (
-                  <form method="post" action="/api/god/integrations/arbor/assessments/approval" className="space-y-4">
+                  <form method="post" action={connectionAction("/api/god/integrations/arbor/assessments/approval")} className="space-y-4">
                     <CsrfInput token={csrfToken} />
                     <div className="space-y-3">
                       {assessmentYears.map((academicYear) => {
@@ -698,7 +729,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                                         <MetaText className="mt-1 break-words">{cycle.definitions.slice(0, 3).join(" · ")}{cycle.definitions.length > 3 ? ` +${cycle.definitions.length - 3} more` : ""}</MetaText>
                                       </span>
                                     </label>
-                                    <Link href={assessmentReviewHref(cycle.key)} className="shrink-0 text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
+                                    <Link href={assessmentReviewHref(cycle.key, integration.id)} className="shrink-0 text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
                                   </div>
                                 );
                               })}
@@ -722,7 +753,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 )}
 
                 {approvedAssessmentCycles.size ? (
-                  <form method="post" action="/api/god/integrations/arbor/assessments/approval" className={actionButtonClass}>
+                  <form method="post" action={connectionAction("/api/god/integrations/arbor/assessments/approval")} className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
                     <input type="hidden" name="action" value="pause" />
                     <SubmitButton variant="ghost" className="w-full">Pause all assessment imports</SubmitButton>
@@ -739,7 +770,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
             <H3>Check the Arbor connection</H3>
             <MetaText className="mt-1">This makes one read-only request to Arbor. It does not import or change data.</MetaText>
           </div>
-          <form method="post" action="/api/god/integrations/arbor/test" className={actionButtonClass}>
+          <form method="post" action={connectionAction("/api/god/integrations/arbor/test")} className={actionButtonClass}>
             <CsrfInput token={csrfToken} />
             <SubmitButton variant="secondary" className="w-full">Check connection</SubmitButton>
           </form>
@@ -748,7 +779,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
 
       {params?.comparison === "success" && previewCount(params.ambiguousMatch) === 0 && previewCount(params.needsReview) === 0 ? (
         <Card className="border-warning/30 bg-[var(--pill-warning-bg)]">
-          <form method="post" action="/api/god/integrations/arbor/sync/students" className="space-y-3">
+          <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/students")} className="space-y-3">
             <CsrfInput token={csrfToken} />
             <div>
               <H3>Apply the first student sync</H3>
@@ -765,7 +796,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
 
       {params?.staff === "success" && previewCount(params.ambiguous) === 0 && (previewCount(params.possiblePrimaryOnly) + previewCount(params.possibleSecondaryOnly) + previewCount(params.possibleBoth)) > 0 ? (
         <Card className="border-warning/30 bg-[var(--pill-warning-bg)]">
-          <form method="post" action="/api/god/integrations/arbor/sync/staff" className="space-y-3">
+          <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/staff")} className="space-y-3">
             <CsrfInput token={csrfToken} />
             <div>
               <H3>Apply the first staff sync</H3>
@@ -781,8 +812,9 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       ) : null}
 
       <Card>
-        <form method="post" action="/api/god/integrations/arbor" className="space-y-5">
+        <form method="post" action={connectionAction("/api/god/integrations/arbor")} className="space-y-5">
           <CsrfInput token={csrfToken} />
+          {integration ? <input type="hidden" name="connectionId" value={integration.id} /> : null}
           <div className="space-y-4">
             <div>
               <H3>Arbor application credentials</H3>
@@ -790,6 +822,9 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
             </div>
             <FormField id="schoolHostname" label="Arbor school name" required hint={<>Enter the part before <code>.uk.arbor.sc</code>, not the full web address.</>}>
               <input id="schoolHostname" name="schoolHostname" required defaultValue={hostname} className="field" placeholder="goresbrook" autoCapitalize="none" />
+            </FormField>
+            <FormField id="label" label="Connection name" required hint="Use the real school name, for example “Goresbrook Arbor”.">
+              <input id="label" name="label" required defaultValue={integration?.label ?? ""} className="field" placeholder="School name Arbor" />
             </FormField>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField id="username" label="Arbor API username" required hint="The Anaxi app username from Arbor's Developer Portal.">
@@ -805,7 +840,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
             <legend className="p-0">
               <H3>Schools that receive Arbor data</H3>
             </legend>
-            <MetaText>Choose both schools for Goresbrook. Their data stays separated inside Anaxi.</MetaText>
+            <MetaText>Attach every Anaxi view that belongs to this real school. Their data remains separated inside Anaxi.</MetaText>
             <div className="grid gap-2 sm:grid-cols-2">
               {schools.map((school) => (
                 <label key={school.id} className="flex items-center gap-3 rounded-sm border border-border/70 bg-surface/60 px-3 py-3 text-sm">
@@ -819,7 +854,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
             </div>
           </fieldset>
 
-          <SubmitButton className={actionButtonClass}>Save Arbor connection</SubmitButton>
+          <SubmitButton className={actionButtonClass}>{integration ? "Save this Arbor connection" : "Create Arbor connection"}</SubmitButton>
         </form>
       </Card>
     </div>

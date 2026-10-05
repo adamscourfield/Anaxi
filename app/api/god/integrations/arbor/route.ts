@@ -28,6 +28,8 @@ export const POST = withApi(async function POST(req: Request) {
   }
 
   const tenantIds = [...new Set(form.getAll("tenantIds").map(String))].filter((id) => id !== PLATFORM_TENANT_ID);
+  const connectionId = typeof form.get("connectionId") === "string" ? String(form.get("connectionId")).trim() : "";
+  const label = typeof form.get("label") === "string" ? String(form.get("label")).trim() : "";
   if (tenantIds.length === 0) {
     return NextResponse.json({ error: "Choose at least one school to receive Arbor data." }, { status: 400 });
   }
@@ -41,7 +43,17 @@ export const POST = withApi(async function POST(req: Request) {
   }
 
   const db = prisma as any;
-  const existing = await db.sharedIntegration.findUnique({ where: { provider: "ARBOR" } });
+  const existing = connectionId
+    ? await db.sharedIntegration.findFirst({ where: { id: connectionId, provider: "ARBOR" } })
+    : null;
+  if (connectionId && !existing) return NextResponse.json({ error: "That Arbor connection no longer exists." }, { status: 404 });
+  const conflictingLinks = await db.sharedIntegrationSchool.findMany({
+    where: { tenantId: { in: tenantIds }, integration: { provider: "ARBOR" }, ...(existing ? { integrationId: { not: existing.id } } : {}) },
+    select: { tenantId: true },
+  });
+  if (conflictingLinks.length) {
+    return NextResponse.json({ error: "A selected school is already linked to another Arbor connection. Each school can have only one Arbor connection." }, { status: 409 });
+  }
   let credentialsCiphertext: string;
   try {
     credentialsCiphertext = encryptCredentials(credentials);
@@ -50,9 +62,11 @@ export const POST = withApi(async function POST(req: Request) {
     return NextResponse.redirect(new URL("/god/integrations/arbor?error=secure-storage", req.url));
   }
   const data = {
+    label: label || `${credentials.schoolHostname} Arbor`,
     status: "DISCONNECTED",
     credentialsCiphertext,
-    config: { schoolHostname: credentials.schoolHostname },
+    // Retain prior per-connection sync progress and approvals when refreshing credentials.
+    config: { ...(existing?.config && typeof existing.config === "object" ? existing.config : {}), schoolHostname: credentials.schoolHostname },
     connectedByUserId: actor.id,
     connectedAt: new Date(),
     lastSyncStatus: null,
@@ -90,5 +104,8 @@ export const POST = withApi(async function POST(req: Request) {
     },
   });
 
-  return NextResponse.redirect(new URL("/god/integrations/arbor?saved=1", req.url));
+  const url = new URL("/god/integrations/arbor", req.url);
+  url.searchParams.set("saved", "1");
+  url.searchParams.set("connectionId", integration.id);
+  return NextResponse.redirect(url);
 });

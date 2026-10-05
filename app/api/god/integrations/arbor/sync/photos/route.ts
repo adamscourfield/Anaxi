@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { withApi } from "@/lib/apiRoute";
 import { assertCronAuthorized } from "@/lib/cronAuth";
@@ -38,7 +39,7 @@ export const POST = withApi(async function POST(req: Request) {
   }
   try {
     const db = prisma as any;
-    const integration = await db.sharedIntegration.findUnique({ where: { provider: "ARBOR" }, include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
+    const integration = await db.sharedIntegration.findFirst({ where: arborConnectionWhere(req), include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
     if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") {
       if (scheduled) return NextResponse.json({ error: "Arbor connection is not ready for photos", code: "NOT_CONNECTED" }, { status: 503 });
       return NextResponse.redirect(new URL("/god/integrations/arbor?photoSync=not-connected", req.url));

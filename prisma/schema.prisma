@@ -734,6 +734,8 @@ model TenantIntegration {
 model SharedIntegration {
   id                    String                     @id @default(cuid())
   provider              IntegrationProvider
+  /// The real school or organisation represented by this encrypted MIS connection.
+  label                 String
   status                IntegrationStatus          @default(DISCONNECTED)
   /// AES-256-GCM ciphertext, produced by lib/integrationSecrets.ts.
   credentialsCiphertext String?
@@ -749,8 +751,8 @@ model SharedIntegration {
   syncRuns              SharedIntegrationSyncRun[]
   staffProvisioningRequests StaffProvisioningRequest[]
 
-  /// There is one shared connection for each provider at platform level.
-  @@unique([provider])
+  @@unique([provider, label])
+  @@index([provider])
 }
 
 /// A new Arbor staff record waiting for a super admin to choose its Anaxi access.
