@@ -29,11 +29,12 @@ export const POST = withApi(async function POST(req: Request) {
   const integration = await db.sharedIntegration.findFirst({ where: arborConnectionWhere(req) });
   if (!integration) return NextResponse.json({ error: "Arbor connection not found" }, { status: 404 });
   const config = integration.config && typeof integration.config === "object" ? integration.config : {};
-  const attention = config.attention && typeof config.attention === "object" ? config.attention : {};
   const acknowledgedAttention = config.acknowledgedAttention && typeof config.acknowledgedAttention === "object" ? config.acknowledgedAttention : {};
   await db.sharedIntegration.update({
     where: { id: integration.id },
-    data: { config: { ...config, attention: { ...attention, [section]: null }, acknowledgedAttention: { ...acknowledgedAttention, [section]: fingerprint } } },
+    // Keep the source alert intact. Its fingerprint changes on a new check or
+    // sync failure, which makes the next issue visible without losing history.
+    data: { config: { ...config, acknowledgedAttention: { ...acknowledgedAttention, [section]: fingerprint } } },
   });
   return NextResponse.json({ acknowledged: true });
 });

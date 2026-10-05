@@ -17,6 +17,7 @@ export function CollapsibleCard({
   attention = false,
   attentionKey,
   attentionFingerprint,
+  attentionMessage,
   connectionId,
   csrfToken,
   className = "",
@@ -30,6 +31,8 @@ export function CollapsibleCard({
   attentionKey?: string;
   /** Identifies the specific issue, so a later change raises a new alert. */
   attentionFingerprint?: string;
+  /** Plain-language explanation shown with the in-section alert. */
+  attentionMessage?: string;
   /** Keeps acknowledgement scoped to the selected real-school connection. */
   connectionId?: string;
   csrfToken?: string;
@@ -72,7 +75,7 @@ export function CollapsibleCard({
       <div className="border-t border-border px-5 py-4 text-sm">
         {showAttention ? (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-danger/25 bg-[var(--pill-danger-bg)] px-3 py-2">
-            <span className="text-sm font-medium text-danger">This section has an alert requiring review.</span>
+            <span className="text-sm font-medium text-danger">{attentionMessage ?? "This section has an alert requiring review."}</span>
             <button type="button" onClick={() => { void acknowledgeAttention(); }} className="rounded-sm border border-danger/30 bg-surface px-3 py-1.5 text-xs font-semibold text-danger hover:bg-[var(--pill-danger-bg)]">Acknowledge alert</button>
           </div>
         ) : null}

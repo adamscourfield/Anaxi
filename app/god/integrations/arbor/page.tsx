@@ -576,7 +576,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
           </Card>
 
           <div className="space-y-3">
-            <CollapsibleCard title="1. Connection" defaultOpen={false} attention={visibleAlert("connection", connectionAlert)} attentionKey="connection" attentionFingerprint={connectionAlert ?? undefined} connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="1. Connection" defaultOpen={false} attention={visibleAlert("connection", connectionAlert)} attentionKey="connection" attentionFingerprint={connectionAlert ?? undefined} attentionMessage="The Arbor connection needs review. Check the connection result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>{integration.label}</H3>
@@ -591,7 +591,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="2. Photo access" defaultOpen={false} attention={visibleAlert("photos", photoAlert)} attentionKey="photos" attentionFingerprint={photoAlert ?? undefined} connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="2. Photo access" defaultOpen={false} attention={visibleAlert("photos", photoAlert)} attentionKey="photos" attentionFingerprint={photoAlert ?? undefined} attentionMessage="Arbor photo access needs review. Check the photo result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Profile photos update automatically</H3>
@@ -604,7 +604,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="3. Timetable access" defaultOpen={false} attention={visibleAlert("timetable", timetableAlert)} attentionKey="timetable" attentionFingerprint={timetableAlert ?? undefined} connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="3. Timetable access" defaultOpen={false} attention={visibleAlert("timetable", timetableAlert)} attentionKey="timetable" attentionFingerprint={timetableAlert ?? undefined} attentionMessage="The timetable sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Subject teachers</H3>
@@ -628,7 +628,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="4. Staff and student syncing" defaultOpen={false} attention={visibleAlert("people", peopleAlert)} attentionKey="people" attentionFingerprint={peopleAlert ?? undefined} connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="4. Staff and student syncing" defaultOpen={false} attention={visibleAlert("people", peopleAlert)} attentionKey="people" attentionFingerprint={peopleAlert ?? undefined} attentionMessage="The people sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>People records update nightly</H3>
@@ -641,7 +641,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="5. Behaviour syncing" defaultOpen={false} attention={visibleAlert("behaviour", behaviourAlert)} attentionKey="behaviour" attentionFingerprint={behaviourAlert ?? undefined} connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="5. Behaviour syncing" defaultOpen={false} attention={visibleAlert("behaviour", behaviourAlert)} attentionKey="behaviour" attentionFingerprint={behaviourAlert ?? undefined} attentionMessage="The latest behaviour sync needs review. Check the error below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-3">
                 <H3>Behaviour data updates nightly</H3>
                 <MetaText className="mt-1">Positive points, detentions, internal exclusions, and suspensions are imported into Anaxi&apos;s existing behaviour measures. No manual behaviour upload is needed.</MetaText>
@@ -650,14 +650,14 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="6. Attendance syncing" defaultOpen={false} attention={visibleAlert("attendance", attendanceAlert)} attentionKey="attendance" attentionFingerprint={attendanceAlert ?? undefined} connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="6. Attendance syncing" defaultOpen={false} attention={visibleAlert("attendance", attendanceAlert)} attentionKey="attendance" attentionFingerprint={attendanceAlert ?? undefined} attentionMessage="The attendance sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div>
                 <H3>Attendance updates nightly</H3>
                 <MetaText className="mt-1">Academic-year attendance totals and daily snapshots refresh automatically. Anaxi then compares the selected 7, 14, 21, or 28-day period with the previous period.</MetaText>
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="7. Leave of absence syncing" defaultOpen={false} attention={visibleAlert("leave", leaveAlert)} attentionKey="leave" attentionFingerprint={leaveAlert ?? undefined} connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="7. Leave of absence syncing" defaultOpen={false} attention={visibleAlert("leave", leaveAlert)} attentionKey="leave" attentionFingerprint={leaveAlert ?? undefined} attentionMessage="Arbor staff-absence access needs review. Check the permission result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Check Arbor staff-absence access</H3>
@@ -680,7 +680,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="8. Assessment syncing" defaultOpen={false} attention={visibleAlert("assessments", assessmentAlert)} attentionKey="assessments" attentionFingerprint={assessmentAlert ?? undefined} connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="8. Assessment syncing" defaultOpen={false} attention={visibleAlert("assessments", assessmentAlert)} attentionKey="assessments" attentionFingerprint={assessmentAlert ?? undefined} attentionMessage="Assessment review needs attention. Check the cycle status below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-5">
                 <div>
                   <H3>Assessment review</H3>
