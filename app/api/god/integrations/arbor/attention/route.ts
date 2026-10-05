@@ -17,8 +17,12 @@ export const POST = withApi(async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
   }
   const section = form.get("section");
+  const fingerprint = form.get("fingerprint");
   if (typeof section !== "string" || !SECTIONS.has(section)) {
     return NextResponse.json({ error: "Invalid Arbor section" }, { status: 400 });
+  }
+  if (typeof fingerprint !== "string" || !fingerprint || fingerprint.length > 500) {
+    return NextResponse.json({ error: "Invalid alert acknowledgement" }, { status: 400 });
   }
 
   const db = prisma as any;
@@ -26,9 +30,10 @@ export const POST = withApi(async function POST(req: Request) {
   if (!integration) return NextResponse.json({ error: "Arbor connection not found" }, { status: 404 });
   const config = integration.config && typeof integration.config === "object" ? integration.config : {};
   const attention = config.attention && typeof config.attention === "object" ? config.attention : {};
+  const acknowledgedAttention = config.acknowledgedAttention && typeof config.acknowledgedAttention === "object" ? config.acknowledgedAttention : {};
   await db.sharedIntegration.update({
     where: { id: integration.id },
-    data: { config: { ...config, attention: { ...attention, [section]: null } } },
+    data: { config: { ...config, attention: { ...attention, [section]: null }, acknowledgedAttention: { ...acknowledgedAttention, [section]: fingerprint } } },
   });
   return NextResponse.json({ acknowledged: true });
 });
