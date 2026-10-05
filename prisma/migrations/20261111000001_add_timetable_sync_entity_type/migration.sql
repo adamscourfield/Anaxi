@@ -1,0 +1,1 @@
+ALTER TYPE "IntegrationEntityType" ADD VALUE IF NOT EXISTS 'TIMETABLE';
