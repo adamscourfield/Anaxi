@@ -9,18 +9,18 @@ import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
 type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
+type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = {
   definitions?: PreparedDefinition[];
   historicalDefinitions?: PreparedDefinition[];
   historicYearCursor?: number;
   historicFamilyCursor?: number;
-  historicDefinitionChunk?: number;
-  historicMarkPage?: number;
+  historicFamilyProgress?: Record<string, HistoricFamilyProgress>;
   historicComplete?: boolean;
   historicDiscoveryVersion?: number;
 };
 
-const HISTORIC_DISCOVERY_VERSION = 6;
+const HISTORIC_DISCOVERY_VERSION = 7;
 const MARK_PAGES_PER_RUN = 12;
 const DEFINITIONS_PER_QUERY = 25;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
@@ -55,7 +55,7 @@ export const POST = withApi(async function POST(req: Request) {
     // Restart safely so discovery instead scans each academic year once and
     // groups every matching subject it finds into the same proposed cycle.
     const state: AssessmentSyncState = savedState.historicComplete || savedState.historicDiscoveryVersion !== HISTORIC_DISCOVERY_VERSION
-      ? { ...savedState, historicalDefinitions: [], historicYearCursor: 0, historicFamilyCursor: 0, historicDefinitionChunk: 0, historicMarkPage: 0, historicComplete: false }
+      ? { ...savedState, historicalDefinitions: [], historicYearCursor: 0, historicFamilyCursor: 0, historicFamilyProgress: {}, historicComplete: false }
       : savedState;
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
     const definitions = Array.isArray(state.definitions)
@@ -67,41 +67,39 @@ export const POST = withApi(async function POST(req: Request) {
     let familyCursor = typeof state.historicFamilyCursor === "number" && state.historicFamilyCursor >= 0
       ? state.historicFamilyCursor
       : 0;
-    let definitionChunk = typeof state.historicDefinitionChunk === "number" && state.historicDefinitionChunk >= 0
-      ? state.historicDefinitionChunk
-      : 0;
-    let markPage = typeof state.historicMarkPage === "number" && state.historicMarkPage >= 0
-      ? state.historicMarkPage
-      : 0;
+    let familyProgress: Record<string, HistoricFamilyProgress> = state.historicFamilyProgress && typeof state.historicFamilyProgress === "object"
+      ? { ...state.historicFamilyProgress }
+      : {};
     const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
     const combined = new Map<string, PreparedDefinition>();
     for (const item of known) {
       const mapping = mapArborAssessment(item.label, item.assessmentDate);
       if (mapping) combined.set(`${item.id}:${mapping.cycleExternalId}`, item);
     }
-    // Ask Arbor for each agreed family directly. Its broad dated-mark ordering
-    // puts the much larger percentage cohort ahead of P8 and A-Level records.
-    // Family chunks ensure GCSE and A-Level cycles are discovered first.
+    // Take one page from each family in turn. This prevents the large P8
+    // catalogue from delaying A-Level or percentage cycle discovery.
     for (let inspected = 0; inspected < MARK_PAGES_PER_RUN && yearCursor < HISTORIC_ACADEMIC_YEARS.length; inspected++) {
-      if (familyCursor >= HISTORIC_FAMILY_ORDER.length) {
+      if (HISTORIC_FAMILY_ORDER.every((family) => familyProgress[family]?.complete)) {
         yearCursor++;
         familyCursor = 0;
-        definitionChunk = 0;
-        markPage = 0;
+        familyProgress = {};
         continue;
       }
       const academicYear = HISTORIC_ACADEMIC_YEARS[yearCursor];
-      const family = HISTORIC_FAMILY_ORDER[familyCursor];
+      const family = HISTORIC_FAMILY_ORDER[familyCursor % HISTORIC_FAMILY_ORDER.length];
+      familyCursor = (familyCursor + 1) % HISTORIC_FAMILY_ORDER.length;
+      const progress = familyProgress[family] ?? {};
+      if (progress.complete) continue;
       const familyDefinitions = definitionsForFamily(definitions, family);
       const chunks = Array.from({ length: Math.ceil(familyDefinitions.length / DEFINITIONS_PER_QUERY) }, (_, index) => familyDefinitions.slice(index * DEFINITIONS_PER_QUERY, (index + 1) * DEFINITIONS_PER_QUERY));
-      if (!chunks[definitionChunk]?.length) {
-        familyCursor++;
-        definitionChunk = 0;
-        markPage = 0;
+      const chunk = progress.chunk ?? 0;
+      const markPage = progress.markPage ?? 0;
+      if (!chunks[chunk]?.length) {
+        familyProgress[family] = { ...progress, complete: true };
         continue;
       }
       if (inspected > 0) await pauseForArbor();
-      const marks = await client.listAssessmentMarks(500, markPage, chunks[definitionChunk].map((definition) => definition.id), academicYear);
+      const marks = await client.listAssessmentMarks(500, markPage, chunks[chunk].map((definition) => definition.id), academicYear);
       for (const mark of marks) {
         if (!mark.assessment) continue;
         const label = arborAssessmentLabel(mark.assessment);
@@ -109,18 +107,26 @@ export const POST = withApi(async function POST(req: Request) {
         if (mapping) combined.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
       }
       if (marks.length < 500) {
-        definitionChunk++;
-        markPage = 0;
+        const nextChunk = chunk + 1;
+        familyProgress[family] = nextChunk >= chunks.length
+          ? { chunk: nextChunk, markPage: 0, complete: true }
+          : { chunk: nextChunk, markPage: 0 };
       } else {
-        markPage++;
+        familyProgress[family] = { chunk, markPage: markPage + 1 };
       }
+    }
+    if (yearCursor < HISTORIC_ACADEMIC_YEARS.length && HISTORIC_FAMILY_ORDER.every((family) => familyProgress[family]?.complete)) {
+      yearCursor++;
+      familyCursor = 0;
+      familyProgress = {};
     }
     const historicComplete = yearCursor >= HISTORIC_ACADEMIC_YEARS.length;
     const nextState = {
       ...state,
       historicalDefinitions: [...combined.values()],
       historicYearCursor: yearCursor,
-      historicMarkPage: markPage,
+      historicFamilyCursor: familyCursor,
+      historicFamilyProgress: familyProgress,
       historicComplete,
       historicDiscoveryVersion: HISTORIC_DISCOVERY_VERSION,
     };
