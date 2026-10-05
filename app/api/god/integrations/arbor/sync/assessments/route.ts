@@ -8,10 +8,12 @@ import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { prisma } from "@/lib/prisma";
 
 type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
-type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicMarkPage?: number; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
+type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicDefinitionChunk?: number; historicMarkPage?: number; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 2;
-const HISTORIC_DISCOVERY_VERSION = 5;
+const HISTORIC_DISCOVERY_VERSION = 6;
 const MARK_PAGES_PER_RUN = 12;
+const DEFINITIONS_PER_QUERY = 25;
+const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
 const HISTORIC_ACADEMIC_YEARS = [
   { label: "2025/2026", from: "2025-09-01", before: "2026-09-01" },
   { label: "2024/2025", from: "2024-09-01", before: "2025-09-01" },
@@ -22,31 +24,10 @@ function pauseForArbor(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 500));
 }
 
-function historicDiscoveryOrder(definitions: PreparedDefinition[]): PreparedDefinition[] {
-  const yearScore = (label: string) => /2025\s*[-/]\s*2026/.test(label) ? 0 : /2024\s*[-/]\s*2025/.test(label) ? 1 : /2026\s*[-/]\s*2027/.test(label) ? 2 : 3;
-  const familyOrder = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
-  const groups = new Map<string, PreparedDefinition[]>();
-  for (const definition of definitions) {
-    const mapping = mapArborAssessment(definition.label);
-    if (!mapping) continue;
-    const key = `${yearScore(definition.label)}:${mapping.family}`;
-    const group = groups.get(key) ?? [];
-    group.push(definition);
-    groups.set(key, group);
-  }
-  for (const group of groups.values()) group.sort((a, b) => a.label.localeCompare(b.label));
-  const ordered: PreparedDefinition[] = [];
-  for (const year of [0, 1, 2, 3]) {
-    let added = true;
-    while (added) {
-      added = false;
-      for (const family of familyOrder) {
-        const next = groups.get(`${year}:${family}`)?.shift();
-        if (next) { ordered.push(next); added = true; }
-      }
-    }
-  }
-  return ordered;
+function definitionsForFamily(definitions: PreparedDefinition[], family: (typeof HISTORIC_FAMILY_ORDER)[number]): PreparedDefinition[] {
+  return definitions
+    .filter((definition) => mapArborAssessment(definition.label)?.family === family)
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 async function ensureAssessment(db: any, tenantId: string, createdByUserId: string, definition: PreparedDefinition, mapping: ArborAssessmentMapping) {
@@ -93,7 +74,7 @@ export async function POST(req: Request) {
   // deterministic definition-by-definition discovery introduced afterwards.
   const hasHistoricDefinitions = Array.isArray(savedState.historicalDefinitions) && savedState.historicalDefinitions.length > 0;
   const state: AssessmentSyncState = (savedState.historicComplete && !hasHistoricDefinitions) || savedState.historicDiscoveryVersion !== HISTORIC_DISCOVERY_VERSION
-    ? { ...savedState, historicYearCursor: 0, historicMarkPage: 0, historicComplete: false }
+    ? { ...savedState, historicYearCursor: 0, historicFamilyCursor: 0, historicDefinitionChunk: 0, historicMarkPage: 0, historicComplete: false }
     : savedState;
   // Assessment outcomes are high-impact data. Discovery may continue, but no
   // results are written until a super admin has reviewed and approved each
@@ -109,11 +90,12 @@ export async function POST(req: Request) {
     // anyone approves the first live import.
     if (state.historicComplete) return NextResponse.json({ skipped: "awaiting assessment cycle approval" });
     try {
-      const definitions = historicDiscoveryOrder(Array.isArray(state.definitions)
+      const definitions = Array.isArray(state.definitions)
         ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(mapArborAssessment(item.label)))
-        : []);
-      const definitionIds = new Set(definitions.map((definition) => definition.id));
+        : [];
       let historicYearCursor = typeof state.historicYearCursor === "number" && state.historicYearCursor >= 0 ? state.historicYearCursor : 0;
+      let historicFamilyCursor = typeof state.historicFamilyCursor === "number" && state.historicFamilyCursor >= 0 ? state.historicFamilyCursor : 0;
+      let historicDefinitionChunk = typeof state.historicDefinitionChunk === "number" && state.historicDefinitionChunk >= 0 ? state.historicDefinitionChunk : 0;
       let historicMarkPage = typeof state.historicMarkPage === "number" && state.historicMarkPage >= 0 ? state.historicMarkPage : 0;
       const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
       const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
@@ -123,20 +105,36 @@ export async function POST(req: Request) {
         if (mapping) historicalDefinitions.set(`${item.id}:${mapping.cycleExternalId}`, item);
       }
       for (let inspected = 0; inspected < MARK_PAGES_PER_RUN && historicYearCursor < HISTORIC_ACADEMIC_YEARS.length; inspected++) {
+        if (historicFamilyCursor >= HISTORIC_FAMILY_ORDER.length) {
+          historicYearCursor++;
+          historicFamilyCursor = 0;
+          historicDefinitionChunk = 0;
+          historicMarkPage = 0;
+          continue;
+        }
         const academicYear = HISTORIC_ACADEMIC_YEARS[historicYearCursor];
+        const family = HISTORIC_FAMILY_ORDER[historicFamilyCursor];
+        const familyDefinitions = definitionsForFamily(definitions, family);
+        const chunks = Array.from({ length: Math.ceil(familyDefinitions.length / DEFINITIONS_PER_QUERY) }, (_, index) => familyDefinitions.slice(index * DEFINITIONS_PER_QUERY, (index + 1) * DEFINITIONS_PER_QUERY));
+        if (!chunks[historicDefinitionChunk]?.length) {
+          historicFamilyCursor++;
+          historicDefinitionChunk = 0;
+          historicMarkPage = 0;
+          continue;
+        }
         if (inspected > 0) await pauseForArbor();
-        const marks = await client.listAssessmentMarks(500, historicMarkPage, undefined, academicYear);
+        const marks = await client.listAssessmentMarks(500, historicMarkPage, chunks[historicDefinitionChunk].map((definition) => definition.id), academicYear);
         for (const mark of marks) {
-          if (!mark.assessment || !definitionIds.has(mark.assessment.id)) continue;
+          if (!mark.assessment) continue;
           const label = arborAssessmentLabel(mark.assessment);
           const mapping = mapArborAssessment(label, mark.assessmentDate);
           if (mapping) historicalDefinitions.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
         }
-        if (marks.length < 500) { historicYearCursor++; historicMarkPage = 0; } else historicMarkPage++;
+        if (marks.length < 500) { historicDefinitionChunk++; historicMarkPage = 0; } else historicMarkPage++;
       }
       const historicComplete = historicYearCursor >= HISTORIC_ACADEMIC_YEARS.length;
-      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicalDefinitions: [...historicalDefinitions.values()], historicYearCursor, historicMarkPage, historicComplete, historicDiscoveryVersion: HISTORIC_DISCOVERY_VERSION } } } });
-      return NextResponse.json({ discovered: historicalDefinitions.size, year: historicYearCursor, page: historicMarkPage, complete: historicComplete });
+      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicalDefinitions: [...historicalDefinitions.values()], historicYearCursor, historicFamilyCursor, historicDefinitionChunk, historicMarkPage, historicComplete, historicDiscoveryVersion: HISTORIC_DISCOVERY_VERSION } } } });
+      return NextResponse.json({ discovered: historicalDefinitions.size, year: historicYearCursor, family: historicFamilyCursor, chunk: historicDefinitionChunk, page: historicMarkPage, complete: historicComplete });
     } catch (error) {
       return NextResponse.json({ skipped: "historic assessment discovery paused", error: error instanceof Error ? error.message.slice(0, 180) : "Arbor did not complete historic discovery." }, { status: 503 });
     }

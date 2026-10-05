@@ -130,7 +130,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
   }
   const assessmentYears = [...assessmentCyclesByYear.keys()].sort((a, b) => b.localeCompare(a));
   const assessmentSync = integration?.config?.assessmentSync && typeof integration.config.assessmentSync === "object"
-    ? integration.config.assessmentSync as { definitions?: PreparedAssessmentDefinition[]; historicYearCursor?: number; historicMarkPage?: number; historicComplete?: boolean; historicalDefinitions?: PreparedAssessmentDefinition[] }
+    ? integration.config.assessmentSync as { definitions?: PreparedAssessmentDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicDefinitionChunk?: number; historicMarkPage?: number; historicComplete?: boolean; historicalDefinitions?: PreparedAssessmentDefinition[] }
     : {};
   const assessmentDiscoveryComplete = assessmentSync.historicComplete === true;
   const approvedAssessmentCycles = new Set<string>(
@@ -670,7 +670,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
 
                 <MetaText>{assessmentSync.historicComplete
                   ? "Historic assessment discovery is complete. Every dated cycle found in Arbor is available below for review."
-                  : `Historic assessment discovery is in progress: it is scanning dated marks for ${["2025/2026", "2024/2025", "2026/2027"][typeof assessmentSync.historicYearCursor === "number" ? assessmentSync.historicYearCursor : 0] ?? "the remaining academic years"}, page ${(typeof assessmentSync.historicMarkPage === "number" ? assessmentSync.historicMarkPage : 0) + 1}. Each pass reads up to 6,000 marks, retains only agreed Arbor definitions, and groups every subject in the same cycle.`}</MetaText>
+                  : `Historic assessment discovery is in progress: it is scanning ${["P8 GCSE", "A-Level", "Year 10 percentage", "KS3 percentage"][typeof assessmentSync.historicFamilyCursor === "number" ? assessmentSync.historicFamilyCursor : 0] ?? "the remaining assessment families"} marks for ${["2025/2026", "2024/2025", "2026/2027"][typeof assessmentSync.historicYearCursor === "number" ? assessmentSync.historicYearCursor : 0] ?? "the remaining academic years"}, page ${(typeof assessmentSync.historicMarkPage === "number" ? assessmentSync.historicMarkPage : 0) + 1}. Each pass reads up to 6,000 marks and groups every matching subject in the same cycle.`}</MetaText>
 
                 {assessmentCycles.length ? (
                   <form method="post" action="/api/god/integrations/arbor/assessments/approval" className="space-y-4">
