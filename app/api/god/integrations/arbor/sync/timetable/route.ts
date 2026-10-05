@@ -9,13 +9,15 @@ import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
+type TimetableSyncState = { page?: number; startedAt?: string; completedAt?: string };
+
 function currentAcademicYearStart(): Date {
   const now = new Date();
   const year = now.getUTCMonth() >= 8 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
   return new Date(Date.UTC(year, 8, 1));
 }
 
-/** Replaces only Arbor-owned subject-teacher links with the current teaching groups. */
+/** Processes one Arbor roster page so a large school timetable never exceeds function limits. */
 export const POST = withApi(async function POST(req: Request) {
   const denied = assertCronAuthorized(req);
   const scheduled = !denied && req.headers.get("x-arbor-scheduled-sync") === "1";
@@ -38,68 +40,83 @@ export const POST = withApi(async function POST(req: Request) {
   let runId: string | null = null;
   let linked = 0;
   try {
+    const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
+    const storedState = config.timetableSync && typeof config.timetableSync === "object" ? config.timetableSync as TimetableSyncState : {};
+    const page = typeof storedState.page === "number" && storedState.page >= 0 ? storedState.page : 0;
+    const startedAt = storedState.startedAt && !Number.isNaN(new Date(storedState.startedAt).getTime()) ? new Date(storedState.startedAt) : new Date();
     const run = await db.sharedIntegrationSyncRun.create({
       data: { integrationId: integration.id, entityType: "TIMETABLE", triggeredBy: scheduled ? "CRON" : actor!.id },
     });
     runId = run.id;
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
-    const [assignments, students, staff]: [
-      Array<{ studentId: string; teachingGroupId: string; subject: string; staffIds: string[] }>,
-      Array<{ id: string; tenantId: string; externalId: string }>,
-      Array<{ id: string; tenantId: string; externalId: string }>,
-    ] = await Promise.all([
-      new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listTimetableTeacherAssignments({ all: true }),
-      db.student.findMany({ where: { tenantId: { in: tenantIds }, status: "ACTIVE", externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true } }),
-      db.user.findMany({ where: { tenantId: { in: tenantIds }, externalId: { not: null }, isActive: true }, select: { id: true, tenantId: true, externalId: true } }),
+    const batch = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listTimetableTeacherAssignmentsBatch(page);
+    const studentExternalIds = [...new Set(batch.assignments.map((assignment) => assignment.studentId))];
+    const staffExternalIds = [...new Set(batch.assignments.flatMap((assignment) => assignment.staffIds))];
+    const [students, staff] = await Promise.all([
+      db.student.findMany({ where: { tenantId: { in: tenantIds }, status: "ACTIVE", externalId: { in: studentExternalIds } }, select: { id: true, tenantId: true, externalId: true } }),
+      db.user.findMany({ where: { tenantId: { in: tenantIds }, externalId: { in: staffExternalIds }, isActive: true }, select: { id: true, tenantId: true, externalId: true } }),
     ]);
-    if (!assignments.length) throw new Error("Arbor returned no subject-teacher assignments, so existing Arbor links were left unchanged.");
-
-    const studentsByExternalId = new Map<string, { id: string; tenantId: string; externalId: string }>(students.map((student) => [student.externalId, student]));
-    const staffByTenantAndExternalId = new Map<string, { id: string; tenantId: string; externalId: string }>(staff.map((user) => [`${user.tenantId}:${user.externalId}`, user]));
-    const candidateLinks = new Map<string, { tenantId: string; studentId: string; teacherId: string; subject: string }>();
-    for (const assignment of assignments) {
+    const studentsByExternalId = new Map<string, { id: string; tenantId: string; externalId: string }>(students.map((student: { id: string; tenantId: string; externalId: string }) => [student.externalId, student]));
+    const staffByTenantAndExternalId = new Map<string, { id: string }>(staff.map((user: { id: string; tenantId: string; externalId: string }) => [`${user.tenantId}:${user.externalId}`, user]));
+    const candidates = new Map<string, { tenantId: string; studentId: string; teacherId: string; subject: string }>();
+    for (const assignment of batch.assignments) {
       const student = studentsByExternalId.get(assignment.studentId);
       if (!student) continue;
       for (const staffExternalId of assignment.staffIds) {
         const teacher = staffByTenantAndExternalId.get(`${student.tenantId}:${staffExternalId}`);
-        if (!teacher) continue;
         const subject = assignment.subject.trim();
-        if (!subject) continue;
-        candidateLinks.set(`${student.id}:${teacher.id}:${subject.toLocaleLowerCase()}`, { tenantId: student.tenantId, studentId: student.id, teacherId: teacher.id, subject });
+        if (!teacher || !subject) continue;
+        candidates.set(`${student.id}:${teacher.id}:${subject.toLocaleLowerCase()}`, { tenantId: student.tenantId, studentId: student.id, teacherId: teacher.id, subject });
       }
     }
-    if (!candidateLinks.size) throw new Error("Arbor returned timetable assignments, but none matched linked Anaxi students and staff. Existing Arbor links were left unchanged.");
 
-    const subjectByTenantAndName = new Map<string, { tenantId: string; name: string }>();
-    for (const item of candidateLinks.values()) subjectByTenantAndName.set(`${item.tenantId}:${item.subject.toLocaleLowerCase()}`, { tenantId: item.tenantId, name: item.subject });
     const subjects = new Map<string, { id: string }>();
-    for (const [key, item] of subjectByTenantAndName) {
-      const subject = await db.subject.upsert({ where: { tenantId_name: { tenantId: item.tenantId, name: item.name } }, create: item, update: { active: true } });
+    for (const item of candidates.values()) {
+      const key = `${item.tenantId}:${item.subject.toLocaleLowerCase()}`;
+      if (subjects.has(key)) continue;
+      const subject = await db.subject.upsert({ where: { tenantId_name: { tenantId: item.tenantId, name: item.subject } }, create: { tenantId: item.tenantId, name: item.subject }, update: { active: true } });
       subjects.set(key, subject);
     }
 
     const effectiveFrom = currentAcademicYearStart();
-    const rows = [...candidateLinks.values()].map((item) => ({
+    const rows = [...candidates.values()].map((item) => ({
       tenantId: item.tenantId,
       studentId: item.studentId,
       teacherId: item.teacherId,
       subjectId: subjects.get(`${item.tenantId}:${item.subject.toLocaleLowerCase()}`)!.id,
       effectiveFrom,
       dataSource: "ARBOR",
+      arborSyncedAt: startedAt,
     }));
-    await db.$transaction(async (tx: any) => {
-      await tx.studentSubjectTeacher.deleteMany({ where: { tenantId: { in: tenantIds }, dataSource: "ARBOR" } });
-      await tx.studentSubjectTeacher.createMany({ data: rows, skipDuplicates: true });
-    });
+    const existing = rows.length ? await db.studentSubjectTeacher.findMany({
+      where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", studentId: { in: [...new Set(rows.map((row) => row.studentId))] }, effectiveFrom },
+      select: { id: true, tenantId: true, studentId: true, subjectId: true, teacherId: true },
+    }) : [];
+    const existingKeys = new Map((existing as Array<{ id: string; tenantId: string; studentId: string; subjectId: string; teacherId: string }>).map((row) => [`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}`, row.id]));
+    for (const row of rows) {
+      const existingId = existingKeys.get(`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}`);
+      if (existingId) await db.studentSubjectTeacher.update({ where: { id: existingId }, data: { arborSyncedAt: startedAt } });
+    }
+    if (rows.length) await db.studentSubjectTeacher.createMany({ data: rows, skipDuplicates: true });
     linked = rows.length;
 
+    const complete = !batch.hasMore;
+    if (complete) {
+      await db.studentSubjectTeacher.deleteMany({
+        where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", OR: [{ arborSyncedAt: null }, { arborSyncedAt: { lt: startedAt } }] },
+      });
+    }
     await db.sharedIntegrationSyncRun.update({ where: { id: run.id }, data: { status: "SUCCESS", recordsProcessed: linked, recordsCreated: linked, finishedAt: new Date() } });
-    await db.sharedIntegration.update({ where: { id: integration.id }, data: { lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null } });
-    if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.timetable_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { assignments: assignments.length, linked } } });
-    if (scheduled) return NextResponse.json({ assignments: assignments.length, linked });
+    await db.sharedIntegration.update({
+      where: { id: integration.id },
+      data: { config: { ...config, timetableSync: complete ? { completedAt: new Date().toISOString() } : { page: page + 1, startedAt: startedAt.toISOString() } }, lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null },
+    });
+    if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.timetable_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { page, assignments: batch.assignments.length, linked, complete } } });
+    if (scheduled) return NextResponse.json({ page, assignments: batch.assignments.length, linked, complete });
     const url = new URL("/god/integrations/arbor", req.url);
-    url.searchParams.set("timetableSync", "success");
-    url.searchParams.set("timetableAssignments", String(assignments.length));
+    url.searchParams.set("timetableSync", complete ? "success" : "progress");
+    url.searchParams.set("timetablePage", String(page + 1));
+    url.searchParams.set("timetableAssignments", String(batch.assignments.length));
     url.searchParams.set("timetableLinkable", String(linked));
     return NextResponse.redirect(url);
   } catch (error) {
