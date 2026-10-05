@@ -19,7 +19,7 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-const HISTORIC_DISCOVERY_VERSION = 2;
+const HISTORIC_DISCOVERY_VERSION = 3;
 const DEFINITIONS_PER_RUN = 12;
 
 function pauseForArbor(): Promise<void> {
@@ -27,10 +27,32 @@ function pauseForArbor(): Promise<void> {
 }
 
 function historicDiscoveryOrder(definitions: PreparedDefinition[]): PreparedDefinition[] {
-  // Put the immediately preceding academic year first, so the 2025/2026 review
-  // set is available promptly rather than waiting behind an arbitrary catalogue order.
-  const score = (label: string) => /2025\s*[-/]\s*2026/.test(label) ? 0 : /2024\s*[-/]\s*2025/.test(label) ? 1 : /2026\s*[-/]\s*2027/.test(label) ? 2 : 3;
-  return [...definitions].sort((a, b) => score(a.label) - score(b.label) || a.label.localeCompare(b.label));
+  const yearScore = (label: string) => /2025\s*[-/]\s*2026/.test(label) ? 0 : /2024\s*[-/]\s*2025/.test(label) ? 1 : /2026\s*[-/]\s*2027/.test(label) ? 2 : 3;
+  const familyOrder = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
+  const groups = new Map<string, PreparedDefinition[]>();
+  for (const definition of definitions) {
+    const mapping = mapArborAssessment(definition.label);
+    if (!mapping) continue;
+    const key = `${yearScore(definition.label)}:${mapping.family}`;
+    const group = groups.get(key) ?? [];
+    group.push(definition);
+    groups.set(key, group);
+  }
+  for (const group of groups.values()) group.sort((a, b) => a.label.localeCompare(b.label));
+  const ordered: PreparedDefinition[] = [];
+  // Round-robin families so an early batch represents all expected pathways,
+  // rather than returning a long run of alphabetically first KS3 subjects.
+  for (const year of [0, 1, 2, 3]) {
+    let added = true;
+    while (added) {
+      added = false;
+      for (const family of familyOrder) {
+        const next = groups.get(`${year}:${family}`)?.shift();
+        if (next) { ordered.push(next); added = true; }
+      }
+    }
+  }
+  return ordered;
 }
 
 export const POST = withApi(async function POST(req: Request) {

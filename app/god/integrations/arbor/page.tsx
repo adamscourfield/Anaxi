@@ -27,9 +27,11 @@ type ProposedAssessmentCycle = {
 function proposedAssessmentCycles(config: unknown): ProposedAssessmentCycle[] {
   const record = config && typeof config === "object" ? config as Record<string, unknown> : {};
   const sync = record.assessmentSync && typeof record.assessmentSync === "object" ? record.assessmentSync as Record<string, unknown> : {};
-  const definitions = [sync.definitions, sync.historicalDefinitions].flatMap((items) => Array.isArray(items)
-    ? items.filter((item): item is PreparedAssessmentDefinition => Boolean(item) && typeof (item as PreparedAssessmentDefinition).id === "string" && typeof (item as PreparedAssessmentDefinition).label === "string")
-    : []);
+  // Catalogue definitions are a discovery queue only. A cycle becomes
+  // reviewable only after Arbor has supplied a dated mark for it.
+  const definitions = Array.isArray(sync.historicalDefinitions)
+    ? sync.historicalDefinitions.filter((item): item is PreparedAssessmentDefinition => Boolean(item) && typeof (item as PreparedAssessmentDefinition).id === "string" && typeof (item as PreparedAssessmentDefinition).label === "string")
+    : [];
   const cycles = new Map<string, ProposedAssessmentCycle>();
   for (const definition of definitions) {
     const mapping = mapArborAssessment(definition.label, definition.assessmentDate);
@@ -122,7 +124,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
   }
   const assessmentYears = [...assessmentCyclesByYear.keys()].sort((a, b) => b.localeCompare(a));
   const assessmentSync = integration?.config?.assessmentSync && typeof integration.config.assessmentSync === "object"
-    ? integration.config.assessmentSync as { historicPage?: number; historicComplete?: boolean; historicalDefinitions?: PreparedAssessmentDefinition[] }
+    ? integration.config.assessmentSync as { definitions?: PreparedAssessmentDefinition[]; historicDefinitionCursor?: number; historicComplete?: boolean; historicalDefinitions?: PreparedAssessmentDefinition[] }
     : {};
   const approvedAssessmentCycles = new Set<string>(
     Array.isArray(integration?.config?.assessmentApprovedCycleKeys)
@@ -648,7 +650,9 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                   </div>
                 </div>
 
-                <MetaText>{assessmentSync.historicComplete ? "Historic assessment discovery is complete. Every dated cycle found in Arbor is available below for review." : `Historic assessment discovery is in progress${typeof assessmentSync.historicPage === "number" ? ` (batch ${assessmentSync.historicPage + 1})` : ""}. It reads 100 dated marks at a time and runs automatically overnight; you can also run the next safe batch now.`}</MetaText>
+                <MetaText>{assessmentSync.historicComplete
+                  ? "Historic assessment discovery is complete. Every dated cycle found in Arbor is available below for review."
+                  : `Historic assessment discovery is in progress: ${typeof assessmentSync.historicDefinitionCursor === "number" ? assessmentSync.historicDefinitionCursor : 0} of ${Array.isArray(assessmentSync.definitions) ? assessmentSync.definitions.filter((definition) => Boolean(mapArborAssessment(definition.label))).length : 0} relevant Arbor definitions checked. Each pass reads 12 definitions and up to 500 dated marks for each; it continues automatically overnight.`}</MetaText>
 
                 {assessmentCycles.length ? (
                   <form method="post" action="/api/god/integrations/arbor/assessments/approval" className="space-y-4">

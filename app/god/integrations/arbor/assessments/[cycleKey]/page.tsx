@@ -26,9 +26,9 @@ export default async function ArborAssessmentCycleReviewPage({ params }: { param
 
   const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
   const sync = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as Record<string, unknown> : {};
-  const definitions = [sync.definitions, sync.historicalDefinitions].flatMap((items) => Array.isArray(items)
-    ? items.filter((item): item is PreparedDefinition => Boolean(item) && typeof (item as PreparedDefinition).id === "string" && typeof (item as PreparedDefinition).label === "string")
-    : []);
+  const definitions = Array.isArray(sync.historicalDefinitions)
+    ? sync.historicalDefinitions.filter((item): item is PreparedDefinition => Boolean(item) && typeof (item as PreparedDefinition).id === "string" && typeof (item as PreparedDefinition).label === "string")
+    : [];
   const matchingDefinitions = definitions.filter((definition) => {
     const mapping = mapArborAssessment(definition.label, definition.assessmentDate);
     return mapping?.yearGroups.some((yearGroup) => mapArborAssessmentForYearGroup(mapping, yearGroup)?.cycleExternalId === cycleKey);

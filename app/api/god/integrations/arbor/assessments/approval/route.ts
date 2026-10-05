@@ -13,9 +13,9 @@ function proposedCycleKeys(config: Record<string, unknown>): Set<string> {
   const state = config.assessmentSync && typeof config.assessmentSync === "object"
     ? config.assessmentSync as AssessmentSyncState
     : {};
-  const definitions = [state.definitions, state.historicalDefinitions].flatMap((items) => Array.isArray(items)
-    ? items.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string")
-    : []);
+  const definitions = Array.isArray(state.historicalDefinitions)
+    ? state.historicalDefinitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string")
+    : [];
   const keys = new Set<string>();
   for (const definition of definitions) {
     const mapping = mapArborAssessment(definition.label, definition.assessmentDate);
