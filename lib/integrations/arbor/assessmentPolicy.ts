@@ -54,7 +54,9 @@ export function mapArborAssessment(name: string, assessmentDate?: string | null)
 
   const finalResult = /\b(actual|exam\s*board|final\s*result|results?)\b/i.test(label);
   let family: ArborAssessmentFamily | null = null;
-  if (/\bP8\b|\bGCSE\b/i.test(label)) family = "GCSE";
+  // Routine GCSE assessments are deliberately excluded: the agreed source is
+  // P8, with GCSE included only when it is explicitly an external final result.
+  if (/\bP8\b/i.test(label) || (finalResult && /\bGCSE\b/i.test(label))) family = "GCSE";
   else if (/\bA[- ]?Level\b/i.test(label)) family = "A_LEVEL";
   else if (/%\s*KS\s*3\b|\bKS\s*3\b.*%/i.test(label)) family = "KS3_PERCENTAGE";
   else if (/%\s*(?:Y\s*10|Year\s*10)\b|\b(?:Y\s*10|Year\s*10)\b.*%/i.test(label)) family = "Y10_PERCENTAGE";

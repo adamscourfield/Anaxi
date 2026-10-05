@@ -16,7 +16,22 @@ type AssessmentSyncState = {
   historicDefinitionCursor?: number;
   historicDefinitionPage?: number;
   historicComplete?: boolean;
+  historicDiscoveryVersion?: number;
 };
+
+const HISTORIC_DISCOVERY_VERSION = 2;
+const DEFINITIONS_PER_RUN = 12;
+
+function pauseForArbor(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 500));
+}
+
+function historicDiscoveryOrder(definitions: PreparedDefinition[]): PreparedDefinition[] {
+  // Put the immediately preceding academic year first, so the 2025/2026 review
+  // set is available promptly rather than waiting behind an arbitrary catalogue order.
+  const score = (label: string) => /2025\s*[-/]\s*2026/.test(label) ? 0 : /2024\s*[-/]\s*2025/.test(label) ? 1 : /2026\s*[-/]\s*2027/.test(label) ? 2 : 3;
+  return [...definitions].sort((a, b) => score(a.label) - score(b.label) || a.label.localeCompare(b.label));
+}
 
 export const POST = withApi(async function POST(req: Request) {
   await requireSuperAdminUser();
@@ -29,51 +44,55 @@ export const POST = withApi(async function POST(req: Request) {
   try {
     const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
     const savedState = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
-    // A previous feed-wide scan can complete without reaching historic data.
-    // A manual recheck restarts the safe, definition-by-definition approach.
-    const state: AssessmentSyncState = savedState.historicComplete
+    // Version one inspected only a single definition per action. Restart it so
+    // discovery uses the batched, date-led approach below.
+    const state: AssessmentSyncState = savedState.historicComplete || savedState.historicDiscoveryVersion !== HISTORIC_DISCOVERY_VERSION
       ? { ...savedState, historicalDefinitions: [], historicPage: 0, historicDefinitionCursor: 0, historicDefinitionPage: 0, historicComplete: false }
       : savedState;
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
-    const definitions = Array.isArray(state.definitions)
-      ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string")
-      : [];
-    const definitionCursor = typeof state.historicDefinitionCursor === "number" && state.historicDefinitionCursor >= 0
+    const definitions = historicDiscoveryOrder(Array.isArray(state.definitions)
+      ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(mapArborAssessment(item.label)))
+      : []);
+    let definitionCursor = typeof state.historicDefinitionCursor === "number" && state.historicDefinitionCursor >= 0
       ? state.historicDefinitionCursor
       : 0;
-    const definitionPage = typeof state.historicDefinitionPage === "number" && state.historicDefinitionPage >= 0
+    let definitionPage = typeof state.historicDefinitionPage === "number" && state.historicDefinitionPage >= 0
       ? state.historicDefinitionPage
       : 0;
-    // Query a single known definition at a time. Arbor's all-marks pagination
-    // is not chronologically ordered, so it can repeatedly surface current
-    // records while leaving prior academic years undiscovered.
-    const definition = definitions[definitionCursor];
-    const page = definition ? definitionPage : (typeof state.historicPage === "number" && state.historicPage >= 0 ? state.historicPage : 0);
-    const marks = await client.listAssessmentMarks(100, page, definition ? [definition.id] : undefined);
     const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
     const combined = new Map<string, PreparedDefinition>();
     for (const item of known) {
       const mapping = mapArborAssessment(item.label, item.assessmentDate);
       if (mapping) combined.set(`${item.id}:${mapping.cycleExternalId}`, item);
     }
-    for (const mark of marks) {
-      if (!mark.assessment) continue;
-      const label = arborAssessmentLabel(mark.assessment);
-      const mapping = mapArborAssessment(label, mark.assessmentDate);
-      if (mapping) combined.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
+    // Arbor does not guarantee chronological ordering for its all-marks feed.
+    // Read known definitions directly, twelve at a time, using 500 marks so a
+    // normal subject captures both Autumn and Spring dates in one request.
+    for (let inspected = 0; inspected < DEFINITIONS_PER_RUN && definitionCursor < definitions.length; inspected++) {
+      const definition = definitions[definitionCursor];
+      if (inspected > 0) await pauseForArbor();
+      const marks = await client.listAssessmentMarks(500, definitionPage, [definition.id]);
+      for (const mark of marks) {
+        if (!mark.assessment) continue;
+        const label = arborAssessmentLabel(mark.assessment);
+        const mapping = mapArborAssessment(label, mark.assessmentDate);
+        if (mapping) combined.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
+      }
+      if (marks.length < 500) {
+        definitionCursor++;
+        definitionPage = 0;
+      } else {
+        definitionPage++;
+      }
     }
-    const morePagesForDefinition = marks.length === 100;
-    const nextDefinitionCursor = definition && !morePagesForDefinition ? definitionCursor + 1 : definitionCursor;
-    const historicComplete = definition
-      ? !morePagesForDefinition && nextDefinitionCursor >= definitions.length
-      : marks.length < 100;
+    const historicComplete = definitionCursor >= definitions.length;
     const nextState = {
       ...state,
       historicalDefinitions: [...combined.values()],
-      historicPage: definition ? state.historicPage : (morePagesForDefinition ? page + 1 : page),
-      historicDefinitionCursor: definition ? nextDefinitionCursor : state.historicDefinitionCursor,
-      historicDefinitionPage: definition ? (morePagesForDefinition ? definitionPage + 1 : 0) : state.historicDefinitionPage,
+      historicDefinitionCursor: definitionCursor,
+      historicDefinitionPage: definitionPage,
       historicComplete,
+      historicDiscoveryVersion: HISTORIC_DISCOVERY_VERSION,
     };
     await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: nextState } } });
     const url = new URL("/god/integrations/arbor", req.url);

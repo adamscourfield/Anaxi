@@ -8,8 +8,19 @@ import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { prisma } from "@/lib/prisma";
 
 type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
-type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicPage?: number; historicDefinitionCursor?: number; historicDefinitionPage?: number; historicComplete?: boolean; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
+type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicPage?: number; historicDefinitionCursor?: number; historicDefinitionPage?: number; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 2;
+const HISTORIC_DISCOVERY_VERSION = 2;
+const DEFINITIONS_PER_RUN = 12;
+
+function pauseForArbor(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 500));
+}
+
+function historicDiscoveryOrder(definitions: PreparedDefinition[]): PreparedDefinition[] {
+  const score = (label: string) => /2025\s*[-/]\s*2026/.test(label) ? 0 : /2024\s*[-/]\s*2025/.test(label) ? 1 : /2026\s*[-/]\s*2027/.test(label) ? 2 : 3;
+  return [...definitions].sort((a, b) => score(a.label) - score(b.label) || a.label.localeCompare(b.label));
+}
 
 async function ensureAssessment(db: any, tenantId: string, createdByUserId: string, definition: PreparedDefinition, mapping: ArborAssessmentMapping) {
   const startYear = Number(mapping.academicYear.slice(0, 4));
@@ -54,7 +65,7 @@ export async function POST(req: Request) {
   // A completed zero-result legacy scan should not permanently block the
   // deterministic definition-by-definition discovery introduced afterwards.
   const hasHistoricDefinitions = Array.isArray(savedState.historicalDefinitions) && savedState.historicalDefinitions.length > 0;
-  const state: AssessmentSyncState = savedState.historicComplete && !hasHistoricDefinitions
+  const state: AssessmentSyncState = (savedState.historicComplete && !hasHistoricDefinitions) || savedState.historicDiscoveryVersion !== HISTORIC_DISCOVERY_VERSION
     ? { ...savedState, historicPage: 0, historicDefinitionCursor: 0, historicDefinitionPage: 0, historicComplete: false }
     : savedState;
   // Assessment outcomes are high-impact data. Discovery may continue, but no
@@ -71,31 +82,33 @@ export async function POST(req: Request) {
     // anyone approves the first live import.
     if (state.historicComplete) return NextResponse.json({ skipped: "awaiting assessment cycle approval" });
     try {
-      const definitions = Array.isArray(state.definitions)
-        ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string")
-        : [];
-      const historicDefinitionCursor = typeof state.historicDefinitionCursor === "number" && state.historicDefinitionCursor >= 0 ? state.historicDefinitionCursor : 0;
-      const historicDefinitionPage = typeof state.historicDefinitionPage === "number" && state.historicDefinitionPage >= 0 ? state.historicDefinitionPage : 0;
-      const definition = definitions[historicDefinitionCursor];
-      const historicPage = definition ? historicDefinitionPage : (typeof state.historicPage === "number" && state.historicPage >= 0 ? state.historicPage : 0);
-      const marks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks(100, historicPage, definition ? [definition.id] : undefined);
+      const definitions = historicDiscoveryOrder(Array.isArray(state.definitions)
+        ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(mapArborAssessment(item.label)))
+        : []);
+      let historicDefinitionCursor = typeof state.historicDefinitionCursor === "number" && state.historicDefinitionCursor >= 0 ? state.historicDefinitionCursor : 0;
+      let historicDefinitionPage = typeof state.historicDefinitionPage === "number" && state.historicDefinitionPage >= 0 ? state.historicDefinitionPage : 0;
+      const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
       const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
       const historicalDefinitions = new Map<string, PreparedDefinition>();
       for (const item of known) {
         const mapping = mapArborAssessment(item.label, item.assessmentDate);
         if (mapping) historicalDefinitions.set(`${item.id}:${mapping.cycleExternalId}`, item);
       }
-      for (const mark of marks) {
-        if (!mark.assessment) continue;
-        const label = arborAssessmentLabel(mark.assessment);
-        const mapping = mapArborAssessment(label, mark.assessmentDate);
-        if (mapping) historicalDefinitions.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
+      for (let inspected = 0; inspected < DEFINITIONS_PER_RUN && historicDefinitionCursor < definitions.length; inspected++) {
+        const definition = definitions[historicDefinitionCursor];
+        if (inspected > 0) await pauseForArbor();
+        const marks = await client.listAssessmentMarks(500, historicDefinitionPage, [definition.id]);
+        for (const mark of marks) {
+          if (!mark.assessment) continue;
+          const label = arborAssessmentLabel(mark.assessment);
+          const mapping = mapArborAssessment(label, mark.assessmentDate);
+          if (mapping) historicalDefinitions.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
+        }
+        if (marks.length < 500) { historicDefinitionCursor++; historicDefinitionPage = 0; } else historicDefinitionPage++;
       }
-      const morePagesForDefinition = marks.length === 100;
-      const nextDefinitionCursor = definition && !morePagesForDefinition ? historicDefinitionCursor + 1 : historicDefinitionCursor;
-      const historicComplete = definition ? !morePagesForDefinition && nextDefinitionCursor >= definitions.length : marks.length < 100;
-      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicalDefinitions: [...historicalDefinitions.values()], historicPage: definition ? state.historicPage : (morePagesForDefinition ? historicPage + 1 : historicPage), historicDefinitionCursor: definition ? nextDefinitionCursor : state.historicDefinitionCursor, historicDefinitionPage: definition ? (morePagesForDefinition ? historicDefinitionPage + 1 : 0) : state.historicDefinitionPage, historicComplete } } } });
-      return NextResponse.json({ discovered: historicalDefinitions.size, page: historicPage, definition: definition?.label ?? null, complete: historicComplete });
+      const historicComplete = historicDefinitionCursor >= definitions.length;
+      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicalDefinitions: [...historicalDefinitions.values()], historicDefinitionCursor, historicDefinitionPage, historicComplete, historicDiscoveryVersion: HISTORIC_DISCOVERY_VERSION } } } });
+      return NextResponse.json({ discovered: historicalDefinitions.size, cursor: historicDefinitionCursor, complete: historicComplete });
     } catch (error) {
       return NextResponse.json({ skipped: "historic assessment discovery paused", error: error instanceof Error ? error.message.slice(0, 180) : "Arbor did not complete historic discovery." }, { status: 503 });
     }
