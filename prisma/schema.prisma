@@ -385,6 +385,9 @@ model StudentSubjectTeacher {
   teacherId     String
   effectiveFrom DateTime
   effectiveTo   DateTime?
+  /// Arbor-managed links are refreshed from the current teaching groups without
+  /// affecting any subject-teacher assignments entered manually in Anaxi.
+  dataSource    DataSource @default(MANUAL)
   student       Student   @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Cascade)
   subject       Subject   @relation(fields: [tenantId, subjectId], references: [tenantId, id])
   teacher       User      @relation("SubjectTeacher", fields: [tenantId, teacherId], references: [tenantId, id])

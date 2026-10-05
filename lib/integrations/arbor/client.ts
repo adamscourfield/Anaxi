@@ -398,8 +398,12 @@ export class ArborClient {
     ]);
   }
 
-  /** Reads a small timetable sample after confirming the exact relationship names. */
-  async listTimetableTeacherAssignmentsPreview(): Promise<Array<{ studentId: string; teachingGroupId: string; subject: string; staffIds: string[] }>> {
+  /**
+   * Maps the subject-teacher relationship Arbor exposes through teaching groups.
+   * A group roster supplies the students; its tutors supply staff; the linked
+   * academic unit supplies the subject.
+   */
+  async listTimetableTeacherAssignments({ all = false }: { all?: boolean } = {}): Promise<Array<{ studentId: string; teachingGroupId: string; subject: string; staffIds: string[] }>> {
     const fields = await this.inspectTimetableMappingFields();
     // Arbor nests a group's subject through its automatic enrolments, rather than
     // directly on TeachingGroup. This is the relationship in Arbor's domain model.
@@ -407,11 +411,12 @@ export class ArborClient {
     const unavailable = required.filter(([entity, field]) => !fields[entity]?.includes(field));
     if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
 
-    const data = await runArborGraphqlQuery<{
+    type TimetableData = {
       TeachingGroupMembership: Array<{ student: { id: string }; teachingGroup: { id: string; academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null } | null }> }> } | null }>;
       TeachingGroupTutor: Array<{ teachingGroup: { id: string } | null; staff: { id: string } | null }>;
-    }>(this.credentials, `{
-      TeachingGroupMembership(page_size: 100, page_num: 0) {
+    };
+    const readPage = async (membershipPage: number, tutorPage: number) => runArborGraphqlQuery<TimetableData>(this.credentials, `{
+      TeachingGroupMembership(page_size: 100, page_num: ${membershipPage}) {
         student { id }
         teachingGroup {
           id
@@ -420,26 +425,44 @@ export class ArborClient {
           }
         }
       }
-      TeachingGroupTutor(page_size: 500, page_num: 0) {
+      TeachingGroupTutor(page_size: 500, page_num: ${tutorPage}) {
         teachingGroup { id }
         staff { id }
       }
     }`);
+
+    const tutors: TimetableData["TeachingGroupTutor"] = [];
+    for (let tutorPage = 0; ; tutorPage++) {
+      const data = await readPage(0, tutorPage);
+      tutors.push(...data.TeachingGroupTutor);
+      if (!all || data.TeachingGroupTutor.length < 500) break;
+    }
     const staffByGroup = new Map<string, string[]>();
-    for (const tutor of data.TeachingGroupTutor) {
+    for (const tutor of tutors) {
       if (!tutor.teachingGroup || !tutor.staff) continue;
       const staff = staffByGroup.get(tutor.teachingGroup.id) ?? [];
       staff.push(tutor.staff.id);
       staffByGroup.set(tutor.teachingGroup.id, staff);
     }
-    return data.TeachingGroupMembership.flatMap((membership) => {
-      const group = membership.teachingGroup;
-      const subjects = group?.academicUnitAutomaticEnrolments
-        .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
-        .flatMap((enrolment) => enrolment.academicUnit?.subject?.displayName ? [enrolment.academicUnit.subject.displayName] : []) ?? [];
-      const staffIds = group ? staffByGroup.get(group.id) ?? [] : [];
-      return group && staffIds.length ? [...new Set(subjects)].map((subject) => ({ studentId: membership.student.id, teachingGroupId: group.id, subject, staffIds })) : [];
-    });
+    const assignments: Array<{ studentId: string; teachingGroupId: string; subject: string; staffIds: string[] }> = [];
+    for (let membershipPage = 0; ; membershipPage++) {
+      const data = await readPage(membershipPage, 0);
+      assignments.push(...data.TeachingGroupMembership.flatMap((membership) => {
+        const group = membership.teachingGroup;
+        const subjects = group?.academicUnitAutomaticEnrolments
+          .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
+          .flatMap((enrolment) => enrolment.academicUnit?.subject?.displayName ? [enrolment.academicUnit.subject.displayName] : []) ?? [];
+        const staffIds = group ? staffByGroup.get(group.id) ?? [] : [];
+        return group && staffIds.length ? [...new Set(subjects)].map((subject) => ({ studentId: membership.student.id, teachingGroupId: group.id, subject, staffIds })) : [];
+      }));
+      if (!all || data.TeachingGroupMembership.length < 100) break;
+    }
+    return assignments;
+  }
+
+  /** Reads a small timetable sample before any subject-teacher links are written. */
+  async listTimetableTeacherAssignmentsPreview(): Promise<Array<{ studentId: string; teachingGroupId: string; subject: string; staffIds: string[] }>> {
+    return this.listTimetableTeacherAssignments();
   }
 }
 

@@ -89,7 +89,7 @@ function StatusBanner({
   );
 }
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentApproval?: string; assessmentApproved?: string; assessmentHistory?: string; assessmentHistoryCycles?: string; assessmentHistoryError?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableAssignments?: string; timetableLinkable?: string; timetableError?: string; leaveAccess?: string; leaveWriteOperations?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ saved?: string; error?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentApproval?: string; assessmentApproved?: string; assessmentHistory?: string; assessmentHistoryCycles?: string; assessmentHistoryError?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableSync?: string; timetableAssignments?: string; timetableLinkable?: string; timetableError?: string; leaveAccess?: string; leaveWriteOperations?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integration, latestBehaviourRun, staffProvisioningRequests, params] = await Promise.all([
     getCsrfToken(),
@@ -162,7 +162,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
     || Boolean(savedAttention.leave);
   const connectionNeedsAttention = params?.error === "secure-storage" || params?.test === "failed" || params?.test === "not-configured" || Boolean(savedAttention.connection);
   const photoNeedsAttention = params?.photo === "unavailable" || params?.photo === "not-connected" || params?.photo === "no-student" || Boolean(savedAttention.photos);
-  const timetableNeedsAttention = params?.timetable === "failed" || params?.timetablePreview === "failed" || Boolean(params?.timetableError) || Boolean(savedAttention.timetable);
+  const timetableNeedsAttention = params?.timetable === "failed" || params?.timetablePreview === "failed" || params?.timetableSync === "failed" || Boolean(params?.timetableError) || Boolean(savedAttention.timetable);
   const peopleNeedsAttention = params?.staff === "failed" || params?.staffSync === "failed" || params?.sync === "failed" || Boolean(savedAttention.people);
   const attendanceNeedsAttention = params?.attendance === "failed" || params?.attendancePreview === "failed" || params?.attendanceSync === "failed" || Boolean(savedAttention.attendance);
 
@@ -416,6 +416,18 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         </StatusBanner>
       ) : null}
 
+      {params?.timetableSync === "success" ? (
+        <StatusBanner variant="success" title="Subject teachers synced.">
+          {previewCount(params.timetableLinkable)} current Arbor subject-teacher links are now shown on student records. Manually entered Anaxi links were kept unchanged.
+        </StatusBanner>
+      ) : null}
+
+      {params?.timetableSync === "failed" || params?.timetableSync === "not-connected" || params?.timetableSync === "confirmation-required" ? (
+        <StatusBanner variant="danger" title="Subject-teacher sync could not run.">
+          {params.timetableError || "No existing subject-teacher links were changed."}
+        </StatusBanner>
+      ) : null}
+
       {params?.preview === "success" ? (
         <StatusBanner
           variant="success"
@@ -529,7 +541,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
               <div className="space-y-4">
                 <div>
                   <H3>Subject teachers</H3>
-                  <MetaText className="mt-1">This is waiting for Arbor to grant access to <code>AcademicUnitAutomaticEnrolment</code>. Once available, Anaxi can show each student&apos;s teachers by subject.</MetaText>
+                  <MetaText className="mt-1">Current Arbor teaching groups map each linked student to their teachers and subjects. Arbor-managed links update nightly; manually entered Anaxi links remain untouched.</MetaText>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <form method="post" action="/api/god/integrations/arbor/preview/timetable" className={actionButtonClass}>
@@ -539,6 +551,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                   <form method="post" action="/api/god/integrations/arbor/preview/timetable/summary" className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
                     <SubmitButton variant="ghost" className="w-full">Preview subject links</SubmitButton>
+                  </form>
+                  <form method="post" action="/api/god/integrations/arbor/sync/timetable" className={actionButtonClass}>
+                    <CsrfInput token={csrfToken} />
+                    <input type="hidden" name="confirm" value="SYNC_TIMETABLE" />
+                    <SubmitButton variant="primary" className="w-full">Sync subject teachers now</SubmitButton>
                   </form>
                 </div>
               </div>
