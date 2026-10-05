@@ -7,7 +7,7 @@ import { mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integr
 import { prisma } from "@/lib/prisma";
 
 type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
-type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[] };
+type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicComplete?: boolean };
 
 function proposedCycleKeys(config: Record<string, unknown>): Set<string> {
   const state = config.assessmentSync && typeof config.assessmentSync === "object"
@@ -42,8 +42,14 @@ export const POST = withApi(async function POST(req: Request) {
   if (!integration) return NextResponse.redirect(new URL("/god/integrations/arbor?assessmentApproval=not-connected", req.url));
 
   const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
+  const state = config.assessmentSync && typeof config.assessmentSync === "object"
+    ? config.assessmentSync as AssessmentSyncState
+    : {};
   const availableKeys = proposedCycleKeys(config);
   const pausing = form.get("action") === "pause";
+  if (!pausing && state.historicComplete !== true) {
+    return NextResponse.redirect(new URL("/god/integrations/arbor?assessmentApproval=discovery-in-progress", req.url));
+  }
   const requestedKeys = pausing ? [] : form.getAll("cycleKey").filter((value): value is string => typeof value === "string");
   const approvedCycleKeys = [...new Set(requestedKeys.filter((key) => availableKeys.has(key)))];
 

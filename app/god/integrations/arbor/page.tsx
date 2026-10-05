@@ -57,6 +57,12 @@ function proposedAssessmentCycles(config: unknown): ProposedAssessmentCycle[] {
   return [...cycles.values()].sort((a, b) => a.label.localeCompare(b.label));
 }
 
+function assessmentReviewHref(cycleKey: string): string {
+  // Cycle keys include academic-year slashes. Encode the whole key so a reverse
+  // proxy cannot split it into multiple URL path segments.
+  return `/god/integrations/arbor/assessments/${Buffer.from(cycleKey).toString("base64url")}`;
+}
+
 // ─── Status banner ────────────────────────────────────────────────────────────
 // Every Arbor action (connect, preview, sync...) redirects back here with query
 // params describing its outcome. One shared banner keeps all of those consistent
@@ -126,6 +132,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
   const assessmentSync = integration?.config?.assessmentSync && typeof integration.config.assessmentSync === "object"
     ? integration.config.assessmentSync as { definitions?: PreparedAssessmentDefinition[]; historicDefinitionCursor?: number; historicComplete?: boolean; historicalDefinitions?: PreparedAssessmentDefinition[] }
     : {};
+  const assessmentDiscoveryComplete = assessmentSync.historicComplete === true;
   const approvedAssessmentCycles = new Set<string>(
     Array.isArray(integration?.config?.assessmentApprovedCycleKeys)
       ? integration.config.assessmentApprovedCycleKeys.filter((key: unknown): key is string => typeof key === "string")
@@ -373,6 +380,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       {params?.assessmentApproval === "paused" ? (
         <StatusBanner variant="success" title="Assessment imports paused.">
           No new Arbor assessment results will be imported until cycles are approved again.
+        </StatusBanner>
+      ) : null}
+      {params?.assessmentApproval === "discovery-in-progress" ? (
+        <StatusBanner variant="danger" title="Assessment approval is not ready yet.">
+          Historic discovery must finish before cycles can be approved, so each approved cycle includes every matching Arbor subject.
         </StatusBanner>
       ) : null}
 
@@ -679,14 +691,14 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                                 return (
                                   <div key={cycle.key} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
                                     <label className="flex min-w-0 cursor-pointer items-start gap-3">
-                                      <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} className="mt-1 accent-accent" />
+                                      <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} disabled={!assessmentDiscoveryComplete} className="mt-1 accent-accent" />
                                       <span className="min-w-0">
                                         <span className="block font-medium">{cycle.label}</span>
                                         <MetaText className="mt-1">{cycle.gradeFormat} · {students} active {students === 1 ? "student" : "students"} · {cycle.definitions.length} Arbor {cycle.definitions.length === 1 ? "definition" : "definitions"}</MetaText>
                                         <MetaText className="mt-1 break-words">{cycle.definitions.slice(0, 3).join(" · ")}{cycle.definitions.length > 3 ? ` +${cycle.definitions.length - 3} more` : ""}</MetaText>
                                       </span>
                                     </label>
-                                    <Link href={`/god/integrations/arbor/assessments/${encodeURIComponent(cycle.key)}`} className="shrink-0 text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
+                                    <Link href={assessmentReviewHref(cycle.key)} className="shrink-0 text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
                                   </div>
                                 );
                               })}
@@ -696,8 +708,10 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                       })}
                     </div>
                     <div className="flex flex-wrap items-center gap-3 border-t border-border/70 pt-4">
-                      <SubmitButton className={actionButtonClass}>Save approved cycles</SubmitButton>
-                      <MetaText>{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} cycle(s) are currently approved.` : "All assessment imports are currently paused."}</MetaText>
+                      <SubmitButton disabled={!assessmentDiscoveryComplete} className={actionButtonClass}>Save approved cycles</SubmitButton>
+                      <MetaText>{assessmentDiscoveryComplete
+                        ? (approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} cycle(s) are currently approved.` : "All assessment imports are currently paused.")
+                        : "Discovery is still in progress. You can review the partial findings, but approval is locked until every relevant definition has been checked."}</MetaText>
                     </div>
                   </form>
                 ) : (

@@ -13,13 +13,29 @@ import { H3, MetaText } from "@/components/ui/typography";
 
 type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
 
+function decodeCycleKey(value: string): string {
+  try {
+    const decoded = Buffer.from(value, "base64url").toString("utf8");
+    return decoded.startsWith("ARBOR:assessment-cycle:") ? decoded : value;
+  } catch {
+    return value;
+  }
+}
+
+function assessmentYearRange(academicYear: string): { from: string; before: string } | undefined {
+  const match = academicYear.match(/^(20\d{2})\/(20\d{2})$/);
+  if (!match) return undefined;
+  return { from: `${match[1]}-09-01`, before: `${match[2]}-09-01` };
+}
+
 function gradeValue(mark: { displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null }): string {
   return [mark.grade?.displayName, mark.grade?.shortName, mark.grade?.code, mark.displayName].find((value): value is string => Boolean(value?.trim())) ?? "No recorded grade";
 }
 
 export default async function ArborAssessmentCycleReviewPage({ params }: { params: Promise<{ cycleKey: string }> }) {
   await requireSuperAdminUser();
-  const { cycleKey } = await params;
+  const { cycleKey: encodedCycleKey } = await params;
+  const cycleKey = decodeCycleKey(encodedCycleKey);
   const db = prisma as any;
   const integration = await db.sharedIntegration.findUnique({ where: { provider: "ARBOR" } });
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") notFound();
@@ -38,8 +54,9 @@ export default async function ArborAssessmentCycleReviewPage({ params }: { param
   const firstMapping = mapArborAssessment(matchingDefinitions[0].label, matchingDefinitions[0].assessmentDate)!;
   const yearGroup = firstMapping.yearGroups.find((value) => mapArborAssessmentForYearGroup(firstMapping, value)?.cycleExternalId === cycleKey)!;
   const cycle = mapArborAssessmentForYearGroup(firstMapping, yearGroup)!;
+  const historicDiscoveryComplete = sync.historicComplete === true;
   const [marks, students] = await Promise.all([
-    new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks(100, 0, matchingDefinitions.slice(0, 20).map((definition) => definition.id)),
+    new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks(100, 0, matchingDefinitions.slice(0, 20).map((definition) => definition.id), assessmentYearRange(cycle.academicYear)),
     db.student.findMany({ where: { externalId: { not: null } }, select: { externalId: true, fullName: true, yearGroup: true } }),
   ]);
   const studentsByExternalId = new Map<string, { externalId: string; fullName: string; yearGroup: string | null }>(
@@ -55,7 +72,9 @@ export default async function ArborAssessmentCycleReviewPage({ params }: { param
       <PageHeader
         eyebrow="God Mode · Arbor"
         title={cycle.cycleLabel}
-        subtitle="Read-only review of the Arbor marks that would be imported into this cycle. No results are created or changed here."
+        subtitle={historicDiscoveryComplete
+          ? "Read-only review of the Arbor marks that would be imported into this cycle. No results are created or changed here."
+          : "Read-only partial review while historic discovery continues. More matching Arbor subjects can appear here before this cycle becomes available for approval."}
         actions={<Link href="/god/integrations/arbor"><Button variant="secondary">Back to Arbor</Button></Link>}
       />
 

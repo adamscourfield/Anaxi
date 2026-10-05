@@ -19,11 +19,17 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-const HISTORIC_DISCOVERY_VERSION = 3;
+const HISTORIC_DISCOVERY_VERSION = 4;
 const DEFINITIONS_PER_RUN = 12;
 
 function pauseForArbor(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 500));
+}
+
+function assessmentYearRange(label: string): { from: string; before: string } | undefined {
+  const match = label.match(/\b(20\d{2})\s*[-/]\s*(20\d{2})\b/);
+  if (!match || Number(match[2]) !== Number(match[1]) + 1) return undefined;
+  return { from: `${match[1]}-09-01`, before: `${match[2]}-09-01` };
 }
 
 function historicDiscoveryOrder(definitions: PreparedDefinition[]): PreparedDefinition[] {
@@ -93,7 +99,7 @@ export const POST = withApi(async function POST(req: Request) {
     for (let inspected = 0; inspected < DEFINITIONS_PER_RUN && definitionCursor < definitions.length; inspected++) {
       const definition = definitions[definitionCursor];
       if (inspected > 0) await pauseForArbor();
-      const marks = await client.listAssessmentMarks(500, definitionPage, [definition.id]);
+      const marks = await client.listAssessmentMarks(500, definitionPage, [definition.id], assessmentYearRange(definition.label));
       for (const mark of marks) {
         if (!mark.assessment) continue;
         const label = arborAssessmentLabel(mark.assessment);

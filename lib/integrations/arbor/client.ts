@@ -123,10 +123,11 @@ export class ArborClient {
     return data.StudentProgressAssessmentMark.length;
   }
 
-  async listAssessmentMarks(pageSize = 100, pageNum = 0, assessmentIds?: string[]): Promise<Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
+  async listAssessmentMarks(pageSize = 100, pageNum = 0, assessmentIds?: string[], dateRange?: { from: string; before: string }): Promise<Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
     const assessmentFilter = assessmentIds?.length ? `, assessment__id_in: [${assessmentIds.map((id) => JSON.stringify(id)).join(", ")}]` : "";
+    const dateFilter = dateRange ? `, assessmentDate_after_or_equal: ${JSON.stringify(dateRange.from)}, assessmentDate_before: ${JSON.stringify(dateRange.before)}` : "";
     const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
-      StudentProgressAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}${assessmentFilter}) {
+      StudentProgressAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}${assessmentFilter}${dateFilter}) {
         id student { id } assessmentDate displayName grade { displayName shortName code } assessment { id displayName assessmentName assessmentShortName }
       }
     }`);
