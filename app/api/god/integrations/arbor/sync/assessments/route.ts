@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
-const ASSESSMENT_POLICY_VERSION = 2;
+const ASSESSMENT_POLICY_VERSION = 3;
 const HISTORIC_DISCOVERY_VERSION = 7;
 const MARK_PAGES_PER_RUN = 12;
 const DEFINITIONS_PER_QUERY = 25;
@@ -59,6 +59,21 @@ function subjectFromLabel(label: string): string {
 
 function markValue(mark: { displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null }): string | null {
   return [mark.grade?.displayName, mark.grade?.shortName, mark.grade?.code, mark.displayName].map((value) => value?.trim()).find((value): value is string => Boolean(value)) ?? null;
+}
+
+function currentAcademicYearStart(): number {
+  const now = new Date();
+  return now.getUTCFullYear() - (now.getUTCMonth() < 8 ? 1 : 0);
+}
+
+/** Restores a student's cohort for historic marks after annual promotion. */
+function yearGroupAtAssessment(studentYearGroup: string | null, academicYear: string): string | null {
+  const year = studentYearGroup?.match(/(?:^|\s)(?:Y|Year\s*)(\d{1,2})\b/i)?.[1];
+  const assessmentStart = Number(academicYear.slice(0, 4));
+  if (!year || !Number.isInteger(assessmentStart)) return studentYearGroup;
+
+  const historicYear = Number(year) - (currentAcademicYearStart() - assessmentStart);
+  return historicYear >= 7 && historicYear <= 13 ? `Y${historicYear}` : null;
 }
 
 /** Imports one paced page from an explicitly approved Arbor assessment definition. */
@@ -182,7 +197,10 @@ export async function POST(req: Request) {
     for (const mark of marks) {
       const student = studentByExternalId.get(mark.student.id); const value = markValue(mark);
       const baseMapping = mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: definition.label, assessmentName: definition.label, assessmentShortName: null }), mark.assessmentDate) ?? provisionalMapping;
-      const mapping = mapArborAssessmentForYearGroup(baseMapping, student?.yearGroup ?? null);
+      const mapping = mapArborAssessmentForYearGroup(
+        baseMapping,
+        yearGroupAtAssessment(student?.yearGroup ?? null, baseMapping.academicYear),
+      );
       if (!student || !value || !mapping || !approvedCycleKeys.has(mapping.cycleExternalId) || !ownerByTenantId.has(student.tenantId)) continue;
       const assessment = await ensureAssessment(db, student.tenantId, ownerByTenantId.get(student.tenantId)!, definition, mapping);
       const normalizedScore = normalizeGrade(value, mapping.gradeFormat);
