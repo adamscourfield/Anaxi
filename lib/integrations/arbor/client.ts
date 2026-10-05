@@ -404,7 +404,11 @@ export class ArborClient {
    * A group roster supplies the students; its tutors supply staff; the linked
    * academic unit supplies the subject.
    */
-  async listTimetableTeacherAssignmentsBatch(membershipPage = 0): Promise<{ assignments: Array<{ studentId: string; teachingGroupId: string; subject: string; staffIds: string[] }>; hasMore: boolean }> {
+  async listTimetableTeacherAssignmentsBatch(membershipPage = 0): Promise<{
+    assignments: Array<{ studentId: string; teachingGroupId: string; subject: string; staffIds: string[] }>;
+    hasMore: boolean;
+    diagnostics: { memberships: number; groupsWithSubjects: number; groupsWithTeachers: number };
+  }> {
     const fields = await this.inspectTimetableMappingFields();
     // Arbor nests a group's subject through its automatic enrolments, rather than
     // directly on TeachingGroup. This is the relationship in Arbor's domain model.
@@ -416,8 +420,8 @@ export class ArborClient {
       TeachingGroupMembership: Array<{ student: { id: string }; teachingGroup: { id: string; academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null } | null }> }> } | null }>;
       TeachingGroupTutor: Array<{ teachingGroup: { id: string } | null; staff: { id: string } | null }>;
     };
-    const readPage = async (membershipPage: number, tutorPage: number) => runArborGraphqlQuery<TimetableData>(this.credentials, `{
-      TeachingGroupMembership(page_size: 100, page_num: ${membershipPage}) {
+    const readMembershipPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "TeachingGroupMembership">>(this.credentials, `{
+      TeachingGroupMembership(page_size: 100, page_num: ${page}) {
         student { id }
         teachingGroup {
           id
@@ -426,15 +430,19 @@ export class ArborClient {
           }
         }
       }
-      TeachingGroupTutor(page_size: 500, page_num: ${tutorPage}) {
+    }`);
+    const readTutorPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "TeachingGroupTutor">>(this.credentials, `{
+      TeachingGroupTutor(page_size: 500, page_num: ${page}) {
         teachingGroup { id }
         staff { id }
       }
     }`);
 
-    const tutors: TimetableData["TeachingGroupTutor"] = [];
-    for (let tutorPage = 0; tutorPage < 20; tutorPage++) {
-      const data = await readPage(0, tutorPage);
+    const membershipData = await readMembershipPage(membershipPage);
+    const tutorData = await readTutorPage(0);
+    const tutors: TimetableData["TeachingGroupTutor"] = [...tutorData.TeachingGroupTutor];
+    for (let tutorPage = 1; tutorPage < 20 && tutorData.TeachingGroupTutor.length === 500; tutorPage++) {
+      const data = await readTutorPage(tutorPage);
       tutors.push(...data.TeachingGroupTutor);
       if (data.TeachingGroupTutor.length < 500) break;
       if (tutorPage === 19) throw new Error("Arbor returned more than 10,000 teaching-group tutors; timetable sync stopped safely.");
@@ -446,16 +454,27 @@ export class ArborClient {
       staff.push(tutor.staff.id);
       staffByGroup.set(tutor.teachingGroup.id, staff);
     }
-    const data = await readPage(membershipPage, 0);
-    const assignments = data.TeachingGroupMembership.flatMap((membership) => {
+    const groupsWithSubjects = new Set<string>();
+    const groupsWithTeachers = new Set<string>();
+    const assignments = membershipData.TeachingGroupMembership.flatMap((membership) => {
         const group = membership.teachingGroup;
         const subjects = group?.academicUnitAutomaticEnrolments
           .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
           .flatMap((enrolment) => enrolment.academicUnit?.subject?.displayName ? [enrolment.academicUnit.subject.displayName] : []) ?? [];
         const staffIds = group ? staffByGroup.get(group.id) ?? [] : [];
+        if (group && subjects.length) groupsWithSubjects.add(group.id);
+        if (group && staffIds.length) groupsWithTeachers.add(group.id);
         return group && staffIds.length ? [...new Set(subjects)].map((subject) => ({ studentId: membership.student.id, teachingGroupId: group.id, subject, staffIds })) : [];
     });
-    return { assignments, hasMore: data.TeachingGroupMembership.length === 100 };
+    return {
+      assignments,
+      hasMore: membershipData.TeachingGroupMembership.length === 100,
+      diagnostics: {
+        memberships: membershipData.TeachingGroupMembership.length,
+        groupsWithSubjects: groupsWithSubjects.size,
+        groupsWithTeachers: groupsWithTeachers.size,
+      },
+    };
   }
 
   /** Reads a small timetable sample before any subject-teacher links are written. */

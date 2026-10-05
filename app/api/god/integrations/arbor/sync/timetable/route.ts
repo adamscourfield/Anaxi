@@ -118,6 +118,9 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("timetablePage", String(page + 1));
     url.searchParams.set("timetableAssignments", String(batch.assignments.length));
     url.searchParams.set("timetableLinkable", String(linked));
+    url.searchParams.set("timetableMemberships", String(batch.diagnostics.memberships));
+    url.searchParams.set("timetableSubjects", String(batch.diagnostics.groupsWithSubjects));
+    url.searchParams.set("timetableTeachers", String(batch.diagnostics.groupsWithTeachers));
     return NextResponse.redirect(url);
   } catch (error) {
     const errorSummary = error instanceof Error ? error.message.slice(0, 500) : "Timetable sync failed.";
