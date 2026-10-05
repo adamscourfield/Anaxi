@@ -8,7 +8,7 @@ import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { prisma } from "@/lib/prisma";
 
 type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
-type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicPage?: number; historicComplete?: boolean; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
+type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicPage?: number; historicDefinitionCursor?: number; historicDefinitionPage?: number; historicComplete?: boolean; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 2;
 
 async function ensureAssessment(db: any, tenantId: string, createdByUserId: string, definition: PreparedDefinition, mapping: ArborAssessmentMapping) {
@@ -50,7 +50,13 @@ export async function POST(req: Request) {
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.json({ skipped: "not connected" });
 
   const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
-  const state = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
+  const savedState = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
+  // A completed zero-result legacy scan should not permanently block the
+  // deterministic definition-by-definition discovery introduced afterwards.
+  const hasHistoricDefinitions = Array.isArray(savedState.historicalDefinitions) && savedState.historicalDefinitions.length > 0;
+  const state: AssessmentSyncState = savedState.historicComplete && !hasHistoricDefinitions
+    ? { ...savedState, historicPage: 0, historicDefinitionCursor: 0, historicDefinitionPage: 0, historicComplete: false }
+    : savedState;
   // Assessment outcomes are high-impact data. Discovery may continue, but no
   // results are written until a super admin has reviewed and approved each
   // proposed Anaxi cycle individually.
@@ -65,8 +71,14 @@ export async function POST(req: Request) {
     // anyone approves the first live import.
     if (state.historicComplete) return NextResponse.json({ skipped: "awaiting assessment cycle approval" });
     try {
-      const historicPage = typeof state.historicPage === "number" && state.historicPage >= 0 ? state.historicPage : 0;
-      const marks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks(100, historicPage);
+      const definitions = Array.isArray(state.definitions)
+        ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string")
+        : [];
+      const historicDefinitionCursor = typeof state.historicDefinitionCursor === "number" && state.historicDefinitionCursor >= 0 ? state.historicDefinitionCursor : 0;
+      const historicDefinitionPage = typeof state.historicDefinitionPage === "number" && state.historicDefinitionPage >= 0 ? state.historicDefinitionPage : 0;
+      const definition = definitions[historicDefinitionCursor];
+      const historicPage = definition ? historicDefinitionPage : (typeof state.historicPage === "number" && state.historicPage >= 0 ? state.historicPage : 0);
+      const marks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks(100, historicPage, definition ? [definition.id] : undefined);
       const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
       const historicalDefinitions = new Map<string, PreparedDefinition>();
       for (const item of known) {
@@ -79,8 +91,11 @@ export async function POST(req: Request) {
         const mapping = mapArborAssessment(label, mark.assessmentDate);
         if (mapping) historicalDefinitions.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
       }
-      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicalDefinitions: [...historicalDefinitions.values()], historicPage: marks.length === 100 ? historicPage + 1 : historicPage, historicComplete: marks.length < 100 } } } });
-      return NextResponse.json({ discovered: historicalDefinitions.size, page: historicPage, complete: marks.length < 100 });
+      const morePagesForDefinition = marks.length === 100;
+      const nextDefinitionCursor = definition && !morePagesForDefinition ? historicDefinitionCursor + 1 : historicDefinitionCursor;
+      const historicComplete = definition ? !morePagesForDefinition && nextDefinitionCursor >= definitions.length : marks.length < 100;
+      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicalDefinitions: [...historicalDefinitions.values()], historicPage: definition ? state.historicPage : (morePagesForDefinition ? historicPage + 1 : historicPage), historicDefinitionCursor: definition ? nextDefinitionCursor : state.historicDefinitionCursor, historicDefinitionPage: definition ? (morePagesForDefinition ? historicDefinitionPage + 1 : 0) : state.historicDefinitionPage, historicComplete } } } });
+      return NextResponse.json({ discovered: historicalDefinitions.size, page: historicPage, definition: definition?.label ?? null, complete: historicComplete });
     } catch (error) {
       return NextResponse.json({ skipped: "historic assessment discovery paused", error: error instanceof Error ? error.message.slice(0, 180) : "Arbor did not complete historic discovery." }, { status: 503 });
     }

@@ -28,9 +28,14 @@ export const POST = withApi(async function POST(req: Request) {
       .filter((definition) => mapArborAssessment(definition.label))
       .sort((a, b) => a.label.localeCompare(b.label));
     const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
+    const existingState = config.assessmentSync && typeof config.assessmentSync === "object"
+      ? config.assessmentSync as Record<string, unknown>
+      : {};
     await db.sharedIntegration.update({
       where: { id: integration.id },
-      data: { config: { ...config, assessmentSync: { definitions: approved, cursor: 0, inspected: 0, matchedMarks: 0, preparedAt: new Date().toISOString() } } },
+      // Catalogue refreshes must not discard historic cycles already found or
+      // reset a long-running historical scan.
+      data: { config: { ...config, assessmentSync: { ...existingState, definitions: approved, cursor: 0, inspected: 0, matchedMarks: 0, preparedAt: new Date().toISOString() } } },
     });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("assessmentActive", "prepared");

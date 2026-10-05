@@ -624,7 +624,10 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                       <CsrfInput token={csrfToken} />
                       <SubmitButton variant="secondary" className="w-full">Refresh catalogue</SubmitButton>
                     </form>
-                    {!assessmentSync.historicComplete ? <form method="post" action="/api/god/integrations/arbor/preview/assessments/history" className={actionButtonClass}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Find historic cycles</SubmitButton></form> : null}
+                    <form method="post" action="/api/god/integrations/arbor/preview/assessments/history" className={actionButtonClass}>
+                      <CsrfInput token={csrfToken} />
+                      <SubmitButton variant="secondary" className="w-full">{assessmentSync.historicComplete ? "Recheck historic cycles" : "Find historic cycles"}</SubmitButton>
+                    </form>
                   </div>
                 </div>
 
