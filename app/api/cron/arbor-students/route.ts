@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { assertCronAuthorized } from "@/lib/cronAuth";
+import { runScheduledArborSync } from "@/lib/integrations/arbor/runScheduledSync";
 
 function londonHour(): number {
   const hour = new Intl.DateTimeFormat("en-GB", {
@@ -16,15 +17,6 @@ export async function GET(req: Request) {
   if (denied) return denied;
   if (londonHour() !== 2) return NextResponse.json({ skipped: "outside 2am Europe/London" });
 
-  const syncUrl = new URL("/api/god/integrations/arbor/sync/students", req.url);
-  const response = await fetch(syncUrl, {
-    method: "POST",
-    headers: {
-      Authorization: req.headers.get("authorization") ?? "",
-      "x-arbor-scheduled-sync": "1",
-    },
-    redirect: "manual",
-  });
-  if (!response.ok) return NextResponse.json({ error: "Arbor student sync failed" }, { status: 500 });
-  return NextResponse.json({ scheduled: true });
+  const sync = await runScheduledArborSync(req, "/api/god/integrations/arbor/sync/students");
+  return NextResponse.json({ scheduled: true, connections: sync.results }, { status: sync.failed ? 207 : 200 });
 }
