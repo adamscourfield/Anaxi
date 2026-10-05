@@ -12,24 +12,22 @@ type PreparedDefinition = { id: string; label: string; assessmentDate?: string |
 type AssessmentSyncState = {
   definitions?: PreparedDefinition[];
   historicalDefinitions?: PreparedDefinition[];
-  historicPage?: number;
-  historicDefinitionCursor?: number;
-  historicDefinitionPage?: number;
+  historicYearCursor?: number;
+  historicMarkPage?: number;
   historicComplete?: boolean;
   historicDiscoveryVersion?: number;
 };
 
-const HISTORIC_DISCOVERY_VERSION = 4;
-const DEFINITIONS_PER_RUN = 12;
+const HISTORIC_DISCOVERY_VERSION = 5;
+const MARK_PAGES_PER_RUN = 12;
+const HISTORIC_ACADEMIC_YEARS = [
+  { label: "2025/2026", from: "2025-09-01", before: "2026-09-01" },
+  { label: "2024/2025", from: "2024-09-01", before: "2025-09-01" },
+  { label: "2026/2027", from: "2026-09-01", before: "2027-09-01" },
+] as const;
 
 function pauseForArbor(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 500));
-}
-
-function assessmentYearRange(label: string): { from: string; before: string } | undefined {
-  const match = label.match(/\b(20\d{2})\s*[-/]\s*(20\d{2})\b/);
-  if (!match || Number(match[2]) !== Number(match[1]) + 1) return undefined;
-  return { from: `${match[1]}-09-01`, before: `${match[2]}-09-01` };
 }
 
 function historicDiscoveryOrder(definitions: PreparedDefinition[]): PreparedDefinition[] {
@@ -72,20 +70,22 @@ export const POST = withApi(async function POST(req: Request) {
   try {
     const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
     const savedState = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
-    // Version one inspected only a single definition per action. Restart it so
-    // discovery uses the batched, date-led approach below.
+    // Earlier versions read every definition's entire mark history in turn.
+    // Restart safely so discovery instead scans each academic year once and
+    // groups every matching subject it finds into the same proposed cycle.
     const state: AssessmentSyncState = savedState.historicComplete || savedState.historicDiscoveryVersion !== HISTORIC_DISCOVERY_VERSION
-      ? { ...savedState, historicalDefinitions: [], historicPage: 0, historicDefinitionCursor: 0, historicDefinitionPage: 0, historicComplete: false }
+      ? { ...savedState, historicalDefinitions: [], historicYearCursor: 0, historicMarkPage: 0, historicComplete: false }
       : savedState;
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
     const definitions = historicDiscoveryOrder(Array.isArray(state.definitions)
       ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(mapArborAssessment(item.label)))
       : []);
-    let definitionCursor = typeof state.historicDefinitionCursor === "number" && state.historicDefinitionCursor >= 0
-      ? state.historicDefinitionCursor
+    const definitionIds = new Set(definitions.map((definition) => definition.id));
+    let yearCursor = typeof state.historicYearCursor === "number" && state.historicYearCursor >= 0
+      ? state.historicYearCursor
       : 0;
-    let definitionPage = typeof state.historicDefinitionPage === "number" && state.historicDefinitionPage >= 0
-      ? state.historicDefinitionPage
+    let markPage = typeof state.historicMarkPage === "number" && state.historicMarkPage >= 0
+      ? state.historicMarkPage
       : 0;
     const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
     const combined = new Map<string, PreparedDefinition>();
@@ -93,32 +93,33 @@ export const POST = withApi(async function POST(req: Request) {
       const mapping = mapArborAssessment(item.label, item.assessmentDate);
       if (mapping) combined.set(`${item.id}:${mapping.cycleExternalId}`, item);
     }
-    // Arbor does not guarantee chronological ordering for its all-marks feed.
-    // Read known definitions directly, twelve at a time, using 500 marks so a
-    // normal subject captures both Autumn and Spring dates in one request.
-    for (let inspected = 0; inspected < DEFINITIONS_PER_RUN && definitionCursor < definitions.length; inspected++) {
-      const definition = definitions[definitionCursor];
+    // Definition labels such as "% Y10 Biology" do not include an academic
+    // year. Reading by definition therefore paged through years of old data
+    // before reaching other subjects. Read dated marks by academic year first,
+    // then retain just the agreed definitions from the Arbor catalogue.
+    for (let inspected = 0; inspected < MARK_PAGES_PER_RUN && yearCursor < HISTORIC_ACADEMIC_YEARS.length; inspected++) {
+      const academicYear = HISTORIC_ACADEMIC_YEARS[yearCursor];
       if (inspected > 0) await pauseForArbor();
-      const marks = await client.listAssessmentMarks(500, definitionPage, [definition.id], assessmentYearRange(definition.label));
+      const marks = await client.listAssessmentMarks(500, markPage, undefined, academicYear);
       for (const mark of marks) {
-        if (!mark.assessment) continue;
+        if (!mark.assessment || !definitionIds.has(mark.assessment.id)) continue;
         const label = arborAssessmentLabel(mark.assessment);
         const mapping = mapArborAssessment(label, mark.assessmentDate);
         if (mapping) combined.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
       }
       if (marks.length < 500) {
-        definitionCursor++;
-        definitionPage = 0;
+        yearCursor++;
+        markPage = 0;
       } else {
-        definitionPage++;
+        markPage++;
       }
     }
-    const historicComplete = definitionCursor >= definitions.length;
+    const historicComplete = yearCursor >= HISTORIC_ACADEMIC_YEARS.length;
     const nextState = {
       ...state,
       historicalDefinitions: [...combined.values()],
-      historicDefinitionCursor: definitionCursor,
-      historicDefinitionPage: definitionPage,
+      historicYearCursor: yearCursor,
+      historicMarkPage: markPage,
       historicComplete,
       historicDiscoveryVersion: HISTORIC_DISCOVERY_VERSION,
     };
