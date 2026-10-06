@@ -12,7 +12,9 @@ type PreparedDefinition = { id: string; label: string; assessmentDate?: string |
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 3;
-const HISTORIC_DISCOVERY_VERSION = 14;
+// Keep the scheduled discovery aligned with the operator-triggered scan.
+// Dated marks are reclassified in v15 before they can be reviewed or approved.
+const HISTORIC_DISCOVERY_VERSION = 15;
 const MARK_PAGES_PER_RUN = 24;
 // A small combined group is paged to completion before moving on, so every
 // subject in the group is retained without serially scanning the full P8 list.

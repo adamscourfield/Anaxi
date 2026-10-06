@@ -21,7 +21,10 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-const HISTORIC_DISCOVERY_VERSION = 14;
+// Version 15 reclassifies dated marks from their date before their reusable
+// Arbor label. Restarting discovery prevents July results appearing in an
+// Autumn review cycle from an older cached scan.
+const HISTORIC_DISCOVERY_VERSION = 15;
 const MARK_PAGES_PER_RUN = 24;
 // Read a small set together, but exhaust its pages before progressing. This
 // preserves full subject rosters without making the P8 catalogue take dozens

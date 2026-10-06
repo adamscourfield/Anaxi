@@ -113,12 +113,10 @@ function namedPeriod(value?: string | null): { label: string; ordinal: number } 
 function periodFor(definitionName: string, periodHint: string | null | undefined, finalResult: boolean, assessmentDate?: string | null): { label: string; ordinal: number } | null {
   if (finalResult) return { label: "Final", ordinal: 90 };
 
-  // A mark-specific hint is more reliable than its reusable definition label.
-  const hintedPeriod = namedPeriod(periodHint);
-  if (hintedPeriod) return hintedPeriod;
-
-  // Dated marks must determine their own term. Definitions can be reused or
-  // retain an old term in Arbor, so they are only a final fallback below.
+  // A reusable Arbor label can retain an old term (for example "Autumn")
+  // while the recorded mark is dated in July. A dated mark therefore always
+  // determines its own term; labels are only safe fallbacks when no date was
+  // returned by Arbor.
   const date = assessmentDate ? new Date(assessmentDate) : null;
   if (date && !Number.isNaN(date.getTime())) {
     const month = date.getUTCMonth();
@@ -129,6 +127,9 @@ function periodFor(definitionName: string, periodHint: string | null | undefined
     // precedence above.
     if (month >= 4 && month <= 7) return { label: "Summer", ordinal: 30 };
   }
+
+  const hintedPeriod = namedPeriod(periodHint);
+  if (hintedPeriod) return hintedPeriod;
 
   return namedPeriod(definitionName);
 }
