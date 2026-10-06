@@ -18,7 +18,7 @@ import { arborConnectionHref } from "@/lib/integrations/arbor/connectionScope";
 // This page embeds a request-specific, httpOnly-cookie-backed CSRF value.
 export const dynamic = "force-dynamic";
 
-type PreparedAssessmentDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null };
+type PreparedAssessmentDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[] };
 type ProposedAssessmentCycle = {
   key: string;
   label: string;
@@ -40,7 +40,7 @@ function proposedAssessmentCycles(config: unknown): ProposedAssessmentCycle[] {
   for (const definition of definitions) {
     const mapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
     if (!mapping) continue;
-    for (const yearGroup of mapping.yearGroups) {
+    for (const yearGroup of definition.yearGroups?.length ? definition.yearGroups : mapping.yearGroups) {
       const cycle = mapArborAssessmentForYearGroup(mapping, yearGroup);
       if (!cycle) continue;
       const existing = cycles.get(cycle.cycleExternalId);

@@ -5,11 +5,11 @@ import { withApi } from "@/lib/apiRoute";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
-import { arborAssessmentLabel, mapArborAssessment } from "@/lib/integrations/arbor/assessmentPolicy";
+import { arborAssessmentLabel, arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[] };
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = {
   definitions?: PreparedDefinition[];
@@ -21,9 +21,9 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-const HISTORIC_DISCOVERY_VERSION = 8;
+const HISTORIC_DISCOVERY_VERSION = 9;
 const MARK_PAGES_PER_RUN = 12;
-const DEFINITIONS_PER_QUERY = 25;
+const DEFINITIONS_PER_QUERY = 1;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
 const HISTORIC_ACADEMIC_YEARS = [
   { label: "2025/2026", from: "2025-09-01", before: "2026-09-01" },
@@ -39,6 +39,16 @@ function definitionsForFamily(definitions: PreparedDefinition[], family: (typeof
   return definitions
     .filter((definition) => mapArborAssessment(definition.label)?.family === family)
     .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: NonNullable<ReturnType<typeof mapArborAssessment>>, currentAcademicLevel: string | null | undefined) {
+  const inferredYearGroup = arborYearGroupAtAssessment(currentAcademicLevel, mapping.academicYear)
+    ?? (mapping.family === "GCSE" ? "Y11" : null);
+  const cycle = inferredYearGroup ? mapArborAssessmentForYearGroup(mapping, inferredYearGroup) : null;
+  if (!cycle || !inferredYearGroup) return;
+  const key = `${definition.id}:${cycle.cycleExternalId}`;
+  const existing = target.get(key);
+  target.set(key, { ...definition, yearGroups: [...new Set([...(existing?.yearGroups ?? []), inferredYearGroup])] });
 }
 
 export const POST = withApi(async function POST(req: Request) {
@@ -81,7 +91,11 @@ export const POST = withApi(async function POST(req: Request) {
     const combined = new Map<string, PreparedDefinition>();
     for (const item of known) {
       const mapping = mapArborAssessment(item.label, item.assessmentDate, item.periodHint);
-      if (mapping) combined.set(`${item.id}:${mapping.cycleExternalId}`, item);
+      if (!mapping) continue;
+      for (const yearGroup of item.yearGroups ?? []) {
+        const cycle = mapArborAssessmentForYearGroup(mapping, yearGroup);
+        if (cycle) combined.set(`${item.id}:${cycle.cycleExternalId}`, item);
+      }
     }
     // Take one page from each family in turn. This prevents the large P8
     // catalogue from delaying A-Level or percentage cycle discovery.
@@ -111,7 +125,7 @@ export const POST = withApi(async function POST(req: Request) {
         if (!mark.assessment) continue;
         const label = arborAssessmentLabel(mark.assessment);
         const mapping = mapArborAssessment(label, mark.assessmentDate, mark.displayName);
-        if (mapping) combined.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate, periodHint: mark.displayName });
+        if (mapping) addHistoricDefinition(combined, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate, periodHint: mark.displayName }, mapping, mark.student.displayAcademicLevel?.displayName);
       }
       if (marks.length < 500) {
         const nextChunk = chunk + 1;

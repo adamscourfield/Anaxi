@@ -32,6 +32,8 @@ import type {
  * needs that confirmed first rather than guessed.
  */
 export class ArborClient {
+  private assessmentMarkScalarFields: Promise<string[]> | null = null;
+
   constructor(private readonly credentials: ArborCredentials) {}
 
   private restUrl(path: string): string {
@@ -123,15 +125,38 @@ export class ArborClient {
     return data.StudentProgressAssessmentMark.length;
   }
 
-  async listAssessmentMarks(pageSize = 100, pageNum = 0, assessmentIds?: string[], dateRange?: { from: string; before: string }): Promise<Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
+  private async getAssessmentMarkScalarFields(): Promise<string[]> {
+    if (!this.assessmentMarkScalarFields) {
+      this.assessmentMarkScalarFields = runArborGraphqlQuery<{
+        __type: { fields: Array<{ name: string; type: { kind: string; name: string | null; ofType: { kind: string; name: string | null } | null } }> } | null;
+      }>(this.credentials, `{
+        __type(name: "StudentProgressAssessmentMark") {
+          fields { name type { kind name ofType { kind name } } }
+        }
+      }`).then((data) => (data.__type?.fields ?? [])
+        .filter((field) => field.type.kind === "SCALAR" || field.type.kind === "ENUM" || field.type.ofType?.kind === "SCALAR" || field.type.ofType?.kind === "ENUM")
+        .map((field) => field.name));
+    }
+    return this.assessmentMarkScalarFields;
+  }
+
+  async listAssessmentMarks(pageSize = 100, pageNum = 0, assessmentIds?: string[], dateRange?: { from: string; before: string }): Promise<Array<{ id: string; student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }; assessmentDate: string | null; displayName: string | null; valueFields: Record<string, string | number | boolean | null>; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
     const assessmentFilter = assessmentIds?.length ? `, assessment__id_in: [${assessmentIds.map((id) => JSON.stringify(id)).join(", ")}]` : "";
     const dateFilter = dateRange ? `, assessmentDate_after_or_equal: ${JSON.stringify(dateRange.from)}, assessmentDate_before: ${JSON.stringify(dateRange.before)}` : "";
-    const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<{ id: string; student: { id: string }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
+    const scalarFields = await this.getAssessmentMarkScalarFields();
+    const selectedScalarFields = scalarFields.filter((field) => !["id", "displayName", "assessmentDate"].includes(field));
+    const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<Record<string, unknown> & { id: string; student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
       StudentProgressAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}${assessmentFilter}${dateFilter}) {
-        id student { id } assessmentDate displayName grade { displayName shortName code } assessment { id displayName assessmentName assessmentShortName }
+        id ${selectedScalarFields.join(" ")} student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } } assessmentDate displayName grade { displayName shortName code } assessment { id displayName assessmentName assessmentShortName }
       }
     }`);
-    return data.StudentProgressAssessmentMark;
+    return data.StudentProgressAssessmentMark.map((mark) => ({
+      ...mark,
+      valueFields: Object.fromEntries(selectedScalarFields.map((field) => {
+        const value = mark[field];
+        return [field, typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? value : null];
+      })),
+    }));
   }
 
   /** Reads every page of recorded progress marks using Arbor's confirmed page size. */
@@ -503,6 +528,34 @@ export class ArborClient {
   async listTimetableTeacherAssignmentsPreview(): Promise<Array<{ studentId: string; teachingGroupId: string; subject: string; staffIds: string[] }>> {
     return (await this.listTimetableTeacherAssignmentsBatch()).assignments;
   }
+}
+
+/** Chooses the meaningful result value from the confirmed fields returned by Arbor. */
+export function arborAssessmentMarkValue(mark: {
+  displayName: string | null;
+  grade: { displayName: string | null; shortName: string | null; code: string | null } | null;
+  valueFields?: Record<string, string | number | boolean | null>;
+}): string | null {
+  const directGrade = [mark.grade?.displayName, mark.grade?.shortName, mark.grade?.code]
+    .map((value) => value?.trim())
+    .find((value): value is string => Boolean(value));
+  if (directGrade) return directGrade;
+
+  const fields = mark.valueFields ?? {};
+  const preferred = ["mark", "value", "result", "score", "numericValue", "percentageValue", "textValue", "gradeValue", "markValue", "resultValue", "resultText", "valueText", "valueNumeric", "assessmentGrade"];
+  for (const field of preferred) {
+    const value = fields[field];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number") return String(value);
+  }
+  // Arbor deployments expose slightly different scalar result names. Use an
+  // explicit value-oriented field only; never fall back to dates or IDs.
+  for (const [field, value] of Object.entries(fields)) {
+    if (!/(?:mark|grade|score|result|value|percent)/i.test(field)) continue;
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number") return String(value);
+  }
+  return mark.displayName?.trim() || null;
 }
 
 export type ArborBehaviourRecords = {

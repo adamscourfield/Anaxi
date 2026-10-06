@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { H3, MetaText } from "@/components/ui/typography";
 import { arborConnectionHref } from "@/lib/integrations/arbor/connectionScope";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[] };
 
 function decodeCycleKey(value: string): string {
   try {
@@ -38,7 +38,8 @@ export default async function ArborAssessmentCycleReviewPage({ params, searchPar
     : [];
   const matchingDefinitions = definitions.filter((definition) => {
     const mapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
-    return mapping?.yearGroups.some((yearGroup) => mapArborAssessmentForYearGroup(mapping, yearGroup)?.cycleExternalId === cycleKey);
+    const discoveredYearGroups = definition.yearGroups?.length ? definition.yearGroups : mapping?.yearGroups ?? [];
+    return discoveredYearGroups.some((yearGroup) => mapArborAssessmentForYearGroup(mapping!, yearGroup)?.cycleExternalId === cycleKey);
   });
   if (!matchingDefinitions.length) notFound();
 

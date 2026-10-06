@@ -6,13 +6,13 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { H3, MetaText } from "@/components/ui/typography";
 import { decryptCredentials } from "@/lib/integrationSecrets";
-import { ArborClient } from "@/lib/integrations/arbor/client";
-import { mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
+import { ArborClient, arborAssessmentMarkValue } from "@/lib/integrations/arbor/client";
+import { arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
 import { arborConnectionHref } from "@/lib/integrations/arbor/connectionScope";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[] };
 type ArborMark = Awaited<ReturnType<ArborClient["listAssessmentMarks"]>>[number];
 
 function decodeCycleKey(value: string): string {
@@ -30,8 +30,14 @@ function assessmentYearRange(academicYear: string): { from: string; before: stri
 }
 
 function gradeValue(mark: ArborMark): string {
-  return [mark.grade?.displayName, mark.grade?.shortName, mark.grade?.code, mark.displayName]
-    .find((value): value is string => Boolean(value?.trim())) ?? "No recorded grade";
+  return arborAssessmentMarkValue(mark) ?? "No recorded grade";
+}
+
+function arborStudentName(mark: ArborMark): string | null {
+  const student = mark.student;
+  const firstName = student.preferredFirstName?.trim() || student.legalFirstName?.trim();
+  const lastName = student.preferredLastName?.trim() || student.legalLastName?.trim();
+  return [firstName, lastName].filter(Boolean).join(" ") || null;
 }
 
 function newestMark(marks: ArborMark[]): ArborMark {
@@ -68,10 +74,17 @@ export default async function ArborAssessmentMarkSheetPage({
   const mapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
   const yearGroup = mapping?.yearGroups.find((value) => mapArborAssessmentForYearGroup(mapping, value)?.cycleExternalId === cycleKey);
   const cycle = mapping && yearGroup ? mapArborAssessmentForYearGroup(mapping, yearGroup) : null;
-  if (!cycle) notFound();
+  if (!cycle || !yearGroup) notFound();
 
-  const marks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext))
+  const allMarks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext))
     .listAssessmentMarksForDefinitionInRange(definition.id, assessmentYearRange(cycle.academicYear));
+  const marks = allMarks.filter((mark) => {
+    const historicYearGroup = arborYearGroupAtAssessment(mark.student.displayAcademicLevel?.displayName, cycle.academicYear);
+    // P8 is an explicitly Year 11 source, so former pupils without a current
+    // academic level can still be reviewed and later archived safely.
+    const fallbackYearGroup = cycle.qualificationType === "GCSE" ? "Y11" : null;
+    return (historicYearGroup ?? fallbackYearGroup) === yearGroup;
+  });
 
   // Arbor's mark records are the subject roster: we intentionally do not add the
   // wider year group, even when a pupil has not yet received a grade.
@@ -86,16 +99,16 @@ export default async function ArborAssessmentMarkSheetPage({
   const students = studentExternalIds.length && tenantIds.length
     ? await db.student.findMany({
       where: { tenantId: { in: tenantIds }, externalId: { in: studentExternalIds } },
-      select: { externalId: true, fullName: true, yearGroup: true },
+      select: { externalId: true, fullName: true, yearGroup: true, status: true },
     })
     : [];
-  const studentsByExternalId = new Map<string, { externalId: string; fullName: string; yearGroup: string | null }>(
-    (students as Array<{ externalId: string; fullName: string; yearGroup: string | null }>).map((student) => [student.externalId, student]),
+  const studentsByExternalId = new Map<string, { externalId: string; fullName: string; yearGroup: string | null; status: string }>(
+    (students as Array<{ externalId: string; fullName: string; yearGroup: string | null; status: string }>).map((student) => [student.externalId, student]),
   );
   const rows = studentExternalIds.map((externalId) => {
     const mark = newestMark(marksByStudent.get(externalId) ?? []);
     return { externalId, mark, student: studentsByExternalId.get(externalId) ?? null };
-  }).sort((a, b) => (a.student?.fullName ?? a.externalId).localeCompare(b.student?.fullName ?? b.externalId));
+  }).sort((a, b) => (a.student?.fullName ?? arborStudentName(a.mark) ?? a.externalId).localeCompare(b.student?.fullName ?? arborStudentName(b.mark) ?? b.externalId));
   const recordedGrades = rows.filter(({ mark }) => gradeValue(mark) !== "No recorded grade").length;
   const reviewPath = `/god/integrations/arbor/assessments/${encodeURIComponent(Buffer.from(cycleKey).toString("base64url"))}`;
 
@@ -128,9 +141,9 @@ export default async function ArborAssessmentMarkSheetPage({
               <tbody className="divide-y divide-border/70">
                 {rows.map(({ externalId, mark, student }) => (
                   <tr key={externalId}>
-                    <td className="px-4 py-3 font-medium">{student?.fullName ?? "Not linked to Anaxi"}</td>
-                    <td className="px-4 py-3">{student?.yearGroup ?? "-"}</td>
-                    <td className="px-4 py-3 text-muted">{student ? "Linked" : "Needs matching"}</td>
+                    <td className="px-4 py-3 font-medium">{student?.fullName ?? arborStudentName(mark) ?? "Former pupil not yet synced"}</td>
+                    <td className="px-4 py-3">{student?.yearGroup ?? yearGroup.replace(/^Y/, "Year ")}</td>
+                    <td className="px-4 py-3 text-muted">{student ? student.status === "ARCHIVED" ? "Archived" : "Linked" : "Historic pupil"}</td>
                     <td className="px-4 py-3">{mark.assessmentDate ? new Date(mark.assessmentDate).toLocaleDateString("en-GB") : "Not supplied"}</td>
                     <td className="px-4 py-3 font-semibold">{gradeValue(mark)}</td>
                   </tr>

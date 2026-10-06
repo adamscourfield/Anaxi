@@ -2,19 +2,21 @@ import { NextResponse } from "next/server";
 import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
 import { assertCronAuthorized } from "@/lib/cronAuth";
 import { decryptCredentials } from "@/lib/integrationSecrets";
-import { arborAssessmentLabel, mapArborAssessment, mapArborAssessmentForYearGroup, type ArborAssessmentMapping } from "@/lib/integrations/arbor/assessmentPolicy";
-import { ArborClient } from "@/lib/integrations/arbor/client";
+import { arborAssessmentLabel, arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup, type ArborAssessmentMapping } from "@/lib/integrations/arbor/assessmentPolicy";
+import { ArborClient, arborAssessmentMarkValue } from "@/lib/integrations/arbor/client";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[] };
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 3;
-const HISTORIC_DISCOVERY_VERSION = 8;
+const HISTORIC_DISCOVERY_VERSION = 9;
 const MARK_PAGES_PER_RUN = 12;
-const DEFINITIONS_PER_QUERY = 25;
+// A combined page can be filled by one large subject, silently hiding the rest.
+// Review each definition separately so every subject gets a fair, complete roster.
+const DEFINITIONS_PER_QUERY = 1;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
 const HISTORIC_ACADEMIC_YEARS = [
   { label: "2025/2026", from: "2025-09-01", before: "2026-09-01" },
@@ -58,23 +60,19 @@ function subjectFromLabel(label: string): string {
   return label.replace(/^.*?\bP8\s*:\s*/i, "").replace(/^\s*A[- ]?Level\s*/i, "").replace(/^.*?%\s*(?:KS\s*3|Y\s*10|Year\s*10)\s*/i, "").replace(/\s+(Autumn|Spring)\s+Term\s*\d+.*$/i, "").trim() || label;
 }
 
-function markValue(mark: { displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null }): string | null {
-  return [mark.grade?.displayName, mark.grade?.shortName, mark.grade?.code, mark.displayName].map((value) => value?.trim()).find((value): value is string => Boolean(value)) ?? null;
-}
+function markValue(mark: Parameters<typeof arborAssessmentMarkValue>[0]): string | null { return arborAssessmentMarkValue(mark); }
 
-function currentAcademicYearStart(): number {
-  const now = new Date();
-  return now.getUTCFullYear() - (now.getUTCMonth() < 8 ? 1 : 0);
-}
-
-/** Restores a student's cohort for historic marks after annual promotion. */
-function yearGroupAtAssessment(studentYearGroup: string | null, academicYear: string): string | null {
-  const year = studentYearGroup?.match(/(?:^|\s)(?:Y|Year\s*)(\d{1,2})\b/i)?.[1];
-  const assessmentStart = Number(academicYear.slice(0, 4));
-  if (!year || !Number.isInteger(assessmentStart)) return studentYearGroup;
-
-  const historicYear = Number(year) - (currentAcademicYearStart() - assessmentStart);
-  return historicYear >= 7 && historicYear <= 13 ? `Y${historicYear}` : null;
+function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: ArborAssessmentMapping, currentAcademicLevel: string | null | undefined) {
+  const inferredYearGroup = arborYearGroupAtAssessment(currentAcademicLevel, mapping.academicYear)
+    ?? (mapping.family === "GCSE" ? "Y11" : null);
+  const cycle = inferredYearGroup ? mapArborAssessmentForYearGroup(mapping, inferredYearGroup) : null;
+  if (!cycle || !inferredYearGroup) return;
+  const key = `${definition.id}:${cycle.cycleExternalId}`;
+  const existing = target.get(key);
+  target.set(key, {
+    ...definition,
+    yearGroups: [...new Set([...(existing?.yearGroups ?? []), inferredYearGroup])],
+  });
 }
 
 /** Imports one paced page from an explicitly approved Arbor assessment definition. */
@@ -120,7 +118,11 @@ export async function POST(req: Request) {
       const historicalDefinitions = new Map<string, PreparedDefinition>();
       for (const item of known) {
         const mapping = mapArborAssessment(item.label, item.assessmentDate, item.periodHint);
-        if (mapping) historicalDefinitions.set(`${item.id}:${mapping.cycleExternalId}`, item);
+        if (!mapping) continue;
+        for (const yearGroup of item.yearGroups ?? []) {
+          const cycle = mapArborAssessmentForYearGroup(mapping, yearGroup);
+          if (cycle) historicalDefinitions.set(`${item.id}:${cycle.cycleExternalId}`, item);
+        }
       }
       for (let inspected = 0; inspected < MARK_PAGES_PER_RUN && historicYearCursor < HISTORIC_ACADEMIC_YEARS.length; inspected++) {
         if (HISTORIC_FAMILY_ORDER.every((family) => historicFamilyProgress[family]?.complete)) {
@@ -148,7 +150,7 @@ export async function POST(req: Request) {
           if (!mark.assessment) continue;
           const label = arborAssessmentLabel(mark.assessment);
           const mapping = mapArborAssessment(label, mark.assessmentDate, mark.displayName);
-          if (mapping) historicalDefinitions.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate, periodHint: mark.displayName });
+          if (mapping) addHistoricDefinition(historicalDefinitions, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate, periodHint: mark.displayName }, mapping, mark.student.displayAcademicLevel?.displayName);
         }
         if (marks.length < 500) {
           const nextChunk = chunk + 1;
@@ -188,7 +190,9 @@ export async function POST(req: Request) {
   try {
     const secondaryTenantIds = integration.schools.filter((school: { tenant: { tenantSettings: { schoolType: string } | null } }) => school.tenant.tenantSettings?.schoolType === "SECONDARY").map((school: { tenantId: string }) => school.tenantId);
     const [students, owners, marks] = await Promise.all([
-      db.student.findMany({ where: { tenantId: { in: secondaryTenantIds }, status: "ACTIVE", externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true, yearGroup: true } }),
+      // Archived pupils remain eligible for historic attainment imports, but are
+      // excluded from day-to-day school views by their Student status.
+      db.student.findMany({ where: { tenantId: { in: secondaryTenantIds }, externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true, yearGroup: true } }),
       db.user.findMany({ where: { tenantId: { in: secondaryTenantIds }, isActive: true }, select: { id: true, tenantId: true }, orderBy: { createdAt: "asc" } }),
       new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks(100, markPage, [definition.id]),
     ]);
@@ -196,12 +200,32 @@ export async function POST(req: Request) {
     const ownerByTenantId = new Map<string, string>(); for (const owner of owners) if (!ownerByTenantId.has(owner.tenantId)) ownerByTenantId.set(owner.tenantId, owner.id);
     let imported = 0;
     for (const mark of marks) {
-      const student = studentByExternalId.get(mark.student.id); const value = markValue(mark);
       const baseMapping = mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: definition.label, assessmentName: definition.label, assessmentShortName: null }), mark.assessmentDate, mark.displayName) ?? provisionalMapping;
-      const mapping = mapArborAssessmentForYearGroup(
-        baseMapping,
-        yearGroupAtAssessment(student?.yearGroup ?? null, baseMapping.academicYear),
-      );
+      let student = studentByExternalId.get(mark.student.id);
+      // A former pupil can have a legitimate historic result but no current Arbor
+      // academic level. Keep a minimal archived record so their results remain
+      // attributable without returning them to operational student lists.
+      if (!student && !mark.student.displayAcademicLevel && secondaryTenantIds.length === 1) {
+        const ownerId = ownerByTenantId.get(secondaryTenantIds[0]);
+        const firstName = mark.student.preferredFirstName?.trim() || mark.student.legalFirstName?.trim();
+        const lastName = mark.student.preferredLastName?.trim() || mark.student.legalLastName?.trim();
+        const fullName = [firstName, lastName].filter(Boolean).join(" ");
+        if (ownerId && fullName) {
+          const historicYearGroup = baseMapping.family === "GCSE" ? "Y11" : arborYearGroupAtAssessment(null, baseMapping.academicYear);
+          const archivedStudent = await db.student.upsert({
+            where: { tenantId_dataSource_externalId: { tenantId: secondaryTenantIds[0], dataSource: "ARBOR", externalId: mark.student.id } },
+            create: { tenantId: secondaryTenantIds[0], fullName, yearGroup: historicYearGroup, status: "ARCHIVED", externalId: mark.student.id, dataSource: "ARBOR" },
+            update: {},
+            select: { id: true, tenantId: true, externalId: true, yearGroup: true },
+          });
+          student = archivedStudent;
+          studentByExternalId.set(mark.student.id, archivedStudent);
+        }
+      }
+      const value = markValue(mark);
+      const historicYearGroup = arborYearGroupAtAssessment(mark.student.displayAcademicLevel?.displayName, baseMapping.academicYear)
+        ?? (baseMapping.family === "GCSE" ? "Y11" : student?.yearGroup ?? null);
+      const mapping = mapArborAssessmentForYearGroup(baseMapping, historicYearGroup);
       if (!student || !value || !mapping || !approvedCycleKeys.has(mapping.cycleExternalId) || !ownerByTenantId.has(student.tenantId)) continue;
       const assessment = await ensureAssessment(db, student.tenantId, ownerByTenantId.get(student.tenantId)!, definition, mapping);
       const normalizedScore = normalizeGrade(value, mapping.gradeFormat);

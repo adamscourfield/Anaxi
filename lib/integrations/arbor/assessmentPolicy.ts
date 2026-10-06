@@ -24,6 +24,16 @@ function academicYearFor(date: Date): string {
   return `${startsIn}/${startsIn + 1}`;
 }
 
+/** Converts Arbor's current academic level into the student's year at a historic assessment. */
+export function arborYearGroupAtAssessment(currentAcademicLevel: string | null | undefined, academicYear: string, now = new Date()): string | null {
+  const match = currentAcademicLevel?.trim().match(/^(?:Year|Y)\s*0?(\d{1,2})$/i);
+  const assessmentStart = Number(academicYear.slice(0, 4));
+  if (!match || !Number.isInteger(assessmentStart)) return null;
+  const currentStart = now.getUTCFullYear() - (now.getUTCMonth() < 8 ? 1 : 0);
+  const historicYear = Number(match[1]) - (currentStart - assessmentStart);
+  return historicYear >= 1 && historicYear <= 13 ? `Y${historicYear}` : null;
+}
+
 function academicYearFromLabel(label: string): string | null {
   const match = label.match(/\b(20\d{2})\s*[-/]\s*(20\d{2})\b/);
   if (!match) return null;
