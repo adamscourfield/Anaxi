@@ -225,6 +225,34 @@ export class ArborClient {
     return data.__type?.fields.map((field) => field.name) ?? [];
   }
 
+  /**
+   * Historic summative outcomes can live in Arbor's progress-batch or
+   * qualification-result models rather than the live progress-mark model.
+   * Probe each source with an ID-only, read-only query so God Mode can report
+   * the exact missing permission instead of guessing which store has grades.
+   */
+  async inspectHistoricAssessmentSources(): Promise<{ available: string[]; blocked: string[] }> {
+    const sources = [
+      "StudentProgressAssessmentMark",
+      "ProgressAssessmentBatch",
+      "ProgressAssessmentBatchTarget",
+      "QualificationResult",
+      "QualificationAward",
+      "QualificationSubject",
+    ];
+    const available: string[] = [];
+    const blocked: string[] = [];
+    for (const source of sources) {
+      try {
+        await runArborGraphqlQuery<Record<string, Array<{ id: string }>>>(this.credentials, `{ ${source}(page_size: 1, page_num: 0) { id } }`);
+        available.push(source);
+      } catch {
+        blocked.push(source);
+      }
+    }
+    return { available, blocked };
+  }
+
   /** One read-only page of the four behaviour sources Anaxi currently measures. */
   async listBehaviourRecords(pageSize = 100, pageNum = 0, startAfter?: string, startBefore?: string): Promise<ArborBehaviourRecords> {
     const pointFilters = startAfter && startBefore ? `, awardedDatetime_after: "${startAfter}", awardedDatetime_before: "${startBefore}"` : "";
