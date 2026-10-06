@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { withApi } from "@/lib/apiRoute";
+import { assertCronAuthorized } from "@/lib/cronAuth";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
@@ -21,10 +22,17 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-// v21 reads each batch target's `allStudents` roster. A parent batch can be a
-// whole year cohort; its `students` relationship is not a subject mark sheet.
-const HISTORIC_DISCOVERY_VERSION = 21;
-const DEFINITIONS_PER_BATCH_QUERY = 20;
+// v22 reads each batch target's `allStudents` roster and prioritises the
+// agreed GCSE/A-Level families before percentage definitions. A parent batch
+// can be a whole year cohort; its `students` relationship is not a subject
+// mark sheet.
+const HISTORIC_DISCOVERY_VERSION = 22;
+const DEFINITIONS_PER_BATCH_QUERY = 80;
+
+function historicDefinitionPriority(definition: PreparedDefinition): number {
+  const family = arborAssessmentFamily(definition.label);
+  return family === "GCSE" ? 0 : family === "A_LEVEL" ? 1 : family === "Y10_PERCENTAGE" ? 2 : 3;
+}
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: NonNullable<ReturnType<typeof mapArborAssessment>>, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
   // P8 GCSE batches are the agreed Year 11 source. Their historic pupils may
@@ -41,14 +49,18 @@ function addHistoricDefinition(target: Map<string, PreparedDefinition>, definiti
 }
 
 export const POST = withApi(async function POST(req: Request) {
-  await requireSuperAdminUser();
-  const form = await req.formData();
-  try { await assertCsrfFromForm(form); } catch {
-    const url = new URL("/god/integrations/arbor", req.url);
-    const connectionId = new URL(req.url).searchParams.get("connectionId");
-    if (connectionId) url.searchParams.set("connectionId", connectionId);
-    url.searchParams.set("csrf", "expired");
-    return NextResponse.redirect(url);
+  const cronDenied = assertCronAuthorized(req);
+  const scheduled = !cronDenied && req.headers.get("x-arbor-scheduled-sync") === "1";
+  if (!scheduled) {
+    await requireSuperAdminUser();
+    const form = await req.formData();
+    try { await assertCsrfFromForm(form); } catch {
+      const url = new URL("/god/integrations/arbor", req.url);
+      const connectionId = new URL(req.url).searchParams.get("connectionId");
+      if (connectionId) url.searchParams.set("connectionId", connectionId);
+      url.searchParams.set("csrf", "expired");
+      return NextResponse.redirect(url);
+    }
   }
   const db = prisma as any;
   const integration = await db.sharedIntegration.findFirst({ where: arborConnectionWhere(req), include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
@@ -84,8 +96,12 @@ export const POST = withApi(async function POST(req: Request) {
       definitions = (await client.listAllAssessmentDefinitions())
         .map((definition) => ({ id: definition.id, label: arborAssessmentLabel(definition) }))
         .filter((definition): definition is PreparedDefinition => Boolean(arborAssessmentFamily(definition.label)))
-        .sort((a, b) => a.label.localeCompare(b.label));
+        .sort((a, b) => historicDefinitionPriority(a) - historicDefinitionPriority(b) || a.label.localeCompare(b.label));
     }
+    // Existing connections may already have an alphabetically prepared queue.
+    // Reorder that queue as well so the next safe request reaches the agreed
+    // GCSE and A-Level subjects before optional percentage assessments.
+    definitions = [...definitions].sort((a, b) => historicDefinitionPriority(a) - historicDefinitionPriority(b) || a.label.localeCompare(b.label));
     const known = [
       ...(Array.isArray(state.pendingHistoricalDefinitions) ? state.pendingHistoricalDefinitions : []),
       ...(Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : []),
@@ -167,8 +183,10 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("assessmentHistoryTargets", String(batches.length));
     url.searchParams.set("assessmentHistoryAccepted", String(acceptedTargets));
     url.searchParams.set("assessmentHistoryReasons", `labels: ${labelSamples.join(" / ") || "none"}; no assessment ${rejected.noAssessment}, unsupported ${rejected.unsupportedLabel}, no period ${rejected.noPeriod}, empty roster ${rejected.emptyRoster}, no cohort ${rejected.noCohort}, already found ${rejected.duplicate}`);
+    if (scheduled) return NextResponse.json({ cycles: combined.size, batches: batches.length, accepted: acceptedTargets, complete: historicComplete });
     return NextResponse.redirect(url);
   } catch (error) {
+    if (scheduled) return NextResponse.json({ error: error instanceof Error ? error.message.slice(0, 180) : "Historic cycle discovery failed." }, { status: 500 });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("assessmentHistory", "failed");
     url.searchParams.set("assessmentHistoryError", error instanceof Error ? error.message.slice(0, 180) : "Historic cycle discovery failed.");

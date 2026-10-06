@@ -101,6 +101,20 @@ function StatusBanner({
   );
 }
 
+function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label: string; detail: string; percent: number; tone?: "success" | "warning" | "danger" | "neutral" }) {
+  const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+  const barClass = tone === "success" ? "bg-success" : tone === "warning" ? "bg-warning" : tone === "danger" ? "bg-danger" : "bg-accent";
+  return (
+    <div className="space-y-2 rounded-sm border border-border/70 bg-[var(--surface-container-lowest)] p-3">
+      <div className="flex items-baseline justify-between gap-3"><span className="text-sm font-semibold">{label}</span><span className="shrink-0 text-xs font-semibold text-muted">{safePercent}%</span></div>
+      <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-container-low)]" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={safePercent}>
+        <div className={`h-full rounded-full transition-[width] duration-500 ${barClass}`} style={{ width: `${safePercent}%` }} />
+      </div>
+      <MetaText>{detail}</MetaText>
+    </div>
+  );
+}
+
 export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ connectionId?: string; new?: string; saved?: string; error?: string; csrf?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentPeriods?: string; assessmentPeriodFields?: string; assessmentSources?: string; assessmentSourcesAvailable?: string; assessmentSourcesBlocked?: string; assessmentSourceFields?: string; assessmentSourceFieldDetails?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentApproval?: string; assessmentApproved?: string; assessmentHistory?: string; assessmentHistoryCycles?: string; assessmentHistoryBatches?: string; assessmentHistoryTargets?: string; assessmentHistoryAccepted?: string; assessmentHistoryReasons?: string; assessmentHistoryError?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableSync?: string; timetablePage?: string; timetableAssignments?: string; timetableLinkable?: string; timetableMemberships?: string; timetableSubjects?: string; timetableTeachers?: string; timetableError?: string; leaveAccess?: string; leaveWriteOperations?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; historicStudents?: string; historicStudentCreated?: string; historicStudentArchived?: string; historicStudentSkipped?: string; historicStudentError?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string; [key: string]: string | string[] | undefined }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integrations, params] = await Promise.all([
@@ -123,16 +137,22 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
     : integrations.find((item: { id: string }) => item.id === params?.connectionId) ?? integrations[0] ?? null;
   const selected = new Set<string>(integration?.schools.map((school: { tenantId: string }) => school.tenantId) ?? []);
   const connectionAction = (path: string) => integration ? arborConnectionHref(path, integration.id) : path;
-  const [latestBehaviourRun, staffProvisioningRequests] = integration
+  const [recentSyncRuns, staffProvisioningRequests] = integration
     ? await Promise.all([
-      (prisma as any).sharedIntegrationSyncRun.findFirst({
-        where: { integrationId: integration.id, entityType: "BEHAVIOUR" },
+      (prisma as any).sharedIntegrationSyncRun.findMany({
+        where: { integrationId: integration.id, entityType: { in: ["STUDENTS", "STAFF", "TIMETABLE", "BEHAVIOUR", "ATTENDANCE", "ASSESSMENTS"] } },
         orderBy: { startedAt: "desc" },
-        select: { status: true, recordsCreated: true, recordsUpdated: true, startedAt: true, finishedAt: true, errorSummary: true },
+        take: 100,
+        select: { entityType: true, status: true, recordsCreated: true, recordsUpdated: true, startedAt: true, finishedAt: true, errorSummary: true },
       }),
       (prisma as any).staffProvisioningRequest.findMany({ where: { integrationId: integration.id, status: "PENDING" }, orderBy: { createdAt: "asc" }, take: 50 }),
     ])
     : [null, []];
+  const latestRunByEntity = new Map<string, { entityType: string; status: string; recordsCreated: number; recordsUpdated: number; startedAt: Date; finishedAt: Date | null; errorSummary: string | null }>();
+  for (const run of (recentSyncRuns ?? []) as Array<{ entityType: string; status: string; recordsCreated: number; recordsUpdated: number; startedAt: Date; finishedAt: Date | null; errorSummary: string | null }>) {
+    if (!latestRunByEntity.has(run.entityType)) latestRunByEntity.set(run.entityType, run);
+  }
+  const latestBehaviourRun = latestRunByEntity.get("BEHAVIOUR") ?? null;
   const hostname = typeof integration?.config?.schoolHostname === "string" ? integration.config.schoolHostname : "";
   const assessmentCycles = proposedAssessmentCycles(integration?.config);
   const assessmentCyclesByYear = new Map<string, ProposedAssessmentCycle[]>();
@@ -146,6 +166,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
     ? integration.config.assessmentSync as { definitions?: PreparedAssessmentDefinition[]; historicBatchDefinitionOffset?: number; historicComplete?: boolean; historicalDefinitions?: PreparedAssessmentDefinition[] }
     : {};
   const assessmentDiscoveryComplete = assessmentSync.historicComplete === true;
+  const preparedAssessmentDefinitions = Array.isArray(assessmentSync.definitions) ? assessmentSync.definitions.length : 0;
+  const assessmentDefinitionsChecked = assessmentDiscoveryComplete
+    ? preparedAssessmentDefinitions
+    : Math.min(typeof assessmentSync.historicBatchDefinitionOffset === "number" ? assessmentSync.historicBatchDefinitionOffset : 0, preparedAssessmentDefinitions);
+  const assessmentDiscoveryPercent = preparedAssessmentDefinitions ? (assessmentDefinitionsChecked / preparedAssessmentDefinitions) * 100 : 0;
   const approvedAssessmentCycles = new Set<string>(
     Array.isArray(integration?.config?.assessmentApprovedCycleKeys)
       ? integration.config.assessmentApprovedCycleKeys.filter((key: unknown): key is string => typeof key === "string")
@@ -263,6 +288,23 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
         <StatusBanner variant="danger" title="Arbor connection needs attention.">
           {params?.test === "not-configured" ? "Save the Arbor application credentials before checking the connection." : integration?.lastSyncError ?? "Try saving the Arbor application credentials again."}
         </StatusBanner>
+      ) : null}
+
+      {integration?.status === "CONNECTED" ? (
+        <Card className="space-y-4" tone="inset">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Connection progress</div><H3 className="mt-1">Arbor connection and import status</H3></div>
+            <MetaText>Each connection is tracked independently.</MetaText>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <ArborProgressRow label="Connection" percent={100} tone="success" detail="Credentials verified and connection is active." />
+            <ArborProgressRow label="Students and staff" percent={latestRunByEntity.has("STUDENTS") && latestRunByEntity.has("STAFF") ? 100 : 0} tone={latestRunByEntity.get("STUDENTS")?.status === "FAILED" || latestRunByEntity.get("STAFF")?.status === "FAILED" ? "danger" : latestRunByEntity.has("STUDENTS") && latestRunByEntity.has("STAFF") ? "success" : "neutral"} detail={latestRunByEntity.has("STUDENTS") && latestRunByEntity.has("STAFF") ? "Latest people syncs have completed." : "Awaiting first completed people sync."} />
+            <ArborProgressRow label="Timetable" percent={latestRunByEntity.get("TIMETABLE")?.status === "SUCCESS" ? 100 : 0} tone={latestRunByEntity.get("TIMETABLE")?.status === "FAILED" ? "danger" : latestRunByEntity.get("TIMETABLE")?.status === "SUCCESS" ? "success" : "neutral"} detail={latestRunByEntity.get("TIMETABLE")?.status === "SUCCESS" ? "Latest timetable page completed." : "Subject-teacher mapping is still awaiting confirmation."} />
+            <ArborProgressRow label="Behaviour" percent={latestRunByEntity.get("BEHAVIOUR")?.status === "SUCCESS" ? 100 : 0} tone={latestRunByEntity.get("BEHAVIOUR")?.status === "FAILED" ? "danger" : latestRunByEntity.get("BEHAVIOUR")?.status === "SUCCESS" ? "success" : "neutral"} detail={latestRunByEntity.get("BEHAVIOUR")?.status === "SUCCESS" ? "Nightly behaviour sync is active." : "Awaiting a completed behaviour sync."} />
+            <ArborProgressRow label="Attendance" percent={latestRunByEntity.get("ATTENDANCE")?.status === "SUCCESS" ? 100 : 0} tone={latestRunByEntity.get("ATTENDANCE")?.status === "FAILED" ? "danger" : latestRunByEntity.get("ATTENDANCE")?.status === "SUCCESS" ? "success" : "neutral"} detail={latestRunByEntity.get("ATTENDANCE")?.status === "SUCCESS" ? "Nightly attendance sync is active." : "Awaiting a completed attendance sync."} />
+            <ArborProgressRow label="Assessment discovery" percent={assessmentDiscoveryPercent} tone={assessmentNeedsAttention ? "warning" : assessmentDiscoveryComplete ? "success" : "neutral"} detail={preparedAssessmentDefinitions ? assessmentDiscoveryComplete ? `${preparedAssessmentDefinitions} prepared definitions checked; ready for review.` : `${assessmentDefinitionsChecked} of ${preparedAssessmentDefinitions} prepared definitions checked automatically.` : "Awaiting the assessment catalogue."} />
+          </div>
+        </Card>
       ) : null}
 
       {params?.photo === "success" ? (
