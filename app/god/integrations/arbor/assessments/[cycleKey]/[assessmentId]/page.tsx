@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { H3, MetaText } from "@/components/ui/typography";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient, arborAssessmentMarkValue } from "@/lib/integrations/arbor/client";
-import { arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
+import { arborHistoricYearGroup, mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
 import { arborConnectionHref } from "@/lib/integrations/arbor/connectionScope";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
@@ -74,16 +74,33 @@ export default async function ArborAssessmentMarkSheetPage({
   const mapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
   const yearGroup = mapping?.yearGroups.find((value) => mapArborAssessmentForYearGroup(mapping, value)?.cycleExternalId === cycleKey);
   const cycle = mapping && yearGroup ? mapArborAssessmentForYearGroup(mapping, yearGroup) : null;
-  if (!cycle || !yearGroup) notFound();
+  if (!mapping || !cycle || !yearGroup) notFound();
 
+  const tenantIds = (integration.schools as Array<{ tenantId: string }>).map((school) => school.tenantId);
+  // Load linked and archived pupils before filtering Arbor's roster. A Year 13
+  // leaver has no current Arbor level, but their archived Anaxi record and
+  // leaving date can still place their historic result in the right cohort.
+  const linkedStudents = tenantIds.length
+    ? await db.student.findMany({
+      where: { tenantId: { in: tenantIds }, externalId: { not: null } },
+      select: { externalId: true, fullName: true, yearGroup: true, status: true },
+    })
+    : [];
+  const studentsByExternalId = new Map<string, { externalId: string; fullName: string; yearGroup: string | null; status: string }>(
+    (linkedStudents as Array<{ externalId: string; fullName: string; yearGroup: string | null; status: string }>).map((student) => [student.externalId, student]),
+  );
   const allMarks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext))
     .listAssessmentMarksForDefinitionInRange(definition.id, assessmentYearRange(cycle.academicYear));
   const marks = allMarks.filter((mark) => {
-    const historicYearGroup = arborYearGroupAtAssessment(mark.student.displayAcademicLevel?.displayName, cycle.academicYear);
-    // P8 is an explicitly Year 11 source, so former pupils without a current
-    // academic level can still be reviewed and later archived safely.
-    const fallbackYearGroup = cycle.qualificationType === "GCSE" ? "Y11" : null;
-    return (historicYearGroup ?? fallbackYearGroup) === yearGroup;
+    const linkedStudent = studentsByExternalId.get(mark.student.id);
+    const historicYearGroup = arborHistoricYearGroup(
+      mark.student.displayAcademicLevel?.displayName,
+      linkedStudent?.status === "ARCHIVED" ? linkedStudent.yearGroup : null,
+      mark.student.leavingDate,
+      cycle.academicYear,
+      mapping.family,
+    );
+    return historicYearGroup === yearGroup;
   });
 
   // Arbor's mark records are the subject roster: we intentionally do not add the
@@ -95,16 +112,6 @@ export default async function ArborAssessmentMarkSheetPage({
     marksByStudent.set(mark.student.id, studentMarks);
   }
   const studentExternalIds = [...marksByStudent.keys()];
-  const tenantIds = (integration.schools as Array<{ tenantId: string }>).map((school) => school.tenantId);
-  const students = studentExternalIds.length && tenantIds.length
-    ? await db.student.findMany({
-      where: { tenantId: { in: tenantIds }, externalId: { in: studentExternalIds } },
-      select: { externalId: true, fullName: true, yearGroup: true, status: true },
-    })
-    : [];
-  const studentsByExternalId = new Map<string, { externalId: string; fullName: string; yearGroup: string | null; status: string }>(
-    (students as Array<{ externalId: string; fullName: string; yearGroup: string | null; status: string }>).map((student) => [student.externalId, student]),
-  );
   const rows = studentExternalIds.map((externalId) => {
     const mark = newestMark(marksByStudent.get(externalId) ?? []);
     return { externalId, mark, student: studentsByExternalId.get(externalId) ?? null };
