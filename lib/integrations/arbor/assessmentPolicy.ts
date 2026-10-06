@@ -24,7 +24,9 @@ export function arborAssessmentFamily(name: string): ArborAssessmentFamily | nul
   if (!label || /\b(predicted|prediction|target|baseline|meg)\b/i.test(label)) return null;
 
   const finalResult = /\b(actual|exam\s*board|final\s*result|results?)\b/i.test(label);
-  if (/\bP8\b/i.test(label) || (finalResult && /\bGCSE\b/i.test(label))) return "GCSE";
+  // P8 also contains Level 3 / AS catalogue entries in this Arbor tenant.
+  // The agreed Anaxi source is P8 GCSE outcomes only.
+  if ((/\bP8\b/i.test(label) && /\bGCSE\b/i.test(label)) || (finalResult && /\bGCSE\b/i.test(label))) return "GCSE";
   if (/\bA[- ]?Level\b/i.test(label)) return "A_LEVEL";
   if (/%\s*KS\s*3\b|\bKS\s*3\b.*%/i.test(label)) return "KS3_PERCENTAGE";
   if (/%\s*(?:Y\s*10|Year\s*10)\b|\b(?:Y\s*10|Year\s*10)\b.*%/i.test(label)) return "Y10_PERCENTAGE";
@@ -74,9 +76,12 @@ function periodFor(definitionName: string, periodHint: string | null | undefined
   const date = assessmentDate ? new Date(assessmentDate) : null;
   if (date && !Number.isNaN(date.getTime())) {
     const month = date.getUTCMonth();
-    if (month >= 8 || month <= 11) return { label: "Autumn", ordinal: 10 };
+    if (month >= 8) return { label: "Autumn", ordinal: 10 };
     if (month >= 0 && month <= 3) return { label: "Spring", ordinal: 20 };
-    if (month >= 4 && month <= 6) return { label: "Summer", ordinal: 30 };
+    // July and August include the summer assessment window and published
+    // examination outcomes; an explicit final-result label still takes
+    // precedence above.
+    if (month >= 4 && month <= 7) return { label: "Summer", ordinal: 30 };
   }
 
   return namedPeriod(definitionName);

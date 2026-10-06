@@ -764,7 +764,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
 
                 <MetaText>{assessmentSync.historicComplete
                   ? "Historic assessment discovery is complete. Every dated cycle found in Arbor is available below for review."
-                  : `Historic assessment discovery is in progress: it is rotating through P8 GCSE, A-Level, Year 10 percentage, and KS3 percentage marks for ${["2025/2026", "2024/2025", "2026/2027"][typeof assessmentSync.historicYearCursor === "number" ? assessmentSync.historicYearCursor : 0] ?? "the remaining academic years"}. Each pass reads up to 6,000 marks and groups every matching subject in the same cycle.`}</MetaText>
+                  : `Historic assessment discovery is in progress: it is rotating through P8 GCSE, A-Level, Year 10 percentage, and KS3 percentage marks for ${["2025/2026", "2024/2025", "2026/2027"][typeof assessmentSync.historicYearCursor === "number" ? assessmentSync.historicYearCursor : 0] ?? "the remaining academic years"}. The cycles below are preliminary while remaining subject definitions are checked; each pass reads up to 12,000 marks and groups every matching subject in the same cycle.`}</MetaText>
 
                 {assessmentCycles.length ? (
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/assessments/approval")} className="space-y-4">

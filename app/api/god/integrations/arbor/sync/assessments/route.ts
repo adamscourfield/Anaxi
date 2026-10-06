@@ -12,8 +12,8 @@ type PreparedDefinition = { id: string; label: string; assessmentDate?: string |
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 3;
-const HISTORIC_DISCOVERY_VERSION = 11;
-const MARK_PAGES_PER_RUN = 12;
+const HISTORIC_DISCOVERY_VERSION = 12;
+const MARK_PAGES_PER_RUN = 24;
 // A combined page can be filled by one large subject, silently hiding the rest.
 // Review each definition separately so every subject gets a fair, complete roster.
 const DEFINITIONS_PER_QUERY = 1;
