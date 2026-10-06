@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
 import { assertCronAuthorized } from "@/lib/cronAuth";
 import { decryptCredentials } from "@/lib/integrationSecrets";
-import { arborAssessmentLabel, arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup, type ArborAssessmentMapping } from "@/lib/integrations/arbor/assessmentPolicy";
+import { arborAssessmentFamily, arborAssessmentLabel, arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup, type ArborAssessmentMapping } from "@/lib/integrations/arbor/assessmentPolicy";
 import { ArborClient, arborAssessmentMarkValue } from "@/lib/integrations/arbor/client";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
@@ -12,7 +12,7 @@ type PreparedDefinition = { id: string; label: string; assessmentDate?: string |
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 3;
-const HISTORIC_DISCOVERY_VERSION = 10;
+const HISTORIC_DISCOVERY_VERSION = 11;
 const MARK_PAGES_PER_RUN = 12;
 // A combined page can be filled by one large subject, silently hiding the rest.
 // Review each definition separately so every subject gets a fair, complete roster.
@@ -30,7 +30,7 @@ function pauseForArbor(): Promise<void> {
 
 function definitionsForFamily(definitions: PreparedDefinition[], family: (typeof HISTORIC_FAMILY_ORDER)[number]): PreparedDefinition[] {
   return definitions
-    .filter((definition) => mapArborAssessment(definition.label)?.family === family)
+    .filter((definition) => arborAssessmentFamily(definition.label) === family)
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     if (state.historicComplete) return NextResponse.json({ skipped: "awaiting assessment cycle approval" });
     try {
       const definitions = Array.isArray(state.definitions)
-        ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(mapArborAssessment(item.label)))
+        ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(arborAssessmentFamily(item.label)))
         : [];
       let historicYearCursor = typeof state.historicYearCursor === "number" && state.historicYearCursor >= 0 ? state.historicYearCursor : 0;
       let historicFamilyCursor = typeof state.historicFamilyCursor === "number" && state.historicFamilyCursor >= 0 ? state.historicFamilyCursor : 0;
@@ -175,14 +175,13 @@ export async function POST(req: Request) {
   }
   const queuedDefinitions = Array.isArray(state.definitions) ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string") : [];
   // Replace the earlier broad discovery queue with the agreed Secondary-only policy.
-  const definitions = state.policyVersion === ASSESSMENT_POLICY_VERSION ? queuedDefinitions : queuedDefinitions.filter((definition) => mapArborAssessment(definition.label));
+  const definitions = state.policyVersion === ASSESSMENT_POLICY_VERSION ? queuedDefinitions : queuedDefinitions.filter((definition) => arborAssessmentFamily(definition.label));
   if (!definitions.length) return NextResponse.json({ skipped: "assessment catalogue has not been prepared" });
 
   const cursor = state.policyVersion === ASSESSMENT_POLICY_VERSION && typeof state.cursor === "number" && state.cursor >= 0 ? state.cursor % definitions.length : 0;
   const markPage = state.policyVersion === ASSESSMENT_POLICY_VERSION && typeof state.markPage === "number" && state.markPage >= 0 ? state.markPage : 0;
   const definition = definitions[cursor];
-  const provisionalMapping = mapArborAssessment(definition.label);
-  if (!provisionalMapping) {
+  if (!arborAssessmentFamily(definition.label)) {
     await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, policyVersion: ASSESSMENT_POLICY_VERSION, definitions, cursor: (cursor + 1) % definitions.length, markPage: 0 } } } });
     return NextResponse.json({ skipped: definition.label });
   }
@@ -200,7 +199,8 @@ export async function POST(req: Request) {
     const ownerByTenantId = new Map<string, string>(); for (const owner of owners) if (!ownerByTenantId.has(owner.tenantId)) ownerByTenantId.set(owner.tenantId, owner.id);
     let imported = 0;
     for (const mark of marks) {
-      const baseMapping = mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: definition.label, assessmentName: definition.label, assessmentShortName: null }), mark.assessmentDate, mark.displayName) ?? provisionalMapping;
+      const baseMapping = mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: definition.label, assessmentName: definition.label, assessmentShortName: null }), mark.assessmentDate, mark.displayName);
+      if (!baseMapping) continue;
       let student = studentByExternalId.get(mark.student.id);
       // A former pupil can have a legitimate historic result but no current Arbor
       // academic level. Keep a minimal archived record so their results remain

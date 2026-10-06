@@ -18,6 +18,19 @@ export type ArborAssessmentMapping = {
   isFinalPoint: boolean;
 };
 
+/** Identifies an agreed assessment family without assuming a term. */
+export function arborAssessmentFamily(name: string): ArborAssessmentFamily | null {
+  const label = name.trim();
+  if (!label || /\b(predicted|prediction|target|baseline|meg)\b/i.test(label)) return null;
+
+  const finalResult = /\b(actual|exam\s*board|final\s*result|results?)\b/i.test(label);
+  if (/\bP8\b/i.test(label) || (finalResult && /\bGCSE\b/i.test(label))) return "GCSE";
+  if (/\bA[- ]?Level\b/i.test(label)) return "A_LEVEL";
+  if (/%\s*KS\s*3\b|\bKS\s*3\b.*%/i.test(label)) return "KS3_PERCENTAGE";
+  if (/%\s*(?:Y\s*10|Year\s*10)\b|\b(?:Y\s*10|Year\s*10)\b.*%/i.test(label)) return "Y10_PERCENTAGE";
+  return null;
+}
+
 function academicYearFor(date: Date): string {
   const year = date.getUTCFullYear();
   const startsIn = date.getUTCMonth() >= 8 ? year : year - 1;
@@ -72,16 +85,10 @@ function periodFor(definitionName: string, periodHint: string | null | undefined
 /** Maps only the agreed Goresbrook Secondary assessment families. */
 export function mapArborAssessment(name: string, assessmentDate?: string | null, periodHint?: string | null): ArborAssessmentMapping | null {
   const label = name.trim();
-  if (!label || /\b(predicted|prediction|target|baseline|meg)\b/i.test(label)) return null;
+  if (!label) return null;
 
   const finalResult = /\b(actual|exam\s*board|final\s*result|results?)\b/i.test(label);
-  let family: ArborAssessmentFamily | null = null;
-  // Routine GCSE assessments are deliberately excluded: the agreed source is
-  // P8, with GCSE included only when it is explicitly an external final result.
-  if (/\bP8\b/i.test(label) || (finalResult && /\bGCSE\b/i.test(label))) family = "GCSE";
-  else if (/\bA[- ]?Level\b/i.test(label)) family = "A_LEVEL";
-  else if (/%\s*KS\s*3\b|\bKS\s*3\b.*%/i.test(label)) family = "KS3_PERCENTAGE";
-  else if (/%\s*(?:Y\s*10|Year\s*10)\b|\b(?:Y\s*10|Year\s*10)\b.*%/i.test(label)) family = "Y10_PERCENTAGE";
+  const family = arborAssessmentFamily(label);
   if (!family) return null;
 
   // Final external outcomes are intentionally limited to GCSE and A-Level.

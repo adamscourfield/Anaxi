@@ -5,7 +5,7 @@ import { withApi } from "@/lib/apiRoute";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
-import { arborAssessmentLabel, mapArborAssessment } from "@/lib/integrations/arbor/assessmentPolicy";
+import { arborAssessmentFamily, arborAssessmentLabel } from "@/lib/integrations/arbor/assessmentPolicy";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
@@ -26,7 +26,7 @@ export const POST = withApi(async function POST(req: Request) {
     const definitions = await client.listAllAssessmentDefinitions();
     const approved = definitions
       .map((definition) => ({ id: definition.id, label: arborAssessmentLabel(definition) }))
-      .filter((definition) => mapArborAssessment(definition.label))
+      .filter((definition) => Boolean(arborAssessmentFamily(definition.label)))
       .sort((a, b) => a.label.localeCompare(b.label));
     const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
     const existingState = config.assessmentSync && typeof config.assessmentSync === "object"

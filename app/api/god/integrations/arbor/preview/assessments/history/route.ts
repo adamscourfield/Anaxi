@@ -5,7 +5,7 @@ import { withApi } from "@/lib/apiRoute";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
-import { arborAssessmentLabel, arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
+import { arborAssessmentFamily, arborAssessmentLabel, arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
@@ -21,7 +21,7 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-const HISTORIC_DISCOVERY_VERSION = 10;
+const HISTORIC_DISCOVERY_VERSION = 11;
 const MARK_PAGES_PER_RUN = 12;
 const DEFINITIONS_PER_QUERY = 1;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
@@ -37,7 +37,7 @@ function pauseForArbor(): Promise<void> {
 
 function definitionsForFamily(definitions: PreparedDefinition[], family: (typeof HISTORIC_FAMILY_ORDER)[number]): PreparedDefinition[] {
   return definitions
-    .filter((definition) => mapArborAssessment(definition.label)?.family === family)
+    .filter((definition) => arborAssessmentFamily(definition.label) === family)
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
@@ -76,7 +76,7 @@ export const POST = withApi(async function POST(req: Request) {
       : savedState;
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
     let definitions = Array.isArray(state.definitions)
-      ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(mapArborAssessment(item.label)))
+      ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(arborAssessmentFamily(item.label)))
       : [];
     // A historic review request must be self-contained. If a deployment or
     // connection migration left the cached catalogue empty, rebuild it here
@@ -85,7 +85,7 @@ export const POST = withApi(async function POST(req: Request) {
     if (!definitions.length) {
       definitions = (await client.listAllAssessmentDefinitions())
         .map((definition) => ({ id: definition.id, label: arborAssessmentLabel(definition) }))
-        .filter((definition): definition is PreparedDefinition => Boolean(mapArborAssessment(definition.label)))
+        .filter((definition): definition is PreparedDefinition => Boolean(arborAssessmentFamily(definition.label)))
         .sort((a, b) => a.label.localeCompare(b.label));
     }
     let yearCursor = typeof state.historicYearCursor === "number" && state.historicYearCursor >= 0
