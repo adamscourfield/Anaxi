@@ -102,7 +102,11 @@ export default async function ArborAssessmentMarkSheetPage({
   );
   const allMarks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext))
     .listAssessmentMarksForDefinitionInRange(definition.id, assessmentYearRange(cycle.academicYear));
-  const termMarks = allMarks.filter((mark) => {
+  // Arbor accepts an assessment filter but a review must not rely on that
+  // server-side filter alone. Verify the relationship on every returned mark
+  // before it can appear in a subject sheet.
+  const subjectMarks = allMarks.filter((mark) => mark.assessment?.id === definition.id);
+  const termMarks = subjectMarks.filter((mark) => {
     // Arbor returns every dated mark for this subject definition. Keep only
     // the term represented by the requested cycle; otherwise a July result
     // can incorrectly replace an Autumn mark in the review grid.
@@ -151,7 +155,7 @@ export default async function ArborAssessmentMarkSheetPage({
       />
 
       <Card className="grid gap-4 sm:grid-cols-3">
-        <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Arbor subject roster</div><div className="mt-1 text-2xl font-semibold">{new Set(termMarks.map((mark) => mark.student.id)).size}</div><MetaText>Returned for this subject and term</MetaText></div>
+        <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Arbor subject roster</div><div className="mt-1 text-2xl font-semibold">{new Set(termMarks.map((mark) => mark.student.id)).size}</div><MetaText>{subjectMarks.length} records verified for this subject</MetaText></div>
         <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Recorded marks</div><div className="mt-1 text-2xl font-semibold">{recordedGrades}</div><MetaText>With a grade or result</MetaText></div>
         <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Included in this cycle</div><div className="mt-1 text-2xl font-semibold">{rows.length}</div><MetaText>{rows.filter((row) => row.student).length} linked to Anaxi</MetaText></div>
       </Card>
