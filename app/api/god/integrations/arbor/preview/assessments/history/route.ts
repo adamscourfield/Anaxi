@@ -74,6 +74,7 @@ export const POST = withApi(async function POST(req: Request) {
     const batchPage = typeof state.historicBatchPage === "number" && state.historicBatchPage >= 0 ? state.historicBatchPage : 0;
     const batches = await client.listProgressAssessmentBatches(50, batchPage);
     const targets = await client.listProgressAssessmentBatchTargets(batches.map((batch) => batch.id));
+    let acceptedTargets = 0;
     for (const target of targets) {
       const batch = target.progressAssessmentBatch;
       if (!batch?.assessment) continue;
@@ -84,7 +85,9 @@ export const POST = withApi(async function POST(req: Request) {
       if (!mapping) continue;
       const definition: PreparedDefinition = { id: target.id, label, assessmentDate, periodHint: batch.batchName ?? target.displayName, source: "BATCH_TARGET" };
       const roster = target.students.length ? target.students : target.studentProgressAssessmentMarks.map((mark) => mark.student);
+      const before = combined.size;
       for (const student of roster) addHistoricDefinition(combined, definition, mapping, student, archivedYearGroupByExternalId.get(student.id));
+      if (combined.size > before) acceptedTargets++;
     }
     const historicComplete = batches.length < 50;
     const nextState = {
@@ -98,6 +101,9 @@ export const POST = withApi(async function POST(req: Request) {
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("assessmentHistory", historicComplete ? "complete" : "progress");
     url.searchParams.set("assessmentHistoryCycles", String(combined.size));
+    url.searchParams.set("assessmentHistoryBatches", String(batches.length));
+    url.searchParams.set("assessmentHistoryTargets", String(targets.length));
+    url.searchParams.set("assessmentHistoryAccepted", String(acceptedTargets));
     return NextResponse.redirect(url);
   } catch (error) {
     const url = new URL("/god/integrations/arbor", req.url);
