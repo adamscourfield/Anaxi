@@ -253,15 +253,41 @@ export class ArborClient {
     return { available, blocked };
   }
 
-  /** Returns the permitted relationship fields needed to map historic results. */
+  /**
+   * Returns the permitted relationship fields needed to map historic results.
+   *
+   * Arbor's entity names alone are not sufficient to form a safe nested query:
+   * the relationship can resolve to an object, a connection, or a scalar. Keep
+   * the GraphQL type beside each field so the integration is built from the
+   * tenant's schema rather than trial-and-error requests against pupil data.
+   */
   async inspectHistoricAssessmentSourceFields(): Promise<Record<string, string[]>> {
     const sources = ["ProgressAssessmentBatch", "ProgressAssessmentBatchTarget", "QualificationResult", "QualificationAward", "QualificationSubject"];
     const result: Record<string, string[]> = {};
     for (const source of sources) {
-      const data = await runArborGraphqlQuery<{ __type: { fields: Array<{ name: string }> } | null }>(this.credentials, `{
-        __type(name: ${JSON.stringify(source)}) { fields { name } }
+      const data = await runArborGraphqlQuery<{
+        __type: { fields: Array<{ name: string; type: { kind: string; name: string | null; ofType: { kind: string; name: string | null; ofType: { kind: string; name: string | null } | null } | null } }> } | null;
+        __schema: { queryType: { fields: Array<{ name: string; args: Array<{ name: string }> }> } };
+      }>(this.credentials, `{
+        __type(name: ${JSON.stringify(source)}) {
+          fields {
+            name
+            type { kind name ofType { kind name ofType { kind name } } }
+          }
+        }
+        __schema { queryType { fields { name args { name } } } }
       }`);
-      result[source] = data.__type?.fields.map((field) => field.name) ?? [];
+      const formatType = (type: { kind: string; name: string | null; ofType: { kind: string; name: string | null; ofType: { kind: string; name: string | null } | null } | null }): string => {
+        if (type.name) return type.name;
+        if (type.ofType?.name) return `${type.kind}<${type.ofType.name}>`;
+        if (type.ofType?.ofType?.name) return `${type.kind}<${type.ofType.kind}<${type.ofType.ofType.name}>>`;
+        return type.kind;
+      };
+      const query = data.__schema.queryType.fields.find((field) => field.name === source);
+      result[source] = [
+        ...(data.__type?.fields.map((field) => `${field.name}: ${formatType(field.type)}`) ?? []),
+        `query arguments: ${(query?.args.map((arg) => arg.name).join(", ") || "none")}`,
+      ];
     }
     return result;
   }
