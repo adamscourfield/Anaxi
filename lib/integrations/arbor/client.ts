@@ -168,8 +168,13 @@ export class ArborClient {
   async listAssessmentMarksForDefinitionInRange(assessmentId: string, dateRange?: { from: string; before: string }): Promise<Awaited<ReturnType<typeof this.listAssessmentMarks>>> {
     const marks: Awaited<ReturnType<typeof this.listAssessmentMarks>> = [];
     for (let pageNum = 0; pageNum < 20; pageNum++) {
-      const page = await this.listAssessmentMarks(500, pageNum, [assessmentId], dateRange);
-      marks.push(...page);
+      // Arbor's combined subject-and-date filter can return an incomplete
+      // roster for historic assessments. Read the complete subject definition
+      // and apply the simple date boundary locally instead.
+      const page = await this.listAssessmentMarks(500, pageNum, [assessmentId]);
+      marks.push(...(dateRange
+        ? page.filter((mark) => Boolean(mark.assessmentDate) && mark.assessmentDate! >= dateRange.from && mark.assessmentDate! < dateRange.before)
+        : page));
       if (page.length < 500) return marks;
     }
     throw new Error("Arbor returned more than 10,000 marks for one assessment; review stopped safely.");
