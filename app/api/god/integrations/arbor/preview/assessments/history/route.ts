@@ -19,11 +19,11 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-// v17 reads Arbor's actual mark-sheet targets filtered to the agreed
-// assessment definitions. Earlier releases inferred a
+// v18 reads the parent batch roster when Arbor exposes empty target-level
+// relationships. Earlier releases inferred a
 // roster from the generic progress-mark stream, which is incomplete for
 // historic senior cohorts and can cross-contaminate subject lists.
-const HISTORIC_DISCOVERY_VERSION = 17;
+const HISTORIC_DISCOVERY_VERSION = 18;
 const DEFINITIONS_PER_BATCH_QUERY = 20;
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: NonNullable<ReturnType<typeof mapArborAssessment>>, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
