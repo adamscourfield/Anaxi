@@ -158,6 +158,20 @@ export class ArborClient {
     return marks;
   }
 
+  /**
+   * Reads a complete subject mark sheet for review. A subject normally has one
+   * record per pupil, but paging keeps the review correct for larger cohorts.
+   */
+  async listAssessmentMarksForDefinitionInRange(assessmentId: string, dateRange?: { from: string; before: string }): Promise<Awaited<ReturnType<typeof this.listAssessmentMarks>>> {
+    const marks: Awaited<ReturnType<typeof this.listAssessmentMarks>> = [];
+    for (let pageNum = 0; pageNum < 20; pageNum++) {
+      const page = await this.listAssessmentMarks(500, pageNum, [assessmentId], dateRange);
+      marks.push(...page);
+      if (page.length < 500) return marks;
+    }
+    throw new Error("Arbor returned more than 10,000 marks for one assessment; review stopped safely.");
+  }
+
   /** Lists the assessment catalogue itself, independently of mark pagination. */
   async listAllAssessmentDefinitions(): Promise<Array<{ id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null }>> {
     const assessments: Array<{ id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null }> = [];
