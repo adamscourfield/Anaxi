@@ -143,7 +143,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
   }
   const assessmentYears = [...assessmentCyclesByYear.keys()].sort((a, b) => b.localeCompare(a));
   const assessmentSync = integration?.config?.assessmentSync && typeof integration.config.assessmentSync === "object"
-    ? integration.config.assessmentSync as { definitions?: PreparedAssessmentDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicComplete?: boolean; historicalDefinitions?: PreparedAssessmentDefinition[] }
+    ? integration.config.assessmentSync as { definitions?: PreparedAssessmentDefinition[]; historicBatchDefinitionOffset?: number; historicComplete?: boolean; historicalDefinitions?: PreparedAssessmentDefinition[] }
     : {};
   const assessmentDiscoveryComplete = assessmentSync.historicComplete === true;
   const approvedAssessmentCycles = new Set<string>(
@@ -794,8 +794,8 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 </div>
 
                 <MetaText>{assessmentSync.historicComplete
-                  ? "Historic assessment discovery is complete. Every dated cycle found in Arbor is available below for review."
-                  : `Historic assessment discovery is in progress: it is rotating through P8 GCSE, A-Level, Year 10 percentage, and KS3 percentage marks for ${["2025/2026", "2024/2025", "2026/2027"][typeof assessmentSync.historicYearCursor === "number" ? assessmentSync.historicYearCursor : 0] ?? "the remaining academic years"}. The cycles below are preliminary while remaining subject definitions are checked; each pass reads up to 12,000 marks and groups every matching subject in the same cycle.`}</MetaText>
+                  ? "Historic assessment discovery is complete. Every matching Arbor mark-sheet target has been checked and the cycles below are ready for review."
+                  : `Historic assessment discovery is reading the agreed P8 GCSE, A-Level, Year 10 percentage, and KS3 percentage definitions through Arbor's subject mark-sheet targets. ${typeof assessmentSync.historicBatchDefinitionOffset === "number" && Array.isArray(assessmentSync.definitions) ? `${Math.min(assessmentSync.historicBatchDefinitionOffset, assessmentSync.definitions.length)} of ${assessmentSync.definitions.length} prepared definitions have been checked. ` : ""}Each pass uses only the pupils and marks assigned by Arbor to that subject.`}</MetaText>
 
                 {assessmentCycles.length ? (
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/assessments/approval")} className="space-y-4">
@@ -843,7 +843,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                   <div className="rounded-sm border border-dashed border-border bg-[var(--surface-container-low)] p-5">
                     <H3>No assessment cycles are ready to review yet</H3>
                     <MetaText className="mt-1">{Array.isArray(assessmentSync.definitions) && assessmentSync.definitions.length
-                      ? "Click Find historic cycles to scan the prepared Arbor definitions for dated Autumn, Spring, Summer, and final-result marks. This is read-only."
+                      ? "Click Find historic cycles to read the prepared Arbor definitions through their subject mark-sheet targets. This is read-only."
                       : "Click Find historic cycles to prepare the agreed P8 GCSE, A-Level, KS3 percentage, Year 10 percentage, and final-result definitions, then start the dated review. This is read-only."}</MetaText>
                   </div>
                 )}
