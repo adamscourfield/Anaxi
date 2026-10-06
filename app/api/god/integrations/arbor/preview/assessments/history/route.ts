@@ -19,15 +19,20 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-// v18 reads the parent batch roster when Arbor exposes empty target-level
+// v19 reads the parent batch roster when Arbor exposes empty target-level
 // relationships. Earlier releases inferred a
 // roster from the generic progress-mark stream, which is incomplete for
 // historic senior cohorts and can cross-contaminate subject lists.
-const HISTORIC_DISCOVERY_VERSION = 18;
+const HISTORIC_DISCOVERY_VERSION = 19;
 const DEFINITIONS_PER_BATCH_QUERY = 20;
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: NonNullable<ReturnType<typeof mapArborAssessment>>, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
-  const inferredYearGroup = arborHistoricYearGroup(student.displayAcademicLevel?.displayName, archivedYearGroup, student.leavingDate, mapping.academicYear, mapping.family);
+  // P8 GCSE batches are the agreed Year 11 source. Their historic pupils may
+  // no longer have a current academic level, so do not let a missing profile
+  // field hide the whole GCSE cycle.
+  const inferredYearGroup = mapping.family === "GCSE"
+    ? "Y11"
+    : arborHistoricYearGroup(student.displayAcademicLevel?.displayName, archivedYearGroup, student.leavingDate, mapping.academicYear, mapping.family);
   const cycle = inferredYearGroup ? mapArborAssessmentForYearGroup(mapping, inferredYearGroup) : null;
   if (!cycle || !inferredYearGroup) return;
   const key = `${definition.id}:${cycle.cycleExternalId}`;

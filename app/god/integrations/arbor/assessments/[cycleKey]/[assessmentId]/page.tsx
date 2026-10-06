@@ -162,7 +162,7 @@ export default async function ArborAssessmentMarkSheetPage({
     );
     return Boolean(markMapping && mapArborAssessmentForYearGroup(markMapping, yearGroup)?.cycleExternalId === cycleKey);
   });
-  const marks = termMarks.filter((mark) => {
+  const marks = (batch || batchTarget) ? termMarks : termMarks.filter((mark) => {
     const linkedStudent = studentsByExternalId.get(mark.student.id);
     const historicYearGroup = arborHistoricYearGroup(
       mark.student.displayAcademicLevel?.displayName,
