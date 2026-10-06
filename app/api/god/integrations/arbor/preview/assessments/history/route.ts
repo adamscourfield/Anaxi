@@ -44,7 +44,13 @@ function definitionsForFamily(definitions: PreparedDefinition[], family: (typeof
 export const POST = withApi(async function POST(req: Request) {
   await requireSuperAdminUser();
   const form = await req.formData();
-  try { await assertCsrfFromForm(form); } catch { return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 }); }
+  try { await assertCsrfFromForm(form); } catch {
+    const url = new URL("/god/integrations/arbor", req.url);
+    const connectionId = new URL(req.url).searchParams.get("connectionId");
+    if (connectionId) url.searchParams.set("connectionId", connectionId);
+    url.searchParams.set("csrf", "expired");
+    return NextResponse.redirect(url);
+  }
   const db = prisma as any;
   const integration = await db.sharedIntegration.findFirst({ where: arborConnectionWhere(req) });
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.redirect(new URL("/god/integrations/arbor?assessmentActive=not-connected", req.url));

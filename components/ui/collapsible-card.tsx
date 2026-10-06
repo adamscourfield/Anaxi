@@ -45,7 +45,7 @@ export function CollapsibleCard({
     // Remove the signal immediately, then restore it only if acknowledgement fails.
     setShowAttention(false);
     const form = new FormData();
-    form.set("csrfToken", csrfToken);
+    form.set("_csrf", csrfToken);
     form.set("section", attentionKey);
     form.set("fingerprint", attentionFingerprint);
     const url = new URL("/api/god/integrations/arbor/attention", window.location.origin);
