@@ -214,9 +214,12 @@ export class ArborClient {
     return targets;
   }
 
-  async listProgressAssessmentBatches(pageSize = 100, pageNum = 0): Promise<Array<{ id: string; batchName: string | null; currentReferenceDate: string | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
+  async listProgressAssessmentBatches(pageSize = 100, pageNum = 0, assessmentIds?: string[]): Promise<Array<{ id: string; batchName: string | null; currentReferenceDate: string | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
+    const assessmentFilter = assessmentIds?.length
+      ? `, assessment__id_in: [${assessmentIds.map((id) => JSON.stringify(id)).join(", ")}]`
+      : "";
     const data = await runArborGraphqlQuery<{ ProgressAssessmentBatch: Array<{ id: string; batchName: string | null; currentReferenceDate: string | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
-      ProgressAssessmentBatch(page_size: ${pageSize}, page_num: ${pageNum}) {
+      ProgressAssessmentBatch(page_size: ${pageSize}, page_num: ${pageNum}${assessmentFilter}) {
         id batchName currentReferenceDate
         assessment { id displayName assessmentName assessmentShortName }
       }

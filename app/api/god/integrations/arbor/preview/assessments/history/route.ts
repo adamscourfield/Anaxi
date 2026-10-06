@@ -14,14 +14,17 @@ type AssessmentSyncState = {
   definitions?: PreparedDefinition[];
   historicalDefinitions?: PreparedDefinition[];
   historicBatchPage?: number;
+  historicBatchDefinitionOffset?: number;
   historicComplete?: boolean;
   historicDiscoveryVersion?: number;
 };
 
-// v16 reads Arbor's actual mark-sheet targets. Earlier releases inferred a
+// v17 reads Arbor's actual mark-sheet targets filtered to the agreed
+// assessment definitions. Earlier releases inferred a
 // roster from the generic progress-mark stream, which is incomplete for
 // historic senior cohorts and can cross-contaminate subject lists.
-const HISTORIC_DISCOVERY_VERSION = 16;
+const HISTORIC_DISCOVERY_VERSION = 17;
+const DEFINITIONS_PER_BATCH_QUERY = 20;
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: NonNullable<ReturnType<typeof mapArborAssessment>>, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
   const inferredYearGroup = arborHistoricYearGroup(student.displayAcademicLevel?.displayName, archivedYearGroup, student.leavingDate, mapping.academicYear, mapping.family);
@@ -53,7 +56,7 @@ export const POST = withApi(async function POST(req: Request) {
     // generic progress-mark reader is deliberately discarded because it can
     // show a pupil in a subject they do not take.
     const state: AssessmentSyncState = savedState.historicComplete || savedState.historicDiscoveryVersion !== HISTORIC_DISCOVERY_VERSION
-      ? { ...savedState, historicalDefinitions: [], historicBatchPage: 0, historicComplete: false }
+      ? { ...savedState, historicalDefinitions: [], historicBatchPage: 0, historicBatchDefinitionOffset: 0, historicComplete: false }
       : savedState;
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
     const archivedStudents = await db.student.findMany({
@@ -61,6 +64,15 @@ export const POST = withApi(async function POST(req: Request) {
       select: { externalId: true, yearGroup: true },
     });
     const archivedYearGroupByExternalId = new Map<string, string | null>(archivedStudents.map((student: { externalId: string | null; yearGroup: string | null }) => [student.externalId!, student.yearGroup]));
+    let definitions = Array.isArray(state.definitions)
+      ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(arborAssessmentFamily(item.label)))
+      : [];
+    if (!definitions.length) {
+      definitions = (await client.listAllAssessmentDefinitions())
+        .map((definition) => ({ id: definition.id, label: arborAssessmentLabel(definition) }))
+        .filter((definition): definition is PreparedDefinition => Boolean(arborAssessmentFamily(definition.label)))
+        .sort((a, b) => a.label.localeCompare(b.label));
+    }
     const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
     const combined = new Map<string, PreparedDefinition>();
     for (const item of known) {
@@ -71,8 +83,10 @@ export const POST = withApi(async function POST(req: Request) {
         if (cycle) combined.set(`${item.id}:${cycle.cycleExternalId}`, item);
       }
     }
+    const definitionOffset = typeof state.historicBatchDefinitionOffset === "number" && state.historicBatchDefinitionOffset >= 0 ? state.historicBatchDefinitionOffset : 0;
+    const definitionSlice = definitions.slice(definitionOffset, definitionOffset + DEFINITIONS_PER_BATCH_QUERY);
     const batchPage = typeof state.historicBatchPage === "number" && state.historicBatchPage >= 0 ? state.historicBatchPage : 0;
-    const batches = await client.listProgressAssessmentBatches(50, batchPage);
+    const batches = await client.listProgressAssessmentBatches(100, batchPage, definitionSlice.map((definition) => definition.id));
     const targets = await client.listProgressAssessmentBatchTargets(batches.map((batch) => batch.id));
     let acceptedTargets = 0;
     for (const target of targets) {
@@ -89,11 +103,15 @@ export const POST = withApi(async function POST(req: Request) {
       for (const student of roster) addHistoricDefinition(combined, definition, mapping, student, archivedYearGroupByExternalId.get(student.id));
       if (combined.size > before) acceptedTargets++;
     }
-    const historicComplete = batches.length < 50;
+    const nextDefinitionOffset = batches.length < 100 ? definitionOffset + DEFINITIONS_PER_BATCH_QUERY : definitionOffset;
+    const nextBatchPage = batches.length < 100 ? 0 : batchPage + 1;
+    const historicComplete = nextDefinitionOffset >= definitions.length;
     const nextState = {
       ...state,
+      definitions,
       historicalDefinitions: [...combined.values()],
-      historicBatchPage: historicComplete ? batchPage : batchPage + 1,
+      historicBatchPage: nextBatchPage,
+      historicBatchDefinitionOffset: nextDefinitionOffset,
       historicComplete,
       historicDiscoveryVersion: HISTORIC_DISCOVERY_VERSION,
     };
