@@ -68,11 +68,22 @@ export default async function ArborAssessmentMarkSheetPage({
   const definitions = Array.isArray(sync.historicalDefinitions)
     ? sync.historicalDefinitions.filter((item): item is PreparedDefinition => Boolean(item) && typeof (item as PreparedDefinition).id === "string" && typeof (item as PreparedDefinition).label === "string")
     : [];
-  const definition = definitions.find((item) => item.id === assessmentId);
+  // A single Arbor subject definition can be present in Autumn, Spring, and
+  // Summer. Select the dated discovery record for this URL's requested cycle,
+  // rather than whichever term happened to be stored first.
+  const definition = definitions.find((item) => {
+    if (item.id !== assessmentId) return false;
+    const candidate = mapArborAssessment(item.label, item.assessmentDate, item.periodHint);
+    if (!candidate) return false;
+    const discoveredYearGroups = item.yearGroups?.length ? item.yearGroups : candidate?.yearGroups ?? [];
+    return discoveredYearGroups.some((value) => mapArborAssessmentForYearGroup(candidate, value)?.cycleExternalId === cycleKey);
+  });
   if (!definition) notFound();
 
   const mapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
-  const yearGroup = mapping?.yearGroups.find((value) => mapArborAssessmentForYearGroup(mapping, value)?.cycleExternalId === cycleKey);
+  if (!mapping) notFound();
+  const discoveredYearGroups = definition.yearGroups?.length ? definition.yearGroups : mapping?.yearGroups ?? [];
+  const yearGroup = discoveredYearGroups.find((value) => mapArborAssessmentForYearGroup(mapping, value)?.cycleExternalId === cycleKey);
   const cycle = mapping && yearGroup ? mapArborAssessmentForYearGroup(mapping, yearGroup) : null;
   if (!mapping || !cycle || !yearGroup) notFound();
 
