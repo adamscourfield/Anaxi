@@ -12,7 +12,7 @@ import { arborConnectionHref } from "@/lib/integrations/arbor/connectionScope";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[] };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[]; source?: "PROGRESS_MARK" | "BATCH_TARGET" };
 type ArborMark = Awaited<ReturnType<ArborClient["listAssessmentMarks"]>>[number];
 
 function decodeCycleKey(value: string): string {
@@ -100,13 +100,34 @@ export default async function ArborAssessmentMarkSheetPage({
   const studentsByExternalId = new Map<string, { externalId: string; fullName: string; yearGroup: string | null; status: string }>(
     (linkedStudents as Array<{ externalId: string; fullName: string; yearGroup: string | null; status: string }>).map((student) => [student.externalId, student]),
   );
-  const allMarks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext))
-    .listAssessmentMarksForDefinitionInRange(definition.id, assessmentYearRange(cycle.academicYear));
+  const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
+  const batchTarget = definition.source === "BATCH_TARGET"
+    ? await client.getProgressAssessmentBatchTarget(definition.id)
+    : null;
+  const allMarks: ArborMark[] = batchTarget
+    ? [
+      ...batchTarget.studentProgressAssessmentMarks,
+      // A target's students are Arbor's roster even if a particular pupil has
+      // not received a grade yet. Include a blank row for those pupils rather
+      // than substituting the whole year group.
+      ...batchTarget.students
+        .filter((student) => !batchTarget.studentProgressAssessmentMarks.some((mark) => mark.student.id === student.id))
+        .map((student) => ({
+          id: `roster:${batchTarget.id}:${student.id}`,
+          student,
+          assessmentDate: definition.assessmentDate ?? null,
+          displayName: definition.periodHint ?? null,
+          valueFields: {},
+          grade: null,
+          assessment: batchTarget.progressAssessmentBatch?.assessment ?? null,
+        })),
+    ]
+    : await client.listAssessmentMarksForDefinitionInRange(definition.id, assessmentYearRange(cycle.academicYear));
   // Arbor accepts an assessment filter but a review must not rely on that
   // server-side filter alone. Verify the relationship on every returned mark
   // before it can appear in a subject sheet.
-  const subjectMarks = allMarks.filter((mark) => mark.assessment?.id === definition.id);
-  const termMarks = subjectMarks.filter((mark) => {
+  const subjectMarks = batchTarget ? allMarks : allMarks.filter((mark) => mark.assessment?.id === definition.id);
+  const termMarks = batchTarget ? subjectMarks : subjectMarks.filter((mark) => {
     // Arbor returns every dated mark for this subject definition. Keep only
     // the term represented by the requested cycle; otherwise a July result
     // can incorrectly replace an Autumn mark in the review grid.

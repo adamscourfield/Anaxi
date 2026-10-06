@@ -6,6 +6,39 @@ import type {
   ArborTeachingGroupRecord,
 } from "./types";
 
+export type ArborAssessmentStudent = {
+  id: string;
+  legalFirstName: string | null;
+  legalLastName: string | null;
+  preferredFirstName: string | null;
+  preferredLastName: string | null;
+  displayAcademicLevel: { displayName: string } | null;
+  leavingDate: string | null;
+};
+
+export type ArborAssessmentMark = {
+  id: string;
+  student: ArborAssessmentStudent;
+  assessmentDate: string | null;
+  displayName: string | null;
+  valueFields: Record<string, string | number | boolean | null>;
+  grade: { displayName: string | null; shortName: string | null; code: string | null } | null;
+  assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null;
+};
+
+export type ArborProgressAssessmentBatchTarget = {
+  id: string;
+  displayName: string | null;
+  progressAssessmentBatch: {
+    id: string;
+    batchName: string | null;
+    currentReferenceDate: string | null;
+    assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null;
+  } | null;
+  students: ArborAssessmentStudent[];
+  studentProgressAssessmentMarks: ArborAssessmentMark[];
+};
+
 /**
  * Client for Arbor's GraphQL API, scoped to the entities Anaxi actually has read
  * access to (see entities.ts). GraphQL is used rather than REST: it supports nested
@@ -123,10 +156,10 @@ export class ArborClient {
     return data.StudentProgressAssessmentMark.length;
   }
 
-  async listAssessmentMarks(pageSize = 100, pageNum = 0, assessmentIds?: string[], dateRange?: { from: string; before: string }): Promise<Array<{ id: string; student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }; assessmentDate: string | null; displayName: string | null; valueFields: Record<string, string | number | boolean | null>; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
+  async listAssessmentMarks(pageSize = 100, pageNum = 0, assessmentIds?: string[], dateRange?: { from: string; before: string }): Promise<ArborAssessmentMark[]> {
     const assessmentFilter = assessmentIds?.length ? `, assessment__id_in: [${assessmentIds.map((id) => JSON.stringify(id)).join(", ")}]` : "";
     const dateFilter = dateRange ? `, assessmentDate_after_or_equal: ${JSON.stringify(dateRange.from)}, assessmentDate_before: ${JSON.stringify(dateRange.before)}` : "";
-    const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<{ id: string; student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
+    const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Omit<ArborAssessmentMark, "valueFields">[] }>(this.credentials, `{
       StudentProgressAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}${assessmentFilter}${dateFilter}) {
         id student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } } assessmentDate displayName grade { displayName shortName code } assessment { id displayName assessmentName assessmentShortName }
       }
@@ -135,6 +168,58 @@ export class ArborClient {
       ...mark,
       valueFields: {},
     }));
+  }
+
+  /**
+   * Historic summative mark sheets are stored as batch targets in Arbor. Each
+   * target is a real subject roster, avoiding the broad cross-subject results
+   * returned by the generic StudentProgressAssessmentMark feed.
+   */
+  async listProgressAssessmentBatchTargets(ids: string[], filter: "batch" | "target" = "batch"): Promise<ArborProgressAssessmentBatchTarget[]> {
+    if (!ids.length) return [];
+    const targets: ArborProgressAssessmentBatchTarget[] = [];
+    for (let offset = 0; offset < ids.length; offset += 20) {
+      const pageIds = ids.slice(offset, offset + 20);
+      for (let pageNum = 0; pageNum < 100; pageNum++) {
+        const data = await runArborGraphqlQuery<{ ProgressAssessmentBatchTarget: (Omit<ArborProgressAssessmentBatchTarget, "studentProgressAssessmentMarks"> & { studentProgressAssessmentMarks: Omit<ArborAssessmentMark, "valueFields">[] })[] }>(this.credentials, `{
+          ProgressAssessmentBatchTarget(page_size: 100, page_num: ${pageNum}, ${filter === "batch" ? "progressAssessmentBatch__id_in" : "id_in"}: [${pageIds.map((id) => JSON.stringify(id)).join(", ")}]) {
+            id displayName
+            progressAssessmentBatch {
+              id batchName currentReferenceDate
+              assessment { id displayName assessmentName assessmentShortName }
+            }
+            students { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
+            studentProgressAssessmentMarks {
+              id assessmentDate displayName
+              student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
+              grade { displayName shortName code }
+              assessment { id displayName assessmentName assessmentShortName }
+            }
+          }
+        }`);
+        targets.push(...data.ProgressAssessmentBatchTarget.map((target) => ({
+          ...target,
+          studentProgressAssessmentMarks: target.studentProgressAssessmentMarks.map((mark) => ({ ...mark, valueFields: {} })),
+        })));
+        if (data.ProgressAssessmentBatchTarget.length < 100) break;
+      }
+    }
+    return targets;
+  }
+
+  async listProgressAssessmentBatches(pageSize = 100, pageNum = 0): Promise<Array<{ id: string; batchName: string | null; currentReferenceDate: string | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
+    const data = await runArborGraphqlQuery<{ ProgressAssessmentBatch: Array<{ id: string; batchName: string | null; currentReferenceDate: string | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
+      ProgressAssessmentBatch(page_size: ${pageSize}, page_num: ${pageNum}) {
+        id batchName currentReferenceDate
+        assessment { id displayName assessmentName assessmentShortName }
+      }
+    }`);
+    return data.ProgressAssessmentBatch;
+  }
+
+  async getProgressAssessmentBatchTarget(id: string): Promise<ArborProgressAssessmentBatchTarget | null> {
+    const targets = await this.listProgressAssessmentBatchTargets([id], "target");
+    return targets.find((target) => target.id === id) ?? null;
   }
 
   /** Reads every page of recorded progress marks using Arbor's confirmed page size. */

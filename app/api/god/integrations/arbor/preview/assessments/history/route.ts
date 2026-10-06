@@ -9,43 +9,19 @@ import { arborAssessmentFamily, arborAssessmentLabel, arborHistoricYearGroup, ma
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[] };
-type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[]; source?: "PROGRESS_MARK" | "BATCH_TARGET" };
 type AssessmentSyncState = {
   definitions?: PreparedDefinition[];
   historicalDefinitions?: PreparedDefinition[];
-  historicYearCursor?: number;
-  historicFamilyCursor?: number;
-  historicFamilyProgress?: Record<string, HistoricFamilyProgress>;
+  historicBatchPage?: number;
   historicComplete?: boolean;
   historicDiscoveryVersion?: number;
 };
 
-// Version 15 reclassifies dated marks from their date before their reusable
-// Arbor label. Restarting discovery prevents July results appearing in an
-// Autumn review cycle from an older cached scan.
-const HISTORIC_DISCOVERY_VERSION = 15;
-const MARK_PAGES_PER_RUN = 24;
-// Read a small set together, but exhaust its pages before progressing. This
-// preserves full subject rosters without making the P8 catalogue take dozens
-// of manual runs to inspect.
-const DEFINITIONS_PER_QUERY = 10;
-const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
-const HISTORIC_ACADEMIC_YEARS = [
-  { label: "2025/2026", from: "2025-09-01", before: "2026-09-01" },
-  { label: "2024/2025", from: "2024-09-01", before: "2025-09-01" },
-  { label: "2026/2027", from: "2026-09-01", before: "2027-09-01" },
-] as const;
-
-function pauseForArbor(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 500));
-}
-
-function definitionsForFamily(definitions: PreparedDefinition[], family: (typeof HISTORIC_FAMILY_ORDER)[number]): PreparedDefinition[] {
-  return definitions
-    .filter((definition) => arborAssessmentFamily(definition.label) === family)
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
+// v16 reads Arbor's actual mark-sheet targets. Earlier releases inferred a
+// roster from the generic progress-mark stream, which is incomplete for
+// historic senior cohorts and can cross-contaminate subject lists.
+const HISTORIC_DISCOVERY_VERSION = 16;
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: NonNullable<ReturnType<typeof mapArborAssessment>>, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
   const inferredYearGroup = arborHistoricYearGroup(student.displayAcademicLevel?.displayName, archivedYearGroup, student.leavingDate, mapping.academicYear, mapping.family);
@@ -73,11 +49,11 @@ export const POST = withApi(async function POST(req: Request) {
   try {
     const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
     const savedState = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
-    // Earlier versions read every definition's entire mark history in turn.
-    // Restart safely so discovery instead scans each academic year once and
-    // groups every matching subject it finds into the same proposed cycle.
+    // Rebuild against real Arbor mark-sheet targets. Cached output from the
+    // generic progress-mark reader is deliberately discarded because it can
+    // show a pupil in a subject they do not take.
     const state: AssessmentSyncState = savedState.historicComplete || savedState.historicDiscoveryVersion !== HISTORIC_DISCOVERY_VERSION
-      ? { ...savedState, historicalDefinitions: [], historicYearCursor: 0, historicFamilyCursor: 0, historicFamilyProgress: {}, historicComplete: false }
+      ? { ...savedState, historicalDefinitions: [], historicBatchPage: 0, historicComplete: false }
       : savedState;
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
     const archivedStudents = await db.student.findMany({
@@ -85,28 +61,6 @@ export const POST = withApi(async function POST(req: Request) {
       select: { externalId: true, yearGroup: true },
     });
     const archivedYearGroupByExternalId = new Map<string, string | null>(archivedStudents.map((student: { externalId: string | null; yearGroup: string | null }) => [student.externalId!, student.yearGroup]));
-    let definitions = Array.isArray(state.definitions)
-      ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(arborAssessmentFamily(item.label)))
-      : [];
-    // A historic review request must be self-contained. If a deployment or
-    // connection migration left the cached catalogue empty, rebuild it here
-    // rather than showing the operator an empty review list and requiring a
-    // separate, non-obvious preparation step.
-    if (!definitions.length) {
-      definitions = (await client.listAllAssessmentDefinitions())
-        .map((definition) => ({ id: definition.id, label: arborAssessmentLabel(definition) }))
-        .filter((definition): definition is PreparedDefinition => Boolean(arborAssessmentFamily(definition.label)))
-        .sort((a, b) => a.label.localeCompare(b.label));
-    }
-    let yearCursor = typeof state.historicYearCursor === "number" && state.historicYearCursor >= 0
-      ? state.historicYearCursor
-      : 0;
-    let familyCursor = typeof state.historicFamilyCursor === "number" && state.historicFamilyCursor >= 0
-      ? state.historicFamilyCursor
-      : 0;
-    let familyProgress: Record<string, HistoricFamilyProgress> = state.historicFamilyProgress && typeof state.historicFamilyProgress === "object"
-      ? { ...state.historicFamilyProgress }
-      : {};
     const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
     const combined = new Map<string, PreparedDefinition>();
     for (const item of known) {
@@ -117,58 +71,26 @@ export const POST = withApi(async function POST(req: Request) {
         if (cycle) combined.set(`${item.id}:${cycle.cycleExternalId}`, item);
       }
     }
-    // Take one page from each family in turn. This prevents the large P8
-    // catalogue from delaying A-Level or percentage cycle discovery.
-    for (let inspected = 0; inspected < MARK_PAGES_PER_RUN && yearCursor < HISTORIC_ACADEMIC_YEARS.length; inspected++) {
-      if (HISTORIC_FAMILY_ORDER.every((family) => familyProgress[family]?.complete)) {
-        yearCursor++;
-        familyCursor = 0;
-        familyProgress = {};
-        continue;
-      }
-      const academicYear = HISTORIC_ACADEMIC_YEARS[yearCursor];
-      const family = HISTORIC_FAMILY_ORDER[familyCursor % HISTORIC_FAMILY_ORDER.length];
-      familyCursor = (familyCursor + 1) % HISTORIC_FAMILY_ORDER.length;
-      const progress = familyProgress[family] ?? {};
-      if (progress.complete) continue;
-      const familyDefinitions = definitionsForFamily(definitions, family);
-      const chunks = Array.from({ length: Math.ceil(familyDefinitions.length / DEFINITIONS_PER_QUERY) }, (_, index) => familyDefinitions.slice(index * DEFINITIONS_PER_QUERY, (index + 1) * DEFINITIONS_PER_QUERY));
-      const chunk = progress.chunk ?? 0;
-      const markPage = progress.markPage ?? 0;
-      if (!chunks[chunk]?.length) {
-        familyProgress[family] = { ...progress, complete: true };
-        continue;
-      }
-      if (inspected > 0) await pauseForArbor();
-      const marks = await client.listAssessmentMarks(500, markPage, chunks[chunk].map((definition) => definition.id), academicYear);
-      for (const mark of marks) {
-        if (!mark.assessment) continue;
-        const label = arborAssessmentLabel(mark.assessment);
-        const mapping = mapArborAssessment(label, mark.assessmentDate, mark.displayName);
-        if (mapping) addHistoricDefinition(combined, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate, periodHint: mark.displayName }, mapping, mark.student, archivedYearGroupByExternalId.get(mark.student.id));
-      }
-      if (marks.length < 500) {
-        const nextChunk = chunk + 1;
-        familyProgress[family] = nextChunk >= chunks.length
-          ? { chunk: nextChunk, markPage: 0, complete: true }
-          : { chunk: nextChunk, markPage: 0 };
-      } else {
-        familyProgress[family] = { chunk, markPage: markPage + 1 };
-      }
+    const batchPage = typeof state.historicBatchPage === "number" && state.historicBatchPage >= 0 ? state.historicBatchPage : 0;
+    const batches = await client.listProgressAssessmentBatches(50, batchPage);
+    const targets = await client.listProgressAssessmentBatchTargets(batches.map((batch) => batch.id));
+    for (const target of targets) {
+      const batch = target.progressAssessmentBatch;
+      if (!batch?.assessment) continue;
+      const label = arborAssessmentLabel(batch.assessment);
+      if (!arborAssessmentFamily(label)) continue;
+      const assessmentDate = batch.currentReferenceDate ?? target.studentProgressAssessmentMarks.find((mark) => mark.assessmentDate)?.assessmentDate ?? null;
+      const mapping = mapArborAssessment(label, assessmentDate, batch.batchName ?? target.displayName);
+      if (!mapping) continue;
+      const definition: PreparedDefinition = { id: target.id, label, assessmentDate, periodHint: batch.batchName ?? target.displayName, source: "BATCH_TARGET" };
+      const roster = target.students.length ? target.students : target.studentProgressAssessmentMarks.map((mark) => mark.student);
+      for (const student of roster) addHistoricDefinition(combined, definition, mapping, student, archivedYearGroupByExternalId.get(student.id));
     }
-    if (yearCursor < HISTORIC_ACADEMIC_YEARS.length && HISTORIC_FAMILY_ORDER.every((family) => familyProgress[family]?.complete)) {
-      yearCursor++;
-      familyCursor = 0;
-      familyProgress = {};
-    }
-    const historicComplete = yearCursor >= HISTORIC_ACADEMIC_YEARS.length;
+    const historicComplete = batches.length < 50;
     const nextState = {
       ...state,
-      definitions,
       historicalDefinitions: [...combined.values()],
-      historicYearCursor: yearCursor,
-      historicFamilyCursor: familyCursor,
-      historicFamilyProgress: familyProgress,
+      historicBatchPage: historicComplete ? batchPage : batchPage + 1,
       historicComplete,
       historicDiscoveryVersion: HISTORIC_DISCOVERY_VERSION,
     };
