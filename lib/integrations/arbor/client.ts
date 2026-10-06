@@ -195,6 +195,14 @@ export class ArborClient {
     return data.__schema.queryType.fields.find((field) => field.name === "StudentProgressAssessmentMark")?.args.map((arg) => arg.name) ?? [];
   }
 
+  /** Lists the permitted mark fields before Anaxi relies on an Arbor period relationship. */
+  async inspectProgressAssessmentMarkFields(): Promise<string[]> {
+    const data = await runArborGraphqlQuery<{ __type: { fields: Array<{ name: string }> } | null }>(this.credentials, `{
+      __type(name: "StudentProgressAssessmentMark") { fields { name } }
+    }`);
+    return data.__type?.fields.map((field) => field.name) ?? [];
+  }
+
   /** One read-only page of the four behaviour sources Anaxi currently measures. */
   async listBehaviourRecords(pageSize = 100, pageNum = 0, startAfter?: string, startBefore?: string): Promise<ArborBehaviourRecords> {
     const pointFilters = startAfter && startBefore ? `, awardedDatetime_after: "${startAfter}", awardedDatetime_before: "${startBefore}"` : "";
