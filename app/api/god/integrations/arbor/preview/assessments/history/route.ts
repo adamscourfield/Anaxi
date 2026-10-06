@@ -13,15 +13,17 @@ type PreparedDefinition = { id: string; label: string; assessmentDate?: string |
 type AssessmentSyncState = {
   definitions?: PreparedDefinition[];
   historicalDefinitions?: PreparedDefinition[];
+  /** Retained while a newer, read-only discovery pass verifies the same cycles. */
+  pendingHistoricalDefinitions?: PreparedDefinition[];
   historicBatchPage?: number;
   historicBatchDefinitionOffset?: number;
   historicComplete?: boolean;
   historicDiscoveryVersion?: number;
 };
 
-// v20 reads each batch target's `allStudents` roster. A parent batch can be a
+// v21 reads each batch target's `allStudents` roster. A parent batch can be a
 // whole year cohort; its `students` relationship is not a subject mark sheet.
-const HISTORIC_DISCOVERY_VERSION = 20;
+const HISTORIC_DISCOVERY_VERSION = 21;
 const DEFINITIONS_PER_BATCH_QUERY = 20;
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: NonNullable<ReturnType<typeof mapArborAssessment>>, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
@@ -55,11 +57,19 @@ export const POST = withApi(async function POST(req: Request) {
   try {
     const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
     const savedState = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
-    // Rebuild against real Arbor mark-sheet targets. Cached output from the
-    // generic progress-mark reader is deliberately discarded because it can
-    // show a pupil in a subject they do not take.
+    // Rebuild against real Arbor mark-sheet targets without clearing the
+    // visible review list. A manual recheck is read-only and must never make
+    // Autumn/Year 11 cycles disappear while later pages are still loading.
     const state: AssessmentSyncState = savedState.historicComplete || savedState.historicDiscoveryVersion !== HISTORIC_DISCOVERY_VERSION
-      ? { ...savedState, historicalDefinitions: [], historicBatchPage: 0, historicBatchDefinitionOffset: 0, historicComplete: false }
+      ? {
+        ...savedState,
+        pendingHistoricalDefinitions: Array.isArray(savedState.historicalDefinitions)
+          ? savedState.historicalDefinitions
+          : savedState.pendingHistoricalDefinitions,
+        historicBatchPage: 0,
+        historicBatchDefinitionOffset: 0,
+        historicComplete: false,
+      }
       : savedState;
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
     const archivedStudents = await db.student.findMany({
@@ -76,7 +86,10 @@ export const POST = withApi(async function POST(req: Request) {
         .filter((definition): definition is PreparedDefinition => Boolean(arborAssessmentFamily(definition.label)))
         .sort((a, b) => a.label.localeCompare(b.label));
     }
-    const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
+    const known = [
+      ...(Array.isArray(state.pendingHistoricalDefinitions) ? state.pendingHistoricalDefinitions : []),
+      ...(Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : []),
+    ];
     const combined = new Map<string, PreparedDefinition>();
     for (const item of known) {
       const mapping = mapArborAssessment(item.label, item.assessmentDate, item.periodHint);
@@ -144,6 +157,7 @@ export const POST = withApi(async function POST(req: Request) {
       historicBatchDefinitionOffset: nextDefinitionOffset,
       historicComplete,
       historicDiscoveryVersion: HISTORIC_DISCOVERY_VERSION,
+      pendingHistoricalDefinitions: historicComplete ? undefined : state.pendingHistoricalDefinitions,
     };
     await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: nextState } } });
     const url = new URL("/god/integrations/arbor", req.url);
