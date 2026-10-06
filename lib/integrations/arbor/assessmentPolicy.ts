@@ -48,7 +48,7 @@ function periodFor(name: string, finalResult: boolean, assessmentDate?: string |
 }
 
 /** Maps only the agreed Goresbrook Secondary assessment families. */
-export function mapArborAssessment(name: string, assessmentDate?: string | null): ArborAssessmentMapping | null {
+export function mapArborAssessment(name: string, assessmentDate?: string | null, periodHint?: string | null): ArborAssessmentMapping | null {
   const label = name.trim();
   if (!label || /\b(predicted|prediction|target|baseline|meg)\b/i.test(label)) return null;
 
@@ -64,7 +64,9 @@ export function mapArborAssessment(name: string, assessmentDate?: string | null)
 
   // Final external outcomes are intentionally limited to GCSE and A-Level.
   if (finalResult && family !== "GCSE" && family !== "A_LEVEL") return null;
-  const period = periodFor(label, finalResult, assessmentDate);
+  // Arbor often keeps the subject definition term-neutral, while the mark
+  // itself carries the Autumn/Spring/Summer label. Preserve that distinction.
+  const period = periodFor(`${label} ${periodHint ?? ""}`, finalResult, assessmentDate);
   if (!period) return null;
   const date = assessmentDate ? new Date(assessmentDate) : new Date();
   // Markbooks commonly include the academic year in their name. Prefer that

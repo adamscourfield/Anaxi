@@ -8,11 +8,11 @@ import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null };
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 3;
-const HISTORIC_DISCOVERY_VERSION = 7;
+const HISTORIC_DISCOVERY_VERSION = 8;
 const MARK_PAGES_PER_RUN = 12;
 const DEFINITIONS_PER_QUERY = 25;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
@@ -119,7 +119,7 @@ export async function POST(req: Request) {
       const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
       const historicalDefinitions = new Map<string, PreparedDefinition>();
       for (const item of known) {
-        const mapping = mapArborAssessment(item.label, item.assessmentDate);
+        const mapping = mapArborAssessment(item.label, item.assessmentDate, item.periodHint);
         if (mapping) historicalDefinitions.set(`${item.id}:${mapping.cycleExternalId}`, item);
       }
       for (let inspected = 0; inspected < MARK_PAGES_PER_RUN && historicYearCursor < HISTORIC_ACADEMIC_YEARS.length; inspected++) {
@@ -147,8 +147,8 @@ export async function POST(req: Request) {
         for (const mark of marks) {
           if (!mark.assessment) continue;
           const label = arborAssessmentLabel(mark.assessment);
-          const mapping = mapArborAssessment(label, mark.assessmentDate);
-          if (mapping) historicalDefinitions.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
+          const mapping = mapArborAssessment(label, mark.assessmentDate, mark.displayName);
+          if (mapping) historicalDefinitions.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate, periodHint: mark.displayName });
         }
         if (marks.length < 500) {
           const nextChunk = chunk + 1;
@@ -197,7 +197,7 @@ export async function POST(req: Request) {
     let imported = 0;
     for (const mark of marks) {
       const student = studentByExternalId.get(mark.student.id); const value = markValue(mark);
-      const baseMapping = mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: definition.label, assessmentName: definition.label, assessmentShortName: null }), mark.assessmentDate) ?? provisionalMapping;
+      const baseMapping = mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: definition.label, assessmentName: definition.label, assessmentShortName: null }), mark.assessmentDate, mark.displayName) ?? provisionalMapping;
       const mapping = mapArborAssessmentForYearGroup(
         baseMapping,
         yearGroupAtAssessment(student?.yearGroup ?? null, baseMapping.academicYear),

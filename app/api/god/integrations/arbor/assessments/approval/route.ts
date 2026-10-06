@@ -7,7 +7,7 @@ import { assertCsrfFromForm } from "@/lib/csrf";
 import { mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null };
 type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicComplete?: boolean };
 
 function proposedCycleKeys(config: Record<string, unknown>): Set<string> {
@@ -19,7 +19,7 @@ function proposedCycleKeys(config: Record<string, unknown>): Set<string> {
     : [];
   const keys = new Set<string>();
   for (const definition of definitions) {
-    const mapping = mapArborAssessment(definition.label, definition.assessmentDate);
+    const mapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
     if (!mapping) continue;
     for (const yearGroup of mapping.yearGroups) {
       const cycle = mapArborAssessmentForYearGroup(mapping, yearGroup);

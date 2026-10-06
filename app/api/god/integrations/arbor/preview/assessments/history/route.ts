@@ -9,7 +9,7 @@ import { arborAssessmentLabel, mapArborAssessment } from "@/lib/integrations/arb
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null };
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = {
   definitions?: PreparedDefinition[];
@@ -21,7 +21,7 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-const HISTORIC_DISCOVERY_VERSION = 7;
+const HISTORIC_DISCOVERY_VERSION = 8;
 const MARK_PAGES_PER_RUN = 12;
 const DEFINITIONS_PER_QUERY = 25;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
@@ -80,7 +80,7 @@ export const POST = withApi(async function POST(req: Request) {
     const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
     const combined = new Map<string, PreparedDefinition>();
     for (const item of known) {
-      const mapping = mapArborAssessment(item.label, item.assessmentDate);
+      const mapping = mapArborAssessment(item.label, item.assessmentDate, item.periodHint);
       if (mapping) combined.set(`${item.id}:${mapping.cycleExternalId}`, item);
     }
     // Take one page from each family in turn. This prevents the large P8
@@ -110,8 +110,8 @@ export const POST = withApi(async function POST(req: Request) {
       for (const mark of marks) {
         if (!mark.assessment) continue;
         const label = arborAssessmentLabel(mark.assessment);
-        const mapping = mapArborAssessment(label, mark.assessmentDate);
-        if (mapping) combined.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate });
+        const mapping = mapArborAssessment(label, mark.assessmentDate, mark.displayName);
+        if (mapping) combined.set(`${mark.assessment.id}:${mapping.cycleExternalId}`, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate, periodHint: mark.displayName });
       }
       if (marks.length < 500) {
         const nextChunk = chunk + 1;

@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { H3, MetaText } from "@/components/ui/typography";
 import { arborConnectionHref } from "@/lib/integrations/arbor/connectionScope";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null };
 
 function decodeCycleKey(value: string): string {
   try {
@@ -50,12 +50,12 @@ export default async function ArborAssessmentCycleReviewPage({ params, searchPar
     ? sync.historicalDefinitions.filter((item): item is PreparedDefinition => Boolean(item) && typeof (item as PreparedDefinition).id === "string" && typeof (item as PreparedDefinition).label === "string")
     : [];
   const matchingDefinitions = definitions.filter((definition) => {
-    const mapping = mapArborAssessment(definition.label, definition.assessmentDate);
+    const mapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
     return mapping?.yearGroups.some((yearGroup) => mapArborAssessmentForYearGroup(mapping, yearGroup)?.cycleExternalId === cycleKey);
   });
   if (!matchingDefinitions.length) notFound();
 
-  const firstMapping = mapArborAssessment(matchingDefinitions[0].label, matchingDefinitions[0].assessmentDate)!;
+  const firstMapping = mapArborAssessment(matchingDefinitions[0].label, matchingDefinitions[0].assessmentDate, matchingDefinitions[0].periodHint)!;
   const yearGroup = firstMapping.yearGroups.find((value) => mapArborAssessmentForYearGroup(firstMapping, value)?.cycleExternalId === cycleKey)!;
   const cycle = mapArborAssessmentForYearGroup(firstMapping, yearGroup)!;
   const historicDiscoveryComplete = sync.historicComplete === true;
@@ -67,7 +67,7 @@ export default async function ArborAssessmentCycleReviewPage({ params, searchPar
     (students as Array<{ externalId: string; fullName: string; yearGroup: string | null }>).map((student) => [student.externalId, student]),
   );
   const visibleMarks = marks
-    .filter((mark) => mapArborAssessmentForYearGroup(mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: null, assessmentName: null, assessmentShortName: null }), mark.assessmentDate) ?? firstMapping, yearGroup)?.cycleExternalId === cycleKey)
+    .filter((mark) => mapArborAssessmentForYearGroup(mapArborAssessment(arborAssessmentLabel(mark.assessment ?? { displayName: null, assessmentName: null, assessmentShortName: null }), mark.assessmentDate, mark.displayName) ?? firstMapping, yearGroup)?.cycleExternalId === cycleKey)
     .slice(0, 50);
   const linkedMarks = visibleMarks.filter((mark) => studentsByExternalId.has(mark.student.id)).length;
 
