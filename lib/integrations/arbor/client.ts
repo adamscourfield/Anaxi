@@ -253,6 +253,19 @@ export class ArborClient {
     return { available, blocked };
   }
 
+  /** Returns the permitted relationship fields needed to map historic results. */
+  async inspectHistoricAssessmentSourceFields(): Promise<Record<string, string[]>> {
+    const sources = ["ProgressAssessmentBatch", "ProgressAssessmentBatchTarget", "QualificationResult", "QualificationAward", "QualificationSubject"];
+    const result: Record<string, string[]> = {};
+    for (const source of sources) {
+      const data = await runArborGraphqlQuery<{ __type: { fields: Array<{ name: string }> } | null }>(this.credentials, `{
+        __type(name: ${JSON.stringify(source)}) { fields { name } }
+      }`);
+      result[source] = data.__type?.fields.map((field) => field.name) ?? [];
+    }
+    return result;
+  }
+
   /** One read-only page of the four behaviour sources Anaxi currently measures. */
   async listBehaviourRecords(pageSize = 100, pageNum = 0, startAfter?: string, startBefore?: string): Promise<ArborBehaviourRecords> {
     const pointFilters = startAfter && startBefore ? `, awardedDatetime_after: "${startAfter}", awardedDatetime_before: "${startBefore}"` : "";
