@@ -103,6 +103,15 @@ export default async function ArborAssessmentMarkSheetPage({
   const allMarks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext))
     .listAssessmentMarksForDefinitionInRange(definition.id, assessmentYearRange(cycle.academicYear));
   const marks = allMarks.filter((mark) => {
+    // Arbor returns every dated mark for this subject definition. Keep only
+    // the term represented by the requested cycle; otherwise a July result
+    // can incorrectly replace an Autumn mark in the review grid.
+    const markMapping = mapArborAssessment(
+      mark.assessment ? `${mark.assessment.assessmentName ?? mark.assessment.assessmentShortName ?? mark.assessment.displayName ?? definition.label}` : definition.label,
+      mark.assessmentDate,
+      mark.displayName,
+    );
+    if (!markMapping || mapArborAssessmentForYearGroup(markMapping, yearGroup)?.cycleExternalId !== cycleKey) return false;
     const linkedStudent = studentsByExternalId.get(mark.student.id);
     const historicYearGroup = arborHistoricYearGroup(
       mark.student.displayAcademicLevel?.displayName,
