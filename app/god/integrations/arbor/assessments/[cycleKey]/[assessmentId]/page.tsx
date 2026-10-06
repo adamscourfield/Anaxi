@@ -44,6 +44,34 @@ function newestMark(marks: ArborMark[]): ArborMark {
   return [...marks].sort((a, b) => (b.assessmentDate ?? "").localeCompare(a.assessmentDate ?? ""))[0];
 }
 
+function normaliseSubject(value: string): string {
+  return value
+    .toLocaleLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\bmathematics\b/g, "maths")
+    .replace(/\bmath\b/g, "maths")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function assessmentSubjectMatches(assessmentLabel: string, subject: string): boolean {
+  const assessment = normaliseSubject(assessmentLabel)
+    .replace(/^p8\s*/, "")
+    .replace(/^a level\s*/, "")
+    .replace(/^ks3\s*/, "")
+    .replace(/^y\d+\s*/, "")
+    .replace(/\b(gcse|gce|level 1|level 2|a level)\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const enrolledSubject = normaliseSubject(subject);
+  if (!assessment || !enrolledSubject) return false;
+  if (assessment.includes(enrolledSubject) || enrolledSubject.includes(assessment)) return true;
+  // Arbor sometimes records combined science as the teaching subject and its
+  // component discipline in the assessment definition.
+  return enrolledSubject === "science" && /\b(biology|chemistry|physics|combined science)\b/.test(assessment);
+}
+
 export default async function ArborAssessmentMarkSheetPage({
   params,
   searchParams,
@@ -109,9 +137,15 @@ export default async function ArborAssessmentMarkSheetPage({
     : null;
   const batchAssessmentId = batch?.assessment?.id ?? definition.id;
   const batchRosterIds = new Set(batch?.students.map((student) => student.id) ?? []);
+  const subjectMemberships = batch
+    ? await client.listTeachingGroupSubjectsForStudents([...batchRosterIds])
+    : new Map<string, string[]>();
+  const verifiedSubjectRosterIds = new Set(
+    [...subjectMemberships].flatMap(([studentId, subjects]) => subjects.some((subject) => assessmentSubjectMatches(definition.label, subject)) ? [studentId] : []),
+  );
   const progressMarks = batch
     ? (await client.listAssessmentMarksForDefinitionInRange(batchAssessmentId, assessmentYearRange(cycle.academicYear)))
-      .filter((mark) => batchRosterIds.has(mark.student.id))
+      .filter((mark) => batchRosterIds.has(mark.student.id) && verifiedSubjectRosterIds.has(mark.student.id))
     : [];
   const allMarks: ArborMark[] = batchTarget
     ? [
@@ -135,7 +169,7 @@ export default async function ArborAssessmentMarkSheetPage({
       ? [
         ...progressMarks,
         ...batch.students
-          .filter((student) => !progressMarks.some((mark) => mark.student.id === student.id))
+          .filter((student) => verifiedSubjectRosterIds.has(student.id) && !progressMarks.some((mark) => mark.student.id === student.id))
           .map((student) => ({
             id: `roster:${batch.id}:${student.id}`,
             student,

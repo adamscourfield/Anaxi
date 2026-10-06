@@ -250,6 +250,57 @@ export class ArborClient {
     return batch ? { ...batch, students: Array.isArray(batch.students) ? batch.students : [] } : null;
   }
 
+  /**
+   * Returns the subjects attached to a supplied set of pupils through Arbor's
+   * teaching-group memberships. A progress-assessment batch can represent a
+   * whole cohort, so its `students` relationship must not be treated as a
+   * subject mark-sheet roster by itself.
+   */
+  async listTeachingGroupSubjectsForStudents(studentIds: string[]): Promise<Map<string, string[]>> {
+    if (!studentIds.length) return new Map();
+    const subjectsByStudent = new Map<string, Set<string>>();
+    for (let offset = 0; offset < studentIds.length; offset += 100) {
+      const ids = studentIds.slice(offset, offset + 100);
+      for (let pageNum = 0; pageNum < 100; pageNum++) {
+        const data = await runArborGraphqlQuery<{
+          TeachingGroupMembership: Array<{
+            student: { id: string } | null;
+            teachingGroup: {
+              academicUnitAutomaticEnrolments: Array<{
+                academicUnitEnrolments: Array<{
+                  academicUnit: { subject: { displayName: string | null } | null } | null;
+                }>;
+              }>;
+            } | null;
+          }>;
+        }>(this.credentials, `{
+          TeachingGroupMembership(page_size: 500, page_num: ${pageNum}, student__id_in: [${ids.map((id) => JSON.stringify(id)).join(", ")}]) {
+            student { id }
+            teachingGroup {
+              academicUnitAutomaticEnrolments {
+                academicUnitEnrolments { academicUnit { subject { displayName } } }
+              }
+            }
+          }
+        }`);
+        const memberships = Array.isArray(data.TeachingGroupMembership) ? data.TeachingGroupMembership : [];
+        for (const membership of memberships) {
+          if (!membership.student?.id) continue;
+          const subjects = subjectsByStudent.get(membership.student.id) ?? new Set<string>();
+          for (const automaticEnrolment of membership.teachingGroup?.academicUnitAutomaticEnrolments ?? []) {
+            for (const enrolment of automaticEnrolment.academicUnitEnrolments ?? []) {
+              const subject = enrolment.academicUnit?.subject?.displayName?.trim();
+              if (subject) subjects.add(subject);
+            }
+          }
+          subjectsByStudent.set(membership.student.id, subjects);
+        }
+        if (memberships.length < 500) break;
+      }
+    }
+    return new Map([...subjectsByStudent].map(([studentId, subjects]) => [studentId, [...subjects]]));
+  }
+
   async getProgressAssessmentBatchTarget(id: string): Promise<ArborProgressAssessmentBatchTarget | null> {
     const targets = await this.listProgressAssessmentBatchTargets([id], "target");
     return targets.find((target) => target.id === id) ?? null;
