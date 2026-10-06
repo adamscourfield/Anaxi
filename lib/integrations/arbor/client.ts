@@ -32,8 +32,6 @@ import type {
  * needs that confirmed first rather than guessed.
  */
 export class ArborClient {
-  private assessmentMarkScalarFields: Promise<string[]> | null = null;
-
   constructor(private readonly credentials: ArborCredentials) {}
 
   private restUrl(path: string): string {
@@ -125,37 +123,17 @@ export class ArborClient {
     return data.StudentProgressAssessmentMark.length;
   }
 
-  private async getAssessmentMarkScalarFields(): Promise<string[]> {
-    if (!this.assessmentMarkScalarFields) {
-      this.assessmentMarkScalarFields = runArborGraphqlQuery<{
-        __type: { fields: Array<{ name: string; type: { kind: string; name: string | null; ofType: { kind: string; name: string | null } | null } }> } | null;
-      }>(this.credentials, `{
-        __type(name: "StudentProgressAssessmentMark") {
-          fields { name type { kind name ofType { kind name } } }
-        }
-      }`).then((data) => (data.__type?.fields ?? [])
-        .filter((field) => field.type.kind === "SCALAR" || field.type.kind === "ENUM" || field.type.ofType?.kind === "SCALAR" || field.type.ofType?.kind === "ENUM")
-        .map((field) => field.name));
-    }
-    return this.assessmentMarkScalarFields;
-  }
-
   async listAssessmentMarks(pageSize = 100, pageNum = 0, assessmentIds?: string[], dateRange?: { from: string; before: string }): Promise<Array<{ id: string; student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }; assessmentDate: string | null; displayName: string | null; valueFields: Record<string, string | number | boolean | null>; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
     const assessmentFilter = assessmentIds?.length ? `, assessment__id_in: [${assessmentIds.map((id) => JSON.stringify(id)).join(", ")}]` : "";
     const dateFilter = dateRange ? `, assessmentDate_after_or_equal: ${JSON.stringify(dateRange.from)}, assessmentDate_before: ${JSON.stringify(dateRange.before)}` : "";
-    const scalarFields = await this.getAssessmentMarkScalarFields();
-    const selectedScalarFields = scalarFields.filter((field) => !["id", "displayName", "assessmentDate"].includes(field));
-    const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<Record<string, unknown> & { id: string; student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
+    const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<{ id: string; student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }; assessmentDate: string | null; displayName: string | null; grade: { displayName: string | null; shortName: string | null; code: string | null } | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
       StudentProgressAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}${assessmentFilter}${dateFilter}) {
-        id ${selectedScalarFields.join(" ")} student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } } assessmentDate displayName grade { displayName shortName code } assessment { id displayName assessmentName assessmentShortName }
+        id student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } } assessmentDate displayName grade { displayName shortName code } assessment { id displayName assessmentName assessmentShortName }
       }
     }`);
     return data.StudentProgressAssessmentMark.map((mark) => ({
       ...mark,
-      valueFields: Object.fromEntries(selectedScalarFields.map((field) => {
-        const value = mark[field];
-        return [field, typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? value : null];
-      })),
+      valueFields: {},
     }));
   }
 
