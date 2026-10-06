@@ -42,19 +42,31 @@ function academicYearFromLabel(label: string): string | null {
   return end === start + 1 ? `${start}/${end}` : null;
 }
 
-function periodFor(name: string, finalResult: boolean, assessmentDate?: string | null): { label: string; ordinal: number } | null {
-  if (finalResult) return { label: "Final", ordinal: 90 };
-  if (/\bautumn\b/i.test(name)) return { label: "Autumn", ordinal: 10 };
-  if (/\bspring\b/i.test(name)) return { label: "Spring", ordinal: 20 };
-  if (/\bsummer\b/i.test(name)) return { label: "Summer", ordinal: 30 };
-  // Catalogue definitions can omit the period; use the dated mark when available.
-  const date = assessmentDate ? new Date(assessmentDate) : new Date();
-  if (Number.isNaN(date.getTime())) return null;
-  const month = date.getUTCMonth();
-  if (month >= 8 || month <= 11) return { label: "Autumn", ordinal: 10 };
-  if (month >= 0 && month <= 3) return { label: "Spring", ordinal: 20 };
-  if (month >= 4 && month <= 6) return { label: "Summer", ordinal: 30 };
+function namedPeriod(value?: string | null): { label: string; ordinal: number } | null {
+  if (/\bautumn\b/i.test(value ?? "")) return { label: "Autumn", ordinal: 10 };
+  if (/\bspring\b/i.test(value ?? "")) return { label: "Spring", ordinal: 20 };
+  if (/\bsummer\b/i.test(value ?? "")) return { label: "Summer", ordinal: 30 };
   return null;
+}
+
+function periodFor(definitionName: string, periodHint: string | null | undefined, finalResult: boolean, assessmentDate?: string | null): { label: string; ordinal: number } | null {
+  if (finalResult) return { label: "Final", ordinal: 90 };
+
+  // A mark-specific hint is more reliable than its reusable definition label.
+  const hintedPeriod = namedPeriod(periodHint);
+  if (hintedPeriod) return hintedPeriod;
+
+  // Dated marks must determine their own term. Definitions can be reused or
+  // retain an old term in Arbor, so they are only a final fallback below.
+  const date = assessmentDate ? new Date(assessmentDate) : null;
+  if (date && !Number.isNaN(date.getTime())) {
+    const month = date.getUTCMonth();
+    if (month >= 8 || month <= 11) return { label: "Autumn", ordinal: 10 };
+    if (month >= 0 && month <= 3) return { label: "Spring", ordinal: 20 };
+    if (month >= 4 && month <= 6) return { label: "Summer", ordinal: 30 };
+  }
+
+  return namedPeriod(definitionName);
 }
 
 /** Maps only the agreed Goresbrook Secondary assessment families. */
@@ -76,7 +88,7 @@ export function mapArborAssessment(name: string, assessmentDate?: string | null,
   if (finalResult && family !== "GCSE" && family !== "A_LEVEL") return null;
   // Arbor often keeps the subject definition term-neutral, while the mark
   // itself carries the Autumn/Spring/Summer label. Preserve that distinction.
-  const period = periodFor(`${label} ${periodHint ?? ""}`, finalResult, assessmentDate);
+  const period = periodFor(label, periodHint, finalResult, assessmentDate);
   if (!period) return null;
   const date = assessmentDate ? new Date(assessmentDate) : new Date();
   // Markbooks commonly include the academic year in their name. Prefer that

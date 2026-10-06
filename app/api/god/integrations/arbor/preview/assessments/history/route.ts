@@ -21,7 +21,7 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-const HISTORIC_DISCOVERY_VERSION = 9;
+const HISTORIC_DISCOVERY_VERSION = 10;
 const MARK_PAGES_PER_RUN = 12;
 const DEFINITIONS_PER_QUERY = 1;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
