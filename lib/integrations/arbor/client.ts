@@ -44,6 +44,8 @@ export type ArborProgressAssessmentBatchTarget = {
     assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null;
   } | null;
   students: ArborAssessmentStudent[];
+  /** Arbor expands a batch target (for example, a class or teaching group) here. */
+  allStudents: ArborAssessmentStudent[];
   studentProgressAssessmentMarks: ArborAssessmentMark[];
 };
 
@@ -197,6 +199,7 @@ export class ArborClient {
               assessment { id displayName assessmentName assessmentShortName }
             }
             students { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
+            allStudents { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
             studentProgressAssessmentMarks {
               id assessmentDate displayName
               student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
@@ -212,6 +215,7 @@ export class ArborClient {
           // mark sheet. Preserve the target and let review show an empty
           // roster instead of failing the whole historic discovery run.
           students: Array.isArray(target.students) ? target.students : [],
+          allStudents: Array.isArray(target.allStudents) ? target.allStudents : [],
           studentProgressAssessmentMarks: Array.isArray(target.studentProgressAssessmentMarks)
             ? target.studentProgressAssessmentMarks.map((mark) => ({ ...mark, valueFields: {} }))
             : [],

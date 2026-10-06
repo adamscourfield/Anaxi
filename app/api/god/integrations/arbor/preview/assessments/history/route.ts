@@ -19,11 +19,9 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-// v19 reads the parent batch roster when Arbor exposes empty target-level
-// relationships. Earlier releases inferred a
-// roster from the generic progress-mark stream, which is incomplete for
-// historic senior cohorts and can cross-contaminate subject lists.
-const HISTORIC_DISCOVERY_VERSION = 19;
+// v20 reads each batch target's `allStudents` roster. A parent batch can be a
+// whole year cohort; its `students` relationship is not a subject mark sheet.
+const HISTORIC_DISCOVERY_VERSION = 20;
 const DEFINITIONS_PER_BATCH_QUERY = 20;
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: NonNullable<ReturnType<typeof mapArborAssessment>>, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
@@ -92,6 +90,15 @@ export const POST = withApi(async function POST(req: Request) {
     const definitionSlice = definitions.slice(definitionOffset, definitionOffset + DEFINITIONS_PER_BATCH_QUERY);
     const batchPage = typeof state.historicBatchPage === "number" && state.historicBatchPage >= 0 ? state.historicBatchPage : 0;
     const batches = await client.listProgressAssessmentBatches(100, batchPage, definitionSlice.map((definition) => definition.id));
+    const targets = await client.listProgressAssessmentBatchTargets(batches.map((batch) => batch.id));
+    const targetsByBatchId = new Map<string, typeof targets>();
+    for (const target of targets) {
+      const batchId = target.progressAssessmentBatch?.id;
+      if (!batchId) continue;
+      const items = targetsByBatchId.get(batchId) ?? [];
+      items.push(target);
+      targetsByBatchId.set(batchId, items);
+    }
     let acceptedTargets = 0;
     const rejected = { noAssessment: 0, unsupportedLabel: 0, noPeriod: 0, emptyRoster: 0, noCohort: 0, duplicate: 0 };
     const labelSamples: string[] = [];
@@ -104,7 +111,12 @@ export const POST = withApi(async function POST(req: Request) {
       const mapping = mapArborAssessment(label, assessmentDate, batch.batchName);
       if (!mapping) { rejected.noPeriod++; continue; }
       const definition: PreparedDefinition = { id: batch.id, label, assessmentDate, periodHint: batch.batchName, source: "BATCH" };
-      const roster = batch.students;
+      // `allStudents` expands the target's actual pupils. Do not fall back to
+      // the parent batch roster: that represents the wider cohort and produces
+      // pupils on subjects they do not study.
+      const roster = [...new Map(
+        (targetsByBatchId.get(batch.id) ?? []).flatMap((target) => target.allStudents).map((student) => [student.id, student]),
+      ).values()];
       if (!roster.length) { rejected.emptyRoster++; continue; }
       const before = combined.size;
       for (const student of roster) addHistoricDefinition(combined, definition, mapping, student, archivedYearGroupByExternalId.get(student.id));
