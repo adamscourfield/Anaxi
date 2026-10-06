@@ -68,6 +68,20 @@ export function arborHistoricYearGroup(
     : null;
   if (archived) return archived;
 
+  // For a former pupil Arbor commonly preserves their final academic level on
+  // the assessment mark. If their leaving date falls in the same academic
+  // year as the result, that value describes the historic cohort directly;
+  // rebasing it from today's date would incorrectly move a 2025/26 Year 13
+  // pupil into Year 12.
+  const currentMatch = currentAcademicLevel?.trim().match(/^(?:Year|Y)\s*0?(\d{1,2})$/i);
+  if (leaving && !Number.isNaN(leaving.getTime()) && currentMatch) {
+    const leavingAcademicStart = leaving.getUTCFullYear() - (leaving.getUTCMonth() < 8 ? 1 : 0);
+    const finalYear = Number(currentMatch[1]);
+    if (leavingAcademicStart === Number(academicYear.slice(0, 4)) && finalYear >= 1 && finalYear <= 13) {
+      return `Y${finalYear}`;
+    }
+  }
+
   // Arbor can omit leavingDate on a historic mark even when the matching
   // pupil has already been archived in Anaxi. For the immediately preceding
   // academic year only, that archived level is still an unambiguous final

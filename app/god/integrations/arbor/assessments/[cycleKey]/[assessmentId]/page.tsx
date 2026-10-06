@@ -102,7 +102,7 @@ export default async function ArborAssessmentMarkSheetPage({
   );
   const allMarks = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext))
     .listAssessmentMarksForDefinitionInRange(definition.id, assessmentYearRange(cycle.academicYear));
-  const marks = allMarks.filter((mark) => {
+  const termMarks = allMarks.filter((mark) => {
     // Arbor returns every dated mark for this subject definition. Keep only
     // the term represented by the requested cycle; otherwise a July result
     // can incorrectly replace an Autumn mark in the review grid.
@@ -111,7 +111,9 @@ export default async function ArborAssessmentMarkSheetPage({
       mark.assessmentDate,
       mark.displayName,
     );
-    if (!markMapping || mapArborAssessmentForYearGroup(markMapping, yearGroup)?.cycleExternalId !== cycleKey) return false;
+    return Boolean(markMapping && mapArborAssessmentForYearGroup(markMapping, yearGroup)?.cycleExternalId === cycleKey);
+  });
+  const marks = termMarks.filter((mark) => {
     const linkedStudent = studentsByExternalId.get(mark.student.id);
     const historicYearGroup = arborHistoricYearGroup(
       mark.student.displayAcademicLevel?.displayName,
@@ -149,9 +151,9 @@ export default async function ArborAssessmentMarkSheetPage({
       />
 
       <Card className="grid gap-4 sm:grid-cols-3">
-        <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Subject roster</div><div className="mt-1 text-2xl font-semibold">{rows.length}</div><MetaText>Returned by Arbor</MetaText></div>
+        <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Arbor subject roster</div><div className="mt-1 text-2xl font-semibold">{new Set(termMarks.map((mark) => mark.student.id)).size}</div><MetaText>Returned for this subject and term</MetaText></div>
         <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Recorded marks</div><div className="mt-1 text-2xl font-semibold">{recordedGrades}</div><MetaText>With a grade or result</MetaText></div>
-        <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Linked to Anaxi</div><div className="mt-1 text-2xl font-semibold">{rows.filter((row) => row.student).length}</div><MetaText>Within this connection&apos;s schools</MetaText></div>
+        <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Included in this cycle</div><div className="mt-1 text-2xl font-semibold">{rows.length}</div><MetaText>{rows.filter((row) => row.student).length} linked to Anaxi</MetaText></div>
       </Card>
 
       <Card className="space-y-3">
