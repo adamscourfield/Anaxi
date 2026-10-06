@@ -12,11 +12,11 @@ type PreparedDefinition = { id: string; label: string; assessmentDate?: string |
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 3;
-const HISTORIC_DISCOVERY_VERSION = 13;
+const HISTORIC_DISCOVERY_VERSION = 14;
 const MARK_PAGES_PER_RUN = 24;
-// A combined page can be filled by one large subject, silently hiding the rest.
-// Review each definition separately so every subject gets a fair, complete roster.
-const DEFINITIONS_PER_QUERY = 1;
+// A small combined group is paged to completion before moving on, so every
+// subject in the group is retained without serially scanning the full P8 list.
+const DEFINITIONS_PER_QUERY = 10;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
 const HISTORIC_ACADEMIC_YEARS = [
   { label: "2025/2026", from: "2025-09-01", before: "2026-09-01" },

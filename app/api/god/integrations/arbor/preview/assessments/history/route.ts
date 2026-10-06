@@ -21,9 +21,12 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-const HISTORIC_DISCOVERY_VERSION = 13;
+const HISTORIC_DISCOVERY_VERSION = 14;
 const MARK_PAGES_PER_RUN = 24;
-const DEFINITIONS_PER_QUERY = 1;
+// Read a small set together, but exhaust its pages before progressing. This
+// preserves full subject rosters without making the P8 catalogue take dozens
+// of manual runs to inspect.
+const DEFINITIONS_PER_QUERY = 10;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
 const HISTORIC_ACADEMIC_YEARS = [
   { label: "2025/2026", from: "2025-09-01", before: "2026-09-01" },
