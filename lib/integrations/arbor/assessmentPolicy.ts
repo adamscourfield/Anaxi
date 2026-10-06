@@ -49,6 +49,38 @@ export function arborYearGroupAtAssessment(currentAcademicLevel: string | null |
   return historicYear >= 1 && historicYear <= 13 ? `Y${historicYear}` : null;
 }
 
+/**
+ * Resolves a pupil's year group at a historic mark. Leavers no longer have a
+ * current Arbor academic level, so use the archived Anaxi level at their
+ * leaving date as the reference point before applying a narrow final-year
+ * fallback for unlinked assessment records.
+ */
+export function arborHistoricYearGroup(
+  currentAcademicLevel: string | null | undefined,
+  archivedYearGroup: string | null | undefined,
+  leavingDate: string | null | undefined,
+  academicYear: string,
+  family: ArborAssessmentFamily,
+): string | null {
+  const current = arborYearGroupAtAssessment(currentAcademicLevel, academicYear);
+  if (current) return current;
+
+  const leaving = leavingDate ? new Date(leavingDate) : null;
+  const archived = leaving && !Number.isNaN(leaving.getTime())
+    ? arborYearGroupAtAssessment(archivedYearGroup, academicYear, leaving)
+    : null;
+  if (archived) return archived;
+
+  // This fallback is limited to final secondary cohorts and is used only to
+  // make an unlinked historic review visible; approval/import remains gated.
+  if (family === "GCSE") return "Y11";
+  if (family === "A_LEVEL" && leaving && !Number.isNaN(leaving.getTime())) {
+    const leavingAcademicStart = leaving.getUTCFullYear() - (leaving.getUTCMonth() < 8 ? 1 : 0);
+    return leavingAcademicStart === Number(academicYear.slice(0, 4)) ? "Y13" : null;
+  }
+  return null;
+}
+
 function academicYearFromLabel(label: string): string | null {
   const match = label.match(/\b(20\d{2})\s*[-/]\s*(20\d{2})\b/);
   if (!match) return null;

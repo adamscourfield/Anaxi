@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
 import { assertCronAuthorized } from "@/lib/cronAuth";
 import { decryptCredentials } from "@/lib/integrationSecrets";
-import { arborAssessmentFamily, arborAssessmentLabel, arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup, type ArborAssessmentMapping } from "@/lib/integrations/arbor/assessmentPolicy";
+import { arborAssessmentFamily, arborAssessmentLabel, arborHistoricYearGroup, arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup, type ArborAssessmentMapping } from "@/lib/integrations/arbor/assessmentPolicy";
 import { ArborClient, arborAssessmentMarkValue } from "@/lib/integrations/arbor/client";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
@@ -12,7 +12,7 @@ type PreparedDefinition = { id: string; label: string; assessmentDate?: string |
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 3;
-const HISTORIC_DISCOVERY_VERSION = 12;
+const HISTORIC_DISCOVERY_VERSION = 13;
 const MARK_PAGES_PER_RUN = 24;
 // A combined page can be filled by one large subject, silently hiding the rest.
 // Review each definition separately so every subject gets a fair, complete roster.
@@ -62,9 +62,8 @@ function subjectFromLabel(label: string): string {
 
 function markValue(mark: Parameters<typeof arborAssessmentMarkValue>[0]): string | null { return arborAssessmentMarkValue(mark); }
 
-function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: ArborAssessmentMapping, currentAcademicLevel: string | null | undefined) {
-  const inferredYearGroup = arborYearGroupAtAssessment(currentAcademicLevel, mapping.academicYear)
-    ?? (mapping.family === "GCSE" ? "Y11" : null);
+function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: ArborAssessmentMapping, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
+  const inferredYearGroup = arborHistoricYearGroup(student.displayAcademicLevel?.displayName, archivedYearGroup, student.leavingDate, mapping.academicYear, mapping.family);
   const cycle = inferredYearGroup ? mapArborAssessmentForYearGroup(mapping, inferredYearGroup) : null;
   if (!cycle || !inferredYearGroup) return;
   const key = `${definition.id}:${cycle.cycleExternalId}`;
@@ -114,6 +113,11 @@ export async function POST(req: Request) {
         ? { ...state.historicFamilyProgress }
         : {};
       const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
+      const archivedStudents = await db.student.findMany({
+        where: { tenantId: { in: integration.schools.map((school: { tenantId: string }) => school.tenantId) }, externalId: { not: null }, status: "ARCHIVED" },
+        select: { externalId: true, yearGroup: true },
+      });
+      const archivedYearGroupByExternalId = new Map<string, string | null>(archivedStudents.map((student: { externalId: string | null; yearGroup: string | null }) => [student.externalId!, student.yearGroup]));
       const known = Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : [];
       const historicalDefinitions = new Map<string, PreparedDefinition>();
       for (const item of known) {
@@ -150,7 +154,7 @@ export async function POST(req: Request) {
           if (!mark.assessment) continue;
           const label = arborAssessmentLabel(mark.assessment);
           const mapping = mapArborAssessment(label, mark.assessmentDate, mark.displayName);
-          if (mapping) addHistoricDefinition(historicalDefinitions, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate, periodHint: mark.displayName }, mapping, mark.student.displayAcademicLevel?.displayName);
+          if (mapping) addHistoricDefinition(historicalDefinitions, { id: mark.assessment.id, label, assessmentDate: mark.assessmentDate, periodHint: mark.displayName }, mapping, mark.student, archivedYearGroupByExternalId.get(mark.student.id));
         }
         if (marks.length < 500) {
           const nextChunk = chunk + 1;
