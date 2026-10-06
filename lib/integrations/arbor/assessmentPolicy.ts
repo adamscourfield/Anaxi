@@ -71,6 +71,17 @@ export function arborHistoricYearGroup(
     : null;
   if (archived) return archived;
 
+  // Arbor can omit leavingDate on a historic mark even when the matching
+  // pupil has already been archived in Anaxi. For the immediately preceding
+  // academic year only, that archived level is still an unambiguous final
+  // cohort indicator. Do not extend this shortcut to older years.
+  const archivedMatch = archivedYearGroup?.trim().match(/^(?:Year|Y)\s*0?(\d{1,2})$/i);
+  const currentAcademicStart = new Date().getUTCFullYear() - (new Date().getUTCMonth() < 8 ? 1 : 0);
+  if (archivedMatch && Number(academicYear.slice(0, 4)) === currentAcademicStart - 1) {
+    const archivedYear = Number(archivedMatch[1]);
+    if (archivedYear >= 1 && archivedYear <= 13) return `Y${archivedYear}`;
+  }
+
   // This fallback is limited to final secondary cohorts and is used only to
   // make an unlinked historic review visible; approval/import remains gated.
   if (family === "GCSE") return "Y11";
