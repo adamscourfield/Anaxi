@@ -811,7 +811,9 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 ) : (
                   <div className="rounded-sm border border-dashed border-border bg-[var(--surface-container-low)] p-5">
                     <H3>No assessment cycles are ready to review yet</H3>
-                    <MetaText className="mt-1">Refresh the Arbor catalogue to find the agreed P8 GCSE, A-Level, KS3 percentage, Year 10 percentage, and final-result definitions. This is read-only.</MetaText>
+                    <MetaText className="mt-1">{Array.isArray(assessmentSync.definitions) && assessmentSync.definitions.length
+                      ? "Click Find historic cycles to scan the prepared Arbor definitions for dated Autumn, Spring, Summer, and final-result marks. This is read-only."
+                      : "Click Find historic cycles to prepare the agreed P8 GCSE, A-Level, KS3 percentage, Year 10 percentage, and final-result definitions, then start the dated review. This is read-only."}</MetaText>
                   </div>
                 )}
 

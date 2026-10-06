@@ -75,9 +75,19 @@ export const POST = withApi(async function POST(req: Request) {
       ? { ...savedState, historicalDefinitions: [], historicYearCursor: 0, historicFamilyCursor: 0, historicFamilyProgress: {}, historicComplete: false }
       : savedState;
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
-    const definitions = Array.isArray(state.definitions)
+    let definitions = Array.isArray(state.definitions)
       ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && Boolean(mapArborAssessment(item.label)))
       : [];
+    // A historic review request must be self-contained. If a deployment or
+    // connection migration left the cached catalogue empty, rebuild it here
+    // rather than showing the operator an empty review list and requiring a
+    // separate, non-obvious preparation step.
+    if (!definitions.length) {
+      definitions = (await client.listAllAssessmentDefinitions())
+        .map((definition) => ({ id: definition.id, label: arborAssessmentLabel(definition) }))
+        .filter((definition): definition is PreparedDefinition => Boolean(mapArborAssessment(definition.label)))
+        .sort((a, b) => a.label.localeCompare(b.label));
+    }
     let yearCursor = typeof state.historicYearCursor === "number" && state.historicYearCursor >= 0
       ? state.historicYearCursor
       : 0;
@@ -144,6 +154,7 @@ export const POST = withApi(async function POST(req: Request) {
     const historicComplete = yearCursor >= HISTORIC_ACADEMIC_YEARS.length;
     const nextState = {
       ...state,
+      definitions,
       historicalDefinitions: [...combined.values()],
       historicYearCursor: yearCursor,
       historicFamilyCursor: familyCursor,
