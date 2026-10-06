@@ -197,11 +197,18 @@ export class ArborClient {
             }
           }
         }`);
-        targets.push(...data.ProgressAssessmentBatchTarget.map((target) => ({
+        const pageTargets = Array.isArray(data.ProgressAssessmentBatchTarget) ? data.ProgressAssessmentBatchTarget : [];
+        targets.push(...pageTargets.map((target) => ({
           ...target,
-          studentProgressAssessmentMarks: target.studentProgressAssessmentMarks.map((mark) => ({ ...mark, valueFields: {} })),
+          // Arbor may omit either relationship for an empty or unfinished
+          // mark sheet. Preserve the target and let review show an empty
+          // roster instead of failing the whole historic discovery run.
+          students: Array.isArray(target.students) ? target.students : [],
+          studentProgressAssessmentMarks: Array.isArray(target.studentProgressAssessmentMarks)
+            ? target.studentProgressAssessmentMarks.map((mark) => ({ ...mark, valueFields: {} }))
+            : [],
         })));
-        if (data.ProgressAssessmentBatchTarget.length < 100) break;
+        if (pageTargets.length < 100) break;
       }
     }
     return targets;
@@ -214,7 +221,7 @@ export class ArborClient {
         assessment { id displayName assessmentName assessmentShortName }
       }
     }`);
-    return data.ProgressAssessmentBatch;
+    return Array.isArray(data.ProgressAssessmentBatch) ? data.ProgressAssessmentBatch : [];
   }
 
   async getProgressAssessmentBatchTarget(id: string): Promise<ArborProgressAssessmentBatchTarget | null> {
