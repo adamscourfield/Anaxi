@@ -62,9 +62,6 @@ export function arborHistoricYearGroup(
   academicYear: string,
   family: ArborAssessmentFamily,
 ): string | null {
-  const current = arborYearGroupAtAssessment(currentAcademicLevel, academicYear);
-  if (current) return current;
-
   const leaving = leavingDate ? new Date(leavingDate) : null;
   const archived = leaving && !Number.isNaN(leaving.getTime())
     ? arborYearGroupAtAssessment(archivedYearGroup, academicYear, leaving)
@@ -81,6 +78,12 @@ export function arborHistoricYearGroup(
     const archivedYear = Number(archivedMatch[1]);
     if (archivedYear >= 1 && archivedYear <= 13) return `Y${archivedYear}`;
   }
+
+  // Arbor may retain a leaver's final level on a historic mark. Only use that
+  // field after the archived Anaxi record, otherwise a former Year 13 is
+  // incorrectly rewound to Year 12 for the prior academic year.
+  const current = arborYearGroupAtAssessment(currentAcademicLevel, academicYear);
+  if (current) return current;
 
   // This fallback is limited to final secondary cohorts and is used only to
   // make an unlinked historic review visible; approval/import remains gated.
