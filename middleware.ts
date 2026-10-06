@@ -65,12 +65,12 @@ export const config = {
     "/api/explorer/:path*",
     "/api/admin/:path*",
     "/god/:path*",
-    // The photo worker authenticates scheduled calls with CRON_SECRET itself.
-    // Let that internal job reach the route instead of redirecting it to login.
-    "/api/god/((?!integrations/arbor/sync/photos).*)",
+    // These workers authenticate scheduled calls with CRON_SECRET themselves.
+    // Let those internal jobs reach their route instead of redirecting to login.
+    "/api/god/((?!integrations/arbor/sync/photos|integrations/arbor/preview/assessments/history).*)",
     "/api/auth/switch-tenant",
-    // The secure Arbor photo worker is excluded above and here; the broader
-    // API matcher would otherwise still send its internal job to sign-in.
-    "/api/((?!auth|cron|webhooks|invite|health|god/integrations/arbor/sync/photos).*)",
+    // The secure Arbor workers are excluded above and here; the broader API
+    // matcher would otherwise still send their internal jobs to sign-in.
+    "/api/((?!auth|cron|webhooks|invite|health|god/integrations/arbor/sync/photos|god/integrations/arbor/preview/assessments/history).*)",
   ],
 };

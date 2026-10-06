@@ -6,18 +6,10 @@ function londonHour(): number {
   return Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", hourCycle: "h23" }).formatToParts(new Date()).find((part) => part.type === "hour")?.value);
 }
 
-function isAssessmentDiscoveryWindow(hour: number) {
-  // Keep the more frequent read-only discovery work out of the school day.
-  return hour >= 18 || hour < 7;
-}
-
 export async function GET(req: Request) {
   const denied = assertCronAuthorized(req); if (denied) return denied;
   const hour = londonHour();
   const discoveryOnly = new URL(req.url).searchParams.get("discoveryOnly") === "1";
-  if (discoveryOnly && !isAssessmentDiscoveryWindow(hour)) {
-    return NextResponse.json({ skipped: "outside the 18:00-07:00 Europe/London assessment discovery window" });
-  }
   if (!discoveryOnly && hour !== 2) return NextResponse.json({ skipped: "outside 2am Europe/London" });
 
   const sync = discoveryOnly

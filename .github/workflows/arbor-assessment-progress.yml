@@ -1,8 +1,8 @@
 name: Arbor assessment progress
 
 on:
-  # GitHub Actions schedules in UTC. The endpoint applies the London overnight
-  # window, so daylight-saving time is handled in one place.
+  # This is a bounded, read-only request. Run it throughout the day so delayed
+  # GitHub scheduled events cannot miss a narrow overnight time window.
   schedule:
     - cron: "*/30 * * * *"
   workflow_dispatch:
@@ -23,7 +23,10 @@ jobs:
         run: |
           test -n "$ANAXI_APP_URL"
           test -n "$ANAXI_CRON_SECRET"
-          curl --fail --silent --show-error \
+          status=$(curl --silent --show-error \
             --retry 2 \
+            --output /dev/null \
+            --write-out "%{http_code}" \
             --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
-            "${ANAXI_APP_URL%/}/api/cron/arbor-assessments?discoveryOnly=1"
+            "${ANAXI_APP_URL%/}/api/cron/arbor-assessments?discoveryOnly=1")
+          test "$status" -ge 200 -a "$status" -lt 300
