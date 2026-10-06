@@ -89,19 +89,34 @@ export const POST = withApi(async function POST(req: Request) {
     const batches = await client.listProgressAssessmentBatches(100, batchPage, definitionSlice.map((definition) => definition.id));
     const targets = await client.listProgressAssessmentBatchTargets(batches.map((batch) => batch.id));
     let acceptedTargets = 0;
+    const rejected = { noAssessment: 0, unsupportedLabel: 0, noPeriod: 0, emptyRoster: 0, noCohort: 0, duplicate: 0 };
+    const labelSamples: string[] = [];
     for (const target of targets) {
       const batch = target.progressAssessmentBatch;
-      if (!batch?.assessment) continue;
+      if (!batch?.assessment) { rejected.noAssessment++; continue; }
       const label = arborAssessmentLabel(batch.assessment);
-      if (!arborAssessmentFamily(label)) continue;
+      if (labelSamples.length < 3 && !labelSamples.includes(label)) labelSamples.push(label);
+      if (!arborAssessmentFamily(label)) { rejected.unsupportedLabel++; continue; }
       const assessmentDate = batch.currentReferenceDate ?? target.studentProgressAssessmentMarks.find((mark) => mark.assessmentDate)?.assessmentDate ?? null;
       const mapping = mapArborAssessment(label, assessmentDate, batch.batchName ?? target.displayName);
-      if (!mapping) continue;
+      if (!mapping) { rejected.noPeriod++; continue; }
       const definition: PreparedDefinition = { id: target.id, label, assessmentDate, periodHint: batch.batchName ?? target.displayName, source: "BATCH_TARGET" };
       const roster = target.students.length ? target.students : target.studentProgressAssessmentMarks.map((mark) => mark.student);
+      if (!roster.length) { rejected.emptyRoster++; continue; }
       const before = combined.size;
       for (const student of roster) addHistoricDefinition(combined, definition, mapping, student, archivedYearGroupByExternalId.get(student.id));
       if (combined.size > before) acceptedTargets++;
+      else {
+        const hasEligibleCohort = roster.some((student) => Boolean(arborHistoricYearGroup(
+          student.displayAcademicLevel?.displayName,
+          archivedYearGroupByExternalId.get(student.id),
+          student.leavingDate,
+          mapping.academicYear,
+          mapping.family,
+        )));
+        if (hasEligibleCohort) rejected.duplicate++;
+        else rejected.noCohort++;
+      }
     }
     const nextDefinitionOffset = batches.length < 100 ? definitionOffset + DEFINITIONS_PER_BATCH_QUERY : definitionOffset;
     const nextBatchPage = batches.length < 100 ? 0 : batchPage + 1;
@@ -122,6 +137,7 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("assessmentHistoryBatches", String(batches.length));
     url.searchParams.set("assessmentHistoryTargets", String(targets.length));
     url.searchParams.set("assessmentHistoryAccepted", String(acceptedTargets));
+    url.searchParams.set("assessmentHistoryReasons", `labels: ${labelSamples.join(" / ") || "none"}; no assessment ${rejected.noAssessment}, unsupported ${rejected.unsupportedLabel}, no period ${rejected.noPeriod}, empty roster ${rejected.emptyRoster}, no cohort ${rejected.noCohort}, already found ${rejected.duplicate}`);
     return NextResponse.redirect(url);
   } catch (error) {
     const url = new URL("/god/integrations/arbor", req.url);
