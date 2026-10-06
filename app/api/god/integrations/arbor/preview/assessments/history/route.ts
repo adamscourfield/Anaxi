@@ -9,7 +9,7 @@ import { arborAssessmentFamily, arborAssessmentLabel, arborHistoricYearGroup, ma
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[]; source?: "PROGRESS_MARK" | "BATCH_TARGET" };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[]; source?: "PROGRESS_MARK" | "BATCH_TARGET" | "BATCH" };
 type AssessmentSyncState = {
   definitions?: PreparedDefinition[];
   historicalDefinitions?: PreparedDefinition[];
@@ -87,21 +87,19 @@ export const POST = withApi(async function POST(req: Request) {
     const definitionSlice = definitions.slice(definitionOffset, definitionOffset + DEFINITIONS_PER_BATCH_QUERY);
     const batchPage = typeof state.historicBatchPage === "number" && state.historicBatchPage >= 0 ? state.historicBatchPage : 0;
     const batches = await client.listProgressAssessmentBatches(100, batchPage, definitionSlice.map((definition) => definition.id));
-    const targets = await client.listProgressAssessmentBatchTargets(batches.map((batch) => batch.id));
     let acceptedTargets = 0;
     const rejected = { noAssessment: 0, unsupportedLabel: 0, noPeriod: 0, emptyRoster: 0, noCohort: 0, duplicate: 0 };
     const labelSamples: string[] = [];
-    for (const target of targets) {
-      const batch = target.progressAssessmentBatch;
-      if (!batch?.assessment) { rejected.noAssessment++; continue; }
+    for (const batch of batches) {
+      if (!batch.assessment) { rejected.noAssessment++; continue; }
       const label = arborAssessmentLabel(batch.assessment);
       if (labelSamples.length < 3 && !labelSamples.includes(label)) labelSamples.push(label);
       if (!arborAssessmentFamily(label)) { rejected.unsupportedLabel++; continue; }
-      const assessmentDate = batch.currentReferenceDate ?? target.studentProgressAssessmentMarks.find((mark) => mark.assessmentDate)?.assessmentDate ?? null;
-      const mapping = mapArborAssessment(label, assessmentDate, batch.batchName ?? target.displayName);
+      const assessmentDate = batch.currentReferenceDate ?? null;
+      const mapping = mapArborAssessment(label, assessmentDate, batch.batchName);
       if (!mapping) { rejected.noPeriod++; continue; }
-      const definition: PreparedDefinition = { id: target.id, label, assessmentDate, periodHint: batch.batchName ?? target.displayName, source: "BATCH_TARGET" };
-      const roster = target.students.length ? target.students : target.studentProgressAssessmentMarks.map((mark) => mark.student);
+      const definition: PreparedDefinition = { id: batch.id, label, assessmentDate, periodHint: batch.batchName, source: "BATCH" };
+      const roster = batch.students;
       if (!roster.length) { rejected.emptyRoster++; continue; }
       const before = combined.size;
       for (const student of roster) addHistoricDefinition(combined, definition, mapping, student, archivedYearGroupByExternalId.get(student.id));
@@ -135,7 +133,7 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("assessmentHistory", historicComplete ? "complete" : "progress");
     url.searchParams.set("assessmentHistoryCycles", String(combined.size));
     url.searchParams.set("assessmentHistoryBatches", String(batches.length));
-    url.searchParams.set("assessmentHistoryTargets", String(targets.length));
+    url.searchParams.set("assessmentHistoryTargets", String(batches.length));
     url.searchParams.set("assessmentHistoryAccepted", String(acceptedTargets));
     url.searchParams.set("assessmentHistoryReasons", `labels: ${labelSamples.join(" / ") || "none"}; no assessment ${rejected.noAssessment}, unsupported ${rejected.unsupportedLabel}, no period ${rejected.noPeriod}, empty roster ${rejected.emptyRoster}, no cohort ${rejected.noCohort}, already found ${rejected.duplicate}`);
     return NextResponse.redirect(url);

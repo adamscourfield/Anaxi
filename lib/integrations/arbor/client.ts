@@ -26,6 +26,14 @@ export type ArborAssessmentMark = {
   assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null;
 };
 
+export type ArborProgressAssessmentBatch = {
+  id: string;
+  batchName: string | null;
+  currentReferenceDate: string | null;
+  assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null;
+  students: ArborAssessmentStudent[];
+};
+
 export type ArborProgressAssessmentBatchTarget = {
   id: string;
   displayName: string | null;
@@ -214,17 +222,32 @@ export class ArborClient {
     return targets;
   }
 
-  async listProgressAssessmentBatches(pageSize = 100, pageNum = 0, assessmentIds?: string[]): Promise<Array<{ id: string; batchName: string | null; currentReferenceDate: string | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }>> {
+  async listProgressAssessmentBatches(pageSize = 100, pageNum = 0, assessmentIds?: string[]): Promise<ArborProgressAssessmentBatch[]> {
     const assessmentFilter = assessmentIds?.length
       ? `, assessment__id_in: [${assessmentIds.map((id) => JSON.stringify(id)).join(", ")}]`
       : "";
-    const data = await runArborGraphqlQuery<{ ProgressAssessmentBatch: Array<{ id: string; batchName: string | null; currentReferenceDate: string | null; assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null }> }>(this.credentials, `{
+    const data = await runArborGraphqlQuery<{ ProgressAssessmentBatch: ArborProgressAssessmentBatch[] }>(this.credentials, `{
       ProgressAssessmentBatch(page_size: ${pageSize}, page_num: ${pageNum}${assessmentFilter}) {
         id batchName currentReferenceDate
         assessment { id displayName assessmentName assessmentShortName }
+        students { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
       }
     }`);
-    return Array.isArray(data.ProgressAssessmentBatch) ? data.ProgressAssessmentBatch : [];
+    return Array.isArray(data.ProgressAssessmentBatch)
+      ? data.ProgressAssessmentBatch.map((batch) => ({ ...batch, students: Array.isArray(batch.students) ? batch.students : [] }))
+      : [];
+  }
+
+  async getProgressAssessmentBatch(id: string): Promise<ArborProgressAssessmentBatch | null> {
+    const data = await runArborGraphqlQuery<{ ProgressAssessmentBatch: ArborProgressAssessmentBatch[] }>(this.credentials, `{
+      ProgressAssessmentBatch(page_size: 1, page_num: 0, id: ${JSON.stringify(id)}) {
+        id batchName currentReferenceDate
+        assessment { id displayName assessmentName assessmentShortName }
+        students { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
+      }
+    }`);
+    const batch = Array.isArray(data.ProgressAssessmentBatch) ? data.ProgressAssessmentBatch[0] : null;
+    return batch ? { ...batch, students: Array.isArray(batch.students) ? batch.students : [] } : null;
   }
 
   async getProgressAssessmentBatchTarget(id: string): Promise<ArborProgressAssessmentBatchTarget | null> {
