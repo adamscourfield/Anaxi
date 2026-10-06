@@ -7,6 +7,12 @@ on:
     - cron: "0 1,2 * * *"
   workflow_dispatch:
 
+# Prevent the full nightly catch-up and a lighter progress pass from querying
+# the same Arbor assessment catalogue concurrently.
+concurrency:
+  group: arbor-assessment-discovery
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest

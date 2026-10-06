@@ -1,0 +1,29 @@
+name: Arbor assessment progress
+
+on:
+  # GitHub Actions schedules in UTC. The endpoint applies the London overnight
+  # window, so daylight-saving time is handled in one place.
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+# Do not run two discovery passes against Arbor at the same time.
+concurrency:
+  group: arbor-assessment-discovery
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Progress protected Arbor assessment discovery
+        env:
+          ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
+          ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
+        run: |
+          test -n "$ANAXI_APP_URL"
+          test -n "$ANAXI_CRON_SECRET"
+          curl --fail --silent --show-error \
+            --retry 2 \
+            --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+            "${ANAXI_APP_URL%/}/api/cron/arbor-assessments?discoveryOnly=1"
