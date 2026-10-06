@@ -754,7 +754,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 </div>
                 {params?.assessmentHistory === "progress" || params?.assessmentHistory === "complete" ? (
                   <StatusBanner variant="success" title={params.assessmentHistory === "complete" ? "Historic assessment discovery complete." : "Historic assessment discovery updated."}>
-                    {previewCount(params.assessmentHistoryCycles)} dated Arbor cycle(s) are now available for review. This pass read {previewCount(params.assessmentHistoryBatches)} Arbor batches, {previewCount(params.assessmentHistoryTargets)} mark-sheet targets, and accepted {previewCount(params.assessmentHistoryAccepted)} matching targets. {params.assessmentHistoryReasons ? `Mapping detail: ${params.assessmentHistoryReasons}. ` : ""}{params.assessmentHistory === "complete" ? "No results have been imported." : "The next safe batch will run overnight, or you can run another batch now."}
+                    {previewCount(params.assessmentHistoryCycles)} dated Arbor cycle(s) are now available for review. This pass read {previewCount(params.assessmentHistoryBatches)} Arbor subject batches and accepted {previewCount(params.assessmentHistoryAccepted)} matching rosters. {params.assessmentHistoryReasons ? `Mapping detail: ${params.assessmentHistoryReasons}. ` : ""}{params.assessmentHistory === "complete" ? "No results have been imported." : "Continue the controlled batch scan with Find historic cycles."}
                   </StatusBanner>
                 ) : null}
                 {params?.assessmentHistory === "failed" ? (

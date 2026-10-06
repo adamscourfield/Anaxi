@@ -100,6 +100,13 @@ export async function POST(req: Request) {
       ? config.assessmentApprovedCycleKeys.filter((value): value is string => typeof value === "string")
       : [],
   );
+  // God Mode v18 discovers historic assessments from Arbor's parent batch
+  // rosters. The legacy cron reader uses generic progress marks and would
+  // overwrite those accurate review candidates with incomplete cohorts.
+  // Keep the verified batch-roster state intact until this cron is migrated.
+  if (!approvedCycleKeys.size && typeof savedState.historicDiscoveryVersion === "number" && savedState.historicDiscoveryVersion >= 18) {
+    return NextResponse.json({ skipped: "historic batch-roster discovery is managed in God Mode" });
+  }
   if (!approvedCycleKeys.size) {
     // While imports are paused, use the scheduled calls to discover dated
     // historic cycles in small pages. This makes prior years reviewable before
