@@ -858,7 +858,7 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                                 return (
                                   <div key={cycle.key} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
                                     <label className="flex min-w-0 cursor-pointer items-start gap-3">
-                                      <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} disabled={!assessmentDiscoveryComplete} className="mt-1 accent-accent" />
+                                      <input type="checkbox" name="cycleKey" value={cycle.key} defaultChecked={approvedAssessmentCycles.has(cycle.key)} className="mt-1 accent-accent" />
                                       <span className="min-w-0">
                                         <span className="block font-medium">{cycle.label}</span>
                                         <MetaText className="mt-1">{cycle.gradeFormat} · {students} active {students === 1 ? "student" : "students"} · {cycle.definitions.length} Arbor {cycle.definitions.length === 1 ? "definition" : "definitions"}</MetaText>
@@ -875,10 +875,10 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                       })}
                     </div>
                     <div className="flex flex-wrap items-center gap-3 border-t border-border/70 pt-4">
-                      <SubmitButton disabled={!assessmentDiscoveryComplete} className={actionButtonClass}>Save approved cycles</SubmitButton>
+                      <SubmitButton className={actionButtonClass}>Save approved cycles</SubmitButton>
                       <MetaText>{assessmentDiscoveryComplete
                         ? (approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} cycle(s) are currently approved.` : "All assessment imports are currently paused.")
-                        : "Discovery is still in progress. You can review the partial findings, but approval is locked until every relevant definition has been checked."}</MetaText>
+                        : "Discovery is still in progress. You can approve the reviewed cycles now; remaining definitions will stay unapproved until you review them."}</MetaText>
                     </div>
                   </form>
                 ) : (

@@ -48,9 +48,9 @@ export const POST = withApi(async function POST(req: Request) {
     : {};
   const availableKeys = proposedCycleKeys(config);
   const pausing = form.get("action") === "pause";
-  if (!pausing && state.historicComplete !== true) {
-    return NextResponse.redirect(new URL("/god/integrations/arbor?assessmentApproval=discovery-in-progress", req.url));
-  }
+  // Operators may approve a reviewed cycle while discovery continues for
+  // other definitions. The importer is scoped to the selected reviewed batch,
+  // so an unfinished scan cannot add unreviewed subjects to that cycle.
   const requestedKeys = pausing ? [] : form.getAll("cycleKey").filter((value): value is string => typeof value === "string");
   const approvedCycleKeys = [...new Set(requestedKeys.filter((key) => availableKeys.has(key)))];
 

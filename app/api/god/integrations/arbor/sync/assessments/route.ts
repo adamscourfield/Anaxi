@@ -8,9 +8,9 @@ import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { prisma } from "@/lib/prisma";
 
-type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[] };
+type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[]; source?: "PROGRESS_MARK" | "BATCH_TARGET" | "BATCH" };
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
-type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
+type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; historicImportCursor?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 3;
 // Keep the scheduled discovery aligned with the operator-triggered scan.
 // Dated marks are reclassified in v15 before they can be reviewed or approved.
@@ -63,6 +63,67 @@ function subjectFromLabel(label: string): string {
 }
 
 function markValue(mark: Parameters<typeof arborAssessmentMarkValue>[0]): string | null { return arborAssessmentMarkValue(mark); }
+
+/**
+ * Imports one reviewed Arbor batch definition. Unlike the legacy generic mark
+ * feed, batch-target marks are tied to the subject sheet reviewed in God Mode.
+ */
+async function importReviewedHistoricDefinition(args: {
+  db: any;
+  integration: any;
+  config: Record<string, unknown>;
+  state: AssessmentSyncState;
+  approvedCycleKeys: Set<string>;
+  definition: PreparedDefinition;
+}) {
+  const { db, integration, config, state, approvedCycleKeys, definition } = args;
+  const secondaryTenantIds = integration.schools
+    .filter((school: { tenant: { tenantSettings: { schoolType: string } | null } }) => school.tenant.tenantSettings?.schoolType === "SECONDARY")
+    .map((school: { tenantId: string }) => school.tenantId);
+  const [students, owners, targets] = await Promise.all([
+    db.student.findMany({ where: { tenantId: { in: secondaryTenantIds }, externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true, yearGroup: true } }),
+    db.user.findMany({ where: { tenantId: { in: secondaryTenantIds }, isActive: true }, select: { id: true, tenantId: true }, orderBy: { createdAt: "asc" } }),
+    new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listProgressAssessmentBatchTargets([definition.id]),
+  ]);
+  const studentByExternalId = new Map<string, { id: string; tenantId: string; externalId: string; yearGroup: string | null }>(students.map((student: { id: string; tenantId: string; externalId: string; yearGroup: string | null }) => [student.externalId, student]));
+  const ownerByTenantId = new Map<string, string>();
+  for (const owner of owners) if (!ownerByTenantId.has(owner.tenantId)) ownerByTenantId.set(owner.tenantId, owner.id);
+
+  let imported = 0;
+  let reviewedMarks = 0;
+  for (const target of targets) {
+    for (const mark of target.studentProgressAssessmentMarks) {
+      // A blank batch placeholder is not a result and must never create an
+      // Attainment entry. This is the same safety rule used by the review UI.
+      const value = markValue(mark);
+      if (!value) continue;
+      reviewedMarks++;
+      const baseMapping = mapArborAssessment(definition.label, mark.assessmentDate ?? definition.assessmentDate, mark.displayName ?? definition.periodHint);
+      if (!baseMapping) continue;
+      const student = studentByExternalId.get(mark.student.id);
+      const historicYearGroup = arborYearGroupAtAssessment(mark.student.displayAcademicLevel?.displayName, baseMapping.academicYear)
+        ?? (baseMapping.family === "GCSE" ? "Y11" : student?.yearGroup ?? null);
+      const mapping = mapArborAssessmentForYearGroup(baseMapping, historicYearGroup);
+      if (!student || !mapping || !approvedCycleKeys.has(mapping.cycleExternalId) || !ownerByTenantId.has(student.tenantId)) continue;
+      const assessment = await ensureAssessment(db, student.tenantId, ownerByTenantId.get(student.tenantId)!, definition, mapping);
+      const normalizedScore = normalizeGrade(value, mapping.gradeFormat);
+      const key = { tenantId_assessmentId_studentId: { tenantId: student.tenantId, assessmentId: assessment.id, studentId: student.id } };
+      const existingResult = await db.assessmentResult.findUnique({ where: key, select: { id: true, isManuallyOverridden: true } });
+      const arborValues = { arborRawValue: value, arborNormalizedScore: normalizedScore, arborNormalisedGrade: value, arborSyncedAt: new Date() };
+      if (existingResult?.isManuallyOverridden) {
+        await db.assessmentResult.update({ where: { id: existingResult.id }, data: arborValues });
+      } else {
+        await db.assessmentResult.upsert({
+          where: key,
+          create: { tenantId: student.tenantId, assessmentId: assessment.id, studentId: student.id, rawValue: value, normalizedScore, normalisedGrade: value, status: "PRESENT", isValid: normalizedScore !== null, dataSource: "ARBOR", ...arborValues },
+          update: { rawValue: value, normalizedScore, normalisedGrade: value, status: "PRESENT", isValid: normalizedScore !== null, dataSource: "ARBOR", ...arborValues },
+        });
+      }
+      imported++;
+    }
+  }
+  return { imported, reviewedMarks, targets: targets.length };
+}
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: ArborAssessmentMapping, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
   const inferredYearGroup = arborHistoricYearGroup(student.displayAcademicLevel?.displayName, archivedYearGroup, student.leavingDate, mapping.academicYear, mapping.family);
@@ -184,6 +245,35 @@ export async function POST(req: Request) {
       return NextResponse.json({ discovered: historicalDefinitions.size, year: historicYearCursor, family: historicFamilyCursor, complete: historicComplete });
     } catch (error) {
       return NextResponse.json({ skipped: "historic assessment discovery paused", error: error instanceof Error ? error.message.slice(0, 180) : "Arbor did not complete historic discovery." }, { status: 503 });
+    }
+  }
+  const reviewedDefinitions = Array.isArray(state.historicalDefinitions)
+    ? state.historicalDefinitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string" && item.source === "BATCH")
+    : [];
+  // v23 discovery stores the exact Arbor batch that was reviewed. Use it for
+  // every approved historical import so the live Attainment module receives
+  // the same subject-specific marks, never the old broad mark feed.
+  if (reviewedDefinitions.length && (state.historicDiscoveryVersion ?? 0) >= 23) {
+    const approvedDefinitions = reviewedDefinitions.filter((definition) => {
+      const mapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
+      return Boolean(mapping && (definition.yearGroups ?? mapping.yearGroups).some((yearGroup) => {
+        const cycle = mapArborAssessmentForYearGroup(mapping, yearGroup);
+        return cycle && approvedCycleKeys.has(cycle.cycleExternalId);
+      }));
+    });
+    if (!approvedDefinitions.length) return NextResponse.json({ skipped: "no reviewed definitions for the approved cycles" });
+    const cursor = typeof state.historicImportCursor === "number" && state.historicImportCursor >= 0
+      ? state.historicImportCursor % approvedDefinitions.length
+      : 0;
+    const definition = approvedDefinitions[cursor];
+    try {
+      const result = await importReviewedHistoricDefinition({ db, integration, config, state, approvedCycleKeys, definition });
+      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicImportCursor: (cursor + 1) % approvedDefinitions.length, importedMarks: (typeof state.importedMarks === "number" ? state.importedMarks : 0) + result.imported, lastInspected: { label: definition.label, reviewedMarks: result.reviewedMarks, imported: result.imported, targets: result.targets, at: new Date().toISOString() } } } } });
+      return NextResponse.json({ imported: result.imported, reviewedMarks: result.reviewedMarks, targets: result.targets, definition: definition.label });
+    } catch (error) {
+      const message = error instanceof Error ? error.message.slice(0, 300) : "Reviewed assessment import failed.";
+      await db.sharedIntegration.update({ where: { id: integration.id }, data: { lastSyncStatus: "PARTIAL", lastSyncError: message } });
+      return NextResponse.json({ error: message }, { status: 503 });
     }
   }
   const queuedDefinitions = Array.isArray(state.definitions) ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string") : [];
