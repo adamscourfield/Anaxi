@@ -152,7 +152,7 @@ async function importReviewedHistoricDefinition(args: {
   for (const owner of owners) if (!ownerByTenantId.has(owner.tenantId)) ownerByTenantId.set(owner.tenantId, owner.id);
 
   const definitionMapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
-  if (!definitionMapping) return { imported: 0, reviewedMarks: 0, targets: targets.length, progressMarks: 0, qualificationMarks: 0 };
+  if (!definitionMapping) return { imported: 0, reviewedMarks: 0, targets: targets.length, progressMarks: 0, qualificationMarks: 0, unlinkedStudents: 0, unmappedCohorts: 0, unapprovedCycles: 0, missingOwners: 0 };
   const batchAssessment = targets.find((target) => target.progressAssessmentBatch?.assessment)?.progressAssessmentBatch?.assessment;
   const assessment = batchAssessment ?? { id: definition.id, displayName: definition.label, assessmentName: definition.label, assessmentShortName: null };
   const progressMarks = await client.listAssessmentMarksForDefinitionInRange(assessment.id, assessmentYearRange(definitionMapping.academicYear));
@@ -175,6 +175,10 @@ async function importReviewedHistoricDefinition(args: {
   const verifiedMarks = latestVerifiedMarks(sourceMarks);
 
   let imported = 0;
+  let unlinkedStudents = 0;
+  let unmappedCohorts = 0;
+  let unapprovedCycles = 0;
+  let missingOwners = 0;
   for (const mark of verifiedMarks) {
     const value = markValue(mark)!;
     const baseMapping = mapArborAssessment(definition.label, mark.assessmentDate ?? definition.assessmentDate, mark.displayName ?? definition.periodHint);
@@ -184,7 +188,22 @@ async function importReviewedHistoricDefinition(args: {
       ? arborYearGroupAtAssessment(student.yearGroup, baseMapping.academicYear)
       : arborHistoricYearGroup(mark.student.displayAcademicLevel?.displayName, student?.status === "ARCHIVED" ? student.yearGroup : null, mark.student.leavingDate, baseMapping.academicYear, baseMapping.family);
     const mapping = mapArborAssessmentForYearGroup(baseMapping, historicYearGroup);
-    if (!student || !mapping || !approvedCycleKeys.has(mapping.cycleExternalId) || !ownerByTenantId.has(student.tenantId)) continue;
+    if (!student) {
+      unlinkedStudents++;
+      continue;
+    }
+    if (!mapping) {
+      unmappedCohorts++;
+      continue;
+    }
+    if (!approvedCycleKeys.has(mapping.cycleExternalId)) {
+      unapprovedCycles++;
+      continue;
+    }
+    if (!ownerByTenantId.has(student.tenantId)) {
+      missingOwners++;
+      continue;
+    }
     const anaxiAssessment = await ensureAssessment(db, student.tenantId, ownerByTenantId.get(student.tenantId)!, definition, mapping);
     const normalizedScore = normalizeGrade(value, mapping.gradeFormat);
     const key = { tenantId_assessmentId_studentId: { tenantId: student.tenantId, assessmentId: anaxiAssessment.id, studentId: student.id } };
@@ -201,7 +220,7 @@ async function importReviewedHistoricDefinition(args: {
     }
     imported++;
   }
-  return { imported, reviewedMarks: verifiedMarks.length, targets: targets.length, progressMarks: progressMarks.length, qualificationMarks: qualificationMarks.length };
+  return { imported, reviewedMarks: verifiedMarks.length, targets: targets.length, progressMarks: progressMarks.length, qualificationMarks: qualificationMarks.length, unlinkedStudents, unmappedCohorts, unapprovedCycles, missingOwners };
 }
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: ArborAssessmentMapping, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
@@ -382,6 +401,10 @@ export async function POST(req: Request) {
       let targets = 0;
       let progressMarks = 0;
       let qualificationMarks = 0;
+      let unlinkedStudents = 0;
+      let unmappedCohorts = 0;
+      let unapprovedCycles = 0;
+      let missingOwners = 0;
       let lastLabel = definitionsToImport[0].label;
       for (const definition of definitionsToImport) {
         const result = await importReviewedHistoricDefinition({ db, integration, config, state, approvedCycleKeys, definition });
@@ -390,11 +413,15 @@ export async function POST(req: Request) {
         targets += result.targets;
         progressMarks += result.progressMarks;
         qualificationMarks += result.qualificationMarks;
+        unlinkedStudents += result.unlinkedStudents;
+        unmappedCohorts += result.unmappedCohorts;
+        unapprovedCycles += result.unapprovedCycles;
+        missingOwners += result.missingOwners;
         lastLabel = definition.label;
       }
       const importedDefinitionIds = [...new Set([...completedIds, ...definitionsToImport.map((definition) => definition.id)])];
       const remaining = Math.max(0, approvedDefinitions.length - importedDefinitionIds.length);
-      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicImportVersion: HISTORIC_IMPORT_VERSION, historicImportCursor: importedDefinitionIds.length % approvedDefinitions.length, historicImportedDefinitionIds: importedDefinitionIds, importedMarks: (typeof state.importedMarks === "number" ? state.importedMarks : 0) + imported, lastInspected: { label: lastLabel, reviewedMarks, imported, targets, progressMarks, qualificationMarks, at: new Date().toISOString() } } } } });
+      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicImportVersion: HISTORIC_IMPORT_VERSION, historicImportCursor: importedDefinitionIds.length % approvedDefinitions.length, historicImportedDefinitionIds: importedDefinitionIds, importedMarks: (typeof state.importedMarks === "number" ? state.importedMarks : 0) + imported, lastInspected: { label: lastLabel, reviewedMarks, imported, targets, progressMarks, qualificationMarks, unlinkedStudents, unmappedCohorts, unapprovedCycles, missingOwners, at: new Date().toISOString() } } } } });
       return manualImport
         ? manualResult({ assessmentImport: "success", assessmentImported: String(imported), assessmentImportSheets: String(definitionsToImport.length), assessmentImportRemaining: String(remaining) })
         : NextResponse.json({ imported, reviewedMarks, targets, definitions: definitionsToImport.map((definition) => definition.label), remaining });
