@@ -29,6 +29,17 @@ function assessmentYearRange(academicYear: string): { from: string; before: stri
   return match ? { from: `${match[1]}-09-01`, before: `${match[2]}-09-01` } : undefined;
 }
 
+function currentAcademicYear(now = new Date()): string {
+  const year = now.getUTCFullYear();
+  const start = now.getUTCMonth() >= 8 ? year : year - 1;
+  return `${start}/${start + 1}`;
+}
+
+function normalisedYearGroup(value: string | null | undefined): string | null {
+  const match = value?.trim().match(/^(?:Year|Y)\s*0?(\d{1,2})$/i);
+  return match ? `Y${Number(match[1])}` : null;
+}
+
 function gradeValue(mark: ArborMark): string {
   return arborAssessmentMarkValue(mark) ?? "No recorded grade";
 }
@@ -277,10 +288,14 @@ export default async function ArborAssessmentMarkSheetPage({
     return historicYearGroup === yearGroup;
   });
 
-  // A Level Year 12 batches can be configured against the whole sixth-form
-  // cohort. For ungraded roster placeholders, verify the pupil's actual Arbor
-  // subject memberships before showing them. Recorded marks remain visible:
-  // a later timetable change must never hide valid historic attainment.
+  // A historic Year 12 A-Level sheet must follow the current Year 13 subject
+  // class. GCSE French in Year 11 is not evidence that a pupil takes A-Level
+  // French, so this stricter rule deliberately applies even to a recorded
+  // placeholder mark. It prevents the Year 11 GCSE cohort being promoted into
+  // a Year 12 A-Level assessment merely because the labels share a subject.
+  const requiresCurrentYear13SubjectRoster = mapping.family === "A_LEVEL"
+    && yearGroup === "Y12"
+    && cycle.academicYear !== currentAcademicYear();
   let subjectsByStudent = new Map<string, string[]>();
   if (mapping.family === "A_LEVEL" && yearGroup === "Y12") {
     try {
@@ -291,8 +306,14 @@ export default async function ArborAssessmentMarkSheetPage({
     }
   }
   const marks = yearGroupMarks.filter((mark) => {
-    if (gradeValue(mark) !== "No recorded grade") return true;
+    const linkedStudent = studentsByExternalId.get(mark.student.id);
     const enrolledSubjects = subjectsByStudent.get(mark.student.id);
+    if (requiresCurrentYear13SubjectRoster) {
+      return linkedStudent?.status === "ACTIVE"
+        && normalisedYearGroup(linkedStudent.yearGroup) === "Y13"
+        && Boolean(enrolledSubjects?.some((subject) => studentSubjectMatchesAssessment(subject, definition.label)));
+    }
+    if (gradeValue(mark) !== "No recorded grade") return true;
     if (!enrolledSubjects?.length) return true;
     return enrolledSubjects.some((subject) => studentSubjectMatchesAssessment(subject, definition.label));
   });
