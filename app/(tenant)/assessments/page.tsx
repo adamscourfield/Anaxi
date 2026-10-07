@@ -23,10 +23,10 @@ const QUAL_LABELS: Record<QualificationType, string> = {
 const QUAL_COLOURS = qualificationTypePillClasses;
 
 function totalEntries(cycle: {
-  points: Array<{ assessments: Array<{ entryCount: number }> }>;
+  points: Array<{ assessments: Array<{ entryCount: number; _count: { results: number } }> }>;
 }): number {
   return cycle.points.reduce(
-    (s, p) => s + p.assessments.reduce((ss, a) => ss + a.entryCount, 0),
+    (s, p) => s + p.assessments.reduce((ss, a) => ss + a._count.results, 0),
     0
   );
 }
@@ -53,7 +53,7 @@ type CycleRow = {
   points: Array<{
     id: string;
     pointType: PointType;
-    assessments: Array<{ subject: string; entryCount: number; matchedStudentCount: number }>;
+    assessments: Array<{ subject: string; entryCount: number; matchedStudentCount: number; _count: { results: number } }>;
   }>;
 };
 
@@ -143,7 +143,14 @@ export default async function AssessmentsPage() {
       points: {
         orderBy: { ordinal: "asc" },
         include: {
-          assessments: true,
+          assessments: {
+            select: {
+              subject: true,
+              entryCount: true,
+              matchedStudentCount: true,
+              _count: { select: { results: true } },
+            },
+          },
         },
       },
     },
@@ -158,7 +165,7 @@ export default async function AssessmentsPage() {
     cycles.flatMap((c) => c.points.flatMap((p) => p.assessments.map((a) => a.subject))),
   ).size;
   const totalEntriesAll = cycles.reduce(
-    (s, c) => s + c.points.reduce((ss, p) => ss + p.assessments.reduce((sss, a) => sss + a.entryCount, 0), 0),
+    (s, c) => s + c.points.reduce((ss, p) => ss + p.assessments.reduce((sss, a) => sss + a._count.results, 0), 0),
     0,
   );
   const progress8Summary = await getProgress8DashboardSummary(user.tenantId);

@@ -143,9 +143,9 @@ function IconUsers({ className = "h-4 w-4" }: { className?: string }) {
 
 
 function sumPointEntries(point: {
-  assessments: Array<{ entryCount: number }>;
+  assessments: Array<{ _count: { results: number } }>;
 }): number {
-  return point.assessments.reduce((s, a) => s + a.entryCount, 0);
+  return point.assessments.reduce((s, a) => s + a._count.results, 0);
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -177,6 +177,7 @@ export default async function CycleDetailPage({
               matchedStudentCount: true,
               expectedStudentCount: true,
               rawFileName: true,
+              _count: { select: { results: true } },
             },
           },
         },
@@ -207,7 +208,7 @@ export default async function CycleDetailPage({
   const integrityDisplay = integrityPct !== null ? `${integrityPct.toFixed(1)}%` : "—";
 
   const totalEntries = cycle.points.reduce(
-    (s, p) => s + p.assessments.reduce((ss, a) => ss + a.entryCount, 0),
+    (s, p) => s + sumPointEntries(p),
     0
   );
   const totalSubjects = new Set(
@@ -275,7 +276,7 @@ export default async function CycleDetailPage({
               cycleId={cycle.id}
               points={cycle.points.map((p) => ({
                 id: p.id,
-                entryCount: p.assessments.reduce((s, a) => s + a.entryCount, 0),
+                entryCount: sumPointEntries(p),
               }))}
             />
             <CycleArchiveControl cycleId={cycle.id} isActive={cycle.isActive} />
@@ -346,7 +347,7 @@ export default async function CycleDetailPage({
               cycleId={cycle.id}
               points={cycle.points.map((p) => ({
                 id: p.id,
-                entryCount: p.assessments.reduce((s, a) => s + a.entryCount, 0),
+                entryCount: sumPointEntries(p),
               }))}
             />
             <Button asChild variant="secondary" className="h-8 py-0 text-xs">
@@ -393,8 +394,8 @@ export default async function CycleDetailPage({
                   </thead>
                   <tbody>
                     {cycle.points.map((point, idx) => {
-                      const entries = point.assessments.reduce((s, a) => s + a.entryCount, 0);
-                      const matched = point.assessments.reduce((s, a) => s + a.matchedStudentCount, 0);
+                      const entries = sumPointEntries(point);
+                      const matched = entries;
                       const hasData = entries > 0;
                       const assessedDateLabel = formatAssessedDate(point.assessedAt);
                       const ordinal = point.ordinal || idx + 1;

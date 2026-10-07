@@ -186,6 +186,7 @@ async function importReviewedHistoricDefinition(args: {
   let unmappedCohorts = 0;
   let unapprovedCycles = 0;
   let missingOwners = 0;
+  const touchedAssessments = new Map<string, string>();
   for (const mark of verifiedMarks) {
     const value = markValue(mark)!;
     const baseMapping = mapArborAssessment(definition.label, mark.assessmentDate ?? definition.assessmentDate, mark.displayName ?? definition.periodHint);
@@ -225,8 +226,18 @@ async function importReviewedHistoricDefinition(args: {
         update: { rawValue: value, normalizedScore, normalisedGrade: value, status: "PRESENT", isValid: normalizedScore !== null, dataSource: "ARBOR", ...arborValues },
       });
     }
+    touchedAssessments.set(anaxiAssessment.id, student.tenantId);
     imported++;
   }
+  // Attainment lists use these counters for fast summaries. Keep them in step
+  // with the Arbor upserts so imported grades are visible immediately.
+  await Promise.all([...touchedAssessments].map(async ([assessmentId, tenantId]) => {
+    const entryCount = await db.assessmentResult.count({ where: { assessmentId, tenantId } });
+    await db.assessment.update({
+      where: { id: assessmentId },
+      data: { entryCount, matchedStudentCount: entryCount, uploadStatus: "VALIDATED" },
+    });
+  }));
   return { imported, reviewedMarks: verifiedMarks.length, targets: targets.length, progressMarks: progressMarks.length, qualificationMarks: qualificationMarks.length, unlinkedStudents, unmappedCohorts, unapprovedCycles, missingOwners };
 }
 
