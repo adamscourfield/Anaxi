@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
+import { requireAssessmentWrite, requireFeature, requireRole } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { ResultStatus } from "@prisma/client";
 import { withApi } from "@/lib/apiRoute";
@@ -64,17 +64,24 @@ export const PATCH = withApi(async function PATCH(
   if (!point) return NextResponse.json({ error: "Result point not found" }, { status: 404 });
 
   const body = await req.json();
-  const { resultStatus } = body;
+  const { resultStatus, label } = body;
 
   const validStatuses: ResultStatus[] = ["DRAFT", "VALIDATED", "PUBLISHED", "LOCKED"];
   if (resultStatus && !validStatuses.includes(resultStatus)) {
     return NextResponse.json({ error: "Invalid resultStatus" }, { status: 400 });
+  }
+  if (label !== undefined) {
+    requireRole(user, ["SUPER_ADMIN"]);
+    if (typeof label !== "string" || !label.trim() || label.trim().length > 120) {
+      return NextResponse.json({ error: "Enter a result-point name between 1 and 120 characters" }, { status: 400 });
+    }
   }
 
   const updated = await prisma.assessmentPoint.update({
     where: { id: resolvedParams.pointId },
     data: {
       ...(resultStatus ? { resultStatus } : {}),
+      ...(label !== undefined ? { label: label.trim().replace(/\s+/g, " ") } : {}),
     },
   });
 

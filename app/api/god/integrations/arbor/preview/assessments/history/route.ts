@@ -43,6 +43,12 @@ function addHistoricDefinition(target: Map<string, PreparedDefinition>, definiti
   // field hide the whole GCSE cycle.
   const inferredYearGroup = mapping.family === "GCSE"
     ? "Y11"
+    // This is a dedicated Arbor Year 10 definition, unlike the shared KS3
+    // percentage family. Current pupils have rolled into Year 11 by the time
+    // historic discovery runs, so a live-level inference must not hide the
+    // legitimate Year 10 cycle.
+    : mapping.family === "Y10_PERCENTAGE"
+      ? "Y10"
     : arborHistoricYearGroup(student.displayAcademicLevel?.displayName, archivedYearGroup, student.leavingDate, mapping.academicYear, mapping.family);
   const cycle = inferredYearGroup ? mapArborAssessmentForYearGroup(mapping, inferredYearGroup) : null;
   if (!cycle || !inferredYearGroup) return;
