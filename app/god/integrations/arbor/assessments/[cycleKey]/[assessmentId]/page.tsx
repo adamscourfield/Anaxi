@@ -41,7 +41,10 @@ function arborStudentName(mark: ArborMark): string | null {
 }
 
 function newestMark(marks: ArborMark[]): ArborMark {
-  return [...marks].sort((a, b) => (b.assessmentDate ?? "").localeCompare(a.assessmentDate ?? ""))[0];
+  return [...marks].sort((a, b) => {
+    const gradeDifference = Number(gradeValue(b) !== "No recorded grade") - Number(gradeValue(a) !== "No recorded grade");
+    return gradeDifference || (b.assessmentDate ?? "").localeCompare(a.assessmentDate ?? "");
+  })[0];
 }
 
 export default async function ArborAssessmentMarkSheetPage({
@@ -112,13 +115,17 @@ export default async function ArborAssessmentMarkSheetPage({
   const batchRoster = [...new Map(
     batchTargets.flatMap((target) => target.allStudents).map((student) => [student.id, student]),
   ).values()];
-  const batchRosterIds = new Set(batchRoster.map((student) => student.id));
   const targetMarks = batchTargets.flatMap((target) => target.studentProgressAssessmentMarks)
-    .filter((mark) => batchRosterIds.has(mark.student.id));
+    .filter((mark) => mark.assessment?.id === batchAssessmentId);
   const progressMarks = batch
     ? (await client.listAssessmentMarksForDefinitionInRange(batchAssessmentId, assessmentYearRange(cycle.academicYear)))
-      .filter((mark) => batchRosterIds.has(mark.student.id))
+      .filter((mark) => mark.assessment?.id === batchAssessmentId)
     : [];
+  // A live batch target can omit former pupils after rollover, even though
+  // Arbor still returns their dated, subject-specific assessment mark. Merge
+  // those records into the roster rather than losing valid historic results.
+  const recordedBatchMarks = [...progressMarks, ...targetMarks];
+  const recordedBatchStudentIds = new Set(recordedBatchMarks.map((mark) => mark.student.id));
   const allMarks: ArborMark[] = batchTarget
     ? [
       ...batchTarget.studentProgressAssessmentMarks,
@@ -139,9 +146,9 @@ export default async function ArborAssessmentMarkSheetPage({
     ]
     : batch
       ? [
-        ...(targetMarks.length ? targetMarks : progressMarks),
+        ...recordedBatchMarks,
         ...batchRoster
-          .filter((student) => !(targetMarks.length ? targetMarks : progressMarks).some((mark) => mark.student.id === student.id))
+          .filter((student) => !recordedBatchStudentIds.has(student.id))
           .map((student) => ({
             id: `roster:${batch.id}:${student.id}`,
             student,
@@ -157,7 +164,7 @@ export default async function ArborAssessmentMarkSheetPage({
   // server-side filter alone. Verify the relationship on every returned mark
   // before it can appear in a subject sheet.
   const subjectMarks = batchTarget || batch ? allMarks : allMarks.filter((mark) => mark.assessment?.id === definition.id);
-  const termMarks = batchTarget || batch ? subjectMarks : subjectMarks.filter((mark) => {
+  const termMarks = subjectMarks.filter((mark) => {
     // Arbor returns every dated mark for this subject definition. Keep only
     // the term represented by the requested cycle; otherwise a July result
     // can incorrectly replace an Autumn mark in the review grid.
