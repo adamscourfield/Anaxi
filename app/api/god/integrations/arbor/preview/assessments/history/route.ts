@@ -22,11 +22,14 @@ type AssessmentSyncState = {
   historicDiscoveryVersion?: number;
 };
 
-// v22 reads each batch target's `allStudents` roster and prioritises the
+// v23 reads each batch target's `allStudents` roster and prioritises the
 // agreed GCSE/A-Level families before percentage definitions. A parent batch
 // can be a whole year cohort; its `students` relationship is not a subject
 // mark sheet.
-const HISTORIC_DISCOVERY_VERSION = 22;
+// A rebuild is accumulated separately, then replaces the visible review list
+// only when complete. This keeps inaccurate historic cohort assignments from
+// being retained indefinitely while avoiding an empty God Mode review screen.
+const HISTORIC_DISCOVERY_VERSION = 23;
 const DEFINITIONS_PER_BATCH_QUERY = 80;
 
 function historicDefinitionPriority(definition: PreparedDefinition): number {
@@ -75,9 +78,9 @@ export const POST = withApi(async function POST(req: Request) {
     const state: AssessmentSyncState = savedState.historicComplete || savedState.historicDiscoveryVersion !== HISTORIC_DISCOVERY_VERSION
       ? {
         ...savedState,
-        pendingHistoricalDefinitions: Array.isArray(savedState.historicalDefinitions)
-          ? savedState.historicalDefinitions
-          : savedState.pendingHistoricalDefinitions,
+        // Do not use the previous visible result as discovery input. It may
+        // contain pupils that have since moved up an academic year.
+        pendingHistoricalDefinitions: [],
         historicBatchPage: 0,
         historicBatchDefinitionOffset: 0,
         historicComplete: false,
@@ -102,10 +105,7 @@ export const POST = withApi(async function POST(req: Request) {
     // Reorder that queue as well so the next safe request reaches the agreed
     // GCSE and A-Level subjects before optional percentage assessments.
     definitions = [...definitions].sort((a, b) => historicDefinitionPriority(a) - historicDefinitionPriority(b) || a.label.localeCompare(b.label));
-    const known = [
-      ...(Array.isArray(state.pendingHistoricalDefinitions) ? state.pendingHistoricalDefinitions : []),
-      ...(Array.isArray(state.historicalDefinitions) ? state.historicalDefinitions : []),
-    ];
+    const known = Array.isArray(state.pendingHistoricalDefinitions) ? state.pendingHistoricalDefinitions : [];
     const combined = new Map<string, PreparedDefinition>();
     for (const item of known) {
       const mapping = mapArborAssessment(item.label, item.assessmentDate, item.periodHint);
@@ -168,12 +168,14 @@ export const POST = withApi(async function POST(req: Request) {
     const nextState = {
       ...state,
       definitions,
-      historicalDefinitions: [...combined.values()],
+      // Publish a fresh set only after every prepared definition has been
+      // checked. Until then God Mode continues to show the last complete list.
+      historicalDefinitions: historicComplete ? [...combined.values()] : savedState.historicalDefinitions,
       historicBatchPage: nextBatchPage,
       historicBatchDefinitionOffset: nextDefinitionOffset,
       historicComplete,
       historicDiscoveryVersion: HISTORIC_DISCOVERY_VERSION,
-      pendingHistoricalDefinitions: historicComplete ? undefined : state.pendingHistoricalDefinitions,
+      pendingHistoricalDefinitions: historicComplete ? undefined : [...combined.values()],
     };
     await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: nextState } } });
     const url = new URL("/god/integrations/arbor", req.url);

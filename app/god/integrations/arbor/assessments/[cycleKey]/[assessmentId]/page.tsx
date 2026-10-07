@@ -168,7 +168,7 @@ export default async function ArborAssessmentMarkSheetPage({
     );
     return Boolean(markMapping && mapArborAssessmentForYearGroup(markMapping, yearGroup)?.cycleExternalId === cycleKey);
   });
-  const marks = (batch || batchTarget) ? termMarks : termMarks.filter((mark) => {
+  const marks = termMarks.filter((mark) => {
     const linkedStudent = studentsByExternalId.get(mark.student.id);
     const historicYearGroup = arborHistoricYearGroup(
       mark.student.displayAcademicLevel?.displayName,
@@ -206,7 +206,7 @@ export default async function ArborAssessmentMarkSheetPage({
       />
 
       <Card className="grid gap-4 sm:grid-cols-3">
-        <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Arbor subject roster</div><div className="mt-1 text-2xl font-semibold">{new Set(termMarks.map((mark) => mark.student.id)).size}</div><MetaText>{subjectMarks.length} records verified for this subject</MetaText></div>
+        <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Arbor subject roster</div><div className="mt-1 text-2xl font-semibold">{new Set(marks.map((mark) => mark.student.id)).size}</div><MetaText>{subjectMarks.length} records verified for this subject</MetaText></div>
         <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Recorded marks</div><div className="mt-1 text-2xl font-semibold">{recordedGrades}</div><MetaText>With a grade or result</MetaText></div>
         <div><div className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Included in this cycle</div><div className="mt-1 text-2xl font-semibold">{rows.length}</div><MetaText>{rows.filter((row) => row.student).length} linked to Anaxi</MetaText></div>
       </Card>
@@ -226,7 +226,7 @@ export default async function ArborAssessmentMarkSheetPage({
                 {rows.map(({ externalId, mark, student }) => (
                   <tr key={externalId}>
                     <td className="px-4 py-3 font-medium">{student?.fullName ?? arborStudentName(mark) ?? "Former pupil not yet synced"}</td>
-                    <td className="px-4 py-3">{student?.yearGroup ?? yearGroup.replace(/^Y/, "Year ")}</td>
+                    <td className="px-4 py-3">{yearGroup.replace(/^Y/, "Year ")}</td>
                     <td className="px-4 py-3 text-muted">{student ? student.status === "ARCHIVED" ? "Archived" : "Linked" : "Historic pupil"}</td>
                     <td className="px-4 py-3">{mark.assessmentDate ? new Date(mark.assessmentDate).toLocaleDateString("en-GB") : "Not supplied"}</td>
                     <td className="px-4 py-3 font-semibold">{gradeValue(mark)}</td>
