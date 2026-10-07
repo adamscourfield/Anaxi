@@ -52,7 +52,6 @@ import {
   thresholdHeaderALevel,
   thresholdHeaderGcse,
   resultStatusPillClasses,
-  emProgressFillClass,
 } from "@/modules/assessments/attainmentColours";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -94,6 +93,11 @@ type ModalView =
 
 type ALevelSummary = {
   total: number; aStarPct: number; aPct: number; bPct: number; cPlusPct: number;
+};
+
+type BestEnglishBasics = {
+  presentCount: number; be4: number; be5: number; be7: number;
+  hasLanguage: boolean; hasLiterature: boolean;
 };
 
 // ─── Percentage analysis types ────────────────────────────────────────────────
@@ -148,6 +152,7 @@ type MetricsData = {
   dataIntegrityPct?: number | null;
   subjects: SubjectMeasure[];
   gcseBasics: GcseBasics | null;
+  bestEnglish: BestEnglishBasics | null;
   aLevelSummary: ALevelSummary | null;
 };
 
@@ -427,6 +432,39 @@ function PctDistCompact({ distribution }: { distribution: BandCount[] }) {
   );
 }
 
+/** Consistent headline-measure card (E&M, Best English) — colour-coded to match the Subject Breakdown threshold columns. */
+function HeadlineMeasureCard({
+  href, label, value, context, accentBg, accentText, barClass,
+}: {
+  href?: string; label: string; value: number; context: string;
+  accentBg: string; accentText: string; barClass: string;
+}) {
+  const inner = (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted">{label}</p>
+        <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${accentBg} ${accentText}`} aria-hidden>
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+          </svg>
+        </span>
+      </div>
+      <p className="mt-3 text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{value}%</p>
+      <p className="mt-1.5 text-[11px] text-muted">{context}</p>
+      <div className="mt-4 h-1.5 w-full overflow-hidden rounded-sm bg-[var(--surface-container-low)]">
+        <div className={`h-full rounded-r-full ${barClass}`} style={{ width: `${value}%` }} />
+      </div>
+    </>
+  );
+  const cardClass = "relative block overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient";
+  if (!href) return <div className={cardClass}>{inner}</div>;
+  return (
+    <Link href={href} className={`${cardClass} cursor-pointer calm-transition hover:-translate-y-0.5 hover:shadow-lg`}>
+      {inner}
+    </Link>
+  );
+}
+
 const POINT_TYPE_COLOURS = pointTypePillClasses;
 const RESULT_STATUS_BADGE = resultStatusPillClasses;
 
@@ -456,6 +494,9 @@ export default function ResultPointPage() {
   const [expandedPctSubject, setExpandedPctSubject] = useState<string | null>(null);
   const [gcseGapView, setGcseGapView] = useState<"pp" | "send">("pp");
   const [gapView, setGapView] = useState<"pp" | "send">("pp");
+  const [subjectFilter, setSubjectFilter] = useState("");
+  const [subjectSortKey, setSubjectSortKey] = useState<string>("subject");
+  const [subjectSortDir, setSubjectSortDir] = useState<"asc" | "desc">("asc");
   const tabFromUrl = searchParams.get("tab");
   const resolveTab = (tab: string | null): "attainment" | "pastoral" | "teaching" | "progress8" => {
     if (tab === "overview" || tab === "attainment") return "attainment";
@@ -584,6 +625,43 @@ export default function ResultPointPage() {
     const band70p = pctSummary.distribution.filter((b) => b.from >= 70).reduce((s, b) => s + b.count, 0);
     return { total, maxBand, below40, band4070, band70p };
   }, [pctSummary]);
+
+  const filteredSubjects = useMemo(() => {
+    if (!metrics) return [];
+    const q = subjectFilter.trim().toLowerCase();
+    const base = q ? metrics.subjects.filter((sm) => sm.subject.toLowerCase().includes(q)) : metrics.subjects;
+    const sortValue = (sm: SubjectMeasure): number | string =>
+      subjectSortKey === "subject" ? sm.subject : subjectSortKey === "presentCount" ? sm.presentCount : (sm.thresholds[subjectSortKey] ?? 0);
+    return [...base].sort((a, b) => {
+      const av = sortValue(a);
+      const bv = sortValue(b);
+      if (typeof av === "string" || typeof bv === "string") {
+        return subjectSortDir === "asc" ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+      }
+      return subjectSortDir === "asc" ? av - bv : bv - av;
+    });
+  }, [metrics, subjectFilter, subjectSortKey, subjectSortDir]);
+
+  const toggleSubjectSort = (key: string) => {
+    if (subjectSortKey === key) setSubjectSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSubjectSortKey(key); setSubjectSortDir(key === "subject" ? "asc" : "desc"); }
+  };
+
+  const subjectSortTh = (col: string, label: string, align: "left" | "right" = "right", extraClass = "") => (
+    <th
+      key={col}
+      scope="col"
+      className={`cursor-pointer select-none calm-transition hover:text-[var(--on-surface)] ${align === "right" ? "px-4 py-3 text-right" : "px-5 py-3 text-left"} ${extraClass}`}
+      onClick={() => toggleSubjectSort(col)}
+    >
+      <span className={`inline-flex items-center gap-1 ${align === "right" ? "justify-end" : ""}`}>
+        {label}
+        {subjectSortKey === col && (
+          <span className="text-[11px]" aria-hidden>{subjectSortDir === "desc" ? "↓" : "↑"}</span>
+        )}
+      </span>
+    </th>
+  );
 
   if (loading) {
     return <AttainmentPointLoadingSkeleton />;
@@ -773,47 +851,57 @@ export default function ResultPointPage() {
             <section className="space-y-4 pt-1">
               <SectionHeader title="English & Maths — Headline Measures" />
 
-              <div className="grid grid-cols-3 gap-4">
-                {/* 4+ Dark Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/4`} className="relative overflow-hidden rounded-2xl bg-[var(--primary-container)] p-5 cursor-pointer shadow-ambient calm-transition hover:shadow-lg hover:-translate-y-0.5 block">
-                  <div className="flex justify-between items-start">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 4+</p>
-                    <div className="h-7 w-7 text-muted/60 absolute top-4 right-4">
-                      <svg viewBox="0 0 24 24" fill="currentColor">
-                         <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-white">{metrics.gcseBasics.em4}%</span>
-                  </div>
-                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-sm bg-primary-container">
-                    <div className={`${emProgressFillClass} rounded-r-full`} style={{ width: `${metrics.gcseBasics.em4}%` }}></div>
-                  </div>
-                </Link>
-
-                {/* 5+ White Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/5`} className="relative block cursor-pointer overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition div:hover:-translate-y-px div:hover:shadow-lg">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 5+</p>
-                  <div className="mt-3">
-                    <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em5}%</span>
-                  </div>
-                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-sm bg-surface-container-low">
-                    <div className="bg-[var(--primary-container)] h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em5}%` }}></div>
-                  </div>
-                </Link>
-
-                {/* 7+ White Card */}
-                <Link href={`/assessments/${cycleId}/points/${pointId}/em/7`} className="relative block cursor-pointer overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient calm-transition div:hover:-translate-y-px div:hover:shadow-lg">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted">E&M 7+</p>
-                  <div className="mt-3">
-                    <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{metrics.gcseBasics.em7}%</span>
-                  </div>
-                  <div className="mt-5 flex h-1.5 w-full overflow-hidden rounded-sm bg-surface-container-low">
-                    <div className="bg-surface-container-high h-full rounded-r-full" style={{ width: `${metrics.gcseBasics.em7}%` }}></div>
-                  </div>
-                </Link>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <HeadlineMeasureCard
+                  href={`/assessments/${cycleId}/points/${pointId}/em/4`}
+                  label="E&M 4+"
+                  value={metrics.gcseBasics.em4}
+                  context="English Language & Maths, both ≥ grade 4"
+                  accentBg="bg-scale-some-light" accentText="text-scale-some-text" barClass="bg-scale-some"
+                />
+                <HeadlineMeasureCard
+                  href={`/assessments/${cycleId}/points/${pointId}/em/5`}
+                  label="E&M 5+"
+                  value={metrics.gcseBasics.em5}
+                  context="English Language & Maths, both ≥ grade 5"
+                  accentBg="bg-cat-violet-bg" accentText="text-cat-violet-text" barClass="bg-cat-violet-text"
+                />
+                <HeadlineMeasureCard
+                  href={`/assessments/${cycleId}/points/${pointId}/em/7`}
+                  label="E&M 7+"
+                  value={metrics.gcseBasics.em7}
+                  context="English Language & Maths, both ≥ grade 7"
+                  accentBg="bg-scale-consistent-bg" accentText="text-scale-consistent-text" barClass="bg-scale-consistent"
+                />
               </div>
+
+              {metrics.bestEnglish && (
+                <div className="space-y-3 pt-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                    Best English ({metrics.bestEnglish.hasLanguage && metrics.bestEnglish.hasLiterature ? "better of Language / Literature" : metrics.bestEnglish.hasLiterature ? "Literature" : "Language"})
+                  </p>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <HeadlineMeasureCard
+                      label="Best English 4+"
+                      value={metrics.bestEnglish.be4}
+                      context={`${metrics.bestEnglish.presentCount} students with an English result`}
+                      accentBg="bg-scale-some-light" accentText="text-scale-some-text" barClass="bg-scale-some"
+                    />
+                    <HeadlineMeasureCard
+                      label="Best English 5+"
+                      value={metrics.bestEnglish.be5}
+                      context={`${metrics.bestEnglish.presentCount} students with an English result`}
+                      accentBg="bg-cat-violet-bg" accentText="text-cat-violet-text" barClass="bg-cat-violet-text"
+                    />
+                    <HeadlineMeasureCard
+                      label="Best English 7+"
+                      value={metrics.bestEnglish.be7}
+                      context={`${metrics.bestEnglish.presentCount} students with an English result`}
+                      accentBg="bg-scale-consistent-bg" accentText="text-scale-consistent-text" barClass="bg-scale-consistent"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* PP / SEND gap headline cards (toggle) */}
               <div className="space-y-3 pt-2">
@@ -940,34 +1028,60 @@ export default function ResultPointPage() {
 
           {/* Subject breakdown table */}
           <div className="space-y-3">
-            <SectionHeader title="Subject Breakdown" subtitle={`${metrics.subjects.length} subjects`} />
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <SectionHeader
+                title="Subject Breakdown"
+                subtitle={subjectFilter ? `${filteredSubjects.length} of ${metrics.subjects.length} subjects` : `${metrics.subjects.length} subjects`}
+              />
+              <div className="relative w-full sm:w-60">
+                <svg className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+                  <circle cx="11" cy="11" r="8" />
+                  <path strokeLinecap="round" d="m21 21-4.3-4.3" />
+                </svg>
+                <input
+                  type="text"
+                  value={subjectFilter}
+                  onChange={(e) => setSubjectFilter(e.target.value)}
+                  placeholder="Filter subjects…"
+                  aria-label="Filter subjects"
+                  className="field h-9 w-full py-0 pl-8 pr-3 text-[13px]"
+                />
+              </div>
+            </div>
             <div className="table-shell">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="table-head-row text-left">
-                      <th className="px-5 py-3">Subject</th>
-                      <th className="px-4 py-3 text-right">N</th>
+                      {subjectSortTh("subject", "Subject", "left")}
+                      {subjectSortTh("presentCount", "N")}
                       {isGcse && (
                         <>
-                          <th className={`px-4 py-3 text-right ${thresholdHeaderGcse.t4}`}>4+</th>
-                          <th className={`px-4 py-3 text-right ${thresholdHeaderGcse.t5}`}>5+</th>
-                          <th className={`px-4 py-3 text-right ${thresholdHeaderGcse.t7}`}>7+</th>
+                          {subjectSortTh("4+", "4+", "right", thresholdHeaderGcse.t4)}
+                          {subjectSortTh("5+", "5+", "right", thresholdHeaderGcse.t5)}
+                          {subjectSortTh("7+", "7+", "right", thresholdHeaderGcse.t7)}
                         </>
                       )}
                       {isALevel && (
                         <>
-                          <th className={`px-4 py-3 text-right ${thresholdHeaderALevel.aStar}`}>A*</th>
-                          <th className={`px-4 py-3 text-right ${thresholdHeaderALevel.aPlus}`}>A+</th>
-                          <th className={`px-4 py-3 text-right ${thresholdHeaderALevel.bPlus}`}>B+</th>
-                          <th className={`px-4 py-3 text-right ${thresholdHeaderALevel.cPlus}`}>C+</th>
+                          {subjectSortTh("A*", "A*", "right", thresholdHeaderALevel.aStar)}
+                          {subjectSortTh("A+", "A+", "right", thresholdHeaderALevel.aPlus)}
+                          {subjectSortTh("B+", "B+", "right", thresholdHeaderALevel.bPlus)}
+                          {subjectSortTh("C+", "C+", "right", thresholdHeaderALevel.cPlus)}
                         </>
                       )}
                       <th className="px-4 py-3">Distribution</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {metrics.subjects.sort((a, b) => a.subject.localeCompare(b.subject)).map((sm) => (
+                    {filteredSubjects.length === 0 && (
+                      <tr>
+                        <td colSpan={isGcse ? 6 : isALevel ? 7 : 3} className="px-5 py-8 text-center text-sm text-[var(--on-surface-muted)]">
+                          No subjects match &ldquo;{subjectFilter}&rdquo;.
+                        </td>
+                      </tr>
+                    )}
+                    {filteredSubjects.map((sm) => (
                       <tr key={sm.subject} className="group table-row calm-transition">
                         <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
                           <Link
@@ -1031,7 +1145,9 @@ export default function ResultPointPage() {
                 </table>
               </div>
               <div className="border-t border-border/20 px-5 py-3.5">
-                <p className="text-[0.8125rem] text-muted">{metrics.subjects.length} subjects</p>
+                <p className="text-[0.8125rem] text-muted">
+                  {subjectFilter ? `${filteredSubjects.length} of ${metrics.subjects.length} subjects` : `${metrics.subjects.length} subjects`}
+                </p>
               </div>
             </div>
           </div>
