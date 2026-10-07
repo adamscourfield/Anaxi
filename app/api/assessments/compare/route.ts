@@ -15,6 +15,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { displayGrade } from "@/modules/assessments/gradeNormalizer";
 import type { GradeFormat } from "@prisma/client";
+import { meetsGcseThreshold } from "@/modules/assessments/gradeNormalizer";
 import { withApi } from "@/lib/apiRoute";
 
 const A_LEVEL_SCORE: Record<string, number> = {
@@ -29,7 +30,7 @@ function gcseThresholdPct(
   const present = results.filter((r) => r.status === "PRESENT");
   if (present.length === 0) return 0;
   const above = present.filter(
-    (r) => r.normalizedScore !== null && Math.round(r.normalizedScore * 9) >= threshold
+    (r) => r.normalizedScore !== null && meetsGcseThreshold(r.normalizedScore, threshold)
   );
   return Math.round((above.length / present.length) * 100);
 }

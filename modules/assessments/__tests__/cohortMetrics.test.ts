@@ -25,6 +25,12 @@ describe("assessment cohort metrics", () => {
     const data = await metrics([result("a", 5, false, false)]);
     expect(data.subjects[0].pp).toMatchObject({ count: 0, t4: null, t5: null, gap4: null, gap5: null });
   });
+  it("does not round a split science grade up across a pass threshold", async () => {
+    const split = { ...result("a", 3.5, true, false), rawValue: "4-3" };
+    const data = await metrics([split]);
+    expect(data.subjects[0].thresholds["4+"]).toBe(0);
+    expect(data.subjects[0].distribution).toEqual([{ grade: "4-3", count: 1 }]);
+  });
   it("uses profile membership when an assessment has no recorded flags", async () => {
     const data = await metrics([result("a", 3, null, null)]);
     expect(data.subjects[0].send).toMatchObject({ count: 1, t4: 0, gap4: null });
