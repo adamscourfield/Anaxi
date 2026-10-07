@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { GodSchoolSwitcher } from "@/components/god-school-switcher";
-import { PageTransition } from "@/components/page-transition";
 
 export default function GodLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -62,8 +61,9 @@ export default function GodLayout({ children }: { children: React.ReactNode }) {
       >
         Platform administration — changes affect live schools
       </div>
-      <main className="anx-workspace-main mx-auto w-full max-w-[1400px] px-6 pt-28 pb-10">
-        <PageTransition className="min-w-0">{children}</PageTransition>
+      <main className="anx-workspace-main mx-auto w-full max-w-[1400px] overflow-visible px-6 pt-28 pb-10">
+        {/* God Mode contains long expandable workspaces; route layers can clip their document height. */}
+        <div className="min-w-0 overflow-visible">{children}</div>
       </main>
     </div>
   );

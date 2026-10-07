@@ -926,10 +926,10 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
                         const cycles = assessmentCyclesByYear.get(academicYear) ?? [];
                         const approved = cycles.filter((cycle) => approvedAssessmentCycles.has(cycle.key)).length;
                         return (
-                          <details key={academicYear} className="overflow-hidden rounded-sm border border-border/70 bg-[var(--surface-container-lowest)]">
+                          <details key={academicYear} className="rounded-sm border border-border/70 bg-[var(--surface-container-lowest)]">
                             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 font-semibold [&::-webkit-details-marker]:hidden">
                               <span>{academicYear}</span>
-                              <MetaText>{cycles.length} proposed {cycles.length === 1 ? "cycle" : "cycles"}{approved ? ` · ${approved} approved` : ""}</MetaText>
+                              <MetaText>{cycles.length} proposed {cycles.length === 1 ? "cycle" : "cycles"}{approved ? ` · ${approved} approved` : ""} · manage cycles</MetaText>
                             </summary>
                             <div className="divide-y divide-border/70 border-t border-border/70">
                               {cycles.map((cycle) => {
@@ -946,7 +946,7 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
                                     </label>
                                     <div className="flex shrink-0 items-center gap-3">
                                       <Link href={assessmentReviewHref(cycle.key, integration.id)} className="text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
-                                      <button type="submit" name="deleteCycleKey" value={cycle.key} className="text-sm font-semibold text-danger underline underline-offset-4">Delete cycle</button>
+                                      <button type="submit" name="deleteCycleKey" value={cycle.key} className="rounded-sm border border-danger/35 bg-[var(--pill-danger-bg)] px-3 py-1.5 text-sm font-semibold text-danger hover:border-danger/60">Remove cycle</button>
                                     </div>
                                   </div>
                                 );
