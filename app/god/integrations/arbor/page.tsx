@@ -106,12 +106,113 @@ function StatusBanner({
   );
 }
 
-function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label: string; detail: string; percent: number; tone?: "success" | "warning" | "danger" | "neutral" }) {
+// ─── Section icons ────────────────────────────────────────────────────────────
+// One icon + accent colour per data area, reused on the progress overview and
+// each collapsible section header so both stay visually in sync.
+
+function IconPlug({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 22v-5M9 8V2M15 8V2M18 8H6a2 2 0 0 0-2 2v2a8 8 0 0 0 8 8v0a8 8 0 0 0 8-8v-2a2 2 0 0 0-2-2z" />
+    </svg>
+  );
+}
+function IconCamera({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+function IconCalendarGrid({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
+    </svg>
+  );
+}
+function IconUsersSection({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+function IconShieldSection({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
+function IconCalendarCheck({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4" />
+    </svg>
+  );
+}
+function IconMoon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+function IconClipboardList({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M9 12h6M9 16h4" />
+    </svg>
+  );
+}
+
+const SECTION_TILE_CLASS = {
+  connection: "bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]",
+  photos: "bg-cat-blue-bg text-cat-blue-text",
+  timetable: "bg-cat-indigo-bg text-cat-indigo-text",
+  people: "bg-cat-violet-bg text-cat-violet-text",
+  behaviour: "bg-scale-some-light text-scale-some-text",
+  attendance: "bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)]",
+  leave: "bg-cat-purple-bg text-cat-purple-text",
+  assessments: "bg-[color-mix(in_srgb,var(--warning)_16%,transparent)] text-[var(--warning-text,var(--warning))]",
+} as const;
+
+const SECTION_ICON = {
+  connection: <IconPlug />,
+  photos: <IconCamera />,
+  timetable: <IconCalendarGrid />,
+  people: <IconUsersSection />,
+  behaviour: <IconShieldSection />,
+  attendance: <IconCalendarCheck />,
+  leave: <IconMoon />,
+  assessments: <IconClipboardList />,
+} as const;
+
+function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, iconClassName }: { label: string; detail: string; percent: number; tone?: "success" | "warning" | "danger" | "neutral"; icon?: ReactNode; iconClassName?: string }) {
   const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
   const barClass = tone === "success" ? "bg-success" : tone === "warning" ? "bg-warning" : tone === "danger" ? "bg-danger" : "bg-accent";
   return (
-    <div className="space-y-2 rounded-sm border border-border/70 bg-[var(--surface-container-lowest)] p-3">
-      <div className="flex items-baseline justify-between gap-3"><span className="text-sm font-semibold">{label}</span><span className="shrink-0 text-xs font-semibold text-muted">{safePercent}%</span></div>
+    <div className="space-y-2.5 rounded-sm border border-border/70 bg-[var(--surface-container-lowest)] p-3">
+      <div className="flex items-center justify-between gap-3">
+        <span className="flex min-w-0 items-center gap-2">
+          {icon ? (
+            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md [&_svg]:h-[15px] [&_svg]:w-[15px] [&_svg]:stroke-[1.75] ${iconClassName ?? "bg-[var(--surface-container)] text-muted"}`} aria-hidden>
+              {icon}
+            </span>
+          ) : null}
+          <span className="truncate text-sm font-semibold">{label}</span>
+        </span>
+        <span className="shrink-0 text-xs font-semibold text-muted">{safePercent}%</span>
+      </div>
       <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-container-low)]" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={safePercent}>
         <div className={`h-full rounded-full transition-[width] duration-500 ${barClass}`} style={{ width: `${safePercent}%` }} />
       </div>
@@ -329,12 +430,12 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
             <MetaText>Each connection is tracked independently.</MetaText>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <ArborProgressRow label="Connection" percent={100} tone="success" detail="Credentials verified and connection is active." />
-            <ArborProgressRow label="Students and staff" percent={latestRunByEntity.has("STUDENTS") && latestRunByEntity.has("STAFF") ? 100 : 0} tone={latestRunByEntity.get("STUDENTS")?.status === "FAILED" || latestRunByEntity.get("STAFF")?.status === "FAILED" ? "danger" : latestRunByEntity.has("STUDENTS") && latestRunByEntity.has("STAFF") ? "success" : "neutral"} detail={latestRunByEntity.has("STUDENTS") && latestRunByEntity.has("STAFF") ? "Latest people syncs have completed." : "Awaiting first completed people sync."} />
-            <ArborProgressRow label="Timetable" percent={latestRunByEntity.get("TIMETABLE")?.status === "SUCCESS" ? 100 : 0} tone={latestRunByEntity.get("TIMETABLE")?.status === "FAILED" ? "danger" : latestRunByEntity.get("TIMETABLE")?.status === "SUCCESS" ? "success" : "neutral"} detail={latestRunByEntity.get("TIMETABLE")?.status === "SUCCESS" ? "Latest timetable page completed." : "Subject-teacher mapping is still awaiting confirmation."} />
-            <ArborProgressRow label="Behaviour" percent={latestRunByEntity.get("BEHAVIOUR")?.status === "SUCCESS" ? 100 : 0} tone={latestRunByEntity.get("BEHAVIOUR")?.status === "FAILED" ? "danger" : latestRunByEntity.get("BEHAVIOUR")?.status === "SUCCESS" ? "success" : "neutral"} detail={latestRunByEntity.get("BEHAVIOUR")?.status === "SUCCESS" ? "Nightly behaviour sync is active." : "Awaiting a completed behaviour sync."} />
-            <ArborProgressRow label="Attendance" percent={latestRunByEntity.get("ATTENDANCE")?.status === "SUCCESS" ? 100 : 0} tone={latestRunByEntity.get("ATTENDANCE")?.status === "FAILED" ? "danger" : latestRunByEntity.get("ATTENDANCE")?.status === "SUCCESS" ? "success" : "neutral"} detail={latestRunByEntity.get("ATTENDANCE")?.status === "SUCCESS" ? "Nightly attendance sync is active." : "Awaiting a completed attendance sync."} />
-            <ArborProgressRow label="Assessment discovery" percent={assessmentDiscoveryPercent} tone={assessmentNeedsAttention ? "warning" : assessmentDiscoveryComplete ? "success" : "neutral"} detail={preparedAssessmentDefinitions ? assessmentDiscoveryComplete ? `${preparedAssessmentDefinitions} prepared definitions checked; ready for review.` : `${assessmentDefinitionsChecked} of ${preparedAssessmentDefinitions} prepared definitions checked automatically.` : "Awaiting the assessment catalogue."} />
+            <ArborProgressRow label="Connection" percent={100} tone="success" detail="Credentials verified and connection is active." icon={SECTION_ICON.connection} iconClassName={SECTION_TILE_CLASS.connection} />
+            <ArborProgressRow label="Students and staff" percent={latestRunByEntity.has("STUDENTS") && latestRunByEntity.has("STAFF") ? 100 : 0} tone={latestRunByEntity.get("STUDENTS")?.status === "FAILED" || latestRunByEntity.get("STAFF")?.status === "FAILED" ? "danger" : latestRunByEntity.has("STUDENTS") && latestRunByEntity.has("STAFF") ? "success" : "neutral"} detail={latestRunByEntity.has("STUDENTS") && latestRunByEntity.has("STAFF") ? "Latest people syncs have completed." : "Awaiting first completed people sync."} icon={SECTION_ICON.people} iconClassName={SECTION_TILE_CLASS.people} />
+            <ArborProgressRow label="Timetable" percent={latestRunByEntity.get("TIMETABLE")?.status === "SUCCESS" ? 100 : 0} tone={latestRunByEntity.get("TIMETABLE")?.status === "FAILED" ? "danger" : latestRunByEntity.get("TIMETABLE")?.status === "SUCCESS" ? "success" : "neutral"} detail={latestRunByEntity.get("TIMETABLE")?.status === "SUCCESS" ? "Latest timetable page completed." : "Subject-teacher mapping is still awaiting confirmation."} icon={SECTION_ICON.timetable} iconClassName={SECTION_TILE_CLASS.timetable} />
+            <ArborProgressRow label="Behaviour" percent={latestRunByEntity.get("BEHAVIOUR")?.status === "SUCCESS" ? 100 : 0} tone={latestRunByEntity.get("BEHAVIOUR")?.status === "FAILED" ? "danger" : latestRunByEntity.get("BEHAVIOUR")?.status === "SUCCESS" ? "success" : "neutral"} detail={latestRunByEntity.get("BEHAVIOUR")?.status === "SUCCESS" ? "Nightly behaviour sync is active." : "Awaiting a completed behaviour sync."} icon={SECTION_ICON.behaviour} iconClassName={SECTION_TILE_CLASS.behaviour} />
+            <ArborProgressRow label="Attendance" percent={latestRunByEntity.get("ATTENDANCE")?.status === "SUCCESS" ? 100 : 0} tone={latestRunByEntity.get("ATTENDANCE")?.status === "FAILED" ? "danger" : latestRunByEntity.get("ATTENDANCE")?.status === "SUCCESS" ? "success" : "neutral"} detail={latestRunByEntity.get("ATTENDANCE")?.status === "SUCCESS" ? "Nightly attendance sync is active." : "Awaiting a completed attendance sync."} icon={SECTION_ICON.attendance} iconClassName={SECTION_TILE_CLASS.attendance} />
+            <ArborProgressRow label="Assessment discovery" percent={assessmentDiscoveryPercent} tone={assessmentNeedsAttention ? "warning" : assessmentDiscoveryComplete ? "success" : "neutral"} detail={preparedAssessmentDefinitions ? assessmentDiscoveryComplete ? `${preparedAssessmentDefinitions} prepared definitions checked; ready for review.` : `${assessmentDefinitionsChecked} of ${preparedAssessmentDefinitions} prepared definitions checked automatically.` : "Awaiting the assessment catalogue."} icon={SECTION_ICON.assessments} iconClassName={SECTION_TILE_CLASS.assessments} />
           </div>
         </Card>
       ) : null}
@@ -723,15 +824,33 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
             <div className="text-xs font-semibold uppercase tracking-[0.12em] text-success">Connected and syncing nightly</div>
             <H3 className="mt-2 text-xl">Arbor is the source of truth for {integration.label}.</H3>
             <MetaText className="mt-2 max-w-3xl">Students, staff, attendance, behaviour, and profile photos update automatically for the schools attached to this connection.</MetaText>
-            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-border/70 pt-4 text-sm">
-              <span><span className="text-muted">Schools:</span> <strong>{selected.size} connected</strong></span>
-              <span><span className="text-muted">Assessment cycles:</span> <strong>{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} approved` : "awaiting review"}</strong></span>
-              <span><span className="text-muted">Connection:</span> <strong className="text-success">healthy</strong></span>
+            <div className="mt-5 grid grid-cols-1 gap-4 border-t border-border/70 pt-5 sm:grid-cols-3">
+              <div className="flex items-center gap-3">
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md [&_svg]:h-[18px] [&_svg]:w-[18px] [&_svg]:stroke-[1.75] ${SECTION_TILE_CLASS.people}`} aria-hidden>{SECTION_ICON.people}</span>
+                <div>
+                  <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Schools</p>
+                  <p className="mt-0.5 text-lg font-bold text-text">{selected.size} connected</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md [&_svg]:h-[18px] [&_svg]:w-[18px] [&_svg]:stroke-[1.75] ${SECTION_TILE_CLASS.assessments}`} aria-hidden>{SECTION_ICON.assessments}</span>
+                <div>
+                  <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Assessment cycles</p>
+                  <p className="mt-0.5 text-lg font-bold text-text">{approvedAssessmentCycles.size ? `${approvedAssessmentCycles.size} approved` : "Awaiting review"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md [&_svg]:h-[18px] [&_svg]:w-[18px] [&_svg]:stroke-[1.75] ${SECTION_TILE_CLASS.connection}`} aria-hidden>{SECTION_ICON.connection}</span>
+                <div>
+                  <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Connection</p>
+                  <p className="mt-0.5 text-lg font-bold text-success">Healthy</p>
+                </div>
+              </div>
             </div>
           </Card>
 
           <div className="space-y-3">
-            <CollapsibleCard title="1. Connection" defaultOpen={false} attention={visibleAlert("connection", connectionAlert)} attentionKey="connection" attentionFingerprint={connectionAlert ?? undefined} attentionMessage="The Arbor connection needs review. Check the connection result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="1. Connection" icon={SECTION_ICON.connection} iconClassName={SECTION_TILE_CLASS.connection} defaultOpen={false} attention={visibleAlert("connection", connectionAlert)} attentionKey="connection" attentionFingerprint={connectionAlert ?? undefined} attentionMessage="The Arbor connection needs review. Check the connection result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>{integration.label}</H3>
@@ -746,7 +865,7 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="2. Photo access" defaultOpen={false} attention={visibleAlert("photos", photoAlert)} attentionKey="photos" attentionFingerprint={photoAlert ?? undefined} attentionMessage="Arbor photo access needs review. Check the photo result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="2. Photo access" icon={SECTION_ICON.photos} iconClassName={SECTION_TILE_CLASS.photos} defaultOpen={false} attention={visibleAlert("photos", photoAlert)} attentionKey="photos" attentionFingerprint={photoAlert ?? undefined} attentionMessage="Arbor photo access needs review. Check the photo result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Profile photos update automatically</H3>
@@ -759,7 +878,7 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="3. Timetable access" defaultOpen={false} attention={visibleAlert("timetable", timetableAlert)} attentionKey="timetable" attentionFingerprint={timetableAlert ?? undefined} attentionMessage="The timetable sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="3. Timetable access" icon={SECTION_ICON.timetable} iconClassName={SECTION_TILE_CLASS.timetable} defaultOpen={false} attention={visibleAlert("timetable", timetableAlert)} attentionKey="timetable" attentionFingerprint={timetableAlert ?? undefined} attentionMessage="The timetable sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Subject teachers</H3>
@@ -783,7 +902,7 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="4. Staff and student syncing" defaultOpen={false} attention={visibleAlert("people", peopleAlert)} attentionKey="people" attentionFingerprint={peopleAlert ?? undefined} attentionMessage="The people sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="4. Staff and student syncing" icon={SECTION_ICON.people} iconClassName={SECTION_TILE_CLASS.people} defaultOpen={false} attention={visibleAlert("people", peopleAlert)} attentionKey="people" attentionFingerprint={peopleAlert ?? undefined} attentionMessage="The people sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>People records update nightly</H3>
@@ -807,7 +926,7 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="5. Behaviour syncing" defaultOpen={false} attention={visibleAlert("behaviour", behaviourAlert)} attentionKey="behaviour" attentionFingerprint={behaviourAlert ?? undefined} attentionMessage="The latest behaviour sync needs review. Check the error below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="5. Behaviour syncing" icon={SECTION_ICON.behaviour} iconClassName={SECTION_TILE_CLASS.behaviour} defaultOpen={false} attention={visibleAlert("behaviour", behaviourAlert)} attentionKey="behaviour" attentionFingerprint={behaviourAlert ?? undefined} attentionMessage="The latest behaviour sync needs review. Check the error below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-3">
                 <H3>Behaviour data updates nightly</H3>
                 <MetaText className="mt-1">Positive points, detentions, internal exclusions, and suspensions are imported into Anaxi&apos;s existing behaviour measures. No manual behaviour upload is needed.</MetaText>
@@ -816,14 +935,14 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="6. Attendance syncing" defaultOpen={false} attention={visibleAlert("attendance", attendanceAlert)} attentionKey="attendance" attentionFingerprint={attendanceAlert ?? undefined} attentionMessage="The attendance sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="6. Attendance syncing" icon={SECTION_ICON.attendance} iconClassName={SECTION_TILE_CLASS.attendance} defaultOpen={false} attention={visibleAlert("attendance", attendanceAlert)} attentionKey="attendance" attentionFingerprint={attendanceAlert ?? undefined} attentionMessage="The attendance sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div>
                 <H3>Attendance updates nightly</H3>
                 <MetaText className="mt-1">Academic-year attendance totals and daily snapshots refresh automatically. Anaxi then compares the selected 7, 14, 21, or 28-day period with the previous period.</MetaText>
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="7. Leave of absence syncing" defaultOpen={false} attention={visibleAlert("leave", leaveAlert)} attentionKey="leave" attentionFingerprint={leaveAlert ?? undefined} attentionMessage="Arbor staff-absence access needs review. Check the permission result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="7. Leave of absence syncing" icon={SECTION_ICON.leave} iconClassName={SECTION_TILE_CLASS.leave} defaultOpen={false} attention={visibleAlert("leave", leaveAlert)} attentionKey="leave" attentionFingerprint={leaveAlert ?? undefined} attentionMessage="Arbor staff-absence access needs review. Check the permission result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Check Arbor staff-absence access</H3>
@@ -846,7 +965,7 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="8. Assessment syncing" defaultOpen={false} attention={visibleAlert("assessments", assessmentAlert)} attentionKey="assessments" attentionFingerprint={assessmentAlert ?? undefined} attentionMessage="Assessment review needs attention. Check the cycle status below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard title="8. Assessment syncing" icon={SECTION_ICON.assessments} iconClassName={SECTION_TILE_CLASS.assessments} defaultOpen={false} attention={visibleAlert("assessments", assessmentAlert)} attentionKey="assessments" attentionFingerprint={assessmentAlert ?? undefined} attentionMessage="Assessment review needs attention. Check the cycle status below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-5">
                 <div>
                   <H3>Assessment review</H3>

@@ -12,6 +12,9 @@ function ChevronDown() {
 
 export function CollapsibleCard({
   title,
+  subtitle,
+  icon,
+  iconClassName = "bg-[var(--surface-container)] text-muted",
   children,
   defaultOpen = true,
   attention = false,
@@ -23,6 +26,12 @@ export function CollapsibleCard({
   className = "",
 }: {
   title: string;
+  /** Short one-line context shown under the title, next to the chevron. */
+  subtitle?: string;
+  /** Optional leading icon tile — gives each section a distinct, scannable identity. */
+  icon?: ReactNode;
+  /** Background/text colour classes for the icon tile (e.g. `bg-cat-blue-bg text-cat-blue-text`). */
+  iconClassName?: string;
   children: ReactNode;
   defaultOpen?: boolean;
   /** Marks a collapsed section when it needs an administrator's attention. */
@@ -65,16 +74,26 @@ export function CollapsibleCard({
       className={`overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none ${className}`}
       open={defaultOpen}
     >
-      <summary className="group flex cursor-pointer list-none items-center justify-between px-5 py-4 text-[14px] font-semibold tracking-[-0.01em] text-text [&::-webkit-details-marker]:hidden">
-        <span className="flex items-center gap-2">
-          {title}
-          {showAttention ? (
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#dc2626] text-[11px] font-bold text-white" title="Needs attention" aria-label="Needs attention">
-              !
+      <summary className="group flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-[14px] font-semibold tracking-[-0.01em] text-text [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 items-center gap-3">
+          {icon ? (
+            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md [&_svg]:h-[18px] [&_svg]:w-[18px] [&_svg]:stroke-[1.75] ${iconClassName}`} aria-hidden>
+              {icon}
             </span>
           ) : null}
+          <span className="min-w-0">
+            <span className="flex items-center gap-2">
+              {title}
+              {showAttention ? (
+                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#dc2626] text-[11px] font-bold text-white" title="Needs attention" aria-label="Needs attention">
+                  !
+                </span>
+              ) : null}
+            </span>
+            {subtitle ? <span className="mt-0.5 block truncate text-xs font-normal text-muted">{subtitle}</span> : null}
+          </span>
         </span>
-        <span className="calm-transition text-muted group-open:rotate-180">
+        <span className="calm-transition shrink-0 text-muted group-open:rotate-180">
           <ChevronDown />
         </span>
       </summary>
