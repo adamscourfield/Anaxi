@@ -312,8 +312,14 @@ export default async function ArborAssessmentMarkSheetPage({
     const linkedStudent = studentsByExternalId.get(mark.student.id);
     const enrolledSubjects = subjectsByStudent.get(mark.student.id);
     if (requiresCurrentYear13SubjectRoster) {
+      // Arbor's Year 12 A-Level batch rosters can contain the entire current
+      // Year 13 cohort, even where the academic-unit enrolment is equally
+      // broad. A recorded outcome is the only per-pupil evidence available in
+      // this historic feed, so never render an ungraded placeholder as if it
+      // proved subject membership.
       return linkedStudent?.status === "ACTIVE"
         && normalisedYearGroup(linkedStudent.yearGroup) === "Y13"
+        && gradeValue(mark) !== "No recorded grade"
         && Boolean(enrolledSubjects?.some((subject) => studentSubjectMatchesAssessment(subject, definition.label)));
     }
     if (gradeValue(mark) !== "No recorded grade") return true;
