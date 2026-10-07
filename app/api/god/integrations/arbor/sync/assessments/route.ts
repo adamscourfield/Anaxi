@@ -10,6 +10,11 @@ import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { prisma } from "@/lib/prisma";
 
+// A superintendent-requested import may include many reviewed subjects. Keep
+// the work in one deliberate action, while limiting concurrent Arbor reads so
+// the MIS is not overwhelmed.
+export const maxDuration = 300;
+
 type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[]; source?: "PROGRESS_MARK" | "BATCH_TARGET" | "BATCH" };
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
 type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; historicImportVersion?: number; historicImportCursor?: number; historicImportedDefinitionIds?: string[]; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
@@ -24,7 +29,7 @@ const MARK_PAGES_PER_RUN = 24;
 // A small combined group is paged to completion before moving on, so every
 // subject in the group is retained without serially scanning the full P8 list.
 const DEFINITIONS_PER_QUERY = 10;
-const MANUAL_IMPORT_BATCH_SIZE = 4;
+const MANUAL_IMPORT_CONCURRENCY = 3;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
 const HISTORIC_ACADEMIC_YEARS = [
   { label: "2025/2026", from: "2025-09-01", before: "2026-09-01" },
@@ -395,7 +400,7 @@ export async function POST(req: Request) {
         : NextResponse.json({ imported: 0, complete: true });
     }
     try {
-      const definitionsToImport = pendingDefinitions.slice(0, manualImport ? MANUAL_IMPORT_BATCH_SIZE : 1);
+      const definitionsToImport = manualImport ? pendingDefinitions : pendingDefinitions.slice(0, 1);
       let imported = 0;
       let reviewedMarks = 0;
       let targets = 0;
@@ -406,18 +411,23 @@ export async function POST(req: Request) {
       let unapprovedCycles = 0;
       let missingOwners = 0;
       let lastLabel = definitionsToImport[0].label;
-      for (const definition of definitionsToImport) {
-        const result = await importReviewedHistoricDefinition({ db, integration, config, state, approvedCycleKeys, definition });
-        imported += result.imported;
-        reviewedMarks += result.reviewedMarks;
-        targets += result.targets;
-        progressMarks += result.progressMarks;
-        qualificationMarks += result.qualificationMarks;
-        unlinkedStudents += result.unlinkedStudents;
-        unmappedCohorts += result.unmappedCohorts;
-        unapprovedCycles += result.unapprovedCycles;
-        missingOwners += result.missingOwners;
-        lastLabel = definition.label;
+      for (let offset = 0; offset < definitionsToImport.length; offset += MANUAL_IMPORT_CONCURRENCY) {
+        const group = definitionsToImport.slice(offset, offset + MANUAL_IMPORT_CONCURRENCY);
+        const results = await Promise.all(group.map((definition) => importReviewedHistoricDefinition({ db, integration, config, state, approvedCycleKeys, definition })));
+        for (let index = 0; index < results.length; index++) {
+          const result = results[index];
+          imported += result.imported;
+          reviewedMarks += result.reviewedMarks;
+          targets += result.targets;
+          progressMarks += result.progressMarks;
+          qualificationMarks += result.qualificationMarks;
+          unlinkedStudents += result.unlinkedStudents;
+          unmappedCohorts += result.unmappedCohorts;
+          unapprovedCycles += result.unapprovedCycles;
+          missingOwners += result.missingOwners;
+          lastLabel = group[index].label;
+        }
+        if (offset + MANUAL_IMPORT_CONCURRENCY < definitionsToImport.length) await pauseForArbor();
       }
       const importedDefinitionIds = [...new Set([...completedIds, ...definitionsToImport.map((definition) => definition.id)])];
       const remaining = Math.max(0, approvedDefinitions.length - importedDefinitionIds.length);

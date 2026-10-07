@@ -1105,7 +1105,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                         <input type="hidden" name="runNow" value="1" />
                         <SubmitButton className={actionButtonClass}>Import approved results now</SubmitButton>
                       </form>
-                      <MetaText>Each run imports up to 4 reviewed subject sheets now; {assessmentImportRemaining} of {approvedAssessmentDefinitionCount} approved sheet{approvedAssessmentDefinitionCount === 1 ? "" : "s"} remain{assessmentImportRemaining ? "." : " complete."}</MetaText>
+                      <MetaText>One run imports all remaining approved subject sheets; {assessmentImportRemaining} of {approvedAssessmentDefinitionCount} approved sheet{approvedAssessmentDefinitionCount === 1 ? "" : "s"} remain{assessmentImportRemaining ? ". This can take a few minutes while Arbor is read safely." : " complete."}</MetaText>
                     </div>
                     {assessmentImportProgress ? (
                       <>
