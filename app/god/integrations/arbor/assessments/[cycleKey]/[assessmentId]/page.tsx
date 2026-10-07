@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { H3, MetaText } from "@/components/ui/typography";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient, arborAssessmentMarkValue, type ArborQualificationResult } from "@/lib/integrations/arbor/client";
-import { arborHistoricYearGroup, mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
+import { arborHistoricYearGroup, arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
 import { arborConnectionHref } from "@/lib/integrations/arbor/connectionScope";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
@@ -261,13 +261,19 @@ export default async function ArborAssessmentMarkSheetPage({
   });
   const yearGroupMarks = termMarks.filter((mark) => {
     const linkedStudent = studentsByExternalId.get(mark.student.id);
-    const historicYearGroup = arborHistoricYearGroup(
-      mark.student.displayAcademicLevel?.displayName,
-      linkedStudent?.status === "ARCHIVED" ? linkedStudent.yearGroup : null,
-      mark.student.leavingDate,
-      cycle.academicYear,
-      mapping.family,
-    );
+    // For active pupils, Anaxi's linked record is the current cohort. Rebase
+    // that current year to the assessment year so 2025/26 Year 12 results
+    // follow the same pupils into their 2026/27 Year 13 view. Archived pupils
+    // retain the historic/leaver handling below.
+    const historicYearGroup = linkedStudent?.status === "ACTIVE"
+      ? arborYearGroupAtAssessment(linkedStudent.yearGroup, cycle.academicYear)
+      : arborHistoricYearGroup(
+        mark.student.displayAcademicLevel?.displayName,
+        linkedStudent?.status === "ARCHIVED" ? linkedStudent.yearGroup : null,
+        mark.student.leavingDate,
+        cycle.academicYear,
+        mapping.family,
+      );
     return historicYearGroup === yearGroup;
   });
 
@@ -312,7 +318,7 @@ export default async function ArborAssessmentMarkSheetPage({
       <PageHeader
         eyebrow="God Mode · Arbor · Assessment review"
         title={definition.label}
-        subtitle="Read-only Arbor mark sheet. Every row is a pupil returned by Arbor for this subject assessment; Anaxi does not add other pupils from the year group."
+        subtitle="Read-only Arbor mark sheet. Historic cycles follow the same pupils into their current cohort where they remain enrolled; archived leavers stay visible as historic records."
         actions={<Link href={arborConnectionHref(reviewPath, integration.id)}><Button variant="secondary">Back to subject assessments</Button></Link>}
       />
 
@@ -339,7 +345,7 @@ export default async function ArborAssessmentMarkSheetPage({
                 {rows.map(({ externalId, mark, student }) => (
                   <tr key={externalId}>
                     <td className="px-4 py-3 font-medium">{student?.fullName ?? arborStudentName(mark) ?? "Former pupil not yet synced"}</td>
-                    <td className="px-4 py-3">{yearGroup.replace(/^Y/, "Year ")}</td>
+                    <td className="px-4 py-3">{student?.yearGroup?.replace(/^Y/i, "Year ") ?? yearGroup.replace(/^Y/, "Year ")}</td>
                     <td className="px-4 py-3 text-muted">{student ? student.status === "ARCHIVED" ? "Archived" : "Linked" : "Historic pupil"}</td>
                     <td className="px-4 py-3">{mark.assessmentDate ? new Date(mark.assessmentDate).toLocaleDateString("en-GB") : "Not supplied"}</td>
                     <td className="px-4 py-3 font-semibold">{gradeValue(mark)}</td>
