@@ -1204,6 +1204,9 @@ model AssessmentResult {
   rank            Int?
   normalisedGrade String?
   candidateNumber String?
+  /// Cohort membership recorded in the assessment upload; null uses the student profile.
+  ppFlag          Boolean?
+  sendFlag        Boolean?
   status          AssessmentResultStatus    @default(PRESENT)
   isValid         Boolean                   @default(true)
   validationNotes String?

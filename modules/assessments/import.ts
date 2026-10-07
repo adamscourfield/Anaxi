@@ -125,6 +125,8 @@ export async function importAssessmentResults(
         },
         update: {
           rawValue: record.rawValue,
+          ppFlag: record.ppFlag,
+          sendFlag: record.sendFlag,
           normalizedScore,
           status,
           updatedAt: new Date(),
@@ -134,6 +136,8 @@ export async function importAssessmentResults(
           assessmentId,
           studentId,
           rawValue: record.rawValue,
+          ppFlag: record.ppFlag,
+          sendFlag: record.sendFlag,
           normalizedScore,
           status,
         },

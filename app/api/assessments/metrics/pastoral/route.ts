@@ -120,6 +120,8 @@ export const GET = withApi(async function GET(req: Request) {
         where: { tenantId: user.tenantId, status: "PRESENT" },
         select: {
           studentId: true,
+          ppFlag: true,
+          sendFlag: true,
           normalizedScore: true,
           rawValue: true,
           student: {
@@ -166,8 +168,8 @@ export const GET = withApi(async function GET(req: Request) {
         scores: [],
         rawValues: [],
         name: r.student.fullName,
-        ppFlag: r.student.ppFlag,
-        sendFlag: r.student.sendFlag,
+        ppFlag: (r.ppFlag ?? r.student.ppFlag),
+        sendFlag: (r.sendFlag ?? r.student.sendFlag),
         yearGroup: r.student.yearGroup ?? "",
       };
       if (r.normalizedScore !== null) existing.scores.push(r.normalizedScore);

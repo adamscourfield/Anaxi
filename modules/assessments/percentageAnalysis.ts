@@ -212,10 +212,10 @@ export async function computePercentageSummary(
     });
 
     // PP/SEND groups
-    const ppScores = present.filter((r) => r.student.ppFlag).map((r) => round1(r.normalizedScore! * 100));
-    const nonPpScores = present.filter((r) => !r.student.ppFlag).map((r) => round1(r.normalizedScore! * 100));
-    const sendScores = present.filter((r) => r.student.sendFlag).map((r) => round1(r.normalizedScore! * 100));
-    const nonSendScores = present.filter((r) => !r.student.sendFlag).map((r) => round1(r.normalizedScore! * 100));
+    const ppScores = present.filter((r) => (r.ppFlag ?? r.student.ppFlag)).map((r) => round1(r.normalizedScore! * 100));
+    const nonPpScores = present.filter((r) => !(r.ppFlag ?? r.student.ppFlag)).map((r) => round1(r.normalizedScore! * 100));
+    const sendScores = present.filter((r) => (r.sendFlag ?? r.student.sendFlag)).map((r) => round1(r.normalizedScore! * 100));
+    const nonSendScores = present.filter((r) => !(r.sendFlag ?? r.student.sendFlag)).map((r) => round1(r.normalizedScore! * 100));
 
     const ppMean = avg(ppScores);
     const nonPpMean = avg(nonPpScores);
@@ -245,8 +245,8 @@ export async function computePercentageSummary(
     const ranked: PercentageStudentResult[] = present.map((r, i) => ({
       studentId: r.studentId,
       name: r.student.fullName,
-      ppFlag: r.student.ppFlag,
-      sendFlag: r.student.sendFlag,
+      ppFlag: (r.ppFlag ?? r.student.ppFlag),
+      sendFlag: (r.sendFlag ?? r.student.sendFlag),
       score: round1(r.normalizedScore! * 100),
       rank: studentRanks[i] ?? present.length,
     }));
@@ -289,8 +289,8 @@ export async function computePercentageSummary(
       if (r.status !== "PRESENT" || r.normalizedScore === null) continue;
       const entry = studentAccum.get(r.studentId) ?? {
         name: r.student.fullName,
-        ppFlag: r.student.ppFlag,
-        sendFlag: r.student.sendFlag,
+        ppFlag: (r.ppFlag ?? r.student.ppFlag),
+        sendFlag: (r.sendFlag ?? r.student.sendFlag),
         scores: [],
       };
       entry.scores.push(r.normalizedScore * 100);
@@ -427,8 +427,8 @@ export async function computeRankMovement(
         if (r.status !== "PRESENT" || r.normalizedScore === null) continue;
         const entry = accum.get(r.studentId) ?? {
           name: r.student.fullName,
-          ppFlag: r.student.ppFlag,
-          sendFlag: r.student.sendFlag,
+          ppFlag: (r.ppFlag ?? r.student.ppFlag),
+          sendFlag: (r.sendFlag ?? r.student.sendFlag),
           scores: [],
         };
         entry.scores.push(r.normalizedScore * 100);

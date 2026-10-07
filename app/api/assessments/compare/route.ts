@@ -91,6 +91,8 @@ export const GET = withApi(async function GET(req: Request) {
               where: { tenantId: user.tenantId },
               select: {
                 studentId: true,
+                ppFlag: true,
+                sendFlag: true,
                 rawValue: true,
                 normalizedScore: true,
                 status: true,
@@ -112,6 +114,8 @@ export const GET = withApi(async function GET(req: Request) {
               where: { tenantId: user.tenantId },
               select: {
                 studentId: true,
+                ppFlag: true,
+                sendFlag: true,
                 rawValue: true,
                 normalizedScore: true,
                 status: true,
@@ -172,8 +176,8 @@ export const GET = withApi(async function GET(req: Request) {
       return {
         studentId: sid,
         name: (fr ?? tr)!.student.fullName,
-        ppFlag: (fr ?? tr)!.student.ppFlag,
-        sendFlag: (fr ?? tr)!.student.sendFlag,
+        ppFlag: (tr ?? fr)!.ppFlag ?? (tr ?? fr)!.student.ppFlag,
+        sendFlag: (tr ?? fr)!.sendFlag ?? (tr ?? fr)!.student.sendFlag,
         from: fr?.rawValue ?? null,
         to: tr?.rawValue ?? null,
         fromNorm,

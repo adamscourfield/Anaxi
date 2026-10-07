@@ -1,0 +1,1 @@
+ALTER TABLE "AssessmentResult" ADD COLUMN "ppFlag" BOOLEAN, ADD COLUMN "sendFlag" BOOLEAN;

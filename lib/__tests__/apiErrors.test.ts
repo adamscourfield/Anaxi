@@ -1,11 +1,9 @@
-import { describe, expect, it, afterEach } from "vitest";
+import { describe, expect, it, afterEach, vi } from "vitest";
 import { apiErrorResponse } from "@/lib/apiErrors";
 
 describe("apiErrorResponse", () => {
-  const originalNodeEnv = process.env.NODE_ENV;
-
   afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv;
+    vi.unstubAllEnvs();
   });
 
   it("maps UNAUTHENTICATED to 401", async () => {
@@ -14,7 +12,7 @@ describe("apiErrorResponse", () => {
   });
 
   it("hides unexpected errors in production", async () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     const res = apiErrorResponse(new Error("database connection leaked detail"));
     expect(res.status).toBe(500);
     const body = await res.json();
@@ -23,7 +21,7 @@ describe("apiErrorResponse", () => {
   });
 
   it("returns validation-style errors in production", async () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     const res = apiErrorResponse(new Error("title required"));
     expect(res.status).toBe(400);
     const body = await res.json();
