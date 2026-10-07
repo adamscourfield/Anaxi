@@ -317,6 +317,43 @@ export class ArborClient {
     return new Map([...subjectsByStudent].map(([studentId, subjects]) => [studentId, [...subjects]]));
   }
 
+  /**
+   * Uses Arbor's direct enrolment table for an exact current subject roster.
+   * This is more precise than walking teaching-group automatic enrolments,
+   * which can expand to a whole sixth-form cohort.
+   */
+  async listAcademicUnitSubjectsForStudents(studentIds: string[]): Promise<Map<string, string[]>> {
+    if (!studentIds.length) return new Map();
+    const subjectsByStudent = new Map<string, Set<string>>();
+    for (let offset = 0; offset < studentIds.length; offset += 100) {
+      const ids = studentIds.slice(offset, offset + 100);
+      for (let pageNum = 0; pageNum < 100; pageNum++) {
+        const data = await runArborGraphqlQuery<{
+          AcademicUnitEnrolment: Array<{
+            student: { id: string } | null;
+            academicUnit: { subject: { displayName: string | null } | null } | null;
+          }>;
+        }>(this.credentials, `{
+          AcademicUnitEnrolment(page_size: 500, page_num: ${pageNum}, student__id_in: [${ids.map((id) => JSON.stringify(id)).join(", ")}]) {
+            student { id }
+            academicUnit { subject { displayName } }
+          }
+        }`);
+        const enrolments = Array.isArray(data.AcademicUnitEnrolment) ? data.AcademicUnitEnrolment : [];
+        for (const enrolment of enrolments) {
+          const studentId = enrolment.student?.id;
+          const subject = enrolment.academicUnit?.subject?.displayName?.trim();
+          if (!studentId || !subject) continue;
+          const subjects = subjectsByStudent.get(studentId) ?? new Set<string>();
+          subjects.add(subject);
+          subjectsByStudent.set(studentId, subjects);
+        }
+        if (enrolments.length < 500) break;
+      }
+    }
+    return new Map([...subjectsByStudent].map(([studentId, subjects]) => [studentId, [...subjects]]));
+  }
+
   async getProgressAssessmentBatchTarget(id: string): Promise<ArborProgressAssessmentBatchTarget | null> {
     const targets = await this.listProgressAssessmentBatchTargets([id], "target");
     return targets.find((target) => target.id === id) ?? null;

@@ -230,7 +230,7 @@ export default async function ArborAssessmentMarkSheetPage({
   // contain a whole-cohort allocation with blank cells for final outcomes.
   // When this source supplies subject-specific rows for a Summer/Final review,
   // it is authoritative and intentionally replaces those placeholders.
-  const usesQualificationResults = (mapping.family === "GCSE" || mapping.family === "A_LEVEL")
+  const usesQualificationResults = (mapping.family === "GCSE" || (mapping.family === "A_LEVEL" && yearGroup === "Y13"))
     && (cycle.pointLabel === "Summer" || cycle.pointLabel === "Final");
   let qualificationReadFailed = false;
   let qualificationReadError: string | null = null;
@@ -302,7 +302,7 @@ export default async function ArborAssessmentMarkSheetPage({
   let subjectsByStudent = new Map<string, string[]>();
   if (mapping.family === "A_LEVEL" && yearGroup === "Y12") {
     try {
-      subjectsByStudent = await client.listTeachingGroupSubjectsForStudents([...new Set(yearGroupMarks.map((mark) => mark.student.id))]);
+      subjectsByStudent = await client.listAcademicUnitSubjectsForStudents([...new Set(yearGroupMarks.map((mark) => mark.student.id))]);
     } catch {
       // Keep the review available if Arbor's optional timetable relationship is
       // temporarily unavailable; this remains a read-only guard, not a sync.
