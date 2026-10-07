@@ -4,8 +4,9 @@ import { usePathname } from "next/navigation";
 import type { AnimationEvent, ReactNode } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
-  hvqtPageEnterClass,
-  hvqtPageExitClass,
+  hvqtSlideEnterLayerClass,
+  hvqtSlideExitLayerClass,
+  hvqtSlideStageClass,
 } from "@/lib/motion/hvqt";
 
 type PageTransitionProps = {
@@ -33,8 +34,9 @@ function mergeClassName(base: string | undefined, extra: string): string {
 }
 
 /**
- * Route-keyed main content: exit-then-enter (AnimatePresence `mode="wait"`)
- * with opacity, 10px Y, and 4px blur (see `lib/motion/hvqt` + `globals.css`).
+ * Route-keyed main content: the outgoing page glides left to reveal the
+ * incoming page underneath, which pushes in slightly from the right — an
+ * iOS nav-stack push (see `lib/motion/hvqt` + `globals.css`).
  */
 export function PageTransition({ children, className }: PageTransitionProps) {
   const pathname = usePathname() ?? "";
@@ -71,19 +73,20 @@ export function PageTransition({ children, className }: PageTransitionProps) {
 
   if (exiting) {
     return (
-      <div
-        key={`exit-${committedPathRef.current}`}
-        className={mergeClassName(className, hvqtPageExitClass)}
-        onAnimationEnd={finishExit}
-      >
-        {committedChildrenRef.current}
+      <div className={mergeClassName(className, hvqtSlideStageClass)}>
+        <div key={`enter-${pathname}`} className={hvqtSlideEnterLayerClass}>
+          {children}
+        </div>
+        <div
+          key={`exit-${committedPathRef.current}`}
+          className={hvqtSlideExitLayerClass}
+          onAnimationEnd={finishExit}
+        >
+          {committedChildrenRef.current}
+        </div>
       </div>
     );
   }
 
-  return (
-    <div key={`enter-${pathname}`} className={mergeClassName(className, hvqtPageEnterClass)}>
-      {children}
-    </div>
-  );
+  return <div className={className}>{children}</div>;
 }

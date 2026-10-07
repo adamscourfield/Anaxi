@@ -2032,6 +2032,54 @@ textarea:focus-visible {
   }
 }
 
+/* HVQT slide (route push): outgoing page glides left to reveal the incoming
+   page underneath, which pushes in slightly from the right — iOS nav-stack feel. */
+@keyframes hvqt-slide-exit {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes hvqt-slide-enter-push {
+  from {
+    transform: translateX(3%);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.hvqt-slide-stage {
+  position: relative;
+  overflow: hidden;
+}
+
+.hvqt-slide-exit-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
+  animation: hvqt-slide-exit var(--motion-duration-panel) var(--motion-ease-hvqt) both;
+}
+
+.hvqt-slide-enter-layer {
+  position: relative;
+  z-index: 1;
+  animation: hvqt-slide-enter-push var(--motion-duration-panel) var(--motion-ease-hvqt) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hvqt-slide-exit-layer,
+  .hvqt-slide-enter-layer {
+    animation: none !important;
+  }
+}
+
 /* Leave calendar: subtle cross-fade when swapping months (client fetch). */
 @keyframes loa-cal-fade-in {
   from {

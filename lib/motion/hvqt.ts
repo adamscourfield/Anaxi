@@ -11,3 +11,11 @@ export const hvqtPageEnterClass = "hvqt-page-surface-enter";
 export const hvqtPageExitClass = "hvqt-page-surface-exit";
 export const hvqtMotionSurfaceRouteClass = "hvqt-motion-surface-route";
 export const hvqtMotionSurfacePanelClass = "hvqt-motion-surface-panel";
+
+/**
+ * Route push/pop (see `app/globals.css`): outgoing page slides left to
+ * reveal the incoming page, which pushes in slightly from the right.
+ */
+export const hvqtSlideStageClass = "hvqt-slide-stage";
+export const hvqtSlideExitLayerClass = "hvqt-slide-exit-layer";
+export const hvqtSlideEnterLayerClass = "hvqt-slide-enter-layer";
