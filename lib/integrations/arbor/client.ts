@@ -336,16 +336,23 @@ export class ArborClient {
         }>(this.credentials, `{
           AcademicUnitEnrolment(page_size: 500, page_num: ${pageNum}, student__id_in: [${ids.map((id) => JSON.stringify(id)).join(", ")}]) {
             student { id }
-            academicUnit { subject { displayName } }
+            academicUnit { displayName subject { displayName } }
           }
         }`);
         const enrolments = Array.isArray(data.AcademicUnitEnrolment) ? data.AcademicUnitEnrolment : [];
         for (const enrolment of enrolments) {
           const studentId = enrolment.student?.id;
-          const subject = enrolment.academicUnit?.subject?.displayName?.trim();
-          if (!studentId || !subject) continue;
+          if (!studentId) continue;
           const subjects = subjectsByStudent.get(studentId) ?? new Set<string>();
-          subjects.add(subject);
+          // `subject` is often deliberately broad (for example Mathematics),
+          // while the academic-unit name retains the precise class such as
+          // Further Mathematics. Keep both so callers can make an exact match.
+          const academicUnit = enrolment.academicUnit as ({ displayName?: string | null; subject?: { displayName?: string | null } | null } | null);
+          const labels = [academicUnit?.displayName, academicUnit?.subject?.displayName]
+            .map((label) => label?.trim())
+            .filter((label): label is string => Boolean(label));
+          if (!labels.length) continue;
+          labels.forEach((label) => subjects.add(label));
           subjectsByStudent.set(studentId, subjects);
         }
         if (enrolments.length < 500) break;
