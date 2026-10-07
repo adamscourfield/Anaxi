@@ -102,6 +102,7 @@ export const GET = withApi(async function GET(req: Request) {
     return NextResponse.json({
       subjects: [],
       gcseBasics: null,
+      bestEnglish: null,
       aLevelSummary: null,
       dominantFormat: null,
       totalStudents: 0,
@@ -285,6 +286,50 @@ export const GET = withApi(async function GET(req: Request) {
     }
   }
 
+  // Best English (better of Language / Literature) — a distinct DfE measure from
+  // the English+Maths Basics above, which uses Language only.
+  let bestEnglish = null;
+  if (dominantFormat === "GCSE") {
+    const engLangA = assessments.find(
+      (a) => a.gradeFormat === "GCSE" && /english/i.test(a.subject) && !/lit/i.test(a.subject)
+    );
+    const engLitA = assessments.find(
+      (a) => a.gradeFormat === "GCSE" && /english/i.test(a.subject) && /lit/i.test(a.subject)
+    );
+    if (engLangA || engLitA) {
+      const langMap = new Map((engLangA?.results ?? []).map((r) => [r.studentId, r]));
+      const litMap = new Map((engLitA?.results ?? []).map((r) => [r.studentId, r]));
+      const allIds = [...new Set([...langMap.keys(), ...litMap.keys()])];
+
+      function bestScore(id: string): number | null {
+        const l = langMap.get(id);
+        const t = litMap.get(id);
+        const ls = l?.status === "PRESENT" ? l.normalizedScore : null;
+        const ts = t?.status === "PRESENT" ? t.normalizedScore : null;
+        if (ls === null) return ts;
+        if (ts === null) return ls;
+        return Math.max(ls, ts);
+      }
+
+      const eligible = allIds.filter((id) => bestScore(id) !== null);
+
+      function bestAt(t: number) {
+        if (eligible.length === 0) return 0;
+        const p = eligible.filter((id) => Math.round(bestScore(id)! * 9) >= t);
+        return Math.round((p.length / eligible.length) * 100);
+      }
+
+      bestEnglish = {
+        presentCount: eligible.length,
+        be4: bestAt(4),
+        be5: bestAt(5),
+        be7: bestAt(7),
+        hasLanguage: !!engLangA,
+        hasLiterature: !!engLitA,
+      };
+    }
+  }
+
   // A-Level overall summary
   let aLevelSummary = null;
   if (dominantFormat === "A_LEVEL") {
@@ -314,6 +359,7 @@ export const GET = withApi(async function GET(req: Request) {
     dataIntegrityPct,
     subjects: subjectMeasures,
     gcseBasics,
+    bestEnglish,
     aLevelSummary,
   });
 });
