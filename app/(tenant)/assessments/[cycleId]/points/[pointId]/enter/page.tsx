@@ -20,9 +20,18 @@ const GRADE_FORMAT_LABELS: Record<GradeFormat, string> = {
   RAW: "Raw score",
 };
 
-const YEAR_GROUP_SUGGESTIONS = ["Year 7", "Year 8", "Year 9", "Year 10", "Year 11", "Year 12", "Year 13"];
-
 type RosterStudent = { id: string; upn: string | null; fullName: string };
+
+type PointAssessment = { subject: string; yearGroup: string };
+
+/** The year group already in use on this point's existing subjects, if any — the
+ * mode (most common value) in the unlikely case a point somehow spans more than one. */
+function derivePointYearGroup(assessments: PointAssessment[]): string | null {
+  if (assessments.length === 0) return null;
+  const counts = new Map<string, number>();
+  for (const a of assessments) counts.set(a.yearGroup, (counts.get(a.yearGroup) ?? 0) + 1);
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]![0];
+}
 
 type ImportResult = {
   subjectsImported: number;
@@ -42,7 +51,11 @@ export default function EnterGradesPage() {
   const [isLocked, setIsLocked] = useState(false);
   const [gradeFormat, setGradeFormat] = useState<GradeFormat>("GCSE");
 
+  const [pointYearGroup, setPointYearGroup] = useState<string | null>(null);
   const [yearGroup, setYearGroup] = useState("");
+  const [yearGroupOptions, setYearGroupOptions] = useState<string[]>([]);
+  const [existingSubjects, setExistingSubjects] = useState<string[]>([]);
+  const [checkedExistingSubjects, setCheckedExistingSubjects] = useState<Set<string>>(new Set());
   const [subjectChips, setSubjectChips] = useState<string[]>([]);
   const [subjectInputValue, setSubjectInputValue] = useState("");
   const [subjectSuggestions, setSubjectSuggestions] = useState<string[]>([]);
@@ -69,9 +82,26 @@ export default function EnterGradesPage() {
         if (point?.cycle?.qualificationType === "A_LEVEL") setGradeFormat("A_LEVEL");
         else if (point?.cycle?.qualificationType === "GCSE") setGradeFormat("GCSE");
         else if (point?.cycle?.qualificationType === "PERCENTAGE") setGradeFormat("PERCENTAGE");
+
+        const assessments: PointAssessment[] = point?.assessments ?? [];
+        const derivedYearGroup = derivePointYearGroup(assessments);
+        setPointYearGroup(derivedYearGroup);
+        if (derivedYearGroup) setYearGroup(derivedYearGroup);
+
+        const subjects = [...new Set(assessments.map((a) => a.subject))].sort((a, b) => a.localeCompare(b));
+        setExistingSubjects(subjects);
+        setCheckedExistingSubjects(new Set(subjects));
       })
       .catch(() => {});
   }, [pointId]);
+
+  useEffect(() => {
+    if (pointYearGroup) return; // already locked to this point's own cohort
+    fetch("/api/assessments/year-groups")
+      .then((r) => r.json())
+      .then((data) => setYearGroupOptions(data.yearGroups ?? []))
+      .catch(() => {});
+  }, [pointYearGroup]);
 
   useEffect(() => {
     const stage = stageForQualificationType(qualificationType);
@@ -104,9 +134,25 @@ export default function EnterGradesPage() {
     setSubjectChips((prev) => prev.filter((s) => s !== name));
   }
 
+  function toggleExistingSubject(name: string) {
+    setCheckedExistingSubjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  }
+
+  // Subjects to grade: this point's own existing subjects (only the checked
+  // ones) plus any genuinely new subject added below — never an arbitrary
+  // subject unrelated to this point.
+  const effectiveSubjects = useMemo(
+    () => [...existingSubjects.filter((s) => checkedExistingSubjects.has(s)), ...subjectChips],
+    [existingSubjects, checkedExistingSubjects, subjectChips],
+  );
+
   async function loadRoster() {
-    if (!yearGroup.trim()) { setError("Enter the year group."); toast("Enter the year group.", "error"); return; }
-    if (subjectChips.length === 0) { setError("Add at least one subject."); toast("Add at least one subject.", "error"); return; }
+    if (!yearGroup.trim()) { setError("Select the year group."); toast("Select the year group.", "error"); return; }
+    if (effectiveSubjects.length === 0) { setError("Select at least one subject."); toast("Select at least one subject.", "error"); return; }
 
     setError(null);
     setLoadingRoster(true);
@@ -169,8 +215,8 @@ export default function EnterGradesPage() {
         const updatedRow = { ...next[student.id] };
         cells.forEach((val, ci) => {
           const c = colIdx + ci;
-          if (c >= subjectChips.length) return;
-          updatedRow[subjectChips[c]] = val.trim();
+          if (c >= effectiveSubjects.length) return;
+          updatedRow[effectiveSubjects[c]] = val.trim();
         });
         next[student.id] = updatedRow;
       });
@@ -201,7 +247,7 @@ export default function EnterGradesPage() {
       const res = await fetch(`/api/assessments/points/${pointId}/grid`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ yearGroup: yearGroup.trim(), gradeFormat, subjects: subjectChips, entries }),
+        body: JSON.stringify({ yearGroup: yearGroup.trim(), gradeFormat, subjects: effectiveSubjects, entries }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Save failed"); toast(data.error || "Save failed", "error"); return; }
@@ -307,7 +353,11 @@ export default function EnterGradesPage() {
           variant="ledger"
           eyebrow="Attainment"
           title="Enter grades directly"
-          subtitle="Pick a year group and subjects, then type or paste grades straight from a spreadsheet — one row per student."
+          subtitle={
+            pointYearGroup
+              ? `Select which of this result point's subjects to grade, then type or paste grades straight from a spreadsheet — one row per student.`
+              : "Pick a year group and subjects, then type or paste grades straight from a spreadsheet — one row per student."
+          }
         />
 
         <Card className="space-y-5">
@@ -315,17 +365,26 @@ export default function EnterGradesPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <label className="text-sm font-medium text-[var(--on-surface)]">Year group</label>
-              <input
-                className="field w-full"
-                list="yg-list"
-                placeholder="e.g. Year 11"
-                value={yearGroup}
-                onChange={(e) => setYearGroup(e.target.value)}
-                disabled={roster !== null}
-              />
-              <datalist id="yg-list">
-                {YEAR_GROUP_SUGGESTIONS.map((y) => <option key={y} value={y} />)}
-              </datalist>
+              {pointYearGroup ? (
+                <>
+                  <p className="field flex w-full items-center bg-[var(--surface-container-low)] text-[var(--on-surface)]">
+                    {pointYearGroup}
+                  </p>
+                  <p className="text-xs text-[var(--on-surface-muted)]">
+                    Locked to this result point&apos;s existing cohort — grades are only entered for {pointYearGroup} students.
+                  </p>
+                </>
+              ) : (
+                <select
+                  className="field w-full"
+                  value={yearGroup}
+                  onChange={(e) => setYearGroup(e.target.value)}
+                  disabled={roster !== null}
+                >
+                  <option value="">Select a year group…</option>
+                  {yearGroupOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-[var(--on-surface)]">Grade format</label>
@@ -342,8 +401,39 @@ export default function EnterGradesPage() {
             </div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--on-surface)]">Subjects</label>
+
+            {existingSubjects.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs text-[var(--on-surface-muted)]">Already on this result point — pick which to grade:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {existingSubjects.map((s) => {
+                    const checked = checkedExistingSubjects.has(s);
+                    return (
+                      <label
+                        key={s}
+                        className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium calm-transition ${
+                          checked
+                            ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--on-surface)]"
+                            : "border-border bg-[var(--surface-container-low)] text-[var(--on-surface-muted)]"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5 accent-[var(--accent)]"
+                          checked={checked}
+                          disabled={roster !== null}
+                          onChange={() => toggleExistingSubject(s)}
+                        />
+                        {s}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {subjectChips.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pb-1">
                 {subjectChips.map((s) => (
@@ -371,7 +461,7 @@ export default function EnterGradesPage() {
                 <input
                   className="field w-full"
                   list="subject-suggestions"
-                  placeholder="Type a subject and press Enter (pick from the list to keep names consistent)"
+                  placeholder={existingSubjects.length > 0 ? "Add another subject to this result point (optional)" : "Type a subject and press Enter (pick from the list to keep names consistent)"}
                   value={subjectInputValue}
                   onChange={(e) => setSubjectInputValue(e.target.value)}
                   onKeyDown={(e) => {
@@ -397,7 +487,7 @@ export default function EnterGradesPage() {
             </Button>
           ) : (
             <Button variant="ghost" onClick={() => { setRoster(null); setGrid({}); setImportResult(null); }}>
-              ← Change year group / subjects
+              {pointYearGroup ? "← Change subjects" : "← Change year group / subjects"}
             </Button>
           )}
         </Card>
@@ -406,7 +496,7 @@ export default function EnterGradesPage() {
           <Card className="space-y-4">
             <SectionHeader
               title={`${roster.length} student${roster.length !== 1 ? "s" : ""} — ${yearGroup}`}
-              subtitle={`Click a cell and type, or copy a block of grades from a spreadsheet and paste into the first cell. ${filledCellCount} of ${roster.length * subjectChips.length} cells filled.`}
+              subtitle={`Click a cell and type, or copy a block of grades from a spreadsheet and paste into the first cell. ${filledCellCount} of ${roster.length * effectiveSubjects.length} cells filled.`}
             />
             <div className="table-shell border-0 rounded-none shadow-none">
               <div className="overflow-x-auto">
@@ -433,7 +523,7 @@ export default function EnterGradesPage() {
                           {sortKey === "name" && <span aria-hidden>{sortDir === "asc" ? "▲" : "▼"}</span>}
                         </button>
                       </th>
-                      {subjectChips.map((subject) => (
+                      {effectiveSubjects.map((subject) => (
                         <th key={subject} className="min-w-[120px] px-3 py-2.5 text-center">{subject}</th>
                       ))}
                     </tr>
@@ -447,7 +537,7 @@ export default function EnterGradesPage() {
                         <td className="sticky left-[140px] z-10 bg-[var(--surface-container-lowest)] px-4 py-2 font-medium text-[var(--on-surface)]">
                           {student.fullName}
                         </td>
-                        {subjectChips.map((subject, colIdx) => {
+                        {effectiveSubjects.map((subject, colIdx) => {
                           const cellKey = `${rowIdx}-${colIdx}`;
                           return (
                             <td key={subject} className="px-1.5 py-1">
