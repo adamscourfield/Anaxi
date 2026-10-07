@@ -79,6 +79,17 @@ function qualificationResultMatchesDefinition(result: ArborQualificationResult, 
   return candidates.some((candidate) => candidate === expected || candidate.includes(expected));
 }
 
+function studentSubjectMatchesAssessment(studentSubject: string, assessmentLabel: string): boolean {
+  const subject = normalisedQualificationSubject(studentSubject);
+  const assessment = normalisedQualificationSubject(assessmentLabel);
+  if (!subject || !assessment) return false;
+  if (subject === assessment || subject.includes(assessment)) return true;
+  // Do not allow the generic Mathematics membership to satisfy Further
+  // Mathematics. Other short Arbor subject names (for example, Biology) are
+  // safe contained matches for their longer assessment labels.
+  return !assessment.includes("further mathematics") && assessment.includes(subject);
+}
+
 function qualificationResultAsMark(
   result: ArborQualificationResult,
   definition: PreparedDefinition,
@@ -248,7 +259,7 @@ export default async function ArborAssessmentMarkSheetPage({
     );
     return Boolean(markMapping && mapArborAssessmentForYearGroup(markMapping, yearGroup)?.cycleExternalId === cycleKey);
   });
-  const marks = termMarks.filter((mark) => {
+  const yearGroupMarks = termMarks.filter((mark) => {
     const linkedStudent = studentsByExternalId.get(mark.student.id);
     const historicYearGroup = arborHistoricYearGroup(
       mark.student.displayAcademicLevel?.displayName,
@@ -258,6 +269,26 @@ export default async function ArborAssessmentMarkSheetPage({
       mapping.family,
     );
     return historicYearGroup === yearGroup;
+  });
+
+  // A Level Year 12 batches can be configured against the whole sixth-form
+  // cohort. For ungraded roster placeholders, verify the pupil's actual Arbor
+  // subject memberships before showing them. Recorded marks remain visible:
+  // a later timetable change must never hide valid historic attainment.
+  let subjectsByStudent = new Map<string, string[]>();
+  if (mapping.family === "A_LEVEL" && yearGroup === "Y12") {
+    try {
+      subjectsByStudent = await client.listTeachingGroupSubjectsForStudents([...new Set(yearGroupMarks.map((mark) => mark.student.id))]);
+    } catch {
+      // Keep the review available if Arbor's optional timetable relationship is
+      // temporarily unavailable; this remains a read-only guard, not a sync.
+    }
+  }
+  const marks = yearGroupMarks.filter((mark) => {
+    if (gradeValue(mark) !== "No recorded grade") return true;
+    const enrolledSubjects = subjectsByStudent.get(mark.student.id);
+    if (!enrolledSubjects?.length) return true;
+    return enrolledSubjects.some((subject) => studentSubjectMatchesAssessment(subject, definition.label));
   });
 
   // Arbor's mark records are the subject roster: we intentionally do not add the
