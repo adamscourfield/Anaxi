@@ -1,0 +1,24 @@
+name: Arbor morning attendance check
+
+on:
+  # London is UTC+1 in summer and UTC in winter. The endpoint below only runs
+  # when it is 10am in London, so one of these two calls safely exits each day.
+  schedule:
+    - cron: "0 9,10 * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the protected Anaxi morning attendance check
+        env:
+          ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
+          ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
+        run: |
+          test -n "$ANAXI_APP_URL"
+          test -n "$ANAXI_CRON_SECRET"
+          curl --fail --silent --show-error \
+            --retry 2 \
+            --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+            "${ANAXI_APP_URL%/}/api/cron/arbor-morning-attendance"
