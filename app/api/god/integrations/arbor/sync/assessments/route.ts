@@ -85,7 +85,7 @@ async function importReviewedHistoricDefinition(args: {
     .map((school: { tenantId: string }) => school.tenantId);
   const [students, owners, targets] = await Promise.all([
     db.student.findMany({ where: { tenantId: { in: secondaryTenantIds }, externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true, yearGroup: true } }),
-    db.user.findMany({ where: { tenantId: { in: secondaryTenantIds }, isActive: true }, select: { id: true, tenantId: true }, orderBy: { createdAt: "asc" } }),
+    db.user.findMany({ where: { tenantId: { in: secondaryTenantIds }, isActive: true }, select: { id: true, tenantId: true }, orderBy: { id: "asc" } }),
     new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listProgressAssessmentBatchTargets([definition.id]),
   ]);
   const studentByExternalId = new Map<string, { id: string; tenantId: string; externalId: string; yearGroup: string | null }>(students.map((student: { id: string; tenantId: string; externalId: string; yearGroup: string | null }) => [student.externalId, student]));
@@ -343,7 +343,7 @@ export async function POST(req: Request) {
       // Archived pupils remain eligible for historic attainment imports, but are
       // excluded from day-to-day school views by their Student status.
       db.student.findMany({ where: { tenantId: { in: secondaryTenantIds }, externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true, yearGroup: true } }),
-      db.user.findMany({ where: { tenantId: { in: secondaryTenantIds }, isActive: true }, select: { id: true, tenantId: true }, orderBy: { createdAt: "asc" } }),
+      db.user.findMany({ where: { tenantId: { in: secondaryTenantIds }, isActive: true }, select: { id: true, tenantId: true }, orderBy: { id: "asc" } }),
       new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAssessmentMarks(100, markPage, [definition.id]),
     ]);
     const studentByExternalId = new Map<string, { id: string; tenantId: string; externalId: string; yearGroup: string | null }>(students.map((student: { id: string; tenantId: string; externalId: string; yearGroup: string | null }) => [student.externalId, student]));
