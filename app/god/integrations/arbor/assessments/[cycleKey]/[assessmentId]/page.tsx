@@ -73,7 +73,12 @@ function qualificationResultMatchesDefinition(result: ArborQualificationResult, 
     result.qualificationAward?.title,
   ].map(normalisedQualificationSubject).filter(Boolean);
 
-  return candidates.some((candidate) => candidate === expected);
+  // Arbor award titles often include an awarding body or qualification prefix
+  // (for example "AQA GCE A Level Further Mathematics"). The configured
+  // assessment label is the specific subject, so only allow the Arbor title
+  // to contain that full subject; never reverse the comparison, which would
+  // incorrectly put Mathematics results in Further Mathematics.
+  return candidates.some((candidate) => candidate === expected || candidate.includes(expected));
 }
 
 function qualificationResultAsMark(
