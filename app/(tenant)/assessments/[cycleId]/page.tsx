@@ -14,6 +14,7 @@ import { pointTypePillClasses } from "@/modules/assessments/attainmentColours";
 import { CycleArchiveControl } from "@/components/assessments/CycleArchiveControl";
 import { CycleDeleteControl } from "@/components/assessments/CycleDeleteControl";
 import { CycleRenameControl } from "@/components/assessments/CycleRenameControl";
+import { AssessmentRenameControl } from "@/components/assessments/AssessmentRenameControl";
 import { CycleCompareLink } from "@/components/assessments/CycleCompareLink";
 import { ResultPointStatusControl } from "@/components/assessments/ResultPointStatusControl";
 
@@ -282,6 +283,7 @@ export default async function CycleDetailPage({
             <CycleArchiveControl cycleId={cycle.id} isActive={cycle.isActive} />
             <CycleDeleteControl cycleId={cycle.id} cycleLabel={cycle.label} />
             {user.role === "SUPER_ADMIN" ? <CycleRenameControl cycleId={cycle.id} cycleLabel={cycle.label} /> : null}
+            {user.role === "SUPER_ADMIN" ? <AssessmentRenameControl assessments={cycle.points.flatMap((point) => point.assessments.map((assessment) => ({ id: assessment.id, subject: assessment.subject })))} /> : null}
             <Button asChild>
               <Link href={`/assessments/${cycle.id}/points/new`}>
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>

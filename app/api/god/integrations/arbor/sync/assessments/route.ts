@@ -67,7 +67,9 @@ async function ensureAssessment(db: any, tenantId: string, createdByUserId: stri
   return db.assessment.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: assessmentExternalId } },
     create: { tenantId, pointId: point.id, subject: subjectFromLabel(definition.label), yearGroup: mapping.yearGroups.join(", "), title: definition.label, gradeFormat: mapping.gradeFormat, uploadStatus: "VALIDATED", createdByUserId, externalId: assessmentExternalId, dataSource: "ARBOR" },
-    update: { pointId: point.id, subject: subjectFromLabel(definition.label), yearGroup: mapping.yearGroups.join(", "), title: definition.label, gradeFormat: mapping.gradeFormat, uploadStatus: "VALIDATED" },
+    // Retain the subject name chosen in Anaxi by a school super admin while
+    // still updating the Arbor-linked point and validation metadata.
+    update: { pointId: point.id, yearGroup: mapping.yearGroups.join(", "), gradeFormat: mapping.gradeFormat, uploadStatus: "VALIDATED" },
   });
 }
 
