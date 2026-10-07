@@ -263,13 +263,14 @@ export default async function ArborAssessmentMarkSheetPage({
     ? qualificationMarks
     : batchMetadata ? allMarks : allMarks.filter((mark) => mark.assessment?.id === definition.id);
   const termMarks = subjectMarks.filter((mark) => {
-    // Arbor returns every dated mark for this subject definition. Keep only
-    // the term represented by the requested cycle; otherwise a July result
-    // can incorrectly replace an Autumn mark in the review grid.
+    // A reviewed batch is already a dated subject mark sheet. Nested marks can
+    // expose Arbor's generic assessment label instead of the batch's precise
+    // subject/term label, so classify them from the reviewed definition first.
+    // This prevents valid Year 10 Summer marks being dropped after rollover.
     const markMapping = mapArborAssessment(
-      mark.assessment ? `${mark.assessment.assessmentName ?? mark.assessment.assessmentShortName ?? mark.assessment.displayName ?? definition.label}` : definition.label,
-      mark.assessmentDate,
-      mark.displayName,
+      definition.label,
+      definition.assessmentDate ?? mark.assessmentDate,
+      definition.periodHint ?? mark.displayName,
     );
     return Boolean(markMapping && mapArborAssessmentForYearGroup(markMapping, yearGroup)?.cycleExternalId === cycleKey);
   });
