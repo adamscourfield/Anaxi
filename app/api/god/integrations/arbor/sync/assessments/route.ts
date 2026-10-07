@@ -22,9 +22,11 @@ const ASSESSMENT_POLICY_VERSION = 3;
 // Keep the scheduled discovery aligned with the operator-triggered scan.
 // Dated marks are reclassified in v15 before they can be reviewed or approved.
 const HISTORIC_DISCOVERY_VERSION = 15;
-// v2 reads the same dated sources as the God Mode review, replacing the
-// earlier batch-placeholder-only importer.
-const HISTORIC_IMPORT_VERSION = 2;
+// v3 deliberately excludes Arbor's broad StudentProgressAssessmentMark feed.
+// That feed can be shared by several subject mark sheets, so it is unsafe to
+// write into a subject-specific Anaxi assessment. Imports must be sourced from
+// the exact batch target or a matched qualification result.
+const HISTORIC_IMPORT_VERSION = 3;
 const MARK_PAGES_PER_RUN = 24;
 // A small combined group is paged to completion before moving on, so every
 // subject in the group is retained without serially scanning the full P8 list.
@@ -52,7 +54,9 @@ async function ensureAssessment(db: any, tenantId: string, createdByUserId: stri
   const cycle = await db.assessmentCycle.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.cycleExternalId } },
     create: { tenantId, label: mapping.cycleLabel, cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear, startDate: new Date(`${startYear}-09-01T00:00:00.000Z`), endDate: new Date(`${startYear + 1}-08-31T23:59:59.999Z`), isActive: true, externalId: mapping.cycleExternalId, dataSource: "ARBOR" },
-    update: { label: mapping.cycleLabel, cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear },
+    // Preserve a super admin's local cycle name while Arbor keeps the cohort
+    // and qualification metadata current.
+    update: { cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear },
   });
   const point = await db.assessmentPoint.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.pointExternalId } },
@@ -133,8 +137,8 @@ function latestVerifiedMarks(marks: ArborAssessmentMark[]): ArborAssessmentMark[
 }
 
 /**
- * Imports one reviewed Arbor batch definition using the same dated marks (and
- * qualification outcomes where relevant) that the God Mode mark sheet shows.
+ * Imports one reviewed Arbor batch definition from its exact Arbor target
+ * roster, or from matched final qualification outcomes where applicable.
  */
 async function importReviewedHistoricDefinition(args: {
   db: any;
@@ -162,7 +166,6 @@ async function importReviewedHistoricDefinition(args: {
   if (!definitionMapping) return { imported: 0, reviewedMarks: 0, targets: targets.length, progressMarks: 0, qualificationMarks: 0, unlinkedStudents: 0, unmappedCohorts: 0, unapprovedCycles: 0, missingOwners: 0 };
   const batchAssessment = targets.find((target) => target.progressAssessmentBatch?.assessment)?.progressAssessmentBatch?.assessment;
   const assessment = batchAssessment ?? { id: definition.id, displayName: definition.label, assessmentName: definition.label, assessmentShortName: null };
-  const progressMarks = await client.listAssessmentMarksForDefinitionInRange(assessment.id, assessmentYearRange(definitionMapping.academicYear));
   const targetMarks = targets.flatMap((target) => target.studentProgressAssessmentMarks);
   const definitionYearGroups = definition.yearGroups?.length ? definition.yearGroups : definitionMapping.yearGroups;
   const usesQualificationResults = (definitionMapping.family === "GCSE" || (definitionMapping.family === "A_LEVEL" && definitionYearGroups.includes("Y13")))
@@ -175,10 +178,7 @@ async function importReviewedHistoricDefinition(args: {
     : [];
   const sourceMarks = qualificationMarks.length
     ? qualificationMarks
-    : [
-      ...progressMarks.filter((mark) => mark.assessment?.id === assessment.id),
-      ...targetMarks,
-    ];
+    : targetMarks;
   const verifiedMarks = latestVerifiedMarks(sourceMarks);
 
   let imported = 0;
@@ -238,7 +238,7 @@ async function importReviewedHistoricDefinition(args: {
       data: { entryCount, matchedStudentCount: entryCount, uploadStatus: "VALIDATED" },
     });
   }));
-  return { imported, reviewedMarks: verifiedMarks.length, targets: targets.length, progressMarks: progressMarks.length, qualificationMarks: qualificationMarks.length, unlinkedStudents, unmappedCohorts, unapprovedCycles, missingOwners };
+  return { imported, reviewedMarks: verifiedMarks.length, targets: targets.length, progressMarks: 0, qualificationMarks: qualificationMarks.length, unlinkedStudents, unmappedCohorts, unapprovedCycles, missingOwners };
 }
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: ArborAssessmentMapping, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
