@@ -26,10 +26,11 @@ type AssessmentSyncState = {
 // agreed GCSE/A-Level families before percentage definitions. A parent batch
 // can be a whole year cohort; its `students` relationship is not a subject
 // mark sheet.
-// A rebuild is accumulated separately, then replaces the visible review list
-// only when complete. This keeps inaccurate historic cohort assignments from
-// being retained indefinitely while avoiding an empty God Mode review screen.
-const HISTORIC_DISCOVERY_VERSION = 23;
+// A rebuild is accumulated separately. Discovery may be temporarily incomplete
+// while Arbor paginates batch targets, so it may add or refine review cycles but
+// must never remove an existing cycle. God Mode removal is the explicit way to
+// hide a cycle an operator does not want to use.
+const HISTORIC_DISCOVERY_VERSION = 24;
 const DEFINITIONS_PER_BATCH_QUERY = 80;
 
 function historicDefinitionPriority(definition: PreparedDefinition): number {
@@ -111,7 +112,13 @@ export const POST = withApi(async function POST(req: Request) {
     // Reorder that queue as well so the next safe request reaches the agreed
     // GCSE and A-Level subjects before optional percentage assessments.
     definitions = [...definitions].sort((a, b) => historicDefinitionPriority(a) - historicDefinitionPriority(b) || a.label.localeCompare(b.label));
-    const known = Array.isArray(state.pendingHistoricalDefinitions) ? state.pendingHistoricalDefinitions : [];
+    // Seed the working catalogue from both the in-progress scan and the last
+    // published result. Arbor can omit a batch from one recheck response; that
+    // must not make a previously reviewable cycle disappear from God Mode.
+    const known = [
+      ...(Array.isArray(savedState.historicalDefinitions) ? savedState.historicalDefinitions : []),
+      ...(Array.isArray(state.pendingHistoricalDefinitions) ? state.pendingHistoricalDefinitions : []),
+    ];
     const combined = new Map<string, PreparedDefinition>();
     for (const item of known) {
       const mapping = mapArborAssessment(item.label, item.assessmentDate, item.periodHint);
@@ -174,8 +181,8 @@ export const POST = withApi(async function POST(req: Request) {
     const nextState = {
       ...state,
       definitions,
-      // Publish a fresh set only after every prepared definition has been
-      // checked. Until then God Mode continues to show the last complete list.
+      // Publish the merged catalogue only after every prepared definition has
+      // been checked. Existing cycles are deliberately retained.
       historicalDefinitions: historicComplete ? [...combined.values()] : savedState.historicalDefinitions,
       historicBatchPage: nextBatchPage,
       historicBatchDefinitionOffset: nextDefinitionOffset,
