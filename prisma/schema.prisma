@@ -28,6 +28,7 @@ model Tenant {
   integrationSyncRuns    IntegrationSyncRun[]
   integrationSyncChanges IntegrationSyncChange[]
   behaviourIncidents     BehaviourIncident[]
+  dailyAttendanceChecks  DailyAttendanceCheck[]
   loaApprovalScopes      LOAApprovalScope[]
   loaAuthorisers         LOAAuthoriser[]
   loaRequests            LOARequest[]
@@ -317,6 +318,24 @@ model StudentSnapshot {
   student                 Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, studentId, snapshotDate])
+}
+
+/// A school-wide same-day attendance figure, captured once each school day at
+/// morning registration (~10am London) by reading today's Arbor attendance
+/// records directly rather than waiting for the overnight cumulative sync.
+/// Distinct from StudentSnapshot: this is a single tenant-level figure for
+/// "today", not a per-student academic-year total.
+model DailyAttendanceCheck {
+  id            String   @id @default(cuid())
+  tenantId      String
+  /// London-local calendar date this check covers, stored as UTC midnight.
+  checkDate     DateTime
+  possibleCount Int
+  presentCount  Int
+  checkedAt     DateTime @default(now())
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, checkDate])
 }
 
 /// A single behaviour event (one detention, one suspension, one award of positive

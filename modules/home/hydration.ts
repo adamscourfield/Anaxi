@@ -55,9 +55,9 @@ export type AttainmentSummary = {
 export type AttendanceHeadline = {
   /** Academic-year-to-date attendance. */
   attendancePct: number | null;
-  /** Just today's attendance, derived from today's cumulative total minus the previous school day's. */
+  /** Today's morning-registration attendance, captured live around 10am. Null before that check has run. */
   todayPct: number | null;
-  /** This week's attendance so far (Monday to today), derived the same way. */
+  /** This week's cumulative attendance so far (Monday through today). */
   weekPct: number | null;
   studentsCovered: number;
   asOf: Date | null;
@@ -84,33 +84,44 @@ export function mondayOnOrBefore(date: Date): Date {
 
 /**
  * The leadership attendance card shows three figures: an academic-year headline,
- * today, and the week so far. Arbor snapshots only store one row per student per day
- * with YEAR_TO_DATE cumulative totals, so "today" and "week so far" are derived by
- * diffing the latest cumulative total against an earlier day's — never by reading
- * individual register marks.
+ * today, and the week so far.
+ *
+ * Arbor snapshots only store one row per student per day with YEAR_TO_DATE
+ * cumulative totals, written by an overnight sync that always lags a full day
+ * behind — so they can supply "this week so far" for every day up to and
+ * including yesterday, but never today. Today's figure instead comes from
+ * DailyAttendanceCheck, a single same-day school-wide total captured live
+ * from Arbor at morning registration (~10am) by a separate scheduled check
+ * (see app/api/cron/arbor-morning-attendance). It is null before that check
+ * has run for the day, rather than silently showing yesterday's number.
  */
 async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHeadline> {
   const today = londonToday();
   const weekStart = mondayOnOrBefore(today);
-  // Go back far enough to find the previous school day's cumulative total even across
-  // a half-term-length gap, so "today" still resolves on the first day back.
+  // Go back far enough to find a prior day's cumulative total even across a
+  // half-term-length gap, so "week so far" still resolves on the first day back.
   const rangeStart = addDays(weekStart, -14);
 
-  const students = await (prisma as any).student.findMany({
-    where: { tenantId, status: "ACTIVE" },
-    select: {
-      snapshots: {
-        // Attendance and behaviour can arrive in separate same-day sync batches.
-        // Only an attendance-bearing snapshot may supply the attendance headline.
-        where: { countScope: "YEAR_TO_DATE", attendancePossibleCount: { gt: 0 }, snapshotDate: { gte: rangeStart } },
-        orderBy: { snapshotDate: "desc" },
-        select: { attendancePossibleCount: true, attendancePresentCount: true, snapshotDate: true },
+  const [students, todayCheck] = await Promise.all([
+    (prisma as any).student.findMany({
+      where: { tenantId, status: "ACTIVE" },
+      select: {
+        snapshots: {
+          // Attendance and behaviour can arrive in separate same-day sync batches.
+          // Only an attendance-bearing snapshot may supply the attendance headline.
+          where: { countScope: "YEAR_TO_DATE", attendancePossibleCount: { gt: 0 }, snapshotDate: { gte: rangeStart } },
+          orderBy: { snapshotDate: "desc" },
+          select: { attendancePossibleCount: true, attendancePresentCount: true, snapshotDate: true },
+        },
       },
-    },
-  });
+    }),
+    (prisma as any).dailyAttendanceCheck.findUnique({
+      where: { tenantId_checkDate: { tenantId, checkDate: today } },
+      select: { possibleCount: true, presentCount: true },
+    }),
+  ]);
 
   let yearPossible = 0, yearPresent = 0, studentsCovered = 0;
-  let todayPossible = 0, todayPresent = 0;
   let weekPossible = 0, weekPresent = 0;
   let asOf: Date | null = null;
 
@@ -123,17 +134,6 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
     yearPresent += latest.attendancePresentCount;
     if (!asOf || latest.snapshotDate > asOf) asOf = latest.snapshotDate;
 
-    // "Today" is really the most recently completed school day's attendance --
-    // the overnight sync always lags by one full day, so during school hours the
-    // latest snapshot is never actually dated today. Requiring an exact match to
-    // today's date here meant this figure was permanently blank; use whatever the
-    // latest single-day figure is instead.
-    const previous = rows[1];
-    if (previous) {
-      todayPossible += latest.attendancePossibleCount - previous.attendancePossibleCount;
-      todayPresent += latest.attendancePresentCount - previous.attendancePresentCount;
-    }
-
     if (new Date(latest.snapshotDate) >= weekStart) {
       const beforeWeek = rows.find((row) => new Date(row.snapshotDate) < weekStart);
       weekPossible += latest.attendancePossibleCount - (beforeWeek?.attendancePossibleCount ?? 0);
@@ -141,9 +141,16 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
     }
   }
 
+  // Fold today's live morning-registration figure into "week so far", since the
+  // per-student snapshot loop above only ever covers up to yesterday.
+  if (todayCheck) {
+    weekPossible += todayCheck.possibleCount;
+    weekPresent += todayCheck.presentCount;
+  }
+
   return {
     attendancePct: studentsCovered > 0 ? attendancePercentage({ possible: yearPossible, present: yearPresent, late: 0 }) : null,
-    todayPct: todayPossible > 0 ? attendancePercentage({ possible: todayPossible, present: todayPresent, late: 0 }) : null,
+    todayPct: todayCheck && todayCheck.possibleCount > 0 ? attendancePercentage({ possible: todayCheck.possibleCount, present: todayCheck.presentCount, late: 0 }) : null,
     weekPct: weekPossible > 0 ? attendancePercentage({ possible: weekPossible, present: weekPresent, late: 0 }) : null,
     studentsCovered,
     asOf,
