@@ -53,8 +53,9 @@ export type ArborQualificationResult = {
   id: string;
   resultDate: string | null;
   numericValue: number | null;
+  numericDisplayValue: string | null;
+  qualificationGradeForStreaming: string | null;
   student: ArborAssessmentStudent | null;
-  qualificationGrade: { displayName: string | null; shortName: string | null; code: string | null } | null;
   qualificationAward: {
     title: string | null;
     shortTitle: string | null;
@@ -383,9 +384,8 @@ export class ArborClient {
     for (let pageNum = 0; pageNum < 20; pageNum++) {
       const data = await runArborGraphqlQuery<{ QualificationResult: ArborQualificationResult[] }>(this.credentials, `{
         QualificationResult(page_size: 500, page_num: ${pageNum}${dateFilter}) {
-          id resultDate numericValue
+          id resultDate numericValue numericDisplayValue qualificationGradeForStreaming
           student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
-          qualificationGrade { displayName shortName code }
           qualificationAward {
             title shortTitle
           }

@@ -115,8 +115,12 @@ function qualificationResultAsMark(
     // the reviewed Summer cycle even if Arbor labels the result record itself
     // only as a qualification outcome.
     displayName: definition.periodHint ?? null,
-    valueFields: result.numericValue === null ? {} : { numericValue: result.numericValue },
-    grade: result.qualificationGrade,
+    valueFields: {
+      ...(result.qualificationGradeForStreaming ? { gradeValue: result.qualificationGradeForStreaming } : {}),
+      ...(result.numericDisplayValue ? { resultValue: result.numericDisplayValue } : {}),
+      ...(result.numericValue === null ? {} : { numericValue: result.numericValue }),
+    },
+    grade: null,
     assessment,
   };
 }
