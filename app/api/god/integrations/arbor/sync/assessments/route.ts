@@ -52,7 +52,9 @@ async function ensureAssessment(db: any, tenantId: string, createdByUserId: stri
   const cycle = await db.assessmentCycle.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.cycleExternalId } },
     create: { tenantId, label: mapping.cycleLabel, cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear, startDate: new Date(`${startYear}-09-01T00:00:00.000Z`), endDate: new Date(`${startYear + 1}-08-31T23:59:59.999Z`), isActive: true, externalId: mapping.cycleExternalId, dataSource: "ARBOR" },
-    update: { label: mapping.cycleLabel, cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear },
+    // The stable Arbor ID continues to match this record, but its Anaxi label
+    // may have been intentionally renamed by a school super admin.
+    update: { cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear },
   });
   const point = await db.assessmentPoint.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.pointExternalId } },

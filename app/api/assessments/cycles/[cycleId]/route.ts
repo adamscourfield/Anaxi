@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
+import { requireAssessmentWrite, requireFeature, requireRole } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { withApi } from "@/lib/apiRoute";
 
@@ -57,17 +57,28 @@ export const PATCH = withApi(async function PATCH(
   if (!cycle) return NextResponse.json({ error: "Cycle not found" }, { status: 404 });
 
   const body = await req.json();
-  const { status, isActive } = body;
+  const { status, isActive, label } = body;
+  if (label !== undefined) {
+    requireRole(user, ["SUPER_ADMIN"]);
+    if (typeof label !== "string" || !label.trim() || label.trim().length > 120) {
+      return NextResponse.json({ error: "Enter a cycle name between 1 and 120 characters" }, { status: 400 });
+    }
+  }
 
-  const updated = await prisma.assessmentCycle.update({
-    where: { id: resolvedParams.cycleId },
-    data: {
-      ...(status !== undefined ? { status } : {}),
-      ...(isActive !== undefined ? { isActive } : {}),
-    },
-  });
-
-  return NextResponse.json({ cycle: updated });
+  try {
+    const updated = await prisma.assessmentCycle.update({
+      where: { id: resolvedParams.cycleId },
+      data: {
+        ...(status !== undefined ? { status } : {}),
+        ...(isActive !== undefined ? { isActive } : {}),
+        ...(label !== undefined ? { label: label.trim().replace(/\s+/g, " ") } : {}),
+      },
+    });
+    return NextResponse.json({ cycle: updated });
+  } catch (error: any) {
+    if (error?.code === "P2002") return NextResponse.json({ error: "A cycle with that name already exists" }, { status: 409 });
+    throw error;
+  }
 });
 
 export const DELETE = withApi(async function DELETE(
