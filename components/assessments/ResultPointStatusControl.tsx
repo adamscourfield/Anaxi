@@ -23,10 +23,14 @@ const NEXT_OPTIONS: Record<ResultStatus, ResultStatus[]> = {
 type Props = {
   pointId: string;
   status: ResultStatus;
-  compact?: boolean;
 };
 
-export function ResultPointStatusControl({ pointId, status, compact = false }: Props) {
+/**
+ * Status pill doubles as its own trigger: a transparent native `<select>` is
+ * layered over the pill, so the badge itself is the clickable control
+ * instead of a separate "Set status…" field sitting next to it.
+ */
+export function ResultPointStatusControl({ pointId, status }: Props) {
   const router = useRouter();
   const [current, setCurrent] = useState(status);
   const [busy, setBusy] = useState(false);
@@ -54,40 +58,49 @@ export function ResultPointStatusControl({ pointId, status, compact = false }: P
   }
 
   const options = NEXT_OPTIONS[current];
+  const canChange = options.length > 0 && !busy;
 
   return (
-    <div className={`flex flex-wrap items-center gap-1.5 ${compact ? "" : "gap-2"}`}>
+    <div className="relative inline-flex">
       <span
-        className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${resultStatusPillClasses[current]}`}
+        className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${resultStatusPillClasses[current]} ${canChange ? "pr-4" : ""} ${busy ? "opacity-60" : ""}`}
         title={
           current === "LOCKED"
             ? "Locked — CSV uploads disabled. Choose Published to unlock."
-            : undefined
+            : canChange
+              ? "Click to change status"
+              : undefined
         }
       >
         {STATUS_LABELS[current]}
+        {canChange && (
+          <svg className="absolute right-1 h-2.5 w-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} aria-hidden>
+            <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
       </span>
-      <label className="sr-only" htmlFor={`status-${pointId}`}>
-        Change result point status
-      </label>
-      <select
-        id={`status-${pointId}`}
-        disabled={busy}
-        value=""
-        onChange={(e) => {
-          const v = e.target.value as ResultStatus;
-          if (v) void updateStatus(v);
-          e.target.value = "";
-        }}
-        className="field h-7 max-w-[9rem] py-0 text-[11px]"
-      >
-        <option value="">Set status…</option>
-        {options.map((s) => (
-          <option key={s} value={s}>
-            → {STATUS_LABELS[s]}
+      {canChange && (
+        <select
+          aria-label="Change result point status"
+          disabled={busy}
+          value=""
+          onChange={(e) => {
+            const v = e.target.value as ResultStatus;
+            if (v) void updateStatus(v);
+            e.target.value = "";
+          }}
+          className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0 disabled:cursor-not-allowed"
+        >
+          <option value="" disabled>
+            {STATUS_LABELS[current]}
           </option>
-        ))}
-      </select>
+          {options.map((s) => (
+            <option key={s} value={s}>
+              → {STATUS_LABELS[s]}
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }

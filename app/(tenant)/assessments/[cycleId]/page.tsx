@@ -386,7 +386,7 @@ export default async function CycleDetailPage({
                       <th className="hidden px-4 py-3 text-left lg:table-cell">Subjects</th>
                       <th className="px-4 py-3 text-right">Entries</th>
                       <th className="px-4 py-3 text-right">Students</th>
-                      <th className="px-5 py-3 text-right">Actions</th>
+                      <th className="min-w-[230px] px-5 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -410,13 +410,15 @@ export default async function CycleDetailPage({
                             </span>
                           </td>
                           <td className="px-4 py-3.5">
-                            <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
-                              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
-                                {POINT_TYPE_LABELS[point.pointType]}
-                              </span>
-                              <ResultPointStatusControl pointId={point.id} status={point.resultStatus} compact />
+                            <div className="flex flex-col gap-1">
+                              <span className="font-semibold text-[var(--on-surface)]">{point.label}</span>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
+                                  {POINT_TYPE_LABELS[point.pointType]}
+                                </span>
+                                <ResultPointStatusControl pointId={point.id} status={point.resultStatus} />
+                              </div>
                             </div>
-                            <span className="font-semibold text-[var(--on-surface)]">{point.label}</span>
                           </td>
                           <td className="hidden px-4 py-3.5 text-[var(--on-surface-muted)] sm:table-cell">
                             {assessedDateLabel ? (
@@ -456,9 +458,9 @@ export default async function CycleDetailPage({
                             {hasData ? matched.toLocaleString() : <span className="text-[var(--on-surface-muted)]/40">—</span>}
                           </td>
                           <td className="px-5 py-3.5 text-right">
-                            <div className="flex items-center justify-end gap-2">
+                            <div className="flex flex-nowrap items-center justify-end gap-1.5">
                               {point.resultStatus !== "LOCKED" && (
-                                <Button asChild className="h-7 py-0 text-[11px]">
+                                <Button asChild className="h-7 whitespace-nowrap px-2.5 py-0 text-[11px]">
                                   <Link href={`/assessments/${cycle.id}/points/${point.id}/upload`}>
                                     <IconUploadCloud />
                                     Upload
@@ -466,7 +468,7 @@ export default async function CycleDetailPage({
                                 </Button>
                               )}
                               {point.resultStatus !== "LOCKED" && (
-                                <Button asChild variant="secondary" className="h-7 py-0 text-[11px]">
+                                <Button asChild variant="secondary" className="h-7 whitespace-nowrap px-2.5 py-0 text-[11px]">
                                   <Link href={`/assessments/${cycle.id}/points/${point.id}/enter`}>
                                     <IconBarChart />
                                     Enter grades
@@ -474,7 +476,7 @@ export default async function CycleDetailPage({
                                 </Button>
                               )}
                               {hasData && (
-                                <Button asChild variant="secondary" className="h-7 py-0 text-[11px]">
+                                <Button asChild variant="secondary" className="h-7 whitespace-nowrap px-2.5 py-0 text-[11px]">
                                   <Link href={`/assessments/${cycle.id}/points/${point.id}`}>
                                     <IconBarChart />
                                     Analysis
