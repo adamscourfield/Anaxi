@@ -163,7 +163,15 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
   }
   const assessmentYears = [...assessmentCyclesByYear.keys()].sort((a, b) => b.localeCompare(a));
   const assessmentSync = integration?.config?.assessmentSync && typeof integration.config.assessmentSync === "object"
-    ? integration.config.assessmentSync as { definitions?: PreparedAssessmentDefinition[]; historicBatchDefinitionOffset?: number; historicComplete?: boolean; historicalDefinitions?: PreparedAssessmentDefinition[] }
+    ? integration.config.assessmentSync as {
+      definitions?: PreparedAssessmentDefinition[];
+      historicBatchDefinitionOffset?: number;
+      historicComplete?: boolean;
+      historicalDefinitions?: PreparedAssessmentDefinition[];
+      importedMarks?: number;
+      historicImportCursor?: number;
+      lastInspected?: { label?: unknown; reviewedMarks?: unknown; imported?: unknown; targets?: unknown; at?: unknown };
+    }
     : {};
   const assessmentDiscoveryComplete = assessmentSync.historicComplete === true;
   const preparedAssessmentDefinitions = Array.isArray(assessmentSync.definitions) ? assessmentSync.definitions.length : 0;
@@ -171,6 +179,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
     ? preparedAssessmentDefinitions
     : Math.min(typeof assessmentSync.historicBatchDefinitionOffset === "number" ? assessmentSync.historicBatchDefinitionOffset : 0, preparedAssessmentDefinitions);
   const assessmentDiscoveryPercent = preparedAssessmentDefinitions ? (assessmentDefinitionsChecked / preparedAssessmentDefinitions) * 100 : 0;
+  const assessmentImportProgress = assessmentSync.lastInspected
+    && typeof assessmentSync.lastInspected === "object"
+    && typeof assessmentSync.lastInspected.reviewedMarks === "number"
+    ? assessmentSync.lastInspected
+    : null;
   const approvedAssessmentCycles = new Set<string>(
     Array.isArray(integration?.config?.assessmentApprovedCycleKeys)
       ? integration.config.assessmentApprovedCycleKeys.filter((key: unknown): key is string => typeof key === "string")
@@ -838,6 +851,19 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 <MetaText>{assessmentSync.historicComplete
                   ? "Historic assessment discovery is complete. Every matching Arbor mark-sheet target has been checked and the cycles below are ready for review."
                   : `Historic assessment discovery is reading the agreed P8 GCSE, A-Level, Year 10 percentage, and KS3 percentage definitions through Arbor's subject batch rosters. ${typeof assessmentSync.historicBatchDefinitionOffset === "number" && Array.isArray(assessmentSync.definitions) ? `${Math.min(assessmentSync.historicBatchDefinitionOffset, assessmentSync.definitions.length)} of ${assessmentSync.definitions.length} prepared definitions have been checked. ` : ""}Each pass uses only the pupils and marks assigned by Arbor to that subject.`}</MetaText>
+
+                {approvedAssessmentCycles.size ? (
+                  <div className="rounded-sm border border-success/25 bg-success/5 p-4">
+                    <H3 className="text-base">Assessment import progress</H3>
+                    <MetaText className="mt-1">{approvedAssessmentCycles.size} approved {approvedAssessmentCycles.size === 1 ? "cycle is" : "cycles are"} queued for the next full Arbor assessment sync at 2am London time. Only verified, graded marks from the reviewed subject sheets will be written to Attainment.</MetaText>
+                    {assessmentImportProgress ? (
+                      <MetaText className="mt-2">Last imported: {String(assessmentImportProgress.label ?? "reviewed assessment")} · {previewCount(String(assessmentImportProgress.imported))} mark{previewCount(String(assessmentImportProgress.imported)) === 1 ? "" : "s"} written from {previewCount(String(assessmentImportProgress.reviewedMarks))} verified mark{previewCount(String(assessmentImportProgress.reviewedMarks)) === 1 ? "" : "s"}{typeof assessmentImportProgress.at === "string" ? ` · ${new Date(assessmentImportProgress.at).toLocaleString("en-GB")}` : ""}.</MetaText>
+                    ) : (
+                      <MetaText className="mt-2">No approved marks have been imported yet.</MetaText>
+                    )}
+                    <MetaText className="mt-2">Total verified marks imported: {typeof assessmentSync.importedMarks === "number" ? assessmentSync.importedMarks : 0}.</MetaText>
+                  </div>
+                ) : null}
 
                 {assessmentCycles.length ? (
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/assessments/approval")} className="space-y-4">
