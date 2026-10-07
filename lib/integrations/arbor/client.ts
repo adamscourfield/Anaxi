@@ -49,6 +49,19 @@ export type ArborProgressAssessmentBatchTarget = {
   studentProgressAssessmentMarks: ArborAssessmentMark[];
 };
 
+export type ArborQualificationResult = {
+  id: string;
+  resultDate: string | null;
+  numericValue: number | null;
+  student: ArborAssessmentStudent | null;
+  qualificationGrade: { displayName: string | null; shortName: string | null; code: string | null } | null;
+  qualificationAward: {
+    title: string | null;
+    shortTitle: string | null;
+    qualificationSubject: { name: string | null; displayName: string | null } | null;
+  } | null;
+};
+
 /**
  * Client for Arbor's GraphQL API, scoped to the entities Anaxi actually has read
  * access to (see entities.ts). GraphQL is used rather than REST: it supports nested
@@ -351,6 +364,34 @@ export class ArborClient {
       if (page.length < 500) return marks;
     }
     throw new Error("Arbor returned more than 10,000 marks for one assessment; review stopped safely.");
+  }
+
+  /**
+   * Final GCSE and A-Level outcomes are often stored outside progress mark
+   * sheets. Read the dedicated qualification-result source so an empty batch
+   * grade does not make a valid published result look missing.
+   */
+  async listQualificationResultsInRange(dateRange?: { from: string; before: string }): Promise<ArborQualificationResult[]> {
+    const results: ArborQualificationResult[] = [];
+    for (let pageNum = 0; pageNum < 100; pageNum++) {
+      const data = await runArborGraphqlQuery<{ QualificationResult: ArborQualificationResult[] }>(this.credentials, `{
+        QualificationResult(page_size: 500, page_num: ${pageNum}) {
+          id resultDate numericValue
+          student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
+          qualificationGrade { displayName shortName code }
+          qualificationAward {
+            title shortTitle
+            qualificationSubject { name displayName }
+          }
+        }
+      }`);
+      const page = Array.isArray(data.QualificationResult) ? data.QualificationResult : [];
+      results.push(...(dateRange
+        ? page.filter((result) => Boolean(result.resultDate) && result.resultDate! >= dateRange.from && result.resultDate! < dateRange.before)
+        : page));
+      if (page.length < 500) return results;
+    }
+    throw new Error("Arbor returned more than 50,000 qualification results; review stopped safely.");
   }
 
   /** Lists the assessment catalogue itself, independently of mark pagination. */

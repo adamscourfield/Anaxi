@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { H3, MetaText } from "@/components/ui/typography";
 import { decryptCredentials } from "@/lib/integrationSecrets";
-import { ArborClient, arborAssessmentMarkValue } from "@/lib/integrations/arbor/client";
+import { ArborClient, arborAssessmentMarkValue, type ArborQualificationResult } from "@/lib/integrations/arbor/client";
 import { arborHistoricYearGroup, mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integrations/arbor/assessmentPolicy";
 import { arborConnectionHref } from "@/lib/integrations/arbor/connectionScope";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
@@ -45,6 +45,55 @@ function newestMark(marks: ArborMark[]): ArborMark {
     const gradeDifference = Number(gradeValue(b) !== "No recorded grade") - Number(gradeValue(a) !== "No recorded grade");
     return gradeDifference || (b.assessmentDate ?? "").localeCompare(a.assessmentDate ?? "");
   })[0];
+}
+
+/**
+ * Qualification results are stored separately from progress mark sheets in
+ * Arbor. Match the actual qualification subject, not a broad phrase such as
+ * "A-Level", so results never leak between subjects.
+ */
+function normalisedQualificationSubject(value: string | null | undefined): string {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/\bfurther\s+maths?\b/g, "further mathematics")
+    .replace(/\bmaths\b/g, "mathematics")
+    .replace(/\b(?:p8|a[-\s]?level|gce|gcse|qualification|assessment|summer|spring|autumn|final|actual|results?|exam\s*board|ks\s*\d|year\s*\d+|y\s*\d+|level\s*\d+(?:\s*\/\s*\d+)?)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function qualificationResultMatchesDefinition(result: ArborQualificationResult, definitionLabel: string): boolean {
+  const expected = normalisedQualificationSubject(definitionLabel);
+  if (!expected || expected.length < 3) return false;
+  const candidates = [
+    result.qualificationAward?.qualificationSubject?.name,
+    result.qualificationAward?.qualificationSubject?.displayName,
+    result.qualificationAward?.shortTitle,
+    result.qualificationAward?.title,
+  ].map(normalisedQualificationSubject).filter(Boolean);
+
+  return candidates.some((candidate) => candidate === expected);
+}
+
+function qualificationResultAsMark(
+  result: ArborQualificationResult,
+  definition: PreparedDefinition,
+  assessment: ArborMark["assessment"],
+): ArborMark | null {
+  if (!result.student) return null;
+  return {
+    id: `qualification-result:${result.id}`,
+    student: result.student,
+    assessmentDate: result.resultDate ?? definition.assessmentDate ?? null,
+    // Keep the discovered cycle's period: a July published result belongs in
+    // the reviewed Summer cycle even if Arbor labels the result record itself
+    // only as a qualification outcome.
+    displayName: definition.periodHint ?? null,
+    valueFields: result.numericValue === null ? {} : { numericValue: result.numericValue },
+    grade: result.qualificationGrade,
+    assessment,
+  };
 }
 
 export default async function ArborAssessmentMarkSheetPage({
@@ -147,10 +196,31 @@ export default async function ArborAssessmentMarkSheetPage({
           })),
       ]
       : await client.listAssessmentMarksForDefinitionInRange(definition.id, assessmentYearRange(cycle.academicYear));
+
+  // Published GCSE and A-Level outcomes use Arbor's dedicated qualification
+  // source. Batch targets are useful rosters for internal mark books but can
+  // contain a whole-cohort allocation with blank cells for final outcomes.
+  // When this source supplies subject-specific rows for a Summer/Final review,
+  // it is authoritative and intentionally replaces those placeholders.
+  const usesQualificationResults = (mapping.family === "GCSE" || mapping.family === "A_LEVEL")
+    && (cycle.pointLabel === "Summer" || cycle.pointLabel === "Final");
+  const qualificationMarks = usesQualificationResults
+    ? (await client.listQualificationResultsInRange(assessmentYearRange(cycle.academicYear)))
+      .filter((result) => qualificationResultMatchesDefinition(result, definition.label))
+      .map((result) => qualificationResultAsMark(result, definition, batchMetadata?.assessment ?? {
+        id: definition.id,
+        displayName: definition.label,
+        assessmentName: definition.label,
+        assessmentShortName: null,
+      }))
+      .filter((mark): mark is ArborMark => Boolean(mark))
+    : [];
   // Arbor accepts an assessment filter but a review must not rely on that
   // server-side filter alone. Verify the relationship on every returned mark
   // before it can appear in a subject sheet.
-  const subjectMarks = batchMetadata ? allMarks : allMarks.filter((mark) => mark.assessment?.id === definition.id);
+  const subjectMarks = qualificationMarks.length
+    ? qualificationMarks
+    : batchMetadata ? allMarks : allMarks.filter((mark) => mark.assessment?.id === definition.id);
   const termMarks = subjectMarks.filter((mark) => {
     // Arbor returns every dated mark for this subject definition. Keep only
     // the term represented by the requested cycle; otherwise a July result
