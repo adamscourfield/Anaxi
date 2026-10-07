@@ -25,6 +25,29 @@ const A_LEVEL_SCORES: Record<string, number> = {
   U: 0,
 };
 
+// OCR Cambridge National performance points (DfE KS4 point-score scale).
+const CAMBRIDGE_NATIONAL_POINTS: Record<string, number> = {
+  P1: 1.25, M1: 2, D1: 3, P2: 4, M2: 5.5, D2: 7, "D*2": 8.5,
+};
+
+function gcsePoints(rawValue: string): number | null {
+  const value = rawValue.trim().toUpperCase();
+  if (value === "U") return 0;
+  if (value in CAMBRIDGE_NATIONAL_POINTS) return CAMBRIDGE_NATIONAL_POINTS[value];
+  const pair = value.match(/^([0-9])\s*-\s*([0-9])$/);
+  if (pair) {
+    const high = Number(pair[1]), low = Number(pair[2]);
+    return high >= low && high - low <= 1 ? (high + low) / 2 : null;
+  }
+  if (!/^-?\d+(?:\.\d+)?$/.test(value)) return null;
+  return Number(value);
+}
+
+/** Compare unrounded points: 4-3 and M1 must not be promoted to grade 4. */
+export function meetsGcseThreshold(normalizedScore: number | null, threshold: number): boolean {
+  return normalizedScore !== null && normalizedScore * 9 + 1e-9 >= threshold;
+}
+
 // ─── Normalise a single raw value ─────────────────────────────────────────────
 
 export function normalizeGrade(
@@ -36,8 +59,8 @@ export function normalizeGrade(
 
   switch (format) {
     case "GCSE": {
-      const n = parseFloat(trimmed);
-      if (isNaN(n)) return null;
+      const n = gcsePoints(trimmed);
+      if (n === null) return null;
       const clamped = Math.max(0, Math.min(9, n));
       return clamped / 9;
     }
@@ -131,9 +154,9 @@ export function validateGrade(
 
   switch (format) {
     case "GCSE": {
-      const n = parseFloat(trimmed);
-      if (isNaN(n) || n < 0 || n > 9) {
-        return `Invalid GCSE grade "${rawValue}". Expected 0–9.`;
+      const n = gcsePoints(trimmed);
+      if (n === null || n < 0 || n > 9) {
+        return `Invalid GCSE grade "${rawValue}". Expected 0–9, U, a double-award grade, or a Cambridge National grade.`;
       }
       return null;
     }

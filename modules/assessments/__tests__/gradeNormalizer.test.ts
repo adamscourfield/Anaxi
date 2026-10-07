@@ -6,6 +6,7 @@ import {
   detectNonGradeStatus,
   displayGrade,
   hasRecordedGrade,
+  meetsGcseThreshold,
 } from "../gradeNormalizer";
 
 // ─── GCSE ─────────────────────────────────────────────────────────────────────
@@ -244,5 +245,30 @@ describe("displayGrade", () => {
 
   it("displays raw scores", () => {
     expect(displayGrade(0.75, "RAW", 80)).toBe("60");
+  });
+});
+
+
+describe("GCSE actual examination grades", () => {
+  it("preserves double-award averages without promoting a split grade", () => {
+    expect(normalizeGrade("5-4", "GCSE")).toBeCloseTo(4.5 / 9);
+    expect(normalizeGrade("4-4", "GCSE")).toBeCloseTo(4 / 9);
+    expect(meetsGcseThreshold(normalizeGrade("4-3", "GCSE"), 4)).toBe(false);
+    expect(meetsGcseThreshold(normalizeGrade("4-4", "GCSE"), 4)).toBe(true);
+    expect(meetsGcseThreshold(normalizeGrade("5-4", "GCSE"), 5)).toBe(false);
+  });
+  it("records U as a genuine zero", () => {
+    expect(validateGrade("U", "GCSE")).toBeNull();
+    expect(normalizeGrade("U", "GCSE")).toBe(0);
+    expect(hasRecordedGrade("U", "GCSE")).toBe(true);
+  });
+  it("uses Cambridge National points while retaining the original grade", () => {
+    for (const [grade, points] of [["M1", 2], ["D1", 3], ["P2", 4], ["M2", 5.5], ["D2", 7]] as const) {
+      expect(validateGrade(grade, "GCSE")).toBeNull();
+      expect(normalizeGrade(grade, "GCSE")).toBeCloseTo(points / 9);
+    }
+  });
+  it("rejects malformed or impossible pairs instead of parsing their first digit", () => {
+    for (const grade of ["5-1", "4-5", "5-", "5abc"]) expect(validateGrade(grade, "GCSE")).not.toBeNull();
   });
 });

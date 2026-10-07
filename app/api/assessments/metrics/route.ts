@@ -14,6 +14,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { GradeFormat } from "@prisma/client";
+import { meetsGcseThreshold, normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { withApi } from "@/lib/apiRoute";
 
 const A_LEVEL_SCORE: Record<string, number> = {
@@ -29,7 +30,7 @@ function gcseThresholdPct(
   if (present.length === 0) return 0;
   const above = present.filter((r) => {
     if (r.normalizedScore === null) return false;
-    return Math.round(r.normalizedScore * 9) >= threshold;
+    return meetsGcseThreshold(r.normalizedScore, threshold);
   });
   return Math.round((above.length / present.length) * 100);
 }
@@ -126,10 +127,15 @@ export const GET = withApi(async function GET(req: Request) {
     const nonSendResults = a.results.filter((r) => !(r.sendFlag ?? r.student.sendFlag));
 
     if (a.gradeFormat === "GCSE") {
-      const dist = [9, 8, 7, 6, 5, 4, 3, 2, 1].map((g) => ({
-        grade: String(g),
-        count: present.filter((r) => r.normalizedScore !== null && Math.round(r.normalizedScore * 9) === g).length,
-      }));
+      const hasNamedGrades = present.some((r) => /-|^[PMD]/i.test(r.rawValue));
+      const dist = hasNamedGrades
+        ? [...new Set(present.map((r) => r.rawValue))]
+            .sort((a, b) => (normalizeGrade(b, "GCSE") ?? 0) - (normalizeGrade(a, "GCSE") ?? 0))
+            .map((grade) => ({ grade, count: present.filter((r) => r.rawValue === grade).length }))
+        : [9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map((g) => ({
+            grade: String(g),
+            count: present.filter((r) => r.normalizedScore !== null && Math.round(r.normalizedScore * 9) === g).length,
+          }));
       return {
         subject: a.subject,
         assessmentId: a.id,
@@ -217,7 +223,7 @@ export const GET = withApi(async function GET(req: Request) {
         const p = bothPresent.filter((id) => {
           const eg = engMap.get(id)!.normalizedScore;
           const mg = mathsMap.get(id)!.normalizedScore;
-          return eg !== null && mg !== null && Math.round(eg * 9) >= t && Math.round(mg * 9) >= t;
+          return eg !== null && mg !== null && meetsGcseThreshold(eg, t) && meetsGcseThreshold(mg, t);
         });
         return Math.round((p.length / bothPresent.length) * 100);
       }
@@ -233,7 +239,7 @@ export const GET = withApi(async function GET(req: Request) {
         const p = eligible.filter((id) => {
           const eg = engMap.get(id)?.normalizedScore;
           const mg = mathsMap.get(id)?.normalizedScore;
-          return eg !== null && mg !== null && Math.round(eg! * 9) >= t && Math.round(mg! * 9) >= t;
+          return eg !== null && mg !== null && meetsGcseThreshold(eg!, t) && meetsGcseThreshold(mg!, t);
         });
         return Math.round((p.length / eligible.length) * 100);
       }
@@ -251,7 +257,7 @@ export const GET = withApi(async function GET(req: Request) {
             mathScore: mg,
             engRaw: eRaw,
             mathRaw: mRaw,
-            met: (eg !== null && Math.round(eg * 9) >= t && mg !== null && Math.round(mg * 9) >= t)
+            met: (eg !== null && meetsGcseThreshold(eg, t) && mg !== null && meetsGcseThreshold(mg, t))
           };
         });
       }
