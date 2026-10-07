@@ -34,6 +34,14 @@ function gcseThresholdPct(
   return Math.round((above.length / present.length) * 100);
 }
 
+function cohortThresholdPct(results: Parameters<typeof gcseThresholdPct>[0], threshold: number): number | null {
+  return results.some((r) => r.status === "PRESENT") ? gcseThresholdPct(results, threshold) : null;
+}
+
+function gap(baseline: number | null, cohort: number | null): number | null {
+  return baseline === null || cohort === null ? null : baseline - cohort;
+}
+
 function aLevelThresholdPct(
   results: Array<{ rawValue: string; status: string }>,
   minGrade: string
@@ -74,6 +82,8 @@ export const GET = withApi(async function GET(req: Request) {
         where: { tenantId: user.tenantId },
         select: {
           studentId: true,
+          ppFlag: true,
+          sendFlag: true,
           rawValue: true,
           normalizedScore: true,
           status: true,
@@ -110,10 +120,10 @@ export const GET = withApi(async function GET(req: Request) {
     const present = a.results.filter((r) => r.status === "PRESENT");
     const total = a.results.length;
 
-    const ppResults = a.results.filter((r) => r.student.ppFlag);
-    const nonPpResults = a.results.filter((r) => !r.student.ppFlag);
-    const sendResults = a.results.filter((r) => r.student.sendFlag);
-    const nonSendResults = a.results.filter((r) => !r.student.sendFlag);
+    const ppResults = a.results.filter((r) => (r.ppFlag ?? r.student.ppFlag));
+    const nonPpResults = a.results.filter((r) => !(r.ppFlag ?? r.student.ppFlag));
+    const sendResults = a.results.filter((r) => (r.sendFlag ?? r.student.sendFlag));
+    const nonSendResults = a.results.filter((r) => !(r.sendFlag ?? r.student.sendFlag));
 
     if (a.gradeFormat === "GCSE") {
       const dist = [9, 8, 7, 6, 5, 4, 3, 2, 1].map((g) => ({
@@ -134,21 +144,21 @@ export const GET = withApi(async function GET(req: Request) {
         },
         pp: {
           count: ppResults.filter((r) => r.status === "PRESENT").length,
-          t4: gcseThresholdPct(ppResults, 4),
-          t5: gcseThresholdPct(ppResults, 5),
-          nonPpT4: gcseThresholdPct(nonPpResults, 4),
-          nonPpT5: gcseThresholdPct(nonPpResults, 5),
-          gap4: gcseThresholdPct(nonPpResults, 4) - gcseThresholdPct(ppResults, 4),
-          gap5: gcseThresholdPct(nonPpResults, 5) - gcseThresholdPct(ppResults, 5),
+          t4: cohortThresholdPct(ppResults, 4),
+          t5: cohortThresholdPct(ppResults, 5),
+          nonPpT4: cohortThresholdPct(nonPpResults, 4),
+          nonPpT5: cohortThresholdPct(nonPpResults, 5),
+          gap4: gap(cohortThresholdPct(nonPpResults, 4), cohortThresholdPct(ppResults, 4)),
+          gap5: gap(cohortThresholdPct(nonPpResults, 5), cohortThresholdPct(ppResults, 5)),
         },
         send: {
           count: sendResults.filter((r) => r.status === "PRESENT").length,
-          t4: gcseThresholdPct(sendResults, 4),
-          t5: gcseThresholdPct(sendResults, 5),
-          nonSendT4: gcseThresholdPct(nonSendResults, 4),
-          nonSendT5: gcseThresholdPct(nonSendResults, 5),
-          gap4: gcseThresholdPct(nonSendResults, 4) - gcseThresholdPct(sendResults, 4),
-          gap5: gcseThresholdPct(nonSendResults, 5) - gcseThresholdPct(sendResults, 5),
+          t4: cohortThresholdPct(sendResults, 4),
+          t5: cohortThresholdPct(sendResults, 5),
+          nonSendT4: cohortThresholdPct(nonSendResults, 4),
+          nonSendT5: cohortThresholdPct(nonSendResults, 5),
+          gap4: gap(cohortThresholdPct(nonSendResults, 4), cohortThresholdPct(sendResults, 4)),
+          gap5: gap(cohortThresholdPct(nonSendResults, 5), cohortThresholdPct(sendResults, 5)),
         },
         distribution: dist,
         students: present.map((r) => ({
@@ -212,14 +222,14 @@ export const GET = withApi(async function GET(req: Request) {
         return Math.round((p.length / bothPresent.length) * 100);
       }
 
-      const ppIds = new Set(engA.results.filter((r) => r.student.ppFlag).map((r) => r.studentId));
-      const nonPpIds = new Set(engA.results.filter((r) => !r.student.ppFlag).map((r) => r.studentId));
-      const sendIds = new Set(engA.results.filter((r) => r.student.sendFlag).map((r) => r.studentId));
-      const nonSendIds = new Set(engA.results.filter((r) => !r.student.sendFlag).map((r) => r.studentId));
+      const ppIds = new Set(engA.results.filter((r) => (r.ppFlag ?? r.student.ppFlag)).map((r) => r.studentId));
+      const nonPpIds = new Set(engA.results.filter((r) => !(r.ppFlag ?? r.student.ppFlag)).map((r) => r.studentId));
+      const sendIds = new Set(engA.results.filter((r) => (r.sendFlag ?? r.student.sendFlag)).map((r) => r.studentId));
+      const nonSendIds = new Set(engA.results.filter((r) => !(r.sendFlag ?? r.student.sendFlag)).map((r) => r.studentId));
 
       function bothAtGroup(ids: Set<string>, t: number) {
         const eligible = bothPresent.filter((id) => ids.has(id));
-        if (eligible.length === 0) return 0;
+        if (eligible.length === 0) return null;
         const p = eligible.filter((id) => {
           const eg = engMap.get(id)?.normalizedScore;
           const mg = mathsMap.get(id)?.normalizedScore;
@@ -254,14 +264,14 @@ export const GET = withApi(async function GET(req: Request) {
         ppEm5: bothAtGroup(ppIds, 5),
         nonPpEm4: bothAtGroup(nonPpIds, 4),
         nonPpEm5: bothAtGroup(nonPpIds, 5),
-        gap4: bothAtGroup(nonPpIds, 4) - bothAtGroup(ppIds, 4),
-        gap5: bothAtGroup(nonPpIds, 5) - bothAtGroup(ppIds, 5),
+        gap4: gap(bothAtGroup(nonPpIds, 4), bothAtGroup(ppIds, 4)),
+        gap5: gap(bothAtGroup(nonPpIds, 5), bothAtGroup(ppIds, 5)),
         sendEm4: bothAtGroup(sendIds, 4),
         sendEm5: bothAtGroup(sendIds, 5),
         nonSendEm4: bothAtGroup(nonSendIds, 4),
         nonSendEm5: bothAtGroup(nonSendIds, 5),
-        sendGap4: bothAtGroup(nonSendIds, 4) - bothAtGroup(sendIds, 4),
-        sendGap5: bothAtGroup(nonSendIds, 5) - bothAtGroup(sendIds, 5),
+        sendGap4: gap(bothAtGroup(nonSendIds, 4), bothAtGroup(sendIds, 4)),
+        sendGap5: gap(bothAtGroup(nonSendIds, 5), bothAtGroup(sendIds, 5)),
         students4: getAtTarget(4),
         students5: getAtTarget(5),
         students7: getAtTarget(7),

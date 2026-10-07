@@ -68,20 +68,20 @@ type SubjectMeasure = {
   presentCount: number;
   thresholds: Record<string, number>;
   pp: {
-    count: number; t4: number; t5: number;
-    nonPpT4: number; nonPpT5: number; gap4: number; gap5: number;
+    count: number; t4: number | null; t5: number | null;
+    nonPpT4: number | null; nonPpT5: number | null; gap4: number | null; gap5: number | null;
   } | null;
-  send: { count: number; t4: number; t5: number; nonSendT4: number; nonSendT5: number; gap4: number; gap5: number } | null;
+  send: { count: number; t4: number | null; t5: number | null; nonSendT4: number | null; nonSendT5: number | null; gap4: number | null; gap5: number | null } | null;
   distribution: Array<{ grade: string; count: number }>;
   students: StudentResult[];
 };
 
 type GcseBasics = {
   em4: number; em5: number; em7: number;
-  ppEm4: number; ppEm5: number; nonPpEm4: number; nonPpEm5: number;
-  gap4: number; gap5: number;
-  sendEm4: number; sendEm5: number; nonSendEm4: number; nonSendEm5: number;
-  sendGap4: number; sendGap5: number;
+  ppEm4: number | null; ppEm5: number | null; nonPpEm4: number | null; nonPpEm5: number | null;
+  gap4: number | null; gap5: number | null;
+  sendEm4: number | null; sendEm5: number | null; nonSendEm4: number | null; nonSendEm5: number | null;
+  sendGap4: number | null; sendGap5: number | null;
   students4: EMStudentResult[];
   students5: EMStudentResult[];
   students7: EMStudentResult[];
@@ -312,7 +312,12 @@ function gapCls(gap: number) {
   return "text-[var(--error)]";
 }
 
-function GapBadge({ gap }: { gap: number }) {
+function formatCohortPct(value: number | null) {
+  return value === null ? "—" : `${value}%`;
+}
+
+function GapBadge({ gap }: { gap: number | null }) {
+  if (gap === null) return <span title="No assessed students in one of the groups">—</span>;
   return (
     <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-bold tabular-nums ${gapBadgeClass(gap)}`}>
       {gap > 0 ? "+" : ""}{gap}pp
@@ -853,19 +858,19 @@ export default function ResultPointPage() {
                             <div>
                               <div className="mb-2 flex items-baseline justify-between">
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary-container)]">{baselineLabel}</span>
-                                <span className="text-xl font-bold leading-none tracking-tight text-text">{baseline}%</span>
+                                <span className="text-xl font-bold leading-none tracking-tight text-text">{formatCohortPct(baseline)}</span>
                               </div>
                               <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
-                                <div className="h-full rounded-r-full bg-[var(--primary-container)]" style={{ width: `${baseline}%` }} />
+                                <div className="h-full rounded-r-full bg-[var(--primary-container)]" style={{ width: `${baseline ?? 0}%` }} />
                               </div>
                             </div>
                             <div>
                               <div className="mb-2 flex items-baseline justify-between">
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted">{cohortLabel}</span>
-                                <span className="text-xl font-bold leading-none tracking-tight text-muted">{cohort}%</span>
+                                <span className="text-xl font-bold leading-none tracking-tight text-muted">{formatCohortPct(cohort)}</span>
                               </div>
                               <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
-                                <div className="h-full rounded-r-full bg-surface-container-high" style={{ width: `${cohort}%` }} />
+                                <div className="h-full rounded-r-full bg-surface-container-high" style={{ width: `${cohort ?? 0}%` }} />
                               </div>
                             </div>
                           </div>
@@ -887,19 +892,19 @@ export default function ResultPointPage() {
                             <div>
                               <div className="mb-2 flex items-baseline justify-between">
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--info)]">{baselineLabel}</span>
-                                <span className="text-xl font-bold leading-none tracking-tight text-text">{baseline}%</span>
+                                <span className="text-xl font-bold leading-none tracking-tight text-text">{formatCohortPct(baseline)}</span>
                               </div>
                               <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
-                                <div className="h-full rounded-r-full bg-[var(--info)]" style={{ width: `${baseline}%` }} />
+                                <div className="h-full rounded-r-full bg-[var(--info)]" style={{ width: `${baseline ?? 0}%` }} />
                               </div>
                             </div>
                             <div>
                               <div className="mb-2 flex items-baseline justify-between">
                                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted">{cohortLabel}</span>
-                                <span className="text-xl font-bold leading-none tracking-tight text-muted">{cohort}%</span>
+                                <span className="text-xl font-bold leading-none tracking-tight text-muted">{formatCohortPct(cohort)}</span>
                               </div>
                               <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
-                                <div className="h-full rounded-r-full bg-surface-container-high" style={{ width: `${cohort}%` }} />
+                                <div className="h-full rounded-r-full bg-surface-container-high" style={{ width: `${cohort ?? 0}%` }} />
                               </div>
                             </div>
                           </div>
@@ -1068,11 +1073,11 @@ export default function ResultPointPage() {
                                   <Link href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`} className="link-accent calm-transition">{sm.subject}</Link>
                                 </div>
                               </td>
-                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.pp!.nonPpT4}%</td>
-                              <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>{sm.pp!.t4}%</td>
+                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{formatCohortPct(sm.pp!.nonPpT4)}</td>
+                              <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>{formatCohortPct(sm.pp!.t4)}</td>
                               <td className="px-4 py-4 text-right"><GapBadge gap={sm.pp!.gap4} /></td>
-                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.pp!.nonPpT5}%</td>
-                              <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>{sm.pp!.t5}%</td>
+                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{formatCohortPct(sm.pp!.nonPpT5)}</td>
+                              <td className={`px-4 py-4 text-right tabular-nums ${ppNumericClass}`}>{formatCohortPct(sm.pp!.t5)}</td>
                               <td className="px-4 py-4 text-right"><GapBadge gap={sm.pp!.gap5} /></td>
                             </tr>
                           ))}
@@ -1114,11 +1119,11 @@ export default function ResultPointPage() {
                                   <Link href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`} className="link-accent calm-transition">{sm.subject}</Link>
                                 </div>
                               </td>
-                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.send!.nonSendT4}%</td>
-                              <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>{sm.send!.t4}%</td>
+                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{formatCohortPct(sm.send!.nonSendT4)}</td>
+                              <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>{formatCohortPct(sm.send!.t4)}</td>
                               <td className="px-4 py-4 text-right"><GapBadge gap={sm.send!.gap4} /></td>
-                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{sm.send!.nonSendT5}%</td>
-                              <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>{sm.send!.t5}%</td>
+                              <td className="px-4 py-4 text-right tabular-nums text-[var(--on-surface)]">{formatCohortPct(sm.send!.nonSendT5)}</td>
+                              <td className={`px-4 py-4 text-right tabular-nums ${sendNumericClass}`}>{formatCohortPct(sm.send!.t5)}</td>
                               <td className="px-4 py-4 text-right"><GapBadge gap={sm.send!.gap5} /></td>
                             </tr>
                           ))}

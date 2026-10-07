@@ -357,6 +357,8 @@ export async function computeAssessmentAnalysis(
       rawValue: true,
       normalizedScore: true,
       normalisedGrade: true,
+      ppFlag: true,
+      sendFlag: true,
     },
   });
 
@@ -496,6 +498,8 @@ export async function computeAssessmentAnalysis(
     normalizedScore: number | null;
     normalisedGrade: string | null;
     rawValue: string;
+    ppFlag: boolean | null;
+    sendFlag: boolean | null;
   };
   const resultLookup = new Map<string, ResultEntry>();
   for (const r of rawResults as any[]) {
@@ -503,6 +507,8 @@ export async function computeAssessmentAnalysis(
       normalizedScore: r.normalizedScore !== null ? Number(r.normalizedScore) : null,
       normalisedGrade: r.normalisedGrade,
       rawValue: r.rawValue,
+      ppFlag: r.ppFlag,
+      sendFlag: r.sendFlag,
     });
   }
 
@@ -520,6 +526,8 @@ export async function computeAssessmentAnalysis(
       normalizedScore: r.normalizedScore !== null ? Number(r.normalizedScore) : null,
       normalisedGrade: r.normalisedGrade,
       rawValue: r.rawValue,
+      ppFlag: r.ppFlag,
+      sendFlag: r.sendFlag,
     });
   }
 
@@ -592,8 +600,8 @@ export async function computeAssessmentAnalysis(
         assessedAt: new Date(cp.current.assessedAt),
         normalizedScore: r.normalizedScore,
         movement,
-        sendFlag: student.sendFlag,
-        ppFlag: student.ppFlag,
+        sendFlag: r.sendFlag ?? student.sendFlag,
+        ppFlag: r.ppFlag ?? student.ppFlag,
         priorBand,
       });
     }
@@ -613,8 +621,8 @@ export async function computeAssessmentAnalysis(
       studentId: student.id,
       studentName: student.fullName,
       yearGroup: student.yearGroup,
-      sendFlag: student.sendFlag,
-      ppFlag: student.ppFlag,
+      sendFlag: currentResults.find((r) => r.sendFlag !== null)?.sendFlag ?? student.sendFlag,
+      ppFlag: currentResults.find((r) => r.ppFlag !== null)?.ppFlag ?? student.ppFlag,
       priorBand,
       ks2MathsScaledScore: student.ks2MathsScaledScore,
       ks2ReadingScaledScore: student.ks2ReadingScaledScore,

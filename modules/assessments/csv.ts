@@ -31,6 +31,8 @@ export type AssessmentCsvRecord = {
   studentName: string;
   subject: string;
   rawValue: string;
+  ppFlag?: boolean;
+  sendFlag?: boolean;
 };
 
 export type AssessmentCsvError = {
@@ -62,6 +64,7 @@ const META_COLUMN_PATTERNS = [
   /^pp$/i,
   /^pupil[\s_-]?premium$/i,
   /^send$/i,
+  /^sen$/i,
   /^gender$/i,
   /^sex$/i,
   /^form$/i,
@@ -157,6 +160,20 @@ function findUpnColumn(headers: string[]): string | null {
   return null;
 }
 
+/** Preserve explicit Yes/No membership without treating a missing column as No. */
+function cohortFlags(row: Record<string, string>, rowNumber: number, errors: AssessmentCsvError[]) {
+  const flags: { ppFlag?: boolean; sendFlag?: boolean } = {};
+  for (const [field, aliases] of [["ppFlag", ["pp", "pupil premium", "pupil_premium", "pupil-premium"]], ["sendFlag", ["send", "sen"]]] as const) {
+    const header = Object.keys(row).find((h) => aliases.some((alias) => h.trim().toLowerCase() === alias));
+    if (!header || !row[header].trim()) continue;
+    const value = row[header].trim().toLowerCase();
+    if (["yes", "y", "true", "1"].includes(value)) flags[field] = true;
+    else if (["no", "n", "false", "0"].includes(value)) flags[field] = false;
+    else errors.push({ rowNumber, field: header, message: `Invalid cohort status "${row[header]}". Expected Yes or No.` });
+  }
+  return flags;
+}
+
 // ─── Wide format parser ───────────────────────────────────────────────────────
 
 /**
@@ -190,6 +207,9 @@ function parseWide(
     const upn = upnCol ? (row[upnCol] || "").trim() : "";
     const rawName = (row[nameCol] || "").trim();
     const studentName = normaliseStudentName(rawName);
+    const priorErrors = errors.length;
+    const flags = cohortFlags(row, rowNum, errors);
+    if (errors.length > priorErrors) return;
 
     if (!studentName) {
       errors.push({ rowNumber: rowNum, field: "Name", message: "Student name is required" });
@@ -213,7 +233,7 @@ function parseWide(
         }
       }
 
-      records.push({ upn, studentName, subject: col, rawValue });
+      records.push({ upn, studentName, subject: col, rawValue, ...flags });
     }
   });
 
@@ -243,6 +263,9 @@ function parseLong(
     const upn = resolveField(row, mapping, "UPN").trim();
     const rawName = resolveField(row, mapping, "Name").trim();
     const studentName = normaliseStudentName(rawName);
+    const priorErrors = errors.length;
+    const flags = cohortFlags(row, rowNum, errors);
+    if (errors.length > priorErrors) return;
     const subject = resolveField(row, mapping, "Subject").trim();
     const rawValue = resolveField(row, mapping, "Grade").trim();
 
@@ -267,7 +290,7 @@ function parseLong(
       }
     }
 
-    records.push({ upn, studentName, subject, rawValue });
+    records.push({ upn, studentName, subject, rawValue, ...flags });
   });
 
   return { records, errors, preview: records.slice(0, 20), layout: "long" };

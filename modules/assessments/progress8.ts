@@ -358,6 +358,8 @@ export async function getProgress8ForPoint(
             select: {
               assessmentId: true,
               studentId: true,
+              ppFlag: true,
+              sendFlag: true,
               rawValue: true,
               normalizedScore: true,
               status: true,
@@ -409,6 +411,8 @@ export async function getProgress8ForPoint(
     }
   }
 
+  const cohortByStudent = new Map(point.assessments.flatMap((a) => a.results.map((r) => [r.studentId, r] as const)));
+
   const details: StudentP8Detail[] = students.map((student) => {
     const lookupScore = getProgress8BenchmarkLookupScore(
       student.ks2ReadingScaledScore,
@@ -425,8 +429,8 @@ export async function getProgress8ForPoint(
       studentId: student.id,
       name: student.fullName,
       yearGroup: student.yearGroup,
-      ppFlag: student.ppFlag,
-      sendFlag: student.sendFlag,
+      ppFlag: cohortByStudent.get(student.id)?.ppFlag ?? student.ppFlag,
+      sendFlag: cohortByStudent.get(student.id)?.sendFlag ?? student.sendFlag,
       hasKs2Data:
         student.ks2ReadingScaledScore !== null && student.ks2MathsScaledScore !== null,
       expectedA8,
