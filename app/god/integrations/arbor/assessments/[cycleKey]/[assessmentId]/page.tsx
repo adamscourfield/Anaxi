@@ -110,14 +110,19 @@ export default async function ArborAssessmentMarkSheetPage({
   const batch = definition.source === "BATCH"
     ? await client.getProgressAssessmentBatch(definition.id)
     : null;
-  const batchAssessmentId = batch?.assessment?.id ?? definition.id;
-  const batchTargets = batch ? await client.listProgressAssessmentBatchTargets([batch.id]) : [];
+  // Older discovery records identify a target while newer records identify its
+  // parent batch. Both represent the same subject assessment and must read
+  // the same dated mark feed.
+  const batchMetadata = batch ?? batchTarget?.progressAssessmentBatch ?? null;
+  const batchAssessmentId = batchMetadata?.assessment?.id ?? definition.id;
+  const batchTargets = batch
+    ? await client.listProgressAssessmentBatchTargets([batch.id])
+    : batchTarget ? [batchTarget] : [];
   const batchRoster = [...new Map(
-    batchTargets.flatMap((target) => target.allStudents).map((student) => [student.id, student]),
+    batchTargets.flatMap((target) => target.allStudents.length ? target.allStudents : target.students).map((student) => [student.id, student]),
   ).values()];
-  const targetMarks = batchTargets.flatMap((target) => target.studentProgressAssessmentMarks)
-    .filter((mark) => mark.assessment?.id === batchAssessmentId);
-  const progressMarks = batch
+  const targetMarks = batchTargets.flatMap((target) => target.studentProgressAssessmentMarks);
+  const progressMarks = batchMetadata
     ? (await client.listAssessmentMarksForDefinitionInRange(batchAssessmentId, assessmentYearRange(cycle.academicYear)))
       .filter((mark) => mark.assessment?.id === batchAssessmentId)
     : [];
@@ -126,44 +131,26 @@ export default async function ArborAssessmentMarkSheetPage({
   // those records into the roster rather than losing valid historic results.
   const recordedBatchMarks = [...progressMarks, ...targetMarks];
   const recordedBatchStudentIds = new Set(recordedBatchMarks.map((mark) => mark.student.id));
-  const allMarks: ArborMark[] = batchTarget
-    ? [
-      ...batchTarget.studentProgressAssessmentMarks,
-      // A target's students are Arbor's roster even if a particular pupil has
-      // not received a grade yet. Include a blank row for those pupils rather
-      // than substituting the whole year group.
-      ...batchTarget.students
-        .filter((student) => !batchTarget.studentProgressAssessmentMarks.some((mark) => mark.student.id === student.id))
-        .map((student) => ({
-          id: `roster:${batchTarget.id}:${student.id}`,
-          student,
-          assessmentDate: definition.assessmentDate ?? null,
-          displayName: definition.periodHint ?? null,
-          valueFields: {},
-          grade: null,
-          assessment: batchTarget.progressAssessmentBatch?.assessment ?? null,
-        })),
-    ]
-    : batch
+  const allMarks: ArborMark[] = batchMetadata
       ? [
         ...recordedBatchMarks,
         ...batchRoster
           .filter((student) => !recordedBatchStudentIds.has(student.id))
           .map((student) => ({
-            id: `roster:${batch.id}:${student.id}`,
+            id: `roster:${batchMetadata.id}:${student.id}`,
             student,
             assessmentDate: definition.assessmentDate ?? null,
             displayName: definition.periodHint ?? null,
             valueFields: {},
             grade: null,
-            assessment: batch.assessment,
+            assessment: batchMetadata.assessment,
           })),
       ]
       : await client.listAssessmentMarksForDefinitionInRange(definition.id, assessmentYearRange(cycle.academicYear));
   // Arbor accepts an assessment filter but a review must not rely on that
   // server-side filter alone. Verify the relationship on every returned mark
   // before it can appear in a subject sheet.
-  const subjectMarks = batchTarget || batch ? allMarks : allMarks.filter((mark) => mark.assessment?.id === definition.id);
+  const subjectMarks = batchMetadata ? allMarks : allMarks.filter((mark) => mark.assessment?.id === definition.id);
   const termMarks = subjectMarks.filter((mark) => {
     // Arbor returns every dated mark for this subject definition. Keep only
     // the term represented by the requested cycle; otherwise a July result
