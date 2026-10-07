@@ -320,7 +320,7 @@ export async function POST(req: Request) {
       const message = error instanceof Error ? error.message.slice(0, 300) : "Reviewed assessment import failed.";
       await db.sharedIntegration.update({ where: { id: integration.id }, data: { lastSyncStatus: "PARTIAL", lastSyncError: message } });
       return manualImport
-        ? manualResult({ assessmentImport: "failed" })
+        ? manualResult({ assessmentImport: "failed", assessmentImportError: message })
         : NextResponse.json({ error: message }, { status: 503 });
     }
   }
