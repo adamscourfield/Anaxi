@@ -456,7 +456,7 @@ function HeadlineMeasureCard({
       </div>
     </>
   );
-  const cardClass = "relative block overflow-hidden rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient";
+  const cardClass = "relative block overflow-hidden rounded-2xl border border-border bg-[var(--surface-container-lowest)] p-5 shadow-ambient";
   if (!href) return <div className={cardClass}>{inner}</div>;
   return (
     <Link href={href} className={`${cardClass} cursor-pointer calm-transition hover:-translate-y-0.5 hover:shadow-lg`}>
@@ -934,7 +934,7 @@ export default function ResultPointPage() {
                         { label: "PP Gap — 4+ threshold", cohort: metrics.gcseBasics.ppEm4, baseline: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4, baselineLabel: "NON-PP", cohortLabel: "PP STUDENTS" },
                         { label: "PP Gap — 5+ threshold", cohort: metrics.gcseBasics.ppEm5, baseline: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5, baselineLabel: "NON-PP", cohortLabel: "PP STUDENTS" },
                       ].map(({ label, cohort, baseline, gap, baselineLabel, cohortLabel }) => (
-                        <div key={label} className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
+                        <div key={label} className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
                           <div className="flex items-start justify-between">
                             <div>
                               <h3 className="text-base font-bold tracking-tight text-text">{label}</h3>
@@ -968,7 +968,7 @@ export default function ResultPointPage() {
                         { label: "SEND Gap — 4+ threshold", cohort: metrics.gcseBasics.sendEm4, baseline: metrics.gcseBasics.nonSendEm4, gap: metrics.gcseBasics.sendGap4, baselineLabel: "NON-SEND", cohortLabel: "SEND STUDENTS" },
                         { label: "SEND Gap — 5+ threshold", cohort: metrics.gcseBasics.sendEm5, baseline: metrics.gcseBasics.nonSendEm5, gap: metrics.gcseBasics.sendGap5, baselineLabel: "NON-SEND", cohortLabel: "SEND STUDENTS" },
                       ].map(({ label, cohort, baseline, gap, baselineLabel, cohortLabel }) => (
-                        <div key={label} className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
+                        <div key={label} className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
                           <div className="flex items-start justify-between">
                             <div>
                               <h3 className="text-base font-bold tracking-tight text-text">{label}</h3>
@@ -2731,7 +2731,7 @@ function TeachingTab({
   }
   if (!data || !data.subjects.length) {
     return (
-      <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
+      <div className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
         No teaching group data available. Assign students to teachers in the Teaching section to see class-level analysis.
       </div>
     );
@@ -2740,7 +2740,7 @@ function TeachingTab({
   const hasAnyClasses = data.subjects.some((s) => s.classes.length > 0);
   if (!hasAnyClasses) {
     return (
-      <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
+      <div className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
         Student–teacher assignments not found for this assessment period. Once teaching groups are configured, class-level analysis will appear here.
       </div>
     );
@@ -2758,7 +2758,7 @@ function TeachingTab({
         const yearMeanVal = subj.yearMean;
 
         return (
-          <div key={subj.subject} className="rounded-2xl bg-[var(--surface-container-lowest)] shadow-ambient overflow-hidden">
+          <div key={subj.subject} className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] shadow-ambient overflow-hidden">
             <button
               type="button"
               onClick={() => setExpandedSubject(isExpanded ? null : subj.subject)}
