@@ -9,9 +9,10 @@ import { toast } from "@/components/toast-provider";
 type Props = {
   cycleId: string;
   cycleLabel: string;
+  className?: string;
 };
 
-export function CycleDeleteControl({ cycleId, cycleLabel }: Props) {
+export function CycleDeleteControl({ cycleId, cycleLabel, className }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -35,7 +36,14 @@ export function CycleDeleteControl({ cycleId, cycleLabel }: Props) {
 
   return (
     <>
-      <Button type="button" variant="ghost" className="text-[var(--error)]" disabled={busy} onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant="ghost"
+        className={className}
+        style={{ color: "var(--error)" }}
+        disabled={busy}
+        onClick={() => setOpen(true)}
+      >
         Delete cycle
       </Button>
       <DestructiveConfirmDialog

@@ -17,7 +17,7 @@ export function CycleCompareLink({ cycleId, points }: Props) {
   const to = withData[withData.length - 1]!.id;
 
   return (
-    <Button asChild variant="secondary" className="h-8 py-0 text-xs">
+    <Button asChild variant="secondary">
       <Link href={`/assessments/${cycleId}/compare?from=${from}&to=${to}`}>Compare points</Link>
     </Button>
   );

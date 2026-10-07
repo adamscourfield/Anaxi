@@ -8,9 +8,10 @@ import { toast } from "@/components/toast-provider";
 type Props = {
   cycleId: string;
   isActive: boolean;
+  className?: string;
 };
 
-export function CycleArchiveControl({ cycleId, isActive }: Props) {
+export function CycleArchiveControl({ cycleId, isActive, className }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -35,7 +36,7 @@ export function CycleArchiveControl({ cycleId, isActive }: Props) {
   }
 
   return (
-    <Button type="button" variant="ghost" disabled={busy} onClick={() => void toggleArchive()}>
+    <Button type="button" variant="ghost" className={className} disabled={busy} onClick={() => void toggleArchive()}>
       {busy ? "Saving…" : isActive ? "Archive cycle" : "Restore cycle"}
     </Button>
   );
