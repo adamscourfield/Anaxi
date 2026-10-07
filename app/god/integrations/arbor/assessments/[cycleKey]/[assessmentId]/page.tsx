@@ -116,7 +116,6 @@ function qualificationResultAsMark(
     // only as a qualification outcome.
     displayName: definition.periodHint ?? null,
     valueFields: {
-      ...(result.qualificationGradeForStreaming ? { gradeValue: result.qualificationGradeForStreaming } : {}),
       ...(result.numericDisplayValue ? { resultValue: result.numericDisplayValue } : {}),
       ...(result.numericValue === null ? {} : { numericValue: result.numericValue }),
     },
