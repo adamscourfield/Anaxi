@@ -81,7 +81,7 @@ type BannerVariant = "success" | "danger";
 
 const BANNER_STYLES: Record<BannerVariant, { border: string; bg: string; text: string }> = {
   success: { border: "border-success/30", bg: "bg-[var(--pill-success-bg)]", text: "text-success" },
-  danger: { border: "border-danger/30", bg: "bg-[var(--pill-danger-bg)]", text: "text-danger" },
+  danger: { border: "border-error/30", bg: "bg-[var(--pill-error-bg)]", text: "text-error" },
 };
 
 function StatusBanner({
@@ -199,7 +199,7 @@ const SECTION_ICON = {
 
 function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, iconClassName }: { label: string; detail: string; percent: number; tone?: "success" | "warning" | "danger" | "neutral"; icon?: ReactNode; iconClassName?: string }) {
   const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
-  const barClass = tone === "success" ? "bg-success" : tone === "warning" ? "bg-warning" : tone === "danger" ? "bg-danger" : "bg-accent";
+  const barClass = tone === "success" ? "bg-success" : tone === "warning" ? "bg-warning" : tone === "danger" ? "bg-error" : "bg-accent";
   return (
     <div className="space-y-2.5 rounded-sm border border-border/70 bg-[var(--surface-container-lowest)] p-3">
       <div className="flex items-center justify-between gap-3">
@@ -218,6 +218,41 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
       </div>
       <MetaText>{detail}</MetaText>
     </div>
+  );
+}
+
+// ─── Action menu ──────────────────────────────────────────────────────────────
+// A primary action stays a visible button; less-frequent checks collapse into
+// a "More" dropdown instead of stacking into a ragged row of equal-weight
+// buttons. Native <details>/<summary> — no client JS needed, and each item is
+// still a real <form> POST, so it works exactly like the buttons it replaces.
+
+function ActionMenu({ label = "More", children }: { label?: string; children: ReactNode }) {
+  return (
+    <details className="group/menu relative inline-block">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md border border-border bg-[var(--surface-container-lowest)] px-4 py-2.5 text-sm font-semibold text-[var(--on-surface)] calm-transition hover:bg-[var(--surface-container-low)] [&::-webkit-details-marker]:hidden">
+        {label}
+        <svg className="h-3.5 w-3.5 text-muted calm-transition group-open/menu:rotate-180" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </summary>
+      <div className="absolute left-0 z-20 mt-1.5 w-72 space-y-0.5 rounded-md border border-border bg-[var(--surface-container-lowest)] p-1.5 shadow-lg">
+        {children}
+      </div>
+    </details>
+  );
+}
+
+/** A form-submitting action styled as a dropdown row instead of a standalone button. */
+function MenuItemForm({ action, csrfToken, hidden, children }: { action: string; csrfToken: string; hidden?: Record<string, string>; children: ReactNode }) {
+  return (
+    <form method="post" action={action}>
+      <CsrfInput token={csrfToken} />
+      {hidden ? Object.entries(hidden).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />) : null}
+      <button type="submit" className="w-full rounded px-3 py-2 text-left text-sm font-medium text-[var(--on-surface)] calm-transition hover:bg-[var(--surface-container-low)]">
+        {children}
+      </button>
+    </form>
   );
 }
 
@@ -322,7 +357,10 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
     : [];
   const studentCountByYearGroup = new Map(activeStudentsByYearGroup.map((row) => [row.yearGroup, row._count._all]));
   const previewCount = (value: string | undefined) => (/^\d+$/.test(value ?? "") ? Number(value) : 0);
-  const actionButtonClass = "w-full sm:w-64";
+  // Buttons size to their own label instead of a fixed box, so a row of
+  // several (e.g. the assessment section) reads as a tidy toolbar rather
+  // than a ragged grid of equally-wide, mostly-empty pills.
+  const actionButtonClass = "w-full sm:w-auto";
   const unrecognisedLevels = Array.isArray(params?.unrecognised)
     ? params.unrecognised
     : params?.unrecognised
@@ -363,8 +401,28 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
   const assessmentAlert = alertFingerprint("assessments", assessmentNeedsReview ? assessmentCycles.filter((cycle) => !approvedAssessmentCycles.has(cycle.key)).map((cycle) => cycle.key).sort() : params?.assessmentHistory === "failed" ? "history-failed" : savedAttention.assessments);
   const visibleAlert = (section: string, fingerprint: string | null) => Boolean(fingerprint && acknowledgedAttention[section] !== fingerprint);
 
+  // One list drives both the per-section "!" badge/banner and the page-level
+  // "Needs attention" summary below, so an administrator never has to hunt
+  // through 8 collapsed sections to find out what is actually wrong.
+  const attentionFingerprintByKey: Record<keyof typeof SECTION_ICON, string | null> = {
+    connection: connectionAlert, photos: photoAlert, timetable: timetableAlert, people: peopleAlert,
+    behaviour: behaviourAlert, attendance: attendanceAlert, leave: leaveAlert, assessments: assessmentAlert,
+  };
+  const attentionItems = (
+    [
+      { key: "connection", label: "Connection", message: "The Arbor connection needs review. Check the connection result below before acknowledging it." },
+      { key: "photos", label: "Photo access", message: "Arbor photo access needs review. Check the photo result below before acknowledging it." },
+      { key: "timetable", label: "Timetable access", message: "The timetable sync needs review. Check the latest result below before acknowledging it." },
+      { key: "people", label: "Staff and student syncing", message: "The people sync needs review. Check the latest result below before acknowledging it." },
+      { key: "behaviour", label: "Behaviour syncing", message: "The latest behaviour sync needs review. Check the error below before acknowledging it." },
+      { key: "attendance", label: "Attendance syncing", message: "The attendance sync needs review. Check the latest result below before acknowledging it." },
+      { key: "leave", label: "Leave of absence syncing", message: "Arbor staff-absence access needs review. Check the permission result below before acknowledging it." },
+      { key: "assessments", label: "Assessment syncing", message: "Assessment review needs attention. Check the cycle status below before acknowledging it." },
+    ] as Array<{ key: keyof typeof SECTION_ICON; label: string; message: string }>
+  ).filter((item) => visibleAlert(item.key, attentionFingerprintByKey[item.key]));
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-[1400px] space-y-6 p-6">
       <PageHeader
         variant="ledger"
         eyebrow="God Mode"
@@ -816,7 +874,7 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
       ) : null}
       {params?.staffProvisioning === "success" ? <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">New Arbor staff checked.</div><MetaText className="mt-1">{previewCount(params.staffProvisioningQueued)} staff record(s) were added to the approval queue. No account has been created yet.</MetaText></Card> : null}
       {params?.staffProvisioning === "provisioned" ? <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">Staff account created.</div><MetaText className="mt-1">The selected school account(s) were created or linked, and an invitation was sent.</MetaText></Card> : null}
-      {params?.staffProvisioning === "failed" || params?.staffProvisioning === "invalid" || params?.staffProvisioning === "not-found" || params?.staffProvisioning === "not-connected" ? <Card className="border-danger/30 bg-[var(--pill-danger-bg)]"><div className="font-medium text-danger">Staff provisioning needs attention.</div><MetaText className="mt-1">No new staff access was granted.</MetaText></Card> : null}
+      {params?.staffProvisioning === "failed" || params?.staffProvisioning === "invalid" || params?.staffProvisioning === "not-found" || params?.staffProvisioning === "not-connected" ? <Card className="border-error/30 bg-[var(--pill-error-bg)]"><div className="font-medium text-error">Staff provisioning needs attention.</div><MetaText className="mt-1">No new staff access was granted.</MetaText></Card> : null}
 
       {integration?.status === "CONNECTED" ? (
         <>
@@ -849,8 +907,39 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
             </div>
           </Card>
 
+          {attentionItems.length > 0 ? (
+            <Card className="space-y-3 border-error/30 bg-[var(--pill-error-bg)]">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-error text-xs font-bold text-white" aria-hidden>
+                  {attentionItems.length}
+                </span>
+                <H3 className="text-error">Needs attention</H3>
+              </div>
+              <div className="divide-y divide-error/15 overflow-hidden rounded-sm border border-error/20 bg-[var(--surface-container-lowest)]">
+                {attentionItems.map((item) => (
+                  <a
+                    key={item.key}
+                    href={`#${item.key}`}
+                    className="flex items-center gap-3 px-4 py-3 calm-transition hover:bg-[var(--pill-error-bg)]"
+                  >
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md [&_svg]:h-4 [&_svg]:w-4 [&_svg]:stroke-[1.75] ${SECTION_TILE_CLASS[item.key]}`} aria-hidden>
+                      {SECTION_ICON[item.key]}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-[var(--on-surface)]">{item.label}</span>
+                      <span className="block truncate text-xs text-muted">{item.message}</span>
+                    </span>
+                    <svg className="h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </Card>
+          ) : null}
+
           <div className="space-y-3">
-            <CollapsibleCard title="1. Connection" icon={SECTION_ICON.connection} iconClassName={SECTION_TILE_CLASS.connection} defaultOpen={false} attention={visibleAlert("connection", connectionAlert)} attentionKey="connection" attentionFingerprint={connectionAlert ?? undefined} attentionMessage="The Arbor connection needs review. Check the connection result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="connection" title="1. Connection" icon={SECTION_ICON.connection} iconClassName={SECTION_TILE_CLASS.connection} defaultOpen={false} attention={visibleAlert("connection", connectionAlert)} attentionKey="connection" attentionFingerprint={connectionAlert ?? undefined} attentionMessage="The Arbor connection needs review. Check the connection result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>{integration.label}</H3>
@@ -865,7 +954,7 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="2. Photo access" icon={SECTION_ICON.photos} iconClassName={SECTION_TILE_CLASS.photos} defaultOpen={false} attention={visibleAlert("photos", photoAlert)} attentionKey="photos" attentionFingerprint={photoAlert ?? undefined} attentionMessage="Arbor photo access needs review. Check the photo result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="photos" title="2. Photo access" icon={SECTION_ICON.photos} iconClassName={SECTION_TILE_CLASS.photos} defaultOpen={false} attention={visibleAlert("photos", photoAlert)} attentionKey="photos" attentionFingerprint={photoAlert ?? undefined} attentionMessage="Arbor photo access needs review. Check the photo result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Profile photos update automatically</H3>
@@ -878,31 +967,27 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="3. Timetable access" icon={SECTION_ICON.timetable} iconClassName={SECTION_TILE_CLASS.timetable} defaultOpen={false} attention={visibleAlert("timetable", timetableAlert)} attentionKey="timetable" attentionFingerprint={timetableAlert ?? undefined} attentionMessage="The timetable sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="timetable" title="3. Timetable access" icon={SECTION_ICON.timetable} iconClassName={SECTION_TILE_CLASS.timetable} defaultOpen={false} attention={visibleAlert("timetable", timetableAlert)} attentionKey="timetable" attentionFingerprint={timetableAlert ?? undefined} attentionMessage="The timetable sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Subject teachers</H3>
                   <MetaText className="mt-1">Current Arbor teaching groups map each linked student to their teachers and subjects. Arbor-managed links update nightly across the whole roster; manually entered Anaxi links remain untouched.</MetaText>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/timetable")} className={actionButtonClass}>
-                    <CsrfInput token={csrfToken} />
-                    <SubmitButton variant="secondary" className="w-full">Check timetable access</SubmitButton>
-                  </form>
-                  <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/timetable/summary")} className={actionButtonClass}>
-                    <CsrfInput token={csrfToken} />
-                    <SubmitButton variant="ghost" className="w-full">Preview subject links</SubmitButton>
-                  </form>
+                <div className="flex flex-wrap items-center gap-2">
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/timetable")} className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
                     <input type="hidden" name="confirm" value="SYNC_TIMETABLE" />
                     <SubmitButton variant="primary" className="w-full">Sync next subject-teacher page</SubmitButton>
                   </form>
+                  <ActionMenu label="More checks">
+                    <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable")} csrfToken={csrfToken}>Check timetable access</MenuItemForm>
+                    <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable/summary")} csrfToken={csrfToken}>Preview subject links</MenuItemForm>
+                  </ActionMenu>
                 </div>
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="4. Staff and student syncing" icon={SECTION_ICON.people} iconClassName={SECTION_TILE_CLASS.people} defaultOpen={false} attention={visibleAlert("people", peopleAlert)} attentionKey="people" attentionFingerprint={peopleAlert ?? undefined} attentionMessage="The people sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="people" title="4. Staff and student syncing" icon={SECTION_ICON.people} iconClassName={SECTION_TILE_CLASS.people} defaultOpen={false} attention={visibleAlert("people", peopleAlert)} attentionKey="people" attentionFingerprint={peopleAlert ?? undefined} attentionMessage="The people sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>People records update nightly</H3>
@@ -912,10 +997,11 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/students")} className={actionButtonClass}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Check students</SubmitButton></form>
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/staff")} className={actionButtonClass}><CsrfInput token={csrfToken} /><SubmitButton variant="secondary" className="w-full">Check staff</SubmitButton></form>
                 </div>
-                <Card className="space-y-3" tone="inset">
+                <Card className="space-y-4" tone="inset">
                   <div>
-                    <H3>Historic pupil archive</H3>
-                    <MetaText className="mt-1">One-off setup for former Arbor pupils. They are added or moved to archived status so historic attainment remains attributable, without appearing in operational student lists. Records without enough information to identify Primary or Secondary are left unchanged.</MetaText>
+                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">One-off setup</div>
+                    <H3 className="mt-2">Historic pupil archive</H3>
+                    <MetaText className="mt-1">Former Arbor pupils are added or moved to archived status so historic attainment remains attributable, without appearing in operational student lists. Records without enough information to identify Primary or Secondary are left unchanged.</MetaText>
                   </div>
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/historic-students")} className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
@@ -926,8 +1012,8 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="5. Behaviour syncing" icon={SECTION_ICON.behaviour} iconClassName={SECTION_TILE_CLASS.behaviour} defaultOpen={false} attention={visibleAlert("behaviour", behaviourAlert)} attentionKey="behaviour" attentionFingerprint={behaviourAlert ?? undefined} attentionMessage="The latest behaviour sync needs review. Check the error below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
-              <div className="space-y-3">
+            <CollapsibleCard id="behaviour" title="5. Behaviour syncing" icon={SECTION_ICON.behaviour} iconClassName={SECTION_TILE_CLASS.behaviour} defaultOpen={false} attention={visibleAlert("behaviour", behaviourAlert)} attentionKey="behaviour" attentionFingerprint={behaviourAlert ?? undefined} attentionMessage="The latest behaviour sync needs review. Check the error below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+              <div className="space-y-4">
                 <H3>Behaviour data updates nightly</H3>
                 <MetaText className="mt-1">Positive points, detentions, internal exclusions, and suspensions are imported into Anaxi&apos;s existing behaviour measures. No manual behaviour upload is needed.</MetaText>
                 {latestBehaviourRun?.status === "SUCCESS" ? <MetaText>Last sync: {previewCount(String(latestBehaviourRun.recordsCreated))} new and {previewCount(String(latestBehaviourRun.recordsUpdated))} refreshed daily snapshots. Nightly catch-up continues automatically.</MetaText> : null}
@@ -935,14 +1021,14 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="6. Attendance syncing" icon={SECTION_ICON.attendance} iconClassName={SECTION_TILE_CLASS.attendance} defaultOpen={false} attention={visibleAlert("attendance", attendanceAlert)} attentionKey="attendance" attentionFingerprint={attendanceAlert ?? undefined} attentionMessage="The attendance sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="attendance" title="6. Attendance syncing" icon={SECTION_ICON.attendance} iconClassName={SECTION_TILE_CLASS.attendance} defaultOpen={false} attention={visibleAlert("attendance", attendanceAlert)} attentionKey="attendance" attentionFingerprint={attendanceAlert ?? undefined} attentionMessage="The attendance sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div>
                 <H3>Attendance updates nightly</H3>
                 <MetaText className="mt-1">Academic-year attendance totals and daily snapshots refresh automatically. Anaxi then compares the selected 7, 14, 21, or 28-day period with the previous period.</MetaText>
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="7. Leave of absence syncing" icon={SECTION_ICON.leave} iconClassName={SECTION_TILE_CLASS.leave} defaultOpen={false} attention={visibleAlert("leave", leaveAlert)} attentionKey="leave" attentionFingerprint={leaveAlert ?? undefined} attentionMessage="Arbor staff-absence access needs review. Check the permission result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="leave" title="7. Leave of absence syncing" icon={SECTION_ICON.leave} iconClassName={SECTION_TILE_CLASS.leave} defaultOpen={false} attention={visibleAlert("leave", leaveAlert)} attentionKey="leave" attentionFingerprint={leaveAlert ?? undefined} attentionMessage="Arbor staff-absence access needs review. Check the permission result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Check Arbor staff-absence access</H3>
@@ -965,8 +1051,8 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard title="8. Assessment syncing" icon={SECTION_ICON.assessments} iconClassName={SECTION_TILE_CLASS.assessments} defaultOpen={false} attention={visibleAlert("assessments", assessmentAlert)} attentionKey="assessments" attentionFingerprint={assessmentAlert ?? undefined} attentionMessage="Assessment review needs attention. Check the cycle status below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
-              <div className="space-y-5">
+            <CollapsibleCard id="assessments" title="8. Assessment syncing" icon={SECTION_ICON.assessments} iconClassName={SECTION_TILE_CLASS.assessments} defaultOpen={false} attention={visibleAlert("assessments", assessmentAlert)} attentionKey="assessments" attentionFingerprint={assessmentAlert ?? undefined} attentionMessage="Assessment review needs attention. Check the cycle status below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+              <div className="space-y-4">
                 <div>
                   <H3>Assessment review</H3>
                   <MetaText className="mt-1">This is the only data area that requires a decision before it appears in Anaxi.</MetaText>
@@ -981,34 +1067,27 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
                     {params.assessmentHistoryError || "No assessment data was imported."}
                   </StatusBanner>
                 ) : null}
-                <Card className="space-y-5" tone="inset">
+                <Card className="space-y-4" tone="inset">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Controlled import</div>
                     <H3 className="mt-2">Proposed assessment cycles</H3>
                     <MetaText className="mt-1">Review and approve only the cycles you want to bring in. Each uses the agreed year group, phase, and term naming convention.</MetaText>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/assessments/history")} className={actionButtonClass}>
+                      <CsrfInput token={csrfToken} />
+                      <SubmitButton variant="primary" className="w-full">{assessmentSync.historicComplete ? "Recheck historic cycles" : "Find historic cycles"}</SubmitButton>
+                    </form>
                     <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/assessments/active")} className={actionButtonClass}>
                       <CsrfInput token={csrfToken} />
                       <SubmitButton variant="secondary" className="w-full">Refresh catalogue</SubmitButton>
                     </form>
-                    <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/assessments/history")} className={actionButtonClass}>
-                      <CsrfInput token={csrfToken} />
-                      <SubmitButton variant="secondary" className="w-full">{assessmentSync.historicComplete ? "Recheck historic cycles" : "Find historic cycles"}</SubmitButton>
-                    </form>
-                    <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/assessments/periods")} className={actionButtonClass}>
-                      <CsrfInput token={csrfToken} />
-                      <SubmitButton variant="ghost" className="w-full">Check assessment periods</SubmitButton>
-                    </form>
-                    <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/assessments/sources")} className={actionButtonClass}>
-                      <CsrfInput token={csrfToken} />
-                      <SubmitButton variant="ghost" className="w-full">Check historic sources</SubmitButton>
-                    </form>
-                    <form method="post" action={connectionAction("/api/god/integrations/arbor/preview/assessments/source-fields")} className={actionButtonClass}>
-                      <CsrfInput token={csrfToken} />
-                      <SubmitButton variant="ghost" className="w-full">Inspect historic source fields</SubmitButton>
-                    </form>
+                    <ActionMenu label="Diagnostics">
+                      <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/assessments/periods")} csrfToken={csrfToken}>Check assessment periods</MenuItemForm>
+                      <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/assessments/sources")} csrfToken={csrfToken}>Check historic sources</MenuItemForm>
+                      <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/assessments/source-fields")} csrfToken={csrfToken}>Inspect historic source fields</MenuItemForm>
+                    </ActionMenu>
                   </div>
                 </div>
 
@@ -1065,7 +1144,7 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral", icon, icon
                                     </label>
                                     <div className="flex shrink-0 items-center gap-3">
                                       <Link href={assessmentReviewHref(cycle.key, integration.id)} className="text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
-                                      <button type="submit" name="deleteCycleKey" value={cycle.key} className="rounded-sm border border-danger/35 bg-[var(--pill-danger-bg)] px-3 py-1.5 text-sm font-semibold text-danger hover:border-danger/60">Remove cycle</button>
+                                      <button type="submit" name="deleteCycleKey" value={cycle.key} className="rounded-sm border border-error/35 bg-[var(--pill-error-bg)] px-3 py-1.5 text-sm font-semibold text-error hover:border-error/60">Remove cycle</button>
                                     </div>
                                   </div>
                                 );

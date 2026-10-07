@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 
 function ChevronDown() {
   return (
@@ -11,6 +11,7 @@ function ChevronDown() {
 }
 
 export function CollapsibleCard({
+  id,
   title,
   subtitle,
   icon,
@@ -25,6 +26,8 @@ export function CollapsibleCard({
   csrfToken,
   className = "",
 }: {
+  /** Lets a "Needs attention" summary or other link jump straight to this section, open. */
+  id?: string;
   title: string;
   /** Short one-line context shown under the title, next to the chevron. */
   subtitle?: string;
@@ -47,6 +50,23 @@ export function CollapsibleCard({
   csrfToken?: string;
   className?: string;
 }) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (!id || typeof window === "undefined") return;
+    const openIfTargeted = () => {
+      if (window.location.hash !== `#${id}`) return;
+      const el = detailsRef.current;
+      if (!el) return;
+      el.open = true;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    // Covers both a direct link (hash already set on load) and a same-page
+    // click on a "Needs attention" row (hash changes without a navigation).
+    openIfTargeted();
+    window.addEventListener("hashchange", openIfTargeted);
+    return () => window.removeEventListener("hashchange", openIfTargeted);
+  }, [id]);
+
   // Keep an acknowledgement hidden through parent rerenders. A changed
   // fingerprint represents a genuinely new issue and deliberately reopens it.
   const [dismissedFingerprint, setDismissedFingerprint] = useState<string | null>(null);
@@ -71,7 +91,9 @@ export function CollapsibleCard({
 
   return (
     <details
-      className={`overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none ${className}`}
+      ref={detailsRef}
+      id={id}
+      className={`scroll-mt-24 rounded-sm border border-border bg-surface-container-lowest shadow-none ${className}`}
       open={defaultOpen}
     >
       <summary className="group flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-[14px] font-semibold tracking-[-0.01em] text-text [&::-webkit-details-marker]:hidden">
@@ -85,7 +107,7 @@ export function CollapsibleCard({
             <span className="flex items-center gap-2">
               {title}
               {showAttention ? (
-                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#dc2626] text-[11px] font-bold text-white" title="Needs attention" aria-label="Needs attention">
+                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-error text-[11px] font-bold text-white" title="Needs attention" aria-label="Needs attention">
                   !
                 </span>
               ) : null}
@@ -99,9 +121,9 @@ export function CollapsibleCard({
       </summary>
       <div className="border-t border-border px-5 py-4 text-sm">
         {showAttention ? (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-danger/25 bg-[var(--pill-danger-bg)] px-3 py-2">
-            <span className="text-sm font-medium text-danger">{attentionMessage ?? "This section has an alert requiring review."}</span>
-            <button type="button" onClick={() => { void acknowledgeAttention(); }} className="rounded-sm border border-danger/30 bg-surface px-3 py-1.5 text-xs font-semibold text-danger hover:bg-[var(--pill-danger-bg)]">Acknowledge alert</button>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-error/25 bg-[var(--pill-error-bg)] px-3 py-2">
+            <span className="text-sm font-medium text-error">{attentionMessage ?? "This section has an alert requiring review."}</span>
+            <button type="button" onClick={() => { void acknowledgeAttention(); }} className="rounded-sm border border-error/30 bg-surface px-3 py-1.5 text-xs font-semibold text-error hover:bg-[var(--pill-error-bg)]">Acknowledge alert</button>
           </div>
         ) : null}
         {children}
