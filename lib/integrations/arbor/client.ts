@@ -58,7 +58,6 @@ export type ArborQualificationResult = {
   qualificationAward: {
     title: string | null;
     shortTitle: string | null;
-    qualificationSubject: { name: string | null; displayName: string | null } | null;
   } | null;
 };
 
@@ -387,7 +386,6 @@ export class ArborClient {
           qualificationGrade { displayName shortName code }
           qualificationAward {
             title shortTitle
-            qualificationSubject { name displayName }
           }
         }
       }`);

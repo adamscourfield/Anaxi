@@ -67,8 +67,6 @@ function qualificationResultMatchesDefinition(result: ArborQualificationResult, 
   const expected = normalisedQualificationSubject(definitionLabel);
   if (!expected || expected.length < 3) return false;
   const candidates = [
-    result.qualificationAward?.qualificationSubject?.name,
-    result.qualificationAward?.qualificationSubject?.displayName,
     result.qualificationAward?.shortTitle,
     result.qualificationAward?.title,
   ].map(normalisedQualificationSubject).filter(Boolean);
@@ -210,10 +208,14 @@ export default async function ArborAssessmentMarkSheetPage({
   const usesQualificationResults = (mapping.family === "GCSE" || mapping.family === "A_LEVEL")
     && (cycle.pointLabel === "Summer" || cycle.pointLabel === "Final");
   let qualificationReadFailed = false;
+  let qualificationReadError: string | null = null;
+  let qualificationResultsRead = 0;
   let qualificationMarks: ArborMark[] = [];
   if (usesQualificationResults) {
     try {
-      qualificationMarks = (await client.listQualificationResultsInRange(assessmentYearRange(cycle.academicYear)))
+      const qualificationResults = await client.listQualificationResultsInRange(assessmentYearRange(cycle.academicYear));
+      qualificationResultsRead = qualificationResults.length;
+      qualificationMarks = qualificationResults
         .filter((result) => qualificationResultMatchesDefinition(result, definition.label))
         .map((result) => qualificationResultAsMark(result, definition, batchMetadata?.assessment ?? {
           id: definition.id,
@@ -222,10 +224,11 @@ export default async function ArborAssessmentMarkSheetPage({
           assessmentShortName: null,
         }))
         .filter((mark): mark is ArborMark => Boolean(mark));
-    } catch {
+    } catch (error) {
       // The review remains available from the existing, read-only mark feed.
       // Never make an Arbor source problem look like an Anaxi application error.
       qualificationReadFailed = true;
+      qualificationReadError = error instanceof Error ? error.message.slice(0, 220) : "Arbor did not return qualification outcomes.";
     }
   }
   // Arbor accepts an assessment filter but a review must not rely on that
@@ -293,7 +296,8 @@ export default async function ArborAssessmentMarkSheetPage({
           <H3>Arbor mark sheet</H3>
           <MetaText className="mt-1">{cycle.cycleLabel} · {cycle.gradeFormat === "PERCENTAGE" ? "Percentage" : cycle.gradeFormat === "A_LEVEL" ? "A-Level" : "GCSE"} · This view does not create, amend, or import results.</MetaText>
         </div>
-        {qualificationReadFailed ? <MetaText>Arbor could not provide qualification outcomes for this sheet just now. The available progress mark feed is shown instead; no data has been changed.</MetaText> : null}
+        {qualificationReadFailed ? <MetaText>Arbor could not provide qualification outcomes for this sheet just now. The available progress mark feed is shown instead; no data has been changed. Detail: {qualificationReadError}</MetaText> : null}
+        {usesQualificationResults && !qualificationReadFailed ? <MetaText>Qualification-result source checked: {qualificationResultsRead} outcome{qualificationResultsRead === 1 ? "" : "s"} in this academic year; {qualificationMarks.length} matched to this subject.</MetaText> : null}
         {rows.length ? (
           <div className="max-h-[70vh] overflow-auto rounded-sm border border-border/70">
             <table className="w-full min-w-[48rem] text-left text-sm">
