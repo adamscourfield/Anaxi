@@ -376,7 +376,9 @@ export class ArborClient {
     // Let Arbor apply the academic-year boundary before paging so opening one
     // review sheet does not scan years of unrelated outcomes.
     const dateFilter = dateRange
-      ? `, resultDate_after_or_equal: ${JSON.stringify(dateRange.from)}, resultDate_before: ${JSON.stringify(dateRange.before)}`
+      // Arbor exposes `resultDate` as a readable value, but its list filters
+      // are named after the underlying datetime field.
+      ? `, resultDatetime_after_or_equal: ${JSON.stringify(`${dateRange.from}T00:00:00Z`)}, resultDatetime_before: ${JSON.stringify(`${dateRange.before}T00:00:00Z`)}`
       : "";
     for (let pageNum = 0; pageNum < 20; pageNum++) {
       const data = await runArborGraphqlQuery<{ QualificationResult: ArborQualificationResult[] }>(this.credentials, `{
