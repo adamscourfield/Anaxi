@@ -52,14 +52,14 @@ async function ensureAssessment(db: any, tenantId: string, createdByUserId: stri
   const cycle = await db.assessmentCycle.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.cycleExternalId } },
     create: { tenantId, label: mapping.cycleLabel, cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear, startDate: new Date(`${startYear}-09-01T00:00:00.000Z`), endDate: new Date(`${startYear + 1}-08-31T23:59:59.999Z`), isActive: true, externalId: mapping.cycleExternalId, dataSource: "ARBOR" },
-    // The stable Arbor ID continues to match this record, but its Anaxi label
-    // may have been intentionally renamed by a school super admin.
-    update: { cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear },
+    update: { label: mapping.cycleLabel, cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear },
   });
   const point = await db.assessmentPoint.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.pointExternalId } },
     create: { tenantId, cycleId: cycle.id, label: mapping.pointLabel, ordinal: mapping.pointOrdinal, pointType: mapping.pointType, resultStatus: "VALIDATED", sourceType: "arbor", isFinalPoint: mapping.isFinalPoint, assessedAt: new Date(), externalId: mapping.pointExternalId, dataSource: "ARBOR" },
-    update: { label: mapping.pointLabel, ordinal: mapping.pointOrdinal, pointType: mapping.pointType, isFinalPoint: mapping.isFinalPoint },
+    // Keep a super admin's Anaxi result-point label (for example, "End of
+    // Year") while Arbor continues to update its ordering and type metadata.
+    update: { ordinal: mapping.pointOrdinal, pointType: mapping.pointType, isFinalPoint: mapping.isFinalPoint },
   });
   // One Arbor definition can carry marks from more than one term. The Anaxi
   // assessment identity therefore includes its mapped term point.
@@ -67,9 +67,7 @@ async function ensureAssessment(db: any, tenantId: string, createdByUserId: stri
   return db.assessment.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: assessmentExternalId } },
     create: { tenantId, pointId: point.id, subject: subjectFromLabel(definition.label), yearGroup: mapping.yearGroups.join(", "), title: definition.label, gradeFormat: mapping.gradeFormat, uploadStatus: "VALIDATED", createdByUserId, externalId: assessmentExternalId, dataSource: "ARBOR" },
-    // Retain the subject name chosen in Anaxi by a school super admin while
-    // still updating the Arbor-linked point and validation metadata.
-    update: { pointId: point.id, yearGroup: mapping.yearGroups.join(", "), gradeFormat: mapping.gradeFormat, uploadStatus: "VALIDATED" },
+    update: { pointId: point.id, subject: subjectFromLabel(definition.label), yearGroup: mapping.yearGroups.join(", "), title: definition.label, gradeFormat: mapping.gradeFormat, uploadStatus: "VALIDATED" },
   });
 }
 

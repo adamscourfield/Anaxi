@@ -14,7 +14,7 @@ import { pointTypePillClasses } from "@/modules/assessments/attainmentColours";
 import { CycleArchiveControl } from "@/components/assessments/CycleArchiveControl";
 import { CycleDeleteControl } from "@/components/assessments/CycleDeleteControl";
 import { CycleRenameControl } from "@/components/assessments/CycleRenameControl";
-import { AssessmentRenameControl } from "@/components/assessments/AssessmentRenameControl";
+import { ResultPointRenameControl } from "@/components/assessments/ResultPointRenameControl";
 import { CycleCompareLink } from "@/components/assessments/CycleCompareLink";
 import { ResultPointStatusControl } from "@/components/assessments/ResultPointStatusControl";
 
@@ -283,7 +283,6 @@ export default async function CycleDetailPage({
             <CycleArchiveControl cycleId={cycle.id} isActive={cycle.isActive} />
             <CycleDeleteControl cycleId={cycle.id} cycleLabel={cycle.label} />
             {user.role === "SUPER_ADMIN" ? <CycleRenameControl cycleId={cycle.id} cycleLabel={cycle.label} /> : null}
-            {user.role === "SUPER_ADMIN" ? <AssessmentRenameControl assessments={cycle.points.flatMap((point) => point.assessments.map((assessment) => ({ id: assessment.id, subject: assessment.subject })))} /> : null}
             <Button asChild>
               <Link href={`/assessments/${cycle.id}/points/new`}>
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -416,7 +415,10 @@ export default async function CycleDetailPage({
                           </td>
                           <td className="px-4 py-3.5">
                             <div className="flex flex-col gap-1">
-                              <span className="font-semibold text-[var(--on-surface)]">{point.label}</span>
+                              <div className="flex flex-wrap items-center gap-1">
+                                <span className="font-semibold text-[var(--on-surface)]">{point.label}</span>
+                                {user.role === "SUPER_ADMIN" ? <ResultPointRenameControl pointId={point.id} pointLabel={point.label} /> : null}
+                              </div>
                               <div className="flex flex-wrap items-center gap-1.5">
                                 <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
                                   {POINT_TYPE_LABELS[point.pointType]}
