@@ -3,6 +3,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
@@ -149,6 +150,29 @@ function sumPointEntries(point: {
   return point.assessments.reduce((s, a) => s + a._count.results, 0);
 }
 
+// ─── Manage-cycle dropdown ──────────────────────────────────────────────────
+// Less frequent, cycle-lifecycle actions (archive, delete, rename) collapse
+// into one dropdown instead of stacking equal-weight buttons next to the
+// primary "Compare points" / "Add point" actions.
+
+const MENU_ITEM_CLASS = "w-full justify-start rounded px-3 py-2 text-sm font-medium hover:bg-[var(--surface-container-low)]";
+
+function ManageCycleMenu({ children }: { children: ReactNode }) {
+  return (
+    <details className="group/menu relative inline-block">
+      <summary className="inline-flex h-10 cursor-pointer list-none items-center gap-1.5 rounded-md border border-border bg-[var(--surface-container-lowest)] px-4 text-sm font-semibold text-[var(--on-surface)] calm-transition hover:bg-[var(--surface-container-low)] [&::-webkit-details-marker]:hidden">
+        Manage cycle
+        <svg className="h-3.5 w-3.5 text-muted calm-transition group-open/menu:rotate-180" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </summary>
+      <div className="absolute right-0 z-20 mt-1.5 w-64 space-y-0.5 rounded-md border border-border bg-[var(--surface-container-lowest)] p-1.5 shadow-lg">
+        {children}
+      </div>
+    </details>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default async function CycleDetailPage({
@@ -280,11 +304,17 @@ export default async function CycleDetailPage({
                 entryCount: sumPointEntries(p),
               }))}
             />
-            <CycleArchiveControl cycleId={cycle.id} isActive={cycle.isActive} />
-            <CycleDeleteControl cycleId={cycle.id} cycleLabel={cycle.label} />
-            {user.role === "SUPER_ADMIN" ? <CycleRenameControl cycleId={cycle.id} cycleLabel={cycle.label} /> : null}
-            {user.role === "SUPER_ADMIN" ? <AssessmentRenameControl assessments={cycle.points.flatMap((point) => point.assessments.map((assessment) => ({ id: assessment.id, subject: assessment.subject })))} /> : null}
-            <Button asChild>
+            {user.role === "SUPER_ADMIN" ? (
+              <AssessmentRenameControl assessments={cycle.points.flatMap((point) => point.assessments.map((assessment) => ({ id: assessment.id, subject: assessment.subject })))} />
+            ) : null}
+            <ManageCycleMenu>
+              <CycleArchiveControl cycleId={cycle.id} isActive={cycle.isActive} className={MENU_ITEM_CLASS} />
+              <CycleDeleteControl cycleId={cycle.id} cycleLabel={cycle.label} className={MENU_ITEM_CLASS} />
+              {user.role === "SUPER_ADMIN" ? (
+                <CycleRenameControl cycleId={cycle.id} cycleLabel={cycle.label} className={MENU_ITEM_CLASS} />
+              ) : null}
+            </ManageCycleMenu>
+            <Button asChild className="h-10 min-h-0">
               <Link href={`/assessments/${cycle.id}/points/new`}>
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M12 5v14M5 12h14" strokeLinecap="round" />
@@ -388,10 +418,10 @@ export default async function CycleDetailPage({
                       <th className="w-8 px-5 py-3 text-center">#</th>
                       <th className="px-4 py-3 text-left">Point</th>
                       <th className="hidden px-4 py-3 text-left sm:table-cell">Date</th>
-                      <th className="hidden px-4 py-3 text-left lg:table-cell">Subjects</th>
+                      <th className="hidden min-w-[150px] px-4 py-3 text-left lg:table-cell">Subjects</th>
                       <th className="px-4 py-3 text-right">Entries</th>
                       <th className="px-4 py-3 text-right">Students</th>
-                      <th className="min-w-[230px] px-5 py-3 text-right">Actions</th>
+                      <th className="min-w-[195px] px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -401,8 +431,8 @@ export default async function CycleDetailPage({
                       const hasData = entries > 0;
                       const assessedDateLabel = formatAssessedDate(point.assessedAt);
                       const ordinal = point.ordinal || idx + 1;
-                      const subjectsShown = point.assessments.slice(0, 5);
-                      const subjectsRemainder = point.assessments.length - 5;
+                      const subjectsShown = point.assessments.slice(0, 3);
+                      const subjectsRemainder = point.assessments.length - 3;
 
                       return (
                         <tr
@@ -437,17 +467,17 @@ export default async function CycleDetailPage({
                           </td>
                           <td className="hidden px-4 py-3.5 lg:table-cell">
                             {point.assessments.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
+                              <div className="flex flex-wrap items-center gap-1.5">
                                 {subjectsShown.map((a) => (
                                   <span
                                     key={a.id}
-                                    className="rounded border border-[var(--outline-variant)]/40 bg-[var(--surface-container)] px-2 py-0.5 text-[10px] font-medium text-[var(--on-surface)]"
+                                    className="rounded-md border border-border bg-[var(--surface-container)] px-2.5 py-1 text-[11px] font-semibold text-[var(--on-surface)]"
                                   >
                                     {a.subject}
                                   </span>
                                 ))}
                                 {subjectsRemainder > 0 && (
-                                  <span className="rounded border border-[var(--outline-variant)]/40 bg-[var(--surface-container)] px-2 py-0.5 text-[10px] font-medium text-[var(--on-surface-muted)]">
+                                  <span className="rounded-md border border-border bg-[var(--surface-container)] px-2.5 py-1 text-[11px] font-semibold text-[var(--on-surface-muted)]">
                                     +{subjectsRemainder}
                                   </span>
                                 )}
@@ -462,28 +492,28 @@ export default async function CycleDetailPage({
                           <td className="px-4 py-3.5 text-right tabular-nums text-[var(--on-surface-muted)]">
                             {hasData ? matched.toLocaleString() : <span className="text-[var(--on-surface-muted)]/40">—</span>}
                           </td>
-                          <td className="px-5 py-3.5 text-right">
+                          <td className="px-4 py-3.5 text-right">
                             <div className="flex flex-nowrap items-center justify-end gap-1.5">
                               {point.resultStatus !== "LOCKED" && (
-                                <Button asChild className="h-7 whitespace-nowrap px-2.5 py-0 text-[11px]">
+                                <Button asChild className="h-8 whitespace-nowrap px-2.5 py-0 text-xs">
                                   <Link href={`/assessments/${cycle.id}/points/${point.id}/upload`}>
-                                    <IconUploadCloud />
+                                    <IconUploadCloud className="h-3.5 w-3.5" />
                                     Upload
                                   </Link>
                                 </Button>
                               )}
                               {point.resultStatus !== "LOCKED" && (
-                                <Button asChild variant="secondary" className="h-7 whitespace-nowrap px-2.5 py-0 text-[11px]">
+                                <Button asChild variant="secondary" className="h-8 whitespace-nowrap px-2.5 py-0 text-xs">
                                   <Link href={`/assessments/${cycle.id}/points/${point.id}/enter`}>
-                                    <IconBarChart />
+                                    <IconBarChart className="h-3.5 w-3.5" />
                                     Enter grades
                                   </Link>
                                 </Button>
                               )}
                               {hasData && (
-                                <Button asChild variant="secondary" className="h-7 whitespace-nowrap px-2.5 py-0 text-[11px]">
+                                <Button asChild variant="secondary" className="h-8 whitespace-nowrap px-2.5 py-0 text-xs">
                                   <Link href={`/assessments/${cycle.id}/points/${point.id}`}>
-                                    <IconBarChart />
+                                    <IconDocument className="h-3.5 w-3.5" />
                                     Analysis
                                   </Link>
                                 </Button>
