@@ -204,17 +204,25 @@ export default async function ArborAssessmentMarkSheetPage({
   // it is authoritative and intentionally replaces those placeholders.
   const usesQualificationResults = (mapping.family === "GCSE" || mapping.family === "A_LEVEL")
     && (cycle.pointLabel === "Summer" || cycle.pointLabel === "Final");
-  const qualificationMarks = usesQualificationResults
-    ? (await client.listQualificationResultsInRange(assessmentYearRange(cycle.academicYear)))
-      .filter((result) => qualificationResultMatchesDefinition(result, definition.label))
-      .map((result) => qualificationResultAsMark(result, definition, batchMetadata?.assessment ?? {
-        id: definition.id,
-        displayName: definition.label,
-        assessmentName: definition.label,
-        assessmentShortName: null,
-      }))
-      .filter((mark): mark is ArborMark => Boolean(mark))
-    : [];
+  let qualificationReadFailed = false;
+  let qualificationMarks: ArborMark[] = [];
+  if (usesQualificationResults) {
+    try {
+      qualificationMarks = (await client.listQualificationResultsInRange(assessmentYearRange(cycle.academicYear)))
+        .filter((result) => qualificationResultMatchesDefinition(result, definition.label))
+        .map((result) => qualificationResultAsMark(result, definition, batchMetadata?.assessment ?? {
+          id: definition.id,
+          displayName: definition.label,
+          assessmentName: definition.label,
+          assessmentShortName: null,
+        }))
+        .filter((mark): mark is ArborMark => Boolean(mark));
+    } catch {
+      // The review remains available from the existing, read-only mark feed.
+      // Never make an Arbor source problem look like an Anaxi application error.
+      qualificationReadFailed = true;
+    }
+  }
   // Arbor accepts an assessment filter but a review must not rely on that
   // server-side filter alone. Verify the relationship on every returned mark
   // before it can appear in a subject sheet.
@@ -280,6 +288,7 @@ export default async function ArborAssessmentMarkSheetPage({
           <H3>Arbor mark sheet</H3>
           <MetaText className="mt-1">{cycle.cycleLabel} · {cycle.gradeFormat === "PERCENTAGE" ? "Percentage" : cycle.gradeFormat === "A_LEVEL" ? "A-Level" : "GCSE"} · This view does not create, amend, or import results.</MetaText>
         </div>
+        {qualificationReadFailed ? <MetaText>Arbor could not provide qualification outcomes for this sheet just now. The available progress mark feed is shown instead; no data has been changed.</MetaText> : null}
         {rows.length ? (
           <div className="max-h-[70vh] overflow-auto rounded-sm border border-border/70">
             <table className="w-full min-w-[48rem] text-left text-sm">

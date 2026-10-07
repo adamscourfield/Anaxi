@@ -373,9 +373,15 @@ export class ArborClient {
    */
   async listQualificationResultsInRange(dateRange?: { from: string; before: string }): Promise<ArborQualificationResult[]> {
     const results: ArborQualificationResult[] = [];
-    for (let pageNum = 0; pageNum < 100; pageNum++) {
+    // QualificationResult can contain a school's full examination history.
+    // Let Arbor apply the academic-year boundary before paging so opening one
+    // review sheet does not scan years of unrelated outcomes.
+    const dateFilter = dateRange
+      ? `, resultDate_after_or_equal: ${JSON.stringify(dateRange.from)}, resultDate_before: ${JSON.stringify(dateRange.before)}`
+      : "";
+    for (let pageNum = 0; pageNum < 20; pageNum++) {
       const data = await runArborGraphqlQuery<{ QualificationResult: ArborQualificationResult[] }>(this.credentials, `{
-        QualificationResult(page_size: 500, page_num: ${pageNum}) {
+        QualificationResult(page_size: 500, page_num: ${pageNum}${dateFilter}) {
           id resultDate numericValue
           student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
           qualificationGrade { displayName shortName code }
@@ -386,12 +392,10 @@ export class ArborClient {
         }
       }`);
       const page = Array.isArray(data.QualificationResult) ? data.QualificationResult : [];
-      results.push(...(dateRange
-        ? page.filter((result) => Boolean(result.resultDate) && result.resultDate! >= dateRange.from && result.resultDate! < dateRange.before)
-        : page));
+      results.push(...page);
       if (page.length < 500) return results;
     }
-    throw new Error("Arbor returned more than 50,000 qualification results; review stopped safely.");
+    throw new Error("Arbor returned more than 10,000 qualification results in one academic year; review stopped safely.");
   }
 
   /** Lists the assessment catalogue itself, independently of mark pagination. */
