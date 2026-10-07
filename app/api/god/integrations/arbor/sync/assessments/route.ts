@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
+import { requireSuperAdminUser } from "@/lib/admin";
 import { assertCronAuthorized } from "@/lib/cronAuth";
+import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { arborAssessmentFamily, arborAssessmentLabel, arborHistoricYearGroup, arborYearGroupAtAssessment, mapArborAssessment, mapArborAssessmentForYearGroup, type ArborAssessmentMapping } from "@/lib/integrations/arbor/assessmentPolicy";
 import { ArborClient, arborAssessmentMarkValue } from "@/lib/integrations/arbor/client";
@@ -10,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 
 type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[]; source?: "PROGRESS_MARK" | "BATCH_TARGET" | "BATCH" };
 type HistoricFamilyProgress = { chunk?: number; markPage?: number; complete?: boolean };
-type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; historicImportCursor?: number; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
+type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicYearCursor?: number; historicFamilyCursor?: number; historicFamilyProgress?: Record<string, HistoricFamilyProgress>; historicComplete?: boolean; historicDiscoveryVersion?: number; historicImportCursor?: number; historicImportedDefinitionIds?: string[]; cursor?: number; markPage?: number; inspected?: number; matchedMarks?: number; importedMarks?: number; policyVersion?: number };
 const ASSESSMENT_POLICY_VERSION = 3;
 // Keep the scheduled discovery aligned with the operator-triggered scan.
 // Dated marks are reclassified in v15 before they can be reviewed or approved.
@@ -19,6 +21,7 @@ const MARK_PAGES_PER_RUN = 24;
 // A small combined group is paged to completion before moving on, so every
 // subject in the group is retained without serially scanning the full P8 list.
 const DEFINITIONS_PER_QUERY = 10;
+const MANUAL_IMPORT_BATCH_SIZE = 4;
 const HISTORIC_FAMILY_ORDER = ["GCSE", "A_LEVEL", "Y10_PERCENTAGE", "KS3_PERCENTAGE"] as const;
 const HISTORIC_ACADEMIC_YEARS = [
   { label: "2025/2026", from: "2025-09-01", before: "2026-09-01" },
@@ -139,11 +142,32 @@ function addHistoricDefinition(target: Map<string, PreparedDefinition>, definiti
 
 /** Imports one paced page from an explicitly approved Arbor assessment definition. */
 export async function POST(req: Request) {
-  const denied = assertCronAuthorized(req);
-  if (denied) return denied;
+  const cronDenied = assertCronAuthorized(req);
+  const manualImport = Boolean(cronDenied);
+  if (manualImport) {
+    await requireSuperAdminUser();
+    const form = await req.formData();
+    try {
+      await assertCsrfFromForm(form);
+    } catch {
+      return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
+    }
+    if (form.get("runNow") !== "1") return cronDenied!;
+  }
+  const manualResult = (params: Record<string, string>) => {
+    const url = new URL("/god/integrations/arbor", req.url);
+    const connectionId = new URL(req.url).searchParams.get("connectionId");
+    if (connectionId) url.searchParams.set("connectionId", connectionId);
+    for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+    return NextResponse.redirect(url);
+  };
   const db = prisma as any;
   const integration = await db.sharedIntegration.findFirst({ where: arborConnectionWhere(req), include: { schools: { where: { enabled: true }, include: { tenant: { include: { tenantSettings: true } } } } } });
-  if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.json({ skipped: "not connected" });
+  if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") {
+    return manualImport
+      ? manualResult({ assessmentImport: "not-connected" })
+      : NextResponse.json({ skipped: "not connected" });
+  }
 
   const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
   const savedState = config.assessmentSync && typeof config.assessmentSync === "object" ? config.assessmentSync as AssessmentSyncState : {};
@@ -254,26 +278,50 @@ export async function POST(req: Request) {
   // every approved historical import so the live Attainment module receives
   // the same subject-specific marks, never the old broad mark feed.
   if (reviewedDefinitions.length && (state.historicDiscoveryVersion ?? 0) >= 23) {
-    const approvedDefinitions = reviewedDefinitions.filter((definition) => {
+    const approvedDefinitions = [...new Map(reviewedDefinitions.filter((definition) => {
       const mapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
       return Boolean(mapping && (definition.yearGroups ?? mapping.yearGroups).some((yearGroup) => {
         const cycle = mapArborAssessmentForYearGroup(mapping, yearGroup);
         return cycle && approvedCycleKeys.has(cycle.cycleExternalId);
       }));
-    });
-    if (!approvedDefinitions.length) return NextResponse.json({ skipped: "no reviewed definitions for the approved cycles" });
-    const cursor = typeof state.historicImportCursor === "number" && state.historicImportCursor >= 0
-      ? state.historicImportCursor % approvedDefinitions.length
-      : 0;
-    const definition = approvedDefinitions[cursor];
+    }).map((definition) => [definition.id, definition] as const)).values()];
+    if (!approvedDefinitions.length) {
+      return manualImport
+        ? manualResult({ assessmentImport: "unavailable" })
+        : NextResponse.json({ skipped: "no reviewed definitions for the approved cycles" });
+    }
+    const completedIds = new Set(Array.isArray(state.historicImportedDefinitionIds) ? state.historicImportedDefinitionIds : []);
+    const pendingDefinitions = approvedDefinitions.filter((definition) => !completedIds.has(definition.id));
+    if (!pendingDefinitions.length) {
+      return manualImport
+        ? manualResult({ assessmentImport: "complete", assessmentImportRemaining: "0" })
+        : NextResponse.json({ imported: 0, complete: true });
+    }
     try {
-      const result = await importReviewedHistoricDefinition({ db, integration, config, state, approvedCycleKeys, definition });
-      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicImportCursor: (cursor + 1) % approvedDefinitions.length, importedMarks: (typeof state.importedMarks === "number" ? state.importedMarks : 0) + result.imported, lastInspected: { label: definition.label, reviewedMarks: result.reviewedMarks, imported: result.imported, targets: result.targets, at: new Date().toISOString() } } } } });
-      return NextResponse.json({ imported: result.imported, reviewedMarks: result.reviewedMarks, targets: result.targets, definition: definition.label });
+      const definitionsToImport = pendingDefinitions.slice(0, manualImport ? MANUAL_IMPORT_BATCH_SIZE : 1);
+      let imported = 0;
+      let reviewedMarks = 0;
+      let targets = 0;
+      let lastLabel = definitionsToImport[0].label;
+      for (const definition of definitionsToImport) {
+        const result = await importReviewedHistoricDefinition({ db, integration, config, state, approvedCycleKeys, definition });
+        imported += result.imported;
+        reviewedMarks += result.reviewedMarks;
+        targets += result.targets;
+        lastLabel = definition.label;
+      }
+      const importedDefinitionIds = [...new Set([...completedIds, ...definitionsToImport.map((definition) => definition.id)])];
+      const remaining = Math.max(0, approvedDefinitions.length - importedDefinitionIds.length);
+      await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, assessmentSync: { ...state, historicImportCursor: importedDefinitionIds.length % approvedDefinitions.length, historicImportedDefinitionIds: importedDefinitionIds, importedMarks: (typeof state.importedMarks === "number" ? state.importedMarks : 0) + imported, lastInspected: { label: lastLabel, reviewedMarks, imported, targets, at: new Date().toISOString() } } } } });
+      return manualImport
+        ? manualResult({ assessmentImport: "success", assessmentImported: String(imported), assessmentImportSheets: String(definitionsToImport.length), assessmentImportRemaining: String(remaining) })
+        : NextResponse.json({ imported, reviewedMarks, targets, definitions: definitionsToImport.map((definition) => definition.label), remaining });
     } catch (error) {
       const message = error instanceof Error ? error.message.slice(0, 300) : "Reviewed assessment import failed.";
       await db.sharedIntegration.update({ where: { id: integration.id }, data: { lastSyncStatus: "PARTIAL", lastSyncError: message } });
-      return NextResponse.json({ error: message }, { status: 503 });
+      return manualImport
+        ? manualResult({ assessmentImport: "failed" })
+        : NextResponse.json({ error: message }, { status: 503 });
     }
   }
   const queuedDefinitions = Array.isArray(state.definitions) ? state.definitions.filter((item): item is PreparedDefinition => typeof item?.id === "string" && typeof item?.label === "string") : [];

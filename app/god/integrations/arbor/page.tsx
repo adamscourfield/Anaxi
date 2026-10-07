@@ -30,6 +30,11 @@ type ProposedAssessmentCycle = {
 
 function proposedAssessmentCycles(config: unknown): ProposedAssessmentCycle[] {
   const record = config && typeof config === "object" ? config as Record<string, unknown> : {};
+  const excludedCycleKeys = new Set(
+    Array.isArray(record.assessmentExcludedCycleKeys)
+      ? record.assessmentExcludedCycleKeys.filter((key): key is string => typeof key === "string")
+      : [],
+  );
   const sync = record.assessmentSync && typeof record.assessmentSync === "object" ? record.assessmentSync as Record<string, unknown> : {};
   // Catalogue definitions are a discovery queue only. A cycle becomes
   // reviewable only after Arbor has supplied a dated mark for it.
@@ -42,7 +47,7 @@ function proposedAssessmentCycles(config: unknown): ProposedAssessmentCycle[] {
     if (!mapping) continue;
     for (const yearGroup of definition.yearGroups?.length ? definition.yearGroups : mapping.yearGroups) {
       const cycle = mapArborAssessmentForYearGroup(mapping, yearGroup);
-      if (!cycle) continue;
+      if (!cycle || excludedCycleKeys.has(cycle.cycleExternalId)) continue;
       const existing = cycles.get(cycle.cycleExternalId);
       if (existing) {
         if (!existing.definitions.includes(definition.label)) existing.definitions.push(definition.label);
@@ -115,7 +120,7 @@ function ArborProgressRow({ label, detail, percent, tone = "neutral" }: { label:
   );
 }
 
-export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ connectionId?: string; new?: string; saved?: string; error?: string; csrf?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentPeriods?: string; assessmentPeriodFields?: string; assessmentSources?: string; assessmentSourcesAvailable?: string; assessmentSourcesBlocked?: string; assessmentSourceFields?: string; assessmentSourceFieldDetails?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentApproval?: string; assessmentApproved?: string; assessmentHistory?: string; assessmentHistoryCycles?: string; assessmentHistoryBatches?: string; assessmentHistoryTargets?: string; assessmentHistoryAccepted?: string; assessmentHistoryReasons?: string; assessmentHistoryError?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableSync?: string; timetablePage?: string; timetableAssignments?: string; timetableLinkable?: string; timetableMemberships?: string; timetableSubjects?: string; timetableTeachers?: string; timetableError?: string; leaveAccess?: string; leaveWriteOperations?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; historicStudents?: string; historicStudentCreated?: string; historicStudentArchived?: string; historicStudentSkipped?: string; historicStudentError?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string; [key: string]: string | string[] | undefined }> }) {
+export default async function ArborIntegrationPage({ searchParams }: { searchParams?: Promise<{ connectionId?: string; new?: string; saved?: string; error?: string; csrf?: string; test?: string; photo?: string; photoSync?: string; studentPhotos?: string; staffPhotos?: string; unavailable?: string; failed?: string; attendance?: string; attendancePreview?: string; attendanceRecords?: string; attendanceStudents?: string; attendancePct?: string; attendanceLate?: string; attendanceUnmatched?: string; attendanceSync?: string; attendanceFrom?: string; attendanceTo?: string; attendanceCreated?: string; attendanceUpdated?: string; attendancePreserved?: string; behaviour?: string; behaviourPointAwards?: string; behaviourDetentions?: string; behaviourInternalExclusions?: string; behaviourSuspensions?: string; behaviourPreview?: string; behaviourStudents?: string; behaviourPoints?: string; behaviourUnmatched?: string; behaviourCapped?: string; assessment?: string; assessmentRecords?: string; assessmentPreview?: string; assessmentMarks?: string; assessmentLinked?: string; assessmentDefinitions?: string; assessmentPriorityDefinitions?: string; assessmentDefinition?: string; assessmentDefinitionFields?: string; assessmentValues?: string; assessmentValueFormat?: string; assessmentValueExamples?: string; assessmentGrades?: string; assessmentGradeFields?: string; assessmentPeriods?: string; assessmentPeriodFields?: string; assessmentSources?: string; assessmentSourcesAvailable?: string; assessmentSourcesBlocked?: string; assessmentSourceFields?: string; assessmentSourceFieldDetails?: string; assessmentCatalogue?: string; assessmentCatalogueTotal?: string; assessmentCataloguePriority?: string; assessmentCatalogueLabels?: string; assessmentActive?: string; assessmentActiveMarks?: string; assessmentActiveDefinitions?: string; assessmentActiveLabels?: string; assessmentActiveError?: string; assessmentApproval?: string; assessmentApproved?: string; assessmentImport?: string; assessmentImported?: string; assessmentImportSheets?: string; assessmentImportRemaining?: string; assessmentHistory?: string; assessmentHistoryCycles?: string; assessmentHistoryBatches?: string; assessmentHistoryTargets?: string; assessmentHistoryAccepted?: string; assessmentHistoryReasons?: string; assessmentHistoryError?: string; assessmentFilters?: string; assessmentFilterNames?: string; timetable?: string; timetableFields?: string; timetablePreview?: string; timetableSync?: string; timetablePage?: string; timetableAssignments?: string; timetableLinkable?: string; timetableMemberships?: string; timetableSubjects?: string; timetableTeachers?: string; timetableError?: string; leaveAccess?: string; leaveWriteOperations?: string; staffProvisioning?: string; staffProvisioningQueued?: string; preview?: string; total?: string; primary?: string; secondary?: string; offRoll?: string; review?: string; unrecognised?: string | string[]; comparison?: string; alreadyLinked?: string; possibleMatch?: string; ambiguousMatch?: string; newStudent?: string; skippedOffRoll?: string; needsReview?: string; sync?: string; created?: string; adopted?: string; archived?: string; historicStudents?: string; historicStudentCreated?: string; historicStudentArchived?: string; historicStudentSkipped?: string; historicStudentError?: string; staff?: string; activeInArbor?: string; linkedPrimaryOnly?: string; linkedSecondaryOnly?: string; linkedBoth?: string; possiblePrimaryOnly?: string; possibleSecondaryOnly?: string; possibleBoth?: string; unmatched?: string; ambiguous?: string; staffSync?: string; linked?: string; [key: string]: string | string[] | undefined }> }) {
   await requireSuperAdminUser();
   const [csrfToken, schools, integrations, params] = await Promise.all([
     getCsrfToken(),
@@ -162,6 +167,11 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
     assessmentCyclesByYear.set(cycle.academicYear, current);
   }
   const assessmentYears = [...assessmentCyclesByYear.keys()].sort((a, b) => b.localeCompare(a));
+  const approvedAssessmentCycles = new Set<string>(
+    Array.isArray(integration?.config?.assessmentApprovedCycleKeys)
+      ? integration.config.assessmentApprovedCycleKeys.filter((key: unknown): key is string => typeof key === "string")
+      : [],
+  );
   const assessmentSync = integration?.config?.assessmentSync && typeof integration.config.assessmentSync === "object"
     ? integration.config.assessmentSync as {
       definitions?: PreparedAssessmentDefinition[];
@@ -170,10 +180,24 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
       historicalDefinitions?: PreparedAssessmentDefinition[];
       importedMarks?: number;
       historicImportCursor?: number;
+      historicImportedDefinitionIds?: string[];
       lastInspected?: { label?: unknown; reviewedMarks?: unknown; imported?: unknown; targets?: unknown; at?: unknown };
     }
     : {};
   const assessmentDiscoveryComplete = assessmentSync.historicComplete === true;
+  const approvedAssessmentDefinitionCount = Array.isArray(assessmentSync.historicalDefinitions)
+    ? new Set(assessmentSync.historicalDefinitions.filter((definition) => {
+      const mapping = mapArborAssessment(definition.label, definition.assessmentDate, definition.periodHint);
+      return Boolean(mapping && (definition.yearGroups?.length ? definition.yearGroups : mapping.yearGroups).some((yearGroup) => {
+        const cycle = mapArborAssessmentForYearGroup(mapping, yearGroup);
+        return cycle && approvedAssessmentCycles.has(cycle.cycleExternalId);
+      }));
+    }).map((definition) => definition.id)).size
+    : 0;
+  const importedAssessmentDefinitionCount = Array.isArray(assessmentSync.historicImportedDefinitionIds)
+    ? assessmentSync.historicImportedDefinitionIds.length
+    : 0;
+  const assessmentImportRemaining = Math.max(0, approvedAssessmentDefinitionCount - importedAssessmentDefinitionCount);
   const preparedAssessmentDefinitions = Array.isArray(assessmentSync.definitions) ? assessmentSync.definitions.length : 0;
   const assessmentDefinitionsChecked = assessmentDiscoveryComplete
     ? preparedAssessmentDefinitions
@@ -184,11 +208,6 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
     && typeof assessmentSync.lastInspected.reviewedMarks === "number"
     ? assessmentSync.lastInspected
     : null;
-  const approvedAssessmentCycles = new Set<string>(
-    Array.isArray(integration?.config?.assessmentApprovedCycleKeys)
-      ? integration.config.assessmentApprovedCycleKeys.filter((key: unknown): key is string => typeof key === "string")
-      : [],
-  );
   const secondaryTenantIds = schools
     .filter((school) => selected.has(school.id))
     .filter((school) => school.tenantSettings?.schoolType === "SECONDARY")
@@ -519,13 +538,39 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
 
       {params?.assessmentApproval === "success" ? (
         <StatusBanner variant="success" title="Assessment cycles approved.">
-          {previewCount(params.assessmentApproved)} cycle(s) can now import linked Arbor results gradually overnight. All unselected cycles remain paused.
+          {previewCount(params.assessmentApproved)} cycle(s) are ready. Use “Import approved results now” below to start immediately; the overnight sync remains a fallback.
+        </StatusBanner>
+      ) : null}
+
+      {params?.assessmentImport === "success" ? (
+        <StatusBanner variant="success" title="Approved assessment results imported.">
+          {previewCount(params.assessmentImported)} verified mark{previewCount(params.assessmentImported) === 1 ? "" : "s"} from {previewCount(params.assessmentImportSheets)} reviewed subject sheet{previewCount(params.assessmentImportSheets) === 1 ? "" : "s"} were written to Attainment. {previewCount(params.assessmentImportRemaining)} approved sheet{previewCount(params.assessmentImportRemaining) === 1 ? "" : "s"} remain.
+        </StatusBanner>
+      ) : null}
+      {params?.assessmentImport === "complete" ? (
+        <StatusBanner variant="success" title="Approved assessment import complete.">
+          Every currently approved review sheet has been written to Attainment.
+        </StatusBanner>
+      ) : null}
+      {params?.assessmentImport === "unavailable" ? (
+        <StatusBanner variant="danger" title="Approved assessment import could not start.">
+          No reviewed subject sheets matched the approved cycles. Refresh the review and save the approved cycles again.
+        </StatusBanner>
+      ) : null}
+      {params?.assessmentImport === "not-connected" || params?.assessmentImport === "failed" ? (
+        <StatusBanner variant="danger" title="Approved assessment import could not complete.">
+          Nothing was changed. Check the Arbor connection status and try the safe import again.
         </StatusBanner>
       ) : null}
 
       {params?.assessmentApproval === "paused" ? (
         <StatusBanner variant="success" title="Assessment imports paused.">
           No new Arbor assessment results will be imported until cycles are approved again.
+        </StatusBanner>
+      ) : null}
+      {params?.assessmentApproval === "deleted" ? (
+        <StatusBanner variant="success" title="Assessment cycle removed from review.">
+          It is no longer approved and will not import into Attainment. Existing Attainment results were not deleted.
         </StatusBanner>
       ) : null}
       {params?.assessmentApproval === "discovery-in-progress" ? (
@@ -855,7 +900,15 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                 {approvedAssessmentCycles.size ? (
                   <div className="rounded-sm border border-success/25 bg-success/5 p-4">
                     <H3 className="text-base">Assessment import progress</H3>
-                    <MetaText className="mt-1">{approvedAssessmentCycles.size} approved {approvedAssessmentCycles.size === 1 ? "cycle is" : "cycles are"} queued for the next full Arbor assessment sync at 2am London time. Only verified, graded marks from the reviewed subject sheets will be written to Attainment.</MetaText>
+                    <MetaText className="mt-1">{approvedAssessmentCycles.size} approved {approvedAssessmentCycles.size === 1 ? "cycle is" : "cycles are"} ready to import. Only verified, graded marks from the reviewed subject sheets are written to Attainment.</MetaText>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/assessments")}>
+                        <CsrfInput token={csrfToken} />
+                        <input type="hidden" name="runNow" value="1" />
+                        <SubmitButton className={actionButtonClass}>Import approved results now</SubmitButton>
+                      </form>
+                      <MetaText>Each run imports up to 4 reviewed subject sheets now; {assessmentImportRemaining} of {approvedAssessmentDefinitionCount} approved sheet{approvedAssessmentDefinitionCount === 1 ? "" : "s"} remain{assessmentImportRemaining ? "." : " complete."}</MetaText>
+                    </div>
                     {assessmentImportProgress ? (
                       <MetaText className="mt-2">Last imported: {String(assessmentImportProgress.label ?? "reviewed assessment")} · {previewCount(String(assessmentImportProgress.imported))} mark{previewCount(String(assessmentImportProgress.imported)) === 1 ? "" : "s"} written from {previewCount(String(assessmentImportProgress.reviewedMarks))} verified mark{previewCount(String(assessmentImportProgress.reviewedMarks)) === 1 ? "" : "s"}{typeof assessmentImportProgress.at === "string" ? ` · ${new Date(assessmentImportProgress.at).toLocaleString("en-GB")}` : ""}.</MetaText>
                     ) : (
@@ -891,7 +944,10 @@ export default async function ArborIntegrationPage({ searchParams }: { searchPar
                                         <MetaText className="mt-1 break-words">{cycle.definitions.slice(0, 3).join(" · ")}{cycle.definitions.length > 3 ? ` +${cycle.definitions.length - 3} more` : ""}</MetaText>
                                       </span>
                                     </label>
-                                    <Link href={assessmentReviewHref(cycle.key, integration.id)} className="shrink-0 text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
+                                    <div className="flex shrink-0 items-center gap-3">
+                                      <Link href={assessmentReviewHref(cycle.key, integration.id)} className="text-sm font-semibold text-accent underline underline-offset-4">Open review</Link>
+                                      <button type="submit" name="deleteCycleKey" value={cycle.key} className="text-sm font-semibold text-danger underline underline-offset-4">Delete cycle</button>
+                                    </div>
                                   </div>
                                 );
                               })}

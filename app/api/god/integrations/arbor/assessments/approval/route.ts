@@ -8,7 +8,7 @@ import { mapArborAssessment, mapArborAssessmentForYearGroup } from "@/lib/integr
 import { prisma } from "@/lib/prisma";
 
 type PreparedDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[] };
-type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicComplete?: boolean };
+type AssessmentSyncState = { definitions?: PreparedDefinition[]; historicalDefinitions?: PreparedDefinition[]; historicComplete?: boolean; historicImportedDefinitionIds?: string[]; historicImportCursor?: number };
 
 function proposedCycleKeys(config: Record<string, unknown>): Set<string> {
   const state = config.assessmentSync && typeof config.assessmentSync === "object"
@@ -47,6 +47,46 @@ export const POST = withApi(async function POST(req: Request) {
     ? config.assessmentSync as AssessmentSyncState
     : {};
   const availableKeys = proposedCycleKeys(config);
+  const deleteCycleKey = form.get("deleteCycleKey");
+  const existingApprovedKeys = Array.isArray(config.assessmentApprovedCycleKeys)
+    ? config.assessmentApprovedCycleKeys.filter((key): key is string => typeof key === "string")
+    : [];
+  if (typeof deleteCycleKey === "string" && availableKeys.has(deleteCycleKey)) {
+    const excludedCycleKeys = new Set(
+      Array.isArray(config.assessmentExcludedCycleKeys)
+        ? config.assessmentExcludedCycleKeys.filter((key): key is string => typeof key === "string")
+        : [],
+    );
+    excludedCycleKeys.add(deleteCycleKey);
+    const approvedCycleKeys = existingApprovedKeys.filter((key) => key !== deleteCycleKey);
+    await db.sharedIntegration.update({
+      where: { id: integration.id },
+      data: {
+        config: {
+          ...config,
+          assessmentImportApproved: approvedCycleKeys.length > 0,
+          assessmentApprovedCycleKeys: approvedCycleKeys,
+          assessmentExcludedCycleKeys: [...excludedCycleKeys],
+          assessmentApprovalUpdatedAt: new Date().toISOString(),
+        },
+      },
+    });
+    await db.auditLog.create({
+      data: {
+        tenantId: PLATFORM_TENANT_ID,
+        actorUserId: actor.id,
+        action: "integration.arbor.assessment_cycle_deleted",
+        targetType: "SharedIntegration",
+        targetId: integration.id,
+        afterJson: { deletedCycleKey: deleteCycleKey },
+      },
+    });
+    const url = new URL("/god/integrations/arbor", req.url);
+    const connectionId = new URL(req.url).searchParams.get("connectionId");
+    if (connectionId) url.searchParams.set("connectionId", connectionId);
+    url.searchParams.set("assessmentApproval", "deleted");
+    return NextResponse.redirect(url);
+  }
   const pausing = form.get("action") === "pause";
   // Operators may approve a reviewed cycle while discovery continues for
   // other definitions. The importer is scoped to the selected reviewed batch,
@@ -62,6 +102,9 @@ export const POST = withApi(async function POST(req: Request) {
         assessmentImportApproved: approvedCycleKeys.length > 0,
         assessmentApprovedCycleKeys: approvedCycleKeys,
         assessmentApprovalUpdatedAt: new Date().toISOString(),
+        // An updated approval selection is a fresh import plan. Start its
+        // reviewed definitions again so newly approved cycles are not skipped.
+        assessmentSync: { ...state, historicImportedDefinitionIds: [], historicImportCursor: 0 },
       },
     },
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
 function ChevronDown() {
   return (
@@ -38,12 +38,18 @@ export function CollapsibleCard({
   csrfToken?: string;
   className?: string;
 }) {
-  const [showAttention, setShowAttention] = useState(attention);
+  // Keep an acknowledgement hidden through parent rerenders. A changed
+  // fingerprint represents a genuinely new issue and deliberately reopens it.
+  const [dismissedFingerprint, setDismissedFingerprint] = useState<string | null>(null);
+  useEffect(() => {
+    setDismissedFingerprint((current) => current === attentionFingerprint ? current : null);
+  }, [attentionFingerprint]);
+  const showAttention = Boolean(attention && attentionFingerprint && dismissedFingerprint !== attentionFingerprint);
 
   async function acknowledgeAttention() {
     if (!showAttention || !attentionKey || !attentionFingerprint || !csrfToken) return;
     // Remove the signal immediately, then restore it only if acknowledgement fails.
-    setShowAttention(false);
+    setDismissedFingerprint(attentionFingerprint);
     const form = new FormData();
     form.set("_csrf", csrfToken);
     form.set("section", attentionKey);
@@ -51,12 +57,12 @@ export function CollapsibleCard({
     const url = new URL("/api/god/integrations/arbor/attention", window.location.origin);
     if (connectionId) url.searchParams.set("connectionId", connectionId);
     const response = await fetch(url, { method: "POST", body: form });
-    if (!response.ok) setShowAttention(true);
+    if (!response.ok) setDismissedFingerprint(null);
   }
 
   return (
     <details
-      className={`h-full overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none ${className}`}
+      className={`overflow-hidden rounded-sm border border-border bg-surface-container-lowest shadow-none ${className}`}
       open={defaultOpen}
     >
       <summary className="group flex cursor-pointer list-none items-center justify-between px-5 py-4 text-[14px] font-semibold tracking-[-0.01em] text-text [&::-webkit-details-marker]:hidden">
