@@ -7,6 +7,7 @@ import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
+import { buildTimetableIdentityResolver } from "@/lib/integrations/arbor/timetableIdentity";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
@@ -51,22 +52,26 @@ export const POST = withApi(async function POST(req: Request) {
     runId = run.id;
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
     const batch = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listTimetableTeacherAssignmentsBatch(page);
-    const studentExternalIds = [...new Set(batch.assignments.map((assignment) => assignment.studentId))];
-    const staffExternalIds = [...new Set(batch.assignments.flatMap((assignment) => assignment.staffIds))];
     const [students, staff] = await Promise.all([
-      db.student.findMany({ where: { tenantId: { in: tenantIds }, status: "ACTIVE", externalId: { in: studentExternalIds } }, select: { id: true, tenantId: true, externalId: true } }),
-      db.user.findMany({ where: { tenantId: { in: tenantIds }, externalId: { in: staffExternalIds }, isActive: true }, select: { id: true, tenantId: true, externalId: true } }),
+      db.student.findMany({ where: { tenantId: { in: tenantIds }, status: "ACTIVE" }, select: { id: true, tenantId: true, fullName: true, externalId: true } }),
+      db.user.findMany({ where: { tenantId: { in: tenantIds }, isActive: true }, select: { id: true, tenantId: true, fullName: true, externalId: true } }),
     ]);
-    const studentsByExternalId = new Map<string, { id: string; tenantId: string; externalId: string }>(students.map((student: { id: string; tenantId: string; externalId: string }) => [student.externalId, student]));
-    const staffByTenantAndExternalId = new Map<string, { id: string }>(staff.map((user: { id: string; tenantId: string; externalId: string }) => [`${user.tenantId}:${user.externalId}`, user]));
+    const studentResolver = buildTimetableIdentityResolver(students);
+    const staffResolver = buildTimetableIdentityResolver(staff);
+    let linkedByExternalId = 0;
+    let linkedByUniqueName = 0;
     const candidates = new Map<string, { tenantId: string; studentId: string; teacherId: string; subject: string }>();
     for (const assignment of batch.assignments) {
-      const student = studentsByExternalId.get(assignment.studentId);
-      if (!student) continue;
-      for (const staffExternalId of assignment.staffIds) {
-        const teacher = staffByTenantAndExternalId.get(`${student.tenantId}:${staffExternalId}`);
+      const studentMatch = studentResolver.student(assignment.studentId, assignment.studentName);
+      if (!studentMatch) continue;
+      const student = studentMatch.person;
+      for (const arborStaff of assignment.staff) {
+        const teacherMatch = staffResolver.staff(student.tenantId, arborStaff.id, arborStaff.fullName);
+        const teacher = teacherMatch?.person;
         const subject = assignment.subject.trim();
         if (!teacher || !subject) continue;
+        if (studentMatch.method === "EXTERNAL_ID" && teacherMatch.method === "EXTERNAL_ID") linkedByExternalId++;
+        else linkedByUniqueName++;
         candidates.set(`${student.id}:${teacher.id}:${subject.toLocaleLowerCase()}`, { tenantId: student.tenantId, studentId: student.id, teacherId: teacher.id, subject });
       }
     }
@@ -112,13 +117,15 @@ export const POST = withApi(async function POST(req: Request) {
       where: { id: integration.id },
       data: { config: { ...config, timetableSync: complete ? { completedAt: new Date().toISOString() } : { page: page + 1, startedAt: startedAt.toISOString() } }, lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null },
     });
-    if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.timetable_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { page, assignments: batch.assignments.length, linked, complete } } });
-    if (scheduled) return NextResponse.json({ page, assignments: batch.assignments.length, linked, complete });
+    if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.timetable_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { page, assignments: batch.assignments.length, linked, linkedByExternalId, linkedByUniqueName, complete } } });
+    if (scheduled) return NextResponse.json({ page, assignments: batch.assignments.length, linked, linkedByExternalId, linkedByUniqueName, complete });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("timetableSync", complete ? "success" : "progress");
     url.searchParams.set("timetablePage", String(page + 1));
     url.searchParams.set("timetableAssignments", String(batch.assignments.length));
     url.searchParams.set("timetableLinkable", String(linked));
+    url.searchParams.set("timetableLinkedById", String(linkedByExternalId));
+    url.searchParams.set("timetableLinkedByName", String(linkedByUniqueName));
     url.searchParams.set("timetableMemberships", String(batch.diagnostics.memberships));
     url.searchParams.set("timetableSubjects", String(batch.diagnostics.groupsWithSubjects));
     url.searchParams.set("timetableTeachers", String(batch.diagnostics.groupsWithTeachers));
