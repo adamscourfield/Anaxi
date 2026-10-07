@@ -317,7 +317,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
       importedMarks?: number;
       historicImportCursor?: number;
       historicImportedDefinitionIds?: string[];
-      lastInspected?: { label?: unknown; reviewedMarks?: unknown; imported?: unknown; targets?: unknown; at?: unknown };
+      lastInspected?: { label?: unknown; reviewedMarks?: unknown; imported?: unknown; targets?: unknown; progressMarks?: unknown; qualificationMarks?: unknown; at?: unknown };
     }
     : {};
   const assessmentDiscoveryComplete = assessmentSync.historicComplete === true;
@@ -1108,7 +1108,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                       <MetaText>Each run imports up to 4 reviewed subject sheets now; {assessmentImportRemaining} of {approvedAssessmentDefinitionCount} approved sheet{approvedAssessmentDefinitionCount === 1 ? "" : "s"} remain{assessmentImportRemaining ? "." : " complete."}</MetaText>
                     </div>
                     {assessmentImportProgress ? (
-                      <MetaText className="mt-2">Last imported: {String(assessmentImportProgress.label ?? "reviewed assessment")} · {previewCount(String(assessmentImportProgress.imported))} mark{previewCount(String(assessmentImportProgress.imported)) === 1 ? "" : "s"} written from {previewCount(String(assessmentImportProgress.reviewedMarks))} verified mark{previewCount(String(assessmentImportProgress.reviewedMarks)) === 1 ? "" : "s"}{typeof assessmentImportProgress.at === "string" ? ` · ${new Date(assessmentImportProgress.at).toLocaleString("en-GB")}` : ""}.</MetaText>
+                      <MetaText className="mt-2">Last imported: {String(assessmentImportProgress.label ?? "reviewed assessment")} · {previewCount(String(assessmentImportProgress.imported))} mark{previewCount(String(assessmentImportProgress.imported)) === 1 ? "" : "s"} written from {previewCount(String(assessmentImportProgress.reviewedMarks))} verified mark{previewCount(String(assessmentImportProgress.reviewedMarks)) === 1 ? "" : "s"}{typeof assessmentImportProgress.progressMarks === "number" ? ` · ${assessmentImportProgress.progressMarks} dated Arbor mark${assessmentImportProgress.progressMarks === 1 ? "" : "s"} read` : ""}{typeof assessmentImportProgress.qualificationMarks === "number" && assessmentImportProgress.qualificationMarks > 0 ? ` · ${assessmentImportProgress.qualificationMarks} qualification outcome${assessmentImportProgress.qualificationMarks === 1 ? "" : "s"} matched` : ""}{typeof assessmentImportProgress.at === "string" ? ` · ${new Date(assessmentImportProgress.at).toLocaleString("en-GB")}` : ""}.</MetaText>
                     ) : (
                       <MetaText className="mt-2">No approved marks have been imported yet.</MetaText>
                     )}
