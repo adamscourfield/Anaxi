@@ -22,7 +22,7 @@ export type ArborAssessmentMark = {
   assessmentDate: string | null;
   displayName: string | null;
   valueFields: Record<string, string | number | boolean | null>;
-  grade: { displayName: string | null; shortName: string | null; code: string | null } | null;
+  grade: { displayName: string | null; shortName: string | null; code: string | null; gradeValue?: number | null; gradeIdentifier?: string | null; longName?: string | null } | null;
   assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null;
   progressAssessmentBatchTargetId?: string | null;
 };
@@ -186,7 +186,7 @@ export class ArborClient {
     const dateFilter = dateRange ? `, assessmentDate_after_or_equal: ${JSON.stringify(dateRange.from)}, assessmentDate_before: ${JSON.stringify(dateRange.before)}` : "";
     const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Omit<ArborAssessmentMark, "valueFields">[] }>(this.credentials, `{
       StudentProgressAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}${assessmentFilter}${dateFilter}) {
-        id student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } } assessmentDate displayName grade { displayName shortName code } markGrade { displayName shortName code } assessment { id displayName assessmentName assessmentShortName }
+        id student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } } assessmentDate displayName grade { displayName shortName code gradeValue gradeIdentifier longName } markGrade { displayName shortName code gradeValue gradeIdentifier longName } assessment { id displayName assessmentName assessmentShortName }
       }
     }`);
     return data.StudentProgressAssessmentMark.map((mark) => ({
@@ -263,16 +263,16 @@ export class ArborClient {
             studentProgressAssessmentMarks {
               id assessmentDate displayName
               student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
-              grade { displayName shortName code }
-              markGrade { displayName shortName code }
+              grade { displayName shortName code gradeValue gradeIdentifier longName }
+              markGrade { displayName shortName code gradeValue gradeIdentifier longName }
               assessment { id displayName assessmentName assessmentShortName }${valueSelection}
             }
             progressAssessmentBatchTarMeasurementPeriods {
               studentProgressAssessmentMarks {
                 id assessmentDate displayName
                 student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
-                grade { displayName shortName code }
-                markGrade { displayName shortName code }
+                grade { displayName shortName code gradeValue gradeIdentifier longName }
+                markGrade { displayName shortName code gradeValue gradeIdentifier longName }
                 assessment { id displayName assessmentName assessmentShortName }${valueSelection}
               }
             }
@@ -329,8 +329,8 @@ export class ArborClient {
         StudentProgressAssessmentMark(page_size: 500, page_num: ${pageNum}, assessment__id_in: [${JSON.stringify(assessmentId)}]) {
           id assessmentDate displayName
           student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
-          grade { displayName shortName code }
-          markGrade { displayName shortName code }
+          grade { displayName shortName code gradeValue gradeIdentifier longName }
+          markGrade { displayName shortName code gradeValue gradeIdentifier longName }
           assessment { id displayName assessmentName assessmentShortName }${valueSelection}
           ${targetRelation} { id }
         }
@@ -376,8 +376,8 @@ export class ArborClient {
       const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<Record<string, unknown>> }>(this.credentials, `{
         StudentProgressAssessmentMark(page_size: 500, page_num: ${pageNum}, assessment__id_in: [${JSON.stringify(assessmentId)}]) {
           id assessmentDate displayName
-          grade { displayName shortName code }
-          markGrade { displayName shortName code }
+          grade { displayName shortName code gradeValue gradeIdentifier longName }
+          markGrade { displayName shortName code gradeValue gradeIdentifier longName }
           lowerGradePointScaleValue upperGradePointScaleValue statisticalGradePointScaleValue
           ${relation} { id }
         }
@@ -1016,10 +1016,19 @@ export class ArborClient {
 /** Chooses the meaningful result value from the confirmed fields returned by Arbor. */
 export function arborAssessmentMarkValue(mark: {
   displayName: string | null;
-  grade: { displayName: string | null; shortName: string | null; code: string | null } | null;
+  grade: { displayName: string | null; shortName: string | null; code: string | null; gradeValue?: number | null; gradeIdentifier?: string | null; longName?: string | null } | null;
   valueFields?: Record<string, string | number | boolean | null>;
 }): string | null {
-  const directGrade = [mark.grade?.displayName, mark.grade?.shortName, mark.grade?.code]
+  const directGrade = [
+    mark.grade?.displayName,
+    mark.grade?.shortName,
+    mark.grade?.code,
+    mark.grade?.longName,
+    mark.grade?.gradeIdentifier,
+    mark.grade?.gradeValue === null || mark.grade?.gradeValue === undefined
+      ? null
+      : String(mark.grade.gradeValue),
+  ]
     .map((value) => value?.trim())
     .find((value): value is string => Boolean(value));
   if (directGrade) return directGrade;

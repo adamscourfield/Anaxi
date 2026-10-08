@@ -25,7 +25,8 @@ const HISTORIC_DISCOVERY_VERSION = 15;
 // v6 reads marks from Arbor's exact target measurement periods. A shared
 // StudentProgressAssessmentMark definition can span several subjects, so an
 // assessment ID alone is never sufficient to select marks for an import.
-const HISTORIC_IMPORT_VERSION = 6;
+// Version 7 reads Arbor's confirmed Grade value fields from subject measurement periods.
+const HISTORIC_IMPORT_VERSION = 7;
 const MARK_PAGES_PER_RUN = 24;
 // A small combined group is paged to completion before moving on, so every
 // subject in the group is retained without serially scanning the full P8 list.
