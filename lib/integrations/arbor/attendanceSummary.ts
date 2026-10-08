@@ -19,3 +19,22 @@ export function summariseAttendance(records: ArborAttendanceRecord[], linkedStud
   }
   return { byStudent, unmatched };
 }
+
+/**
+ * Returns the first valid attendance event for each pupil on a day. Arbor's
+ * earliest register is the morning registration, whereas later events can be
+ * afternoon registration. This lets daily summaries report morning lateness.
+ */
+export function summariseMorningAttendance(records: ArborAttendanceRecord[], linkedStudentIds: Set<string>) {
+  const firstRecordByStudent = new Map<string, ArborAttendanceRecord>();
+
+  for (const record of records) {
+    if (record.isRedundant || !record.attendanceMark || !record.startDatetime) continue;
+    const existing = firstRecordByStudent.get(record.student.id);
+    if (!existing || record.startDatetime < (existing.startDatetime ?? "")) {
+      firstRecordByStudent.set(record.student.id, record);
+    }
+  }
+
+  return summariseAttendance([...firstRecordByStudent.values()], linkedStudentIds);
+}

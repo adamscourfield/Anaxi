@@ -67,6 +67,7 @@ export type AttendanceHeadline = {
 type AttendanceSnapshot = {
   attendancePossibleCount: number;
   attendancePresentCount: number;
+  latenessCount: number;
   snapshotDate: Date;
 };
 
@@ -105,7 +106,11 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
           // Only an attendance-bearing snapshot may supply the attendance headline.
           where: { countScope: "YEAR_TO_DATE", attendancePossibleCount: { gt: 0 } },
           orderBy: { snapshotDate: "desc" },
-          select: { attendancePossibleCount: true, attendancePresentCount: true, snapshotDate: true },
+          // Three school-day rows cover the current headline plus yesterday and
+          // the previous completed day, without loading an academic year's
+          // history for every pupil on every home-page request.
+          take: 3,
+          select: { attendancePossibleCount: true, attendancePresentCount: true, latenessCount: true, snapshotDate: true },
         },
       },
     }),
@@ -116,6 +121,7 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
   ]);
 
   let yearPossible = 0, yearPresent = 0, studentsCovered = 0;
+  let fallbackYesterdayPossible = 0, fallbackYesterdayPresent = 0, fallbackYesterdayLate = 0;
   let asOf: Date | null = null;
 
   for (const student of students as Array<{ snapshots: AttendanceSnapshot[] }>) {
@@ -127,13 +133,28 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
     yearPresent += latest.attendancePresentCount;
     if (!asOf || latest.snapshotDate > asOf) asOf = latest.snapshotDate;
 
+    const yesterdayRow = rows.find((row) => row.snapshotDate.getTime() === yesterday.getTime());
+    const previousRow = yesterdayRow
+      ? rows.find((row) => row.snapshotDate < yesterday)
+      : undefined;
+    if (yesterdayRow && previousRow) {
+      fallbackYesterdayPossible += Math.max(0, yesterdayRow.attendancePossibleCount - previousRow.attendancePossibleCount);
+      fallbackYesterdayPresent += Math.max(0, yesterdayRow.attendancePresentCount - previousRow.attendancePresentCount);
+      fallbackYesterdayLate += Math.max(0, yesterdayRow.latenessCount - previousRow.latenessCount);
+    }
+
   }
+
+  const fallbackYesterdayAvailable = fallbackYesterdayPossible > 0;
+  const yesterdayPossible = yesterdayCheck?.possibleCount ?? (fallbackYesterdayAvailable ? fallbackYesterdayPossible : 0);
+  const yesterdayPresent = yesterdayCheck?.presentCount ?? (fallbackYesterdayAvailable ? fallbackYesterdayPresent : 0);
+  const yesterdayLate = yesterdayCheck?.lateCount ?? (fallbackYesterdayAvailable ? fallbackYesterdayLate : null);
 
   return {
     attendancePct: studentsCovered > 0 ? attendancePercentage({ possible: yearPossible, present: yearPresent, late: 0 }) : null,
-    yesterdayPct: yesterdayCheck && yesterdayCheck.possibleCount > 0 ? attendancePercentage({ possible: yesterdayCheck.possibleCount, present: yesterdayCheck.presentCount, late: 0 }) : null,
-    yesterdayLatenessPct: yesterdayCheck && yesterdayCheck.possibleCount > 0 && yesterdayCheck.lateCount !== null
-      ? Math.round((yesterdayCheck.lateCount / yesterdayCheck.possibleCount) * 1000) / 10
+    yesterdayPct: yesterdayPossible > 0 ? attendancePercentage({ possible: yesterdayPossible, present: yesterdayPresent, late: 0 }) : null,
+    yesterdayLatenessPct: yesterdayPossible > 0 && yesterdayLate !== null
+      ? Math.round((yesterdayLate / yesterdayPossible) * 1000) / 10
       : null,
     studentsCovered,
     asOf,

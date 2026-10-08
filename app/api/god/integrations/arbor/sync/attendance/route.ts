@@ -7,7 +7,7 @@ import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
 import { academicYearStart, addDays, attendancePercentage, dateKey } from "@/lib/integrations/arbor/attendanceSync";
-import { summariseAttendance } from "@/lib/integrations/arbor/attendanceSummary";
+import { summariseAttendance, summariseMorningAttendance } from "@/lib/integrations/arbor/attendanceSummary";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
@@ -123,6 +123,7 @@ export const POST = withApi(async function POST(req: Request) {
       const nextDay = addDays(day, 1);
       const records = await client.listAllAttendanceRecords(dateKey(day), dateKey(nextDay));
       const daily = summariseAttendance(records, linkedExternalIds).byStudent;
+      const morning = summariseMorningAttendance(records, linkedExternalIds).byStudent;
       const creates: Array<Record<string, unknown>> = [];
       const updates: Array<() => Promise<unknown>> = [];
       for (const student of students) {
@@ -151,6 +152,27 @@ export const POST = withApi(async function POST(req: Request) {
       }
       if (creates.length) await db.studentSnapshot.createMany({ data: creates });
       await updateInChunks(updates);
+
+      // Backfill the same completed-day figures used by the home page. This is
+      // deliberately calculated from the first register only, so lateness is
+      // the morning-registration rate rather than a mixture of AM and PM.
+      const dailyTotalsByTenant = new Map<string, Totals>();
+      for (const student of students) {
+        const attendance = morning.get(student.externalId);
+        if (!attendance) continue;
+        const totals = dailyTotalsByTenant.get(student.tenantId) ?? { possible: 0, present: 0, late: 0 };
+        totals.possible += attendance.possible;
+        totals.present += attendance.present;
+        totals.late += attendance.late;
+        dailyTotalsByTenant.set(student.tenantId, totals);
+      }
+      await Promise.all([...dailyTotalsByTenant.entries()].map(([tenantId, totals]) =>
+        db.dailyAttendanceCheck.upsert({
+          where: { tenantId_checkDate: { tenantId, checkDate: day } },
+          create: { tenantId, checkDate: day, possibleCount: totals.possible, presentCount: totals.present, lateCount: totals.late },
+          update: { possibleCount: totals.possible, presentCount: totals.present, lateCount: totals.late, checkedAt: new Date() },
+        })
+      ));
     }
 
     await db.sharedIntegrationSyncRun.update({ where: { id: run.id }, data: { status: "SUCCESS", recordsProcessed: created + updated, recordsCreated: created, recordsUpdated: updated, finishedAt: new Date() } });
