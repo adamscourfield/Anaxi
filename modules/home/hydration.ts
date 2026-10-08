@@ -530,11 +530,14 @@ export type HomeAttainmentHeadline = {
 
 const A_LEVEL_SCORE: Record<string, number> = { "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1 };
 
-/** The most recent result point, in the most recent active cycle of this qualification
- * type, that actually has grades recorded — not just an empty draft point. */
+/** The most recent result point, in the most recent cycle of this qualification type
+ * that actually has grades recorded — not just an empty draft point. Cycles can be
+ * created either manually or synced in from Arbor, and `isActive` isn't a reliable
+ * signal for "current" across both paths, so this walks every cycle newest-first by
+ * `startDate` and takes the first one with real data, regardless of that flag. */
 async function findLatestAssessedPoint(tenantId: string, qualificationType: "GCSE" | "A_LEVEL") {
-  const cycle = await (prisma as any).assessmentCycle.findFirst({
-    where: { tenantId, isActive: true, qualificationType },
+  const cycles = await (prisma as any).assessmentCycle.findMany({
+    where: { tenantId, qualificationType },
     orderBy: { startDate: "desc" },
     include: {
       points: {
@@ -552,13 +555,13 @@ async function findLatestAssessedPoint(tenantId: string, qualificationType: "GCS
       },
     },
   });
-  if (!cycle) return null;
 
-  const points: any[] = cycle.points ?? [];
-  const point = points.find((p) => (p.assessments ?? []).some((a: any) => (a.results ?? []).length > 0));
-  if (!point) return null;
-
-  return { cycleLabel: cycle.label as string, point };
+  for (const cycle of cycles as any[]) {
+    const points: any[] = cycle.points ?? [];
+    const point = points.find((p) => (p.assessments ?? []).some((a: any) => (a.results ?? []).length > 0));
+    if (point) return { cycleLabel: cycle.label as string, point };
+  }
+  return null;
 }
 
 async function fetchGcseHeadline(tenantId: string): Promise<GcseAttainmentHeadline | null> {
