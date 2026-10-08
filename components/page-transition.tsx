@@ -4,10 +4,14 @@ import { usePathname } from "next/navigation";
 import type { AnimationEvent, ReactNode } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
+  HVQT_DURATION_SEC,
   hvqtSlideEnterLayerClass,
   hvqtSlideExitLayerClass,
   hvqtSlideStageClass,
 } from "@/lib/motion/hvqt";
+
+/** Safety margin added to the CSS animation duration for the `animationend` fallback below. */
+const EXIT_FALLBACK_BUFFER_MS = 400;
 
 type PageTransitionProps = {
   children: ReactNode;
@@ -43,6 +47,8 @@ export function PageTransition({ children, className }: PageTransitionProps) {
   const reduceMotion = usePrefersReducedMotion();
   const committedPathRef = useRef(pathname);
   const committedChildrenRef = useRef(children);
+  const latestChildrenRef = useRef(children);
+  latestChildrenRef.current = children;
   const [exiting, setExiting] = useState(false);
 
   useLayoutEffect(() => {
@@ -66,6 +72,21 @@ export function PageTransition({ children, className }: PageTransitionProps) {
     },
     [children, pathname],
   );
+
+  // Safety net: if `animationend` never fires on the exit layer (an interrupted
+  // transition, a dropped frame, or any other browser quirk), `exiting` would
+  // stay true forever and leave the page stuck under `.hvqt-slide-stage`'s
+  // `overflow: hidden` — unable to scroll. Force the same cleanup `finishExit`
+  // would have done once the animation should clearly be over.
+  useEffect(() => {
+    if (!exiting) return;
+    const timeoutId = window.setTimeout(() => {
+      committedPathRef.current = pathname;
+      committedChildrenRef.current = latestChildrenRef.current;
+      setExiting(false);
+    }, HVQT_DURATION_SEC * 1000 + EXIT_FALLBACK_BUFFER_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [exiting, pathname]);
 
   if (reduceMotion) {
     return <div className={className}>{children}</div>;
