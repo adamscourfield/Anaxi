@@ -191,25 +191,19 @@ export default async function ArborAssessmentMarkSheetPage({
   // parent batch. Both represent the same subject assessment and must read
   // the same dated mark feed.
   const batchMetadata = batch ?? batchTarget?.progressAssessmentBatch ?? null;
-  const batchAssessmentId = batchMetadata?.assessment?.id ?? definition.id;
   const batchTargets = batch
     ? await client.listProgressAssessmentBatchTargets([batch.id])
     : batchTarget ? [batchTarget] : [];
   const batchRoster = [...new Map(
     batchTargets.flatMap((target) => target.allStudents.length ? target.allStudents : target.students).map((student) => [student.id, student]),
   ).values()];
-  const targetMarks = batchTargets.flatMap((target) => target.studentProgressAssessmentMarks);
-  const progressMarks = batchMetadata
-    ? await client.listAssessmentMarksForBatchTargets(
-      batchAssessmentId,
-      batchTargets.map((target) => target.id),
-      assessmentYearRange(cycle.academicYear),
-    )
-    : [];
-  // A live batch target can omit former pupils after rollover, even though
-  // Arbor still returns their dated, subject-specific assessment mark. These
-  // generic-feed records are accepted only when linked to this exact target.
-  const recordedBatchMarks = [...progressMarks, ...targetMarks];
+  const targetMarks = batchTargets.flatMap((target) => [
+    ...target.studentProgressAssessmentMarks,
+    ...target.measurementPeriodMarks,
+  ]);
+  // Measurement-period marks are scoped by Arbor to this target. Do not fall
+  // back to its shared assessment feed: it has no subject link for this tenant.
+  const recordedBatchMarks = targetMarks;
   const recordedBatchStudentIds = new Set(recordedBatchMarks.map((mark) => mark.student.id));
   const allMarks: ArborMark[] = batchMetadata
       ? [

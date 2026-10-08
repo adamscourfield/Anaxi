@@ -22,10 +22,10 @@ const ASSESSMENT_POLICY_VERSION = 3;
 // Keep the scheduled discovery aligned with the operator-triggered scan.
 // Dated marks are reclassified in v15 before they can be reviewed or approved.
 const HISTORIC_DISCOVERY_VERSION = 15;
-// v5 reads marks tied through Arbor's exact batch-target relationship. A shared
+// v6 reads marks from Arbor's exact target measurement periods. A shared
 // StudentProgressAssessmentMark definition can span several subjects, so an
 // assessment ID alone is never sufficient to select marks for an import.
-const HISTORIC_IMPORT_VERSION = 5;
+const HISTORIC_IMPORT_VERSION = 6;
 const MARK_PAGES_PER_RUN = 24;
 // A small combined group is paged to completion before moving on, so every
 // subject in the group is retained without serially scanning the full P8 list.
@@ -165,14 +165,10 @@ async function importReviewedHistoricDefinition(args: {
   if (!definitionMapping) return { imported: 0, reviewedMarks: 0, targets: targets.length, progressMarks: 0, qualificationMarks: 0, unlinkedStudents: 0, unmappedCohorts: 0, unapprovedCycles: 0, missingOwners: 0 };
   const batchAssessment = targets.find((target) => target.progressAssessmentBatch?.assessment)?.progressAssessmentBatch?.assessment;
   const assessment = batchAssessment ?? { id: definition.id, displayName: definition.label, assessmentName: definition.label, assessmentShortName: null };
-  const targetMarks = targets.flatMap((target) => target.studentProgressAssessmentMarks);
-  // The shared assessment feed is usable only when its record names the exact
-  // subject target. Filtering by the assessment ID alone mixes subjects.
-  const targetLinkedMarks = await client.listAssessmentMarksForBatchTargets(
-    assessment.id,
-    targets.map((target) => target.id),
-    assessmentYearRange(definitionMapping.academicYear),
-  );
+  const targetMarks = targets.flatMap((target) => [
+    ...target.studentProgressAssessmentMarks,
+    ...target.measurementPeriodMarks,
+  ]);
   const definitionYearGroups = definition.yearGroups?.length ? definition.yearGroups : definitionMapping.yearGroups;
   const usesQualificationResults = (definitionMapping.family === "GCSE" || (definitionMapping.family === "A_LEVEL" && definitionYearGroups.includes("Y13")))
     && (definitionMapping.pointLabel === "Summer" || definitionMapping.pointLabel === "Final");
@@ -184,7 +180,7 @@ async function importReviewedHistoricDefinition(args: {
     : [];
   const sourceMarks = qualificationMarks.length
     ? qualificationMarks
-    : [...targetMarks, ...targetLinkedMarks];
+    : targetMarks;
   const verifiedMarks = latestVerifiedMarks(sourceMarks);
 
   let imported = 0;
@@ -244,7 +240,7 @@ async function importReviewedHistoricDefinition(args: {
       data: { entryCount, matchedStudentCount: entryCount, uploadStatus: "VALIDATED" },
     });
   }));
-  return { imported, reviewedMarks: verifiedMarks.length, targets: targets.length, progressMarks: targetLinkedMarks.length, qualificationMarks: qualificationMarks.length, unlinkedStudents, unmappedCohorts, unapprovedCycles, missingOwners };
+  return { imported, reviewedMarks: verifiedMarks.length, targets: targets.length, progressMarks: 0, qualificationMarks: qualificationMarks.length, unlinkedStudents, unmappedCohorts, unapprovedCycles, missingOwners };
 }
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: ArborAssessmentMapping, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {

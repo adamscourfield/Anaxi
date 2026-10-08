@@ -48,6 +48,8 @@ export type ArborProgressAssessmentBatchTarget = {
   /** Arbor expands a batch target (for example, a class or teaching group) here. */
   allStudents: ArborAssessmentStudent[];
   studentProgressAssessmentMarks: ArborAssessmentMark[];
+  /** Marks are stored against a target's individual measurement periods. */
+  measurementPeriodMarks: ArborAssessmentMark[];
 };
 
 export type ArborQualificationResult = {
@@ -246,7 +248,10 @@ export class ArborClient {
     for (let offset = 0; offset < ids.length; offset += 20) {
       const pageIds = ids.slice(offset, offset + 20);
       for (let pageNum = 0; pageNum < 100; pageNum++) {
-        const data = await runArborGraphqlQuery<{ ProgressAssessmentBatchTarget: (Omit<ArborProgressAssessmentBatchTarget, "studentProgressAssessmentMarks"> & { studentProgressAssessmentMarks: Omit<ArborAssessmentMark, "valueFields">[] })[] }>(this.credentials, `{
+        const data = await runArborGraphqlQuery<{ ProgressAssessmentBatchTarget: (Omit<ArborProgressAssessmentBatchTarget, "studentProgressAssessmentMarks" | "measurementPeriodMarks"> & {
+          studentProgressAssessmentMarks: Omit<ArborAssessmentMark, "valueFields">[];
+          progressAssessmentBatchTarMeasurementPeriods: Array<{ studentProgressAssessmentMarks: Omit<ArborAssessmentMark, "valueFields">[] }>;
+        })[] }>(this.credentials, `{
           ProgressAssessmentBatchTarget(page_size: 100, page_num: ${pageNum}, ${filter === "batch" ? "progressAssessmentBatch__id_in" : "id_in"}: [${pageIds.map((id) => JSON.stringify(id)).join(", ")}]) {
             id displayName
             progressAssessmentBatch {
@@ -261,6 +266,15 @@ export class ArborClient {
               grade { displayName shortName code }
               markGrade { displayName shortName code }
               assessment { id displayName assessmentName assessmentShortName }${valueSelection}
+            }
+            progressAssessmentBatchTarMeasurementPeriods {
+              studentProgressAssessmentMarks {
+                id assessmentDate displayName
+                student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
+                grade { displayName shortName code }
+                markGrade { displayName shortName code }
+                assessment { id displayName assessmentName assessmentShortName }${valueSelection}
+              }
             }
           }
         }`);
@@ -278,6 +292,15 @@ export class ArborClient {
               grade: mark.grade ?? (mark as typeof mark & { markGrade?: ArborAssessmentMark["grade"] }).markGrade ?? null,
               valueFields: Object.fromEntries(valueFields.map((field) => [field, (mark as Record<string, unknown>)[field] as string | number | boolean | null])),
             }))
+            : [],
+          measurementPeriodMarks: Array.isArray(target.progressAssessmentBatchTarMeasurementPeriods)
+            ? target.progressAssessmentBatchTarMeasurementPeriods.flatMap((period) => Array.isArray(period.studentProgressAssessmentMarks)
+              ? period.studentProgressAssessmentMarks.map((mark) => ({
+                ...mark,
+                grade: mark.grade ?? (mark as typeof mark & { markGrade?: ArborAssessmentMark["grade"] }).markGrade ?? null,
+                valueFields: Object.fromEntries(valueFields.map((field) => [field, (mark as Record<string, unknown>)[field] as string | number | boolean | null])),
+              }))
+              : [])
             : [],
         })));
         if (pageTargets.length < 100) break;
