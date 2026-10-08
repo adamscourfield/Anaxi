@@ -236,6 +236,61 @@ export class ArborClient {
   }
 
   /**
+   * Arbor does not consistently populate measurement-period marks when they
+   * are requested beneath a batch target. Read the documented top-level
+   * measurement-period entity instead, then attach every mark to its target.
+   */
+  private async listMeasurementPeriodMarksForTargets(
+    targetIds: string[],
+    valueFields: string[],
+  ): Promise<Map<string, ArborAssessmentMark[]>> {
+    const marksByTarget = new Map<string, ArborAssessmentMark[]>();
+    if (!targetIds.length) return marksByTarget;
+    const valueSelection = this.assessmentMarkValueSelection(valueFields);
+    for (let pageNum = 0; pageNum < 100; pageNum++) {
+      const data = await runArborGraphqlQuery<{
+        ProgressAssessmentBatchTargetMeasurementPeriod: Array<{
+          progressAssessmentBatchTarget: { id: string } | null;
+          studentProgressAssessmentMarks: Array<Omit<ArborAssessmentMark, "valueFields"> & { markGrade?: ArborAssessmentMark["grade"] }>;
+        }>;
+      }>(this.credentials, `{
+        ProgressAssessmentBatchTargetMeasurementPeriod(
+          page_size: 500,
+          page_num: ${pageNum},
+          progressAssessmentBatchTarget__id_in: [${targetIds.map((id) => JSON.stringify(id)).join(", ")}]
+        ) {
+          progressAssessmentBatchTarget { id }
+          studentProgressAssessmentMarks {
+            id assessmentDate displayName
+            student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
+            grade { displayName shortName code gradeValue gradeIdentifier longName }
+            markGrade { displayName shortName code gradeValue gradeIdentifier longName }
+            assessment { id displayName assessmentName assessmentShortName }${valueSelection}
+          }
+        }
+      }`);
+      const periods = Array.isArray(data.ProgressAssessmentBatchTargetMeasurementPeriod)
+        ? data.ProgressAssessmentBatchTargetMeasurementPeriod
+        : [];
+      for (const period of periods) {
+        const targetId = period.progressAssessmentBatchTarget?.id;
+        if (!targetId) continue;
+        const marks = marksByTarget.get(targetId) ?? [];
+        for (const mark of Array.isArray(period.studentProgressAssessmentMarks) ? period.studentProgressAssessmentMarks : []) {
+          marks.push({
+            ...mark,
+            grade: mark.grade ?? mark.markGrade ?? null,
+            valueFields: Object.fromEntries(valueFields.map((field) => [field, (mark as Record<string, unknown>)[field] as string | number | boolean | null])),
+          });
+        }
+        marksByTarget.set(targetId, marks);
+      }
+      if (periods.length < 500) break;
+    }
+    return marksByTarget;
+  }
+
+  /**
    * Historic summative mark sheets are stored as batch targets in Arbor. Each
    * target is a real subject roster, avoiding the broad cross-subject results
    * returned by the generic StudentProgressAssessmentMark feed.
@@ -279,6 +334,10 @@ export class ArborClient {
           }
         }`);
         const pageTargets = Array.isArray(data.ProgressAssessmentBatchTarget) ? data.ProgressAssessmentBatchTarget : [];
+        const directMeasurementPeriodMarks = await this.listMeasurementPeriodMarksForTargets(
+          pageTargets.map((target) => target.id),
+          valueFields,
+        );
         targets.push(...pageTargets.map((target) => ({
           ...target,
           // Arbor may omit either relationship for an empty or unfinished
@@ -293,15 +352,18 @@ export class ArborClient {
               valueFields: Object.fromEntries(valueFields.map((field) => [field, (mark as Record<string, unknown>)[field] as string | number | boolean | null])),
             }))
             : [],
-          measurementPeriodMarks: Array.isArray(target.progressAssessmentBatchTarMeasurementPeriods)
-            ? target.progressAssessmentBatchTarMeasurementPeriods.flatMap((period) => Array.isArray(period.studentProgressAssessmentMarks)
+          measurementPeriodMarks: [
+            ...(Array.isArray(target.progressAssessmentBatchTarMeasurementPeriods)
+              ? target.progressAssessmentBatchTarMeasurementPeriods.flatMap((period) => Array.isArray(period.studentProgressAssessmentMarks)
               ? period.studentProgressAssessmentMarks.map((mark) => ({
                 ...mark,
                 grade: mark.grade ?? (mark as typeof mark & { markGrade?: ArborAssessmentMark["grade"] }).markGrade ?? null,
                 valueFields: Object.fromEntries(valueFields.map((field) => [field, (mark as Record<string, unknown>)[field] as string | number | boolean | null])),
               }))
               : [])
-            : [],
+              : []),
+            ...(directMeasurementPeriodMarks.get(target.id) ?? []),
+          ].filter((mark, index, marks) => marks.findIndex((candidate) => candidate.id === mark.id) === index),
         })));
         if (pageTargets.length < 100) break;
       }
