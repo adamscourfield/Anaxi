@@ -4,7 +4,7 @@ import { assertCronAuthorized } from "@/lib/cronAuth";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
 import { addDays, dateKey } from "@/lib/integrations/arbor/attendanceSync";
-import { summariseAttendance } from "@/lib/integrations/arbor/attendanceSummary";
+import { summariseMorningAttendance } from "@/lib/integrations/arbor/attendanceSummary";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 import { withApi } from "@/lib/apiRoute";
@@ -18,11 +18,9 @@ function londonToday(): Date {
 
 /**
  * Captures a school-wide "in by morning registration" figure for today, read
- * live from Arbor rather than waiting for the overnight cumulative sync (which
- * always lags a day behind). Run once around 10am London time: at that point
- * Arbor has only published the AM register for today, so every attendance
- * record returned for today's date already represents that register, with no
- * need to separate AM from PM.
+ * directly from Arbor. GitHub Actions may delay a scheduled call, so the sync
+ * always reads each pupil's first register of the day and backfills yesterday
+ * too. That preserves a reliable morning-registration measure at any run time.
  */
 export const POST = withApi(async function POST(req: Request) {
   const cronDenied = assertCronAuthorized(req);
@@ -39,7 +37,7 @@ export const POST = withApi(async function POST(req: Request) {
 
   const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
   const today = londonToday();
-  const tomorrow = addDays(today, 1);
+  const daysToCheck = [addDays(today, -1), today];
 
   const students: Array<{ id: string; tenantId: string; externalId: string }> = await db.student.findMany({
     where: { tenantId: { in: tenantIds }, status: "ACTIVE", externalId: { not: null } },
@@ -48,33 +46,37 @@ export const POST = withApi(async function POST(req: Request) {
   if (students.length === 0) return NextResponse.json({ skipped: "no linked students" });
 
   try {
-    const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
-    const records = await client.listAllAttendanceRecords(dateKey(today), dateKey(tomorrow));
     const linkedExternalIds = new Set(students.map((student) => student.externalId));
-    const byStudent = summariseAttendance(records, linkedExternalIds).byStudent;
+    const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
+    const completedDates: string[] = [];
 
-    const totalsByTenant = new Map<string, { possible: number; present: number; late: number }>();
-    for (const student of students) {
-      const daily = byStudent.get(student.externalId);
-      if (!daily) continue;
-      const totals = totalsByTenant.get(student.tenantId) ?? { possible: 0, present: 0, late: 0 };
-      totals.possible += daily.possible;
-      totals.present += daily.present;
-      totals.late += daily.late;
-      totalsByTenant.set(student.tenantId, totals);
+    for (const checkDate of daysToCheck) {
+      const records = await client.listAllAttendanceRecords(dateKey(checkDate), dateKey(addDays(checkDate, 1)));
+      const byStudent = summariseMorningAttendance(records, linkedExternalIds).byStudent;
+      const totalsByTenant = new Map<string, { possible: number; present: number; late: number }>();
+      for (const student of students) {
+        const daily = byStudent.get(student.externalId);
+        if (!daily) continue;
+        const totals = totalsByTenant.get(student.tenantId) ?? { possible: 0, present: 0, late: 0 };
+        totals.possible += daily.possible;
+        totals.present += daily.present;
+        totals.late += daily.late;
+        totalsByTenant.set(student.tenantId, totals);
+      }
+
+      for (const tenantId of tenantIds) {
+        const totals = totalsByTenant.get(tenantId);
+        if (!totals || totals.possible === 0) continue;
+        await db.dailyAttendanceCheck.upsert({
+          where: { tenantId_checkDate: { tenantId, checkDate } },
+          create: { tenantId, checkDate, possibleCount: totals.possible, presentCount: totals.present, lateCount: totals.late },
+          update: { possibleCount: totals.possible, presentCount: totals.present, lateCount: totals.late, checkedAt: new Date() },
+        });
+      }
+      completedDates.push(dateKey(checkDate));
     }
 
-    for (const tenantId of tenantIds) {
-      const totals = totalsByTenant.get(tenantId);
-      if (!totals || totals.possible === 0) continue;
-      await db.dailyAttendanceCheck.upsert({
-        where: { tenantId_checkDate: { tenantId, checkDate: today } },
-        create: { tenantId, checkDate: today, possibleCount: totals.possible, presentCount: totals.present, lateCount: totals.late },
-        update: { possibleCount: totals.possible, presentCount: totals.present, lateCount: totals.late, checkedAt: new Date() },
-      });
-    }
-
-    return NextResponse.json({ date: dateKey(today), tenants: [...totalsByTenant.keys()].length });
+    return NextResponse.json({ dates: completedDates, tenants: tenantIds.length });
   } catch (error) {
     const errorSummary = error instanceof Error ? error.message.slice(0, 500) : "Morning attendance check failed.";
     return NextResponse.json({ error: errorSummary }, { status: 500 });

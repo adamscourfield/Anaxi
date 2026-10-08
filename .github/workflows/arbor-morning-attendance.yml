@@ -1,8 +1,8 @@
 name: Arbor morning attendance check
 
 on:
-  # London is UTC+1 in summer and UTC in winter. The endpoint below only runs
-  # when it is 10am in London, so one of these two calls safely exits each day.
+  # GitHub scheduling can be delayed. The endpoint safely reads the first
+  # register of the day and also backfills the previous completed day.
   schedule:
     - cron: "0 9,10 * * *"
   workflow_dispatch:
