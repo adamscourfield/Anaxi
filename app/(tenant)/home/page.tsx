@@ -307,7 +307,7 @@ function LeadershipHome({
   ];
 
   return (
-    <div className="w-full min-w-0 space-y-8">
+    <div key={windowDays} className="w-full min-w-0 space-y-8 motion-safe:animate-page-enter">
       <LeadershipTodayBar chips={todayChips} />
       <AttentionStrip items={attentionItems} />
       <ExplorerPromoBand windowDays={windowDays} />
@@ -809,7 +809,7 @@ function HodHome({
   const deptObsCount = deptTeacherRows.reduce((sum, r) => sum + r.teacherCoverage, 0);
 
   return (
-    <div className="w-full min-w-0 space-y-8">
+    <div key={`${windowDays}-${activeDeptId}`} className="w-full min-w-0 space-y-8 motion-safe:animate-page-enter">
       <AttentionStrip items={attentionItems} />
       <ExplorerPromoBand windowDays={windowDays} />
       {/* Dept switcher — navigation control, sits at top */}
@@ -1048,7 +1048,7 @@ function CoachHome({
   >;
 }) {
   return (
-    <div className="w-full min-w-0 space-y-8">
+    <div key={windowDays} className="w-full min-w-0 space-y-8 motion-safe:animate-page-enter">
       <CoacheePrioritiesCard coacheeRows={coacheeRows} windowDays={windowDays} coacheeCount={coacheeCount} />
       <TeacherHome {...teacherHomeProps} showWholeSchoolFocus={false} wholeSchoolTop1={null} />
     </div>

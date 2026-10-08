@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HomeCardHeadingSm, IconChartBar } from "@/components/home/home-chrome";
 
 export type AttainmentKPIRow = {
   label: string;
@@ -96,29 +97,19 @@ export function AttainmentPanel({
 }: AttainmentPanelProps) {
   return (
     <div className="flex h-full flex-col gap-5">
-      {/* Header */}
-      <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container)] text-muted [&_svg]:h-4 [&_svg]:w-4">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-              <path d="M3 3v18h18" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M7 16v-5M12 16V8M17 16v-3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-          <div className="min-w-0">
-            <h2 className="text-base font-bold tracking-[-0.01em] text-text">Attainment</h2>
-            {subtitle ? (
-              <p className="mt-0.5 text-xs text-muted">{subtitle}</p>
-            ) : null}
-          </div>
-        </div>
-        <Link
-          href={ctaHref}
-          className="shrink-0 text-xs font-semibold text-muted calm-transition hover:text-text"
-        >
-          View all →
-        </Link>
-      </div>
+      <HomeCardHeadingSm
+        icon={<IconChartBar className="text-[var(--brand-blue)]" />}
+        title="Attainment"
+        subtitle={subtitle}
+        end={
+          <Link
+            href={ctaHref}
+            className="link-accent shrink-0 text-xs font-semibold"
+          >
+            View all →
+          </Link>
+        }
+      />
 
       {/* KPI rows */}
       <div className="flex flex-1 flex-col divide-y divide-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]">

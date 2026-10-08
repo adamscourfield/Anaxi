@@ -105,11 +105,13 @@ export function AttainmentSummaryCard({
 }) {
   if (rows.length === 0) return null;
   return (
-    <AttainmentPanel
-      rows={rows}
-      subtitle="Latest assessment cycle proxies"
-      ctaHref={`/assessments?window=${windowDays}`}
-      ctaLabel="Open assessments"
-    />
+    <Card className="rounded-sm !p-6 shadow-none">
+      <AttainmentPanel
+        rows={rows}
+        subtitle="Latest assessment cycle proxies"
+        ctaHref={`/assessments?window=${windowDays}`}
+        ctaLabel="Open assessments"
+      />
+    </Card>
   );
 }
