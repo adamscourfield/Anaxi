@@ -6,6 +6,7 @@ const people = [
   { id: "teacher-1", tenantId: "school-1", fullName: "Rezia Akhtar", externalId: "arbor-teacher-1" },
   { id: "teacher-2", tenantId: "school-1", fullName: "Same Name", externalId: null },
   { id: "teacher-3", tenantId: "school-1", fullName: "Same Name", externalId: null },
+  { id: "teacher-4", tenantId: "school-2", fullName: "Rezia Akhtar", externalId: "arbor-teacher-1" },
 ];
 
 describe("timetable identity resolver", () => {
@@ -24,6 +25,19 @@ describe("timetable identity resolver", () => {
     expect(resolver.staff("school-1", "missing", "rezia-akhtar")).toMatchObject({
       person: { id: "teacher-1" },
       method: "UNIQUE_NAME",
+    });
+  });
+
+  it("resolves a shared Arbor staff ID within the student's school", () => {
+    const resolver = buildTimetableIdentityResolver(people);
+
+    expect(resolver.staff("school-1", "arbor-teacher-1", "Rezia Akhtar")).toMatchObject({
+      person: { id: "teacher-1" },
+      method: "EXTERNAL_ID",
+    });
+    expect(resolver.staff("school-2", "arbor-teacher-1", "Rezia Akhtar")).toMatchObject({
+      person: { id: "teacher-4" },
+      method: "EXTERNAL_ID",
     });
   });
 

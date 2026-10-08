@@ -28,11 +28,15 @@ function addUnique(map: Map<string, PersonRecord | null>, key: string, person: P
  */
 export function buildTimetableIdentityResolver(rows: PersonRecord[]) {
   const byExternalId = new Map<string, PersonRecord | null>();
+  const staffByTenantAndExternalId = new Map<string, PersonRecord | null>();
   const studentsByName = new Map<string, PersonRecord | null>();
   const staffByTenantAndName = new Map<string, PersonRecord | null>();
 
   for (const person of rows) {
     if (person.externalId) addUnique(byExternalId, person.externalId, person);
+    // Arbor staff can legitimately be linked to separate Anaxi accounts in
+    // Primary and Secondary. Resolve teacher IDs within the pupil's school.
+    if (person.externalId) addUnique(staffByTenantAndExternalId, `${person.tenantId}\u0000${person.externalId}`, person);
     const name = normaliseName(person.fullName);
     if (!name) continue;
     addUnique(studentsByName, name, person);
@@ -47,8 +51,8 @@ export function buildTimetableIdentityResolver(rows: PersonRecord[]) {
       return byName ? { person: byName, method: "UNIQUE_NAME" } : null;
     },
     staff(tenantId: string, externalId: string, fullName: string): TimetableIdentityMatch | null {
-      const byId = byExternalId.get(externalId);
-      if (byId?.tenantId === tenantId) return { person: byId, method: "EXTERNAL_ID" };
+      const byId = staffByTenantAndExternalId.get(`${tenantId}\u0000${externalId}`);
+      if (byId) return { person: byId, method: "EXTERNAL_ID" };
       const byName = staffByTenantAndName.get(`${tenantId}\u0000${normaliseName(fullName)}`);
       return byName ? { person: byName, method: "UNIQUE_NAME" } : null;
     },
