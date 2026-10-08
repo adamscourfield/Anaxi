@@ -235,6 +235,20 @@ export class ArborClient {
     return fields.length ? ` ${fields.join(" ")}` : "";
   }
 
+  private async measurementPeriodQuerySupportsTargetFilter(): Promise<boolean> {
+    const data = await runArborGraphqlQuery<{
+      __schema: { queryType: { fields: Array<{ name: string; args: Array<{ name: string }> }> } | null };
+    }>(this.credentials, `{
+      __schema {
+        queryType {
+          fields { name args { name } }
+        }
+      }
+    }`);
+    const query = data.__schema.queryType?.fields.find((field) => field.name === "ProgressAssessmentBatchTargetMeasurementPeriod");
+    return Boolean(query?.args.some((argument) => argument.name === "progressAssessmentBatchTarget__id_in"));
+  }
+
   /**
    * Arbor does not consistently populate measurement-period marks when they
    * are requested beneath a batch target. Read the documented top-level
@@ -246,14 +260,19 @@ export class ArborClient {
   ): Promise<Map<string, ArborAssessmentMark[]>> {
     const marksByTarget = new Map<string, ArborAssessmentMark[]>();
     if (!targetIds.length) return marksByTarget;
-    const valueSelection = this.assessmentMarkValueSelection(valueFields);
-    for (let pageNum = 0; pageNum < 100; pageNum++) {
-      const data = await runArborGraphqlQuery<{
+    try {
+      // Arbor exposes the entity type on every tenant, but some tenants do not
+      // expose it as a root query with this relationship filter. Do not allow a
+      // capability difference to break the entire assessment review page.
+      if (!await this.measurementPeriodQuerySupportsTargetFilter()) return marksByTarget;
+      const valueSelection = this.assessmentMarkValueSelection(valueFields);
+      for (let pageNum = 0; pageNum < 100; pageNum++) {
+        const data = await runArborGraphqlQuery<{
         ProgressAssessmentBatchTargetMeasurementPeriod: Array<{
           progressAssessmentBatchTarget: { id: string } | null;
           studentProgressAssessmentMarks: Array<Omit<ArborAssessmentMark, "valueFields"> & { markGrade?: ArborAssessmentMark["grade"] }>;
         }>;
-      }>(this.credentials, `{
+        }>(this.credentials, `{
         ProgressAssessmentBatchTargetMeasurementPeriod(
           page_size: 500,
           page_num: ${pageNum},
@@ -269,23 +288,29 @@ export class ArborClient {
           }
         }
       }`);
-      const periods = Array.isArray(data.ProgressAssessmentBatchTargetMeasurementPeriod)
-        ? data.ProgressAssessmentBatchTargetMeasurementPeriod
-        : [];
-      for (const period of periods) {
-        const targetId = period.progressAssessmentBatchTarget?.id;
-        if (!targetId) continue;
-        const marks = marksByTarget.get(targetId) ?? [];
-        for (const mark of Array.isArray(period.studentProgressAssessmentMarks) ? period.studentProgressAssessmentMarks : []) {
-          marks.push({
-            ...mark,
-            grade: mark.grade ?? mark.markGrade ?? null,
-            valueFields: Object.fromEntries(valueFields.map((field) => [field, (mark as Record<string, unknown>)[field] as string | number | boolean | null])),
-          });
+        const periods = Array.isArray(data.ProgressAssessmentBatchTargetMeasurementPeriod)
+          ? data.ProgressAssessmentBatchTargetMeasurementPeriod
+          : [];
+        for (const period of periods) {
+          const targetId = period.progressAssessmentBatchTarget?.id;
+          if (!targetId) continue;
+          const marks = marksByTarget.get(targetId) ?? [];
+          for (const mark of Array.isArray(period.studentProgressAssessmentMarks) ? period.studentProgressAssessmentMarks : []) {
+            marks.push({
+              ...mark,
+              grade: mark.grade ?? mark.markGrade ?? null,
+              valueFields: Object.fromEntries(valueFields.map((field) => [field, (mark as Record<string, unknown>)[field] as string | number | boolean | null])),
+            });
+          }
+          marksByTarget.set(targetId, marks);
         }
-        marksByTarget.set(targetId, marks);
+        if (periods.length < 500) break;
       }
-      if (periods.length < 500) break;
+    } catch {
+      // The nested relationship remains available as a compatibility path.
+      // Returning an empty map here lets that path render rather than making
+      // one unsupported Arbor query take down a whole review sheet.
+      return new Map();
     }
     return marksByTarget;
   }
