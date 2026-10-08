@@ -200,12 +200,15 @@ export default async function ArborAssessmentMarkSheetPage({
   ).values()];
   const targetMarks = batchTargets.flatMap((target) => target.studentProgressAssessmentMarks);
   const progressMarks = batchMetadata
-    ? (await client.listAssessmentMarksForDefinitionInRange(batchAssessmentId, assessmentYearRange(cycle.academicYear)))
-      .filter((mark) => mark.assessment?.id === batchAssessmentId)
+    ? await client.listAssessmentMarksForBatchTargets(
+      batchAssessmentId,
+      batchTargets.map((target) => target.id),
+      assessmentYearRange(cycle.academicYear),
+    )
     : [];
   // A live batch target can omit former pupils after rollover, even though
-  // Arbor still returns their dated, subject-specific assessment mark. Merge
-  // those records into the roster rather than losing valid historic results.
+  // Arbor still returns their dated, subject-specific assessment mark. These
+  // generic-feed records are accepted only when linked to this exact target.
   const recordedBatchMarks = [...progressMarks, ...targetMarks];
   const recordedBatchStudentIds = new Set(recordedBatchMarks.map((mark) => mark.student.id));
   const allMarks: ArborMark[] = batchMetadata

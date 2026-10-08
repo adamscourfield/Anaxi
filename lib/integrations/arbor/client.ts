@@ -24,6 +24,7 @@ export type ArborAssessmentMark = {
   valueFields: Record<string, string | number | boolean | null>;
   grade: { displayName: string | null; shortName: string | null; code: string | null } | null;
   assessment: { id: string; displayName: string | null; assessmentName: string | null; assessmentShortName: string | null } | null;
+  progressAssessmentBatchTargetId?: string | null;
 };
 
 export type ArborProgressAssessmentBatch = {
@@ -193,12 +194,53 @@ export class ArborClient {
   }
 
   /**
+   * Arbor installations vary in the scalar used for a progress result. Read
+   * only documented value-like scalar fields and never infer a mark from an
+   * ID, name, or date.
+   */
+  private async progressAssessmentMarkValueFields(): Promise<string[]> {
+    const data = await runArborGraphqlQuery<{
+      __type: { fields: Array<{ name: string; type: { kind: string; ofType: { kind: string } | null } | null }> } | null;
+    }>(this.credentials, `{
+      __type(name: "StudentProgressAssessmentMark") {
+        fields { name type { kind ofType { kind } } }
+      }
+    }`);
+    const supported = new Set(["mark", "value", "result", "score", "numericValue", "percentageValue", "textValue", "gradeValue", "markValue", "resultValue", "resultText", "valueText", "valueNumeric"]);
+    return (data.__type?.fields ?? [])
+      .filter((field) => supported.has(field.name) && (
+        field.type?.kind === "SCALAR"
+        || field.type?.kind === "ENUM"
+        || field.type?.ofType?.kind === "SCALAR"
+        || field.type?.ofType?.kind === "ENUM"
+      ))
+      .map((field) => field.name);
+  }
+
+  private async progressAssessmentBatchTargetRelation(): Promise<string | null> {
+    const data = await runArborGraphqlQuery<{
+      __type: { fields: Array<{ name: string }> } | null;
+    }>(this.credentials, `{
+      __type(name: "StudentProgressAssessmentMark") { fields { name } }
+    }`);
+    const fieldNames = new Set((data.__type?.fields ?? []).map((field) => field.name));
+    return ["progressAssessmentBatchTarget", "progressAssessmentBatchTar"]
+      .find((field) => fieldNames.has(field)) ?? null;
+  }
+
+  private assessmentMarkValueSelection(fields: string[]): string {
+    return fields.length ? ` ${fields.join(" ")}` : "";
+  }
+
+  /**
    * Historic summative mark sheets are stored as batch targets in Arbor. Each
    * target is a real subject roster, avoiding the broad cross-subject results
    * returned by the generic StudentProgressAssessmentMark feed.
    */
   async listProgressAssessmentBatchTargets(ids: string[], filter: "batch" | "target" = "batch"): Promise<ArborProgressAssessmentBatchTarget[]> {
     if (!ids.length) return [];
+    const valueFields = await this.progressAssessmentMarkValueFields();
+    const valueSelection = this.assessmentMarkValueSelection(valueFields);
     const targets: ArborProgressAssessmentBatchTarget[] = [];
     for (let offset = 0; offset < ids.length; offset += 20) {
       const pageIds = ids.slice(offset, offset + 20);
@@ -216,7 +258,7 @@ export class ArborClient {
               id assessmentDate displayName
               student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
               grade { displayName shortName code }
-              assessment { id displayName assessmentName assessmentShortName }
+              assessment { id displayName assessmentName assessmentShortName }${valueSelection}
             }
           }
         }`);
@@ -229,13 +271,59 @@ export class ArborClient {
           students: Array.isArray(target.students) ? target.students : [],
           allStudents: Array.isArray(target.allStudents) ? target.allStudents : [],
           studentProgressAssessmentMarks: Array.isArray(target.studentProgressAssessmentMarks)
-            ? target.studentProgressAssessmentMarks.map((mark) => ({ ...mark, valueFields: {} }))
+            ? target.studentProgressAssessmentMarks.map((mark) => ({
+              ...mark,
+              valueFields: Object.fromEntries(valueFields.map((field) => [field, (mark as Record<string, unknown>)[field] as string | number | boolean | null])),
+            }))
             : [],
         })));
         if (pageTargets.length < 100) break;
       }
     }
     return targets;
+  }
+
+  /**
+   * Reads only marks whose Arbor record names one of the supplied batch
+   * targets. A shared assessment definition alone is not enough to identify a
+   * subject, so this is the only safe generic-feed path for an import.
+   */
+  async listAssessmentMarksForBatchTargets(assessmentId: string, targetIds: string[], dateRange?: { from: string; before: string }): Promise<ArborAssessmentMark[]> {
+    if (!targetIds.length) return [];
+    const [valueFields, targetRelation] = await Promise.all([
+      this.progressAssessmentMarkValueFields(),
+      this.progressAssessmentBatchTargetRelation(),
+    ]);
+    if (!targetRelation) return [];
+    const valueSelection = this.assessmentMarkValueSelection(valueFields);
+    const targetIdsSet = new Set(targetIds);
+    const marks: ArborAssessmentMark[] = [];
+    for (let pageNum = 0; pageNum < 20; pageNum++) {
+      const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<Record<string, unknown>> }>(this.credentials, `{
+        StudentProgressAssessmentMark(page_size: 500, page_num: ${pageNum}, assessment__id_in: [${JSON.stringify(assessmentId)}]) {
+          id assessmentDate displayName
+          student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
+          grade { displayName shortName code }
+          assessment { id displayName assessmentName assessmentShortName }${valueSelection}
+          ${targetRelation} { id }
+        }
+      }`);
+      const page = Array.isArray(data.StudentProgressAssessmentMark) ? data.StudentProgressAssessmentMark : [];
+      for (const mark of page) {
+        const target = mark[targetRelation] as { id?: string } | null | undefined;
+        const assessmentDate = typeof mark.assessmentDate === "string" ? mark.assessmentDate : null;
+        if (!target?.id || !targetIdsSet.has(target.id)) continue;
+        if (dateRange && (!assessmentDate || assessmentDate < dateRange.from || assessmentDate >= dateRange.before)) continue;
+        marks.push({
+          ...(mark as Omit<ArborAssessmentMark, "valueFields" | "progressAssessmentBatchTargetId">),
+          assessmentDate,
+          valueFields: Object.fromEntries(valueFields.map((field) => [field, mark[field] as string | number | boolean | null])),
+          progressAssessmentBatchTargetId: target.id,
+        });
+      }
+      if (page.length < 500) return marks;
+    }
+    throw new Error("Arbor returned more than 10,000 marks for one batch assessment; import stopped safely.");
   }
 
   async listProgressAssessmentBatches(pageSize = 100, pageNum = 0, assessmentIds?: string[]): Promise<ArborProgressAssessmentBatch[]> {
