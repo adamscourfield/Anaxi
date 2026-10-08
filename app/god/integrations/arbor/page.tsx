@@ -22,7 +22,7 @@ type PreparedAssessmentDefinition = { id: string; label: string; assessmentDate?
 // Keep the operator-facing progress card aligned with the safe, exact-target
 // importer. Earlier completed IDs may have been recorded before this source
 // selection was available and must be retried.
-const HISTORIC_IMPORT_VERSION = 4;
+const HISTORIC_IMPORT_VERSION = 5;
 type ProposedAssessmentCycle = {
   key: string;
   label: string;

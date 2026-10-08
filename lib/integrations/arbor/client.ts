@@ -224,7 +224,7 @@ export class ArborClient {
       __type(name: "StudentProgressAssessmentMark") { fields { name } }
     }`);
     const fieldNames = new Set((data.__type?.fields ?? []).map((field) => field.name));
-    return ["progressAssessmentBatchTarget", "progressAssessmentBatchTar"]
+    return ["progressAssessmentBatchTars", "progressAssessmentBatchTarget", "progressAssessmentBatchTar"]
       .find((field) => fieldNames.has(field)) ?? null;
   }
 
@@ -310,15 +310,18 @@ export class ArborClient {
       }`);
       const page = Array.isArray(data.StudentProgressAssessmentMark) ? data.StudentProgressAssessmentMark : [];
       for (const mark of page) {
-        const target = mark[targetRelation] as { id?: string } | null | undefined;
+        const relatedTargets = Array.isArray(mark[targetRelation])
+          ? mark[targetRelation] as Array<{ id?: string }>
+          : [mark[targetRelation] as { id?: string } | null | undefined];
+        const matchingTarget = relatedTargets.find((target) => target?.id !== undefined && targetIdsSet.has(target.id));
         const assessmentDate = typeof mark.assessmentDate === "string" ? mark.assessmentDate : null;
-        if (!target?.id || !targetIdsSet.has(target.id)) continue;
+        if (!matchingTarget?.id) continue;
         if (dateRange && (!assessmentDate || assessmentDate < dateRange.from || assessmentDate >= dateRange.before)) continue;
         marks.push({
           ...(mark as Omit<ArborAssessmentMark, "valueFields" | "progressAssessmentBatchTargetId">),
           assessmentDate,
           valueFields: Object.fromEntries(valueFields.map((field) => [field, mark[field] as string | number | boolean | null])),
-          progressAssessmentBatchTargetId: target.id,
+          progressAssessmentBatchTargetId: matchingTarget.id,
         });
       }
       if (page.length < 500) return marks;

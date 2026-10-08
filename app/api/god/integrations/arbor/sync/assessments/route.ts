@@ -22,10 +22,10 @@ const ASSESSMENT_POLICY_VERSION = 3;
 // Keep the scheduled discovery aligned with the operator-triggered scan.
 // Dated marks are reclassified in v15 before they can be reviewed or approved.
 const HISTORIC_DISCOVERY_VERSION = 15;
-// v4 reads value fields from marks tied to the exact batch target. A shared
+// v5 reads marks tied through Arbor's exact batch-target relationship. A shared
 // StudentProgressAssessmentMark definition can span several subjects, so an
 // assessment ID alone is never sufficient to select marks for an import.
-const HISTORIC_IMPORT_VERSION = 4;
+const HISTORIC_IMPORT_VERSION = 5;
 const MARK_PAGES_PER_RUN = 24;
 // A small combined group is paged to completion before moving on, so every
 // subject in the group is retained without serially scanning the full P8 list.
