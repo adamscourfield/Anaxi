@@ -20,8 +20,14 @@ export const POST = withApi(async function POST(req: Request) {
   if (connectionId) url.searchParams.set("connectionId", connectionId);
   try {
     const fields = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).inspectHistoricAssessmentSourceFields();
+    // The full source schema can exceed browser URL limits. This diagnostic is
+    // currently investigating the subject-to-mark join, so return only the
+    // two compact measurement-period models needed for that decision.
+    const focusedSources = ["ProgressAssessmentBatchTargetMeasurementPeriod", "ProgressMeasurementPeriod"];
     url.searchParams.set("assessmentSourceFields", "success");
-    url.searchParams.set("assessmentSourceFieldDetails", Object.entries(fields).map(([source, names]) => `${source}: ${names.join(", ") || "none"}`).join(" | "));
+    url.searchParams.set("assessmentSourceFieldDetails", focusedSources
+      .map((source) => `${source}: ${(fields[source] ?? []).filter((field) => !field.startsWith("query arguments:")).join(", ") || "none"}`)
+      .join(" | "));
   } catch {
     url.searchParams.set("assessmentSourceFields", "failed");
   }
