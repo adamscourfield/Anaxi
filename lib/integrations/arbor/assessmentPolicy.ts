@@ -110,10 +110,13 @@ export function arborHistoricYearGroup(
 }
 
 function academicYearFromLabel(label: string): string | null {
-  const match = label.match(/\b(20\d{2})\s*[-/]\s*(20\d{2})\b/);
+  // Markbook names use either the full form ("2024-2025") or the UK-standard
+  // shorthand ("2024/25") -- both must be recognised, or a shorthand-named
+  // markbook falls through to date-based inference and can mislabel its year.
+  const match = label.match(/\b(20\d{2})\s*[-/]\s*(20\d{2}|\d{2})\b/);
   if (!match) return null;
   const start = Number(match[1]);
-  const end = Number(match[2]);
+  const end = match[2].length === 2 ? Number(match[1].slice(0, 2) + match[2]) : Number(match[2]);
   return end === start + 1 ? `${start}/${end}` : null;
 }
 
