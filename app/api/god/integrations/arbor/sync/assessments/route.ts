@@ -25,8 +25,10 @@ const HISTORIC_DISCOVERY_VERSION = 15;
 // v6 reads marks from Arbor's exact target measurement periods. A shared
 // StudentProgressAssessmentMark definition can span several subjects, so an
 // assessment ID alone is never sufficient to select marks for an import.
-// Version 7 reads Arbor's confirmed Grade value fields from subject measurement periods.
-const HISTORIC_IMPORT_VERSION = 7;
+// Version 8 supplements a target roster with only the identically labelled
+// generic progress marks. This is needed for Arbor tenants that store values
+// outside the target relationship while retaining the subject roster there.
+const HISTORIC_IMPORT_VERSION = 8;
 const MARK_PAGES_PER_RUN = 24;
 // A small combined group is paged to completion before moving on, so every
 // subject in the group is retained without serially scanning the full P8 list.
@@ -95,6 +97,19 @@ function normalisedQualificationSubject(value: string | null | undefined): strin
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+function progressMarkMatchesDefinition(mark: ArborAssessmentMark, definitionLabel: string): boolean {
+  const expected = normalisedQualificationSubject(definitionLabel);
+  if (!expected || expected.length < 3) return false;
+  return [
+    mark.displayName,
+    mark.assessment?.assessmentName,
+    mark.assessment?.assessmentShortName,
+    mark.assessment?.displayName,
+  ]
+    .map(normalisedQualificationSubject)
+    .some((candidate) => candidate === expected || candidate.includes(expected));
 }
 
 function qualificationResultMatchesDefinition(result: ArborQualificationResult, definitionLabel: string): boolean {
@@ -166,10 +181,14 @@ async function importReviewedHistoricDefinition(args: {
   if (!definitionMapping) return { imported: 0, reviewedMarks: 0, targets: targets.length, progressMarks: 0, qualificationMarks: 0, unlinkedStudents: 0, unmappedCohorts: 0, unapprovedCycles: 0, missingOwners: 0 };
   const batchAssessment = targets.find((target) => target.progressAssessmentBatch?.assessment)?.progressAssessmentBatch?.assessment;
   const assessment = batchAssessment ?? { id: definition.id, displayName: definition.label, assessmentName: definition.label, assessmentShortName: null };
+  const targetRosterIds = new Set(targets.flatMap((target) => (target.allStudents.length ? target.allStudents : target.students).map((student) => student.id)));
   const targetMarks = targets.flatMap((target) => [
     ...target.studentProgressAssessmentMarks,
     ...target.measurementPeriodMarks,
   ]);
+  const progressMarks = batchAssessment
+    ? await client.listAssessmentMarksForDefinitionInRange(batchAssessment.id, assessmentYearRange(definitionMapping.academicYear))
+    : [];
   const definitionYearGroups = definition.yearGroups?.length ? definition.yearGroups : definitionMapping.yearGroups;
   const usesQualificationResults = (definitionMapping.family === "GCSE" || (definitionMapping.family === "A_LEVEL" && definitionYearGroups.includes("Y13")))
     && (definitionMapping.pointLabel === "Summer" || definitionMapping.pointLabel === "Final");
@@ -181,7 +200,13 @@ async function importReviewedHistoricDefinition(args: {
     : [];
   const sourceMarks = qualificationMarks.length
     ? qualificationMarks
-    : targetMarks;
+    : [
+      ...targetMarks,
+      // A batch target is the only trusted roster. Some Arbor tenants store
+      // the result value in the shared progress stream, so accept it only
+      // when its own label names this exact subject as well.
+      ...progressMarks.filter((mark) => targetRosterIds.has(mark.student.id) && progressMarkMatchesDefinition(mark, definition.label)),
+    ];
   const verifiedMarks = latestVerifiedMarks(sourceMarks);
 
   let imported = 0;

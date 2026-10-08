@@ -74,6 +74,19 @@ function normalisedQualificationSubject(value: string | null | undefined): strin
     .replace(/\s+/g, " ");
 }
 
+function progressMarkMatchesDefinition(mark: ArborMark, definitionLabel: string): boolean {
+  const expected = normalisedQualificationSubject(definitionLabel);
+  if (!expected || expected.length < 3) return false;
+  return [
+    mark.displayName,
+    mark.assessment?.assessmentName,
+    mark.assessment?.assessmentShortName,
+    mark.assessment?.displayName,
+  ]
+    .map(normalisedQualificationSubject)
+    .some((candidate) => candidate === expected || candidate.includes(expected));
+}
+
 function qualificationResultMatchesDefinition(result: ArborQualificationResult, definitionLabel: string): boolean {
   const expected = normalisedQualificationSubject(definitionLabel);
   if (!expected || expected.length < 3) return false;
@@ -197,13 +210,20 @@ export default async function ArborAssessmentMarkSheetPage({
   const batchRoster = [...new Map(
     batchTargets.flatMap((target) => target.allStudents.length ? target.allStudents : target.students).map((student) => [student.id, student]),
   ).values()];
+  const batchRosterIds = new Set(batchRoster.map((student) => student.id));
   const targetMarks = batchTargets.flatMap((target) => [
     ...target.studentProgressAssessmentMarks,
     ...target.measurementPeriodMarks,
   ]);
+  const progressMarks = batchMetadata?.assessment
+    ? await client.listAssessmentMarksForDefinitionInRange(batchMetadata.assessment.id, assessmentYearRange(cycle.academicYear))
+    : [];
   // Measurement-period marks are scoped by Arbor to this target. Do not fall
   // back to its shared assessment feed: it has no subject link for this tenant.
-  const recordedBatchMarks = targetMarks;
+  const recordedBatchMarks = [
+    ...targetMarks,
+    ...progressMarks.filter((mark) => batchRosterIds.has(mark.student.id) && progressMarkMatchesDefinition(mark, definition.label)),
+  ];
   const recordedBatchStudentIds = new Set(recordedBatchMarks.map((mark) => mark.student.id));
   const allMarks: ArborMark[] = batchMetadata
       ? [
