@@ -611,7 +611,9 @@ export class ArborClient {
    * tenant's schema rather than trial-and-error requests against pupil data.
    */
   async inspectHistoricAssessmentSourceFields(): Promise<Record<string, string[]>> {
-    const sources = ["ProgressAssessmentBatch", "ProgressAssessmentBatchTarget", "QualificationResult", "QualificationAward", "QualificationSubject"];
+    // Include the mark model itself. Its relationship fields determine whether
+    // a generic result can be tied safely to one subject batch target.
+    const sources = ["StudentProgressAssessmentMark", "ProgressAssessmentBatch", "ProgressAssessmentBatchTarget", "QualificationResult", "QualificationAward", "QualificationSubject"];
     const result: Record<string, string[]> = {};
     for (const source of sources) {
       const data = await runArborGraphqlQuery<{
