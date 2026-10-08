@@ -19,6 +19,10 @@ import { arborConnectionHref } from "@/lib/integrations/arbor/connectionScope";
 export const dynamic = "force-dynamic";
 
 type PreparedAssessmentDefinition = { id: string; label: string; assessmentDate?: string | null; periodHint?: string | null; yearGroups?: string[] };
+// Keep the operator-facing progress card aligned with the safe, exact-target
+// importer. Earlier completed IDs may have been recorded before this source
+// selection was available and must be retried.
+const HISTORIC_IMPORT_VERSION = 4;
 type ProposedAssessmentCycle = {
   key: string;
   label: string;
@@ -315,6 +319,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
       historicComplete?: boolean;
       historicalDefinitions?: PreparedAssessmentDefinition[];
       importedMarks?: number;
+      historicImportVersion?: number;
       historicImportCursor?: number;
       historicImportedDefinitionIds?: string[];
       lastInspected?: { label?: unknown; reviewedMarks?: unknown; imported?: unknown; targets?: unknown; progressMarks?: unknown; qualificationMarks?: unknown; unlinkedStudents?: unknown; unmappedCohorts?: unknown; unapprovedCycles?: unknown; missingOwners?: unknown; at?: unknown };
@@ -330,7 +335,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
       }));
     }).map((definition) => definition.id)).size
     : 0;
-  const importedAssessmentDefinitionCount = Array.isArray(assessmentSync.historicImportedDefinitionIds)
+  const importedAssessmentDefinitionCount = assessmentSync.historicImportVersion === HISTORIC_IMPORT_VERSION && Array.isArray(assessmentSync.historicImportedDefinitionIds)
     ? assessmentSync.historicImportedDefinitionIds.length
     : 0;
   const assessmentImportRemaining = Math.max(0, approvedAssessmentDefinitionCount - importedAssessmentDefinitionCount);
