@@ -332,6 +332,9 @@ model DailyAttendanceCheck {
   checkDate     DateTime
   possibleCount Int
   presentCount  Int
+  /// Late pupils in the morning-registration check. Older checks predate this
+  /// field, so null means the rate is not available rather than zero.
+  lateCount     Int?
   checkedAt     DateTime @default(now())
   tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 

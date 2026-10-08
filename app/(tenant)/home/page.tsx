@@ -242,7 +242,7 @@ function LeadershipHome({
   topImproving: CpdPriorityRow[];
   meetingsTodayCount: number;
   attainmentHeadline: HomeAttainmentHeadline;
-  attendanceHeadline: { attendancePct: number | null; todayPct: number | null; weekPct: number | null; studentsCovered: number; asOf: Date | null };
+  attendanceHeadline: { attendancePct: number | null; yesterdayPct: number | null; yesterdayLatenessPct: number | null; studentsCovered: number; asOf: Date | null };
 }) {
   const allDriftingCpd = cpdRows.filter((r) => r.teachersDriftingDown > 0);
   const topCpd = allDriftingCpd.slice(0, 3);
@@ -251,8 +251,8 @@ function LeadershipHome({
   // group's mean is based on -- an unweighted average-of-averages would let
   // a small sixth form pull the figure as hard as a full-size year group.
   const attendancePct = attendanceHeadline.attendancePct;
-  const attendanceTodayPct = attendanceHeadline.todayPct;
-  const attendanceWeekPct = attendanceHeadline.weekPct;
+  const attendanceYesterdayPct = attendanceHeadline.yesterdayPct;
+  const latenessYesterdayPct = attendanceHeadline.yesterdayLatenessPct;
 
   const cohortWithAttendanceDelta = cohortRows.filter((r) => r.attendanceDelta !== null);
   const attendanceDeltaStudentTotal = cohortWithAttendanceDelta.reduce((sum, r) => sum + r.pairedCount, 0);
@@ -421,6 +421,7 @@ function LeadershipHome({
             <p className="text-[2.25rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums">
               {attendancePct !== null ? `${attendancePct.toFixed(1)}%` : "—"}
             </p>
+            <p className="-mt-1 text-xs text-muted">Current cumulative attendance</p>
             {attendancePct !== null && (
               <div className="h-1.5 w-full overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--surface-container)_88%,transparent)]">
                 <div
@@ -431,15 +432,15 @@ function LeadershipHome({
             )}
             <div className="mt-1 grid grid-cols-2 gap-3 border-t border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] pt-3">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Today</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Attendance yesterday</p>
                 <p className="mt-0.5 text-base font-semibold tabular-nums text-text">
-                  {attendanceTodayPct !== null ? `${attendanceTodayPct.toFixed(1)}%` : "—"}
+                  {attendanceYesterdayPct !== null ? `${attendanceYesterdayPct.toFixed(1)}%` : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">This week</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Lateness yesterday</p>
                 <p className="mt-0.5 text-base font-semibold tabular-nums text-text">
-                  {attendanceWeekPct !== null ? `${attendanceWeekPct.toFixed(1)}%` : "—"}
+                  {latenessYesterdayPct !== null ? `${latenessYesterdayPct.toFixed(1)}%` : "—"}
                 </p>
               </div>
             </div>

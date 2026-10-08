@@ -53,13 +53,14 @@ export const POST = withApi(async function POST(req: Request) {
     const linkedExternalIds = new Set(students.map((student) => student.externalId));
     const byStudent = summariseAttendance(records, linkedExternalIds).byStudent;
 
-    const totalsByTenant = new Map<string, { possible: number; present: number }>();
+    const totalsByTenant = new Map<string, { possible: number; present: number; late: number }>();
     for (const student of students) {
       const daily = byStudent.get(student.externalId);
       if (!daily) continue;
-      const totals = totalsByTenant.get(student.tenantId) ?? { possible: 0, present: 0 };
+      const totals = totalsByTenant.get(student.tenantId) ?? { possible: 0, present: 0, late: 0 };
       totals.possible += daily.possible;
       totals.present += daily.present;
+      totals.late += daily.late;
       totalsByTenant.set(student.tenantId, totals);
     }
 
@@ -68,8 +69,8 @@ export const POST = withApi(async function POST(req: Request) {
       if (!totals || totals.possible === 0) continue;
       await db.dailyAttendanceCheck.upsert({
         where: { tenantId_checkDate: { tenantId, checkDate: today } },
-        create: { tenantId, checkDate: today, possibleCount: totals.possible, presentCount: totals.present },
-        update: { possibleCount: totals.possible, presentCount: totals.present, checkedAt: new Date() },
+        create: { tenantId, checkDate: today, possibleCount: totals.possible, presentCount: totals.present, lateCount: totals.late },
+        update: { possibleCount: totals.possible, presentCount: totals.present, lateCount: totals.late, checkedAt: new Date() },
       });
     }
 
