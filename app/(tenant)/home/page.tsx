@@ -39,10 +39,10 @@ import {
   hydrateCoachHomeData,
   hydrateHodAttentionContext,
   fetchBehaviourHeatmapMatrix,
-  fetchDashboardAttainmentKPIs,
   PendingLeaveDetail,
   OnCallDetail,
   AttainmentSummary,
+  HomeAttainmentHeadline,
   DualFlaggedStudent,
   BehaviourHeatmapData,
 } from "@/modules/home/hydration";
@@ -221,7 +221,7 @@ function LeadershipHome({
   behaviourHeatmap,
   topImproving,
   meetingsTodayCount,
-  attainmentKpis,
+  attainmentHeadline,
   attendanceHeadline,
 }: {
   windowDays: number;
@@ -241,7 +241,7 @@ function LeadershipHome({
   behaviourHeatmap: BehaviourHeatmapData | null;
   topImproving: CpdPriorityRow[];
   meetingsTodayCount: number;
-  attainmentKpis: Awaited<ReturnType<typeof fetchDashboardAttainmentKPIs>>;
+  attainmentHeadline: HomeAttainmentHeadline;
   attendanceHeadline: { attendancePct: number | null; todayPct: number | null; weekPct: number | null; studentsCovered: number; asOf: Date | null };
 }) {
   const allDriftingCpd = cpdRows.filter((r) => r.teachersDriftingDown > 0);
@@ -518,7 +518,7 @@ function LeadershipHome({
         <PositiveMomentumCard topImproving={topImproving} windowDays={windowDays} />
       </section>
 
-      <AttainmentSummaryCard rows={attainmentKpis} windowDays={windowDays} />
+      <AttainmentSummaryCard headline={attainmentHeadline} windowDays={windowDays} />
 
       {/* ═══ Behaviour Heatmap ═══ */}
       {behaviourHeatmap && (
@@ -1460,7 +1460,7 @@ export default async function HomePage({
           behaviourHeatmap={behaviourHeatmap}
           topImproving={leadershipData.topImproving}
           meetingsTodayCount={leadershipData.meetingsTodayCount}
-          attainmentKpis={leadershipData.attainmentKpis}
+          attainmentHeadline={leadershipData.attainmentHeadline}
           attendanceHeadline={leadershipData.attendanceHeadline}
         />
       );

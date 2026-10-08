@@ -1,10 +1,13 @@
 export type AttentionTone = "critical" | "warning";
 
+export type AttentionKind = "onCall" | "intervention" | "attendance" | "leave" | "studentRisk";
+
 export type AttentionItem = {
   title: string;
   detail: string;
   href: string;
   tone: AttentionTone;
+  kind: AttentionKind;
 };
 
 export function attentionViewAllTarget(items: AttentionItem[]): { href: string; label: string } {

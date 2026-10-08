@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { MetaText } from "@/components/ui/typography";
 import { HomeCardHeadingSm } from "@/components/home/home-chrome";
-import { AttainmentPanel, type AttainmentKPIRow } from "@/components/dashboard/AttainmentPanel";
+import { AttainmentPanel } from "@/components/dashboard/AttainmentPanel";
+import type { HomeAttainmentHeadline } from "@/modules/home/hydration";
 import { CohortPivotRow } from "@/modules/analysis/cohortPivot";
 import { CpdPriorityRow } from "@/modules/analysis/cpdPriorities";
 import { IconTrendDown, IconTrendUp } from "@/components/home/home-chrome";
@@ -97,20 +98,19 @@ export function PositiveMomentumCard({
 }
 
 export function AttainmentSummaryCard({
-  rows,
+  headline,
   windowDays,
 }: {
-  rows: AttainmentKPIRow[];
+  headline: HomeAttainmentHeadline;
   windowDays: number;
 }) {
-  if (rows.length === 0) return null;
+  if (!headline.gcse && !headline.aLevel) return null;
   return (
     <Card className="rounded-sm !p-6 shadow-none">
       <AttainmentPanel
-        rows={rows}
-        subtitle="Latest assessment cycle proxies"
+        gcse={headline.gcse}
+        aLevel={headline.aLevel}
         ctaHref={`/assessments?window=${windowDays}`}
-        ctaLabel="Open assessments"
       />
     </Card>
   );
