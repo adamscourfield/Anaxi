@@ -25,10 +25,9 @@ const HISTORIC_DISCOVERY_VERSION = 15;
 // v6 reads marks from Arbor's exact target measurement periods. A shared
 // StudentProgressAssessmentMark definition can span several subjects, so an
 // assessment ID alone is never sufficient to select marks for an import.
-// Version 8 supplements a target roster with only the identically labelled
-// generic progress marks. This is needed for Arbor tenants that store values
-// outside the target relationship while retaining the subject roster there.
-const HISTORIC_IMPORT_VERSION = 8;
+// Version 9 imports a reviewed definition into the already approved cycle,
+// rather than attempting to infer its period again from a generic mark label.
+const HISTORIC_IMPORT_VERSION = 9;
 const MARK_PAGES_PER_RUN = 24;
 // A small combined group is paged to completion before moving on, so every
 // subject in the group is retained without serially scanning the full P8 list.
@@ -217,8 +216,10 @@ async function importReviewedHistoricDefinition(args: {
   const touchedAssessments = new Map<string, string>();
   for (const mark of verifiedMarks) {
     const value = markValue(mark)!;
-    const baseMapping = mapArborAssessment(definition.label, mark.assessmentDate ?? definition.assessmentDate, mark.displayName ?? definition.periodHint);
-    if (!baseMapping) continue;
+    // The review selected this dated definition and the mark has already
+    // passed the exact subject-label guard above. Generic Arbor marks often
+    // omit their term in `displayName`, so never reclassify them here.
+    const baseMapping = definitionMapping;
     const student = studentByExternalId.get(mark.student.id);
     const historicYearGroup = student?.status === "ACTIVE"
       ? arborYearGroupAtAssessment(student.yearGroup, baseMapping.academicYear)
@@ -266,7 +267,7 @@ async function importReviewedHistoricDefinition(args: {
       data: { entryCount, matchedStudentCount: entryCount, uploadStatus: "VALIDATED" },
     });
   }));
-  return { imported, reviewedMarks: verifiedMarks.length, targets: targets.length, progressMarks: 0, qualificationMarks: qualificationMarks.length, unlinkedStudents, unmappedCohorts, unapprovedCycles, missingOwners };
+  return { imported, reviewedMarks: verifiedMarks.length, targets: targets.length, progressMarks: progressMarks.length, qualificationMarks: qualificationMarks.length, unlinkedStudents, unmappedCohorts, unapprovedCycles, missingOwners };
 }
 
 function addHistoricDefinition(target: Map<string, PreparedDefinition>, definition: PreparedDefinition, mapping: ArborAssessmentMapping, student: { id: string; displayAcademicLevel: { displayName: string } | null; leavingDate: string | null }, archivedYearGroup?: string | null) {
