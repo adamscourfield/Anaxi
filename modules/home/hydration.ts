@@ -537,18 +537,24 @@ export type HomeAttainmentHeadline = {
 
 const A_LEVEL_SCORE: Record<string, number> = { "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1 };
 
-/** The most recent result point, in the most recent cycle of this qualification type
- * that actually has grades recorded — not just an empty draft point. Cycles can be
- * created either manually or synced in from Arbor, and `isActive` isn't a reliable
- * signal for "current" across both paths, so this walks every cycle newest-first by
- * `startDate` and takes the first one with real data, regardless of that flag. */
+function academicYearEndDate(cycle: { academicYear: string; label: string; endDate: Date }) {
+  const startYear = Number((cycle.academicYear.match(/(20\d{2})/) ?? cycle.label.match(/(20\d{2})/))?.[1]);
+  // Arbor imports can be created with an unreliable start date. The academic-year
+  // label is the authoritative ordering key for a school assessment cycle.
+  return Number.isFinite(startYear)
+    ? new Date(Date.UTC(startYear + 1, 7, 31, 23, 59, 59, 999))
+    : cycle.endDate;
+}
+
+/** The most recent result point with real grades. Cycles can be created manually
+ * or synced from Arbor, so `isActive`, creation time, and import order cannot be
+ * used to determine recency. */
 async function findLatestAssessedPoint(tenantId: string, qualificationType: "GCSE" | "A_LEVEL") {
   const cycles = await (prisma as any).assessmentCycle.findMany({
     where: { tenantId, qualificationType },
-    orderBy: { startDate: "desc" },
     include: {
       points: {
-        orderBy: { ordinal: "desc" },
+        orderBy: [{ dateTaken: "desc" }, { assessedAt: "desc" }, { ordinal: "desc" }],
         include: {
           assessments: {
             select: {
@@ -563,12 +569,24 @@ async function findLatestAssessedPoint(tenantId: string, qualificationType: "GCS
     },
   });
 
-  for (const cycle of cycles as any[]) {
-    const points: any[] = cycle.points ?? [];
-    const point = points.find((p) => (p.assessments ?? []).some((a: any) => (a.results ?? []).length > 0));
-    if (point) return { cycleLabel: cycle.label as string, point };
-  }
-  return null;
+  const candidates = (cycles as any[]).flatMap((cycle) =>
+    (cycle.points ?? [])
+      .filter((point: any) => (point.assessments ?? []).some((assessment: any) => (assessment.results ?? []).length > 0))
+      .map((point: any) => ({
+        cycleLabel: cycle.label as string,
+        cycleRecency: academicYearEndDate(cycle),
+        pointRecency: point.dateTaken ?? point.assessedAt,
+        point,
+      }))
+  );
+
+  candidates.sort((a, b) =>
+    b.cycleRecency.getTime() - a.cycleRecency.getTime()
+    || new Date(b.pointRecency).getTime() - new Date(a.pointRecency).getTime()
+    || b.point.ordinal - a.point.ordinal
+  );
+  const latest = candidates[0];
+  return latest ? { cycleLabel: latest.cycleLabel, point: latest.point } : null;
 }
 
 async function fetchGcseHeadline(tenantId: string): Promise<GcseAttainmentHeadline | null> {

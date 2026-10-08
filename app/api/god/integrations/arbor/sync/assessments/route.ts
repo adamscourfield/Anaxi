@@ -52,6 +52,8 @@ function definitionsForFamily(definitions: PreparedDefinition[], family: (typeof
 
 async function ensureAssessment(db: any, tenantId: string, createdByUserId: string, definition: PreparedDefinition, mapping: ArborAssessmentMapping) {
   const startYear = Number(mapping.academicYear.slice(0, 4));
+  const assessmentDate = definition.assessmentDate ? new Date(definition.assessmentDate) : null;
+  const dateTaken = assessmentDate && !Number.isNaN(assessmentDate.getTime()) ? assessmentDate : null;
   const cycle = await db.assessmentCycle.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.cycleExternalId } },
     create: { tenantId, label: mapping.cycleLabel, cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear, startDate: new Date(`${startYear}-09-01T00:00:00.000Z`), endDate: new Date(`${startYear + 1}-08-31T23:59:59.999Z`), isActive: true, externalId: mapping.cycleExternalId, dataSource: "ARBOR" },
@@ -61,10 +63,10 @@ async function ensureAssessment(db: any, tenantId: string, createdByUserId: stri
   });
   const point = await db.assessmentPoint.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.pointExternalId } },
-    create: { tenantId, cycleId: cycle.id, label: mapping.pointLabel, ordinal: mapping.pointOrdinal, pointType: mapping.pointType, resultStatus: "VALIDATED", sourceType: "arbor", isFinalPoint: mapping.isFinalPoint, assessedAt: new Date(), externalId: mapping.pointExternalId, dataSource: "ARBOR" },
+    create: { tenantId, cycleId: cycle.id, label: mapping.pointLabel, ordinal: mapping.pointOrdinal, pointType: mapping.pointType, resultStatus: "VALIDATED", sourceType: "arbor", isFinalPoint: mapping.isFinalPoint, dateTaken, assessedAt: new Date(), externalId: mapping.pointExternalId, dataSource: "ARBOR" },
     // Keep a super admin's Anaxi result-point label (for example, "End of
     // Year") while Arbor continues to update its ordering and type metadata.
-    update: { ordinal: mapping.pointOrdinal, pointType: mapping.pointType, isFinalPoint: mapping.isFinalPoint },
+    update: { ordinal: mapping.pointOrdinal, pointType: mapping.pointType, isFinalPoint: mapping.isFinalPoint, ...(dateTaken ? { dateTaken } : {}) },
   });
   // One Arbor definition can carry marks from more than one term. The Anaxi
   // assessment identity therefore includes its mapped term point.
