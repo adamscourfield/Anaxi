@@ -682,6 +682,17 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
         </StatusBanner>
       ) : null}
 
+      {params?.["assessmentTargetLinkage"] === "success" ? (
+        <StatusBanner variant="success" title="Year 10 subject-mark linkage checked.">
+          {params["assessmentTargetLinkageDetails"] || "No linkage details were returned."} Nothing has been imported.
+        </StatusBanner>
+      ) : null}
+      {params?.["assessmentTargetLinkage"] === "failed" || params?.["assessmentTargetLinkage"] === "not-connected" ? (
+        <StatusBanner variant="danger" title="Year 10 subject-mark linkage could not be checked.">
+          {params["assessmentTargetLinkageDetails"] || "No assessment data was imported."}
+        </StatusBanner>
+      ) : null}
+
       {params?.assessmentCatalogue === "success" ? (
         <StatusBanner variant="success" title="Priority assessment catalogue preview complete.">
           Arbor has {previewCount(params.assessmentCatalogueTotal)} assessment definitions, with {previewCount(params.assessmentCataloguePriority)} matching P8, A-Level, KS1, or KS2. {params.assessmentCatalogueLabels ? `Matches: ${params.assessmentCatalogueLabels}.` : ""} Nothing has been imported.
@@ -1092,6 +1103,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                       <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/assessments/periods")} csrfToken={csrfToken}>Check assessment periods</MenuItemForm>
                       <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/assessments/sources")} csrfToken={csrfToken}>Check historic sources</MenuItemForm>
                       <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/assessments/source-fields")} csrfToken={csrfToken}>Inspect historic source fields</MenuItemForm>
+                      <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/assessments/target-linkage")} csrfToken={csrfToken}>Diagnose Year 10 mark links</MenuItemForm>
                     </ActionMenu>
                   </div>
                 </div>

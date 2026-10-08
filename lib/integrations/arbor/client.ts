@@ -329,6 +329,50 @@ export class ArborClient {
     throw new Error("Arbor returned more than 10,000 marks for one batch assessment; import stopped safely.");
   }
 
+  /**
+   * Reports how Arbor associates stored marks with a subject batch target.
+   * This is deliberately read-only and is used to diagnose a tenant-specific
+   * historic import without writing or guessing at result ownership.
+   */
+  async inspectAssessmentBatchTargetLinkage(assessmentId: string, targetIds: string[], dateRange?: { from: string; before: string }): Promise<{ relation: string | null; total: number; linked: number; graded: number; dateMatched: number; sample: string[] }> {
+    const relation = await this.progressAssessmentBatchTargetRelation();
+    if (!relation || !targetIds.length) return { relation, total: 0, linked: 0, graded: 0, dateMatched: 0, sample: [] };
+    const targetIdsSet = new Set(targetIds);
+    let total = 0;
+    let dateMatched = 0;
+    let linked = 0;
+    let graded = 0;
+    const sample: string[] = [];
+    for (let pageNum = 0; pageNum < 20; pageNum++) {
+      const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<Record<string, unknown>> }>(this.credentials, `{
+        StudentProgressAssessmentMark(page_size: 500, page_num: ${pageNum}, assessment__id_in: [${JSON.stringify(assessmentId)}]) {
+          id assessmentDate displayName
+          grade { displayName shortName code }
+          ${relation} { id }
+        }
+      }`);
+      const page = Array.isArray(data.StudentProgressAssessmentMark) ? data.StudentProgressAssessmentMark : [];
+      total += page.length;
+      for (const mark of page) {
+        const date = typeof mark.assessmentDate === "string" ? mark.assessmentDate : null;
+        if (dateRange && (!date || date < dateRange.from || date >= dateRange.before)) continue;
+        dateMatched++;
+        const relatedTargets = Array.isArray(mark[relation])
+          ? mark[relation] as Array<{ id?: string }>
+          : [mark[relation] as { id?: string } | null | undefined];
+        if (!relatedTargets.some((target) => target?.id !== undefined && targetIdsSet.has(target.id))) continue;
+        linked++;
+        const grade = mark.grade as { displayName?: string | null; shortName?: string | null; code?: string | null } | null;
+        const value = [grade?.displayName, grade?.shortName, grade?.code, mark.displayName]
+          .find((candidate) => typeof candidate === "string" && candidate.trim());
+        if (value) graded++;
+        if (sample.length < 5) sample.push(`${date ?? "no date"}: ${value ?? "no grade"}`);
+      }
+      if (page.length < 500) break;
+    }
+    return { relation, total, dateMatched, linked, graded, sample };
+  }
+
   async listProgressAssessmentBatches(pageSize = 100, pageNum = 0, assessmentIds?: string[]): Promise<ArborProgressAssessmentBatch[]> {
     const assessmentFilter = assessmentIds?.length
       ? `, assessment__id_in: [${assessmentIds.map((id) => JSON.stringify(id)).join(", ")}]`
