@@ -15,7 +15,7 @@ import { computeCohortPivot, CohortPivotRow } from "@/modules/analysis/cohortPiv
 import { getProgress8DashboardSummary, type Progress8DashboardSummary } from "@/modules/assessments/progress8";
 import { computeStudentRiskIndex, StudentRiskRow } from "@/modules/analysis/studentRisk";
 import { HomeAssembly } from "@/modules/home/assembler";
-import { addDays, attendancePercentage } from "@/lib/integrations/arbor/attendanceSync";
+import { addDays, attendancePercentage, dateKey } from "@/lib/integrations/arbor/attendanceSync";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- Prisma dynamic model access */
 
@@ -96,9 +96,9 @@ export function mondayOnOrBefore(date: Date): Date {
 async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHeadline> {
   const today = londonToday();
   const yesterday = addDays(today, -1);
+  const yesterdayKey = dateKey(yesterday);
 
-  const [students, yesterdayCheck] = await Promise.all([
-    (prisma as any).student.findMany({
+  const students = await (prisma as any).student.findMany({
       where: { tenantId, status: "ACTIVE" },
       select: {
         snapshots: {
@@ -113,12 +113,16 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
           select: { attendancePossibleCount: true, attendancePresentCount: true, latenessCount: true, snapshotDate: true },
         },
       },
-    }),
+    });
+  // This supplementary table was introduced after snapshots already existed.
+  // Its absence or a deployment race must never hide the snapshot fallback.
+  const yesterdayCheck = await safe(
     (prisma as any).dailyAttendanceCheck.findUnique({
       where: { tenantId_checkDate: { tenantId, checkDate: yesterday } },
       select: { possibleCount: true, presentCount: true, lateCount: true },
     }),
-  ]);
+    null as { possibleCount: number; presentCount: number; lateCount: number | null } | null,
+  );
 
   let yearPossible = 0, yearPresent = 0, studentsCovered = 0;
   let fallbackYesterdayPossible = 0, fallbackYesterdayPresent = 0, fallbackYesterdayLate = 0;
@@ -133,9 +137,9 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
     yearPresent += latest.attendancePresentCount;
     if (!asOf || latest.snapshotDate > asOf) asOf = latest.snapshotDate;
 
-    const yesterdayRow = rows.find((row) => row.snapshotDate.getTime() === yesterday.getTime());
+    const yesterdayRow = rows.find((row) => dateKey(row.snapshotDate) === yesterdayKey);
     const previousRow = yesterdayRow
-      ? rows.find((row) => row.snapshotDate < yesterday)
+      ? rows.find((row) => dateKey(row.snapshotDate) < yesterdayKey)
       : undefined;
     if (yesterdayRow && previousRow) {
       fallbackYesterdayPossible += Math.max(0, yesterdayRow.attendancePossibleCount - previousRow.attendancePossibleCount);
