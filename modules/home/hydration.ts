@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { SessionUser } from "@/lib/types";
+import { meetsGcseThreshold } from "@/modules/assessments/gradeNormalizer";
 import {
   CpdPriorityRow,
   computeCpdPriorities,
@@ -457,7 +458,7 @@ export async function hydrateLeadershipHomeData({
     { count: 0, recentTeachers: [] as { id: string; name: string; avatarUpdatedAt: Date | null }[] }
   );
 
-  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentKpis, attendanceHeadline] = await Promise.all([
+  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentHeadline, attendanceHeadline] = await Promise.all([
     safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]),
     safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]),
     safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }),
@@ -472,7 +473,9 @@ export async function hydrateLeadershipHomeData({
     weekObsPromise,
     attainmentPromise,
     meetingsTodayPromise,
-    hasAssessmentsFeature ? fetchDashboardAttainmentKPIs(user.tenantId) : Promise.resolve([] as DashboardAttainmentKPIRow[]),
+    hasAssessmentsFeature
+      ? fetchHomeAttainmentHeadline(user.tenantId)
+      : Promise.resolve({ gcse: null, aLevel: null } as HomeAttainmentHeadline),
     safe(fetchAttendanceHeadline(user.tenantId), { attendancePct: null, todayPct: null, weekPct: null, studentsCovered: 0, asOf: null } as AttendanceHeadline),
   ]);
 
@@ -490,152 +493,164 @@ export async function hydrateLeadershipHomeData({
     weekObsCount: weekObs.count,
     weekObsTeachers: weekObs.recentTeachers,
     attainmentSummary,
-    attainmentKpis,
+    attainmentHeadline,
     attendanceHeadline,
     meetingsTodayCount: meetingsTodayCount as number,
     watchlistStudents: studentResult.rows.filter((r) => r.onWatchlist),
   };
 }
 
-/* ── Attainment KPI panel ────────────────────────────────────────── */
+/* ── Attainment headline (GCSE / A-Level key measures) ──────────────── */
 
-export type DashboardAttainmentKPIRow = {
-  label: string;
-  /** Primary displayed number. Delta is shown as "+/-" if delta !== null, else as plain value. */
-  value: number;
-  delta: number | null;
-  /** Ordered series of average normalised scores (0–1) for sparkline rendering. */
-  sparkline: number[];
+export type GcseAttainmentHeadline = {
+  cycleLabel: string;
+  pointLabel: string;
+  /** Students with both English Language and Maths present, i.e. the E&M Basics cohort. */
+  presentCount: number;
+  em4: number | null;
+  em5: number | null;
+  em7: number | null;
+  /** Average point score (1–9 scale) across every GCSE entry recorded at this point. */
+  aps: number | null;
+  apsEntryCount: number;
 };
 
-const KS4_YEAR_GROUPS = ["Year 10", "Year 11", "10", "11"];
-const KS5_YEAR_GROUPS = ["Year 12", "Year 13", "12", "13"];
+export type ALevelAttainmentHeadline = {
+  cycleLabel: string;
+  pointLabel: string;
+  presentCount: number;
+  aStarBPct: number;
+  aStarCPct: number;
+};
 
-function matchesYearGroups(yg: string, targets: string[]): boolean {
-  return targets.some((t) => yg === t || yg.includes(t));
-}
+export type HomeAttainmentHeadline = {
+  gcse: GcseAttainmentHeadline | null;
+  aLevel: ALevelAttainmentHeadline | null;
+};
 
-/**
- * Fetches attainment KPI rows for the dashboard Attainment panel.
- * Returns up to 3 rows: KS4 Progress 8 proxy, KS4 Attainment 8 proxy, KS5 Progress proxy.
- * Falls back to empty array if no assessment data exists.
- */
-export async function fetchDashboardAttainmentKPIs(
-  tenantId: string
-): Promise<DashboardAttainmentKPIRow[]> {
-  return safe(
-    (async () => {
-      const cycle = await (prisma as any).assessmentCycle.findFirst({
-        where: { tenantId, isActive: true },
+const A_LEVEL_SCORE: Record<string, number> = { "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1 };
+
+/** The most recent result point, in the most recent active cycle of this qualification
+ * type, that actually has grades recorded — not just an empty draft point. */
+async function findLatestAssessedPoint(tenantId: string, qualificationType: "GCSE" | "A_LEVEL") {
+  const cycle = await (prisma as any).assessmentCycle.findFirst({
+    where: { tenantId, isActive: true, qualificationType },
+    orderBy: { startDate: "desc" },
+    include: {
+      points: {
+        orderBy: { ordinal: "desc" },
         include: {
-          points: {
-            orderBy: { ordinal: "asc" },
-            include: {
-              assessments: {
-                select: {
-                  yearGroup: true,
-                  results: { select: { normalizedScore: true } },
-                },
+          assessments: {
+            select: {
+              subject: true,
+              results: {
+                select: { studentId: true, status: true, normalizedScore: true, rawValue: true },
               },
             },
           },
         },
+      },
+    },
+  });
+  if (!cycle) return null;
+
+  const points: any[] = cycle.points ?? [];
+  const point = points.find((p) => (p.assessments ?? []).some((a: any) => (a.results ?? []).length > 0));
+  if (!point) return null;
+
+  return { cycleLabel: cycle.label as string, point };
+}
+
+async function fetchGcseHeadline(tenantId: string): Promise<GcseAttainmentHeadline | null> {
+  const found = await findLatestAssessedPoint(tenantId, "GCSE");
+  if (!found) return null;
+  const { cycleLabel, point } = found;
+  const assessments: any[] = point.assessments ?? [];
+
+  const engA = assessments.find((a) => /english/i.test(a.subject) && !/lit/i.test(a.subject));
+  const mathsA = assessments.find((a) => /maths?/i.test(a.subject));
+
+  let em4: number | null = null;
+  let em5: number | null = null;
+  let em7: number | null = null;
+  let presentCount = 0;
+
+  if (engA && mathsA) {
+    const engMap = new Map(engA.results.map((r: any) => [r.studentId, r]));
+    const mathsMap = new Map(mathsA.results.map((r: any) => [r.studentId, r]));
+    const allIds = [...new Set([...engMap.keys(), ...mathsMap.keys()])];
+    const bothPresent = allIds.filter(
+      (id) => (engMap.get(id) as any)?.status === "PRESENT" && (mathsMap.get(id) as any)?.status === "PRESENT"
+    );
+    presentCount = bothPresent.length;
+
+    const bothAt = (t: number): number | null => {
+      if (bothPresent.length === 0) return null;
+      const met = bothPresent.filter((id) => {
+        const eg = (engMap.get(id) as any).normalizedScore;
+        const mg = (mathsMap.get(id) as any).normalizedScore;
+        return eg !== null && mg !== null && meetsGcseThreshold(eg, t) && meetsGcseThreshold(mg, t);
       });
+      return Math.round((met.length / bothPresent.length) * 100);
+    };
 
-      if (!cycle) return [];
+    em4 = bothAt(4);
+    em5 = bothAt(5);
+    em7 = bothAt(7);
+  }
 
-      const points: any[] = cycle.points ?? [];
-      if (points.length === 0) return [];
+  const allScores = assessments
+    .flatMap((a) => a.results)
+    .filter((r: any) => r.status === "PRESENT" && r.normalizedScore !== null)
+    .map((r: any) => r.normalizedScore as number);
+  const aps =
+    allScores.length > 0
+      ? Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 9 * 10) / 10
+      : null;
 
-      // For each assessment point, compute avg normalised score by key stage
-      const ks4Series: number[] = [];
-      const ks5Series: number[] = [];
+  return {
+    cycleLabel,
+    pointLabel: point.label as string,
+    presentCount,
+    em4,
+    em5,
+    em7,
+    aps,
+    apsEntryCount: allScores.length,
+  };
+}
 
-      for (const point of points) {
-        const assessments: any[] = point.assessments ?? [];
-        const ks4Scores: number[] = [];
-        const ks5Scores: number[] = [];
+async function fetchALevelHeadline(tenantId: string): Promise<ALevelAttainmentHeadline | null> {
+  const found = await findLatestAssessedPoint(tenantId, "A_LEVEL");
+  if (!found) return null;
+  const { cycleLabel, point } = found;
+  const assessments: any[] = point.assessments ?? [];
+  const allResults = assessments.flatMap((a) => a.results).filter((r: any) => r.status === "PRESENT");
+  if (allResults.length === 0) return null;
 
-        for (const assessment of assessments) {
-          const yg: string = assessment.yearGroup ?? "";
-          const results: any[] = assessment.results ?? [];
-          const scores = results
-            .filter((r: any) => r.normalizedScore !== null)
-            .map((r: any) => r.normalizedScore as number);
+  const scoreOf = (r: any) => A_LEVEL_SCORE[String(r.rawValue ?? "").trim().toUpperCase()] ?? 0;
+  const total = allResults.length;
 
-          if (scores.length === 0) continue;
-          const avg = scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
+  return {
+    cycleLabel,
+    pointLabel: point.label as string,
+    presentCount: total,
+    aStarBPct: Math.round((allResults.filter((r: any) => scoreOf(r) >= 5).length / total) * 100),
+    aStarCPct: Math.round((allResults.filter((r: any) => scoreOf(r) >= 4).length / total) * 100),
+  };
+}
 
-          if (matchesYearGroups(yg, KS4_YEAR_GROUPS)) ks4Scores.push(avg);
-          if (matchesYearGroups(yg, KS5_YEAR_GROUPS)) ks5Scores.push(avg);
-        }
-
-        if (ks4Scores.length > 0) {
-          ks4Series.push(ks4Scores.reduce((a, b) => a + b, 0) / ks4Scores.length);
-        }
-        if (ks5Scores.length > 0) {
-          ks5Series.push(ks5Scores.reduce((a, b) => a + b, 0) / ks5Scores.length);
-        }
-      }
-
-      const rows: DashboardAttainmentKPIRow[] = [];
-
-      // KS4 Progress 8 proxy — expressed as normalised delta (+/-) between first and last point
-      if (ks4Series.length >= 2) {
-        const first = ks4Series[0];
-        const last = ks4Series[ks4Series.length - 1];
-        const progressDelta = parseFloat(((last - first) * 4).toFixed(2)); // scale 0-1 → 0-4 range
-        rows.push({
-          label: "KS4 Progress 8",
-          value: progressDelta,
-          delta: progressDelta,
-          sparkline: ks4Series,
-        });
-      } else if (ks4Series.length === 1) {
-        rows.push({
-          label: "KS4 Progress 8",
-          value: 0,
-          delta: 0,
-          sparkline: ks4Series,
-        });
-      }
-
-      // KS4 Attainment 8 proxy — last point avg mapped to 0-80 Att8 scale
-      if (ks4Series.length > 0) {
-        const lastKs4 = ks4Series[ks4Series.length - 1];
-        const att8 = parseFloat((lastKs4 * 80).toFixed(1));
-        rows.push({
-          label: "KS4 Attainment 8",
-          value: att8,
-          delta: null,
-          sparkline: ks4Series.map((v) => v * 80),
-        });
-      }
-
-      // KS5 Progress proxy
-      if (ks5Series.length >= 2) {
-        const first = ks5Series[0];
-        const last = ks5Series[ks5Series.length - 1];
-        const progressDelta = parseFloat(((last - first) * 4).toFixed(2));
-        rows.push({
-          label: "KS5 Progress",
-          value: progressDelta,
-          delta: progressDelta,
-          sparkline: ks5Series,
-        });
-      } else if (ks5Series.length === 1) {
-        rows.push({
-          label: "KS5 Progress",
-          value: 0,
-          delta: 0,
-          sparkline: ks5Series,
-        });
-      }
-
-      return rows;
-    })(),
-    [] as DashboardAttainmentKPIRow[]
-  );
+/**
+ * Headline attainment measures for the home page: GCSE English & Maths 4+/5+/7+ plus
+ * average point score, and A-Level %A*–B / %A*–C — each from the latest assessed
+ * result point in the tenant's current active cycle of that qualification type.
+ */
+export async function fetchHomeAttainmentHeadline(tenantId: string): Promise<HomeAttainmentHeadline> {
+  const [gcse, aLevel] = await Promise.all([
+    safe(fetchGcseHeadline(tenantId), null as GcseAttainmentHeadline | null),
+    safe(fetchALevelHeadline(tenantId), null as ALevelAttainmentHeadline | null),
+  ]);
+  return { gcse, aLevel };
 }
 
 /* ── Behaviour Heatmap ───────────────────────────────────────────── */

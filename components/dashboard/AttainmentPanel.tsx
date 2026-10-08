@@ -1,100 +1,98 @@
 import Link from "next/link";
 import { HomeCardHeadingSm, IconChartBar } from "@/components/home/home-chrome";
-
-export type AttainmentKPIRow = {
-  label: string;
-  value: number;
-  /** +/- style delta, e.g. +0.24. If null, value is an absolute score (e.g. 48.7). */
-  delta: number | null;
-  sparkline: number[];
-  href?: string;
-};
+import type { GcseAttainmentHeadline, ALevelAttainmentHeadline } from "@/modules/home/hydration";
 
 export type AttainmentPanelProps = {
-  rows: AttainmentKPIRow[];
-  /** Subtitle shown below card title */
-  subtitle?: string;
+  gcse: GcseAttainmentHeadline | null;
+  aLevel: ALevelAttainmentHeadline | null;
   ctaHref?: string;
-  ctaLabel?: string;
 };
 
-/** Minimal 40×20 SVG sparkline */
-function Sparkline({ values }: { values: number[] }) {
-  if (values.length < 2) return null;
+type StatTone = {
+  bg: string;
+  text: string;
+  bar: string;
+};
 
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
+const TONES = {
+  amber: { bg: "bg-scale-some-light", text: "text-scale-some-text", bar: "bg-scale-some" },
+  violet: { bg: "bg-cat-violet-bg", text: "text-cat-violet-text", bar: "bg-cat-violet-text" },
+  emerald: { bg: "bg-scale-consistent-bg", text: "text-scale-consistent-text", bar: "bg-scale-consistent" },
+  blue: {
+    bg: "bg-[color-mix(in_srgb,var(--info)_14%,transparent)]",
+    text: "text-[var(--info)]",
+    bar: "bg-[var(--info)]",
+  },
+} as const satisfies Record<string, StatTone>;
 
-  const W = 72;
-  const H = 22;
-  const pad = 2;
-
-  const pts = values.map((v, i) => {
-    const x = pad + (i / (values.length - 1)) * (W - pad * 2);
-    const y = H - pad - ((v - min) / range) * (H - pad * 2);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
-
-  const polyline = pts.join(" ");
-
-  // Area fill path
-  const first = pts[0].split(",");
-  const last = pts[pts.length - 1].split(",");
-  const area = `M${first[0]},${H} L${polyline.replace(/(\d+\.?\d*),(\d+\.?\d*)/g, "L$1,$2").slice(1)} L${last[0]},${H} Z`;
-
+/** A single stat tile: label, big %, thin progress bar. Used for both the GCSE
+ * and A-Level rows so every number on the card reads with the same weight. */
+function StatTile({ label, value, tone }: { label: string; value: number | null; tone: StatTone }) {
   return (
-    <svg
-      width={W}
-      height={H}
-      viewBox={`0 0 ${W} ${H}`}
-      aria-hidden
-      className="shrink-0 overflow-visible"
-    >
-      <path
-        d={area}
-        fill="var(--coral)"
-        fillOpacity="0.12"
-      />
-      <polyline
-        points={polyline}
-        fill="none"
-        stroke="var(--coral)"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-      {/* Last dot */}
-      <circle
-        cx={last[0]}
-        cy={last[1]}
-        r="2.5"
-        fill="var(--coral)"
-      />
-    </svg>
+    <div className="min-w-0 rounded-xl border border-border bg-[var(--surface-container-lowest)] p-3.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted">{label}</p>
+        <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded ${tone.bg} ${tone.text}`} aria-hidden>
+          <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+          </svg>
+        </span>
+      </div>
+      <p className="mt-2 text-2xl font-bold leading-none tracking-[-0.02em] tabular-nums text-text">
+        {value === null ? "—" : `${value}%`}
+      </p>
+      <div className="mt-2.5 h-1 w-full overflow-hidden rounded-sm bg-[var(--surface-container-low)]">
+        <div className={`h-full rounded-r-full ${tone.bar}`} style={{ width: `${value ?? 0}%` }} />
+      </div>
+    </div>
   );
 }
 
-function DeltaChip({ delta }: { delta: number }) {
-  const positive = delta >= 0;
-  const sign = positive ? "+" : "";
+function ApsTile({ value, entryCount }: { value: number | null; entryCount: number }) {
   return (
-    <span
-      className={`tabular-nums text-sm font-semibold ${
-        positive ? "text-[var(--success)]" : "text-[var(--error)]"
-      }`}
-    >
-      {sign}{delta.toFixed(2)}
-    </span>
+    <div className="min-w-0 rounded-xl border border-border bg-[var(--surface-container-lowest)] p-3.5">
+      <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted">Average point score</p>
+      <p className="mt-2 text-2xl font-bold leading-none tracking-[-0.02em] tabular-nums text-text">
+        {value === null ? "—" : value.toFixed(1)}
+      </p>
+      <p className="mt-2.5 text-[11px] text-muted">{entryCount} grade{entryCount !== 1 ? "s" : ""} · 1–9 scale</p>
+    </div>
   );
 }
 
-export function AttainmentPanel({
-  rows,
-  subtitle,
-  ctaHref = "/assessments",
-  ctaLabel = "Go to attainment",
-}: AttainmentPanelProps) {
+function GcseRow({ data }: { data: GcseAttainmentHeadline }) {
+  return (
+    <div className="space-y-2.5">
+      <p className="text-xs font-semibold text-text">
+        GCSE <span className="font-normal text-muted">— {data.cycleLabel} · {data.pointLabel}</span>
+      </p>
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <StatTile label="En & Ma 4+" value={data.em4} tone={TONES.amber} />
+        <StatTile label="En & Ma 5+" value={data.em5} tone={TONES.violet} />
+        <StatTile label="En & Ma 7+" value={data.em7} tone={TONES.emerald} />
+        <ApsTile value={data.aps} entryCount={data.apsEntryCount} />
+      </div>
+    </div>
+  );
+}
+
+function ALevelRow({ data }: { data: ALevelAttainmentHeadline }) {
+  return (
+    <div className="space-y-2.5">
+      <p className="text-xs font-semibold text-text">
+        A Level <span className="font-normal text-muted">— {data.cycleLabel} · {data.pointLabel}</span>
+      </p>
+      <div className="grid grid-cols-2 gap-2.5">
+        <StatTile label="A*–B" value={data.aStarBPct} tone={TONES.blue} />
+        <StatTile label="A*–C" value={data.aStarCPct} tone={TONES.violet} />
+      </div>
+    </div>
+  );
+}
+
+export function AttainmentPanel({ gcse, aLevel, ctaHref = "/assessments" }: AttainmentPanelProps) {
+  const subtitle = [gcse ? "GCSE" : null, aLevel ? "A Level" : null].filter(Boolean).join(" · ") || "No results recorded yet";
+
   return (
     <div className="flex h-full flex-col gap-5">
       <HomeCardHeadingSm
@@ -102,49 +100,26 @@ export function AttainmentPanel({
         title="Attainment"
         subtitle={subtitle}
         end={
-          <Link
-            href={ctaHref}
-            className="link-accent shrink-0 text-xs font-semibold"
-          >
+          <Link href={ctaHref} className="link-accent shrink-0 text-xs font-semibold">
             View all →
           </Link>
         }
       />
 
-      {/* KPI rows */}
-      <div className="flex flex-1 flex-col divide-y divide-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]">
-        {rows.map((row) => (
-          <div key={row.label} className="flex min-w-0 items-center gap-4 py-4 first:pt-0 last:pb-0">
-            {/* Label */}
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-text">{row.label}</p>
-            </div>
+      {gcse || aLevel ? (
+        <div className="space-y-5">
+          {gcse && <GcseRow data={gcse} />}
+          {aLevel && <ALevelRow data={aLevel} />}
+        </div>
+      ) : (
+        <p className="text-sm text-muted">No GCSE or A-Level results recorded yet this cycle.</p>
+      )}
 
-            {/* Sparkline */}
-            <div className="shrink-0">
-              <Sparkline values={row.sparkline} />
-            </div>
-
-            {/* Value / delta */}
-            <div className="shrink-0 text-right">
-              {row.delta !== null ? (
-                <DeltaChip delta={row.delta} />
-              ) : (
-                <span className="tabular-nums text-sm font-semibold text-text">
-                  {row.value.toFixed(1)}
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* CTA */}
       <Link
         href={ctaHref}
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-text calm-transition hover:text-muted"
       >
-        {ctaLabel} →
+        Open assessments →
       </Link>
     </div>
   );

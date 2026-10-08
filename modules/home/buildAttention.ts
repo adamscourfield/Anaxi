@@ -37,6 +37,7 @@ export function buildLeadershipAttentionItems({
             : "Open requests in the live queue",
           href: "/on-call",
           tone: "critical" as const,
+          kind: "onCall" as const,
         }]
       : []),
     ...(interventionCount > 0
@@ -45,6 +46,7 @@ export function buildLeadershipAttentionItems({
           detail: interventionDetailLabel,
           href: `/analytics?tab=teachers&window=${windowDays}`,
           tone: "critical" as const,
+          kind: "intervention" as const,
         }]
       : []),
     ...(attendanceDelta !== null && attendanceDelta < 0
@@ -53,6 +55,7 @@ export function buildLeadershipAttentionItems({
           detail: `${attendanceDelta.toFixed(1)}% from last week`,
           href: `/analytics?tab=students&window=${windowDays}`,
           tone: "critical" as const,
+          kind: "attendance" as const,
         }]
       : []),
     ...(pendingLeaveCount > 0
@@ -61,6 +64,7 @@ export function buildLeadershipAttentionItems({
           detail: "Cover decisions waiting",
           href: "/leave#pending-requests",
           tone: "warning" as const,
+          kind: "leave" as const,
         }]
       : []),
   ];
@@ -92,6 +96,7 @@ export function buildHodAttentionItems({
             : "School-wide queue",
           href: "/on-call",
           tone: "critical" as const,
+          kind: "onCall" as const,
         }]
       : []),
     ...(interventionCount > 0
@@ -100,6 +105,7 @@ export function buildHodAttentionItems({
           detail: "Drift signals in your department",
           href: `/analytics?tab=teachers&window=${windowDays}&department=${deptId}`,
           tone: "critical" as const,
+          kind: "intervention" as const,
         }]
       : []),
     ...(urgentStudentCount > 0
@@ -108,6 +114,7 @@ export function buildHodAttentionItems({
           detail: "Pastoral risk in the school",
           href: `/analytics?tab=students&window=${windowDays}`,
           tone: "warning" as const,
+          kind: "studentRisk" as const,
         }]
       : []),
     ...(pendingLeaveCount > 0
@@ -116,6 +123,7 @@ export function buildHodAttentionItems({
           detail: "Awaiting your decision",
           href: "/leave#pending-requests",
           tone: "warning" as const,
+          kind: "leave" as const,
         }]
       : []),
   ];

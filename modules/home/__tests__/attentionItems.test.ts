@@ -4,8 +4,8 @@ import { attentionViewAllTarget } from "@/modules/home/attentionItems";
 describe("attentionViewAllTarget", () => {
   it("links to the first item when multiple alerts exist", () => {
     const target = attentionViewAllTarget([
-      { title: "A", detail: "", href: "/on-call", tone: "critical" },
-      { title: "B", detail: "", href: "/leave", tone: "warning" },
+      { title: "A", detail: "", href: "/on-call", tone: "critical", kind: "onCall" },
+      { title: "B", detail: "", href: "/leave", tone: "warning", kind: "leave" },
     ]);
     expect(target.href).toBe("/on-call");
     expect(target.label).toBe("Top priority");
@@ -13,7 +13,7 @@ describe("attentionViewAllTarget", () => {
 
   it("uses Open label for a single alert", () => {
     const target = attentionViewAllTarget([
-      { title: "Leave", detail: "", href: "/leave#pending-requests", tone: "warning" },
+      { title: "Leave", detail: "", href: "/leave#pending-requests", tone: "warning", kind: "leave" },
     ]);
     expect(target.href).toBe("/leave#pending-requests");
     expect(target.label).toBe("Open");
