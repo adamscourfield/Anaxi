@@ -184,11 +184,12 @@ export class ArborClient {
     const dateFilter = dateRange ? `, assessmentDate_after_or_equal: ${JSON.stringify(dateRange.from)}, assessmentDate_before: ${JSON.stringify(dateRange.before)}` : "";
     const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Omit<ArborAssessmentMark, "valueFields">[] }>(this.credentials, `{
       StudentProgressAssessmentMark(page_size: ${pageSize}, page_num: ${pageNum}${assessmentFilter}${dateFilter}) {
-        id student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } } assessmentDate displayName grade { displayName shortName code } assessment { id displayName assessmentName assessmentShortName }
+        id student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } } assessmentDate displayName grade { displayName shortName code } markGrade { displayName shortName code } assessment { id displayName assessmentName assessmentShortName }
       }
     }`);
     return data.StudentProgressAssessmentMark.map((mark) => ({
       ...mark,
+      grade: mark.grade ?? (mark as typeof mark & { markGrade?: ArborAssessmentMark["grade"] }).markGrade ?? null,
       valueFields: {},
     }));
   }
@@ -258,6 +259,7 @@ export class ArborClient {
               id assessmentDate displayName
               student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
               grade { displayName shortName code }
+              markGrade { displayName shortName code }
               assessment { id displayName assessmentName assessmentShortName }${valueSelection}
             }
           }
@@ -273,6 +275,7 @@ export class ArborClient {
           studentProgressAssessmentMarks: Array.isArray(target.studentProgressAssessmentMarks)
             ? target.studentProgressAssessmentMarks.map((mark) => ({
               ...mark,
+              grade: mark.grade ?? (mark as typeof mark & { markGrade?: ArborAssessmentMark["grade"] }).markGrade ?? null,
               valueFields: Object.fromEntries(valueFields.map((field) => [field, (mark as Record<string, unknown>)[field] as string | number | boolean | null])),
             }))
             : [],
@@ -304,6 +307,7 @@ export class ArborClient {
           id assessmentDate displayName
           student { id legalFirstName legalLastName preferredFirstName preferredLastName leavingDate displayAcademicLevel { displayName } }
           grade { displayName shortName code }
+          markGrade { displayName shortName code }
           assessment { id displayName assessmentName assessmentShortName }${valueSelection}
           ${targetRelation} { id }
         }
@@ -319,6 +323,7 @@ export class ArborClient {
         if (dateRange && (!assessmentDate || assessmentDate < dateRange.from || assessmentDate >= dateRange.before)) continue;
         marks.push({
           ...(mark as Omit<ArborAssessmentMark, "valueFields" | "progressAssessmentBatchTargetId">),
+          grade: (mark.grade as ArborAssessmentMark["grade"]) ?? (mark.markGrade as ArborAssessmentMark["grade"]) ?? null,
           assessmentDate,
           valueFields: Object.fromEntries(valueFields.map((field) => [field, mark[field] as string | number | boolean | null])),
           progressAssessmentBatchTargetId: matchingTarget.id,
@@ -334,20 +339,23 @@ export class ArborClient {
    * This is deliberately read-only and is used to diagnose a tenant-specific
    * historic import without writing or guessing at result ownership.
    */
-  async inspectAssessmentBatchTargetLinkage(assessmentId: string, targetIds: string[], dateRange?: { from: string; before: string }): Promise<{ relation: string | null; total: number; linked: number; graded: number; dateMatched: number; sample: string[] }> {
+  async inspectAssessmentBatchTargetLinkage(assessmentId: string, targetIds: string[], dateRange?: { from: string; before: string }): Promise<{ relation: string | null; total: number; linked: number; graded: number; dateMatched: number; sample: string[]; targetReferences: string[] }> {
     const relation = await this.progressAssessmentBatchTargetRelation();
-    if (!relation || !targetIds.length) return { relation, total: 0, linked: 0, graded: 0, dateMatched: 0, sample: [] };
+    if (!relation || !targetIds.length) return { relation, total: 0, linked: 0, graded: 0, dateMatched: 0, sample: [], targetReferences: [] };
     const targetIdsSet = new Set(targetIds);
     let total = 0;
     let dateMatched = 0;
     let linked = 0;
     let graded = 0;
     const sample: string[] = [];
+    const targetReferences = new Set<string>();
     for (let pageNum = 0; pageNum < 20; pageNum++) {
       const data = await runArborGraphqlQuery<{ StudentProgressAssessmentMark: Array<Record<string, unknown>> }>(this.credentials, `{
         StudentProgressAssessmentMark(page_size: 500, page_num: ${pageNum}, assessment__id_in: [${JSON.stringify(assessmentId)}]) {
           id assessmentDate displayName
           grade { displayName shortName code }
+          markGrade { displayName shortName code }
+          lowerGradePointScaleValue upperGradePointScaleValue statisticalGradePointScaleValue
           ${relation} { id }
         }
       }`);
@@ -360,17 +368,18 @@ export class ArborClient {
         const relatedTargets = Array.isArray(mark[relation])
           ? mark[relation] as Array<{ id?: string }>
           : [mark[relation] as { id?: string } | null | undefined];
+        for (const target of relatedTargets) if (target?.id) targetReferences.add(target.id);
         if (!relatedTargets.some((target) => target?.id !== undefined && targetIdsSet.has(target.id))) continue;
         linked++;
-        const grade = mark.grade as { displayName?: string | null; shortName?: string | null; code?: string | null } | null;
-        const value = [grade?.displayName, grade?.shortName, grade?.code, mark.displayName]
+        const grade = (mark.grade ?? mark.markGrade) as { displayName?: string | null; shortName?: string | null; code?: string | null } | null;
+        const value = [grade?.displayName, grade?.shortName, grade?.code, mark.displayName, mark.lowerGradePointScaleValue, mark.upperGradePointScaleValue, mark.statisticalGradePointScaleValue]
           .find((candidate) => typeof candidate === "string" && candidate.trim());
         if (value) graded++;
         if (sample.length < 5) sample.push(`${date ?? "no date"}: ${value ?? "no grade"}`);
       }
       if (page.length < 500) break;
     }
-    return { relation, total, dateMatched, linked, graded, sample };
+    return { relation, total, dateMatched, linked, graded, sample, targetReferences: [...targetReferences].slice(0, 10) };
   }
 
   async listProgressAssessmentBatches(pageSize = 100, pageNum = 0, assessmentIds?: string[]): Promise<ArborProgressAssessmentBatch[]> {

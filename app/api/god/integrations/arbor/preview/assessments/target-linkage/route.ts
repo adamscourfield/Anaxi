@@ -41,7 +41,7 @@ export const POST = withApi(async function POST(req: Request) {
     if (!assessmentId) throw new Error("Arbor did not return the Year 10 batch assessment identity.");
     const result = await client.inspectAssessmentBatchTargetLinkage(assessmentId, targets.map((target) => target.id), assessmentYearRange(mapping.academicYear));
     url.searchParams.set("assessmentTargetLinkage", "success");
-    url.searchParams.set("assessmentTargetLinkageDetails", `relation ${result.relation ?? "none"}; ${result.total} assessment records read; ${result.dateMatched} in the academic year; ${result.linked} linked to this subject target; ${result.graded} carry a displayed grade; examples: ${result.sample.join(" / ") || "none"}`);
+    url.searchParams.set("assessmentTargetLinkageDetails", `relation ${result.relation ?? "none"}; ${result.total} assessment records read; ${result.dateMatched} in the academic year; ${result.linked} linked to this subject target; ${result.graded} carry a displayed grade; target IDs on marks: ${result.targetReferences.join(", ") || "none"}; examples: ${result.sample.join(" / ") || "none"}`);
   } catch (error) {
     url.searchParams.set("assessmentTargetLinkage", "failed");
     url.searchParams.set("assessmentTargetLinkageDetails", error instanceof Error ? error.message.slice(0, 500) : "The target linkage diagnostic failed.");
