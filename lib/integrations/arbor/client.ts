@@ -999,17 +999,19 @@ export class ArborClient {
    */
   async inspectTimetableMappingFields(): Promise<Record<string, string[]>> {
     type IntrospectionType = { name: string; fields: Array<{ name: string }> } | null;
-    const data = await runArborGraphqlQuery<{ membership: IntrospectionType; group: IntrospectionType; tutor: IntrospectionType; unit: IntrospectionType }>(this.credentials, `{
+    const data = await runArborGraphqlQuery<{ membership: IntrospectionType; group: IntrospectionType; tutor: IntrospectionType; unit: IntrospectionType; slotStaff: IntrospectionType }>(this.credentials, `{
       membership: __type(name: "TeachingGroupMembership") { name fields { name } }
       group: __type(name: "TeachingGroup") { name fields { name } }
       tutor: __type(name: "TeachingGroupTutor") { name fields { name } }
       unit: __type(name: "AcademicUnit") { name fields { name } }
+      slotStaff: __type(name: "TimetableSlotStaff") { name fields { name } }
     }`);
     return Object.fromEntries([
       ["membership", data.membership?.fields.map((field) => field.name) ?? []],
       ["group", data.group?.fields.map((field) => field.name) ?? []],
       ["tutor", data.tutor?.fields.map((field) => field.name) ?? []],
       ["academic unit", data.unit?.fields.map((field) => field.name) ?? []],
+      ["timetable slot staff", data.slotStaff?.fields.map((field) => field.name) ?? []],
     ]);
   }
 
@@ -1040,26 +1042,10 @@ export class ArborClient {
 
   /** Finds the timetable entities Arbor exposes for classroom-level teaching staff. */
   async inspectTimetableLessonEntities(): Promise<string> {
-    type TypeRef = { kind: string; name: string | null; ofType: TypeRef | null };
-    type Field = { name: string; type: TypeRef };
-    const data = await runArborGraphqlQuery<{ query: { fields: Field[] } | null }>(this.credentials, `{
-      query: __type(name: "Query") {
-        fields {
-          name
-          type { kind name ofType { kind name ofType { kind name } } }
-        }
-      }
-    }`);
-    const renderType = (type: TypeRef): string => {
-      if (type.kind === "NON_NULL") return `${renderType(type.ofType!)}!`;
-      if (type.kind === "LIST") return `[${renderType(type.ofType!)}]`;
-      return type.name ?? type.kind;
-    };
-    const relevant = /lesson|timetable|schedule|staff|teacher|teachinggroup/i;
-    return (data.query?.fields ?? [])
-      .filter((field) => relevant.test(field.name) || relevant.test(renderType(field.type)))
-      .map((field) => `${field.name}: ${renderType(field.type)}`)
-      .join(" | ") || "No lesson or timetable queries exposed";
+    const fields = await this.inspectTimetableMappingFields();
+    const unitFields = fields["academic unit"]?.filter((field) => /timetable|session/i.test(field)) ?? [];
+    const slotStaffFields = fields["timetable slot staff"] ?? [];
+    return `AcademicUnit: ${unitFields.join(", ") || "no timetable fields"} | TimetableSlotStaff: ${slotStaffFields.join(", ") || "no fields"}`;
   }
 
   /**
