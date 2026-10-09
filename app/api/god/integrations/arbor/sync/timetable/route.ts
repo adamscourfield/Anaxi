@@ -136,6 +136,8 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("timetableLinkedByName", String(linkedByUniqueName));
     url.searchParams.set("timetableMemberships", String(batch.diagnostics.memberships));
     url.searchParams.set("timetableCurrentMemberships", String(batch.diagnostics.currentMemberships));
+    url.searchParams.set("timetableGroupsRequested", String(batch.diagnostics.groupsRequested));
+    url.searchParams.set("timetableGroupsReturned", String(batch.diagnostics.groupsReturned));
     url.searchParams.set("timetableSubjects", String(batch.diagnostics.groupsWithSubjects));
     url.searchParams.set("timetableTeachers", String(batch.diagnostics.groupsWithTeachers));
     return NextResponse.redirect(url);

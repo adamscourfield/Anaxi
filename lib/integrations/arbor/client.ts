@@ -1082,7 +1082,7 @@ export class ArborClient {
   async listTimetableTeacherAssignmentsBatch(membershipPage = 0, validateFields = true): Promise<{
     assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; subject: string; staff: Array<{ id: string; fullName: string }> }>;
     hasMore: boolean;
-    diagnostics: { memberships: number; currentMemberships: number; groupsWithSubjects: number; groupsWithTeachers: number };
+    diagnostics: { memberships: number; currentMemberships: number; groupsRequested: number; groupsReturned: number; groupsWithSubjects: number; groupsWithTeachers: number };
   }> {
     if (validateFields) {
       const fields = await this.inspectTimetableMappingFields();
@@ -1173,6 +1173,8 @@ export class ArborClient {
       diagnostics: {
         memberships: membershipData.TeachingGroupMembership.length,
         currentMemberships: currentMemberships.length,
+        groupsRequested: currentGroupIds.length,
+        groupsReturned: groupData.TeachingGroup.length,
         groupsWithSubjects: groupsWithSubjects.size,
         groupsWithTeachers: groupsWithTeachers.size,
       },
@@ -1180,15 +1182,26 @@ export class ArborClient {
   }
 
   /** Reads a small timetable sample before any subject-teacher links are written. */
-  async listTimetableTeacherAssignmentsPreview(): Promise<Array<{ studentId: string; studentName: string; teachingGroupId: string; subject: string; staff: Array<{ id: string; fullName: string }> }>> {
+  async listTimetableTeacherAssignmentsPreview(): Promise<{
+    assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; subject: string; staff: Array<{ id: string; fullName: string }> }>;
+    diagnostics: { pages: number; memberships: number; currentMemberships: number; groupsRequested: number; groupsReturned: number; groupsWithSubjects: number; groupsWithTeachers: number };
+  }> {
     // Arbor orders teaching-group memberships historically. Advance through a
     // bounded set of lightweight pages so preview reaches current classes itself.
+    const diagnostics = { pages: 0, memberships: 0, currentMemberships: 0, groupsRequested: 0, groupsReturned: 0, groupsWithSubjects: 0, groupsWithTeachers: 0 };
     for (let page = 0; page < 32; page++) {
       const batch = await this.listTimetableTeacherAssignmentsBatch(page, page === 0);
-      if (batch.assignments.length) return batch.assignments;
+      diagnostics.pages++;
+      diagnostics.memberships += batch.diagnostics.memberships;
+      diagnostics.currentMemberships += batch.diagnostics.currentMemberships;
+      diagnostics.groupsRequested += batch.diagnostics.groupsRequested;
+      diagnostics.groupsReturned += batch.diagnostics.groupsReturned;
+      diagnostics.groupsWithSubjects += batch.diagnostics.groupsWithSubjects;
+      diagnostics.groupsWithTeachers += batch.diagnostics.groupsWithTeachers;
+      if (batch.assignments.length) return { assignments: batch.assignments, diagnostics };
       if (!batch.hasMore) break;
     }
-    return [];
+    return { assignments: [], diagnostics };
   }
 }
 

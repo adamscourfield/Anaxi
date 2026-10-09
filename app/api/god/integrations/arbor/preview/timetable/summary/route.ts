@@ -18,7 +18,8 @@ export const POST = withApi(async function POST(req: Request) {
   const integration = await db.sharedIntegration.findFirst({ where: arborConnectionWhere(req), include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.redirect(new URL("/god/integrations/arbor?timetablePreview=not-connected", req.url));
   try {
-    const assignments = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listTimetableTeacherAssignmentsPreview();
+    const preview = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listTimetableTeacherAssignmentsPreview();
+    const assignments = preview.assignments;
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
     const [students, staff] = await Promise.all([
       db.student.findMany({ where: { tenantId: { in: tenantIds }, status: "ACTIVE" }, select: { id: true, tenantId: true, fullName: true, externalId: true } }),
@@ -45,6 +46,14 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("timetableLinkable", String(linkable));
     url.searchParams.set("timetableStudentsMatched", String(studentsMatched));
     url.searchParams.set("timetableStaffMatched", String(staffMatched));
+    url.searchParams.set("timetablePreviewPages", String(preview.diagnostics.pages));
+    url.searchParams.set("timetablePreviewMemberships", String(preview.diagnostics.memberships));
+    url.searchParams.set("timetablePreviewCurrent", String(preview.diagnostics.currentMemberships));
+    url.searchParams.set("timetablePreviewGroupsRequested", String(preview.diagnostics.groupsRequested));
+    url.searchParams.set("timetablePreviewGroupsReturned", String(preview.diagnostics.groupsReturned));
+    url.searchParams.set("timetablePreviewSubjects", String(preview.diagnostics.groupsWithSubjects));
+    url.searchParams.set("timetablePreviewTeachers", String(preview.diagnostics.groupsWithTeachers));
+    url.searchParams.set("connectionId", integration.id);
     return NextResponse.redirect(url);
   } catch (error) {
     const url = new URL("/god/integrations/arbor", req.url);
