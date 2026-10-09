@@ -17,14 +17,16 @@ export const POST = withApi(async function POST(req: Request) {
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return NextResponse.redirect(new URL("/god/integrations/arbor?timetable=not-connected", req.url));
   try {
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
-    const [fields, relationTypes] = await Promise.all([
+    const [fields, relationTypes, lessonEntities] = await Promise.all([
       client.inspectTimetableMappingFields(),
       client.inspectTimetableTeacherRelationTypes(),
+      client.inspectTimetableLessonEntities(),
     ]);
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("timetable", "success");
     url.searchParams.set("timetableFields", Object.entries(fields).map(([entity, names]) => `${entity}: ${names.join(", ") || "none"}`).join(" | ").slice(0, 1800));
     url.searchParams.set("timetableRelationTypes", relationTypes.slice(0, 500));
+    url.searchParams.set("timetableLessonEntities", lessonEntities.slice(0, 900));
     return NextResponse.redirect(url);
   } catch {
     return NextResponse.redirect(new URL("/god/integrations/arbor?timetable=failed", req.url));
