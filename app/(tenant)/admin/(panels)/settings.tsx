@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
@@ -29,6 +30,11 @@ export async function SettingsAdminPanel() {
       await prisma.tenant.update({ where: { id: admin.tenantId }, data: { name: schoolName } });
     }
     revalidateAdmin("settings");
+    // revalidateAdmin only touches admin routes -- the home page reads
+    // defaultInsightWindowDays too, and without this it keeps serving a
+    // cached copy (client router cache) until that cache naturally expires,
+    // so a changed default silently doesn't show up there after saving.
+    revalidatePath("/home");
   }
 
   return (
