@@ -1085,7 +1085,7 @@ export class ArborClient {
       const fields = await this.inspectTimetableMappingFields();
       // Arbor nests a group's subject through its automatic enrolments, rather than
       // directly on TeachingGroup. This is the relationship in Arbor's domain model.
-      const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["membership", "startDate"], ["membership", "endDate"], ["group", "academicYear"], ["group", "academicUnitAutomaticEnrolments"], ["academic unit", "subject"], ["academic unit", "timetabledStaffByDateRange"]];
+      const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["membership", "startDate"], ["membership", "endDate"], ["group", "academicUnitAutomaticEnrolments"], ["academic unit", "subject"], ["academic unit", "timetabledStaffByDateRange"]];
       const unavailable = required.filter(([entity, field]) => !fields[entity]?.includes(field));
       if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
     }
@@ -1097,7 +1097,6 @@ export class ArborClient {
         student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null;
         teachingGroup: {
           id: string;
-          academicYear: { code: string | null; displayName: string | null } | null;
         } | null;
       }>;
       TeachingGroup: Array<{
@@ -1112,25 +1111,19 @@ export class ArborClient {
         student { id legalFirstName legalLastName preferredFirstName preferredLastName }
         teachingGroup {
           id
-          academicYear { code displayName }
         }
       }
     }`);
     const membershipData = await readMembershipPage(membershipPage);
     const personName = (person: { legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
     const today = new Date().toISOString().slice(0, 10);
-    const currentStartYear = new Date().getUTCMonth() >= 8 ? new Date().getUTCFullYear() : new Date().getUTCFullYear() - 1;
     const isCurrentMembership = (membership: TimetableData["TeachingGroupMembership"][number]) =>
       (!membership.startDate || membership.startDate <= today) && (!membership.endDate || membership.endDate >= today);
-    const isCurrentGroup = (group: NonNullable<TimetableData["TeachingGroupMembership"][number]["teachingGroup"]>) => {
-      const label = `${group.academicYear?.code ?? ""} ${group.academicYear?.displayName ?? ""}`;
-      // Arbor deployments use either `2026/2027`, `2026-2027`, or a verbose
-      // display label. Both academic-year bounds must be present to qualify.
-      return label.includes(String(currentStartYear)) && label.includes(String(currentStartYear + 1));
-    };
     const groupsWithSubjects = new Set<string>();
     const groupsWithTeachers = new Set<string>();
-    const currentMemberships = membershipData.TeachingGroupMembership.filter((membership) => membership.teachingGroup && isCurrentMembership(membership) && isCurrentGroup(membership.teachingGroup));
+    // Arbor's membership dates are authoritative. Its academic-year labels are
+    // inconsistent across tenants and must not suppress a live classroom link.
+    const currentMemberships = membershipData.TeachingGroupMembership.filter((membership) => membership.teachingGroup && isCurrentMembership(membership));
     const currentGroupIds = [...new Set(currentMemberships.flatMap((membership) => membership.teachingGroup ? [membership.teachingGroup.id] : []))];
     // A teaching group appears once for every pupil. Fetch its staff once, rather
     // than repeating a large timetable subtree for every membership row.
