@@ -100,6 +100,7 @@ export function AdminSettingsForms(props: AdminSettingsFormsProps) {
                 className={FIELD_SHELL}
               >
                 <option value="7">7 days</option>
+                <option value="14">14 days</option>
                 <option value="21">21 days</option>
                 <option value="28">28 days</option>
               </select>

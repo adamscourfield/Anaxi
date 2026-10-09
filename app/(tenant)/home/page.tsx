@@ -1389,11 +1389,18 @@ export default async function HomePage({
   const cookieStore = await cookies();
   const cookieWindow = parseInt(cookieStore.get(INSIGHT_WINDOW_COOKIE)?.value ?? "", 10);
   const rawWindow = typeof resolvedSearchParams.window === "string" ? parseInt(resolvedSearchParams.window, 10) : NaN;
+  // The tenant's "Default insight window" setting is meant to be the school-wide
+  // default, so it must win over a user's older cookie once an admin changes it --
+  // otherwise anyone who has ever clicked a window toggle is permanently stuck on
+  // whatever was the default at that time, no matter what the admin sets later.
+  // An explicit `?window=` (clicking a toggle just now) still applies immediately.
   const windowDays: number = ALLOWED_WINDOW_DAYS.includes(rawWindow)
     ? rawWindow
-    : ALLOWED_WINDOW_DAYS.includes(cookieWindow)
-      ? cookieWindow
-      : ((settings?.defaultInsightWindowDays as number) ?? DEFAULT_WINDOW_DAYS);
+    : ALLOWED_WINDOW_DAYS.includes(settings?.defaultInsightWindowDays as number)
+      ? (settings!.defaultInsightWindowDays as number)
+      : ALLOWED_WINDOW_DAYS.includes(cookieWindow)
+        ? cookieWindow
+        : DEFAULT_WINDOW_DAYS;
 
   const features = await db.tenantFeature.findMany({
     where: { tenantId: user.tenantId, enabled: true },
