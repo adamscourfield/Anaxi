@@ -1073,8 +1073,11 @@ export class ArborClient {
         teachingGroup: {
           id: string;
           academicYear: { code: string | null; displayName: string | null } | null;
-          academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null; timetabledStaffByDateRange: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }> } | null }> }>;
         } | null;
+      }>;
+      TeachingGroup: Array<{
+        id: string;
+          academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null; timetabledStaffByDateRange: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }> } | null }> }>;
       }>;
     };
     const readMembershipPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "TeachingGroupMembership">>(this.credentials, `{
@@ -1085,9 +1088,6 @@ export class ArborClient {
         teachingGroup {
           id
           academicYear { code displayName }
-          academicUnitAutomaticEnrolments {
-            academicUnitEnrolments { academicUnit { subject { displayName } timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName } } }
-          }
         }
       }
     }`);
@@ -1105,8 +1105,23 @@ export class ArborClient {
     const groupsWithSubjects = new Set<string>();
     const groupsWithTeachers = new Set<string>();
     const currentMemberships = membershipData.TeachingGroupMembership.filter((membership) => membership.teachingGroup && isCurrentMembership(membership) && isCurrentGroup(membership.teachingGroup));
+    const currentGroupIds = [...new Set(currentMemberships.flatMap((membership) => membership.teachingGroup ? [membership.teachingGroup.id] : []))];
+    // A teaching group appears once for every pupil. Fetch its staff once, rather
+    // than repeating a large timetable subtree for every membership row.
+    const groupData = currentGroupIds.length
+      ? await runArborGraphqlQuery<Pick<TimetableData, "TeachingGroup">>(this.credentials, `{
+          TeachingGroup(page_size: ${currentGroupIds.length}, page_num: 0, id_in: [${currentGroupIds.map((id) => JSON.stringify(id)).join(", ")}]) {
+            id
+            academicUnitAutomaticEnrolments {
+              academicUnitEnrolments { academicUnit { subject { displayName } timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName } } }
+            }
+          }
+        }`)
+      : { TeachingGroup: [] };
+    const currentGroups = new Map(groupData.TeachingGroup.map((group) => [group.id, group]));
     const assignments = currentMemberships.flatMap((membership) => {
-        const group = membership.teachingGroup;
+        const membershipGroup = membership.teachingGroup;
+        const group = membershipGroup ? currentGroups.get(membershipGroup.id) : null;
         const subjects = group?.academicUnitAutomaticEnrolments
           .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
           .flatMap((enrolment) => enrolment.academicUnit?.subject?.displayName ? [enrolment.academicUnit.subject.displayName] : []) ?? [];
@@ -1117,10 +1132,10 @@ export class ArborClient {
         // This direct academic-unit timetable relation is the classroom source.
         // Do not use tutors or broad group staff: those can be form staff or stale.
         const staff = [...new Map(scheduledStaff.map((teacher) => [teacher.id, teacher])).values()];
-        if (group && subjects.length) groupsWithSubjects.add(group.id);
-        if (group && staff.length) groupsWithTeachers.add(group.id);
-        return group && membership.student && staff.length
-          ? [...new Set(subjects)].map((subject) => ({ studentId: membership.student!.id, studentName: personName(membership.student!), teachingGroupId: group.id, subject, staff }))
+        if (membershipGroup && subjects.length) groupsWithSubjects.add(membershipGroup.id);
+        if (membershipGroup && staff.length) groupsWithTeachers.add(membershipGroup.id);
+        return membershipGroup && membership.student && staff.length
+          ? [...new Set(subjects)].map((subject) => ({ studentId: membership.student!.id, studentName: personName(membership.student!), teachingGroupId: membershipGroup.id, subject, staff }))
           : [];
     });
     return {
