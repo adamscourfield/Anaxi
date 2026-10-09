@@ -361,7 +361,10 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
     })
     : [];
   const studentCountByYearGroup = new Map(activeStudentsByYearGroup.map((row) => [row.yearGroup, row._count._all]));
-  const previewCount = (value: string | undefined) => (/^\d+$/.test(value ?? "") ? Number(value) : 0);
+  const previewCount = (value: string | string[] | undefined) => {
+    const text = Array.isArray(value) ? value[0] : value;
+    return /^\d+$/.test(text ?? "") ? Number(text) : 0;
+  };
   // Buttons size to their own label instead of a fixed box, so a row of
   // several (e.g. the assessment section) reads as a tidy toolbar rather
   // than a ragged grid of equally-wide, mostly-empty pills.
@@ -786,7 +789,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
 
       {params?.timetablePreview === "success" ? (
         <StatusBanner variant="success" title="Subject-teacher preview complete.">
-          Arbor returned {previewCount(params.timetableAssignments)} timetable assignments, of which {previewCount(params.timetableLinkable)} can be linked to existing Anaxi students and staff. Matching uses Arbor IDs first and a unique exact name only when an Arbor ID is not yet stored. Nothing has been changed.
+          Arbor returned {previewCount(params.timetableAssignments)} timetable assignments. {previewCount(params.timetableStudentsMatched)} pupils and {previewCount(params.timetableStaffMatched)} classroom staff records matched Anaxi; {previewCount(params.timetableLinkable)} assignments can be linked safely. Matching uses Arbor IDs first and a unique exact name only when an Arbor ID is not yet stored. Nothing has been changed.
         </StatusBanner>
       ) : null}
 

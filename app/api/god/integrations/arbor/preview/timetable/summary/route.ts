@@ -27,14 +27,22 @@ export const POST = withApi(async function POST(req: Request) {
     const studentResolver = buildTimetableIdentityResolver(students);
     const staffResolver = buildTimetableIdentityResolver(staff);
     let linkable = 0;
+    let studentsMatched = 0;
+    let staffMatched = 0;
     for (const assignment of assignments) {
       const student = studentResolver.student(assignment.studentId, assignment.studentName)?.person;
-      if (student && assignment.staff.some((arborStaff) => staffResolver.staff(student.tenantId, arborStaff.id, arborStaff.fullName))) linkable++;
+      if (!student) continue;
+      studentsMatched++;
+      const matchedStaff = assignment.staff.filter((arborStaff) => staffResolver.staff(student.tenantId, arborStaff.id, arborStaff.fullName));
+      staffMatched += matchedStaff.length;
+      if (matchedStaff.length) linkable++;
     }
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("timetablePreview", "success");
     url.searchParams.set("timetableAssignments", String(assignments.length));
     url.searchParams.set("timetableLinkable", String(linkable));
+    url.searchParams.set("timetableStudentsMatched", String(studentsMatched));
+    url.searchParams.set("timetableStaffMatched", String(staffMatched));
     return NextResponse.redirect(url);
   } catch (error) {
     const url = new URL("/god/integrations/arbor", req.url);
