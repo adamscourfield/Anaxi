@@ -1061,7 +1061,7 @@ export class ArborClient {
     const fields = await this.inspectTimetableMappingFields();
     // Arbor nests a group's subject through its automatic enrolments, rather than
     // directly on TeachingGroup. This is the relationship in Arbor's domain model.
-    const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["group", "academicUnitAutomaticEnrolments"], ["tutor", "staff"], ["academic unit", "subject"], ["academic unit", "timetableSlots"], ["timetable slot staff", "timetableSlot"], ["timetable slot staff", "staff"]];
+    const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["group", "academicUnitAutomaticEnrolments"], ["tutor", "staff"], ["academic unit", "subject"], ["academic unit", "timetabledStaffByDateRange"]];
     const unavailable = required.filter(([entity, field]) => !fields[entity]?.includes(field));
     // Arbor deployments expose the tutor's class through either relationship.
     // Both point to the same TeachingGroup; neither is safe to assume alone.
@@ -1071,9 +1071,8 @@ export class ArborClient {
     if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
 
     type TimetableData = {
-      TeachingGroupMembership: Array<{ student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null; teachingGroup: { id: string; academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null; timetableSlots: Array<{ id: string }> } | null }> }>; tutorMemberships: Array<{ staff: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null }>; staffByDateRange: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }> } | null }>;
+      TeachingGroupMembership: Array<{ student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null; teachingGroup: { id: string; academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null; timetabledStaffByDateRange: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }> } | null }> }>; tutorMemberships: Array<{ staff: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null }>; staffByDateRange: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }> } | null }>;
       TeachingGroupTutor: Array<{ teachingGroup: { id: string } | null; group: { id: string } | null; staff: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null }>;
-      TimetableSlotStaff: Array<{ timetableSlot: { id: string } | null; staff: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null }>;
     };
     const readMembershipPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "TeachingGroupMembership">>(this.credentials, `{
       TeachingGroupMembership(page_size: 100, page_num: ${page}) {
@@ -1097,7 +1096,7 @@ export class ArborClient {
             preferredLastName
           }
           academicUnitAutomaticEnrolments {
-            academicUnitEnrolments { academicUnit { subject { displayName } timetableSlots { id } } }
+            academicUnitEnrolments { academicUnit { subject { displayName } timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName } } }
           }
         }
       }
@@ -1109,29 +1108,15 @@ export class ArborClient {
         staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
       }
     }`);
-    const readSlotStaffPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "TimetableSlotStaff">>(this.credentials, `{
-      TimetableSlotStaff(page_size: 500, page_num: ${page}) {
-        timetableSlot { id }
-        staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
-      }
-    }`);
 
     const membershipData = await readMembershipPage(membershipPage);
     const tutorData = await readTutorPage(0);
-    const slotStaffData = await readSlotStaffPage(0);
     const tutors: TimetableData["TeachingGroupTutor"] = [...tutorData.TeachingGroupTutor];
     for (let tutorPage = 1; tutorPage < 20 && tutorData.TeachingGroupTutor.length === 500; tutorPage++) {
       const data = await readTutorPage(tutorPage);
       tutors.push(...data.TeachingGroupTutor);
       if (data.TeachingGroupTutor.length < 500) break;
       if (tutorPage === 19) throw new Error("Arbor returned more than 10,000 teaching-group tutors; timetable sync stopped safely.");
-    }
-    const slotStaff: TimetableData["TimetableSlotStaff"] = [...slotStaffData.TimetableSlotStaff];
-    for (let slotStaffPage = 1; slotStaffPage < 20 && slotStaffData.TimetableSlotStaff.length === 500; slotStaffPage++) {
-      const data = await readSlotStaffPage(slotStaffPage);
-      slotStaff.push(...data.TimetableSlotStaff);
-      if (data.TimetableSlotStaff.length < 500) break;
-      if (slotStaffPage === 19) throw new Error("Arbor returned more than 10,000 timetable-slot staff records; timetable sync stopped safely.");
     }
     const personName = (person: { legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
     const staffByGroup = new Map<string, Array<{ id: string; fullName: string }>>();
@@ -1142,13 +1127,6 @@ export class ArborClient {
       staff.push({ id: tutor.staff.id, fullName: personName(tutor.staff) });
       staffByGroup.set(tutorGroup.id, staff);
     }
-    const staffBySlot = new Map<string, Array<{ id: string; fullName: string }>>();
-    for (const assignment of slotStaff) {
-      if (!assignment.timetableSlot || !assignment.staff) continue;
-      const staff = staffBySlot.get(assignment.timetableSlot.id) ?? [];
-      staff.push({ id: assignment.staff.id, fullName: personName(assignment.staff) });
-      staffBySlot.set(assignment.timetableSlot.id, staff);
-    }
     const groupsWithSubjects = new Set<string>();
     const groupsWithTeachers = new Set<string>();
     const assignments = membershipData.TeachingGroupMembership.flatMap((membership) => {
@@ -1156,12 +1134,12 @@ export class ArborClient {
         const subjects = group?.academicUnitAutomaticEnrolments
           .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
           .flatMap((enrolment) => enrolment.academicUnit?.subject?.displayName ? [enrolment.academicUnit.subject.displayName] : []) ?? [];
-        const slotStaff = group?.academicUnitAutomaticEnrolments
+        const scheduledStaff = group?.academicUnitAutomaticEnrolments
           .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
-          .flatMap((enrolment) => enrolment.academicUnit?.timetableSlots ?? [])
-          .flatMap((slot) => staffBySlot.get(slot.id) ?? []) ?? [];
-        // TimetableSlotStaff is Arbor's explicit classroom-staff assignment. Keep
-        // broader group relationships only for older tenants without slot records.
+          .flatMap((enrolment) => enrolment.academicUnit?.timetabledStaffByDateRange ?? [])
+          .map((staff) => ({ id: staff.id, fullName: personName(staff) })) ?? [];
+        // AcademicUnit's timetable relation is the source of classroom staff. Keep
+        // broader group relationships only for older tenants without timetable data.
         const activeStaff = group?.staffByDateRange.map((staff) => ({
           id: staff.id,
           fullName: personName(staff),
@@ -1169,7 +1147,7 @@ export class ArborClient {
         const tutorStaff = group?.tutorMemberships.flatMap((tutor) => tutor.staff
           ? [{ id: tutor.staff.id, fullName: personName(tutor.staff) }]
           : []) ?? [];
-        const staff = [...new Map([...slotStaff, ...activeStaff, ...tutorStaff, ...(group ? staffByGroup.get(group.id) ?? [] : [])].map((teacher) => [teacher.id, teacher])).values()];
+        const staff = [...new Map([...scheduledStaff, ...activeStaff, ...tutorStaff, ...(group ? staffByGroup.get(group.id) ?? [] : [])].map((teacher) => [teacher.id, teacher])).values()];
         if (group && subjects.length) groupsWithSubjects.add(group.id);
         if (group && staff.length) groupsWithTeachers.add(group.id);
         return group && membership.student && staff.length
