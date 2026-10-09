@@ -21,15 +21,18 @@ function KpiCard({
   href,
   hoverClassName = "hover:text-accent",
   meta,
+  warm = false,
 }: {
   label: string;
   value: string;
   href: string;
   hoverClassName?: string;
   meta: React.ReactNode;
+  /** Coral-tinted card for the one stat that most needs to stand out. */
+  warm?: boolean;
 }) {
   return (
-    <Card className="rounded-sm !p-5 shadow-none">
+    <Card className={`rounded-sm !p-5 shadow-none ${warm ? "border-coral/25 bg-coral-10" : ""}`}>
       <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
       <Link
         href={href}
@@ -92,6 +95,7 @@ export function StudentsKpiStrip({
         value={String(priorityCount)}
         href={attentionHref}
         hoverClassName="hover:text-[var(--error)]"
+        warm
         meta={
           <>
             Students in urgent or priority bands ·{" "}
