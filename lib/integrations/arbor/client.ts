@@ -1073,8 +1073,11 @@ export class ArborClient {
 
   /**
    * Maps the subject-teacher relationship Arbor exposes through teaching groups.
-   * A group roster supplies the students; its tutors supply staff; the linked
-   * academic unit supplies the subject.
+   * A group roster supplies the students and the linked academic unit supplies
+   * the subject. Arbor's dated timetable-staff relation is preferred, but some
+   * tenants only populate the teaching group's staff list. That list is used
+   * only after the group has been confirmed as a subject teaching group, never
+   * for a form/tutor group.
    */
   async listTimetableTeacherAssignmentsBatch(membershipPage = 0, validateFields = true): Promise<{
     assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; subject: string; staff: Array<{ id: string; fullName: string }> }>;
@@ -1085,7 +1088,7 @@ export class ArborClient {
       const fields = await this.inspectTimetableMappingFields();
       // Arbor nests a group's subject through its automatic enrolments, rather than
       // directly on TeachingGroup. This is the relationship in Arbor's domain model.
-      const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["membership", "startDate"], ["membership", "endDate"], ["group", "academicUnitAutomaticEnrolments"], ["academic unit", "subject"], ["academic unit", "timetabledStaffByDateRange"]];
+      const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["membership", "startDate"], ["membership", "endDate"], ["group", "academicUnitAutomaticEnrolments"], ["academic unit", "subject"]];
       const unavailable = required.filter(([entity, field]) => !fields[entity]?.includes(field));
       if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
     }
@@ -1101,6 +1104,7 @@ export class ArborClient {
       }>;
       TeachingGroup: Array<{
         id: string;
+          tutors: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }>;
           academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null; timetabledStaffByDateRange: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }> } | null }> }>;
       }>;
     };
@@ -1131,6 +1135,7 @@ export class ArborClient {
       ? await runArborGraphqlQuery<Pick<TimetableData, "TeachingGroup">>(this.credentials, `{
           TeachingGroup(page_size: ${currentGroupIds.length}, page_num: 0, id_in: [${currentGroupIds.map((id) => JSON.stringify(id)).join(", ")}]) {
             id
+            tutors { id legalFirstName legalLastName preferredFirstName preferredLastName }
             academicUnitAutomaticEnrolments {
               academicUnitEnrolments { academicUnit { subject { displayName } timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName } } }
             }
@@ -1148,9 +1153,14 @@ export class ArborClient {
           .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
           .flatMap((enrolment) => enrolment.academicUnit?.timetabledStaffByDateRange ?? [])
           .map((staff) => ({ id: staff.id, fullName: personName(staff) })) ?? [];
-        // This direct academic-unit timetable relation is the classroom source.
-        // Do not use tutors or broad group staff: those can be form staff or stale.
-        const staff = [...new Map(scheduledStaff.map((teacher) => [teacher.id, teacher])).values()];
+        // Subject-bearing groups are classroom groups. Some Arbor tenants do
+        // not populate timetabledStaffByDateRange, while their group tutors are
+        // the teachers of that subject class. Do not use this fallback without
+        // a subject, which prevents form-tutor links being created.
+        const groupTutors = subjects.length
+          ? (group?.tutors ?? []).map((staff) => ({ id: staff.id, fullName: personName(staff) }))
+          : [];
+        const staff = [...new Map((scheduledStaff.length ? scheduledStaff : groupTutors).map((teacher) => [teacher.id, teacher])).values()];
         if (membershipGroup && subjects.length) groupsWithSubjects.add(membershipGroup.id);
         if (membershipGroup && staff.length) groupsWithTeachers.add(membershipGroup.id);
         return membershipGroup && membership.student && staff.length
