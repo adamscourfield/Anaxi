@@ -526,8 +526,12 @@ export type ALevelAttainmentHeadline = {
   cycleLabel: string;
   pointLabel: string;
   presentCount: number;
+  aStarAPct: number;
   aStarBPct: number;
   aStarCPct: number;
+  /** e.g. "B-", "B", "B+" -- null when no entry has a recognised grade. */
+  averageGrade: string | null;
+  averageGradeEntryCount: number;
 };
 
 export type HomeAttainmentHeadline = {
@@ -536,6 +540,24 @@ export type HomeAttainmentHeadline = {
 };
 
 const A_LEVEL_SCORE: Record<string, number> = { "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1 };
+const A_LEVEL_GRADE_LABELS = ["U", "E", "D", "C", "B", "A", "A*"];
+
+/**
+ * Formats a mean A-Level score (1 = U .. 7 = A*) as a letter grade with a
+ * +/- modifier, the way schools commonly display a cohort average that
+ * naturally falls between two certificate grades (e.g. 4.3 -> "C+").
+ * A* has no "+" (nothing above it) and U has no "-" (nothing below it).
+ */
+function formatALevelAverageGrade(avgScore: number): string | null {
+  if (!Number.isFinite(avgScore)) return null;
+  const idx = Math.min(6, Math.max(0, avgScore - 1));
+  const base = Math.round(idx);
+  const diff = idx - base;
+  const label = A_LEVEL_GRADE_LABELS[base];
+  if (diff > 1 / 6 && base < 6) return `${label}+`;
+  if (diff < -1 / 6 && base > 0) return `${label}-`;
+  return label;
+}
 
 function academicYearEndDate(cycle: { academicYear: string; label: string; endDate: Date }) {
   const startYear = Number((cycle.academicYear.match(/(20\d{2})/) ?? cycle.label.match(/(20\d{2})/))?.[1]);
@@ -658,20 +680,28 @@ async function fetchALevelHeadline(tenantId: string): Promise<ALevelAttainmentHe
 
   const scoreOf = (r: any) => A_LEVEL_SCORE[String(r.rawValue ?? "").trim().toUpperCase()] ?? 0;
   const total = allResults.length;
+  const gradedScores = allResults.map(scoreOf).filter((s) => s > 0);
 
   return {
     cycleLabel,
     pointLabel: point.label as string,
     presentCount: total,
+    aStarAPct: Math.round((allResults.filter((r: any) => scoreOf(r) >= 6).length / total) * 100),
     aStarBPct: Math.round((allResults.filter((r: any) => scoreOf(r) >= 5).length / total) * 100),
     aStarCPct: Math.round((allResults.filter((r: any) => scoreOf(r) >= 4).length / total) * 100),
+    averageGrade:
+      gradedScores.length > 0
+        ? formatALevelAverageGrade(gradedScores.reduce((a, b) => a + b, 0) / gradedScores.length)
+        : null,
+    averageGradeEntryCount: gradedScores.length,
   };
 }
 
 /**
  * Headline attainment measures for the home page: GCSE English & Maths 4+/5+/7+ plus
- * average point score, and A-Level %A*–B / %A*–C — each from the latest assessed
- * result point in the tenant's current active cycle of that qualification type.
+ * average point score, and A-Level %A*–A / %A*–B / %A*–C plus average grade — each
+ * from the latest assessed result point in the tenant's current active cycle of
+ * that qualification type.
  */
 export async function fetchHomeAttainmentHeadline(tenantId: string): Promise<HomeAttainmentHeadline> {
   const [gcse, aLevel] = await Promise.all([
