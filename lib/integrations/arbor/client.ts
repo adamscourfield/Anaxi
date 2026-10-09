@@ -1015,6 +1015,26 @@ export class ArborClient {
     ]);
   }
 
+  /**
+   * Arbor keeps historic teaching-group memberships in the same collection as
+   * live ones. Its default ordering can place years of leavers before today's
+   * timetable, so use the documented date filters when the tenant exposes
+   * them. This prevents a time-limited sync from only ever reading history.
+   */
+  private async currentTeachingGroupMembershipFilters(today: string): Promise<string> {
+    const data = await runArborGraphqlQuery<{
+      __schema: { queryType: { fields: Array<{ name: string; args: Array<{ name: string }> }> } | null };
+    }>(this.credentials, `{
+      __schema { queryType { fields { name args { name } } } }
+    }`);
+    const membershipQuery = data.__schema.queryType?.fields.find((field) => field.name === "TeachingGroupMembership");
+    const argumentsByName = new Set(membershipQuery?.args.map((argument) => argument.name) ?? []);
+    const filters: string[] = [];
+    if (argumentsByName.has("startDate_before_or_equal")) filters.push(`startDate_before_or_equal: ${JSON.stringify(today)}`);
+    if (argumentsByName.has("endDate_after_or_equal")) filters.push(`endDate_after_or_equal: ${JSON.stringify(today)}`);
+    return filters.length === 2 ? `, ${filters.join(", ")}` : "";
+  }
+
   /** Identifies the exact classroom-staff relations exposed by this Arbor tenant. */
   async inspectTimetableTeacherRelationTypes(): Promise<string> {
     type TypeRef = { kind: string; name: string | null; ofType: TypeRef | null };
@@ -1108,8 +1128,10 @@ export class ArborClient {
           academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null; timetabledStaffByDateRange: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }> } | null }> }>;
       }>;
     };
+    const today = new Date().toISOString().slice(0, 10);
+    const currentFilters = await this.currentTeachingGroupMembershipFilters(today);
     const readMembershipPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "TeachingGroupMembership">>(this.credentials, `{
-      TeachingGroupMembership(page_size: 100, page_num: ${page}) {
+      TeachingGroupMembership(page_size: 100, page_num: ${page}${currentFilters}) {
         startDate
         endDate
         student { id legalFirstName legalLastName preferredFirstName preferredLastName }
@@ -1120,7 +1142,6 @@ export class ArborClient {
     }`);
     const membershipData = await readMembershipPage(membershipPage);
     const personName = (person: { legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
-    const today = new Date().toISOString().slice(0, 10);
     const isCurrentMembership = (membership: TimetableData["TeachingGroupMembership"][number]) =>
       (!membership.startDate || membership.startDate <= today) && (!membership.endDate || membership.endDate >= today);
     const groupsWithSubjects = new Set<string>();
