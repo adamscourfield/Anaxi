@@ -1042,10 +1042,33 @@ export class ArborClient {
 
   /** Finds the timetable entities Arbor exposes for classroom-level teaching staff. */
   async inspectTimetableLessonEntities(): Promise<string> {
-    const fields = await this.inspectTimetableMappingFields();
-    const unitFields = fields["academic unit"]?.filter((field) => /timetable|session/i.test(field)) ?? [];
-    const slotStaffFields = fields["timetable slot staff"] ?? [];
-    return `AcademicUnit: ${unitFields.join(", ") || "no timetable fields"} | TimetableSlotStaff: ${slotStaffFields.join(", ") || "no fields"}`;
+    type TypeRef = { kind: string; name: string | null; ofType: TypeRef | null };
+    type Field = { name: string; type: TypeRef; args: Array<{ name: string; type: TypeRef }> };
+    const data = await runArborGraphqlQuery<{ unit: { fields: Field[] } | null; slotStaff: { fields: Field[] } | null }>(this.credentials, `{
+      unit: __type(name: "AcademicUnit") {
+        fields {
+          name
+          args { name type { kind name ofType { kind name ofType { kind name ofType { kind name } } } } }
+          type { kind name ofType { kind name ofType { kind name ofType { kind name } } } }
+        }
+      }
+      slotStaff: __type(name: "TimetableSlotStaff") {
+        fields {
+          name
+          args { name type { kind name ofType { kind name ofType { kind name ofType { kind name } } } } }
+          type { kind name ofType { kind name ofType { kind name ofType { kind name } } } }
+        }
+      }
+    }`);
+    const renderType = (type: TypeRef): string => {
+      if (type.kind === "NON_NULL") return `${renderType(type.ofType!)}!`;
+      if (type.kind === "LIST") return `[${renderType(type.ofType!)}]`;
+      return type.name ?? type.kind;
+    };
+    const renderField = (field: Field) => `${field.name}${field.args.length ? `(${field.args.map((arg) => `${arg.name}: ${renderType(arg.type)}`).join(", ")})` : ""}: ${renderType(field.type)}`;
+    const unitFields = (data.unit?.fields ?? []).filter((field) => /timetable|session|staff/i.test(field.name)).map(renderField);
+    const slotStaffFields = (data.slotStaff?.fields ?? []).filter((field) => /staff|slot|date/i.test(field.name)).map(renderField);
+    return `AcademicUnit: ${unitFields.join(" | ") || "no timetable fields"} | TimetableSlotStaff: ${slotStaffFields.join(" | ") || "no fields"}`;
   }
 
   /**
