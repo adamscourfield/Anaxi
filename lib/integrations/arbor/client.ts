@@ -1013,6 +1013,30 @@ export class ArborClient {
     ]);
   }
 
+  /** Identifies the exact classroom-staff relations exposed by this Arbor tenant. */
+  async inspectTimetableTeacherRelationTypes(): Promise<string> {
+    type TypeRef = { kind: string; name: string | null; ofType: TypeRef | null };
+    type Field = { name: string; type: TypeRef };
+    const data = await runArborGraphqlQuery<{ group: { fields: Field[] } | null }>(this.credentials, `{
+      group: __type(name: "TeachingGroup") {
+        fields {
+          name
+          type { kind name ofType { kind name ofType { kind name ofType { kind name } } } }
+        }
+      }
+    }`);
+    const renderType = (type: TypeRef): string => {
+      if (type.kind === "NON_NULL") return `${renderType(type.ofType!)}!`;
+      if (type.kind === "LIST") return `[${renderType(type.ofType!)}]`;
+      return type.name ?? type.kind;
+    };
+    const names = new Set(["tutors", "tutorMemberships", "staffByDateRange"]);
+    return (data.group?.fields ?? [])
+      .filter((field) => names.has(field.name))
+      .map((field) => `${field.name}: ${renderType(field.type)}`)
+      .join(" | ") || "No classroom-staff relations exposed";
+  }
+
   /**
    * Maps the subject-teacher relationship Arbor exposes through teaching groups.
    * A group roster supplies the students; its tutors supply staff; the linked
