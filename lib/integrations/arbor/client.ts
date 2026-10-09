@@ -1016,11 +1016,12 @@ export class ArborClient {
   /** Identifies the exact classroom-staff relations exposed by this Arbor tenant. */
   async inspectTimetableTeacherRelationTypes(): Promise<string> {
     type TypeRef = { kind: string; name: string | null; ofType: TypeRef | null };
-    type Field = { name: string; type: TypeRef };
+    type Field = { name: string; type: TypeRef; args: Array<{ name: string; type: TypeRef }> };
     const data = await runArborGraphqlQuery<{ group: { fields: Field[] } | null }>(this.credentials, `{
       group: __type(name: "TeachingGroup") {
         fields {
           name
+          args { name type { kind name ofType { kind name ofType { kind name ofType { kind name } } } } }
           type { kind name ofType { kind name ofType { kind name ofType { kind name } } } }
         }
       }
@@ -1033,7 +1034,7 @@ export class ArborClient {
     const names = new Set(["tutors", "tutorMemberships", "staffByDateRange"]);
     return (data.group?.fields ?? [])
       .filter((field) => names.has(field.name))
-      .map((field) => `${field.name}: ${renderType(field.type)}`)
+      .map((field) => `${field.name}${field.args.length ? `(${field.args.map((arg) => `${arg.name}: ${renderType(arg.type)}`).join(", ")})` : ""}: ${renderType(field.type)}`)
       .join(" | ") || "No classroom-staff relations exposed";
   }
 
