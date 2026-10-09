@@ -60,6 +60,18 @@ function ApsTile({ value, entryCount }: { value: number | null; entryCount: numb
   );
 }
 
+function AverageGradeTile({ grade, entryCount }: { grade: string | null; entryCount: number }) {
+  return (
+    <div className="min-w-0 rounded-xl border border-border bg-[var(--surface-container-lowest)] p-3.5">
+      <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted">Average grade</p>
+      <p className="mt-2 text-2xl font-bold leading-none tracking-[-0.02em] text-text">
+        {grade ?? "—"}
+      </p>
+      <p className="mt-2.5 text-[11px] text-muted">{entryCount} grade{entryCount !== 1 ? "s" : ""} · A*–U scale</p>
+    </div>
+  );
+}
+
 function GcseRow({ data }: { data: GcseAttainmentHeadline }) {
   return (
     <div className="space-y-2.5">
@@ -82,9 +94,11 @@ function ALevelRow({ data }: { data: ALevelAttainmentHeadline }) {
       <p className="text-xs font-semibold text-text">
         A Level <span className="font-normal text-muted">— {data.cycleLabel} · {data.pointLabel}</span>
       </p>
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <StatTile label="A*–A" value={data.aStarAPct} tone={TONES.emerald} />
         <StatTile label="A*–B" value={data.aStarBPct} tone={TONES.blue} />
         <StatTile label="A*–C" value={data.aStarCPct} tone={TONES.violet} />
+        <AverageGradeTile grade={data.averageGrade} entryCount={data.averageGradeEntryCount} />
       </div>
     </div>
   );
