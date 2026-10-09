@@ -1035,6 +1035,21 @@ export class ArborClient {
     return filters.length === 2 ? `, ${filters.join(", ")}` : "";
   }
 
+  /** Applies the same active-date filter to the direct pupil-to-class table. */
+  private async currentAcademicUnitEnrolmentFilters(today: string): Promise<string> {
+    const data = await runArborGraphqlQuery<{
+      __schema: { queryType: { fields: Array<{ name: string; args: Array<{ name: string }> }> } | null };
+    }>(this.credentials, `{
+      __schema { queryType { fields { name args { name } } } }
+    }`);
+    const enrolmentQuery = data.__schema.queryType?.fields.find((field) => field.name === "AcademicUnitEnrolment");
+    const argumentsByName = new Set(enrolmentQuery?.args.map((argument) => argument.name) ?? []);
+    const filters: string[] = [];
+    if (argumentsByName.has("startDate_before_or_equal")) filters.push(`startDate_before_or_equal: ${JSON.stringify(today)}`);
+    if (argumentsByName.has("endDate_after_or_equal")) filters.push(`endDate_after_or_equal: ${JSON.stringify(today)}`);
+    return filters.length === 2 ? `, ${filters.join(", ")}` : "";
+  }
+
   /** Identifies the exact classroom-staff relations exposed by this Arbor tenant. */
   async inspectTimetableTeacherRelationTypes(): Promise<string> {
     type TypeRef = { kind: string; name: string | null; ofType: TypeRef | null };
@@ -1092,12 +1107,10 @@ export class ArborClient {
   }
 
   /**
-   * Maps the subject-teacher relationship Arbor exposes through teaching groups.
-   * A group roster supplies the students and the linked academic unit supplies
-   * the subject. Arbor's dated timetable-staff relation is preferred, but some
-   * tenants only populate the teaching group's staff list. That list is used
-   * only after the group has been confirmed as a subject teaching group, never
-   * for a form/tutor group.
+   * Maps subject teachers using Arbor's direct academic-unit enrolments. A
+   * teaching-group membership can represent a year or other automatic cohort
+   * and therefore expands into unrelated subjects and staff. An academic-unit
+   * enrolment is the exact pupil-to-class relationship needed for a profile.
    */
   async listTimetableTeacherAssignmentsBatch(membershipPage = 0, validateFields = true): Promise<{
     assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; subject: string; staff: Array<{ id: string; fullName: string }> }>;
@@ -1106,96 +1119,67 @@ export class ArborClient {
   }> {
     if (validateFields) {
       const fields = await this.inspectTimetableMappingFields();
-      // Arbor nests a group's subject through its automatic enrolments, rather than
-      // directly on TeachingGroup. This is the relationship in Arbor's domain model.
-      const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["membership", "startDate"], ["membership", "endDate"], ["group", "academicUnitAutomaticEnrolments"], ["academic unit", "subject"]];
-      const unavailable = required.filter(([entity, field]) => !fields[entity]?.includes(field));
-      if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
+      if (!fields["academic unit"]?.includes("subject") || !fields["academic unit"]?.includes("staff")) {
+        throw new Error("Arbor timetable fields unavailable: academic unit subject or staff.");
+      }
     }
 
     type TimetableData = {
-      TeachingGroupMembership: Array<{
+      AcademicUnitEnrolment: Array<{
         startDate: string | null;
         endDate: string | null;
         student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null;
-        teachingGroup: {
+        academicUnit: {
           id: string;
+          subject: { displayName: string } | null;
+          staff: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }>;
+          timetabledStaffByDateRange: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }>;
         } | null;
-      }>;
-      TeachingGroup: Array<{
-        id: string;
-          tutors: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }>;
-          academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null; timetabledStaffByDateRange: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }> } | null }> }>;
       }>;
     };
     const today = new Date().toISOString().slice(0, 10);
-    const currentFilters = await this.currentTeachingGroupMembershipFilters(today);
-    const readMembershipPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "TeachingGroupMembership">>(this.credentials, `{
-      TeachingGroupMembership(page_size: 100, page_num: ${page}${currentFilters}) {
+    const currentFilters = await this.currentAcademicUnitEnrolmentFilters(today);
+    const readEnrolmentPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "AcademicUnitEnrolment">>(this.credentials, `{
+      AcademicUnitEnrolment(page_size: 100, page_num: ${page}${currentFilters}) {
         startDate
         endDate
         student { id legalFirstName legalLastName preferredFirstName preferredLastName }
-        teachingGroup {
+        academicUnit {
           id
+          subject { displayName }
+          staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
+          timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName }
         }
       }
     }`);
-    const membershipData = await readMembershipPage(membershipPage);
+    const enrolmentData = await readEnrolmentPage(membershipPage);
     const personName = (person: { legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
-    const isCurrentMembership = (membership: TimetableData["TeachingGroupMembership"][number]) =>
-      (!membership.startDate || membership.startDate <= today) && (!membership.endDate || membership.endDate >= today);
+    const isCurrentEnrolment = (enrolment: TimetableData["AcademicUnitEnrolment"][number]) =>
+      (!enrolment.startDate || enrolment.startDate <= today) && (!enrolment.endDate || enrolment.endDate >= today);
     const groupsWithSubjects = new Set<string>();
     const groupsWithTeachers = new Set<string>();
-    // Arbor's membership dates are authoritative. Its academic-year labels are
-    // inconsistent across tenants and must not suppress a live classroom link.
-    const currentMemberships = membershipData.TeachingGroupMembership.filter((membership) => membership.teachingGroup && isCurrentMembership(membership));
-    const currentGroupIds = [...new Set(currentMemberships.flatMap((membership) => membership.teachingGroup ? [membership.teachingGroup.id] : []))];
-    // A teaching group appears once for every pupil. Fetch its staff once, rather
-    // than repeating a large timetable subtree for every membership row.
-    const groupData = currentGroupIds.length
-      ? await runArborGraphqlQuery<Pick<TimetableData, "TeachingGroup">>(this.credentials, `{
-          TeachingGroup(page_size: ${currentGroupIds.length}, page_num: 0, id_in: [${currentGroupIds.map((id) => JSON.stringify(id)).join(", ")}]) {
-            id
-            tutors { id legalFirstName legalLastName preferredFirstName preferredLastName }
-            academicUnitAutomaticEnrolments {
-              academicUnitEnrolments { academicUnit { subject { displayName } timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName } } }
-            }
-          }
-        }`)
-      : { TeachingGroup: [] };
-    const currentGroups = new Map(groupData.TeachingGroup.map((group) => [group.id, group]));
-    const assignments = currentMemberships.flatMap((membership) => {
-        const membershipGroup = membership.teachingGroup;
-        const group = membershipGroup ? currentGroups.get(membershipGroup.id) : null;
-        const subjects = group?.academicUnitAutomaticEnrolments
-          .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
-          .flatMap((enrolment) => enrolment.academicUnit?.subject?.displayName ? [enrolment.academicUnit.subject.displayName] : []) ?? [];
-        const scheduledStaff = group?.academicUnitAutomaticEnrolments
-          .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
-          .flatMap((enrolment) => enrolment.academicUnit?.timetabledStaffByDateRange ?? [])
-          .map((staff) => ({ id: staff.id, fullName: personName(staff) })) ?? [];
-        // Subject-bearing groups are classroom groups. Some Arbor tenants do
-        // not populate timetabledStaffByDateRange, while their group tutors are
-        // the teachers of that subject class. Do not use this fallback without
-        // a subject, which prevents form-tutor links being created.
-        const groupTutors = subjects.length
-          ? (group?.tutors ?? []).map((staff) => ({ id: staff.id, fullName: personName(staff) }))
-          : [];
-        const staff = [...new Map((scheduledStaff.length ? scheduledStaff : groupTutors).map((teacher) => [teacher.id, teacher])).values()];
-        if (membershipGroup && subjects.length) groupsWithSubjects.add(membershipGroup.id);
-        if (membershipGroup && staff.length) groupsWithTeachers.add(membershipGroup.id);
-        return membershipGroup && membership.student && staff.length
-          ? [...new Set(subjects)].map((subject) => ({ studentId: membership.student!.id, studentName: personName(membership.student!), teachingGroupId: membershipGroup.id, subject, staff }))
+    const currentEnrolments = enrolmentData.AcademicUnitEnrolment.filter((enrolment) => enrolment.academicUnit && isCurrentEnrolment(enrolment));
+    const currentUnitIds = new Set(currentEnrolments.flatMap((enrolment) => enrolment.academicUnit ? [enrolment.academicUnit.id] : []));
+    const assignments = currentEnrolments.flatMap((enrolment) => {
+        const unit = enrolment.academicUnit;
+        const subject = unit?.subject?.displayName?.trim();
+        const scheduledStaff = unit?.timetabledStaffByDateRange ?? [];
+        const directStaff = unit?.staff ?? [];
+        const staff = [...new Map((scheduledStaff.length ? scheduledStaff : directStaff).map((teacher) => [teacher.id, { id: teacher.id, fullName: personName(teacher) }])).values()];
+        if (unit && subject) groupsWithSubjects.add(unit.id);
+        if (unit && subject && staff.length) groupsWithTeachers.add(unit.id);
+        return unit && enrolment.student && subject && staff.length
+          ? [{ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, subject, staff }]
           : [];
     });
     return {
       assignments,
-      hasMore: membershipData.TeachingGroupMembership.length === 100,
+      hasMore: enrolmentData.AcademicUnitEnrolment.length === 100,
       diagnostics: {
-        memberships: membershipData.TeachingGroupMembership.length,
-        currentMemberships: currentMemberships.length,
-        groupsRequested: currentGroupIds.length,
-        groupsReturned: groupData.TeachingGroup.length,
+        memberships: enrolmentData.AcademicUnitEnrolment.length,
+        currentMemberships: currentEnrolments.length,
+        groupsRequested: currentUnitIds.size,
+        groupsReturned: currentUnitIds.size,
         groupsWithSubjects: groupsWithSubjects.size,
         groupsWithTeachers: groupsWithTeachers.size,
       },

@@ -12,7 +12,7 @@ import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
 type TimetableSyncState = { version?: number; page?: number; startedAt?: string; completedAt?: string };
-const TIMETABLE_MAPPING_VERSION = 4;
+const TIMETABLE_MAPPING_VERSION = 5;
 
 function currentAcademicYearStart(): Date {
   const now = new Date();
