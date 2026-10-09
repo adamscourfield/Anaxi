@@ -11,7 +11,8 @@ import { buildTimetableIdentityResolver } from "@/lib/integrations/arbor/timetab
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
-type TimetableSyncState = { page?: number; startedAt?: string; completedAt?: string };
+type TimetableSyncState = { version?: number; page?: number; startedAt?: string; completedAt?: string };
+const TIMETABLE_MAPPING_VERSION = 2;
 
 function currentAcademicYearStart(): Date {
   const now = new Date();
@@ -43,7 +44,10 @@ export const POST = withApi(async function POST(req: Request) {
   let linked = 0;
   try {
     const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
-    const storedState = config.timetableSync && typeof config.timetableSync === "object" ? config.timetableSync as TimetableSyncState : {};
+    const savedState = config.timetableSync && typeof config.timetableSync === "object" ? config.timetableSync as TimetableSyncState : {};
+    // The old implementation read historical groups and tutor assignments. Start
+    // a clean pass when the classroom-only mapping changes so stale links retire.
+    const storedState = savedState.version === TIMETABLE_MAPPING_VERSION ? savedState : {};
     const page = typeof storedState.page === "number" && storedState.page >= 0 ? storedState.page : 0;
     const startedAt = storedState.startedAt && !Number.isNaN(new Date(storedState.startedAt).getTime()) ? new Date(storedState.startedAt) : new Date();
     const run = await db.sharedIntegrationSyncRun.create({
@@ -62,8 +66,12 @@ export const POST = withApi(async function POST(req: Request) {
     let linkedByUniqueName = 0;
     const candidates = new Map<string, { tenantId: string; studentId: string; teacherId: string; subject: string }>();
     for (const assignment of batch.assignments) {
-      const studentMatch = studentResolver.student(assignment.studentId, assignment.studentName);
-      if (!studentMatch) continue;
+      const studentMatches = studentResolver.studentCandidates(assignment.studentId, assignment.studentName);
+      const eligibleStudents = studentMatches.filter((studentMatch) => assignment.staff.some((arborStaff) => staffResolver.staff(studentMatch.person.tenantId, arborStaff.id, arborStaff.fullName)));
+      // An Arbor ID can occur in multiple connected schools. The classroom staff
+      // must identify exactly one tenant before any relationship is written.
+      if (eligibleStudents.length !== 1) continue;
+      const studentMatch = eligibleStudents[0];
       const student = studentMatch.person;
       for (const arborStaff of assignment.staff) {
         const teacherMatch = staffResolver.staff(student.tenantId, arborStaff.id, arborStaff.fullName);
@@ -115,7 +123,7 @@ export const POST = withApi(async function POST(req: Request) {
     await db.sharedIntegrationSyncRun.update({ where: { id: run.id }, data: { status: "SUCCESS", recordsProcessed: linked, recordsCreated: linked, finishedAt: new Date() } });
     await db.sharedIntegration.update({
       where: { id: integration.id },
-      data: { config: { ...config, timetableSync: complete ? { completedAt: new Date().toISOString() } : { page: page + 1, startedAt: startedAt.toISOString() } }, lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null },
+      data: { config: { ...config, timetableSync: complete ? { version: TIMETABLE_MAPPING_VERSION, completedAt: new Date().toISOString() } : { version: TIMETABLE_MAPPING_VERSION, page: page + 1, startedAt: startedAt.toISOString() } }, lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null },
     });
     if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.timetable_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { page, assignments: batch.assignments.length, linked, linkedByExternalId, linkedByUniqueName, complete } } });
     if (scheduled) return NextResponse.json({ page, assignments: batch.assignments.length, linked, linkedByExternalId, linkedByUniqueName, complete });
@@ -127,6 +135,7 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("timetableLinkedById", String(linkedByExternalId));
     url.searchParams.set("timetableLinkedByName", String(linkedByUniqueName));
     url.searchParams.set("timetableMemberships", String(batch.diagnostics.memberships));
+    url.searchParams.set("timetableCurrentMemberships", String(batch.diagnostics.currentMemberships));
     url.searchParams.set("timetableSubjects", String(batch.diagnostics.groupsWithSubjects));
     url.searchParams.set("timetableTeachers", String(batch.diagnostics.groupsWithTeachers));
     return NextResponse.redirect(url);

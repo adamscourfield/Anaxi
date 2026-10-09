@@ -30,8 +30,10 @@ export const POST = withApi(async function POST(req: Request) {
     let studentsMatched = 0;
     let staffMatched = 0;
     for (const assignment of assignments) {
-      const student = studentResolver.student(assignment.studentId, assignment.studentName)?.person;
-      if (!student) continue;
+      const studentMatches = studentResolver.studentCandidates(assignment.studentId, assignment.studentName);
+      const eligibleStudents = studentMatches.filter((studentMatch) => assignment.staff.some((arborStaff) => staffResolver.staff(studentMatch.person.tenantId, arborStaff.id, arborStaff.fullName)));
+      if (eligibleStudents.length !== 1) continue;
+      const student = eligibleStudents[0].person;
       studentsMatched++;
       const matchedStaff = assignment.staff.filter((arborStaff) => staffResolver.staff(student.tenantId, arborStaff.id, arborStaff.fullName));
       staffMatched += matchedStaff.length;

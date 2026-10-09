@@ -789,7 +789,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
 
       {params?.timetablePreview === "success" ? (
         <StatusBanner variant="success" title="Subject-teacher preview complete.">
-          Arbor returned {previewCount(params.timetableAssignments)} timetable assignments. {previewCount(params.timetableStudentsMatched)} pupils and {previewCount(params.timetableStaffMatched)} classroom staff records matched Anaxi; {previewCount(params.timetableLinkable)} assignments can be linked safely. Matching uses Arbor IDs first and a unique exact name only when an Arbor ID is not yet stored. Nothing has been changed.
+          Arbor returned {previewCount(params.timetableAssignments)} current classroom assignments. {previewCount(params.timetableStudentsMatched)} pupils and {previewCount(params.timetableStaffMatched)} classroom staff records matched Anaxi; {previewCount(params.timetableLinkable)} assignments can be linked safely. Historic groups, tutor groups, and ambiguous cross-school matches are excluded. Nothing has been changed.
         </StatusBanner>
       ) : null}
 
@@ -807,7 +807,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
 
       {params?.timetableSync === "progress" ? (
         <StatusBanner variant="success" title="Subject-teacher sync is continuing.">
-          Roster page {previewCount(params.timetablePage)} read {previewCount(params.timetableMemberships)} student class memberships across {previewCount(params.timetableSubjects)} subject classes and {previewCount(params.timetableTeachers)} teacher-led classes. {previewCount(params.timetableLinkable)} subject-teacher links were confirmed: {previewCount(params.timetableLinkedById)} by Arbor ID and {previewCount(params.timetableLinkedByName)} by a unique exact name. The remaining pages will continue automatically overnight, or you can run the next page now.
+          Roster page {previewCount(params.timetablePage)} read {previewCount(params.timetableMemberships)} student class memberships, including {previewCount(params.timetableCurrentMemberships)} in current classes. {previewCount(params.timetableSubjects)} current subject classes had a classroom teacher. {previewCount(params.timetableLinkable)} subject-teacher links were confirmed: {previewCount(params.timetableLinkedById)} by Arbor ID and {previewCount(params.timetableLinkedByName)} by a unique exact name. The remaining pages will continue automatically overnight.
         </StatusBanner>
       ) : null}
 
