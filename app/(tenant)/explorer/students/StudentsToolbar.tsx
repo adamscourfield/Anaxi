@@ -27,25 +27,10 @@ const STATUS_OPTIONS: { value: StudentsStatusFilter; label: string }[] = [
   { value: "all", label: "Active + archived" },
 ];
 
-const BANDS = [
-  { value: "", label: "All risk bands" },
-  { value: "URGENT", label: "Urgent" },
-  { value: "PRIORITY", label: "Priority" },
-  { value: "WATCH", label: "Watch" },
-  { value: "STABLE", label: "Stable" },
-];
-
 const WINDOWS = [
   { value: "7", label: "7 days" },
   { value: "21", label: "21 days" },
   { value: "28", label: "28 days" },
-];
-
-const VIEW_SEGMENTS: { value: StudentsViewMode; label: string }[] = [
-  { value: "attention", label: "Needs attention" },
-  { value: "all", label: "All" },
-  { value: "watch", label: "Watch" },
-  { value: "stable", label: "Stable" },
 ];
 
 const SAVED_VIEWS_KEY = "anaxi-students-saved-views";
@@ -201,39 +186,11 @@ export function StudentsToolbar({
 
   const triggerWhite = "field-filter-trigger";
 
-  const segmentHref = (v: StudentsViewMode) =>
-    buildStudentsListUrl(basePath, {
-      ...urlBase,
-      view: v,
-      band: undefined,
-      page: undefined,
-    });
-
   return (
     <div className="space-y-4">
-      <div className="segmented-toggle w-full max-w-2xl" role="tablist" aria-label="Student list view">
-        {VIEW_SEGMENTS.map((seg) => (
-          <a
-            key={seg.value}
-            href={segmentHref(seg.value)}
-            role="tab"
-            aria-selected={view === seg.value && !band}
-            className={`segmented-toggle-btn flex-1 text-center ${view === seg.value && !band ? "segmented-toggle-btn-active" : ""}`}
-            onClick={(e) => {
-              e.preventDefault();
-              setView(seg.value);
-              setBand("");
-              pushParams({ view: seg.value, band: undefined });
-            }}
-          >
-            {seg.label}
-          </a>
-        ))}
-      </div>
-
       <div className="filter-panel">
-        <div className="flex w-full flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-4 lg:gap-y-4">
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[180px]">
+        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="flex min-w-0 flex-col gap-1.5 sm:col-span-2 lg:col-span-1">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               Search
             </span>
@@ -263,28 +220,25 @@ export function StudentsToolbar({
             </div>
           </label>
 
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[120px]">
+          <label className="flex min-w-0 flex-col gap-1.5">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               Window
             </span>
-            <select
-              value={windowDays}
-              onChange={(e) => {
-                const v = e.target.value;
+            <FormSelect
+              name="windowDays"
+              defaultValue={windowDays}
+              key={`window-${windowDays}`}
+              placeholder="21 days"
+              triggerClassName={triggerWhite}
+              options={WINDOWS}
+              onChange={(v) => {
                 setWindowDays(v);
                 pushParams({ windowDays: Number(v) });
               }}
-              className={`field ${triggerWhite}`}
-            >
-              {WINDOWS.map((w) => (
-                <option key={w.value} value={w.value}>
-                  {w.label}
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[120px]">
+          <label className="flex min-w-0 flex-col gap-1.5">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               Year group
             </span>
@@ -305,25 +259,7 @@ export function StudentsToolbar({
             />
           </label>
 
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[120px]">
-            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-              Risk band
-            </span>
-            <FormSelect
-              name="band"
-              defaultValue={band}
-              key={`band-${band}`}
-              placeholder="All risk bands"
-              triggerClassName={triggerWhite}
-              options={BANDS}
-              onChange={(v) => {
-                setBand(v);
-                pushParams({ band: v || undefined, view: v ? "all" : view });
-              }}
-            />
-          </label>
-
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[100px]">
+          <label className="flex min-w-0 flex-col gap-1.5">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               SEN
             </span>
@@ -345,7 +281,7 @@ export function StudentsToolbar({
             />
           </label>
 
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[100px]">
+          <label className="flex min-w-0 flex-col gap-1.5">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               Pupil premium
             </span>
@@ -367,7 +303,7 @@ export function StudentsToolbar({
             />
           </label>
 
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[130px]">
+          <label className="flex min-w-0 flex-col gap-1.5">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               Confidence
             </span>
@@ -389,7 +325,7 @@ export function StudentsToolbar({
             />
           </label>
 
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[160px]">
+          <label className="flex min-w-0 flex-col gap-1.5">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               Sort by
             </span>
@@ -409,7 +345,7 @@ export function StudentsToolbar({
           </label>
 
           {canManageStudents && (
-            <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[160px]">
+            <label className="flex min-w-0 flex-col gap-1.5">
               <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
                 Status
               </span>
@@ -429,7 +365,7 @@ export function StudentsToolbar({
             </label>
           )}
 
-          <label className="flex items-end gap-2 pb-2.5 lg:pb-0">
+          <label className="flex items-center gap-2 self-end pb-2.5">
             <input
               type="checkbox"
               checked={watchlist}
