@@ -1076,17 +1076,19 @@ export class ArborClient {
    * A group roster supplies the students; its tutors supply staff; the linked
    * academic unit supplies the subject.
    */
-  async listTimetableTeacherAssignmentsBatch(membershipPage = 0): Promise<{
+  async listTimetableTeacherAssignmentsBatch(membershipPage = 0, validateFields = true): Promise<{
     assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; subject: string; staff: Array<{ id: string; fullName: string }> }>;
     hasMore: boolean;
     diagnostics: { memberships: number; currentMemberships: number; groupsWithSubjects: number; groupsWithTeachers: number };
   }> {
-    const fields = await this.inspectTimetableMappingFields();
-    // Arbor nests a group's subject through its automatic enrolments, rather than
-    // directly on TeachingGroup. This is the relationship in Arbor's domain model.
-    const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["membership", "startDate"], ["membership", "endDate"], ["group", "academicYear"], ["group", "academicUnitAutomaticEnrolments"], ["academic unit", "subject"], ["academic unit", "timetabledStaffByDateRange"]];
-    const unavailable = required.filter(([entity, field]) => !fields[entity]?.includes(field));
-    if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
+    if (validateFields) {
+      const fields = await this.inspectTimetableMappingFields();
+      // Arbor nests a group's subject through its automatic enrolments, rather than
+      // directly on TeachingGroup. This is the relationship in Arbor's domain model.
+      const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["membership", "startDate"], ["membership", "endDate"], ["group", "academicYear"], ["group", "academicUnitAutomaticEnrolments"], ["academic unit", "subject"], ["academic unit", "timetabledStaffByDateRange"]];
+      const unavailable = required.filter(([entity, field]) => !fields[entity]?.includes(field));
+      if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
+    }
 
     type TimetableData = {
       TeachingGroupMembership: Array<{
@@ -1175,7 +1177,14 @@ export class ArborClient {
 
   /** Reads a small timetable sample before any subject-teacher links are written. */
   async listTimetableTeacherAssignmentsPreview(): Promise<Array<{ studentId: string; studentName: string; teachingGroupId: string; subject: string; staff: Array<{ id: string; fullName: string }> }>> {
-    return (await this.listTimetableTeacherAssignmentsBatch()).assignments;
+    // Arbor orders teaching-group memberships historically. Advance through a
+    // bounded set of lightweight pages so preview reaches current classes itself.
+    for (let page = 0; page < 32; page++) {
+      const batch = await this.listTimetableTeacherAssignmentsBatch(page, page === 0);
+      if (batch.assignments.length) return batch.assignments;
+      if (!batch.hasMore) break;
+    }
+    return [];
   }
 }
 
