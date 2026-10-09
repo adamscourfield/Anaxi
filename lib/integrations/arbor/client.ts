@@ -1026,13 +1026,18 @@ export class ArborClient {
     const fields = await this.inspectTimetableMappingFields();
     // Arbor nests a group's subject through its automatic enrolments, rather than
     // directly on TeachingGroup. This is the relationship in Arbor's domain model.
-    const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["group", "academicUnitAutomaticEnrolments"], ["tutor", "teachingGroup"], ["tutor", "staff"], ["academic unit", "subject"]];
+    const required: Array<[string, string]> = [["membership", "student"], ["membership", "teachingGroup"], ["group", "academicUnitAutomaticEnrolments"], ["tutor", "staff"], ["academic unit", "subject"]];
     const unavailable = required.filter(([entity, field]) => !fields[entity]?.includes(field));
+    // Arbor deployments expose the tutor's class through either relationship.
+    // Both point to the same TeachingGroup; neither is safe to assume alone.
+    if (!fields.tutor?.includes("teachingGroup") && !fields.tutor?.includes("group")) {
+      unavailable.push(["tutor", "teachingGroup or group"]);
+    }
     if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
 
     type TimetableData = {
       TeachingGroupMembership: Array<{ student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null; teachingGroup: { id: string; academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null } | null }> }> } | null }>;
-      TeachingGroupTutor: Array<{ teachingGroup: { id: string } | null; staff: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null }>;
+      TeachingGroupTutor: Array<{ teachingGroup: { id: string } | null; group: { id: string } | null; staff: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null }>;
     };
     const readMembershipPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "TeachingGroupMembership">>(this.credentials, `{
       TeachingGroupMembership(page_size: 100, page_num: ${page}) {
@@ -1048,6 +1053,7 @@ export class ArborClient {
     const readTutorPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "TeachingGroupTutor">>(this.credentials, `{
       TeachingGroupTutor(page_size: 500, page_num: ${page}) {
         teachingGroup { id }
+        group { id }
         staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
       }
     }`);
@@ -1064,10 +1070,11 @@ export class ArborClient {
     const personName = (person: { legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
     const staffByGroup = new Map<string, Array<{ id: string; fullName: string }>>();
     for (const tutor of tutors) {
-      if (!tutor.teachingGroup || !tutor.staff) continue;
-      const staff = staffByGroup.get(tutor.teachingGroup.id) ?? [];
+      const tutorGroup = tutor.teachingGroup ?? tutor.group;
+      if (!tutorGroup || !tutor.staff) continue;
+      const staff = staffByGroup.get(tutorGroup.id) ?? [];
       staff.push({ id: tutor.staff.id, fullName: personName(tutor.staff) });
-      staffByGroup.set(tutor.teachingGroup.id, staff);
+      staffByGroup.set(tutorGroup.id, staff);
     }
     const groupsWithSubjects = new Set<string>();
     const groupsWithTeachers = new Set<string>();
