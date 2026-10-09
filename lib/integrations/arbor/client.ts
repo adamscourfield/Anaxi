@@ -1120,12 +1120,13 @@ export class ArborClient {
     const personName = (person: { legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
     const today = new Date().toISOString().slice(0, 10);
     const currentStartYear = new Date().getUTCMonth() >= 8 ? new Date().getUTCFullYear() : new Date().getUTCFullYear() - 1;
-    const currentAcademicYear = `${currentStartYear}/${currentStartYear + 1}`;
     const isCurrentMembership = (membership: TimetableData["TeachingGroupMembership"][number]) =>
       (!membership.startDate || membership.startDate <= today) && (!membership.endDate || membership.endDate >= today);
     const isCurrentGroup = (group: NonNullable<TimetableData["TeachingGroupMembership"][number]["teachingGroup"]>) => {
       const label = `${group.academicYear?.code ?? ""} ${group.academicYear?.displayName ?? ""}`;
-      return label.includes(currentAcademicYear);
+      // Arbor deployments use either `2026/2027`, `2026-2027`, or a verbose
+      // display label. Both academic-year bounds must be present to qualify.
+      return label.includes(String(currentStartYear)) && label.includes(String(currentStartYear + 1));
     };
     const groupsWithSubjects = new Set<string>();
     const groupsWithTeachers = new Set<string>();
