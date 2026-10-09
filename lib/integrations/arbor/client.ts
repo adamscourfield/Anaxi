@@ -1040,17 +1040,26 @@ export class ArborClient {
 
   /** Finds the timetable entities Arbor exposes for classroom-level teaching staff. */
   async inspectTimetableLessonEntities(): Promise<string> {
-    type Field = { name: string };
-    type Entity = { name: string; fields?: Field[] | null } | null;
-    const data = await runArborGraphqlQuery<{ lesson: Entity; slot: Entity; event: Entity }>(this.credentials, `{
-      lesson: __type(name: "Lesson") { name fields { name } }
-      slot: __type(name: "TimetableSlot") { name fields { name } }
-      event: __type(name: "CalendarEvent") { name fields { name } }
+    type TypeRef = { kind: string; name: string | null; ofType: TypeRef | null };
+    type Field = { name: string; type: TypeRef };
+    const data = await runArborGraphqlQuery<{ query: { fields: Field[] } | null }>(this.credentials, `{
+      query: __type(name: "Query") {
+        fields {
+          name
+          type { kind name ofType { kind name ofType { kind name } } }
+        }
+      }
     }`);
-    const relevant = /staff|teacher|teaching|student|group|academicunit/i;
-    return [data.lesson, data.slot, data.event]
-      .flatMap((entity) => entity ? [`${entity.name}: ${(entity.fields ?? []).filter((field) => relevant.test(field.name)).map((field) => field.name).join(", ") || "no relevant fields"}`] : [])
-      .join(" | ") || "No lesson or timetable entities exposed";
+    const renderType = (type: TypeRef): string => {
+      if (type.kind === "NON_NULL") return `${renderType(type.ofType!)}!`;
+      if (type.kind === "LIST") return `[${renderType(type.ofType!)}]`;
+      return type.name ?? type.kind;
+    };
+    const relevant = /lesson|timetable|schedule|staff|teacher|teachinggroup/i;
+    return (data.query?.fields ?? [])
+      .filter((field) => relevant.test(field.name) || relevant.test(renderType(field.type)))
+      .map((field) => `${field.name}: ${renderType(field.type)}`)
+      .join(" | ") || "No lesson or timetable queries exposed";
   }
 
   /**
