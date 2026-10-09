@@ -1060,7 +1060,7 @@ export class ArborClient {
     if (unavailable.length) throw new Error(`Arbor timetable fields unavailable: ${unavailable.map(([entity, field]) => `${entity}.${field}`).join(", ")}.`);
 
     type TimetableData = {
-      TeachingGroupMembership: Array<{ student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null; teachingGroup: { id: string; academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null } | null }> }>; tutors: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }> } | null }>;
+      TeachingGroupMembership: Array<{ student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null; teachingGroup: { id: string; academicUnitAutomaticEnrolments: Array<{ academicUnitEnrolments: Array<{ academicUnit: { subject: { displayName: string } | null } | null }> }>; tutorMemberships: Array<{ staff: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null }> } | null }>;
       TeachingGroupTutor: Array<{ teachingGroup: { id: string } | null; group: { id: string } | null; staff: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null }>;
     };
     const readMembershipPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "TeachingGroupMembership">>(this.credentials, `{
@@ -1068,12 +1068,14 @@ export class ArborClient {
         student { id legalFirstName legalLastName preferredFirstName preferredLastName }
         teachingGroup {
           id
-          tutors {
-            id
-            legalFirstName
-            legalLastName
-            preferredFirstName
-            preferredLastName
+          tutorMemberships {
+            staff {
+              id
+              legalFirstName
+              legalLastName
+              preferredFirstName
+              preferredLastName
+            }
           }
           academicUnitAutomaticEnrolments {
             academicUnitEnrolments { academicUnit { subject { displayName } } }
@@ -1114,13 +1116,11 @@ export class ArborClient {
         const subjects = group?.academicUnitAutomaticEnrolments
           .flatMap((automaticEnrolment) => automaticEnrolment.academicUnitEnrolments)
           .flatMap((enrolment) => enrolment.academicUnit?.subject?.displayName ? [enrolment.academicUnit.subject.displayName] : []) ?? [];
-        // The teaching group's own tutor list is Arbor's classroom-teacher
-        // roster. Retain the top-level relation as a fallback for tenants that
-        // populate it instead.
-        const directStaff = group?.tutors.map((tutor) => ({
-          id: tutor.id,
-          fullName: personName(tutor),
-        })) ?? [];
+        // Arbor's tutorMemberships relation contains classroom staff objects.
+        // Retain the top-level relation as a fallback for tenants that populate it instead.
+        const directStaff = group?.tutorMemberships.flatMap((tutor) => tutor.staff
+          ? [{ id: tutor.staff.id, fullName: personName(tutor.staff) }]
+          : []) ?? [];
         const staff = [...new Map([...directStaff, ...(group ? staffByGroup.get(group.id) ?? [] : [])].map((teacher) => [teacher.id, teacher])).values()];
         if (group && subjects.length) groupsWithSubjects.add(group.id);
         if (group && staff.length) groupsWithTeachers.add(group.id);
