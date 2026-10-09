@@ -152,22 +152,24 @@ type GroupedSubjectTeacher = {
   fullName: string;
   email: string | null;
   subjects: string[];
+  classes: string[];
 };
 
 function groupSubjectTeachers(rows: any[]): GroupedSubjectTeacher[] {
-  const map = new Map<string, { fullName: string; email: string | null; subjects: Set<string> }>();
+  const map = new Map<string, { fullName: string; email: string | null; subjects: Set<string>; classes: Set<string> }>();
   for (const x of rows) {
     const tid = x.teacher?.id ?? "";
     if (!tid) continue;
     const name = x.teacher?.fullName ?? "Unknown";
     const email = (x.teacher?.email as string | null) ?? null;
     if (!map.has(tid)) {
-      map.set(tid, { fullName: name, email, subjects: new Set() });
+      map.set(tid, { fullName: name, email, subjects: new Set(), classes: new Set() });
     }
     const entry = map.get(tid)!;
     if (email && !entry.email) entry.email = email;
     const subj = x.subject?.name;
     if (subj) entry.subjects.add(subj);
+    if (x.className) entry.classes.add(x.className);
   }
   return [...map.entries()]
     .map(([teacherId, v]) => ({
@@ -175,6 +177,7 @@ function groupSubjectTeachers(rows: any[]): GroupedSubjectTeacher[] {
       fullName: v.fullName,
       email: v.email,
       subjects: [...v.subjects].sort((a, b) => a.localeCompare(b)),
+      classes: [...v.classes].sort((a, b) => a.localeCompare(b)),
     }))
     .sort((a, b) => a.fullName.localeCompare(b.fullName, undefined, { sensitivity: "base" }));
 }
@@ -675,7 +678,7 @@ export default async function StudentDetailPage({
             <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)]">
               {groupedTeachers.map((row) => {
                 const theme = TEACHER_ROW_THEMES[teacherThemeIndex(row.teacherId)];
-                const subjectLine = row.subjects.join(", ");
+                const subjectLine = row.classes.length ? row.classes.join(", ") : row.subjects.join(", ");
                 const teacherDepartmentIds = teacherDepartmentIdsByUser.get(row.teacherId) ?? [];
                 const canOpenStaffProfile =
                   analysisFeature?.enabled &&

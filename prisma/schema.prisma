@@ -405,6 +405,8 @@ model StudentSubjectTeacher {
   studentId     String
   subjectId     String
   teacherId     String
+  /// Arbor class label, for example "7A English". Manual links may omit it.
+  className     String?
   effectiveFrom DateTime
   effectiveTo   DateTime?
   /// Arbor-managed links are refreshed from the current teaching groups without

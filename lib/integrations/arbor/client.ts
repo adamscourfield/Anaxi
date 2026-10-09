@@ -1113,7 +1113,7 @@ export class ArborClient {
    * enrolment is the exact pupil-to-class relationship needed for a profile.
    */
   async listTimetableTeacherAssignmentsBatch(membershipPage = 0, validateFields = true): Promise<{
-    assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; subject: string; staff: Array<{ id: string; fullName: string }> }>;
+    assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; className: string; subject: string; staff: Array<{ id: string; fullName: string }> }>;
     hasMore: boolean;
     diagnostics: { memberships: number; currentMemberships: number; groupsRequested: number; groupsReturned: number; groupsWithSubjects: number; groupsWithTeachers: number };
   }> {
@@ -1131,6 +1131,7 @@ export class ArborClient {
         student: { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null } | null;
         academicUnit: {
           id: string;
+          displayName: string | null;
           subject: { displayName: string } | null;
           staff: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }>;
           timetabledStaffByDateRange: Array<{ id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }>;
@@ -1146,6 +1147,7 @@ export class ArborClient {
         student { id legalFirstName legalLastName preferredFirstName preferredLastName }
         academicUnit {
           id
+          displayName
           subject { displayName }
           staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
           timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName }
@@ -1169,7 +1171,7 @@ export class ArborClient {
         if (unit && subject) groupsWithSubjects.add(unit.id);
         if (unit && subject && staff.length) groupsWithTeachers.add(unit.id);
         return unit && enrolment.student && subject && staff.length
-          ? [{ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, subject, staff }]
+          ? [{ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, className: unit.displayName?.trim() || subject, subject, staff }]
           : [];
     });
     return {

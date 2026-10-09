@@ -64,7 +64,7 @@ export const POST = withApi(async function POST(req: Request) {
     const staffResolver = buildTimetableIdentityResolver(staff);
     let linkedByExternalId = 0;
     let linkedByUniqueName = 0;
-    const candidates = new Map<string, { tenantId: string; studentId: string; teacherId: string; subject: string }>();
+    const candidates = new Map<string, { tenantId: string; studentId: string; teacherId: string; subject: string; className: string }>();
     for (const assignment of batch.assignments) {
       const studentMatches = studentResolver.studentCandidates(assignment.studentId, assignment.studentName);
       const eligibleStudents = studentMatches.filter((studentMatch) => assignment.staff.some((arborStaff) => staffResolver.staff(studentMatch.person.tenantId, arborStaff.id, arborStaff.fullName)));
@@ -80,7 +80,7 @@ export const POST = withApi(async function POST(req: Request) {
         if (!teacher || !subject) continue;
         if (studentMatch.method === "EXTERNAL_ID" && teacherMatch.method === "EXTERNAL_ID") linkedByExternalId++;
         else linkedByUniqueName++;
-        candidates.set(`${student.id}:${teacher.id}:${subject.toLocaleLowerCase()}`, { tenantId: student.tenantId, studentId: student.id, teacherId: teacher.id, subject });
+        candidates.set(`${student.id}:${teacher.id}:${subject.toLocaleLowerCase()}`, { tenantId: student.tenantId, studentId: student.id, teacherId: teacher.id, subject, className: assignment.className });
       }
     }
 
@@ -97,6 +97,7 @@ export const POST = withApi(async function POST(req: Request) {
       tenantId: item.tenantId,
       studentId: item.studentId,
       teacherId: item.teacherId,
+      className: item.className,
       subjectId: subjects.get(`${item.tenantId}:${item.subject.toLocaleLowerCase()}`)!.id,
       effectiveFrom,
       dataSource: "ARBOR",
@@ -109,7 +110,7 @@ export const POST = withApi(async function POST(req: Request) {
     const existingKeys = new Map((existing as Array<{ id: string; tenantId: string; studentId: string; subjectId: string; teacherId: string }>).map((row) => [`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}`, row.id]));
     for (const row of rows) {
       const existingId = existingKeys.get(`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}`);
-      if (existingId) await db.studentSubjectTeacher.update({ where: { id: existingId }, data: { arborSyncedAt: startedAt } });
+      if (existingId) await db.studentSubjectTeacher.update({ where: { id: existingId }, data: { arborSyncedAt: startedAt, className: row.className } });
     }
     if (rows.length) await db.studentSubjectTeacher.createMany({ data: rows, skipDuplicates: true });
     linked = rows.length;
