@@ -1041,7 +1041,7 @@ export class ArborClient {
   /** Finds the timetable entities Arbor exposes for classroom-level teaching staff. */
   async inspectTimetableLessonEntities(): Promise<string> {
     type Field = { name: string };
-    type Entity = { name: string; fields: Field[] } | null;
+    type Entity = { name: string; fields?: Field[] | null } | null;
     const data = await runArborGraphqlQuery<{ lesson: Entity; slot: Entity; event: Entity }>(this.credentials, `{
       lesson: __type(name: "Lesson") { name fields { name } }
       slot: __type(name: "TimetableSlot") { name fields { name } }
@@ -1049,7 +1049,7 @@ export class ArborClient {
     }`);
     const relevant = /staff|teacher|teaching|student|group|academicunit/i;
     return [data.lesson, data.slot, data.event]
-      .flatMap((entity) => entity ? [`${entity.name}: ${entity.fields.filter((field) => relevant.test(field.name)).map((field) => field.name).join(", ") || "no relevant fields"}`] : [])
+      .flatMap((entity) => entity ? [`${entity.name}: ${(entity.fields ?? []).filter((field) => relevant.test(field.name)).map((field) => field.name).join(", ") || "no relevant fields"}`] : [])
       .join(" | ") || "No lesson or timetable entities exposed";
   }
 

@@ -780,7 +780,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
 
       {params?.timetable === "failed" || params?.timetable === "not-connected" ? (
         <StatusBanner variant="danger" title="Arbor timetable mapping needs attention.">
-          No student-teacher links were changed.
+          {params.timetableError || "No student-teacher links were changed."}
         </StatusBanner>
       ) : null}
 

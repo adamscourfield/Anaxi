@@ -28,7 +28,10 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("timetableRelationTypes", relationTypes.slice(0, 500));
     url.searchParams.set("timetableLessonEntities", lessonEntities.slice(0, 900));
     return NextResponse.redirect(url);
-  } catch {
-    return NextResponse.redirect(new URL("/god/integrations/arbor?timetable=failed", req.url));
+  } catch (error) {
+    const url = new URL("/god/integrations/arbor", req.url);
+    url.searchParams.set("timetable", "failed");
+    url.searchParams.set("timetableError", error instanceof Error ? error.message.slice(0, 700) : "Unknown Arbor timetable inspection error");
+    return NextResponse.redirect(url);
   }
 });
