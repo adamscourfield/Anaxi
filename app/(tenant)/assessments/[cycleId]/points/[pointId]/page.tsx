@@ -189,7 +189,7 @@ type TeachingStudent = {
 
 type TeachingClass = {
   teacherId: string; teacherName: string; teacherEmail: string;
-  classNames: string[];
+  className: string;
   count: number; mean: number | null; meanDisplay: string | null;
   vsYearMean: number | null; observationCount: number;
   topSignals: Array<{ key: string; positiveCount: number; concernCount: number; totalCount: number }>;
@@ -200,6 +200,7 @@ type TeachingSubject = {
   subject: string; gradeFormat: string;
   yearMean: number | null; yearMeanDisplay: string | null;
   presentCount: number; classes: TeachingClass[];
+  teacherImpact: Array<Omit<TeachingClass, "className" | "students"> & { classNames: string[] }>;
   unassigned: TeachingStudent[];
 };
 
@@ -2750,7 +2751,7 @@ function TeachingTab({
 
   const teacherImpactRows = data.subjects
     .flatMap((subject) =>
-      subject.classes
+      subject.teacherImpact
         .filter((teacher) => teacher.mean !== null)
         .map((teacher) => ({
           subject: subject.subject,
@@ -2845,14 +2846,15 @@ function TeachingTab({
                       : 50;
 
                     return (
-                      <div key={cls.teacherId} className="space-y-1.5">
+                      <div key={`${cls.teacherId}:${cls.className}`} className="space-y-1.5">
                         <div className="flex items-baseline justify-between">
                           <button
                             type="button"
-                            onClick={() => onOpenModal(subj.subject, cls.teacherName, cls.students)}
+                            onClick={() => onOpenModal(subj.subject, `${cls.className} · ${cls.teacherName}`, cls.students)}
                             className="text-sm font-semibold text-[var(--on-surface)] hover:text-[var(--accent)] calm-transition text-left"
                           >
-                            {cls.teacherName}
+                            {cls.className}
+                            <span className="ml-1.5 text-xs text-[var(--on-surface-muted)] font-normal">{cls.teacherName}</span>
                             <span className="ml-1.5 text-xs text-[var(--on-surface-muted)] font-normal">({cls.count} students)</span>
                           </button>
                           <div className="flex items-baseline gap-2">

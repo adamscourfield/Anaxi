@@ -45,6 +45,25 @@ function round1(v: number | null): number | null {
   return v !== null ? Math.round(v * 10) / 10 : null;
 }
 
+function historicPointDate(point: {
+  assessedAt: Date;
+  dateTaken: Date | null;
+  label: string;
+  dataSource: string;
+  cycle: { academicYear: string };
+}): Date {
+  if (point.dateTaken) return point.dateTaken;
+  if (point.dataSource !== "ARBOR") return point.assessedAt;
+
+  const startYear = Number(point.cycle.academicYear.slice(0, 4));
+  if (!Number.isInteger(startYear)) return point.assessedAt;
+  if (point.label === "Autumn") return new Date(Date.UTC(startYear, 11, 15));
+  if (point.label === "Spring") return new Date(Date.UTC(startYear + 1, 2, 31));
+  if (point.label === "Summer") return new Date(Date.UTC(startYear + 1, 6, 15));
+  if (point.label === "Final") return new Date(Date.UTC(startYear + 1, 7, 31));
+  return point.assessedAt;
+}
+
 export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
@@ -59,12 +78,18 @@ export const GET = withApi(async function GET(req: Request) {
   // ── 1. Load the result point ─────────────────────────────────────────────
   const point = await prisma.assessmentPoint.findFirst({
     where: { id: pointId, tenantId: user.tenantId },
-    select: { assessedAt: true },
+    select: {
+      assessedAt: true,
+      dateTaken: true,
+      label: true,
+      dataSource: true,
+      cycle: { select: { academicYear: true } },
+    },
   });
   if (!point) {
     return NextResponse.json({ error: "Point not found" }, { status: 404 });
   }
-  const assessedAt = point.assessedAt;
+  const assessedAt = historicPointDate(point);
 
   // ── 2. Load all assessments + results ────────────────────────────────────
   const assessments = await prisma.assessment.findMany({
@@ -117,6 +142,10 @@ export const GET = withApi(async function GET(req: Request) {
     where: {
       tenantId: user.tenantId,
       studentId: { in: studentIds },
+      // Teacher impact is based on verified Arbor classroom links only. This
+      // prevents a legacy or manually-created assignment from attributing a
+      // historic assessment to a teacher who was not teaching that class.
+      dataSource: "ARBOR",
       effectiveFrom: { lte: assessedAt },
       OR: [
         { effectiveTo: null },
@@ -138,23 +167,19 @@ export const GET = withApi(async function GET(req: Request) {
     },
   });
 
-  // Map: studentId → subjectId → teacherId, plus the dated class labels for
-  // each teacher and subject. These labels come from the same verified link as
-  // the result attribution.
-  const studentSubjectTeacher = new Map<string, Map<string, string>>();
+  // Map: studentId → subjectId → dated class assignment. The class label comes
+  // from the same verified link as the result attribution.
+  const studentSubjectTeacher = new Map<string, Map<string, { teacherId: string; className: string }>>();
   const teacherInfoMap = new Map<string, { id: string; fullName: string; email: string }>();
-  const classNamesByTeacherSubject = new Map<string, Set<string>>();
 
   for (const a of assignments) {
     if (!studentSubjectTeacher.has(a.studentId)) {
       studentSubjectTeacher.set(a.studentId, new Map());
     }
-    studentSubjectTeacher.get(a.studentId)!.set(a.subjectId, a.teacherId);
-    if (a.className) {
-      const key = `${a.subjectId}:${a.teacherId}`;
-      if (!classNamesByTeacherSubject.has(key)) classNamesByTeacherSubject.set(key, new Set());
-      classNamesByTeacherSubject.get(key)!.add(a.className);
-    }
+    studentSubjectTeacher.get(a.studentId)!.set(a.subjectId, {
+      teacherId: a.teacherId,
+      className: a.className?.trim() || "Class not recorded",
+    });
     if (!teacherInfoMap.has(a.teacherId)) {
       teacherInfoMap.set(a.teacherId, {
         id: a.teacher.id,
@@ -253,7 +278,7 @@ export const GET = withApi(async function GET(req: Request) {
     teacherId: string;
     teacherName: string;
     teacherEmail: string;
-    classNames: string[];
+    className: string;
     count: number;
     mean: number | null;
     meanDisplay: string | null;
@@ -263,6 +288,8 @@ export const GET = withApi(async function GET(req: Request) {
     students: StudentRow[];
   };
 
+  type TeacherImpactStat = Omit<ClassStat, "className" | "students"> & { classNames: string[] };
+
   type SubjectStat = {
     subject: string;
     gradeFormat: GradeFormat;
@@ -270,6 +297,7 @@ export const GET = withApi(async function GET(req: Request) {
     yearMeanDisplay: string | null;
     presentCount: number;
     classes: ClassStat[];
+    teacherImpact: TeacherImpactStat[];
     unassigned: StudentRow[];
   };
 
@@ -284,12 +312,14 @@ export const GET = withApi(async function GET(req: Request) {
       .filter((s): s is number => s !== null);
     const yearMeanVal = mean(allScores);
 
-    // Group by teacher
-    const teacherStudents = new Map<string, StudentRow[]>();
+    // Group by teacher and actual class, not merely by teacher. A teacher can
+    // teach several classes in the same subject and each must be measured on
+    // its own results.
+    const classStudents = new Map<string, { teacherId: string; className: string; students: StudentRow[] }>();
     const unassigned: StudentRow[] = [];
 
     for (const r of asmt.results) {
-      const teacherId = subjectId
+      const assignment = subjectId
         ? (studentSubjectTeacher.get(r.studentId)?.get(subjectId) ?? null)
         : null;
 
@@ -304,9 +334,10 @@ export const GET = withApi(async function GET(req: Request) {
           : r.rawValue,
       };
 
-      if (teacherId) {
-        if (!teacherStudents.has(teacherId)) teacherStudents.set(teacherId, []);
-        teacherStudents.get(teacherId)!.push(sRow);
+      if (assignment) {
+        const key = `${assignment.teacherId}:${assignment.className}`;
+        if (!classStudents.has(key)) classStudents.set(key, { ...assignment, students: [] });
+        classStudents.get(key)!.students.push(sRow);
       } else {
         unassigned.push(sRow);
       }
@@ -314,7 +345,7 @@ export const GET = withApi(async function GET(req: Request) {
 
     // Build class stats
     const classes: ClassStat[] = [];
-    for (const [teacherId, students] of teacherStudents) {
+    for (const { teacherId, className, students } of classStudents.values()) {
       const teacher = teacherInfoMap.get(teacherId);
       const teacherName = teacher
         ? teacher.fullName || teacher.email
@@ -339,7 +370,7 @@ export const GET = withApi(async function GET(req: Request) {
         teacherId,
         teacherName,
         teacherEmail: teacher?.email ?? "",
-        classNames: [...(classNamesByTeacherSubject.get(`${subjectId}:${teacherId}`) ?? new Set())].sort((a, b) => a.localeCompare(b)),
+        className,
         count: students.length,
         mean: classMean,
         meanDisplay: classMean !== null ? displayScore(classMean, asmt.gradeFormat) : null,
@@ -353,6 +384,32 @@ export const GET = withApi(async function GET(req: Request) {
     // Sort classes by mean descending (best first)
     classes.sort((a, b) => (b.mean ?? 0) - (a.mean ?? 0));
 
+    const teacherImpact = new Map<string, ClassStat[]>();
+    for (const classStat of classes) {
+      if (!teacherImpact.has(classStat.teacherId)) teacherImpact.set(classStat.teacherId, []);
+      teacherImpact.get(classStat.teacherId)!.push(classStat);
+    }
+    const teacherImpactStats: TeacherImpactStat[] = [...teacherImpact.values()].map((teacherClasses) => {
+      const [first] = teacherClasses;
+      const students = teacherClasses.flatMap((classStat) => classStat.students);
+      const scores = students.map((student) => student.score).filter((score): score is number => score !== null);
+      const teacherMean = mean(scores);
+      return {
+        teacherId: first.teacherId,
+        teacherName: first.teacherName,
+        teacherEmail: first.teacherEmail,
+        classNames: teacherClasses.map((classStat) => classStat.className).sort((a, b) => a.localeCompare(b)),
+        count: students.length,
+        mean: teacherMean,
+        meanDisplay: teacherMean !== null ? displayScore(teacherMean, asmt.gradeFormat) : null,
+        vsYearMean: teacherMean !== null && yearMeanVal !== null
+          ? Math.round((teacherMean - yearMeanVal) * (asmt.gradeFormat === "GCSE" ? 9 : asmt.gradeFormat === "A_LEVEL" ? 7 : 100) * 10) / 10
+          : null,
+        observationCount: first.observationCount,
+        topSignals: first.topSignals,
+      };
+    }).sort((a, b) => a.teacherName.localeCompare(b.teacherName));
+
     subjectStats.push({
       subject: asmt.subject,
       gradeFormat: asmt.gradeFormat,
@@ -360,6 +417,7 @@ export const GET = withApi(async function GET(req: Request) {
       yearMeanDisplay: yearMeanVal !== null ? displayScore(yearMeanVal, asmt.gradeFormat) : null,
       presentCount: asmt.results.length,
       classes,
+      teacherImpact: teacherImpactStats,
       unassigned,
     });
   }
