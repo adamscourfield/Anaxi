@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { StudentProfileNav } from "@/components/students/student-profile-nav";
 import { StudentProfileTabScroll } from "@/components/students/student-profile-tab-scroll";
 import { MatchSiblingHeight } from "@/components/students/match-sibling-height";
+import { TeacherSubjectFilter } from "@/components/students/teacher-subject-filter";
 import type { GradeFormat } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -660,6 +661,8 @@ export default async function StudentDetailPage({
             <p className="mt-1 text-sm leading-relaxed text-muted">Current subject assignments</p>
           </div>
 
+          <TeacherSubjectFilter subjects={[...new Set(groupedTeachers.flatMap((teacher) => teacher.subjects))].sort((a, b) => a.localeCompare(b))} />
+
           {groupedTeachers.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-low)]/40 px-6 py-14 text-center">
               <div
@@ -677,7 +680,7 @@ export default async function StudentDetailPage({
               </p>
             </div>
           ) : (
-            <div className="min-h-0 flex-1 divide-y divide-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] overflow-y-auto rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)]">
+            <div id="teacher-assignment-list" className="min-h-0 flex-1 divide-y divide-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] overflow-y-auto rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)]">
               {groupedTeachers.map((row) => {
                 const theme = TEACHER_ROW_THEMES[teacherThemeIndex(row.teacherId)];
                 const subjectLine = row.classes.length ? row.classes.join(", ") : row.subjects.join(", ");
@@ -722,16 +725,20 @@ export default async function StudentDetailPage({
                     key={row.teacherId}
                     href={profileHref}
                     aria-label={`Open staff profile for ${row.fullName}`}
+                    data-teacher-subjects={JSON.stringify(row.subjects)}
                     className={`${rowClass} outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_30%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-container-lowest)]`}
                   >
                     {inner}
                   </Link>
                 ) : (
-                  <div key={row.teacherId} className={rowClass}>
+                  <div key={row.teacherId} data-teacher-subjects={JSON.stringify(row.subjects)} className={rowClass}>
                     {inner}
                   </div>
                 );
               })}
+              <p id="teacher-subject-filter-empty" hidden className="px-5 py-8 text-center text-sm text-muted">
+                No teacher is linked to this subject.
+              </p>
             </div>
           )}
 
