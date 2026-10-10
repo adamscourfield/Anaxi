@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { StatCard } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/toast-provider";
 import { updateStudentPriorAttainmentAction } from "@/app/(tenant)/students/actions";
@@ -20,7 +21,7 @@ export function PriorAttainmentCard({ studentId, reading, maths, canEdit }: {
   const [errors, setErrors] = useState<Partial<Record<ScoreField, string[]>>>({});
   const complete = reading !== null && maths !== null;
   return (
-    <section aria-labelledby="prior-attainment-heading" className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 sm:p-8">
+    <section aria-labelledby="prior-attainment-heading" className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="prior-attainment-heading" className="text-lg font-semibold text-text">KS2 prior attainment</h2>
@@ -28,14 +29,31 @@ export function PriorAttainmentCard({ studentId, reading, maths, canEdit }: {
         </div>
         {canEdit && !editing ? <Button variant="secondary" onClick={() => { setErrors({}); setEditing(true); }}>Edit KS2 scores</Button> : null}
       </div>
-      <dl className="mt-5 grid gap-4 sm:grid-cols-3">
-        {[["Reading", reading], ["Maths", maths], ["Reading and maths average", complete ? (reading + maths) / 2 : null]].map(([label, score]) => (
-          <div key={String(label)}><dt className="text-sm text-muted">{label}</dt><dd className="mt-1 text-xl font-semibold tabular-nums text-text">{score ?? "Not recorded"}</dd></div>
-        ))}
-      </dl>
-      {!complete ? <p className="mt-4 text-sm text-muted">Both scores are needed for the Progress 8 baseline.</p> : null}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          label="KS2 reading"
+          value={reading ?? "Not recorded"}
+          context="Scaled score · 80–120"
+          tone="glass"
+          valueClassName={reading === null ? "mt-2 text-lg font-semibold text-muted" : undefined}
+        />
+        <StatCard
+          label="KS2 maths"
+          value={maths ?? "Not recorded"}
+          context="Scaled score · 80–120"
+          tone="glass"
+          valueClassName={maths === null ? "mt-2 text-lg font-semibold text-muted" : undefined}
+        />
+        <StatCard
+          label="Reading & maths average"
+          value={complete ? (reading + maths) / 2 : "Awaiting scores"}
+          context={complete ? "Prior attainment for Progress 8" : "Both scores needed for Progress 8"}
+          tone="softGrey"
+          valueClassName={!complete ? "mt-2 text-lg font-semibold text-muted" : undefined}
+        />
+      </div>
       {editing ? (
-        <form className="mt-5 space-y-4" onSubmit={async (event) => {
+        <form className="space-y-4 rounded-sm border border-border bg-surface-container-lowest p-5 sm:p-6" onSubmit={async (event) => {
           event.preventDefault();
           const data = new FormData(event.currentTarget);
           setPending(true);
