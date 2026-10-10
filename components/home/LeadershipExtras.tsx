@@ -46,7 +46,9 @@ export function CohortChangeCard({ cohortRows, windowDays }: { cohortRows: Cohor
       <ul className="space-y-2">
         {declining.map((row) => (
           <li key={row.yearGroup} className="flex items-center justify-between gap-3 rounded-lg bg-[var(--surface-container-low)] px-3 py-2">
-            <span className="text-sm font-medium text-text">Year {row.yearGroup}</span>
+            <span className="text-sm font-medium text-text">
+              Year {row.yearGroup.trim().replace(/^(?:year\s*|y(?=\d))+/i, "")}
+            </span>
             <span className="text-sm font-semibold tabular-nums text-negative">
               {(row.attendanceDelta ?? 0).toFixed(1)}%
             </span>
