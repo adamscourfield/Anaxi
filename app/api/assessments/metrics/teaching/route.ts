@@ -75,7 +75,7 @@ function isHistoricCycle(academicYear: string): boolean {
 
 /** Arbor class labels may use either 2025/26 or 2025/2026 for the same year. */
 function academicYearLabelVariants(academicYear: string): string[] {
-  const match = academicYear.match(/^(\d{4})\/(\d{2}|\d{4})$/);
+  const match = academicYear.match(/(\d{4})\s*(?:\/|-)\s*(\d{2}|\d{4})/);
   if (!match) return [academicYear];
   const [, start, end] = match;
   const fullEnd = end.length === 2 ? `${start.slice(0, 2)}${end}` : end;
@@ -178,6 +178,35 @@ export const GET = withApi(async function GET(req: Request) {
   });
   const subjectIdByName = new Map(subjectRecords.map((s) => [s.name, s.id]));
 
+  // Count each historic roster boundary independently. This is retained in the
+  // response when a point has no eligible assignments so we can distinguish a
+  // missing roster from an academic-year or assessment-date mismatch.
+  const historicRosterScope = historicCycle
+    ? await Promise.all([
+        prisma.studentSubjectTeacher.count({
+          where: { tenantId: user.tenantId, dataSource: "ARBOR", studentId: { in: studentIds } },
+        }),
+        prisma.studentSubjectTeacher.count({
+          where: {
+            tenantId: user.tenantId,
+            dataSource: "ARBOR",
+            studentId: { in: studentIds },
+            OR: historicClassYearLabels.map((label) => ({ className: { contains: label } })),
+          },
+        }),
+        prisma.studentSubjectTeacher.count({
+          where: {
+            tenantId: user.tenantId,
+            dataSource: "ARBOR",
+            studentId: { in: studentIds },
+            OR: historicClassYearLabels.map((label) => ({ className: { contains: label } })),
+            effectiveFrom: { lte: assessedAt },
+            AND: [{ OR: [{ effectiveTo: null }, { effectiveTo: { gte: assessedAt } }] }],
+          },
+        }),
+      ])
+    : null;
+
   // Load only assignments that were active at the assessment date. In
   // particular, a current timetable assignment must never be used to explain
   // or measure a historic result.
@@ -229,6 +258,20 @@ export const GET = withApi(async function GET(req: Request) {
       assessedAt: assessedAt.toISOString(),
       subjects: [],
       historicalClassRostersAvailable: false,
+      historicalRosterDiagnostic: historicRosterScope
+        ? {
+            rosterLinks: 0,
+            studentsWithRoster: 0,
+            resultsChecked: 0,
+            exactSubjectMatches: 0,
+            labelVariantMatches: 0,
+            missingStudentRoster: 0,
+            missingSubjectRoster: 0,
+            pupilLinks: historicRosterScope[0],
+            academicYearLinks: historicRosterScope[1],
+            dateEligibleLinks: historicRosterScope[2],
+          }
+        : undefined,
     }, { headers: { "Cache-Control": "private, no-store" } });
   }
 
@@ -246,6 +289,9 @@ export const GET = withApi(async function GET(req: Request) {
     labelVariantMatches: 0,
     missingStudentRoster: 0,
     missingSubjectRoster: 0,
+    pupilLinks: historicRosterScope?.[0] ?? assignments.length,
+    academicYearLinks: historicRosterScope?.[1] ?? assignments.length,
+    dateEligibleLinks: historicRosterScope?.[2] ?? assignments.length,
   };
 
   for (const a of assignments) {
