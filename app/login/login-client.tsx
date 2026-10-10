@@ -18,7 +18,7 @@ import { SkipToContent } from "@/components/skip-to-content";
 type School = { id: string; name: string };
 type Step = "credentials" | "selectSchool";
 
-export function LoginClient() {
+export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const switchTo = searchParams.get("switchTo") || "";
@@ -28,7 +28,7 @@ export function LoginClient() {
   const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
   const [schools, setSchools] = useState<School[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(searchParams.get("error") ? "Microsoft sign-in failed or your account is not linked. Contact your school administrator, or use your Anaxi password." : null);
   const [loading, setLoading] = useState(false);
 
   async function onCredentialsSubmit(e: FormEvent<HTMLFormElement>) {
@@ -115,6 +115,24 @@ export function LoginClient() {
               align="start"
             />
             <AuthCard>
+              {microsoftEnabled && (
+                <div className="mb-5 space-y-3">
+                  <Button type="button" variant="secondary" disabled={loading} className="w-full"
+                    onClick={async () => {
+                      setLoading(true);
+                      setError(null);
+                      try {
+                        await signIn("azure-ad", { callbackUrl: "/home" });
+                      } catch {
+                        setError("Microsoft sign-in could not start. Please try again.");
+                        setLoading(false);
+                      }
+                    }}>
+                    {loading ? "Signing in…" : "Sign in with Microsoft"}
+                  </Button>
+                  <p className="text-center text-[13px] text-[var(--on-surface-variant)]">Or use your Anaxi password</p>
+                </div>
+              )}
               <form onSubmit={onCredentialsSubmit} className="space-y-5">
                 <div className="space-y-2">
                   <AuthFieldLabel htmlFor="login-email">Email</AuthFieldLabel>
