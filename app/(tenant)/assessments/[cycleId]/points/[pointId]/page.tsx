@@ -208,6 +208,15 @@ type TeachingData = {
   assessedAt: string;
   subjects: TeachingSubject[];
   historicalClassRostersAvailable: boolean;
+  historicalRosterDiagnostic?: {
+    rosterLinks: number;
+    studentsWithRoster: number;
+    resultsChecked: number;
+    exactSubjectMatches: number;
+    labelVariantMatches: number;
+    missingStudentRoster: number;
+    missingSubjectRoster: number;
+  };
 };
 
 // ─── Progress 8 types ─────────────────────────────────────────────────────────
@@ -2750,10 +2759,16 @@ function TeachingTab({
 
   const hasAnyClasses = data.subjects.some((s) => s.classes.length > 0);
   if (!hasAnyClasses) {
+    const diagnostic = data.historicalRosterDiagnostic;
     return (
       <div className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
         <p className="font-semibold text-[var(--on-surface)]">No verified teacher-impact data for this assessment date.</p>
         <p className="mx-auto mt-2 max-w-xl">Anaxi has not imported a class-teacher assignment active on {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(new Date(data.assessedAt))}. Current teaching classes are deliberately not used for historic results.</p>
+        {diagnostic ? (
+          <p className="mx-auto mt-3 max-w-2xl text-xs text-[var(--on-surface-muted)]">
+            Historic check: {diagnostic.rosterLinks.toLocaleString()} dated links; {diagnostic.studentsWithRoster.toLocaleString()} of {diagnostic.resultsChecked.toLocaleString()} assessment results have a historic pupil link; {diagnostic.exactSubjectMatches.toLocaleString()} exact and {diagnostic.labelVariantMatches.toLocaleString()} label-variant subject matches; {diagnostic.missingStudentRoster.toLocaleString()} have no historic pupil link and {diagnostic.missingSubjectRoster.toLocaleString()} have no matching historic subject.
+          </p>
+        ) : null}
       </div>
     );
   }

@@ -218,6 +218,15 @@ export const GET = withApi(async function GET(req: Request) {
   const studentSubjectTeacher = new Map<string, Map<string, DatedAssignment>>();
   const studentSubjectKeyAssignments = new Map<string, Map<string, DatedAssignment[]>>();
   const teacherInfoMap = new Map<string, { id: string; fullName: string; email: string }>();
+  const historicRosterDiagnostic = {
+    rosterLinks: assignments.length,
+    studentsWithRoster: 0,
+    resultsChecked: 0,
+    exactSubjectMatches: 0,
+    labelVariantMatches: 0,
+    missingStudentRoster: 0,
+    missingSubjectRoster: 0,
+  };
 
   for (const a of assignments) {
     if (!studentSubjectTeacher.has(a.studentId)) {
@@ -244,12 +253,27 @@ export const GET = withApi(async function GET(req: Request) {
   }
 
   function assignmentFor(studentId: string, subjectId: string | undefined, assessmentSubject: string): DatedAssignment | null {
+    if (isHistoricCycle(point.cycle.academicYear)) {
+      historicRosterDiagnostic.resultsChecked++;
+      if (studentSubjectTeacher.has(studentId)) historicRosterDiagnostic.studentsWithRoster++;
+      else historicRosterDiagnostic.missingStudentRoster++;
+    }
     const exact = subjectId ? studentSubjectTeacher.get(studentId)?.get(subjectId) : null;
-    if (exact) return exact;
+    if (exact) {
+      if (isHistoricCycle(point.cycle.academicYear)) historicRosterDiagnostic.exactSubjectMatches++;
+      return exact;
+    }
     const matches = studentSubjectKeyAssignments.get(studentId)?.get(subjectKey(assessmentSubject)) ?? [];
     // Never guess when a simplified label could point at more than one class.
     const uniqueMatches = new Map(matches.map((match) => [`${match.teacherId}:${match.className}`, match]));
-    return uniqueMatches.size === 1 ? [...uniqueMatches.values()][0] : null;
+    if (uniqueMatches.size === 1) {
+      if (isHistoricCycle(point.cycle.academicYear)) historicRosterDiagnostic.labelVariantMatches++;
+      return [...uniqueMatches.values()][0];
+    }
+    if (isHistoricCycle(point.cycle.academicYear) && studentSubjectTeacher.has(studentId)) {
+      historicRosterDiagnostic.missingSubjectRoster++;
+    }
+    return null;
   }
 
   // ── 4. Load observation signals for teachers in this year ────────────────
@@ -488,5 +512,6 @@ export const GET = withApi(async function GET(req: Request) {
     assessedAt: assessedAt.toISOString(),
     subjects: subjectStats,
     historicalClassRostersAvailable: true,
+    ...(isHistoricCycle(point.cycle.academicYear) ? { historicalRosterDiagnostic } : {}),
   }, { headers: { "Cache-Control": "private, no-store" } });
 });
