@@ -7,6 +7,8 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
+import { canAccessStudentRecord } from "@/modules/students/access";
+import { priorAttainmentSchema } from "@/modules/students/priorAttainment";
 
 async function assertStudentWriteAccess() {
   const user = await getSessionUserOrThrow();
@@ -75,4 +77,25 @@ export async function bulkSetStudentStatus(
   revalidatePath("/on-call/new");
 
   return { updated: result.count };
+}
+
+export async function updateStudentPriorAttainmentAction(studentId: string, formData: FormData) {
+  await assertSafeServerAction(formData);
+  const user = await assertStudentWriteAccess();
+  if (!(await canAccessStudentRecord(user, studentId))) throw new Error("FORBIDDEN");
+  const parsed = priorAttainmentSchema.safeParse({
+    ks2ReadingScaledScore: formData.get("ks2ReadingScaledScore"),
+    ks2MathsScaledScore: formData.get("ks2MathsScaledScore"),
+  });
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+  const result = await prisma.student.updateMany({
+    where: { id: studentId, tenantId: user.tenantId },
+    data: parsed.data,
+  });
+  if (!result.count) throw new Error("Student not found");
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath("/assessments", "layout");
+  return { errors: null };
 }
