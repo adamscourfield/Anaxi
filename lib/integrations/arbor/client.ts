@@ -1276,6 +1276,56 @@ export class ArborClient {
       },
     };
   }
+
+  /** Reads one dated historic roster page for a controlled, resumable import. */
+  async listHistoricTimetableTeacherAssignmentsBatch(asOfDate: string, membershipPage = 0, validateFields = true): Promise<{
+    assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; className: string; subject: string; staff: Array<{ id: string; fullName: string }> }>;
+    hasMore: boolean;
+    diagnostics: { memberships: number; activeMemberships: number; classes: number; subjectClasses: number; staffedClasses: number };
+  }> {
+    if (validateFields) {
+      const fields = await this.inspectTimetableMappingFields();
+      if (!fields["academic unit"]?.includes("subject") || !fields["academic unit"]?.includes("staff")) {
+        throw new Error("Arbor historic roster fields unavailable: academic unit subject or staff.");
+      }
+    }
+    type Person = { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null };
+    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; staff: Person[] } | null };
+    const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
+    const data = await runArborGraphqlQuery<{ AcademicUnitEnrolment: Enrolment[] }>(this.credentials, `{
+      AcademicUnitEnrolment(page_size: 100, page_num: ${membershipPage}${filters}) {
+        startDate endDate
+        student { id legalFirstName legalLastName preferredFirstName preferredLastName }
+        academicUnit {
+          id displayName subject { displayName }
+          staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
+        }
+      }
+    }`);
+    const personName = (person: Person) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
+    const activeOnDate = (enrolment: Enrolment) => (!enrolment.startDate || enrolment.startDate <= asOfDate) && (!enrolment.endDate || enrolment.endDate >= asOfDate);
+    const classes = new Set<string>();
+    const subjectClasses = new Set<string>();
+    const staffedClasses = new Set<string>();
+    let activeMemberships = 0;
+    const assignments = data.AcademicUnitEnrolment.flatMap((enrolment) => {
+      if (!enrolment.academicUnit || !activeOnDate(enrolment)) return [];
+      activeMemberships++;
+      const unit = enrolment.academicUnit;
+      const subject = unit.subject?.displayName?.trim();
+      classes.add(unit.id);
+      if (!subject) return [];
+      subjectClasses.add(unit.id);
+      const staff = [...new Map(unit.staff.map((teacher) => [teacher.id, { id: teacher.id, fullName: personName(teacher) }])).values()];
+      if (staff.length) staffedClasses.add(unit.id);
+      return enrolment.student && staff.length ? [{ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, className: unit.displayName?.trim() || subject, subject, staff }] : [];
+    });
+    return {
+      assignments,
+      hasMore: data.AcademicUnitEnrolment.length === 100,
+      diagnostics: { memberships: data.AcademicUnitEnrolment.length, activeMemberships, classes: classes.size, subjectClasses: subjectClasses.size, staffedClasses: staffedClasses.size },
+    };
+  }
 }
 
 /** Chooses the meaningful result value from the confirmed fields returned by Arbor. */
