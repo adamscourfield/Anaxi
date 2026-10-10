@@ -76,6 +76,8 @@ model User {
   emailObservations             Boolean                    @default(true)
   emailMeetings                 Boolean                    @default(true)
   emailLeave                    Boolean                    @default(true)
+  microsoftTenantId             String?
+  microsoftObjectId             String?
   passwordHash                  String?
   /// The external MIS record this row is kept in sync with, e.g. Arbor's own staff ID.
   /// Null means the record only exists because it was created or imported inside Anaxi.
@@ -114,6 +116,8 @@ model User {
   timetableImportJobs           TimetableImportJob[]       @relation("TimetableImportUploader")
   tenant                        Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, microsoftTenantId, microsoftObjectId])
+  @@index([microsoftTenantId, microsoftObjectId])
   @@unique([tenantId, email])
   @@unique([tenantId, id])
   @@unique([tenantId, dataSource, externalId])

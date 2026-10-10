@@ -1,3 +1,4 @@
+import { microsoftEnabled } from "@/lib/microsoftAuth";
 import { Suspense } from "react";
 import { LoginClient } from "./login-client";
 
@@ -10,7 +11,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginClient />
+      <LoginClient microsoftEnabled={microsoftEnabled()} />
     </Suspense>
   );
 }
