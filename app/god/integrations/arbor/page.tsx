@@ -300,13 +300,16 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
   const latestBehaviourRun = latestRunByEntity.get("BEHAVIOUR") ?? null;
   const hostname = typeof integration?.config?.schoolHostname === "string" ? integration.config.schoolHostname : "";
   const historicTimetableSyncs = integration?.config?.historicTimetableSyncs && typeof integration.config.historicTimetableSyncs === "object"
-    ? integration.config.historicTimetableSyncs as Record<string, { page?: unknown; completedAt?: unknown; membershipsProcessed?: unknown; linksSaved?: unknown }>
+    ? integration.config.historicTimetableSyncs as Record<string, { page?: unknown; completedAt?: unknown; membershipsProcessed?: unknown; linksSaved?: unknown; totalMemberships?: unknown; totalPages?: unknown }>
     : {};
   const historicTimetableState = historicTimetableSyncs["2025/2026"] ?? {};
   const historicTimetableComplete = typeof historicTimetableState.completedAt === "string";
   const historicTimetablePagesCompleted = typeof historicTimetableState.page === "number" ? historicTimetableState.page : 0;
   const historicMembershipsProcessed = typeof historicTimetableState.membershipsProcessed === "number" ? historicTimetableState.membershipsProcessed : 0;
   const historicLinksSaved = typeof historicTimetableState.linksSaved === "number" ? historicTimetableState.linksSaved : 0;
+  const historicTotalMemberships = typeof historicTimetableState.totalMemberships === "number" ? historicTimetableState.totalMemberships : null;
+  const historicTotalPages = typeof historicTimetableState.totalPages === "number" ? historicTimetableState.totalPages : null;
+  const historicProgressPercent = historicTimetableComplete ? 100 : historicTotalMemberships ? Math.min(99, Math.round((historicMembershipsProcessed / historicTotalMemberships) * 100)) : null;
   const assessmentCycles = proposedAssessmentCycles(integration?.config);
   const assessmentCyclesByYear = new Map<string, ProposedAssessmentCycle[]>();
   for (const cycle of assessmentCycles) {
@@ -837,6 +840,12 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
         </StatusBanner>
       ) : null}
 
+      {params?.timetableHistoricProgress === "success" ? (
+        <StatusBanner variant="success" title="Historic roster total calculated.">
+          Arbor has {previewCount(params.timetableHistoricTotal)} dated memberships across {previewCount(params.timetableHistoricTotalPages)} pages for 2025/26. Nothing has been imported by this check.
+        </StatusBanner>
+      ) : null}
+
       {params?.timetableSync === "success" ? (
         <StatusBanner variant="success" title="Subject teachers synced.">
           {previewCount(params.timetableLinkable)} current Arbor subject-teacher links are now shown on student records: {previewCount(params.timetableLinkedById)} matched by Arbor ID and {previewCount(params.timetableLinkedByName)} using a unique exact name. Manually entered Anaxi links were kept unchanged.
@@ -1037,10 +1046,12 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                   </div>
                   {historicTimetableComplete ? (
                     <progress className="mt-2 h-2 w-full accent-emerald-600" value={1} max={1}>Complete</progress>
+                  ) : historicProgressPercent !== null ? (
+                    <progress className="mt-2 h-2 w-full accent-indigo-600" value={historicProgressPercent} max={100}>{historicProgressPercent}%</progress>
                   ) : historicTimetablePagesCompleted ? (
                     <progress className="mt-2 h-2 w-full accent-indigo-600">Importing</progress>
                   ) : null}
-                  <MetaText className="mt-1">{historicTimetableComplete ? `All historic pages are imported: ${historicMembershipsProcessed.toLocaleString()} memberships and ${historicLinksSaved.toLocaleString()} dated teacher links. No further action is needed.` : historicTimetablePagesCompleted ? `${historicMembershipsProcessed.toLocaleString()} memberships and ${historicLinksSaved.toLocaleString()} dated teacher links saved so far. Each click now processes up to five pages; continue until this changes to Complete and the button disappears.` : "This reads former class memberships and their staff as at 15 July 2026."}</MetaText>
+                  <MetaText className="mt-1">{historicTimetableComplete ? `All historic pages are imported: ${historicMembershipsProcessed.toLocaleString()} memberships and ${historicLinksSaved.toLocaleString()} dated teacher links. No further action is needed.` : historicTimetablePagesCompleted && historicTotalMemberships ? `${historicMembershipsProcessed.toLocaleString()} of ${historicTotalMemberships.toLocaleString()} memberships processed (${historicProgressPercent}%). ${historicLinksSaved.toLocaleString()} dated teacher links saved. ${historicTotalPages} Arbor pages in total.` : historicTimetablePagesCompleted ? `${historicMembershipsProcessed.toLocaleString()} memberships and ${historicLinksSaved.toLocaleString()} dated teacher links saved so far. Use Calculate historic roster total to show an exact percentage.` : "This reads former class memberships and their staff as at 15 July 2026."}</MetaText>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/timetable")} className={actionButtonClass}>
@@ -1059,6 +1070,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                     <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable")} csrfToken={csrfToken}>Check timetable access</MenuItemForm>
                     <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable/summary")} csrfToken={csrfToken}>Preview subject links</MenuItemForm>
                     <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable/historic")} csrfToken={csrfToken}>Check 2025/26 historic roster</MenuItemForm>
+                    <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable/historic/progress")} csrfToken={csrfToken}>Calculate historic roster total</MenuItemForm>
                   </ActionMenu>
                 </div>
               </div>

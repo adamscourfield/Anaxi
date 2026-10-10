@@ -1326,6 +1326,40 @@ export class ArborClient {
       diagnostics: { memberships: data.AcademicUnitEnrolment.length, activeMemberships, classes: classes.size, subjectClasses: subjectClasses.size, staffedClasses: staffedClasses.size },
     };
   }
+
+  /** Counts dated roster pages with a bounded binary search; no Anaxi data is changed. */
+  async countHistoricTimetableRoster(asOfDate: string): Promise<{ memberships: number; pages: number }> {
+    const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
+    const pageLength = async (page: number) => {
+      const data = await runArborGraphqlQuery<{ AcademicUnitEnrolment: Array<{ startDate: string | null }> }>(this.credentials, `{
+        AcademicUnitEnrolment(page_size: 100, page_num: ${page}${filters}) { startDate }
+      }`);
+      return data.AcademicUnitEnrolment.length;
+    };
+    const first = await pageLength(0);
+    if (first < 100) return { memberships: first, pages: first ? 1 : 0 };
+
+    let lowerFullPage = 0;
+    let upperPage = 1;
+    let upperLength = await pageLength(upperPage);
+    // The cap prevents an unexpected Arbor pagination fault from looping forever.
+    while (upperLength === 100 && upperPage < 4096) {
+      lowerFullPage = upperPage;
+      upperPage *= 2;
+      upperLength = await pageLength(upperPage);
+    }
+    if (upperLength === 100) throw new Error("Arbor roster count exceeded the safe pagination limit.");
+    while (lowerFullPage + 1 < upperPage) {
+      const middle = Math.floor((lowerFullPage + upperPage) / 2);
+      const length = await pageLength(middle);
+      if (length === 100) lowerFullPage = middle;
+      else {
+        upperPage = middle;
+        upperLength = length;
+      }
+    }
+    return { memberships: upperPage * 100 + upperLength, pages: upperLength ? upperPage + 1 : upperPage };
+  }
 }
 
 /** Chooses the meaningful result value from the confirmed fields returned by Arbor. */
