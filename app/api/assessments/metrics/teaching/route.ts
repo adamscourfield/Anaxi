@@ -110,7 +110,9 @@ export const GET = withApi(async function GET(req: Request) {
   });
   const subjectIdByName = new Map(subjectRecords.map((s) => [s.name, s.id]));
 
-  // Load teaching assignments effective around the assessedAt date
+  // Load only assignments that were active at the assessment date. In
+  // particular, a current timetable assignment must never be used to explain
+  // or measure a historic result.
   const assignments = await prisma.studentSubjectTeacher.findMany({
     where: {
       tenantId: user.tenantId,

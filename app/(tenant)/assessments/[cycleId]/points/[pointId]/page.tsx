@@ -202,7 +202,7 @@ type TeachingSubject = {
   unassigned: TeachingStudent[];
 };
 
-type TeachingData = { subjects: TeachingSubject[] };
+type TeachingData = { assessedAt: string; subjects: TeachingSubject[] };
 
 // ─── Progress 8 types ─────────────────────────────────────────────────────────
 
@@ -808,7 +808,7 @@ export default function ResultPointPage() {
             />
           </div>
 
-          {/* Tab navigation (UX-100: Overview / Upload / E&M + extensions) */}
+          {/* Tab navigation (overview, upload, teacher impact + extensions) */}
           <div className="mb-2 flex flex-wrap gap-2">
             <Button
               type="button"
@@ -823,7 +823,7 @@ export default function ResultPointPage() {
               const labels: Record<string, string> = {
                 attainment: "Overview",
                 pastoral: "Pastoral",
-                teaching: "E&M",
+                teaching: "Teacher Impact",
                 progress8: "Progress 8",
               };
               return (
@@ -2741,7 +2741,8 @@ function TeachingTab({
   if (!hasAnyClasses) {
     return (
       <div className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
-        Student–teacher assignments not found for this assessment period. Once teaching groups are configured, class-level analysis will appear here.
+        <p className="font-semibold text-[var(--on-surface)]">No verified teacher-impact data for this assessment date.</p>
+        <p className="mx-auto mt-2 max-w-xl">Anaxi has not imported a class-teacher assignment active on {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(new Date(data.assessedAt))}. Current teaching classes are deliberately not used for historic results.</p>
       </div>
     );
   }
@@ -2763,7 +2764,7 @@ function TeachingTab({
   return (
     <div className="space-y-4">
       <p className="text-sm text-[var(--on-surface-muted)]">
-        Teacher averages are calculated only from the students linked to that teacher for the assessed subject. This is an attainment indicator, not a causal measure of impact.
+        Teacher averages are calculated only from the students linked to that teacher for the assessed subject on the assessment date. This is an attainment indicator, not a causal measure of impact.
       </p>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-[var(--surface-container-lowest)] shadow-ambient">

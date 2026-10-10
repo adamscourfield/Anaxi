@@ -54,6 +54,10 @@ async function ensureAssessment(db: any, tenantId: string, createdByUserId: stri
   const startYear = Number(mapping.academicYear.slice(0, 4));
   const assessmentDate = definition.assessmentDate ? new Date(definition.assessmentDate) : null;
   const dateTaken = assessmentDate && !Number.isNaN(assessmentDate.getTime()) ? assessmentDate : null;
+  // Assessment points must be dated at the historic assessment, never at the
+  // import. Teacher impact uses this date to avoid crediting current teachers
+  // with a previous academic year's results.
+  const assessedAt = dateTaken ?? fallbackAssessmentDate(mapping);
   const cycle = await db.assessmentCycle.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.cycleExternalId } },
     create: { tenantId, label: mapping.cycleLabel, cohortLabel: mapping.cohortLabel, qualificationType: mapping.qualificationType, academicYear: mapping.academicYear, startDate: new Date(`${startYear}-09-01T00:00:00.000Z`), endDate: new Date(`${startYear + 1}-08-31T23:59:59.999Z`), isActive: true, externalId: mapping.cycleExternalId, dataSource: "ARBOR" },
@@ -63,10 +67,10 @@ async function ensureAssessment(db: any, tenantId: string, createdByUserId: stri
   });
   const point = await db.assessmentPoint.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.pointExternalId } },
-    create: { tenantId, cycleId: cycle.id, label: mapping.pointLabel, ordinal: mapping.pointOrdinal, pointType: mapping.pointType, resultStatus: "VALIDATED", sourceType: "arbor", isFinalPoint: mapping.isFinalPoint, dateTaken, assessedAt: new Date(), externalId: mapping.pointExternalId, dataSource: "ARBOR" },
+    create: { tenantId, cycleId: cycle.id, label: mapping.pointLabel, ordinal: mapping.pointOrdinal, pointType: mapping.pointType, resultStatus: "VALIDATED", sourceType: "arbor", isFinalPoint: mapping.isFinalPoint, dateTaken, assessedAt, externalId: mapping.pointExternalId, dataSource: "ARBOR" },
     // Keep a super admin's Anaxi result-point label (for example, "End of
     // Year") while Arbor continues to update its ordering and type metadata.
-    update: { ordinal: mapping.pointOrdinal, pointType: mapping.pointType, isFinalPoint: mapping.isFinalPoint, ...(dateTaken ? { dateTaken } : {}) },
+    update: { ordinal: mapping.pointOrdinal, pointType: mapping.pointType, isFinalPoint: mapping.isFinalPoint, ...(dateTaken ? { dateTaken, assessedAt } : {}) },
   });
   // One Arbor definition can carry marks from more than one term. The Anaxi
   // assessment identity therefore includes its mapped term point.
@@ -76,6 +80,14 @@ async function ensureAssessment(db: any, tenantId: string, createdByUserId: stri
     create: { tenantId, pointId: point.id, subject: subjectFromLabel(definition.label), yearGroup: mapping.yearGroups.join(", "), title: definition.label, gradeFormat: mapping.gradeFormat, uploadStatus: "VALIDATED", createdByUserId, externalId: assessmentExternalId, dataSource: "ARBOR" },
     update: { pointId: point.id, subject: subjectFromLabel(definition.label), yearGroup: mapping.yearGroups.join(", "), title: definition.label, gradeFormat: mapping.gradeFormat, uploadStatus: "VALIDATED" },
   });
+}
+
+function fallbackAssessmentDate(mapping: ArborAssessmentMapping): Date {
+  const startYear = Number(mapping.academicYear.slice(0, 4));
+  if (mapping.pointLabel === "Autumn") return new Date(Date.UTC(startYear, 11, 15));
+  if (mapping.pointLabel === "Spring") return new Date(Date.UTC(startYear + 1, 2, 31));
+  if (mapping.pointLabel === "Summer") return new Date(Date.UTC(startYear + 1, 6, 15));
+  return new Date(Date.UTC(startYear + 1, 7, 31));
 }
 
 function subjectFromLabel(label: string): string {
