@@ -11,7 +11,9 @@ export async function loadClasses(tenantId: string, windowDays: number, behaviou
     where: { tenantId, className: { not: null }, effectiveFrom: { lte: now }, OR: [{ effectiveTo: null }, { effectiveTo: { gt: now } }], student: { status: "ACTIVE" } },
     select: { className: true, subject: { select: { id: true, name: true } }, teacher: { select: { id: true, fullName: true } }, student: { select: {
       id: true, fullName: true, yearGroup: true, ks2ReadingScaledScore: true, ks2MathsScaledScore: true,
-      snapshots: { where: { tenantId, snapshotDate: { lte: now } }, orderBy: { snapshotDate: "desc" }, take: 1,
+      // Behaviour catch-up creates rows without attendance. Keep using the latest
+      // populated attendance record instead of treating those defaults as 0%.
+      snapshots: { where: { tenantId, snapshotDate: { lte: now }, ...(behaviourThrough !== undefined ? { OR: [{ attendancePossibleCount: { gt: 0 } }, { attendancePct: { gt: 0 } }, { dataSource: { not: "ARBOR" as const } }] } : {}) }, orderBy: { snapshotDate: "desc" }, take: 1,
         select: { snapshotDate: true, attendancePct: true, attendancePossibleCount: true, attendancePresentCount: true, positivePointsTotal: true, negativePointsTotal: true, detentionsCount: true, onCallsCount: true, latenessCount: true, suspensionsCount: true, internalExclusionsCount: true, countScope: true } },
     } } },
   });

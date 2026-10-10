@@ -21,6 +21,9 @@ describe("school class queries", () => {
     mocks.snapshots.mockResolvedValue([{ studentId: "p", snapshotDate: new Date("2026-10-07"), countScope: "YEAR_TO_DATE", positivePointsTotal: 40, detentionsCount: 3, internalExclusionsCount: 0, suspensionsCount: 0, onCallsCount: 0, latenessCount: 0 }]);
     const result = await loadClasses("school", 21, "2026-10-07");
     expect(result.classes[0].students[0].snapshot?.attendancePct).toBe(95);
+    expect(mocks.links.mock.calls[0][0].select.student.select.snapshots.where.OR).toEqual([
+      { attendancePossibleCount: { gt: 0 } }, { attendancePct: { gt: 0 } }, { dataSource: { not: "ARBOR" } },
+    ]);
     expect(result.classes[0].behaviourSnapshots[0].detentions).toBe(3);
     expect(mocks.snapshots.mock.calls[0][0].where).toMatchObject({ tenantId: "school", snapshotDate: { lte: new Date("2026-10-07T23:59:59.999Z") } });
     const pending = await loadClasses("school",21,null);
