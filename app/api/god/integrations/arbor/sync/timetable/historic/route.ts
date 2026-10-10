@@ -80,7 +80,11 @@ export const POST = withApi(async function POST(req: Request) {
         const teacher = staffResolver.staff(student.tenantId, arborStaff.id, arborStaff.fullName)?.person;
         const subject = assignment.subject.trim();
         if (!teacher || !subject) continue;
-        candidates.set(`${student.id}:${teacher.id}:${subject.toLocaleLowerCase()}`, { tenantId: student.tenantId, studentId: student.id, teacherId: teacher.id, subject, className: assignment.className });
+        // Retain the teaching group as part of the identity. A student may
+        // appear in more than one Arbor membership for a broad subject, and
+        // collapsing those rows loses the class evidence needed for historic
+        // Teacher Impact.
+        candidates.set(`${student.id}:${teacher.id}:${subject.toLocaleLowerCase()}:${assignment.teachingGroupId}`, { tenantId: student.tenantId, studentId: student.id, teacherId: teacher.id, subject, className: assignment.className });
       }
     }
     const subjects = new Map<string, { id: string }>();
