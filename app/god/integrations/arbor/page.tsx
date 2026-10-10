@@ -299,6 +299,12 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
   }
   const latestBehaviourRun = latestRunByEntity.get("BEHAVIOUR") ?? null;
   const hostname = typeof integration?.config?.schoolHostname === "string" ? integration.config.schoolHostname : "";
+  const historicTimetableSyncs = integration?.config?.historicTimetableSyncs && typeof integration.config.historicTimetableSyncs === "object"
+    ? integration.config.historicTimetableSyncs as Record<string, { page?: unknown; completedAt?: unknown }>
+    : {};
+  const historicTimetableState = historicTimetableSyncs["2025/2026"] ?? {};
+  const historicTimetableComplete = typeof historicTimetableState.completedAt === "string";
+  const historicTimetablePagesCompleted = typeof historicTimetableState.page === "number" ? historicTimetableState.page : 0;
   const assessmentCycles = proposedAssessmentCycles(integration?.config);
   const assessmentCyclesByYear = new Map<string, ProposedAssessmentCycle[]>();
   for (const cycle of assessmentCycles) {
@@ -1022,17 +1028,31 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                   <H3>Subject teachers</H3>
                   <MetaText className="mt-1">Current Arbor teaching groups map each linked student to their teachers and subjects. A separate dated 2025/26 roster can be imported for historic Teacher Impact; manually entered Anaxi links remain untouched.</MetaText>
                 </div>
+                <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2" aria-live="polite">
+                  <div className="flex items-center justify-between gap-3 text-sm font-medium text-slate-800">
+                    <span>2025/26 historic roster</span>
+                    <span>{historicTimetableComplete ? "Complete" : historicTimetablePagesCompleted ? `Page ${historicTimetablePagesCompleted} complete` : "Not started"}</span>
+                  </div>
+                  {historicTimetableComplete ? (
+                    <progress className="mt-2 h-2 w-full accent-emerald-600" value={1} max={1}>Complete</progress>
+                  ) : historicTimetablePagesCompleted ? (
+                    <progress className="mt-2 h-2 w-full accent-indigo-600">Importing</progress>
+                  ) : null}
+                  <MetaText className="mt-1">{historicTimetableComplete ? "All historic pages have been imported. No further action is needed." : historicTimetablePagesCompleted ? "Arbor does not provide a total page count. Continue until this changes to Complete and the sync button disappears." : "This reads former class memberships and their staff as at 15 July 2026."}</MetaText>
+                </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/timetable")} className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
                     <input type="hidden" name="confirm" value="SYNC_TIMETABLE" />
                     <SubmitButton variant="primary" className="w-full">Sync next subject-teacher page</SubmitButton>
                   </form>
-                  <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/timetable/historic")} className={actionButtonClass}>
-                    <CsrfInput token={csrfToken} />
-                    <input type="hidden" name="confirm" value="SYNC_HISTORIC_TIMETABLE" />
-                    <SubmitButton variant="secondary" className="w-full">Sync next 2025/26 historic roster page</SubmitButton>
-                  </form>
+                  {!historicTimetableComplete ? (
+                    <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/timetable/historic")} className={actionButtonClass}>
+                      <CsrfInput token={csrfToken} />
+                      <input type="hidden" name="confirm" value="SYNC_HISTORIC_TIMETABLE" />
+                      <SubmitButton variant="secondary" className="w-full">Sync next 2025/26 historic roster page</SubmitButton>
+                    </form>
+                  ) : null}
                   <ActionMenu label="More checks">
                     <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable")} csrfToken={csrfToken}>Check timetable access</MenuItemForm>
                     <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable/summary")} csrfToken={csrfToken}>Preview subject links</MenuItemForm>
