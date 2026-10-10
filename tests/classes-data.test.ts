@@ -31,4 +31,10 @@ describe("school class queries", () => {
     expect(group.points).toHaveLength(2);
     expect(group.students[0].grades.map(g => g.value).sort()).toEqual(["50", "70"]);
   });
+  it("does not count placeholder marks as recorded attainment", async () => {
+    mocks.links.mockResolvedValue([{ className: "7A", subject: { id: "maths", name: "Maths" }, teacher: { id: "t", fullName: "Teacher" }, student: { id: "p", fullName: "Pupil", yearGroup: "Y7", snapshots: [] } }]);
+    mocks.results.mockResolvedValue([{ studentId: "p", rawValue: "N/A", normalizedScore: null, isValid: true, status: "PRESENT", assessment: { id: "a", subject: "Maths", title: "Test", gradeFormat: "PERCENTAGE", maxScore: null, createdAt: new Date(), point: { id: "point", label: "Mock", ordinal: 1, assessedAt: new Date(), resultStatus: "PUBLISHED", cycle: { id: "cycle", label: "2026", academicYear: "2026" } } } }]);
+    expect((await loadClasses("school", 21)).classes[0].recorded).toBe(0);
+  });
+
 });

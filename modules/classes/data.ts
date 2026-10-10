@@ -1,5 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
+import { hasRecordedGrade, normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { prisma } from "@/lib/prisma";
 import { attendanceSummary, groupClassRosters } from "./metrics";
 
@@ -61,7 +62,7 @@ export async function loadClasses(tenantId: string, windowDays: number) {
     }
     const rows = students.map(student => ({ ...student, grades: points.map(point => {
       const mark = gradeMap.get(JSON.stringify([student.id, point.id]));
-      return { pointId: point.id, value: mark?.rawValue ?? null, valid: mark?.isValid ?? false, status: mark?.status ?? "NOT_ENTERED", normalizedScore: mark?.normalizedScore ?? null };
+      return { pointId: point.id, value: mark?.rawValue ?? null, valid: mark ? mark.isValid && hasRecordedGrade(mark.rawValue, mark.assessment.gradeFormat, mark.assessment.maxScore) : false, status: mark?.status ?? "NOT_ENTERED", normalizedScore: mark ? mark.normalizedScore ?? normalizeGrade(mark.rawValue, mark.assessment.gradeFormat, mark.assessment.maxScore) : null };
     }) }));
     const latest = points[0];
     const recorded = latest ? rows.filter(row => row.grades[0]?.valid && row.grades[0]?.status === "PRESENT" && row.grades[0]?.value?.trim()).length : 0;
