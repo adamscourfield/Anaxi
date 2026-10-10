@@ -176,6 +176,9 @@ export function TenantNav({
   const canSeeAnalysis = hasAnyPermission(role, ["analysis:view", "analysis:export"]);
   const canSeeTeacherDirectory = canAccessTeacherDirectory(role, coacheeCount);
   const canViewStrategy = role === "SUPER_ADMIN" || role === "ADMIN" || role === "SLT";
+  // Opening the explorer directly avoids an unnecessary server redirect from
+  // /students, which can leave the client router in an inconsistent state.
+  const studentsHref = has("ANALYSIS") && canSeeAnalysis ? "/explorer/students" : "/students";
 
   const navItem = (label: string, href: string, badgeCount?: number): NavItem => ({
     label,
@@ -205,7 +208,7 @@ export function TenantNav({
       label: "Students",
       items: [
         ...(has("ASSESSMENTS") ? [navItem("Attainment", "/assessments")] : []),
-      ...(has("STUDENTS") ? [navItem("Students", "/students")] : []),
+        ...(has("STUDENTS") ? [navItem("Students", studentsHref)] : []),
         navItem("On call", "/on-call", onCallCount),
       ],
     },

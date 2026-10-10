@@ -38,7 +38,9 @@ jobs:
             "${ANAXI_APP_URL%/}/api/cron/arbor-staff-provisioning"
           # Timetable roster pages are deliberately small to stay within function
           # limits. Repeat the protected call to complete a whole school overnight.
-          for _ in $(seq 1 16); do
+          # Current direct class enrolments span 25 pages for the largest
+          # connected school. Leave headroom so a nightly run always finishes.
+          for _ in $(seq 1 32); do
             curl --fail --silent --show-error \
               --retry 2 \
               --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
