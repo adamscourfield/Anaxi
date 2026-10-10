@@ -571,7 +571,7 @@ export default function ResultPointPage() {
     }
     if (!teachingData && !teachingLoading) {
       setTeachingLoading(true);
-      fetch(`/api/assessments/metrics/teaching?pointId=${pointId}`)
+      fetch(`/api/assessments/metrics/teaching?pointId=${pointId}`, { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => { if (d) setTeachingData(d); })
         .finally(() => setTeachingLoading(false));
@@ -597,7 +597,7 @@ export default function ResultPointPage() {
     }
     if (activeTab === "teaching" && !teachingData && !teachingLoading) {
       setTeachingLoading(true);
-      fetch(`/api/assessments/metrics/teaching?pointId=${pointId}`)
+      fetch(`/api/assessments/metrics/teaching?pointId=${pointId}`, { cache: "no-store" })
         .then((r) => r.ok ? r.json() : null)
         .then((d) => { if (d) setTeachingData(d); })
         .finally(() => setTeachingLoading(false));

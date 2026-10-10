@@ -64,6 +64,18 @@ function historicPointDate(point: {
   return point.assessedAt;
 }
 
+function academicYearStart(date: Date): number {
+  return date.getUTCFullYear() - (date.getUTCMonth() < 8 ? 1 : 0);
+}
+
+function historicAssignmentWasVerifiedInYear(assessedAt: Date, syncedAt: Date | null): boolean {
+  const assessmentYear = academicYearStart(assessedAt);
+  const currentYear = academicYearStart(new Date());
+  if (assessmentYear >= currentYear) return true;
+  if (!syncedAt) return false;
+  return syncedAt <= new Date(Date.UTC(assessmentYear + 1, 7, 31, 23, 59, 59));
+}
+
 export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
@@ -157,6 +169,7 @@ export const GET = withApi(async function GET(req: Request) {
       subjectId: true,
       teacherId: true,
       className: true,
+      arborSyncedAt: true,
       teacher: {
         select: {
           id: true,
@@ -173,6 +186,10 @@ export const GET = withApi(async function GET(req: Request) {
   const teacherInfoMap = new Map<string, { id: string; fullName: string; email: string }>();
 
   for (const a of assignments) {
+    // A historic outcome can be attributed only to a classroom relationship
+    // that Arbor verified during that same academic year. A 2026/27 sync with
+    // an old effective date is not evidence of who taught in 2025/26.
+    if (!historicAssignmentWasVerifiedInYear(assessedAt, a.arborSyncedAt)) continue;
     if (!studentSubjectTeacher.has(a.studentId)) {
       studentSubjectTeacher.set(a.studentId, new Map());
     }
@@ -426,5 +443,5 @@ export const GET = withApi(async function GET(req: Request) {
     pointId,
     assessedAt: assessedAt.toISOString(),
     subjects: subjectStats,
-  });
+  }, { headers: { "Cache-Control": "private, no-store" } });
 });
