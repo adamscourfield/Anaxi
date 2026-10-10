@@ -98,5 +98,5 @@ jobs:
             curl --fail --silent --show-error --retry 2 \
               --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
               "${ANAXI_APP_URL%/}/api/cron/arbor-behaviour" > /tmp/behaviour-result.json
-            python3 -c 'import json; d=json.load(open("/tmp/behaviour-result.json")); print(json.dumps(d)); assert "skipped" not in d and all(c["ok"] for c in d.get("connections", [])), "Behaviour sync did not complete"'
+            python3 -c 'import json; d=json.load(open("/tmp/behaviour-result.json")); print(json.dumps(d)); assert "skipped" not in d and all(c["ok"] and isinstance(c.get("body"), dict) for c in d.get("connections", [])), "Behaviour sync did not complete"'
           done

@@ -68,10 +68,10 @@ export const config = {
     "/god/:path*",
     // These workers authenticate scheduled calls with CRON_SECRET themselves.
     // Let those internal jobs reach their route instead of redirecting to login.
-    "/api/god/((?!integrations/arbor/sync/photos|integrations/arbor/sync/morning-attendance|integrations/arbor/sync/timetable|integrations/arbor/preview/assessments/history).*)",
+    "/api/god/((?!integrations/arbor/sync/behaviour|integrations/arbor/sync/photos|integrations/arbor/sync/morning-attendance|integrations/arbor/sync/timetable|integrations/arbor/preview/assessments/history).*)",
     "/api/auth/switch-tenant",
     // The secure Arbor workers are excluded above and here; the broader API
     // matcher would otherwise still send their internal jobs to sign-in.
-    "/api/((?!auth|cron|webhooks|invite|health|god/integrations/arbor/sync/photos|god/integrations/arbor/sync/morning-attendance|god/integrations/arbor/sync/timetable|god/integrations/arbor/preview/assessments/history).*)",
+    "/api/((?!auth|cron|webhooks|invite|health|god/integrations/arbor/sync/behaviour|integrations/arbor/sync/photos|god/integrations/arbor/sync/morning-attendance|god/integrations/arbor/sync/timetable|god/integrations/arbor/preview/assessments/history).*)",
   ],
 };
