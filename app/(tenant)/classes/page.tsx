@@ -1,6 +1,7 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/page-header";
 import { ClassDashboard } from "@/components/classes/dashboard";
+import { classSettings } from "@/modules/classes/settings";
 import { loadClasses } from "@/modules/classes/data";
 
 import "./classes.css";
@@ -12,10 +13,11 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
   const user = await getSessionUserOrThrow();
   const params = await searchParams;
   const windowDays = classWindow(params.window);
-  const data = await loadClasses(user.tenantId, windowDays);
+  const settings = await classSettings(user.tenantId);
+  const data = await loadClasses(user.tenantId, windowDays, settings.behaviourThrough);
   const selected = data.classes.find(c => c.id === params.class) ?? data.classes.find(c => c.teachers.some(t => t.id === user.id)) ?? data.classes[0];
   return <div className="class-enter space-y-6">
     <PageHeader title="Classes" eyebrow="Students" subtitle="Your class, its teachers and every pupil’s outcomes in one place." />
-    {selected ? <ClassDashboard key={selected.id} data={selected} classes={data.classes.map(c => ({ id: c.id, name: c.name, subject: c.subject }))} windowDays={windowDays} /> : <p className="class-panel p-8 text-muted">No current classes have been imported yet.</p>}
+    {selected ? <ClassDashboard labels={settings.labels} key={selected.id} data={selected} classes={data.classes.map(c => ({ id: c.id, name: c.name, subject: c.subject }))} windowDays={windowDays} /> : <p className="class-panel p-8 text-muted">No current classes have been imported yet.</p>}
   </div>;
 }

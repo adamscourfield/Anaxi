@@ -6,6 +6,12 @@ on:
   schedule:
     - cron: "0 1,2 * * *"
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Data to refresh
+        type: choice
+        default: all
+        options: [all, behaviour]
 
 # Prevent the full nightly catch-up and a lighter progress pass from querying
 # the same Arbor assessment catalogue concurrently.
@@ -18,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger the protected Anaxi sync
+        if: ${{ inputs.scope != 'behaviour' }}
         env:
           ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
           ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
@@ -79,3 +86,17 @@ jobs:
             --retry 2 \
             --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
             "${ANAXI_APP_URL%/}/api/cron/compute-student-flags"
+      - name: Catch up behaviour totals
+        if: ${{ inputs.scope == 'behaviour' }}
+        env:
+          ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
+          ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
+        run: |
+          test -n "$ANAXI_APP_URL"
+          test -n "$ANAXI_CRON_SECRET"
+          for _ in $(seq 1 8); do
+            curl --fail --silent --show-error --retry 2 \
+              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+              "${ANAXI_APP_URL%/}/api/cron/arbor-behaviour" > /tmp/behaviour-result.json
+            python3 -c 'import json; d=json.load(open("/tmp/behaviour-result.json")); print(json.dumps(d)); assert "skipped" not in d and all(c["ok"] for c in d.get("connections", [])), "Behaviour sync did not complete"'
+          done

@@ -4,7 +4,7 @@ import { hasRecordedGrade, normalizeGrade } from "@/modules/assessments/gradeNor
 import { prisma } from "@/lib/prisma";
 import { attendanceSummary, groupClassRosters, classSubjectKey, behaviourSnapshotGroups } from "./metrics";
 
-export async function loadClasses(tenantId: string, windowDays: number) {
+export async function loadClasses(tenantId: string, windowDays: number, behaviourThrough?: string | null) {
   const now = new Date();
   const since = new Date(now.getTime() - windowDays * 86400000);
   const links = await prisma.studentSubjectTeacher.findMany({
@@ -35,6 +35,11 @@ export async function loadClasses(tenantId: string, windowDays: number) {
     if (event.category === "POSITIVE_POINTS") counts.positivePoints = event._sum.points ?? 0;
     pupilEvents.set(event.studentId, counts);
   }
+  const behaviourByPupil = behaviourThrough ? new Map((await prisma.studentSnapshot.findMany({
+    where: { tenantId, studentId: { in: ids }, snapshotDate: { lte: new Date(`${behaviourThrough}T23:59:59.999Z`) } },
+    orderBy: { snapshotDate: "desc" }, distinct: ["studentId"],
+    select: { studentId: true, snapshotDate: true, countScope: true, positivePointsTotal: true, negativePointsTotal: true, detentionsCount: true, onCallsCount: true, latenessCount: true, internalExclusionsCount: true, suspensionsCount: true },
+  })).map(s => [s.studentId, { ...s, snapshotDate: s.snapshotDate.toISOString() }])) : null;
   const groups = groupClassRosters(links).filter(group => group.combined || ![...group.years].every(year => /^[789]$/.test(year.match(/\d+/)?.[0] ?? ""))).map(group => ({ ...group,
     id: createHash("sha256").update(group.key).digest("hex").slice(0, 20),
     yearGroup: [...group.years].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(" / "),
@@ -45,7 +50,7 @@ export async function loadClasses(tenantId: string, windowDays: number) {
     list.push(result); byStudent.set(result.studentId, list);
   }
   const classes = groups.map(group => {
-    const students = [...group.pupilIds].map(id => ({ ...pupils.get(id)!, events: pupilEvents.get(id) ?? {} })).sort((a, b) => a.name.localeCompare(b.name));
+    const students = [...group.pupilIds].map(id => ({ ...pupils.get(id)!, behaviourSnapshot: behaviourThrough === undefined ? pupils.get(id)!.snapshot : behaviourByPupil?.get(id) ?? null, events: pupilEvents.get(id) ?? {} })).sort((a, b) => a.name.localeCompare(b.name));
     const marks = students.flatMap(student => (byStudent.get(student.id) ?? []).filter(result => group.subjects.has(classSubjectKey(result.assessment.subject))));
     const pointMap = new Map<string, { id: string; label: string; cycleId: string; cycle: string; date: string; ordinal: number; format: string; maxScore: number | null; status: string }>();
     for (const mark of marks) {
@@ -86,7 +91,7 @@ export async function loadClasses(tenantId: string, windowDays: number) {
     const recorded = latest ? rows.filter(row => row.grades.find(g => g.pointId === latest.id)?.valid && row.grades.find(g => g.pointId === latest.id)?.status === "PRESENT").length : 0;
     const attendance = attendanceSummary(students.flatMap(s => s.snapshot ? [{ pct: s.snapshot.attendancePct, possible: s.snapshot.attendancePossibleCount, present: s.snapshot.attendancePresentCount }] : []));
     const events = students.reduce<Record<string, number>>((total, student) => { for (const [key, count] of Object.entries(student.events)) total[key] = (total[key] ?? 0) + count; return total; }, {});
-    return { id: group.id, name: group.name, subject: group.subject, yearGroup: group.yearGroup, teachers: [...group.teachers].map(([id, name]) => ({ id, name })), count: students.length, attendance, events, behaviourSnapshots: behaviourSnapshotGroups(students.flatMap(s => s.snapshot ? [s.snapshot] : [])), recorded, latest: latest ? `${latest.cycle} · ${latest.label}` : null, points, students: rows };
+    return { behaviourThrough: behaviourThrough ?? null, behaviourPending: behaviourThrough === null, id: group.id, name: group.name, subject: group.subject, yearGroup: group.yearGroup, teachers: [...group.teachers].map(([id, name]) => ({ id, name })), count: students.length, attendance, events, behaviourSnapshots: behaviourSnapshotGroups(students.flatMap(s => s.behaviourSnapshot ? [s.behaviourSnapshot] : [])), recorded, latest: latest ? `${latest.cycle} · ${latest.label}` : null, points, students: rows };
   }).sort((a, b) => a.yearGroup.localeCompare(b.yearGroup, undefined, { numeric: true }) || a.name.localeCompare(b.name, undefined, { numeric: true }));
   return { classes, pupilCount: pupils.size, unlabelled: links.filter(link => !link.className?.trim()).length, since: since.toISOString(), asOf: now.toISOString() };
 }

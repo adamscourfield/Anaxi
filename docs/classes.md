@@ -19,3 +19,11 @@ KS2 averages use pupils with both reading and maths scaled scores, averaging the
 Every chart offers pupil drilldown into the main roster. Attendance and KS2 include missing-data selections; attainment includes pupils without valid results. Behaviour selections require a positive contribution in the selected reporting period. Award points from snapshots are explicitly points, not award counts. Changing assessment/behaviour period clears the prior chart selection. Show all pupils clears both the measure and name filters.
 
 KS3 dashboards add an all-subject aggregate for each assessment point. Each pupil contributes their mean of valid present subject results (newest assessment per subject within that point); the class average then weights pupils equally. Percentage-only datasets retain percentage units. Mixed scales are labelled as a normalized index out of 100. Individual subject assessments remain selectable, and no older dataset fills missing results.
+
+## Behaviour freshness and school language
+
+The dashboard resolves school language from TenantSettings and explicit TenantVocab plural overrides (including DTAs/Reroutings/Navigations). Internal measure IDs remain independent of labels. Arbor behaviour uses its own `behaviourLastSyncedDate`, rather than treating an attendance-created snapshot as completed behaviour. The latest snapshot on or before that completed date supplies cumulative behaviour; latest attendance remains independent. Before the first completed Arbor behaviour import the page shows unavailable/pending values, not false zeros. Manual schools continue using their imported snapshots.
+
+The protected behaviour cron accepts delayed GitHub schedules at any hour. Authentication and idempotent seven-day batches remain enforced. The nightly workflow can also dispatch a behaviour-only catch-up without reimporting unrelated data. Regression coverage includes delayed execution, authentication, terminology overrides and attendance ahead of behaviour.
+
+The workspace uses a compact class identity/teaching-team section, three outcome summaries, semantic behaviour cards with pupil contribution bars, and a pupil roster beside compact insight charts. Assessment history is expandable. Desktop and 390px mobile layouts, class switching, chart drilldowns and clearing selection were checked in the authenticated local preview.

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ links: vi.fn(), incidents: vi.fn(), results: vi.fn() }));
+const mocks = vi.hoisted(() => ({ links: vi.fn(), incidents: vi.fn(), results: vi.fn(), snapshots: vi.fn() }));
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/prisma", () => ({ prisma: { studentSubjectTeacher: { findMany: mocks.links }, behaviourIncident: { groupBy: mocks.incidents }, assessmentResult: { findMany: mocks.results } } }));
+vi.mock("@/lib/prisma", () => ({ prisma: { studentSnapshot: { findMany: mocks.snapshots }, studentSubjectTeacher: { findMany: mocks.links }, behaviourIncident: { groupBy: mocks.incidents }, assessmentResult: { findMany: mocks.results } } }));
 import { loadClasses } from "@/modules/classes/data";
 
 describe("school class queries", () => {
@@ -15,6 +15,17 @@ describe("school class queries", () => {
     expect(mocks.results.mock.calls[0][0].where).toMatchObject({ tenantId: "school-a", studentId: { in: ["p1"] }, assessment: { tenantId: "school-a" } });
     expect(data.classes[0].attendance.value).toBeNull();
     expect(data.classes[0].recorded).toBe(0);
+  });
+  it("does not mistake a newer attendance snapshot for completed behaviour totals", async () => {
+    mocks.links.mockResolvedValue([{ className: "7A", subject: { id: "maths", name: "Maths" }, teacher: { id: "t", fullName: "Teacher" }, student: { id: "p", fullName: "Pupil", yearGroup: "Y7", snapshots: [{ snapshotDate: new Date("2026-10-09"), attendancePct: 95, countScope: "YEAR_TO_DATE", detentionsCount: 0, positivePointsTotal: 0 }] } }]);
+    mocks.snapshots.mockResolvedValue([{ studentId: "p", snapshotDate: new Date("2026-10-07"), countScope: "YEAR_TO_DATE", positivePointsTotal: 40, detentionsCount: 3, internalExclusionsCount: 0, suspensionsCount: 0, onCallsCount: 0, latenessCount: 0 }]);
+    const result = await loadClasses("school", 21, "2026-10-07");
+    expect(result.classes[0].students[0].snapshot?.attendancePct).toBe(95);
+    expect(result.classes[0].behaviourSnapshots[0].detentions).toBe(3);
+    expect(mocks.snapshots.mock.calls[0][0].where).toMatchObject({ tenantId: "school", snapshotDate: { lte: new Date("2026-10-07T23:59:59.999Z") } });
+    const pending = await loadClasses("school",21,null);
+    expect(pending.classes[0].behaviourPending).toBe(true);
+    expect(pending.classes[0].behaviourSnapshots).toEqual([]);
   });
   it("does not query pupil outcomes when no named classes are available", async () => {
     mocks.links.mockResolvedValue([]);
