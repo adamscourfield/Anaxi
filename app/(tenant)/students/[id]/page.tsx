@@ -691,7 +691,7 @@ export default async function StudentDetailPage({
                   "flex items-center gap-4 px-4 py-4 calm-transition hover:bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] sm:px-5";
                 const inner = (
                   <>
-                    <Avatar name={row.fullName} userId={row.teacherId} size="lg" />
+                    <Avatar name={row.fullName} userId={row.teacherId} size="xs" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold tracking-[-0.01em] text-text">{row.fullName}</p>
                       <p className="mt-1 flex items-start gap-2 text-xs leading-snug text-muted">
