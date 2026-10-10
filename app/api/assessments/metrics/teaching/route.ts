@@ -127,6 +127,7 @@ export const GET = withApi(async function GET(req: Request) {
       studentId: true,
       subjectId: true,
       teacherId: true,
+      className: true,
       teacher: {
         select: {
           id: true,
@@ -137,15 +138,23 @@ export const GET = withApi(async function GET(req: Request) {
     },
   });
 
-  // Map: studentId → subjectId → teacherId
+  // Map: studentId → subjectId → teacherId, plus the dated class labels for
+  // each teacher and subject. These labels come from the same verified link as
+  // the result attribution.
   const studentSubjectTeacher = new Map<string, Map<string, string>>();
   const teacherInfoMap = new Map<string, { id: string; fullName: string; email: string }>();
+  const classNamesByTeacherSubject = new Map<string, Set<string>>();
 
   for (const a of assignments) {
     if (!studentSubjectTeacher.has(a.studentId)) {
       studentSubjectTeacher.set(a.studentId, new Map());
     }
     studentSubjectTeacher.get(a.studentId)!.set(a.subjectId, a.teacherId);
+    if (a.className) {
+      const key = `${a.subjectId}:${a.teacherId}`;
+      if (!classNamesByTeacherSubject.has(key)) classNamesByTeacherSubject.set(key, new Set());
+      classNamesByTeacherSubject.get(key)!.add(a.className);
+    }
     if (!teacherInfoMap.has(a.teacherId)) {
       teacherInfoMap.set(a.teacherId, {
         id: a.teacher.id,
@@ -244,6 +253,7 @@ export const GET = withApi(async function GET(req: Request) {
     teacherId: string;
     teacherName: string;
     teacherEmail: string;
+    classNames: string[];
     count: number;
     mean: number | null;
     meanDisplay: string | null;
@@ -329,6 +339,7 @@ export const GET = withApi(async function GET(req: Request) {
         teacherId,
         teacherName,
         teacherEmail: teacher?.email ?? "",
+        classNames: [...(classNamesByTeacherSubject.get(`${subjectId}:${teacherId}`) ?? new Set())].sort((a, b) => a.localeCompare(b)),
         count: students.length,
         mean: classMean,
         meanDisplay: classMean !== null ? displayScore(classMean, asmt.gradeFormat) : null,

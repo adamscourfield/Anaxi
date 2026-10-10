@@ -189,6 +189,7 @@ type TeachingStudent = {
 
 type TeachingClass = {
   teacherId: string; teacherName: string; teacherEmail: string;
+  classNames: string[];
   count: number; mean: number | null; meanDisplay: string | null;
   vsYearMean: number | null; observationCount: number;
   topSignals: Array<{ key: string; positiveCount: number; concernCount: number; totalCount: number }>;
@@ -2754,6 +2755,7 @@ function TeachingTab({
         .map((teacher) => ({
           subject: subject.subject,
           teacherName: teacher.teacherName,
+          classNames: teacher.classNames,
           count: teacher.count,
           average: teacher.meanDisplay ?? "—",
           vsYearMean: teacher.vsYearMean,
@@ -2773,11 +2775,12 @@ function TeachingTab({
           <p className="mt-1 text-xs text-[var(--on-surface-muted)]">Average result for each teacher&apos;s linked students at this assessment point.</p>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[580px] text-left text-sm">
+          <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-[var(--surface-container-low)] text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-muted)]">
               <tr>
                 <th className="px-5 py-3">Teacher</th>
                 <th className="px-4 py-3">Subject</th>
+                <th className="px-4 py-3">Class</th>
                 <th className="px-4 py-3 text-right">Students</th>
                 <th className="px-4 py-3 text-right">Average</th>
                 <th className="px-5 py-3 text-right">Vs subject mean</th>
@@ -2788,6 +2791,9 @@ function TeachingTab({
                 <tr key={`${row.teacherName}:${row.subject}`}>
                   <td className="px-5 py-3 font-medium text-[var(--on-surface)]">{row.teacherName}</td>
                   <td className="px-4 py-3 text-[var(--on-surface-muted)]">{row.subject}</td>
+                  <td className="px-4 py-3 text-[var(--on-surface-muted)]" title={row.classNames.join(", ") || undefined}>
+                    {row.classNames.length ? <>{row.classNames[0]}{row.classNames.length > 1 ? ` +${row.classNames.length - 1}` : ""}</> : "Class not recorded"}
+                  </td>
                   <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">{row.count}</td>
                   <td className="px-4 py-3 text-right font-semibold tabular-nums text-[var(--on-surface)]">{row.average}</td>
                   <td className={`px-5 py-3 text-right font-semibold tabular-nums ${row.vsYearMean === null ? "text-[var(--on-surface-muted)]" : row.vsYearMean >= 0 ? "text-[var(--success)]" : "text-[var(--error)]"}`}>
