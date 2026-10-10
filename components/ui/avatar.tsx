@@ -40,7 +40,7 @@ export function Avatar({
   studentId,
 }: {
   name: string;
-  size?: "xs" | "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   /** Neutral grey circle (dashboard lists) vs hashed accent colors */
   tone?: "default" | "muted";
   /** When set, renders this image instead of initials. */
@@ -64,7 +64,9 @@ export function Avatar({
         ? "h-8 w-8 text-[10px]"
         : size === "md"
           ? "h-10 w-10 text-[12px]"
-          : "h-[4.5rem] w-[4.5rem] text-xl";
+          : size === "lg"
+            ? "h-[4.5rem] w-[4.5rem] text-xl"
+            : "h-[60px] w-[60px] text-lg";
 
   if (resolvedAvatarUrl && failedAvatarUrl !== resolvedAvatarUrl) {
     return (

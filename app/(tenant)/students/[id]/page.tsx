@@ -519,7 +519,7 @@ export default async function StudentDetailPage({
       )}
 
       {analysisProfile ? (
-        <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
+        <div className="flex max-h-[32rem] flex-col overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] pb-4">
             <div>
               <H2>Pastoral risk</H2>
@@ -675,7 +675,7 @@ export default async function StudentDetailPage({
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)]">
+            <div className="min-h-0 flex-1 divide-y divide-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] overflow-y-auto rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] bg-[var(--surface-container-lowest)]">
               {groupedTeachers.map((row) => {
                 const theme = TEACHER_ROW_THEMES[teacherThemeIndex(row.teacherId)];
                 const subjectLine = row.classes.length ? row.classes.join(", ") : row.subjects.join(", ");
@@ -691,7 +691,7 @@ export default async function StudentDetailPage({
                   "flex items-center gap-4 px-4 py-4 calm-transition hover:bg-[color-mix(in_srgb,var(--surface-container-low)_55%,transparent)] sm:px-5";
                 const inner = (
                   <>
-                    <Avatar name={row.fullName} userId={row.teacherId} size="xs" />
+                    <Avatar name={row.fullName} userId={row.teacherId} size="xl" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold tracking-[-0.01em] text-text">{row.fullName}</p>
                       <p className="mt-1 flex items-start gap-2 text-xs leading-snug text-muted">
