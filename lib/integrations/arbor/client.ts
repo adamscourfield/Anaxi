@@ -1226,7 +1226,7 @@ export class ArborClient {
     }
 
     type Person = { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null };
-    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; staff: Person[] } | null };
+    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; staff: Person[]; timetabledStaffByDateRange: Person[] } | null };
     const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
     const personName = (person: Person) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
     const activeOnDate = (enrolment: Enrolment) => (!enrolment.startDate || enrolment.startDate <= asOfDate) && (!enrolment.endDate || enrolment.endDate >= asOfDate);
@@ -1242,6 +1242,7 @@ export class ArborClient {
           academicUnit {
             id displayName subject { displayName }
             staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
+            timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName }
           }
         }
       }`);
@@ -1257,7 +1258,11 @@ export class ArborClient {
         diagnostics.sampleClasses.add(className);
         if (!subject) continue;
         diagnostics.subjectClasses.add(unit.id);
-        const staff = [...new Map(unit.staff.map((teacher) => [teacher.id, { id: teacher.id, fullName: personName(teacher) }])).values()];
+        // Direct academic-unit staff can be a subject lead. Prefer the people
+        // timetabled to this historic class, falling back only when Arbor has
+        // no timetable-staff record for the unit.
+        const classStaff = unit.timetabledStaffByDateRange?.length ? unit.timetabledStaffByDateRange : unit.staff;
+        const staff = [...new Map(classStaff.map((teacher) => [teacher.id, { id: teacher.id, fullName: personName(teacher) }])).values()];
         if (staff.length) diagnostics.staffedClasses.add(unit.id);
         if (enrolment.student && staff.length) assignments.push({ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, className, subject, staff });
       }
@@ -1290,7 +1295,7 @@ export class ArborClient {
       }
     }
     type Person = { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null };
-    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; staff: Person[] } | null };
+    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; staff: Person[]; timetabledStaffByDateRange: Person[] } | null };
     const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
     const data = await runArborGraphqlQuery<{ AcademicUnitEnrolment: Enrolment[] }>(this.credentials, `{
       AcademicUnitEnrolment(page_size: 100, page_num: ${membershipPage}${filters}) {
@@ -1299,6 +1304,7 @@ export class ArborClient {
         academicUnit {
           id displayName subject { displayName }
           staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
+          timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName }
         }
       }
     }`);
@@ -1316,7 +1322,10 @@ export class ArborClient {
       classes.add(unit.id);
       if (!subject) return [];
       subjectClasses.add(unit.id);
-      const staff = [...new Map(unit.staff.map((teacher) => [teacher.id, { id: teacher.id, fullName: personName(teacher) }])).values()];
+      // Historic classes use their timetabled staff, not the broader subject
+      // staff list, so Teacher Impact reflects who taught the class.
+      const classStaff = unit.timetabledStaffByDateRange?.length ? unit.timetabledStaffByDateRange : unit.staff;
+      const staff = [...new Map(classStaff.map((teacher) => [teacher.id, { id: teacher.id, fullName: personName(teacher) }])).values()];
       if (staff.length) staffedClasses.add(unit.id);
       return enrolment.student && staff.length ? [{ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, className: unit.displayName?.trim() || subject, subject, staff }] : [];
     });
