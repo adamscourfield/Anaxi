@@ -284,7 +284,7 @@ export const GET = withApi(async function GET(req: Request) {
   type DatedAssignment = { teacherId: string; className: string };
   // First prefer Anaxi's exact subject ID. The secondary map is only for safe
   // Arbor label variants, and is used only when it identifies one class.
-  const studentSubjectTeacher = new Map<string, Map<string, DatedAssignment>>();
+  const studentSubjectTeacher = new Map<string, Map<string, DatedAssignment[]>>();
   const studentSubjectKeyAssignments = new Map<string, Map<string, DatedAssignment[]>>();
   const teacherInfoMap = new Map<string, { id: string; fullName: string; email: string }>();
   const historicRosterDiagnostic = {
@@ -308,7 +308,12 @@ export const GET = withApi(async function GET(req: Request) {
       teacherId: a.teacherId,
       className: a.className?.trim() || "Class not recorded",
     };
-    studentSubjectTeacher.get(a.studentId)!.set(a.subjectId, datedAssignment);
+    const bySubjectId = studentSubjectTeacher.get(a.studentId)!;
+    // A pupil can legitimately have more than one historic membership whose
+    // Arbor subject resolves to the same Anaxi subject. Keep them all here;
+    // selecting the last database row would silently credit every result to
+    // whichever teacher happened to be returned last.
+    bySubjectId.set(a.subjectId, [...(bySubjectId.get(a.subjectId) ?? []), datedAssignment]);
     if (!studentSubjectKeyAssignments.has(a.studentId)) {
       studentSubjectKeyAssignments.set(a.studentId, new Map());
     }
@@ -335,10 +340,11 @@ export const GET = withApi(async function GET(req: Request) {
       if (studentSubjectTeacher.has(studentId)) historicRosterDiagnostic.studentsWithRoster++;
       else historicRosterDiagnostic.missingStudentRoster++;
     }
-    const exact = subjectId ? studentSubjectTeacher.get(studentId)?.get(subjectId) : null;
-    if (exact) {
+    const exactMatches = subjectId ? studentSubjectTeacher.get(studentId)?.get(subjectId) ?? [] : [];
+    const exactUniqueMatches = new Map(exactMatches.map((match) => [`${match.teacherId}:${match.className}`, match]));
+    if (exactUniqueMatches.size === 1) {
       if (historicCycle) historicRosterDiagnostic.exactSubjectMatches++;
-      return exact;
+      return [...exactUniqueMatches.values()][0];
     }
     const matches = studentSubjectKeyAssignments.get(studentId)?.get(subjectKey(assessmentSubject)) ?? [];
     // Never guess when a simplified label could point at more than one class.
