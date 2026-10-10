@@ -117,6 +117,7 @@ export const GET = withApi(async function GET(req: Request) {
     return NextResponse.json({ error: "Point not found" }, { status: 404 });
   }
   const assessedAt = historicPointDate(point);
+  const historicCycle = isHistoricCycle(point.cycle.academicYear);
 
   // ── 2. Load all assessments + results ────────────────────────────────────
   const assessments = await prisma.assessment.findMany({
@@ -176,7 +177,7 @@ export const GET = withApi(async function GET(req: Request) {
       // Arbor's dated class labels are the final safeguard for historic
       // attribution. Some enrolment records omit dates, so a current class
       // must never qualify merely because it has a broad effective range.
-      ...(isHistoricCycle(point.cycle.academicYear)
+      ...(historicCycle
         ? { className: { contains: point.cycle.academicYear } }
         : {}),
       effectiveFrom: { lte: assessedAt },
@@ -203,7 +204,7 @@ export const GET = withApi(async function GET(req: Request) {
 
   // Historic impact is available only once the former academic year's dated
   // class roster has been imported. Never fall back to a current class.
-  if (isHistoricCycle(point.cycle.academicYear) && !assignments.length) {
+  if (historicCycle && !assignments.length) {
     return NextResponse.json({
       pointId,
       assessedAt: assessedAt.toISOString(),
