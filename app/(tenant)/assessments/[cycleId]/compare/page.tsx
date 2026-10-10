@@ -257,6 +257,9 @@ export default function ComparisonPage() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [p8Data, setP8Data] = useState<P8CompareData | null>(null);
   const [p8SortDir, setP8SortDir] = useState<SortDir>("desc");
+  const [p8Search, setP8Search] = useState("");
+  const [p8ShowAll, setP8ShowAll] = useState(false);
+  const P8_COLLAPSED_ROWS = 15;
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -412,7 +415,7 @@ export default function ComparisonPage() {
       )}
 
       {!loading && data && data.subjects.length > 0 && (
-        <>
+        <div key={`${data.fromPoint.id}-${data.toPoint.id}`} className="motion-safe:animate-page-enter space-y-8">
           {/* Summary cards */}
           <div className="grid grid-cols-4 gap-4">
             {(() => {
@@ -449,13 +452,13 @@ export default function ComparisonPage() {
                   iconBg: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
                 },
               ].map(({ label, value, colour, icon, iconBg }) => (
-                <div key={label} className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
+                <Card key={label} className="rounded-sm !p-5 shadow-none">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${iconBg}`}>{icon}</span>
                   </div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
                   <p className={`mt-1 text-2xl font-bold tabular-nums ${colour}`}>{value}</p>
-                </div>
+                </Card>
               ));
             })()}
           </div>
@@ -648,63 +651,107 @@ export default function ComparisonPage() {
 
               {/* P8 student table */}
               <Card className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                   <SectionHeader title="Progress 8 by student" subtitle="Comparing predicted P8 score between the two result points" />
-                </div>
-                <div className="table-shell border-0 rounded-none shadow-none">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead>
-                        <tr className="table-head-row">
-                          <th className="px-5 py-3 text-left">Student</th>
-                          <th className="px-4 py-3 text-right">Year</th>
-                          <th className="px-4 py-3 text-right">P8 (from)</th>
-                          <th className="px-4 py-3 text-right">P8 (to)</th>
-                          <th
-                            className="px-5 py-3 text-right cursor-pointer select-none"
-                            onClick={() => setP8SortDir((d) => d === "asc" ? "desc" : "asc")}
-                          >
-                            Change<SortIcon active dir={p8SortDir} />
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...p8Data.students]
-                          .sort((a, b) => {
-                            if (a.delta === null && b.delta === null) return 0;
-                            if (a.delta === null) return 1;
-                            if (b.delta === null) return -1;
-                            return p8SortDir === "desc" ? b.delta - a.delta : a.delta - b.delta;
-                          })
-                          .map((s) => {
-                            const deltaUp = s.delta !== null && s.delta > 0.005;
-                            const deltaDown = s.delta !== null && s.delta < -0.005;
-                            return (
-                              <tr key={s.studentId} className="table-row">
-                                <td className="px-5 py-3 font-medium text-[var(--on-surface)]">
-                                  {s.name}
-                                  {s.ppFlag && <span className={`ml-1.5 ${ppInlineBadgeClassLg}`}>PP</span>}
-                                  {s.sendFlag && <span className={`ml-1.5 ${sendInlineBadgeClassLg}`}>SEND</span>}
-                                </td>
-                                <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">
-                                  {s.yearGroup ?? "—"}
-                                </td>
-                                <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">
-                                  {s.fromP8 !== null ? (s.fromP8 > 0 ? "+" : "") + s.fromP8.toFixed(2) : "—"}
-                                </td>
-                                <td className="px-4 py-3 text-right tabular-nums font-semibold text-[var(--on-surface)]">
-                                  {s.toP8 !== null ? (s.toP8 > 0 ? "+" : "") + s.toP8.toFixed(2) : "—"}
-                                </td>
-                                <td className={`px-5 py-3 text-right tabular-nums font-bold ${deltaUp ? "text-[var(--success)]" : deltaDown ? "text-[var(--error)]" : "text-[var(--on-surface-muted)]"}`}>
-                                  {s.delta !== null ? (s.delta > 0 ? "+" : "") + s.delta.toFixed(2) : "—"}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
+                  <div className="relative w-full sm:w-60">
+                    <svg className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+                      <circle cx="11" cy="11" r="8" />
+                      <path strokeLinecap="round" d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input
+                      type="text"
+                      value={p8Search}
+                      onChange={(e) => { setP8Search(e.target.value); setP8ShowAll(false); }}
+                      placeholder="Filter students…"
+                      aria-label="Filter students"
+                      className="field h-9 w-full py-0 pl-8 pr-3 text-[13px]"
+                    />
                   </div>
                 </div>
+                {(() => {
+                  const q = p8Search.trim().toLowerCase();
+                  const filtered = (q ? p8Data.students.filter((s) => s.name.toLowerCase().includes(q)) : p8Data.students)
+                    .slice()
+                    .sort((a, b) => {
+                      if (a.delta === null && b.delta === null) return 0;
+                      if (a.delta === null) return 1;
+                      if (b.delta === null) return -1;
+                      return p8SortDir === "desc" ? b.delta - a.delta : a.delta - b.delta;
+                    });
+                  const visible = p8ShowAll ? filtered : filtered.slice(0, P8_COLLAPSED_ROWS);
+                  return (
+                    <>
+                      <div className="table-shell border-0 rounded-none shadow-none">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-sm">
+                            <thead>
+                              <tr className="table-head-row">
+                                <th className="px-5 py-3 text-left">Student</th>
+                                <th className="px-4 py-3 text-right">Year</th>
+                                <th className="px-4 py-3 text-right">P8 (from)</th>
+                                <th className="px-4 py-3 text-right">P8 (to)</th>
+                                <th
+                                  className="px-5 py-3 text-right cursor-pointer select-none"
+                                  onClick={() => setP8SortDir((d) => d === "asc" ? "desc" : "asc")}
+                                >
+                                  Change<SortIcon active dir={p8SortDir} />
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {visible.length === 0 && (
+                                <tr>
+                                  <td colSpan={5} className="px-5 py-8 text-center text-sm text-[var(--on-surface-muted)]">
+                                    No students match &ldquo;{p8Search}&rdquo;.
+                                  </td>
+                                </tr>
+                              )}
+                              {visible.map((s) => {
+                                const deltaUp = s.delta !== null && s.delta > 0.005;
+                                const deltaDown = s.delta !== null && s.delta < -0.005;
+                                return (
+                                  <tr key={s.studentId} className="table-row">
+                                    <td className="px-5 py-3 font-medium text-[var(--on-surface)]">
+                                      {s.name}
+                                      {s.ppFlag && <span className={`ml-1.5 ${ppInlineBadgeClassLg}`}>PP</span>}
+                                      {s.sendFlag && <span className={`ml-1.5 ${sendInlineBadgeClassLg}`}>SEND</span>}
+                                    </td>
+                                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">
+                                      {s.yearGroup ?? "—"}
+                                    </td>
+                                    <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">
+                                      {s.fromP8 !== null ? (s.fromP8 > 0 ? "+" : "") + s.fromP8.toFixed(2) : "—"}
+                                    </td>
+                                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-[var(--on-surface)]">
+                                      {s.toP8 !== null ? (s.toP8 > 0 ? "+" : "") + s.toP8.toFixed(2) : "—"}
+                                    </td>
+                                    <td className={`px-5 py-3 text-right tabular-nums font-bold ${deltaUp ? "text-[var(--success)]" : deltaDown ? "text-[var(--error)]" : "text-[var(--on-surface-muted)]"}`}>
+                                      {s.delta !== null ? (s.delta > 0 ? "+" : "") + s.delta.toFixed(2) : "—"}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between border-t border-border/20 px-1 pt-3.5">
+                        <p className="text-[0.8125rem] text-muted">
+                          {q ? `${filtered.length} of ${p8Data.students.length} students` : `${p8Data.students.length} students`}
+                        </p>
+                        {filtered.length > P8_COLLAPSED_ROWS && (
+                          <button
+                            type="button"
+                            onClick={() => setP8ShowAll((v) => !v)}
+                            className="link-accent text-[0.8125rem] font-semibold"
+                          >
+                            {p8ShowAll ? "Show fewer" : `Show all ${filtered.length}`}
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </Card>
             </>
           )}
@@ -806,7 +853,7 @@ export default function ComparisonPage() {
               { title: "Top Improvers", students: topImprovers, valueCls: "text-[var(--success)]", icon: <IconTrendUp />, iconBg: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]" },
               { title: "Biggest Declines", students: topDecliners, valueCls: "text-[var(--error)]", icon: <IconTrendDown />, iconBg: "bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]" },
             ].map(({ title, students, valueCls, icon, iconBg }) => (
-              <div key={title} className="rounded-2xl border border-[var(--outline-variant)]/60 bg-[var(--surface-container-lowest)] p-6 shadow-ambient">
+              <Card key={title} className="rounded-sm shadow-none">
                 <div className="flex items-center gap-3 mb-5">
                   <span className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md ${iconBg}`}>{icon}</span>
                   <h3 className="text-xl font-bold text-[var(--on-surface)]">{title}</h3>
@@ -824,10 +871,10 @@ export default function ComparisonPage() {
                     ))}
                   </div>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
-        </>
+        </div>
       )}
     </AttainmentPageShell>
   );
