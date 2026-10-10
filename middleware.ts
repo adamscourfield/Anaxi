@@ -52,6 +52,7 @@ export const config = {
     "/on-call/:path*",
     "/onboarding",
     "/students/:path*",
+    "/classes/:path*",
     "/api/assessments/:path*",
     "/api/students/:path*",
     "/api/oncall/:path*",

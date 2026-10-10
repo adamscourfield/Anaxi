@@ -209,6 +209,7 @@ export function TenantNav({
       items: [
         ...(has("ASSESSMENTS") ? [navItem("Attainment", "/assessments")] : []),
         ...(has("STUDENTS") ? [navItem("Students", studentsHref)] : []),
+        navItem("Classes", "/classes"),
         navItem("On call", "/on-call", onCallCount),
       ],
     },

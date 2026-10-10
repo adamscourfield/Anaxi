@@ -1,0 +1,26 @@
+.class-panel { border: 1px solid hsl(var(--border)); border-radius: 3px; background: var(--surface-container-lowest); }
+.class-table th, .class-table td { padding: 1rem .75rem; border-bottom: 1px solid hsl(var(--border)); vertical-align: middle; }
+.class-table thead th { font-size: .625rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--on-surface-variant); }
+.class-table tbody tr { transition: background-color 180ms ease; }
+.class-table tbody tr:hover { background: var(--surface-container-low); }
+.class-table tbody tr:last-child > * { border-bottom: 0; }
+.class-link { text-decoration: none; transition: color 180ms ease; }
+.class-link:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 4px; }
+.class-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.class-badge { display: inline-flex; align-items: center; border-radius: 4px; padding: .4rem .65rem; font-size: .6875rem; font-weight: 600; background: var(--secondary-container); color: var(--on-secondary-container); }
+.class-page-button { padding: .5rem .8rem; border: 1px solid var(--outline-variant); border-radius: 3px; color: var(--on-surface); transition: background-color 180ms ease; }
+.class-page-button:hover:not(:disabled) { background: var(--surface-container-high); }
+.class-page-button:disabled { opacity: .4; cursor: not-allowed; }
+.class-page-button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  .class-enter { animation: class-enter 300ms ease-out both; }
+  .class-chart-bar { transform-origin: left; animation: class-bar 600ms cubic-bezier(.2,.7,.2,1) both; transition: width 250ms ease; }
+  .class-chart-ring { animation: class-ring 450ms ease-out both; transition: stroke-dasharray 250ms ease; }
+}
+@media (prefers-reduced-motion: reduce) { .class-table tbody tr, .class-link, .class-page-button { transition: none; } }
+@keyframes class-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes class-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes class-ring { from { opacity: 0; } to { opacity: 1; } }
+
+.class-field label { display: block; margin-bottom: .375rem; font-size: .75rem; font-weight: 500; color: var(--on-surface-variant); }
+.class-field .field { width: 100%; min-width: 0; }
