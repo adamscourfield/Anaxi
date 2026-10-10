@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { StudentProfileNav } from "@/components/students/student-profile-nav";
 import { StudentProfileTabScroll } from "@/components/students/student-profile-tab-scroll";
+import { MatchSiblingHeight } from "@/components/students/match-sibling-height";
 import type { GradeFormat } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -519,7 +520,7 @@ export default async function StudentDetailPage({
       )}
 
       {analysisProfile ? (
-        <div className="flex max-h-[32rem] flex-col overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
+        <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] pb-4">
             <div>
               <H2>Pastoral risk</H2>
@@ -650,9 +651,10 @@ export default async function StudentDetailPage({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
         {/* Teachers */}
-        <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
+        <MatchSiblingHeight targetId="attainment">
+        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
           <div className="mb-5">
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-text">Teachers</h2>
             <p className="mt-1 text-sm leading-relaxed text-muted">Current subject assignments</p>
@@ -734,6 +736,7 @@ export default async function StudentDetailPage({
           )}
 
         </div>
+        </MatchSiblingHeight>
 
         {/* Assessments */}
         {assessmentsFeature?.enabled ? (
