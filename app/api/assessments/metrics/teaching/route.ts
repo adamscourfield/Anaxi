@@ -73,6 +73,24 @@ function isHistoricCycle(academicYear: string): boolean {
   return Number.isInteger(startYear) && startYear < academicYearStart(new Date());
 }
 
+/**
+ * Arbor's timetable subject and its assessment label are not always identical
+ * (for example, "% Y10 Chemistry" and "Chemistry"). Match only safe label
+ * variants; the caller still rejects a key that resolves to multiple classes.
+ */
+function subjectKey(value: string): string {
+  return value
+    .toLocaleLowerCase("en-GB")
+    .replace(/&/g, " and ")
+    .replace(/^\s*(?:p8\s*:\s*)?%?\s*(?:y|year)\s*\d+\s*/i, "")
+    .replace(/^\s*a\s*level\s+/i, "")
+    .replace(/\s+gcse(?:\s*\(level\s*1\s*\/\s*2\))?/gi, "")
+    .replace(/\s*\(level\s*1\s*\/\s*2\)/gi, "")
+    .replace(/mathematics/g, "maths")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
 export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
@@ -172,6 +190,7 @@ export const GET = withApi(async function GET(req: Request) {
       subjectId: true,
       teacherId: true,
       className: true,
+      subject: { select: { name: true } },
       teacher: {
         select: {
           id: true,
@@ -193,19 +212,28 @@ export const GET = withApi(async function GET(req: Request) {
     }, { headers: { "Cache-Control": "private, no-store" } });
   }
 
-  // Map: studentId → subjectId → dated class assignment. The class label comes
-  // from the same verified link as the result attribution.
-  const studentSubjectTeacher = new Map<string, Map<string, { teacherId: string; className: string }>>();
+  type DatedAssignment = { teacherId: string; className: string };
+  // First prefer Anaxi's exact subject ID. The secondary map is only for safe
+  // Arbor label variants, and is used only when it identifies one class.
+  const studentSubjectTeacher = new Map<string, Map<string, DatedAssignment>>();
+  const studentSubjectKeyAssignments = new Map<string, Map<string, DatedAssignment[]>>();
   const teacherInfoMap = new Map<string, { id: string; fullName: string; email: string }>();
 
   for (const a of assignments) {
     if (!studentSubjectTeacher.has(a.studentId)) {
       studentSubjectTeacher.set(a.studentId, new Map());
     }
-    studentSubjectTeacher.get(a.studentId)!.set(a.subjectId, {
+    const datedAssignment = {
       teacherId: a.teacherId,
       className: a.className?.trim() || "Class not recorded",
-    });
+    };
+    studentSubjectTeacher.get(a.studentId)!.set(a.subjectId, datedAssignment);
+    if (!studentSubjectKeyAssignments.has(a.studentId)) {
+      studentSubjectKeyAssignments.set(a.studentId, new Map());
+    }
+    const bySubjectKey = studentSubjectKeyAssignments.get(a.studentId)!;
+    const key = subjectKey(a.subject.name);
+    if (key) bySubjectKey.set(key, [...(bySubjectKey.get(key) ?? []), datedAssignment]);
     if (!teacherInfoMap.has(a.teacherId)) {
       teacherInfoMap.set(a.teacherId, {
         id: a.teacher.id,
@@ -213,6 +241,15 @@ export const GET = withApi(async function GET(req: Request) {
         email: a.teacher.email,
       });
     }
+  }
+
+  function assignmentFor(studentId: string, subjectId: string | undefined, assessmentSubject: string): DatedAssignment | null {
+    const exact = subjectId ? studentSubjectTeacher.get(studentId)?.get(subjectId) : null;
+    if (exact) return exact;
+    const matches = studentSubjectKeyAssignments.get(studentId)?.get(subjectKey(assessmentSubject)) ?? [];
+    // Never guess when a simplified label could point at more than one class.
+    const uniqueMatches = new Map(matches.map((match) => [`${match.teacherId}:${match.className}`, match]));
+    return uniqueMatches.size === 1 ? [...uniqueMatches.values()][0] : null;
   }
 
   // ── 4. Load observation signals for teachers in this year ────────────────
@@ -345,9 +382,7 @@ export const GET = withApi(async function GET(req: Request) {
     const unassigned: StudentRow[] = [];
 
     for (const r of asmt.results) {
-      const assignment = subjectId
-        ? (studentSubjectTeacher.get(r.studentId)?.get(subjectId) ?? null)
-        : null;
+      const assignment = assignmentFor(r.studentId, subjectId, asmt.subject);
 
       const sRow: StudentRow = {
         studentId: r.studentId,
