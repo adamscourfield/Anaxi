@@ -91,6 +91,11 @@ function subjectKey(value: string): string {
     .trim();
 }
 
+/** The leading segment of Arbor's class label is its displayed class subject. */
+function classSubjectKey(className: string | null): string {
+  return subjectKey((className ?? "").split(":", 1)[0] ?? "");
+}
+
 export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
@@ -242,8 +247,13 @@ export const GET = withApi(async function GET(req: Request) {
       studentSubjectKeyAssignments.set(a.studentId, new Map());
     }
     const bySubjectKey = studentSubjectKeyAssignments.get(a.studentId)!;
-    const key = subjectKey(a.subject.name);
-    if (key) bySubjectKey.set(key, [...(bySubjectKey.get(key) ?? []), datedAssignment]);
+    // Arbor's subject relation can be broad (for example, "Art and Design")
+    // while its dated class is labelled "Art: Year 7: 7A/Ar". Both are kept
+    // as possible keys; assignmentFor accepts one only when it is unambiguous.
+    const keys = new Set([subjectKey(a.subject.name), classSubjectKey(a.className)]);
+    for (const key of keys) {
+      if (key) bySubjectKey.set(key, [...(bySubjectKey.get(key) ?? []), datedAssignment]);
+    }
     if (!teacherInfoMap.has(a.teacherId)) {
       teacherInfoMap.set(a.teacherId, {
         id: a.teacher.id,
