@@ -117,6 +117,7 @@ export const GET = withApi(async function GET(req: Request) {
     return NextResponse.json({ error: "Point not found" }, { status: 404 });
   }
   const assessedAt = historicPointDate(point);
+  const historicCycle = isHistoricCycle(point.cycle.academicYear);
 
   // ── 2. Load all assessments + results ────────────────────────────────────
   const assessments = await prisma.assessment.findMany({
@@ -176,7 +177,7 @@ export const GET = withApi(async function GET(req: Request) {
       // Arbor's dated class labels are the final safeguard for historic
       // attribution. Some enrolment records omit dates, so a current class
       // must never qualify merely because it has a broad effective range.
-      ...(isHistoricCycle(point.cycle.academicYear)
+      ...(historicCycle
         ? { className: { contains: point.cycle.academicYear } }
         : {}),
       effectiveFrom: { lte: assessedAt },
@@ -203,7 +204,7 @@ export const GET = withApi(async function GET(req: Request) {
 
   // Historic impact is available only once the former academic year's dated
   // class roster has been imported. Never fall back to a current class.
-  if (isHistoricCycle(point.cycle.academicYear) && !assignments.length) {
+  if (historicCycle && !assignments.length) {
     return NextResponse.json({
       pointId,
       assessedAt: assessedAt.toISOString(),
@@ -253,24 +254,24 @@ export const GET = withApi(async function GET(req: Request) {
   }
 
   function assignmentFor(studentId: string, subjectId: string | undefined, assessmentSubject: string): DatedAssignment | null {
-    if (isHistoricCycle(point.cycle.academicYear)) {
+    if (historicCycle) {
       historicRosterDiagnostic.resultsChecked++;
       if (studentSubjectTeacher.has(studentId)) historicRosterDiagnostic.studentsWithRoster++;
       else historicRosterDiagnostic.missingStudentRoster++;
     }
     const exact = subjectId ? studentSubjectTeacher.get(studentId)?.get(subjectId) : null;
     if (exact) {
-      if (isHistoricCycle(point.cycle.academicYear)) historicRosterDiagnostic.exactSubjectMatches++;
+      if (historicCycle) historicRosterDiagnostic.exactSubjectMatches++;
       return exact;
     }
     const matches = studentSubjectKeyAssignments.get(studentId)?.get(subjectKey(assessmentSubject)) ?? [];
     // Never guess when a simplified label could point at more than one class.
     const uniqueMatches = new Map(matches.map((match) => [`${match.teacherId}:${match.className}`, match]));
     if (uniqueMatches.size === 1) {
-      if (isHistoricCycle(point.cycle.academicYear)) historicRosterDiagnostic.labelVariantMatches++;
+      if (historicCycle) historicRosterDiagnostic.labelVariantMatches++;
       return [...uniqueMatches.values()][0];
     }
-    if (isHistoricCycle(point.cycle.academicYear) && studentSubjectTeacher.has(studentId)) {
+    if (historicCycle && studentSubjectTeacher.has(studentId)) {
       historicRosterDiagnostic.missingSubjectRoster++;
     }
     return null;
@@ -512,6 +513,6 @@ export const GET = withApi(async function GET(req: Request) {
     assessedAt: assessedAt.toISOString(),
     subjects: subjectStats,
     historicalClassRostersAvailable: true,
-    ...(isHistoricCycle(point.cycle.academicYear) ? { historicalRosterDiagnostic } : {}),
+    ...(historicCycle ? { historicalRosterDiagnostic: historicRosterDiagnostic } : {}),
   }, { headers: { "Cache-Control": "private, no-store" } });
 });
