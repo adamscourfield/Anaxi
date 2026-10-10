@@ -155,6 +155,12 @@ export const GET = withApi(async function GET(req: Request) {
       // prevents a legacy or manually-created assignment from attributing a
       // historic assessment to a teacher who was not teaching that class.
       dataSource: "ARBOR",
+      // Arbor's dated class labels are the final safeguard for historic
+      // attribution. Some enrolment records omit dates, so a current class
+      // must never qualify merely because it has a broad effective range.
+      ...(isHistoricCycle(point.cycle.academicYear)
+        ? { className: { contains: point.cycle.academicYear } }
+        : {}),
       effectiveFrom: { lte: assessedAt },
       OR: [
         { effectiveTo: null },

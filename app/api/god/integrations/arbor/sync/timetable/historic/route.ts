@@ -68,6 +68,10 @@ export const POST = withApi(async function POST(req: Request) {
     const staffResolver = buildTimetableIdentityResolver(staff);
     const candidates = new Map<string, { tenantId: string; studentId: string; teacherId: string; subject: string; className: string }>();
     for (const assignment of assignments) {
+      // Arbor sometimes returns enrolments without start/end dates. The class
+      // label itself names the academic year, so require it before historic
+      // links can be stored for assessment attribution.
+      if (!assignment.className.includes(ACADEMIC_YEAR)) continue;
       const matches = studentResolver.studentCandidates(assignment.studentId, assignment.studentName);
       const eligibleStudents = matches.filter((match) => assignment.staff.some((arborStaff) => staffResolver.staff(match.person.tenantId, arborStaff.id, arborStaff.fullName)));
       if (eligibleStudents.length !== 1) continue;
