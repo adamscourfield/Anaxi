@@ -2746,11 +2746,58 @@ function TeachingTab({
     );
   }
 
+  const teacherImpactRows = data.subjects
+    .flatMap((subject) =>
+      subject.classes
+        .filter((teacher) => teacher.mean !== null)
+        .map((teacher) => ({
+          subject: subject.subject,
+          teacherName: teacher.teacherName,
+          count: teacher.count,
+          average: teacher.meanDisplay ?? "—",
+          vsYearMean: teacher.vsYearMean,
+        })),
+    )
+    .sort((a, b) => a.subject.localeCompare(b.subject) || a.teacherName.localeCompare(b.teacherName));
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-[var(--on-surface-muted)]">
-        Class mean vs year mean for each subject. Click a class to see individual student results.
+        Teacher averages are calculated only from the students linked to that teacher for the assessed subject. This is an attainment indicator, not a causal measure of impact.
       </p>
+
+      <div className="overflow-hidden rounded-2xl border border-border bg-[var(--surface-container-lowest)] shadow-ambient">
+        <div className="border-b border-border/30 px-5 py-4">
+          <p className="font-bold text-[var(--on-surface)]">Teacher impact</p>
+          <p className="mt-1 text-xs text-[var(--on-surface-muted)]">Average result for each teacher&apos;s linked students at this assessment point.</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[580px] text-left text-sm">
+            <thead className="bg-[var(--surface-container-low)] text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-muted)]">
+              <tr>
+                <th className="px-5 py-3">Teacher</th>
+                <th className="px-4 py-3">Subject</th>
+                <th className="px-4 py-3 text-right">Students</th>
+                <th className="px-4 py-3 text-right">Average</th>
+                <th className="px-5 py-3 text-right">Vs subject mean</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/20">
+              {teacherImpactRows.map((row) => (
+                <tr key={`${row.teacherName}:${row.subject}`}>
+                  <td className="px-5 py-3 font-medium text-[var(--on-surface)]">{row.teacherName}</td>
+                  <td className="px-4 py-3 text-[var(--on-surface-muted)]">{row.subject}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">{row.count}</td>
+                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-[var(--on-surface)]">{row.average}</td>
+                  <td className={`px-5 py-3 text-right font-semibold tabular-nums ${row.vsYearMean === null ? "text-[var(--on-surface-muted)]" : row.vsYearMean >= 0 ? "text-[var(--success)]" : "text-[var(--error)]"}`}>
+                    {row.vsYearMean === null ? "—" : `${row.vsYearMean >= 0 ? "+" : ""}${row.vsYearMean}`}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {data.subjects.map((subj) => {
         if (!subj.classes.length) return null;
