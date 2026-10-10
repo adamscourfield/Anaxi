@@ -846,6 +846,12 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
         </StatusBanner>
       ) : null}
 
+      {params?.timetableHistoricStored === "success" ? (
+        <StatusBanner variant="success" title="Stored historic teacher links checked.">
+          Anaxi has {previewCount(params.timetableHistoricStoredAll)} saved 2025/26-dated links; {previewCount(params.timetableHistoricStoredVerified)} carry an explicit `2025/2026` class label and are eligible for historic Teacher Impact. Sample stored labels: {params.timetableHistoricStoredSamples || "none"}. Nothing has been changed.
+        </StatusBanner>
+      ) : null}
+
       {params?.timetableSync === "success" ? (
         <StatusBanner variant="success" title="Subject teachers synced.">
           {previewCount(params.timetableLinkable)} current Arbor subject-teacher links are now shown on student records: {previewCount(params.timetableLinkedById)} matched by Arbor ID and {previewCount(params.timetableLinkedByName)} using a unique exact name. Manually entered Anaxi links were kept unchanged.
@@ -1071,6 +1077,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                     <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable/summary")} csrfToken={csrfToken}>Preview subject links</MenuItemForm>
                     <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable/historic")} csrfToken={csrfToken}>Check 2025/26 historic roster</MenuItemForm>
                     <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable/historic/progress")} csrfToken={csrfToken}>Calculate historic roster total</MenuItemForm>
+                    <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable/historic/stored")} csrfToken={csrfToken}>Check stored historic teacher links</MenuItemForm>
                   </ActionMenu>
                 </div>
               </div>
