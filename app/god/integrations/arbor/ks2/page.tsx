@@ -15,17 +15,29 @@ export default async function Ks2ImportPage({ searchParams }: { searchParams: Pr
   const params = await searchParams;
   const integration = await prisma.sharedIntegration.findFirst({ where: { provider: "ARBOR", ...(params.connectionId ? { id: params.connectionId } : {}) }, include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return <p>Arbor is not connected.</p>;
-  const students = await prisma.student.findMany({ where: { tenantId: { in: integration.schools.map((school) => school.tenantId) }, externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true, ks2ReadingScaledScore: true, ks2MathsScaledScore: true } });
+  const students = await prisma.student.findMany({ where: { tenantId: { in: integration.schools.map((school) => school.tenantId) }, externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true, ks2ReadingScaledScore: true, ks2MathsScaledScore: true, status: true, yearGroup: true, tenant: { select: { name: true } } } });
   try {
     const source = await loadArborKs2Results(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
     const plan = planKs2Backfill(students, source.results);
     const paired = students.filter((student) => student.ks2ReadingScaledScore !== null && student.ks2MathsScaledScore !== null).length;
+    const active = students.filter((student) => student.status === "ACTIVE");
+    const activePaired = active.filter((student) => student.ks2ReadingScaledScore !== null && student.ks2MathsScaledScore !== null).length;
+    const coverage = new Map<string, { total: number; paired: number }>();
+    for (const student of active) {
+      const key = `${student.tenant.name} · ${student.yearGroup ?? "No year group"}`;
+      const value = coverage.get(key) ?? { total: 0, paired: 0 };
+      value.total++;
+      if (student.ks2ReadingScaledScore !== null && student.ks2MathsScaledScore !== null) value.paired++;
+      coverage.set(key, value);
+    }
     const scoreCount = plan.updates.reduce((total, update) => total + Object.keys(update.data).length, 0);
     return <main className="mx-auto max-w-5xl space-y-6 p-8">
       <Link href={`/god/integrations/arbor?connectionId=${integration.id}`}>← Back to Arbor connection</Link>
       <h1 className="text-2xl font-semibold">KS2 prior attainment</h1>
       <p>Import reading and maths scaled scores from {integration.label}. Existing Anaxi values are preserved.</p>
       {params.updated !== undefined ? <p role="status" className="rounded border border-border p-4">Imported {params.scores} scores for {params.updated} students.</p> : null}
+      {source.warning ? <p role="alert" className="rounded border border-border p-4">{source.warning}</p> : null}
+      <p>Active students with both scores: {activePaired} / {active.length}. Totals below include archived students.</p>
       <dl className="grid gap-4 sm:grid-cols-3">
         <div><dt>Students with both scores</dt><dd className="text-2xl">{paired} / {students.length}</dd></div>
         <div><dt>Students ready to update</dt><dd className="text-2xl">{plan.updates.length}</dd></div>
@@ -33,6 +45,8 @@ export default async function Ks2ImportPage({ searchParams }: { searchParams: Pr
       </dl>
       <p>{source.results.length} valid scaled marks found across {source.matchedDefinitions.length} KS2 assessment definitions. {source.scanned} source marks checked. {plan.conflicts} conflicting scores skipped; {source.invalid} invalid or unavailable marks skipped.</p>
       {plan.updates.length ? <form action={importArborKs2}><input type="hidden" name="connectionId" value={integration.id} /><SubmitButton>Import missing KS2 scores</SubmitButton></form> : <p>No missing scores can currently be filled from this source.</p>}
+      <h2 className="text-lg font-semibold">Active student coverage</h2>
+      <ul>{[...coverage.entries()].sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true })).map(([key, value]) => <li key={key}>{key}: {value.paired} / {value.total} with both scores</li>)}</ul>
       <h2 className="text-lg font-semibold">Matched KS2 assessments</h2>
       <ul>{source.matchedDefinitions.map((definition) => <li key={definition.id}>{definition.assessmentName || definition.displayName} ({definition.subject})</li>)}</ul>
       {!source.matchedDefinitions.length ? <details><summary>Available KS2 source definitions</summary><pre className="whitespace-pre-wrap text-sm">{JSON.stringify(source.catalogue, null, 2)}</pre></details> : null}
