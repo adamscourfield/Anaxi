@@ -1132,6 +1132,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
               <div className="space-y-4">
                 <div>
                   <H3>Assessment review</H3>
+                  <Link href={connectionAction("/god/integrations/arbor/ks2")} className="mt-2 inline-block text-sm font-medium text-accent">Import KS2 prior attainment →</Link>
                   <MetaText className="mt-1">This is the only data area that requires a decision before it appears in Anaxi.</MetaText>
                 </div>
                 {params?.assessmentHistory === "progress" || params?.assessmentHistory === "complete" ? (
