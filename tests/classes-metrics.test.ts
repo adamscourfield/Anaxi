@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attendanceSummary, groupClassRosters } from "@/modules/classes/metrics";
+import { attendanceSummary, groupClassRosters, classSubjectKey, behaviourSnapshotGroups } from "@/modules/classes/metrics";
 
 describe("class data", () => {
   it("weights attendance by sessions instead of averaging rates", () => {
@@ -25,4 +25,18 @@ describe("class data", () => {
     const base = { className: "7A", subject: { id: "maths", name: "Maths" }, teacher: { id: "a", fullName: "Teacher" }, student: { id: "p1", yearGroup: "Y7" } };
     expect(groupClassRosters([base, { ...base, subject: { id: "english", name: "English" } }])).toHaveLength(2);
   });
+  it("matches known Arbor subject labels without merging distinct English qualifications", () => {
+    expect(classSubjectKey("Mathematics")).toBe(classSubjectKey(" Maths "));
+    expect(classSubjectKey("Art and Design / Art")).toBe(classSubjectKey("Art"));
+    expect(classSubjectKey("Design and Technology - Graphics")).toBe(classSubjectKey("Graphics"));
+    expect(classSubjectKey("English Language")).not.toBe(classSubjectKey("English Literature"));
+    expect(classSubjectKey("Physics")).not.toBe(classSubjectKey("Science"));
+  });
+
+  it("never adds behaviour snapshots from different reporting periods together", () => {
+    const sample = { detentionsCount: 2, onCallsCount: 1, latenessCount: 3, internalExclusionsCount: 0, suspensionsCount: 0 };
+    const groups = behaviourSnapshotGroups([{ ...sample, countScope: "YEAR_TO_DATE" }, { ...sample, countScope: "YEAR_TO_DATE" }, { ...sample, detentionsCount: 9, countScope: "ROLLING_21_DAYS" }]);
+    expect(groups.map(g => [g.scope, g.pupils, g.detentions])).toEqual([["YEAR_TO_DATE", 2, 4], ["ROLLING_21_DAYS", 1, 9]]);
+  });
+
 });

@@ -21,6 +21,15 @@ export function ClassDetail({ data, windowDays }: { data: ClassData; windowDays:
   const cyclePoints = data.points.filter(point => point.cycleId === cycleId);
   const [pointId, setPointId] = useState(cyclePoints[0]?.id ?? "");
   const point = cyclePoints.find(p => p.id === pointId) ?? cyclePoints[0];
+  const [behaviourSource, setBehaviourSource] = useState(Object.keys(data.events).length ? "events" : data.behaviourSnapshots[0]?.scope ?? "events");
+  const behaviourSnapshot = data.behaviourSnapshots.find(s => s.scope === behaviourSource);
+  const behaviourRows = behaviourSnapshot ? [
+    { label: "Detentions", value: behaviourSnapshot.detentions },
+    { label: "On calls", value: behaviourSnapshot.onCalls },
+    { label: "Late arrivals", value: behaviourSnapshot.lateness },
+    { label: "Internal exclusions", value: behaviourSnapshot.internalExclusions },
+    { label: "Suspensions", value: behaviourSnapshot.suspensions },
+  ] : categories.map(([key, label]) => ({ label, value: data.events[key] ?? 0 }));
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("name");
   const visible = useMemo(() => data.students.filter(s => s.name.toLowerCase().includes(search.toLowerCase())).sort((a, b) => sort === "attendance" ? (a.snapshot?.attendancePct ?? 101) - (b.snapshot?.attendancePct ?? 101) : sort === "detentions" ? (b.events.DETENTION ?? 0) - (a.events.DETENTION ?? 0) : a.name.localeCompare(b.name)), [data.students, search, sort]);
@@ -42,12 +51,12 @@ export function ClassDetail({ data, windowDays }: { data: ClassData; windowDays:
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard label="Class size" value={data.count} context={`${data.yearGroup} · Current roster`} tone="glass" />
       <StatCard label="Overall attendance" value={data.attendance.value === null ? "—" : `${data.attendance.value.toFixed(1)}%`} context={`${data.attendance.count}/${data.count} pupils · ${data.attendance.weighted ? "Session weighted" : "Mean of pupil rates"}`} tone="glass" />
-      <StatCard label="Detentions" value={data.events.DETENTION ?? 0} context={`Recorded pupil events · last ${windowDays} days`} tone="glass" />
+      <StatCard label="Detentions" value={behaviourSnapshot?.detentions ?? data.events.DETENTION ?? 0} context={behaviourSnapshot ? `${behaviourSnapshot.label} · ${behaviourSnapshot.pupils}/${data.count} pupils` : `Recorded pupil events · last ${windowDays} days`} tone="glass" />
       <StatCard label="Attainment recorded" value={`${validGrades.length} / ${data.count}`} context={point?.label ?? "No subject assessment results"} tone="softGrey" />
     </div>
     <div className="grid gap-4 xl:grid-cols-3">
       <AttendanceRing bands={bands} missing={data.count - data.attendance.count} />
-      <BarChart title="Behaviour events" subtitle={`Current pupils · last ${windowDays} days · all lessons`} rows={categories.map(([key, label]) => ({ label, value: data.events[key] ?? 0 }))} color="var(--warning)" />
+      <BarChart title={behaviourSnapshot ? "Behaviour totals" : "Behaviour events"} subtitle={behaviourSnapshot ? `${behaviourSnapshot.label} · ${behaviourSnapshot.pupils}/${data.count} pupils · Latest snapshots` : `Recorded pupil events · last ${windowDays} days · all lessons`} rows={behaviourRows} color="var(--warning)" controls={<div className="class-field"><label htmlFor="behaviour-source">Reporting period</label><select className="field" id="behaviour-source" value={behaviourSource} onChange={e => setBehaviourSource(e.target.value)}><option value="events">Events · last {windowDays} days</option>{data.behaviourSnapshots.map(s => <option key={s.scope} value={s.scope}>{s.label} · {s.pupils} pupils</option>)}</select></div>} />
       <BarChart title="Attainment distribution" subtitle={point ? `${point.cycle} · ${point.label}${point.format === "RAW" ? " · % of available marks" : ""}` : "No subject results have been recorded"} rows={gradeRows} color="var(--primary)" />
     </div>
     <section className="class-panel p-5 sm:p-6" aria-labelledby="class-attainment-heading">

@@ -31,3 +31,30 @@ export function groupClassRosters(links: RosterLink[]) {
   }
   return [...groups.values()];
 }
+
+/** Known MIS curriculum labels and assessment upload names for the same subject. */
+export function classSubjectKey(subject: string) {
+  const key = subject.trim().toLowerCase().replace(/\s+/g, " ");
+  const aliases: Record<string, string> = {
+    mathematics: "maths", maths: "maths", math: "maths",
+    "art and design / art": "art", "art and design": "art", art: "art",
+    "design and technology - graphics": "graphics", graphics: "graphics",
+    "physical education / sports": "pe", "physical education": "pe", pe: "pe",
+    "biology / botany / zoology / ecology": "biology", biology: "biology",
+    "government and politics": "politics", politics: "politics",
+    "religious education": "re", "religious studies": "re", re: "re", rs: "re",
+  };
+  return aliases[key] ?? key;
+}
+
+export const behaviourScopeLabels: Record<string, string> = { TERM_TO_DATE: "Term to date", YEAR_TO_DATE: "Year to date", ROLLING_21_DAYS: "Rolling 21 days", ROLLING_28_DAYS: "Rolling 28 days" };
+export type BehaviourSnapshot = { countScope: string; detentionsCount: number; onCallsCount: number; latenessCount: number; internalExclusionsCount: number; suspensionsCount: number };
+export function behaviourSnapshotGroups(snapshots: BehaviourSnapshot[]) {
+  const groups = new Map<string, { scope: string; label: string; pupils: number; detentions: number; onCalls: number; lateness: number; internalExclusions: number; suspensions: number }>();
+  for (const snapshot of snapshots) {
+    const group = groups.get(snapshot.countScope) ?? { scope: snapshot.countScope, label: behaviourScopeLabels[snapshot.countScope] ?? snapshot.countScope, pupils: 0, detentions: 0, onCalls: 0, lateness: 0, internalExclusions: 0, suspensions: 0 };
+    group.pupils++; group.detentions += snapshot.detentionsCount; group.onCalls += snapshot.onCallsCount; group.lateness += snapshot.latenessCount; group.internalExclusions += snapshot.internalExclusionsCount; group.suspensions += snapshot.suspensionsCount;
+    groups.set(snapshot.countScope, group);
+  }
+  return [...groups.values()].sort((a, b) => b.pupils - a.pupils || a.scope.localeCompare(b.scope));
+}

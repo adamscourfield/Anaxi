@@ -1,12 +1,14 @@
 "use client";
+import type { ReactNode } from "react";
 
-export function BarChart({ title, subtitle, rows, color = "var(--primary)", suffix = "", max }: {
-  title: string; subtitle: string; rows: { label: string; value: number }[]; color?: string; suffix?: string; max?: number;
+export function BarChart({ title, subtitle, rows, color = "var(--primary)", suffix = "", max, controls }: {
+  title: string; subtitle: string; rows: { label: string; value: number }[]; color?: string; suffix?: string; max?: number; controls?: ReactNode;
 }) {
   const ceiling = max ?? Math.max(1, ...rows.map(row => row.value));
   return <section className="class-panel p-5 sm:p-6" aria-label={title}>
     <h2 className="text-base font-semibold text-text">{title}</h2>
     <p className="mt-1 text-xs leading-relaxed text-muted">{subtitle}</p>
+    {controls ? <div className="mt-4">{controls}</div> : null}
     {rows.length ? <ul className="mt-6 space-y-4">{rows.map(row => <li key={row.label}>
       <div className="mb-1.5 flex justify-between gap-3 text-xs"><span className="text-muted">{row.label}</span><span className="font-semibold tabular-nums text-text">{Number.isInteger(row.value) ? row.value : row.value.toFixed(1)}{suffix}</span></div>
       <div className="h-2 overflow-hidden rounded-full bg-surface-container-high" aria-hidden="true"><div className="class-chart-bar h-full rounded-full" style={{ width: `${Math.min(100, row.value / ceiling * 100)}%`, background: color }} /></div>

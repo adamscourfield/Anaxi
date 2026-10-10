@@ -2,7 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { hasRecordedGrade, normalizeGrade } from "@/modules/assessments/gradeNormalizer";
 import { prisma } from "@/lib/prisma";
-import { attendanceSummary, groupClassRosters } from "./metrics";
+import { attendanceSummary, groupClassRosters, classSubjectKey, behaviourSnapshotGroups } from "./metrics";
 
 export async function loadClasses(tenantId: string, windowDays: number) {
   const now = new Date();
@@ -46,7 +46,7 @@ export async function loadClasses(tenantId: string, windowDays: number) {
   }
   const classes = groups.map(group => {
     const students = [...group.pupilIds].map(id => ({ ...pupils.get(id)!, events: pupilEvents.get(id) ?? {} })).sort((a, b) => a.name.localeCompare(b.name));
-    const marks = students.flatMap(student => (byStudent.get(student.id) ?? []).filter(result => result.assessment.subject.trim().toLowerCase() === group.subject.trim().toLowerCase()));
+    const marks = students.flatMap(student => (byStudent.get(student.id) ?? []).filter(result => classSubjectKey(result.assessment.subject) === classSubjectKey(group.subject)));
     const pointMap = new Map<string, { id: string; label: string; cycleId: string; cycle: string; date: string; ordinal: number; format: string; maxScore: number | null; status: string }>();
     for (const mark of marks) {
       const assessment = mark.assessment, point = assessment.point;
@@ -68,7 +68,7 @@ export async function loadClasses(tenantId: string, windowDays: number) {
     const recorded = latest ? rows.filter(row => row.grades[0]?.valid && row.grades[0]?.status === "PRESENT" && row.grades[0]?.value?.trim()).length : 0;
     const attendance = attendanceSummary(students.flatMap(s => s.snapshot ? [{ pct: s.snapshot.attendancePct, possible: s.snapshot.attendancePossibleCount, present: s.snapshot.attendancePresentCount }] : []));
     const events = students.reduce<Record<string, number>>((total, student) => { for (const [key, count] of Object.entries(student.events)) total[key] = (total[key] ?? 0) + count; return total; }, {});
-    return { id: group.id, name: group.name, subject: group.subject, yearGroup: group.yearGroup, teachers: [...group.teachers].map(([id, name]) => ({ id, name })), count: students.length, attendance, events, recorded, latest: latest ? `${latest.cycle} · ${latest.label}` : null, points, students: rows };
+    return { id: group.id, name: group.name, subject: group.subject, yearGroup: group.yearGroup, teachers: [...group.teachers].map(([id, name]) => ({ id, name })), count: students.length, attendance, events, behaviourSnapshots: behaviourSnapshotGroups(students.flatMap(s => s.snapshot ? [s.snapshot] : [])), recorded, latest: latest ? `${latest.cycle} · ${latest.label}` : null, points, students: rows };
   }).sort((a, b) => a.yearGroup.localeCompare(b.yearGroup, undefined, { numeric: true }) || a.name.localeCompare(b.name, undefined, { numeric: true }));
   return { classes, pupilCount: pupils.size, unlabelled: links.filter(link => !link.className?.trim()).length, since: since.toISOString(), asOf: now.toISOString() };
 }
