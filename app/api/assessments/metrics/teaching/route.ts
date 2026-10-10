@@ -253,7 +253,6 @@ export const GET = withApi(async function GET(req: Request) {
     }
   }
 
-  const historicCycle = isHistoricCycle(point.cycle.academicYear);
   function assignmentFor(studentId: string, subjectId: string | undefined, assessmentSubject: string): DatedAssignment | null {
     if (historicCycle) {
       historicRosterDiagnostic.resultsChecked++;
