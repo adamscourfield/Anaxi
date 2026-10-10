@@ -68,12 +68,9 @@ function academicYearStart(date: Date): number {
   return date.getUTCFullYear() - (date.getUTCMonth() < 8 ? 1 : 0);
 }
 
-function historicAssignmentWasVerifiedInYear(assessedAt: Date, syncedAt: Date | null): boolean {
-  const assessmentYear = academicYearStart(assessedAt);
-  const currentYear = academicYearStart(new Date());
-  if (assessmentYear >= currentYear) return true;
-  if (!syncedAt) return false;
-  return syncedAt <= new Date(Date.UTC(assessmentYear + 1, 7, 31, 23, 59, 59));
+function isHistoricCycle(academicYear: string): boolean {
+  const startYear = Number(academicYear.slice(0, 4));
+  return Number.isInteger(startYear) && startYear < academicYearStart(new Date());
 }
 
 export const GET = withApi(async function GET(req: Request) {
@@ -102,6 +99,19 @@ export const GET = withApi(async function GET(req: Request) {
     return NextResponse.json({ error: "Point not found" }, { status: 404 });
   }
   const assessedAt = historicPointDate(point);
+
+  // The timetable sync intentionally captures the live academic year's class
+  // roster. It does not yet retain a verified historical roster. Do not use a
+  // current class (for example, 8H) to attribute a prior year's result from
+  // the student's former class (for example, 7H).
+  if (isHistoricCycle(point.cycle.academicYear)) {
+    return NextResponse.json({
+      pointId,
+      assessedAt: assessedAt.toISOString(),
+      subjects: [],
+      historicalClassRostersAvailable: false,
+    }, { headers: { "Cache-Control": "private, no-store" } });
+  }
 
   // ── 2. Load all assessments + results ────────────────────────────────────
   const assessments = await prisma.assessment.findMany({
@@ -169,7 +179,6 @@ export const GET = withApi(async function GET(req: Request) {
       subjectId: true,
       teacherId: true,
       className: true,
-      arborSyncedAt: true,
       teacher: {
         select: {
           id: true,
@@ -186,10 +195,6 @@ export const GET = withApi(async function GET(req: Request) {
   const teacherInfoMap = new Map<string, { id: string; fullName: string; email: string }>();
 
   for (const a of assignments) {
-    // A historic outcome can be attributed only to a classroom relationship
-    // that Arbor verified during that same academic year. A 2026/27 sync with
-    // an old effective date is not evidence of who taught in 2025/26.
-    if (!historicAssignmentWasVerifiedInYear(assessedAt, a.arborSyncedAt)) continue;
     if (!studentSubjectTeacher.has(a.studentId)) {
       studentSubjectTeacher.set(a.studentId, new Map());
     }
@@ -443,5 +448,6 @@ export const GET = withApi(async function GET(req: Request) {
     pointId,
     assessedAt: assessedAt.toISOString(),
     subjects: subjectStats,
+    historicalClassRostersAvailable: true,
   }, { headers: { "Cache-Control": "private, no-store" } });
 });

@@ -204,7 +204,11 @@ type TeachingSubject = {
   unassigned: TeachingStudent[];
 };
 
-type TeachingData = { assessedAt: string; subjects: TeachingSubject[] };
+type TeachingData = {
+  assessedAt: string;
+  subjects: TeachingSubject[];
+  historicalClassRostersAvailable: boolean;
+};
 
 // ─── Progress 8 types ─────────────────────────────────────────────────────────
 
@@ -2734,7 +2738,12 @@ function TeachingTab({
   if (!data || !data.subjects.length) {
     return (
       <div className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] p-8 text-center text-sm text-[var(--on-surface-muted)] shadow-ambient">
-        No teaching group data available. Assign students to teachers in the Teaching section to see class-level analysis.
+        {data && !data.historicalClassRostersAvailable ? (
+          <>
+            <p className="font-semibold text-[var(--on-surface)]">Historical teacher impact is not available for this assessment.</p>
+            <p className="mx-auto mt-2 max-w-xl">Anaxi has not imported the class roster and teaching assignments from this academic year. Current classes are deliberately excluded so results are not credited to the wrong teachers.</p>
+          </>
+        ) : "No teaching group data available. Assign students to teachers in the Teaching section to see class-level analysis."}
       </div>
     );
   }
