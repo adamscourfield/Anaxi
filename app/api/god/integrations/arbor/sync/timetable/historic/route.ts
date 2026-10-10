@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { withApi } from "@/lib/apiRoute";
+import { assertCronAuthorized } from "@/lib/cronAuth";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
 import { ArborClient } from "@/lib/integrations/arbor/client";
@@ -10,20 +11,27 @@ import { decryptCredentials } from "@/lib/integrationSecrets";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
-type HistoricSyncState = { page?: number; startedAt?: string; completedAt?: string; membershipsProcessed?: number; linksSaved?: number };
+type HistoricSyncState = { version?: number; page?: number; startedAt?: string; completedAt?: string; membershipsProcessed?: number; linksSaved?: number };
 const ACADEMIC_YEAR = "2025/2026";
 const AS_OF_DATE = "2026-07-15";
 const EFFECTIVE_FROM = new Date("2025-09-01T00:00:00.000Z");
 const EFFECTIVE_TO = new Date("2026-08-31T23:59:59.999Z");
 const PAGES_PER_RUN = 5;
+// Version 2 switches historic attribution from broad academic-unit staff to
+// the staff timetabled to the individual class.
+const HISTORIC_TIMETABLE_MAPPING_VERSION = 2;
 
 /** Imports only dated 2025/26 classroom assignments; current timetable rows are untouched. */
 export const POST = withApi(async function POST(req: Request) {
-  const actor = await requireSuperAdminUser();
-  const form = await req.formData();
-  try { await assertCsrfFromForm(form); } catch { return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 }); }
-  if (form.get("confirm") !== "SYNC_HISTORIC_TIMETABLE") {
-    return NextResponse.redirect(new URL("/god/integrations/arbor?timetableHistoricSync=confirmation-required", req.url));
+  const denied = assertCronAuthorized(req);
+  const scheduled = !denied && req.headers.get("x-arbor-scheduled-sync") === "1";
+  const actor = scheduled ? null : await requireSuperAdminUser();
+  if (!scheduled) {
+    const form = await req.formData();
+    try { await assertCsrfFromForm(form); } catch { return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 }); }
+    if (form.get("confirm") !== "SYNC_HISTORIC_TIMETABLE") {
+      return NextResponse.redirect(new URL("/god/integrations/arbor?timetableHistoricSync=confirmation-required", req.url));
+    }
   }
 
   const db = prisma as any;
@@ -39,10 +47,16 @@ export const POST = withApi(async function POST(req: Request) {
   try {
     const config = integration.config && typeof integration.config === "object" ? integration.config as Record<string, unknown> : {};
     const historicSyncs = config.historicTimetableSyncs && typeof config.historicTimetableSyncs === "object" ? config.historicTimetableSyncs as Record<string, HistoricSyncState> : {};
-    const state = historicSyncs[ACADEMIC_YEAR] ?? {};
+    const savedState = historicSyncs[ACADEMIC_YEAR] ?? {};
+    const state = savedState.version === HISTORIC_TIMETABLE_MAPPING_VERSION ? savedState : {};
+    // A completed versioned pass remains complete until a later mapping version
+    // deliberately starts a replacement rebuild.
+    if (scheduled && state.completedAt) {
+      return NextResponse.json({ complete: true, skipped: "historic roster already current" });
+    }
     const page = typeof state.page === "number" && state.page >= 0 ? state.page : 0;
     const startedAt = state.startedAt && !Number.isNaN(new Date(state.startedAt).getTime()) ? new Date(state.startedAt) : new Date();
-    const run = await db.sharedIntegrationSyncRun.create({ data: { integrationId: integration.id, entityType: "TIMETABLE", triggeredBy: actor.id } });
+    const run = await db.sharedIntegrationSyncRun.create({ data: { integrationId: integration.id, entityType: "TIMETABLE", triggeredBy: scheduled ? "CRON" : actor!.id } });
     runId = run.id;
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
@@ -110,11 +124,12 @@ export const POST = withApi(async function POST(req: Request) {
     const membershipsProcessed = (typeof state.membershipsProcessed === "number" ? state.membershipsProcessed : page * 100) + diagnostics.activeMemberships;
     const linksSaved = await db.studentSubjectTeacher.count({ where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", effectiveFrom: EFFECTIVE_FROM } });
     const nextState = complete
-      ? { completedAt: new Date().toISOString(), membershipsProcessed, linksSaved }
-      : { page: nextPage, startedAt: startedAt.toISOString(), membershipsProcessed, linksSaved };
+      ? { version: HISTORIC_TIMETABLE_MAPPING_VERSION, completedAt: new Date().toISOString(), membershipsProcessed, linksSaved }
+      : { version: HISTORIC_TIMETABLE_MAPPING_VERSION, page: nextPage, startedAt: startedAt.toISOString(), membershipsProcessed, linksSaved };
     await db.sharedIntegrationSyncRun.update({ where: { id: run.id }, data: { status: "SUCCESS", recordsProcessed: rows.length, recordsCreated: rows.length, finishedAt: new Date() } });
     await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, historicTimetableSyncs: { ...historicSyncs, [ACADEMIC_YEAR]: nextState } }, lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null } });
-    await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.historic_timetable_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { academicYear: ACADEMIC_YEAR, page, nextPage, pagesRead: nextPage - page, linked: rows.length, complete } } });
+    if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.historic_timetable_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { academicYear: ACADEMIC_YEAR, page, nextPage, pagesRead: nextPage - page, linked: rows.length, complete } } });
+    if (scheduled) return NextResponse.json({ page, nextPage, linked: rows.length, complete });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("timetableHistoricSync", complete ? "success" : "progress");
     url.searchParams.set("timetableHistoricPage", String(nextPage));
@@ -127,6 +142,7 @@ export const POST = withApi(async function POST(req: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message.slice(0, 500) : "Historic timetable sync failed.";
     if (runId) await db.sharedIntegrationSyncRun.update({ where: { id: runId }, data: { status: "FAILED", recordsFailed: 1, errorSummary: message, finishedAt: new Date() } });
+    if (scheduled) return NextResponse.json({ error: message }, { status: 500 });
     const url = new URL("/god/integrations/arbor?timetableHistoricSync=failed", req.url);
     url.searchParams.set("timetableError", message);
     return NextResponse.redirect(url);

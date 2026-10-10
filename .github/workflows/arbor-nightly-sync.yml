@@ -53,6 +53,14 @@ jobs:
               --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
               "${ANAXI_APP_URL%/}/api/cron/arbor-timetable"
           done
+          # Historic class staffing is versioned. A mapping change starts a
+          # replacement pass automatically; each request advances five pages.
+          for _ in $(seq 1 42); do
+            curl --fail --silent --show-error \
+              --retry 2 \
+              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+              "${ANAXI_APP_URL%/}/api/cron/arbor-timetable-historic"
+          done
           for _ in $(seq 1 8); do
             curl --fail --silent --show-error \
               --retry 2 \
