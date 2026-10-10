@@ -22,8 +22,15 @@ describe("class data", () => {
     expect([...groups[0].years]).toEqual(["Y10", "Y11"]);
   });
   it("does not merge same-named classes from different subjects", () => {
-    const base = { className: "7A", subject: { id: "maths", name: "Maths" }, teacher: { id: "a", fullName: "Teacher" }, student: { id: "p1", yearGroup: "Y7" } };
+    const base = { className: "10A", subject: { id: "maths", name: "Maths" }, teacher: { id: "a", fullName: "Teacher" }, student: { id: "p1", yearGroup: "Y10" } };
     expect(groupClassRosters([base, { ...base, subject: { id: "english", name: "English" } }])).toHaveLength(2);
+  });
+  it("combines the twelve KS3 streams across subjects without multiplying pupils", () => {
+    const links = [7, 8, 9].flatMap(year => ["A", "F", "H", "S"].flatMap(stream => ["English", "Mathematics"].map(subject => ({ className: `${subject}: Year ${year}: ${year}${stream}/${subject.slice(0, 2)}`, subject: { id: subject, name: subject }, teacher: { id: subject, fullName: subject }, student: { id: `${year}${stream}`, yearGroup: `Y${year}` } }))));
+    const groups = groupClassRosters(links);
+    expect(groups).toHaveLength(12);
+    expect(groups.every(g => g.combined && g.pupilIds.size === 1 && g.teachers.size === 2 && g.subjects.size === 2)).toBe(true);
+    expect(groups.map(g => g.name)).toContain("9S");
   });
   it("matches known Arbor subject labels without merging distinct English qualifications", () => {
     expect(classSubjectKey("Mathematics")).toBe(classSubjectKey(" Maths "));

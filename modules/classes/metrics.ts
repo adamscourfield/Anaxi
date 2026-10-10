@@ -18,12 +18,16 @@ export function attendanceBand(pct: number) {
 
 export type RosterLink = { className: string | null; subject: { id: string; name: string }; teacher: { id: string; fullName: string }; student: { id: string; yearGroup: string | null } };
 export function groupClassRosters(links: RosterLink[]) {
-  const groups = new Map<string, { key: string; name: string; subject: string; years: Set<string>; teachers: Map<string, string>; pupilIds: Set<string> }>();
+  const groups = new Map<string, { key: string; name: string; subject: string; years: Set<string>; teachers: Map<string, string>; pupilIds: Set<string>; subjects: Set<string>; combined: boolean }>();
   for (const link of links) {
     const name = link.className?.trim();
     if (!name) continue;
-    const key = classKey(link.subject.id, name);
-    const group = groups.get(key) ?? { key, name, subject: link.subject.name, years: new Set<string>(), teachers: new Map<string, string>(), pupilIds: new Set<string>() };
+    const stream = name.match(/(?:^|[:\s])([789][AFHS])(?=\/|$|\s)/i)?.[1]?.toUpperCase();
+    const year = link.student.yearGroup?.match(/\d+/)?.[0];
+    const combined = !!stream && (!year || year === stream[0]);
+    const key = combined ? `ks3:${stream}` : classKey(link.subject.id, name);
+    const group = groups.get(key) ?? { key, name: combined ? stream! : name, subject: combined ? "All subjects" : link.subject.name, combined, subjects: new Set<string>(), years: new Set<string>(), teachers: new Map<string, string>(), pupilIds: new Set<string>() };
+    group.subjects.add(classSubjectKey(link.subject.name));
     group.years.add(link.student.yearGroup ?? "Unassigned");
     group.teachers.set(link.teacher.id, link.teacher.fullName);
     group.pupilIds.add(link.student.id);

@@ -1,8 +1,8 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/page-header";
-import { ClassesDirectory } from "@/components/classes/directory";
+import { ClassDashboard } from "@/components/classes/dashboard";
 import { loadClasses } from "@/modules/classes/data";
-import Link from "next/link";
+
 import "./classes.css";
 
 export const metadata = { title: "Classes | Anaxi" };
@@ -13,10 +13,9 @@ export default async function ClassesPage({ searchParams }: { searchParams: Prom
   const params = await searchParams;
   const windowDays = classWindow(params.window);
   const data = await loadClasses(user.tenantId, windowDays);
-  const summaries = data.classes.map(({ students: _students, points: _points, ...summary }) => summary);
+  const selected = data.classes.find(c => c.id === params.class) ?? data.classes.find(c => c.teachers.some(t => t.id === user.id)) ?? data.classes[0];
   return <div className="class-enter space-y-6">
-    <PageHeader title="Classes" eyebrow="Students" subtitle="A shared view of your school’s current teaching groups, their teachers and pupil outcomes." actions={<nav className="segmented-toggle" aria-label="Behaviour event window">{[7, 14, 21, 28].map(days => <Link key={days} href={`/classes?window=${days}`} aria-current={windowDays === days ? "page" : undefined} className={`segmented-toggle-btn ${windowDays === days ? "segmented-toggle-btn-active" : ""}`}>{days}d</Link>)}</nav>} />
-    <p className="text-xs leading-relaxed text-muted">Current class lists · Latest overall pupil attendance · Behaviour events over {windowDays} days · Latest subject assessment coverage</p>
-    <ClassesDirectory classes={summaries} pupilCount={data.pupilCount} windowDays={windowDays} />
+    <PageHeader title="Classes" eyebrow="Students" subtitle="Your class, its teachers and every pupil’s outcomes in one place." />
+    {selected ? <ClassDashboard key={selected.id} data={selected} classes={data.classes.map(c => ({ id: c.id, name: c.name, subject: c.subject }))} windowDays={windowDays} /> : <p className="class-panel p-8 text-muted">No current classes have been imported yet.</p>}
   </div>;
 }
