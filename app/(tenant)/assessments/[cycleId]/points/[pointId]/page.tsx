@@ -216,6 +216,9 @@ type TeachingData = {
     labelVariantMatches: number;
     missingStudentRoster: number;
     missingSubjectRoster: number;
+    pupilLinks: number;
+    academicYearLinks: number;
+    dateEligibleLinks: number;
   };
 };
 
@@ -2751,6 +2754,11 @@ function TeachingTab({
           <>
             <p className="font-semibold text-[var(--on-surface)]">Historical teacher impact is not available for this assessment.</p>
             <p className="mx-auto mt-2 max-w-xl">Anaxi has not imported the class roster and teaching assignments from this academic year. Current classes are deliberately excluded so results are not credited to the wrong teachers.</p>
+            {data.historicalRosterDiagnostic ? (
+              <p className="mx-auto mt-3 max-w-2xl text-xs text-[var(--on-surface-muted)]">
+                Historic roster check: {data.historicalRosterDiagnostic.pupilLinks.toLocaleString()} Arbor links for these pupils; {data.historicalRosterDiagnostic.academicYearLinks.toLocaleString()} match this academic year; {data.historicalRosterDiagnostic.dateEligibleLinks.toLocaleString()} are active on this assessment date.
+              </p>
+            ) : null}
           </>
         ) : "No teaching group data available. Assign students to teachers in the Teaching section to see class-level analysis."}
       </div>
