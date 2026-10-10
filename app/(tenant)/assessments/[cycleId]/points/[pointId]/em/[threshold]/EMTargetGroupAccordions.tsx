@@ -15,6 +15,7 @@ export type EMStudentRow = {
   year: string | null;
   sendFlag: boolean;
   ppFlag: boolean;
+  avatarUrl: string | null;
   eRaw: string | null;
   mRaw: string | null;
   met: boolean;
@@ -112,7 +113,7 @@ function StudentRows({ rows }: { rows: EMStudentRow[] }) {
         <tr key={row.id} className="group table-row calm-transition">
           <td className="px-5 py-4">
             <div className="flex items-center gap-3">
-              <Avatar name={row.name} studentId={row.id} size="lg" tone="muted" />
+              <Avatar name={row.name} avatarUrl={row.avatarUrl} size="lg" tone="muted" />
               <div className="flex min-w-0 flex-col">
                 <Link href={`/students/${row.id}`} className="link-to-accent font-semibold text-text">
                   {row.name}

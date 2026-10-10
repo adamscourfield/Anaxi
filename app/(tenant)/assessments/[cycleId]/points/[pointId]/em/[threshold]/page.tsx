@@ -7,6 +7,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EMTargetGroupToolbar } from "./EMTargetGroupToolbar";
 import { EMTargetGroupAccordions } from "./EMTargetGroupAccordions";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
+import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
+import { studentAvatarUrlFor } from "@/lib/avatarUpload";
 
 export default async function EMThresholdPage({
   params,
@@ -186,6 +188,7 @@ export default async function EMThresholdPage({
       year: student.yearGroup,
       sendFlag: student.sendFlag,
       ppFlag: student.ppFlag,
+      avatarUrl: studentAvatarUrlFor(id, student.avatarUpdatedAt),
       eRaw,
       mRaw,
       met,
@@ -247,7 +250,7 @@ export default async function EMThresholdPage({
   });
 
   return (
-    <div className="anx-reports-page min-h-full w-full space-y-8 bg-[color-mix(in_srgb,var(--surface-container)_38%,var(--surface-container-lowest))] pb-16">
+    <AttainmentPageShell>
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -325,6 +328,6 @@ export default async function EMThresholdPage({
               : " students not yet meeting both"}
         </p>
       </div>
-    </div>
+    </AttainmentPageShell>
   );
 }
