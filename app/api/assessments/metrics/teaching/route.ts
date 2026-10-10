@@ -207,9 +207,11 @@ export const GET = withApi(async function GET(req: Request) {
       ])
     : null;
 
-  // Load only assignments that were active at the assessment date. In
-  // particular, a current timetable assignment must never be used to explain
-  // or measure a historic result.
+  // Current points use their effective dates. A historic import has an
+  // explicit year inside its Arbor class label (for example, "7A/En
+  // (2025/2026)"); that immutable label is the safer evidence. Arbor's
+  // imported membership dates are not reliable enough to reject a correctly
+  // labelled former class at the end of an academic year.
   const assignments = await prisma.studentSubjectTeacher.findMany({
     where: {
       tenantId: user.tenantId,
@@ -228,11 +230,15 @@ export const GET = withApi(async function GET(req: Request) {
             }],
           }
         : {}),
-      effectiveFrom: { lte: assessedAt },
-      OR: [
-        { effectiveTo: null },
-        { effectiveTo: { gte: assessedAt } },
-      ],
+      ...(!historicCycle
+        ? {
+            effectiveFrom: { lte: assessedAt },
+            OR: [
+              { effectiveTo: null },
+              { effectiveTo: { gte: assessedAt } },
+            ],
+          }
+        : {}),
     },
     select: {
       studentId: true,
