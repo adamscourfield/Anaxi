@@ -1035,8 +1035,8 @@ export class ArborClient {
     return filters.length === 2 ? `, ${filters.join(", ")}` : "";
   }
 
-  /** Applies the same active-date filter to the direct pupil-to-class table. */
-  private async currentAcademicUnitEnrolmentFilters(today: string): Promise<string> {
+  /** Applies a date filter to the direct pupil-to-class table when Arbor exposes it. */
+  private async academicUnitEnrolmentFiltersAt(date: string): Promise<string> {
     const data = await runArborGraphqlQuery<{
       __schema: { queryType: { fields: Array<{ name: string; args: Array<{ name: string }> }> } | null };
     }>(this.credentials, `{
@@ -1045,8 +1045,8 @@ export class ArborClient {
     const enrolmentQuery = data.__schema.queryType?.fields.find((field) => field.name === "AcademicUnitEnrolment");
     const argumentsByName = new Set(enrolmentQuery?.args.map((argument) => argument.name) ?? []);
     const filters: string[] = [];
-    if (argumentsByName.has("startDate_before_or_equal")) filters.push(`startDate_before_or_equal: ${JSON.stringify(today)}`);
-    if (argumentsByName.has("endDate_after_or_equal")) filters.push(`endDate_after_or_equal: ${JSON.stringify(today)}`);
+    if (argumentsByName.has("startDate_before_or_equal")) filters.push(`startDate_before_or_equal: ${JSON.stringify(date)}`);
+    if (argumentsByName.has("endDate_after_or_equal")) filters.push(`endDate_after_or_equal: ${JSON.stringify(date)}`);
     return filters.length === 2 ? `, ${filters.join(", ")}` : "";
   }
 
@@ -1139,7 +1139,7 @@ export class ArborClient {
       }>;
     };
     const today = new Date().toISOString().slice(0, 10);
-    const currentFilters = await this.currentAcademicUnitEnrolmentFilters(today);
+    const currentFilters = await this.academicUnitEnrolmentFiltersAt(today);
     const readEnrolmentPage = async (page: number) => runArborGraphqlQuery<Pick<TimetableData, "AcademicUnitEnrolment">>(this.credentials, `{
       AcademicUnitEnrolment(page_size: 100, page_num: ${page}${currentFilters}) {
         startDate
@@ -1209,6 +1209,72 @@ export class ArborClient {
       if (!batch.hasMore) break;
     }
     return { assignments: [], diagnostics };
+  }
+
+  /**
+   * Checks a former academic year's exact pupil-to-class memberships without
+   * writing them to Anaxi. Historic staffing is intentionally read from the
+   * class's direct staff relation, never from today's timetable allocation.
+   */
+  async previewHistoricTimetableRoster(asOfDate: string): Promise<{
+    assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; className: string; subject: string; staff: Array<{ id: string; fullName: string }> }>;
+    diagnostics: { pages: number; memberships: number; activeMemberships: number; classes: number; subjectClasses: number; staffedClasses: number; sampleClasses: string[] };
+  }> {
+    const fields = await this.inspectTimetableMappingFields();
+    if (!fields["academic unit"]?.includes("subject") || !fields["academic unit"]?.includes("staff")) {
+      throw new Error("Arbor historic roster fields unavailable: academic unit subject or staff.");
+    }
+
+    type Person = { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null };
+    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; staff: Person[] } | null };
+    const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
+    const personName = (person: Person) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
+    const activeOnDate = (enrolment: Enrolment) => (!enrolment.startDate || enrolment.startDate <= asOfDate) && (!enrolment.endDate || enrolment.endDate >= asOfDate);
+    const diagnostics = { pages: 0, memberships: 0, activeMemberships: 0, classes: new Set<string>(), subjectClasses: new Set<string>(), staffedClasses: new Set<string>(), sampleClasses: new Set<string>() };
+    const assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; className: string; subject: string; staff: Array<{ id: string; fullName: string }> }> = [];
+
+    // Three pages keeps this diagnostic quick while sampling the dated roster.
+    for (let page = 0; page < 3; page++) {
+      const data = await runArborGraphqlQuery<{ AcademicUnitEnrolment: Enrolment[] }>(this.credentials, `{
+        AcademicUnitEnrolment(page_size: 100, page_num: ${page}${filters}) {
+          startDate endDate
+          student { id legalFirstName legalLastName preferredFirstName preferredLastName }
+          academicUnit {
+            id displayName subject { displayName }
+            staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
+          }
+        }
+      }`);
+      diagnostics.pages++;
+      diagnostics.memberships += data.AcademicUnitEnrolment.length;
+      for (const enrolment of data.AcademicUnitEnrolment) {
+        if (!enrolment.academicUnit || !activeOnDate(enrolment)) continue;
+        diagnostics.activeMemberships++;
+        const unit = enrolment.academicUnit;
+        const subject = unit.subject?.displayName?.trim();
+        const className = unit.displayName?.trim() || subject || "Unnamed class";
+        diagnostics.classes.add(unit.id);
+        diagnostics.sampleClasses.add(className);
+        if (!subject) continue;
+        diagnostics.subjectClasses.add(unit.id);
+        const staff = [...new Map(unit.staff.map((teacher) => [teacher.id, { id: teacher.id, fullName: personName(teacher) }])).values()];
+        if (staff.length) diagnostics.staffedClasses.add(unit.id);
+        if (enrolment.student && staff.length) assignments.push({ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, className, subject, staff });
+      }
+      if (data.AcademicUnitEnrolment.length < 100) break;
+    }
+    return {
+      assignments,
+      diagnostics: {
+        pages: diagnostics.pages,
+        memberships: diagnostics.memberships,
+        activeMemberships: diagnostics.activeMemberships,
+        classes: diagnostics.classes.size,
+        subjectClasses: diagnostics.subjectClasses.size,
+        staffedClasses: diagnostics.staffedClasses.size,
+        sampleClasses: [...diagnostics.sampleClasses].slice(0, 8),
+      },
+    };
   }
 }
 
