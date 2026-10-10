@@ -118,7 +118,9 @@ export const POST = withApi(async function POST(req: Request) {
     const complete = !batch.hasMore;
     if (complete) {
       await db.studentSubjectTeacher.deleteMany({
-        where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", OR: [{ arborSyncedAt: null }, { arborSyncedAt: { lt: startedAt } }] },
+        // A live sync may retire only this academic year's rows. Historic
+        // classroom rosters are retained for dated assessment attribution.
+        where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", effectiveFrom, OR: [{ arborSyncedAt: null }, { arborSyncedAt: { lt: startedAt } }] },
       });
     }
     await db.sharedIntegrationSyncRun.update({ where: { id: run.id }, data: { status: "SUCCESS", recordsProcessed: linked, recordsCreated: linked, finishedAt: new Date() } });

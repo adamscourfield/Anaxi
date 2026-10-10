@@ -811,6 +811,24 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
         </StatusBanner>
       ) : null}
 
+      {params?.timetableHistoricSync === "success" ? (
+        <StatusBanner variant="success" title="2025/26 historic class roster imported.">
+          The dated classroom roster is complete. Teacher Impact can now use 2025/26 classes and staff for historical results; current teaching assignments remain separate.
+        </StatusBanner>
+      ) : null}
+
+      {params?.timetableHistoricSync === "progress" ? (
+        <StatusBanner variant="success" title="Historic class roster import is continuing.">
+          Roster page {previewCount(params.timetableHistoricPage)} read {previewCount(params.timetableHistoricMemberships)} memberships, including {previewCount(params.timetableHistoricActive)} active on 15 July 2026. {previewCount(params.timetableHistoricLinked)} dated subject-teacher links were saved. Run the next page to continue.
+        </StatusBanner>
+      ) : null}
+
+      {params?.timetableHistoricSync === "failed" || params?.timetableHistoricSync === "not-connected" || params?.timetableHistoricSync === "confirmation-required" ? (
+        <StatusBanner variant="danger" title="Historic class roster import could not run.">
+          {params.timetableError || "No historic subject-teacher links were changed."}
+        </StatusBanner>
+      ) : null}
+
       {params?.timetableSync === "success" ? (
         <StatusBanner variant="success" title="Subject teachers synced.">
           {previewCount(params.timetableLinkable)} current Arbor subject-teacher links are now shown on student records: {previewCount(params.timetableLinkedById)} matched by Arbor ID and {previewCount(params.timetableLinkedByName)} using a unique exact name. Manually entered Anaxi links were kept unchanged.
@@ -1002,13 +1020,18 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
               <div className="space-y-4">
                 <div>
                   <H3>Subject teachers</H3>
-                  <MetaText className="mt-1">Current Arbor teaching groups map each linked student to their teachers and subjects. Arbor-managed links update nightly across the whole roster; manually entered Anaxi links remain untouched.</MetaText>
+                  <MetaText className="mt-1">Current Arbor teaching groups map each linked student to their teachers and subjects. A separate dated 2025/26 roster can be imported for historic Teacher Impact; manually entered Anaxi links remain untouched.</MetaText>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/timetable")} className={actionButtonClass}>
                     <CsrfInput token={csrfToken} />
                     <input type="hidden" name="confirm" value="SYNC_TIMETABLE" />
                     <SubmitButton variant="primary" className="w-full">Sync next subject-teacher page</SubmitButton>
+                  </form>
+                  <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/timetable/historic")} className={actionButtonClass}>
+                    <CsrfInput token={csrfToken} />
+                    <input type="hidden" name="confirm" value="SYNC_HISTORIC_TIMETABLE" />
+                    <SubmitButton variant="secondary" className="w-full">Sync next 2025/26 historic roster page</SubmitButton>
                   </form>
                   <ActionMenu label="More checks">
                     <MenuItemForm action={connectionAction("/api/god/integrations/arbor/preview/timetable")} csrfToken={csrfToken}>Check timetable access</MenuItemForm>

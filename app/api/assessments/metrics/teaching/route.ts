@@ -100,19 +100,6 @@ export const GET = withApi(async function GET(req: Request) {
   }
   const assessedAt = historicPointDate(point);
 
-  // The timetable sync intentionally captures the live academic year's class
-  // roster. It does not yet retain a verified historical roster. Do not use a
-  // current class (for example, 8H) to attribute a prior year's result from
-  // the student's former class (for example, 7H).
-  if (isHistoricCycle(point.cycle.academicYear)) {
-    return NextResponse.json({
-      pointId,
-      assessedAt: assessedAt.toISOString(),
-      subjects: [],
-      historicalClassRostersAvailable: false,
-    }, { headers: { "Cache-Control": "private, no-store" } });
-  }
-
   // ── 2. Load all assessments + results ────────────────────────────────────
   const assessments = await prisma.assessment.findMany({
     where: { tenantId: user.tenantId, pointId },
@@ -188,6 +175,17 @@ export const GET = withApi(async function GET(req: Request) {
       },
     },
   });
+
+  // Historic impact is available only once the former academic year's dated
+  // class roster has been imported. Never fall back to a current class.
+  if (isHistoricCycle(point.cycle.academicYear) && !assignments.length) {
+    return NextResponse.json({
+      pointId,
+      assessedAt: assessedAt.toISOString(),
+      subjects: [],
+      historicalClassRostersAvailable: false,
+    }, { headers: { "Cache-Control": "private, no-store" } });
+  }
 
   // Map: studentId → subjectId → dated class assignment. The class label comes
   // from the same verified link as the result attribution.
