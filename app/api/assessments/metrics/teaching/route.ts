@@ -73,6 +73,15 @@ function isHistoricCycle(academicYear: string): boolean {
   return Number.isInteger(startYear) && startYear < academicYearStart(new Date());
 }
 
+/** Arbor class labels may use either 2025/26 or 2025/2026 for the same year. */
+function academicYearLabelVariants(academicYear: string): string[] {
+  const match = academicYear.match(/^(\d{4})\/(\d{2}|\d{4})$/);
+  if (!match) return [academicYear];
+  const [, start, end] = match;
+  const fullEnd = end.length === 2 ? `${start.slice(0, 2)}${end}` : end;
+  return [...new Set([`${start}/${fullEnd}`, `${start}/${fullEnd.slice(-2)}`])];
+}
+
 /**
  * Arbor's timetable subject and its assessment label are not always identical
  * (for example, "% Y10 Chemistry" and "Chemistry"). Match only safe label
@@ -123,6 +132,7 @@ export const GET = withApi(async function GET(req: Request) {
   }
   const assessedAt = historicPointDate(point);
   const historicCycle = isHistoricCycle(point.cycle.academicYear);
+  const historicClassYearLabels = academicYearLabelVariants(point.cycle.academicYear);
 
   // ── 2. Load all assessments + results ────────────────────────────────────
   const assessments = await prisma.assessment.findMany({
@@ -183,7 +193,11 @@ export const GET = withApi(async function GET(req: Request) {
       // attribution. Some enrolment records omit dates, so a current class
       // must never qualify merely because it has a broad effective range.
       ...(historicCycle
-        ? { className: { contains: point.cycle.academicYear } }
+        ? {
+            AND: [{
+              OR: historicClassYearLabels.map((label) => ({ className: { contains: label } })),
+            }],
+          }
         : {}),
       effectiveFrom: { lte: assessedAt },
       OR: [
