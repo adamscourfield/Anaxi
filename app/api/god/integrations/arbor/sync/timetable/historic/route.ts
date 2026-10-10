@@ -10,11 +10,12 @@ import { decryptCredentials } from "@/lib/integrationSecrets";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
-type HistoricSyncState = { page?: number; startedAt?: string; completedAt?: string };
+type HistoricSyncState = { page?: number; startedAt?: string; completedAt?: string; membershipsProcessed?: number; linksSaved?: number };
 const ACADEMIC_YEAR = "2025/2026";
 const AS_OF_DATE = "2026-07-15";
 const EFFECTIVE_FROM = new Date("2025-09-01T00:00:00.000Z");
 const EFFECTIVE_TO = new Date("2026-08-31T23:59:59.999Z");
+const PAGES_PER_RUN = 5;
 
 /** Imports only dated 2025/26 classroom assignments; current timetable rows are untouched. */
 export const POST = withApi(async function POST(req: Request) {
@@ -44,7 +45,21 @@ export const POST = withApi(async function POST(req: Request) {
     const run = await db.sharedIntegrationSyncRun.create({ data: { integrationId: integration.id, entityType: "TIMETABLE", triggeredBy: actor.id } });
     runId = run.id;
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
-    const batch = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listHistoricTimetableTeacherAssignmentsBatch(AS_OF_DATE, page);
+    const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
+    let nextPage = page;
+    let hasMore = true;
+    const assignments: Awaited<ReturnType<typeof client.listHistoricTimetableTeacherAssignmentsBatch>>["assignments"] = [];
+    const diagnostics = { memberships: 0, activeMemberships: 0, subjectClasses: 0, staffedClasses: 0 };
+    for (let pagesRead = 0; pagesRead < PAGES_PER_RUN && hasMore; pagesRead++) {
+      const batch = await client.listHistoricTimetableTeacherAssignmentsBatch(AS_OF_DATE, nextPage, pagesRead === 0);
+      assignments.push(...batch.assignments);
+      diagnostics.memberships += batch.diagnostics.memberships;
+      diagnostics.activeMemberships += batch.diagnostics.activeMemberships;
+      diagnostics.subjectClasses += batch.diagnostics.subjectClasses;
+      diagnostics.staffedClasses += batch.diagnostics.staffedClasses;
+      hasMore = batch.hasMore;
+      nextPage++;
+    }
     const [students, staff] = await Promise.all([
       db.student.findMany({ where: { tenantId: { in: tenantIds } }, select: { id: true, tenantId: true, fullName: true, externalId: true } }),
       db.user.findMany({ where: { tenantId: { in: tenantIds } }, select: { id: true, tenantId: true, fullName: true, externalId: true } }),
@@ -52,7 +67,7 @@ export const POST = withApi(async function POST(req: Request) {
     const studentResolver = buildTimetableIdentityResolver(students);
     const staffResolver = buildTimetableIdentityResolver(staff);
     const candidates = new Map<string, { tenantId: string; studentId: string; teacherId: string; subject: string; className: string }>();
-    for (const assignment of batch.assignments) {
+    for (const assignment of assignments) {
       const matches = studentResolver.studentCandidates(assignment.studentId, assignment.studentName);
       const eligibleStudents = matches.filter((match) => assignment.staff.some((arborStaff) => staffResolver.staff(match.person.tenantId, arborStaff.id, arborStaff.fullName)));
       if (eligibleStudents.length !== 1) continue;
@@ -78,22 +93,28 @@ export const POST = withApi(async function POST(req: Request) {
     }
     if (rows.length) await db.studentSubjectTeacher.createMany({ data: rows, skipDuplicates: true });
 
-    const complete = !batch.hasMore;
+    const complete = !hasMore;
     if (complete) {
       await db.studentSubjectTeacher.deleteMany({ where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", effectiveFrom: EFFECTIVE_FROM, OR: [{ arborSyncedAt: null }, { arborSyncedAt: { lt: startedAt } }] } });
     }
-    const nextState = complete ? { completedAt: new Date().toISOString() } : { page: page + 1, startedAt: startedAt.toISOString() };
+    // Earlier one-page runs predate running counters. Each of those pages was
+    // 100 active memberships, so carry their confirmed work into the display.
+    const membershipsProcessed = (typeof state.membershipsProcessed === "number" ? state.membershipsProcessed : page * 100) + diagnostics.activeMemberships;
+    const linksSaved = await db.studentSubjectTeacher.count({ where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", effectiveFrom: EFFECTIVE_FROM } });
+    const nextState = complete
+      ? { completedAt: new Date().toISOString(), membershipsProcessed, linksSaved }
+      : { page: nextPage, startedAt: startedAt.toISOString(), membershipsProcessed, linksSaved };
     await db.sharedIntegrationSyncRun.update({ where: { id: run.id }, data: { status: "SUCCESS", recordsProcessed: rows.length, recordsCreated: rows.length, finishedAt: new Date() } });
     await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, historicTimetableSyncs: { ...historicSyncs, [ACADEMIC_YEAR]: nextState } }, lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null } });
-    await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.historic_timetable_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { academicYear: ACADEMIC_YEAR, page, linked: rows.length, complete } } });
+    await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.historic_timetable_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { academicYear: ACADEMIC_YEAR, page, nextPage, pagesRead: nextPage - page, linked: rows.length, complete } } });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("timetableHistoricSync", complete ? "success" : "progress");
-    url.searchParams.set("timetableHistoricPage", String(page + 1));
+    url.searchParams.set("timetableHistoricPage", String(nextPage));
     url.searchParams.set("timetableHistoricLinked", String(rows.length));
-    url.searchParams.set("timetableHistoricMemberships", String(batch.diagnostics.memberships));
-    url.searchParams.set("timetableHistoricActive", String(batch.diagnostics.activeMemberships));
-    url.searchParams.set("timetableHistoricSubjects", String(batch.diagnostics.subjectClasses));
-    url.searchParams.set("timetableHistoricTeachers", String(batch.diagnostics.staffedClasses));
+    url.searchParams.set("timetableHistoricMemberships", String(diagnostics.memberships));
+    url.searchParams.set("timetableHistoricActive", String(diagnostics.activeMemberships));
+    url.searchParams.set("timetableHistoricSubjects", String(diagnostics.subjectClasses));
+    url.searchParams.set("timetableHistoricTeachers", String(diagnostics.staffedClasses));
     return NextResponse.redirect(url);
   } catch (error) {
     const message = error instanceof Error ? error.message.slice(0, 500) : "Historic timetable sync failed.";
