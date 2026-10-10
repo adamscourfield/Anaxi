@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { hasPermission } from "@/lib/rbac";
+import { PriorAttainmentCard } from "@/components/students/prior-attainment-card";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { StudentProfileNav } from "@/components/students/student-profile-nav";
@@ -481,6 +483,7 @@ export default async function StudentDetailPage({
       </Suspense>
 
       <div id="overview" className="scroll-mt-24 space-y-8">
+      <PriorAttainmentCard studentId={student.id} reading={student.ks2ReadingScaledScore ?? null} maths={student.ks2MathsScaledScore ?? null} canEdit={hasPermission(user.role, "students:write")} />
       {/* Latest behaviour snapshot */}
       {latestSnapshot && attDisplay !== null ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
