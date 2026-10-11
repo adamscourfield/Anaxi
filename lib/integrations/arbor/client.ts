@@ -1079,8 +1079,15 @@ export class ArborClient {
   async inspectTimetableLessonEntities(): Promise<string> {
     type TypeRef = { kind: string; name: string | null; ofType: TypeRef | null };
     type Field = { name: string; type: TypeRef; args: Array<{ name: string; type: TypeRef }> };
-    const data = await runArborGraphqlQuery<{ unit: { fields: Field[] } | null; slotStaff: { fields: Field[] } | null }>(this.credentials, `{
+    const data = await runArborGraphqlQuery<{ unit: { fields: Field[] } | null; slotStaff: { fields: Field[] } | null; slot: { fields: Field[] } | null }>(this.credentials, `{
       unit: __type(name: "AcademicUnit") {
+        fields {
+          name
+          args { name type { kind name ofType { kind name ofType { kind name ofType { kind name } } } } }
+          type { kind name ofType { kind name ofType { kind name ofType { kind name } } } }
+        }
+      }
+      slot: __type(name: "TimetableSlot") {
         fields {
           name
           args { name type { kind name ofType { kind name ofType { kind name ofType { kind name } } } } }
@@ -1103,7 +1110,8 @@ export class ArborClient {
     const renderField = (field: Field) => `${field.name}${field.args.length ? `(${field.args.map((arg) => `${arg.name}: ${renderType(arg.type)}`).join(", ")})` : ""}: ${renderType(field.type)}`;
     const unitFields = (data.unit?.fields ?? []).filter((field) => /timetable|session|staff/i.test(field.name)).map(renderField);
     const slotStaffFields = (data.slotStaff?.fields ?? []).filter((field) => /staff|slot|date/i.test(field.name)).map(renderField);
-    return `AcademicUnit: ${unitFields.join(" | ") || "no timetable fields"} | TimetableSlotStaff: ${slotStaffFields.join(" | ") || "no fields"}`;
+    const slotFields = (data.slot?.fields ?? []).filter((field) => /academic|staff|date|session/i.test(field.name)).map(renderField);
+    return `TimetableSlot: ${slotFields.join(" | ") || "no fields"} | TimetableSlotStaff: ${slotStaffFields.join(" | ") || "no fields"} | AcademicUnit: ${unitFields.join(" | ") || "no timetable fields"}`;
   }
 
   /**

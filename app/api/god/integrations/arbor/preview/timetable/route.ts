@@ -26,7 +26,7 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("timetable", "success");
     url.searchParams.set("timetableFields", Object.entries(fields).map(([entity, names]) => `${entity}: ${names.join(", ") || "none"}`).join(" | ").slice(0, 1800));
     url.searchParams.set("timetableRelationTypes", relationTypes.slice(0, 500));
-    url.searchParams.set("timetableLessonEntities", lessonEntities.slice(0, 900));
+    url.searchParams.set("timetableLessonEntities", lessonEntities.slice(0, 1800));
     return NextResponse.redirect(url);
   } catch (error) {
     const url = new URL("/god/integrations/arbor", req.url);
