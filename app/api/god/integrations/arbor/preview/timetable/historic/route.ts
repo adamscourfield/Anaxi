@@ -20,7 +20,7 @@ export const POST = withApi(async function POST(req: Request) {
   }
 
   try {
-    const asOfDate = "2026-07-15";
+    const asOfDate = "2026-06-30";
     const preview = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).previewHistoricTimetableRoster(asOfDate);
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("timetableHistoric", "success");

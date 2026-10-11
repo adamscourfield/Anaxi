@@ -1,4 +1,5 @@
 import { runArborGraphqlQuery } from "./graphqlClient";
+import { historicTimetableStaff } from "./historicTimetableStaff";
 import type {
   ArborCredentials,
   ArborStaffRecord,
@@ -1221,21 +1222,24 @@ export class ArborClient {
 
   /**
    * Checks a former academic year's exact pupil-to-class memberships without
-   * writing them to Anaxi. Historic staffing is intentionally read from the
-   * class's direct staff relation, never from today's timetable allocation.
+   * writing them to Anaxi. Historic staffing is read only from an explicitly
+   * dated timetable relation, never from an undated staff allocation.
    */
   async previewHistoricTimetableRoster(asOfDate: string): Promise<{
     assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; className: string; subject: string; staff: Array<{ id: string; fullName: string }> }>;
     diagnostics: { pages: number; memberships: number; activeMemberships: number; classes: number; subjectClasses: number; staffedClasses: number; sampleClasses: string[] };
   }> {
     const fields = await this.inspectTimetableMappingFields();
-    if (!fields["academic unit"]?.includes("subject") || !fields["academic unit"]?.includes("staff")) {
-      throw new Error("Arbor historic roster fields unavailable: academic unit subject or staff.");
+    if (!fields["academic unit"]?.includes("subject") || !fields["academic unit"]?.includes("timetableSlots")) {
+      throw new Error("Arbor historic roster fields unavailable: academic unit subject or dated timetable staff.");
     }
 
     type Person = { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null };
-    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; staff: Person[]; timetabledStaffByDateRange: Person[] } | null };
+    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; timetableSlots: Array<{ id: string; timetableSlotStaff: Array<{ effectiveDate: string | null; endDate: string | null; staff: Person | null }> }> } | null };
     const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
+    const date = new Date(asOfDate);
+    if (Number.isNaN(date.getTime())) throw new Error("Invalid historic timetable date");
+    const yearStart = `${date.getUTCFullYear() - (date.getUTCMonth() < 8 ? 1 : 0)}-09-01`;
     const personName = (person: Person) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
     const activeOnDate = (enrolment: Enrolment) => (!enrolment.startDate || enrolment.startDate <= asOfDate) && (!enrolment.endDate || enrolment.endDate >= asOfDate);
     const diagnostics = { pages: 0, memberships: 0, activeMemberships: 0, classes: new Set<string>(), subjectClasses: new Set<string>(), staffedClasses: new Set<string>(), sampleClasses: new Set<string>() };
@@ -1249,8 +1253,13 @@ export class ArborClient {
           student { id legalFirstName legalLastName preferredFirstName preferredLastName }
           academicUnit {
             id displayName subject { displayName }
-            staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
-            timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName }
+            timetableSlots {
+              id
+              timetableSlotStaff {
+                effectiveDate endDate
+                staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
+              }
+            }
           }
         }
       }`);
@@ -1266,11 +1275,10 @@ export class ArborClient {
         diagnostics.sampleClasses.add(className);
         if (!subject) continue;
         diagnostics.subjectClasses.add(unit.id);
-        // Direct academic-unit staff can be a subject lead. Prefer the people
-        // timetabled to this historic class, falling back only when Arbor has
-        // no timetable-staff record for the unit.
-        const classStaff = unit.timetabledStaffByDateRange?.length ? unit.timetabledStaffByDateRange : unit.staff;
-        const staff = [...new Map(classStaff.map((teacher) => [teacher.id, { id: teacher.id, fullName: personName(teacher) }])).values()];
+        // Only explicitly dated timetable staff are historical evidence.
+        const staff = historicTimetableStaff(unit.timetableSlots.flatMap((slot) => slot.timetableSlotStaff).map((record) => ({
+          ...record, staff: record.staff ? { id: record.staff.id, fullName: personName(record.staff) } : null,
+        })), yearStart, asOfDate);
         if (staff.length) diagnostics.staffedClasses.add(unit.id);
         if (enrolment.student && staff.length) assignments.push({ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, className, subject, staff });
       }
@@ -1298,21 +1306,29 @@ export class ArborClient {
   }> {
     if (validateFields) {
       const fields = await this.inspectTimetableMappingFields();
-      if (!fields["academic unit"]?.includes("subject") || !fields["academic unit"]?.includes("staff")) {
-        throw new Error("Arbor historic roster fields unavailable: academic unit subject or staff.");
+      if (!fields["academic unit"]?.includes("subject") || !fields["academic unit"]?.includes("timetableSlots")) {
+        throw new Error("Arbor historic roster fields unavailable: academic unit subject or dated timetable staff.");
       }
     }
     type Person = { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null };
-    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; staff: Person[]; timetabledStaffByDateRange: Person[] } | null };
+    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; timetableSlots: Array<{ id: string; timetableSlotStaff: Array<{ effectiveDate: string | null; endDate: string | null; staff: Person | null }> }> } | null };
     const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
+    const date = new Date(asOfDate);
+    if (Number.isNaN(date.getTime())) throw new Error("Invalid historic timetable date");
+    const yearStart = `${date.getUTCFullYear() - (date.getUTCMonth() < 8 ? 1 : 0)}-09-01`;
     const data = await runArborGraphqlQuery<{ AcademicUnitEnrolment: Enrolment[] }>(this.credentials, `{
       AcademicUnitEnrolment(page_size: 100, page_num: ${membershipPage}${filters}) {
         startDate endDate
         student { id legalFirstName legalLastName preferredFirstName preferredLastName }
         academicUnit {
           id displayName subject { displayName }
-          staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
-          timetabledStaffByDateRange { id legalFirstName legalLastName preferredFirstName preferredLastName }
+          timetableSlots {
+              id
+              timetableSlotStaff {
+                effectiveDate endDate
+                staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
+              }
+            }
         }
       }
     }`);
@@ -1332,8 +1348,9 @@ export class ArborClient {
       subjectClasses.add(unit.id);
       // Historic classes use their timetabled staff, not the broader subject
       // staff list, so Teacher Impact reflects who taught the class.
-      const classStaff = unit.timetabledStaffByDateRange?.length ? unit.timetabledStaffByDateRange : unit.staff;
-      const staff = [...new Map(classStaff.map((teacher) => [teacher.id, { id: teacher.id, fullName: personName(teacher) }])).values()];
+      const staff = historicTimetableStaff(unit.timetableSlots.flatMap((slot) => slot.timetableSlotStaff).map((record) => ({
+        ...record, staff: record.staff ? { id: record.staff.id, fullName: personName(record.staff) } : null,
+      })), yearStart, asOfDate);
       if (staff.length) staffedClasses.add(unit.id);
       return enrolment.student && staff.length ? [{ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, className: unit.displayName?.trim() || subject, subject, staff }] : [];
     });

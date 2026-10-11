@@ -1,0 +1,46 @@
+name: Arbor historic timetable rebuild
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: arbor-historic-timetable
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Rebuild historical class staffing until complete
+        env:
+          ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
+          ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
+        run: |
+          test -n "$ANAXI_APP_URL"
+          test -n "$ANAXI_CRON_SECRET"
+          for pass in $(seq 1 80); do
+            curl --fail --silent --show-error \
+              --retry 2 \
+              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+              "${ANAXI_APP_URL%/}/api/cron/arbor-timetable-historic" \
+              --output /tmp/historic-timetable-result.json
+            result=$(python3 - <<'PY'
+          import json
+          data = json.load(open('/tmp/historic-timetable-result.json'))
+          connections = data.get('connections', [])
+          assert connections, 'No connected Arbor schools were processed'
+          assert all(c.get('ok') and isinstance(c.get('body'), dict) and 'error' not in c['body'] for c in connections), str(data)
+          for c in connections:
+              body = c['body']
+              print(f"{c['label']}: page {body.get('page')}, next {body.get('nextPage')}, saved {body.get('linked')}, complete {body.get('complete')}")
+          print('COMPLETE' if all(c['body'].get('complete') is True for c in connections) else 'CONTINUE')
+          PY
+            )
+            printf '%s\n' "$result"
+            if [ "$(printf '%s\n' "$result" | tail -n 1)" = COMPLETE ]; then
+              exit 0
+            fi
+          done
+          echo 'Historic roster did not finish within 80 bounded passes' >&2
+          exit 1

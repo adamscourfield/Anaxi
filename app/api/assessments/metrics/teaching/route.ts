@@ -15,6 +15,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { GradeFormat } from "@prisma/client";
 import { withApi } from "@/lib/apiRoute";
+import { teachersForOneClass, teachingSubjectKey as subjectKey, historicPointDate } from "@/modules/assessments/teachingAssignments";
 
 const A_LEVEL_SCORE: Record<string, number> = {
   "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1,
@@ -45,25 +46,6 @@ function round1(v: number | null): number | null {
   return v !== null ? Math.round(v * 10) / 10 : null;
 }
 
-function historicPointDate(point: {
-  assessedAt: Date;
-  dateTaken: Date | null;
-  label: string;
-  dataSource: string;
-  cycle: { academicYear: string };
-}): Date {
-  if (point.dateTaken) return point.dateTaken;
-  if (point.dataSource !== "ARBOR") return point.assessedAt;
-
-  const startYear = Number(point.cycle.academicYear.slice(0, 4));
-  if (!Number.isInteger(startYear)) return point.assessedAt;
-  if (point.label === "Autumn") return new Date(Date.UTC(startYear, 11, 15));
-  if (point.label === "Spring") return new Date(Date.UTC(startYear + 1, 2, 31));
-  if (point.label === "Summer") return new Date(Date.UTC(startYear + 1, 6, 15));
-  if (point.label === "Final") return new Date(Date.UTC(startYear + 1, 7, 31));
-  return point.assessedAt;
-}
-
 function academicYearStart(date: Date): number {
   return date.getUTCFullYear() - (date.getUTCMonth() < 8 ? 1 : 0);
 }
@@ -80,24 +62,6 @@ function academicYearLabelVariants(academicYear: string): string[] {
   const [, start, end] = match;
   const fullEnd = end.length === 2 ? `${start.slice(0, 2)}${end}` : end;
   return [...new Set([`${start}/${fullEnd}`, `${start}/${fullEnd.slice(-2)}`])];
-}
-
-/**
- * Arbor's timetable subject and its assessment label are not always identical
- * (for example, "% Y10 Chemistry" and "Chemistry"). Match only safe label
- * variants; the caller still rejects a key that resolves to multiple classes.
- */
-function subjectKey(value: string): string {
-  return value
-    .toLocaleLowerCase("en-GB")
-    .replace(/&/g, " and ")
-    .replace(/^\s*(?:p8\s*:\s*)?%?\s*(?:y|year)\s*\d+\s*/i, "")
-    .replace(/^\s*a\s*level\s+/i, "")
-    .replace(/\s+gcse(?:\s*\(level\s*1\s*\/\s*2\))?/gi, "")
-    .replace(/\s*\(level\s*1\s*\/\s*2\)/gi, "")
-    .replace(/mathematics/g, "maths")
-    .replace(/[^a-z0-9]+/g, "")
-    .trim();
 }
 
 /** The leading segment of Arbor's class label is its displayed class subject. */
@@ -334,29 +298,29 @@ export const GET = withApi(async function GET(req: Request) {
     }
   }
 
-  function assignmentFor(studentId: string, subjectId: string | undefined, assessmentSubject: string): DatedAssignment | null {
+  function assignmentFor(studentId: string, subjectId: string | undefined, assessmentSubject: string): DatedAssignment[] {
     if (historicCycle) {
       historicRosterDiagnostic.resultsChecked++;
       if (studentSubjectTeacher.has(studentId)) historicRosterDiagnostic.studentsWithRoster++;
       else historicRosterDiagnostic.missingStudentRoster++;
     }
     const exactMatches = subjectId ? studentSubjectTeacher.get(studentId)?.get(subjectId) ?? [] : [];
-    const exactUniqueMatches = new Map(exactMatches.map((match) => [`${match.teacherId}:${match.className}`, match]));
-    if (exactUniqueMatches.size === 1) {
+    const exactUniqueMatches = teachersForOneClass(exactMatches);
+    if (exactUniqueMatches.length) {
       if (historicCycle) historicRosterDiagnostic.exactSubjectMatches++;
-      return [...exactUniqueMatches.values()][0];
+      return exactUniqueMatches;
     }
     const matches = studentSubjectKeyAssignments.get(studentId)?.get(subjectKey(assessmentSubject)) ?? [];
     // Never guess when a simplified label could point at more than one class.
-    const uniqueMatches = new Map(matches.map((match) => [`${match.teacherId}:${match.className}`, match]));
-    if (uniqueMatches.size === 1) {
+    const uniqueMatches = teachersForOneClass(matches);
+    if (uniqueMatches.length) {
       if (historicCycle) historicRosterDiagnostic.labelVariantMatches++;
-      return [...uniqueMatches.values()][0];
+      return uniqueMatches;
     }
     if (historicCycle && studentSubjectTeacher.has(studentId)) {
       historicRosterDiagnostic.missingSubjectRoster++;
     }
-    return null;
+    return [];
   }
 
   // ── 4. Load observation signals for teachers in this year ────────────────
@@ -502,10 +466,12 @@ export const GET = withApi(async function GET(req: Request) {
           : r.rawValue,
       };
 
-      if (assignment) {
-        const key = `${assignment.teacherId}:${assignment.className}`;
-        if (!classStudents.has(key)) classStudents.set(key, { ...assignment, students: [] });
-        classStudents.get(key)!.students.push(sRow);
+      if (assignment.length) {
+        for (const linkedTeacher of assignment) {
+          const key = `${linkedTeacher.teacherId}:${linkedTeacher.className}`;
+          if (!classStudents.has(key)) classStudents.set(key, { ...linkedTeacher, students: [] });
+          classStudents.get(key)!.students.push(sRow);
+        }
       } else {
         unassigned.push(sRow);
       }
@@ -559,7 +525,7 @@ export const GET = withApi(async function GET(req: Request) {
     }
     const teacherImpactStats: TeacherImpactStat[] = [...teacherImpact.values()].map((teacherClasses) => {
       const [first] = teacherClasses;
-      const students = teacherClasses.flatMap((classStat) => classStat.students);
+      const students = [...new Map(teacherClasses.flatMap((classStat) => classStat.students).map((student) => [student.studentId, student])).values()];
       const scores = students.map((student) => student.score).filter((score): score is number => score !== null);
       const teacherMean = mean(scores);
       return {

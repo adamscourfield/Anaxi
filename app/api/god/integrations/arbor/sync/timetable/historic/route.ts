@@ -11,15 +11,17 @@ import { decryptCredentials } from "@/lib/integrationSecrets";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
+export const maxDuration = 300;
+
 type HistoricSyncState = { version?: number; page?: number; startedAt?: string; completedAt?: string; membershipsProcessed?: number; linksSaved?: number };
 const ACADEMIC_YEAR = "2025/2026";
-const AS_OF_DATE = "2026-07-15";
+const AS_OF_DATE = "2026-06-30";
 const EFFECTIVE_FROM = new Date("2025-09-01T00:00:00.000Z");
 const EFFECTIVE_TO = new Date("2026-08-31T23:59:59.999Z");
 const PAGES_PER_RUN = 5;
-// Version 2 switches historic attribution from broad academic-unit staff to
-// the staff timetabled to the individual class.
-const HISTORIC_TIMETABLE_MAPPING_VERSION = 2;
+// Version 3 joins classroom timetable slots to dated staff allocations.
+// Computed staff relations are undated in Arbor and cannot prove history.
+const HISTORIC_TIMETABLE_MAPPING_VERSION = 3;
 
 /** Imports only dated 2025/26 classroom assignments; current timetable rows are untouched. */
 export const POST = withApi(async function POST(req: Request) {
@@ -85,7 +87,7 @@ export const POST = withApi(async function POST(req: Request) {
       // Arbor sometimes returns enrolments without start/end dates. The class
       // label itself names the academic year, so require it before historic
       // links can be stored for assessment attribution.
-      if (!assignment.className.includes(ACADEMIC_YEAR)) continue;
+      if (![ACADEMIC_YEAR, "2025/26"].some((year) => assignment.className.includes(year))) continue;
       const matches = studentResolver.studentCandidates(assignment.studentId, assignment.studentName);
       const eligibleStudents = matches.filter((match) => assignment.staff.some((arborStaff) => staffResolver.staff(match.person.tenantId, arborStaff.id, arborStaff.fullName)));
       if (eligibleStudents.length !== 1) continue;

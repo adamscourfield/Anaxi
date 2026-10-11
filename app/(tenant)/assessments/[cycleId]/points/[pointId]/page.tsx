@@ -2785,7 +2785,7 @@ function TeachingTab({
   return (
     <div className="space-y-4">
       <p className="text-sm text-[var(--on-surface-muted)]">
-        Teacher averages are calculated only from the students linked to that teacher for the assessed subject on the assessment date. This is an attainment indicator, not a causal measure of impact.
+        Teacher averages use the students linked to each teacher for the assessed subject. Historical assessments use Arbor class rosters and timetable staff from that academic year. Shared classes appear for each verified teacher. This is an attainment indicator, not a causal measure of impact.
       </p>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-[var(--surface-container-lowest)] shadow-ambient">
