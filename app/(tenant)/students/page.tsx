@@ -1,4 +1,5 @@
 import Link from "next/link";
+import StudentDirectory from "../explorer/students/view";
 import { redirect } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -65,8 +66,7 @@ export default async function StudentsPage({
   const qs = mapped.toString();
 
   if (canOpenExplorerStudentDirectory) {
-    const explorerQs = qs ? `?${qs}` : "";
-    redirect(`/explorer/students${explorerQs}`);
+    return <StudentDirectory searchParams={Promise.resolve({ ...params, studentSearch: params.studentSearch ?? q, view: params.view ?? "all" })} />;
   }
 
   if (user.role === "TEACHER" || user.role === "LEADER" || user.role === "SUPPORT") {

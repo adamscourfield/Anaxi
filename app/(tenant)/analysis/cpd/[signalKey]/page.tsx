@@ -1,3 +1,4 @@
+import { safeInsightsReturn } from "@/lib/insights-navigation";
 import { Fragment, type ReactNode } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -155,6 +156,8 @@ export default async function CpdSignalDrilldownPage({
     minute: "2-digit",
   });
 
+  const rawFrom = typeof resolvedSearchParams.from === "string" ? resolvedSearchParams.from : "";
+  const insightsFrom = safeInsightsReturn(rawFrom) ?? "";
   const backParams = new URLSearchParams();
   backParams.set("window", String(windowDays));
   if (departmentId) backParams.set("department", departmentId);
@@ -163,6 +166,7 @@ export default async function CpdSignalDrilldownPage({
     const p = new URLSearchParams();
     p.set("window", String(w));
     if (departmentId) p.set("department", departmentId);
+    if (insightsFrom) p.set("from", insightsFrom);
     return `/analysis/cpd/${signalKey}?${p.toString()}`;
   };
 
@@ -170,13 +174,13 @@ export default async function CpdSignalDrilldownPage({
     <div className={`${styles.page} w-full min-w-0 space-y-8 pb-12 pt-1`}>
       <div className="mx-auto w-full space-y-8">
         <Link
-          href={`/analytics?tab=cpd&${backParams.toString()}`}
+          href={insightsFrom || `/insights/teaching?view=cpd&windowDays=${windowDays}${departmentId ? "&department="+departmentId : ""}`}
           className="link-muted-accent inline-flex items-center gap-1 text-[0.8125rem] font-medium"
         >
           <span aria-hidden className="text-[0.9375rem] leading-none">
             &lt;
           </span>
-          Back to CPD priorities
+          {insightsFrom ? "Back to teaching insights" : "Back to CPD priorities"}
         </Link>
 
         <header className="space-y-4">

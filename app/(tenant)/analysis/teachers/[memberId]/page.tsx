@@ -1,3 +1,4 @@
+import { safeInsightsReturn } from "@/lib/insights-navigation";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
@@ -22,7 +23,7 @@ const STATUS_LABELS: Record<RiskStatus, string> = {
   SIGNIFICANT_DRIFT: "Significant drift",
   EMERGING_DRIFT: "Emerging drift",
   STABLE: "Stable",
-  LOW_COVERAGE: "Low coverage",
+  LOW_COVERAGE: "Insufficient observations",
 };
 
 const STATUS_PILL: Record<RiskStatus, string> = {
@@ -178,6 +179,8 @@ export default async function TeacherProfilePage({
     ? (rawWindow as (typeof WINDOW_OPTIONS)[number])
     : 21;
 
+  const rawFrom = typeof resolvedSearchParams.from === "string" ? resolvedSearchParams.from : "";
+  const insightsFrom = safeInsightsReturn(rawFrom) ?? "";
   const refRaw = typeof resolvedSearchParams.ref === "string" ? resolvedSearchParams.ref : "";
   const refSource = refRaw === "instruction" || refRaw === "explorer" ? refRaw : undefined;
 
@@ -295,11 +298,11 @@ export default async function TeacherProfilePage({
     return a.classCode.localeCompare(b.classCode);
   });
 
-  const backHref =
+  const backHref = insightsFrom || (
     refSource === "instruction" || refSource === "explorer"
-      ? `/explorer/teachers?windowDays=${windowDays}`
-      : `/analytics?tab=teachers&window=${windowDays}`;
-  const backLabel =
+      ? `/insights/teaching/evidence?windowDays=${windowDays}`
+      : `/insights/teaching?view=teachers&windowDays=${windowDays}`);
+  const backLabel = insightsFrom ? "← Back to teaching insights" :
     refSource === "instruction" || refSource === "explorer"
       ? "← Back to teachers"
       : "← Back to teacher priorities";
@@ -310,9 +313,10 @@ export default async function TeacherProfilePage({
 
   return (
     <div className={`${styles.page} space-y-8 pb-10`}>
+      {insightsFrom && <Link href={backHref} className={styles.back}>{backLabel}</Link>}
       <AnalysisBreadcrumb
         items={[
-          { label: "Teachers", href: "/explorer/teachers" },
+          { label: insightsFrom ? "Teaching insights" : "Teachers", href: insightsFrom || "/insights/teaching?view=teachers" },
           { label: profile.teacherName },
         ]}
       />
@@ -341,7 +345,7 @@ export default async function TeacherProfilePage({
               {WINDOW_OPTIONS.map((w) => (
                 <Link
                   key={w}
-                  href={buildWindowHref(teacherId, w, refSource)}
+                  href={buildWindowHref(teacherId, w, refSource) + (insightsFrom ? "&from=" + encodeURIComponent(insightsFrom) : "")}
                   aria-current={w === windowDays ? "true" : undefined}
                   className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}
                 >
@@ -357,14 +361,14 @@ export default async function TeacherProfilePage({
 
 
       <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
-        {/* Observed (observee) */}
+        {/* Lessons observed */}
         <section className={OBS_CARD_SHELL}>
           <div className="flex gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
             <IconCircle>
               <IconObservee />
             </IconCircle>
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-text">Observed (observee)</h2>
+              <h2 className="text-base font-semibold text-text">Lessons observed</h2>
               <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">
                 Observations where this teacher was observed in the window.
               </p>
@@ -427,7 +431,7 @@ export default async function TeacherProfilePage({
               <IconObserverPeople />
             </IconCircle>
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-text">Observations conducted (observer)</h2>
+              <h2 className="text-base font-semibold text-text">Observations of colleagues</h2>
               <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">
                 Lessons this teacher observed for others in the window.
               </p>
@@ -482,7 +486,7 @@ export default async function TeacherProfilePage({
       {assignedClasses.length > 0 && (
         <section className={OBS_CARD_SHELL}>
           <div className="border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
-            <h2 className="text-base font-semibold text-text">Assigned classes (timetable)</h2>
+            <h2 className="text-base font-semibold text-text">Assigned classes</h2>
             <p className="mt-0.5 text-[0.8125rem] text-muted">
               Distinct classes linked to this teacher from timetable import.
             </p>
@@ -514,14 +518,14 @@ export default async function TeacherProfilePage({
       )}
 
       <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
-        {/* Drift on signals */}
+        {/* Areas to discuss */}
         <section className={OBS_CARD_SHELL}>
           <div className="flex gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
             <IconCircle className="bg-[color-mix(in_srgb,var(--risk-urgent-text)_10%,var(--surface-container-high))] text-risk-urgent-text">
               <IconDriftDown />
             </IconCircle>
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-text">Drift on signals</h2>
+              <h2 className="text-base font-semibold text-text">Areas to discuss</h2>
               <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">
                 Weakening beyond the school drift threshold (Δ &lt; −{driftThreshold.toFixed(2)}).
               </p>
@@ -574,14 +578,14 @@ export default async function TeacherProfilePage({
           )}
         </section>
 
-        {/* Success on signals */}
+        {/* Improving signals */}
         <section className={OBS_CARD_SHELL}>
           <div className="flex gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
             <IconCircle className="bg-[color-mix(in_srgb,var(--scale-strong-text)_12%,var(--surface-container-high))] text-scale-strong-text">
               <IconTrendUp />
             </IconCircle>
             <div className="min-w-0">
-              <h2 className="text-base font-semibold text-text">Success on signals</h2>
+              <h2 className="text-base font-semibold text-text">Improving signals</h2>
               <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">
                 Meaningful improvement (Δ &gt; +{driftThreshold.toFixed(2)}), same threshold as drift.
               </p>
@@ -635,15 +639,15 @@ export default async function TeacherProfilePage({
         </section>
       </div>
 
-      <section id="teacher-full-signal-profile" className={`${OBS_CARD_SHELL} scroll-mt-20`}>
-        <div className="border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
+      <details open={Boolean(highlightSignal)} id="teacher-full-signal-profile" className={`${OBS_CARD_SHELL} scroll-mt-20`}>
+        <summary className="border-b border-[color-mix(in_srgb,var(--outline-variant)_12%,transparent)] px-5 py-4">
           <h2 className="text-base font-semibold text-text">Full signal profile</h2>
           <p className="mt-0.5 text-[0.8125rem] text-muted">
             {profile.status === "LOW_COVERAGE"
               ? "Insufficient observations for drift analysis."
               : `Instructional drift score (IDS): ${profile.normalizedIDS.toFixed(1)} · Sorted by change (weakest first)`}
           </p>
-        </div>
+        </summary>
         <div className={styles.signalScroll}>
           <table className="w-full text-left text-sm">
             <thead>
@@ -698,7 +702,7 @@ export default async function TeacherProfilePage({
             </tbody>
           </table>
         </div>
-      </section>
+      </details>
 
       <div className="flex flex-wrap justify-center gap-4 pt-2">
         <span className="text-xs text-muted">Updated {computedAt}</span>

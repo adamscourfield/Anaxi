@@ -32,7 +32,9 @@ export async function archiveStudentAction(formData: FormData) {
     data: { status: "ARCHIVED" },
   });
 
-  revalidatePath("/explorer/students");
+  revalidatePath("/students");
+  revalidatePath("/insights/students");
+  revalidatePath("/insights");
   revalidatePath("/on-call/new");
   revalidatePath(`/students/${studentId}`);
   redirect(returnTo);
@@ -51,7 +53,9 @@ export async function unarchiveStudentAction(formData: FormData) {
     data: { status: "ACTIVE" },
   });
 
-  revalidatePath("/explorer/students");
+  revalidatePath("/students");
+  revalidatePath("/insights/students");
+  revalidatePath("/insights");
   revalidatePath("/on-call/new");
   revalidatePath(`/students/${studentId}`);
   redirect(returnTo);
@@ -72,7 +76,9 @@ export async function bulkSetStudentStatus(
     data: { status },
   });
 
-  revalidatePath("/explorer/students");
+  revalidatePath("/students");
+  revalidatePath("/insights/students");
+  revalidatePath("/insights");
   revalidatePath("/students/my");
   revalidatePath("/on-call/new");
 

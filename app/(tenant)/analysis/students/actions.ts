@@ -33,8 +33,10 @@ export async function toggleWatchlist(studentId: string): Promise<{ onWatchlist:
 
   if (existing) {
     await (prisma as any).studentWatchlist.delete({ where: { id: existing.id } });
-    revalidatePath("/analytics");
-    revalidatePath("/explorer/students");
+    revalidatePath("/insights/priorities");
+    revalidatePath("/students");
+    revalidatePath("/insights/students");
+    revalidatePath("/insights");
     revalidatePath("/students/my");
     return { onWatchlist: false };
   } else {
@@ -45,8 +47,10 @@ export async function toggleWatchlist(studentId: string): Promise<{ onWatchlist:
         createdByUserId: user.id,
       },
     });
-    revalidatePath("/analytics");
-    revalidatePath("/explorer/students");
+    revalidatePath("/insights/priorities");
+    revalidatePath("/students");
+    revalidatePath("/insights/students");
+    revalidatePath("/insights");
     revalidatePath("/students/my");
     return { onWatchlist: true };
   }
@@ -101,8 +105,10 @@ export async function bulkToggleWatchlist(
     });
   }
 
-  revalidatePath("/analytics");
-  revalidatePath("/explorer/students");
+  revalidatePath("/insights/priorities");
+  revalidatePath("/students");
+  revalidatePath("/insights/students");
+  revalidatePath("/insights");
   revalidatePath("/students/my");
   return { updated: unique.length };
 }

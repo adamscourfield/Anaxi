@@ -27,7 +27,7 @@ function teachersExplorerHref(departmentId: string, windowDays: number): string 
     mode: "priorities",
     page: "1",
   });
-  return `/explorer/teachers?${qs}`;
+  return `/insights/teaching/evidence?${qs}`;
 }
 
 const STATUS_STYLES: Record<string, string> = {

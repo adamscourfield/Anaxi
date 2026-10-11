@@ -19,12 +19,12 @@ export function AttainmentExplorerLink({ cycleId, className = "" }: Props) {
   if (!EXPLORER_ROLES.has(ui.role)) return null;
 
   const href = cycleId
-    ? `/explorer/assessment?cycle=${encodeURIComponent(cycleId)}`
-    : "/explorer/assessment";
+    ? `/insights/attainment?cycle=${encodeURIComponent(cycleId)}`
+    : "/insights/attainment";
 
   return (
     <Button asChild variant="secondary" className={className}>
-      <Link href={href}>Explorer analysis</Link>
+      <Link href={href}>Attainment insights</Link>
     </Button>
   );
 }

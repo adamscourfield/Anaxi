@@ -44,7 +44,7 @@ export function parseViewMode(
     if (bandParam === "STABLE") return "stable";
     return "attention";
   }
-  if (viewParam === "all" || viewParam === "watch" || viewParam === "stable") {
+  if (viewParam === "attention" || viewParam === "all" || viewParam === "watch" || viewParam === "stable") {
     return viewParam;
   }
   return DEFAULT_VIEW_MODE;
@@ -220,7 +220,7 @@ export function studentDetailHref(
   listPath: string,
 ): string {
   const from = encodeURIComponent(listPath);
-  return `/analysis/students/${studentId}?window=${windowDays}&from=${from}`;
+  return `/students/${studentId}?window=${windowDays}&from=${from}`;
 }
 
 export function formatDelta(value: number | null): string {

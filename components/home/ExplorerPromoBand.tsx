@@ -7,14 +7,14 @@ export function ExplorerPromoBand({ windowDays }: { windowDays: number }) {
         <p className="text-sm font-semibold text-text">Need to dig deeper?</p>
         <p className="text-xs text-muted">
           <span className="font-medium text-text">Today</span> is your pulse — use{" "}
-          <span className="font-medium text-text">Explore</span> for full pivots, exports, and drill-downs.
+          <span className="font-medium text-text">Insights</span> to investigate changes and review the evidence.
         </p>
       </div>
       <Link
-        href={`/explorer?windowDays=${windowDays}`}
+        href={`/insights?windowDays=${windowDays}`}
         className="mt-3 inline-flex shrink-0 items-center justify-center rounded-lg bg-[var(--surface-container-lowest)] px-4 py-2 text-xs font-semibold text-text ring-1 ring-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] calm-transition hover:bg-[var(--surface-container)] sm:mt-0"
       >
-        Open Explorer →
+        Open Insights →
       </Link>
     </section>
   );

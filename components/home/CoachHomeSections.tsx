@@ -39,7 +39,7 @@ export function CoacheePrioritiesCard({
         subtitle={`${coacheeCount} assigned · ${windowDays}-day window`}
         end={
           <Link
-            href={`/analytics?tab=teachers&window=${windowDays}`}
+            href={`/insights/teaching?view=teachers&windowDays=${windowDays}`}
             className="link-accent shrink-0 text-xs font-semibold"
           >
             All priorities →
@@ -72,7 +72,7 @@ export function CoacheePrioritiesCard({
         </ul>
       )}
       <div className="flex flex-wrap gap-2">
-        <HomePrimaryLink href="/explorer/teachers">Coachee directory →</HomePrimaryLink>
+        <HomePrimaryLink href="/insights/teaching/evidence">Coachee directory →</HomePrimaryLink>
         <HomePrimaryLink href="/observe/new">New observation</HomePrimaryLink>
       </div>
     </Card>

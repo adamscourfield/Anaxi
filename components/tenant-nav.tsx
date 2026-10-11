@@ -103,14 +103,14 @@ function iconFor(href: string) {
   if (href.includes("/observe/history")) return "history";
   if (href.includes("/observe")) return "radar";
   if (href.includes("/instruction")) return "users";
-  if (href === "/explorer/teachers") return "users";
-  if (href.includes("/explorer")) return "grid";
+  if (href === "/insights/teaching/evidence") return "users";
+  if (href.includes("/insights")) return "grid";
   if (href.includes("/assessments")) return "chart";
   if (href.includes("/students")) return "users";
   if (href.includes("/on-call")) return "flag";
   if (href.includes("/meetings")) return "calendar";
   if (href.includes("/leave")) return "moon";
-  if (href.includes("/analytics")) return "chart";
+  if (href.includes("/insights/priorities")) return "chart";
   if (href.includes("/strategy")) return "strategy";
   if (href.includes("/admin/users")) return "users";
   if (href.includes("/admin/departments")) return "building";
@@ -179,9 +179,7 @@ export function TenantNav({
   const canSeeAnalysis = hasAnyPermission(role, ["analysis:view", "analysis:export"]);
   const canSeeTeacherDirectory = canAccessTeacherDirectory(role, coacheeCount);
   const canViewStrategy = role === "SUPER_ADMIN" || role === "ADMIN" || role === "SLT";
-  // Opening the explorer directly avoids an unnecessary server redirect from
-  // /students, which can leave the client router in an inconsistent state.
-  const studentsHref = has("ANALYSIS") && canSeeAnalysis ? "/explorer/students" : "/students";
+  const studentsHref = "/students";
 
   const navItem = (label: string, href: string, badgeCount?: number): NavItem => ({
     label,
@@ -191,7 +189,7 @@ export function TenantNav({
   });
 
   const sections: NavSection[] = [
-    { label: "Overview", items: [navItem("Home", "/home"), navItem("My actions", "/my-actions")] },
+    { label: "Overview", items: [navItem("Home", "/home"), navItem("My actions", "/my-actions"), ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Insights", "/insights")] : [])] },
     {
       label: "Instruction",
       items: [
@@ -202,9 +200,9 @@ export function TenantNav({
         // kept only for roles who can see multiple staff members' data but can't reach
         // Explorer itself (LEADER with coachees, no analysis:view).
         ...(has("ANALYSIS") && canSeeTeacherDirectory && !canSeeAnalysis
-          ? [navItem("Teachers", "/explorer/teachers")]
+          ? [navItem("Teachers", "/insights/teaching")]
           : []),
-        ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Explorer", "/explorer")] : []),
+
       ],
     },
     {

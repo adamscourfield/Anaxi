@@ -40,7 +40,7 @@ export function StudentPrioritiesFilters({
     <div className="anx-priorities-student-filters">
       <form
         method="get"
-        action="/analytics"
+        action="/insights/priorities"
         className="flex w-full flex-col gap-5 xl:flex-row xl:flex-wrap xl:items-end xl:justify-between"
       >
         <input type="hidden" name="tab" value="students" />
@@ -149,7 +149,7 @@ export function StudentPrioritiesFilters({
           </button>
           {hasFilters && (
             <Link
-              href={`/analytics?tab=students&window=${windowDays}`}
+              href={`/insights/priorities?tab=students&window=${windowDays}`}
               className="inline-flex items-center justify-center rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 text-sm font-semibold text-[#374151] shadow-sm calm-transition hover:bg-[#f9fafb]"
             >
               Clear

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 /**
- * Teachers now lives at /explorer/teachers (same page, same access rules).
+ * Teachers now lives at /insights/teaching/evidence (same page, same access rules).
  * This route just forwards old links/bookmarks, preserving query params.
  */
 export default async function InstructionTeachersRedirect({
@@ -16,5 +16,5 @@ export default async function InstructionTeachersRedirect({
     if (typeof v === "string") qs.set(key, v);
   }
   const qsString = qs.toString();
-  redirect(`/explorer/teachers${qsString ? `?${qsString}` : ""}`);
+  redirect(`/insights/teaching/evidence${qsString ? `?${qsString}` : ""}`);
 }

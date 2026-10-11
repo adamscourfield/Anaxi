@@ -295,14 +295,14 @@ function LeadershipHome({
       ? [{
           label: "Intervention",
           value: allInterventionStaff.length,
-          href: `/analytics?tab=teachers&window=${windowDays}`,
+          href: `/insights/teaching?view=teachers&windowDays=${windowDays}`,
           tone: "critical" as const,
         }]
       : []),
     ...(pendingLeaveCount > 0
       ? [{ label: "Leave", value: pendingLeaveCount, href: "/leave#pending-requests", tone: "warning" as const }]
       : []),
-    { label: "Obs this week", value: weekObsCount, href: "/explorer/observations" },
+    { label: "Obs this week", value: weekObsCount, href: "/insights/teaching/observations" },
     ...(meetingsTodayCount > 0 ? [{ label: "Meetings", value: meetingsTodayCount, href: "/meetings" }] : []),
   ];
 
@@ -322,8 +322,8 @@ function LeadershipHome({
             title="Staff signals"
             subtitle={`CPD drift and intervention — ${windowDays}-day window`}
             end={
-              <Link href={`/analytics?tab=teachers&window=${windowDays}`} className="link-accent shrink-0 text-xs font-semibold">
-                Full analytics →
+              <Link href={`/insights/teaching?view=teachers&windowDays=${windowDays}`} className="link-accent shrink-0 text-xs font-semibold">
+                Teaching insights →
               </Link>
             }
           />
@@ -357,7 +357,7 @@ function LeadershipHome({
                     ))}
                   </div>
                   <Link
-                    href={`/analytics?tab=cpd&window=${windowDays}`}
+                    href={`/insights/teaching?view=cpd&windowDays=${windowDays}`}
                     className="inline-flex items-center gap-1 text-xs font-semibold text-muted calm-transition hover:text-text"
                   >
                     View full CPD breakdown →
@@ -393,7 +393,7 @@ function LeadershipHome({
                   </ul>
                   {allInterventionStaff.length > 3 && (
                     <Link
-                      href={`/analytics?tab=teachers&window=${windowDays}`}
+                      href={`/insights/teaching?view=teachers&windowDays=${windowDays}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-muted calm-transition hover:text-text"
                     >
                       +{allInterventionStaff.length - 3} more →
@@ -412,7 +412,7 @@ function LeadershipHome({
             <div className="flex items-center justify-between gap-2">
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Attendance</p>
               <Link
-                href={`/analytics?tab=students&window=${windowDays}`}
+                href={`/insights/students?windowDays=${windowDays}`}
                 className="text-xs font-semibold text-[var(--primary)] calm-transition hover:opacity-80"
               >
                 Report →
@@ -451,7 +451,7 @@ function LeadershipHome({
             <div className="flex items-center justify-between gap-2">
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Observations this week</p>
               <Link
-                href="/explorer/observations"
+                href="/insights/teaching/observations"
                 className="text-xs font-semibold text-[var(--primary)] calm-transition hover:opacity-80"
               >
                 View all →
@@ -530,7 +530,7 @@ function LeadershipHome({
               columnLabels={behaviourHeatmap.columnLabels}
               matrix={behaviourHeatmap.matrix}
               incidents={behaviourHeatmap.incidents}
-              ctaHref={`/explorer/analysis?windowDays=${windowDays}#behaviour-heatmap`}
+              ctaHref={`/insights/students/patterns?windowDays=${windowDays}#behaviour-heatmap`}
               ctaLabel="View full map"
             />
           </Card>
@@ -553,7 +553,7 @@ function LeadershipHome({
                 </p>
               </div>
             </div>
-            <Link href="/analytics?watchlist=1" className="link-accent shrink-0 text-sm">
+            <Link href="/insights/students?view=watchlist" className="link-accent shrink-0 text-sm">
               View all →
             </Link>
           </div>
@@ -826,8 +826,8 @@ function HodHome({
           title={`${deptName} staff signals`}
           subtitle={`${windowDays}-day window · ${deptTeacherRows.length} teacher${deptTeacherRows.length !== 1 ? "s" : ""} · ${deptObsCount} observations`}
           end={
-            <Link href={`/analytics?tab=teachers&window=${windowDays}&department=${deptId}`} className="link-accent shrink-0 text-xs font-semibold">
-              Full analytics →
+            <Link href={`/insights/teaching?view=teachers&windowDays=${windowDays}&department=${deptId}`} className="link-accent shrink-0 text-xs font-semibold">
+              Teaching insights →
             </Link>
           }
         />
@@ -862,7 +862,7 @@ function HodHome({
                   ))}
                 </div>
                 <Link
-                  href={`/analytics?tab=cpd&window=${windowDays}&department=${deptId}`}
+                  href={`/insights/teaching?view=cpd&windowDays=${windowDays}&department=${deptId}`}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-muted calm-transition hover:text-text"
                 >
                   View full CPD breakdown →
@@ -1025,7 +1025,7 @@ function HodHome({
               />
             </div>
           </div>
-          <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
+          <Link href={`/insights/teaching?view=cpd&windowDays=${windowDays}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
             See CPD priorities ↗
           </Link>
         </Card>
@@ -1352,7 +1352,7 @@ function TeacherHome({
               />
             </div>
           </div>
-          <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
+          <Link href={`/insights/teaching?view=cpd&windowDays=${windowDays}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
             See CPD priorities ↗
           </Link>
         </Card>

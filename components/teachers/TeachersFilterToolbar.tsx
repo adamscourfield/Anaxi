@@ -108,7 +108,7 @@ export function TeachersFilterToolbar(props: TeachersFilterToolbarProps) {
       <div className="teachers-filter-toolbar__divider" aria-hidden />
       <div className="teachers-filter-toolbar__section sm:flex-[1.15]">
         <SectionHeader icon={<UserIcon />} label="Department" />
-        <form className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center" method="GET" action="/explorer/teachers">
+        <form className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center" method="GET" action="/insights/teaching/evidence">
           <input type="hidden" name="windowDays" value={String(windowDays)} />
           <input type="hidden" name="mode" value={mode} />
           <input type="hidden" name="sort" value={sort} />

@@ -191,12 +191,15 @@ export default async function StudentDetailPage({
   // Contextual back link — callers can pass ?from=/some/path for context-aware navigation
   const rawFrom = Array.isArray(query.from) ? query.from[0] : (query.from ?? "");
   const backHref =
-    rawFrom && rawFrom.startsWith("/") ? rawFrom : "/explorer/students";
+    rawFrom && rawFrom.startsWith("/") && !rawFrom.startsWith("//") && !rawFrom.includes("\\") ? rawFrom : "/students";
   let backLabel = "Back to students";
-  if (rawFrom.includes("/assessments")) backLabel = "Back to attainment";
+  if (rawFrom.startsWith("/insights/students")) backLabel = "Back to student insights";
+  else if (rawFrom.startsWith("/insights/attainment")) backLabel = "Back to attainment insights";
+  else if (rawFrom.startsWith("/insights")) backLabel = "Back to insights";
+  else if (rawFrom.includes("/assessments")) backLabel = "Back to attainment";
   else if (rawFrom.includes("/students/my")) backLabel = "Back to my students";
-  else if (rawFrom.includes("/explorer/students")) backLabel = "Back to student list";
-  else if (rawFrom.includes("/analytics")) backLabel = "Back to analytics";
+  else if (rawFrom.includes("/insights/students")) backLabel = "Back to student list";
+  else if (rawFrom.includes("/insights/priorities")) backLabel = "Back to analytics";
 
   const assessmentsFeature = await prisma.tenantFeature.findUnique({
     where: { tenantId_key: { tenantId: user.tenantId, key: "ASSESSMENTS" } },
@@ -457,7 +460,7 @@ export default async function StudentDetailPage({
             {analysisProfile && (
               <div className="segmented-toggle home-pulse-window-toggle" role="group" aria-label="Analysis window length">
                 {WINDOW_OPTIONS.map((w) => (
-                  <Link key={w} href={`/students/${resolvedParams.id}?window=${w}`}
+                  <Link key={w} href={`/students/${resolvedParams.id}?window=${w}${rawFrom ? "&from=" + encodeURIComponent(backHref) : ""}`}
                     className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}>
                     {w}d
                   </Link>
@@ -529,7 +532,7 @@ export default async function StudentDetailPage({
       )}
 
       {analysisProfile ? (
-        <div className="overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
+        <div id="pastoral-evidence" className="scroll-mt-24 overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none sm:p-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] pb-4">
             <div>
               <H2>Pastoral risk</H2>
@@ -638,7 +641,7 @@ export default async function StudentDetailPage({
                 {analysisProfile.onWatchlist ? "★ On watchlist" : "Add to watchlist"}
               </Button>
             </form>
-            <Link href={`/analytics?tab=students&window=${windowDays}`} className="link-accent text-sm">
+            <Link href={`/insights/priorities?tab=students&window=${windowDays}`} className="link-accent text-sm">
               Open student support priorities →
             </Link>
           </div>

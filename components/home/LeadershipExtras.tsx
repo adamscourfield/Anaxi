@@ -38,7 +38,7 @@ export function CohortChangeCard({ cohortRows, windowDays }: { cohortRows: Cohor
         title="Cohort change"
         subtitle={`Attendance movement — ${windowDays}-day window`}
         end={
-          <Link href={`/analytics?tab=students&window=${windowDays}`} className="link-accent shrink-0 text-xs font-semibold">
+          <Link href={`/insights/students?windowDays=${windowDays}`} className="link-accent shrink-0 text-xs font-semibold">
             Students →
           </Link>
         }
@@ -75,7 +75,7 @@ export function PositiveMomentumCard({
         title="Positive momentum"
         subtitle="Signals with the most teachers improving"
         end={
-          <Link href={`/analytics?tab=cpd&window=${windowDays}`} className="link-accent shrink-0 text-xs font-semibold">
+          <Link href={`/insights/teaching?view=cpd&windowDays=${windowDays}`} className="link-accent shrink-0 text-xs font-semibold">
             CPD →
           </Link>
         }

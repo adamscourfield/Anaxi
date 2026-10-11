@@ -1,3 +1,5 @@
+import { filterStudentRows, parseViewMode, parseSortMode, parseStatusFilter } from "@/modules/students/explorerList";
+import { hasPermission } from "@/lib/rbac";
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -224,7 +226,16 @@ export const POST = withApi(async function POST(req: NextRequest | Request) {
       if (!canViewStudentAnalysis(viewerContext)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
-      const { rows } = await computeStudentRiskIndex(user.tenantId, windowDays, user.id);
+      const field = (key: string) => String(body.get(key) ?? "");
+      const status = hasPermission(user.role, "students:write") ? parseStatusFilter(field("status")) : "active";
+      const { rows } = await computeStudentRiskIndex(user.tenantId, windowDays, user.id, status === "archived" ? "ARCHIVED" : status === "all" ? "ALL" : "ACTIVE");
+      const filteredRows = filterStudentRows(rows, {
+        view: parseViewMode(field("listView"), field("band")), band: field("band"),
+        yearGroup, studentSearch, send: field("send"), pp: field("pp"),
+        confidence: field("confidence"), watchlistOnly: field("watchlist") === "1",
+        attendanceBelow80: field("attendanceBelow") === "1", sort: parseSortMode(field("sort")),
+      });
+
       csvLines.push(
         buildRow([
           "Student",
@@ -334,13 +345,16 @@ export const POST = withApi(async function POST(req: NextRequest | Request) {
         ]));
       }
     } else if (view === "BEHAVIOUR_STUDENTS_TABLE") {
-      const { rows } = await computeStudentRiskIndex(user.tenantId, windowDays, user.id);
-      let filteredRows = rows;
-      if (yearGroup) filteredRows = filteredRows.filter((r) => r.yearGroup === yearGroup);
-      if (studentSearch) {
-        const q = studentSearch.toLowerCase();
-        filteredRows = filteredRows.filter((r) => r.studentName.toLowerCase().includes(q));
-      }
+      const field = (key: string) => String(body.get(key) ?? "");
+      const status = hasPermission(user.role, "students:write") ? parseStatusFilter(field("status")) : "active";
+      const { rows } = await computeStudentRiskIndex(user.tenantId, windowDays, user.id,
+        status === "archived" ? "ARCHIVED" : status === "all" ? "ALL" : "ACTIVE");
+      const filteredRows = filterStudentRows(rows, {
+        view: parseViewMode(field("listView"), field("band")), band: field("band"), yearGroup,
+        studentSearch, send: field("send"), pp: field("pp"), confidence: field("confidence"),
+        watchlistOnly: field("watchlist") === "1", attendanceBelow80: field("attendanceBelow") === "80",
+        sort: parseSortMode(field("sort")),
+      });
 
       csvLines.push(buildRow(["Student", "Year", "Band", "Score", "Drivers", "Attendance%", "AttendanceDelta", "DetentionsDelta", "OnCallsDelta", "LatenessDelta", "SuspensionsDelta", "SEND", "PP"]));
       for (const row of filteredRows) {
