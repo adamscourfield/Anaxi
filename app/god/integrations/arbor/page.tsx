@@ -300,10 +300,12 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
   const latestBehaviourRun = latestRunByEntity.get("BEHAVIOUR") ?? null;
   const hostname = typeof integration?.config?.schoolHostname === "string" ? integration.config.schoolHostname : "";
   const historicTimetableSyncs = integration?.config?.historicTimetableSyncs && typeof integration.config.historicTimetableSyncs === "object"
-    ? integration.config.historicTimetableSyncs as Record<string, { page?: unknown; completedAt?: unknown; membershipsProcessed?: unknown; linksSaved?: unknown; totalMemberships?: unknown; totalPages?: unknown }>
+    ? integration.config.historicTimetableSyncs as Record<string, { version?: unknown; page?: unknown; completedAt?: unknown; membershipsProcessed?: unknown; linksSaved?: unknown; totalMemberships?: unknown; totalPages?: unknown }>
     : {};
   const historicTimetableState = historicTimetableSyncs["2025/2026"] ?? {};
-  const historicTimetableComplete = typeof historicTimetableState.completedAt === "string";
+  const HISTORIC_TIMETABLE_MAPPING_VERSION = 2;
+  const historicTimetableVersionCurrent = historicTimetableState.version === HISTORIC_TIMETABLE_MAPPING_VERSION;
+  const historicTimetableComplete = historicTimetableVersionCurrent && typeof historicTimetableState.completedAt === "string";
   const historicTimetablePagesCompleted = typeof historicTimetableState.page === "number" ? historicTimetableState.page : 0;
   const historicMembershipsProcessed = typeof historicTimetableState.membershipsProcessed === "number" ? historicTimetableState.membershipsProcessed : 0;
   const historicLinksSaved = typeof historicTimetableState.linksSaved === "number" ? historicTimetableState.linksSaved : 0;
@@ -1048,16 +1050,18 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                 <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2" aria-live="polite">
                   <div className="flex items-center justify-between gap-3 text-sm font-medium text-slate-800">
                     <span>2025/26 historic roster</span>
-                    <span>{historicTimetableComplete ? "Complete" : historicTimetablePagesCompleted ? `${historicTimetablePagesCompleted} pages complete` : "Not started"}</span>
+                    <span>{historicTimetableComplete ? "Complete" : historicTimetableVersionCurrent && historicTimetablePagesCompleted ? `${historicTimetablePagesCompleted} pages complete` : historicTimetableVersionCurrent ? "Not started" : "Replacement queued"}</span>
                   </div>
                   {historicTimetableComplete ? (
                     <progress className="mt-2 h-2 w-full accent-emerald-600" value={1} max={1}>Complete</progress>
+                  ) : !historicTimetableVersionCurrent ? (
+                    <progress className="mt-2 h-2 w-full accent-indigo-600">Replacement queued</progress>
                   ) : historicProgressPercent !== null ? (
                     <progress className="mt-2 h-2 w-full accent-indigo-600" value={historicProgressPercent} max={100}>{historicProgressPercent}%</progress>
                   ) : historicTimetablePagesCompleted ? (
                     <progress className="mt-2 h-2 w-full accent-indigo-600">Importing</progress>
                   ) : null}
-                  <MetaText className="mt-1">{historicTimetableComplete ? `All historic pages are imported: ${historicMembershipsProcessed.toLocaleString()} memberships and ${historicLinksSaved.toLocaleString()} dated teacher links. No further action is needed.` : historicTimetablePagesCompleted && historicTotalMemberships ? `${historicMembershipsProcessed.toLocaleString()} of ${historicTotalMemberships.toLocaleString()} memberships processed (${historicProgressPercent}%). ${historicLinksSaved.toLocaleString()} dated teacher links saved. ${historicTotalPages} Arbor pages in total.` : historicTimetablePagesCompleted ? `${historicMembershipsProcessed.toLocaleString()} memberships and ${historicLinksSaved.toLocaleString()} dated teacher links saved so far. Use Calculate historic roster total to show an exact percentage.` : "This reads former class memberships and their staff as at 15 July 2026."}</MetaText>
+                  <MetaText className="mt-1">{historicTimetableComplete ? `All historic pages are imported: ${historicMembershipsProcessed.toLocaleString()} memberships and ${historicLinksSaved.toLocaleString()} dated teacher links. No further action is needed.` : !historicTimetableVersionCurrent ? "A corrected historic class-teacher replacement is queued to run automatically. The previous completed roster remains visible until the new pass begins." : historicTimetablePagesCompleted && historicTotalMemberships ? `${historicMembershipsProcessed.toLocaleString()} of ${historicTotalMemberships.toLocaleString()} memberships processed (${historicProgressPercent}%). ${historicLinksSaved.toLocaleString()} dated teacher links saved. ${historicTotalPages} Arbor pages in total.` : historicTimetablePagesCompleted ? `${historicMembershipsProcessed.toLocaleString()} memberships and ${historicLinksSaved.toLocaleString()} dated teacher links saved so far. Use Calculate historic roster total to show an exact percentage.` : "This reads former class memberships and their staff as at 15 July 2026."}</MetaText>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <form method="post" action={connectionAction("/api/god/integrations/arbor/sync/timetable")} className={actionButtonClass}>
