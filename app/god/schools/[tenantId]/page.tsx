@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import styles from "@/app/god/god.module.css";
 import { notFound } from "next/navigation";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { getCsrfToken } from "@/lib/csrf";
@@ -65,7 +68,7 @@ export default async function SchoolDetailPage({
   const enabled = new Set(school.features.filter((f) => f.enabled).map((f) => f.key));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 p-6">
+    <div className={styles.page}>
       {invitePreview ? (
         <Card className="border-success/30 bg-[var(--pill-success-bg)]">
           <div className="font-medium text-success">Invite created.</div>
@@ -78,11 +81,10 @@ export default async function SchoolDetailPage({
           </details>
         </Card>
       ) : null}
-      <div>
-        <H1>{school.name}</H1>
-        <MetaText>{school.id} · {school.slug ?? "no-slug"} · {school.status}</MetaText>
-      </div>
-
+      <Link href="/god" className="text-xs text-muted">← Schools</Link>
+      <PageHeader variant="ledger" title={school.name} subtitle={`${school.slug ?? "No slug"} · ${school.status.toLowerCase()}`} />
+      <nav className={styles.jumpNav} aria-label="School settings"><a href="#school-configuration">Configuration</a><a href="#school-modules">Modules</a><a href="#school-admins">Administrators</a><a href="#school-invites">Invitations</a><Link href={`/god/audit?tenantId=${school.id}`}>School activity ↗</Link></nav>
+      <div id="school-configuration" className={styles.settingsGrid}>
       <Card>
         <form method="post" action={`/api/god/schools/${school.id}/status`} className="flex items-end gap-3">
           <CsrfInput token={csrfToken} />
@@ -111,19 +113,20 @@ export default async function SchoolDetailPage({
           <Button type="submit">Update</Button>
         </form>
         <MetaText className="mt-2">
-          Controls which observation signal catalog (primary vs. secondary) this school sees in Language/Signals admin.
+          Sets the school’s observation signal catalogue.
         </MetaText>
       </Card>
 
-      <Card>
+      </div>
+      <Card id="school-modules">
         <form method="post" action={`/api/god/schools/${school.id}/modules`} className="space-y-3">
           <CsrfInput token={csrfToken} />
           <H2>Modules</H2>
-          <div className="grid gap-1.5 sm:grid-cols-2">
+          <div className={styles.moduleGrid}>
             {MODULES.map((m) => (
               <label key={m} className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-surface/60 px-3 py-2 text-sm calm-transition hover:border-accent/30 hover:bg-[var(--accent-tint)]">
                 <input type="checkbox" name="modules" value={m} defaultChecked={enabled.has(m)} className="accent-accent" />
-                {m}
+                {m.toLowerCase().split("_").map(word=>word.charAt(0).toUpperCase()+word.slice(1)).join(" ")}
               </label>
             ))}
           </div>
@@ -131,11 +134,11 @@ export default async function SchoolDetailPage({
         </form>
       </Card>
 
-      <Card>
-        <SectionHeader title="Admins" subtitle={`${school.users.length} admin account${school.users.length === 1 ? "" : "s"}`} />
+      <Card id="school-admins">
+        <SectionHeader title="Administrators" subtitle={`${school.users.length} admin account${school.users.length === 1 ? "" : "s"}`} />
         <ul className="mt-2 space-y-1.5 text-sm">
           {school.users.map((u) => (
-            <li key={u.id} className="flex items-center gap-2">
+            <li key={u.id} className="flex flex-wrap items-center gap-2 border-b border-border py-3">
               <span>{u.fullName} · {u.email}</span>
               <StatusPill variant={u.isActive ? "success" : "neutral"} size="sm">{u.isActive ? "Active" : "Inactive"}</StatusPill>
               <StatusPill variant="neutral" size="sm">{u.role}</StatusPill>
@@ -144,13 +147,13 @@ export default async function SchoolDetailPage({
         </ul>
       </Card>
 
-      <Card>
+      <Card id="school-invites">
         <form method="post" action={`/api/god/schools/${school.id}/invites`} className="space-y-3">
           <CsrfInput token={csrfToken} />
           <H2>Invite school admin</H2>
           <div className="grid gap-3 sm:grid-cols-2">
-            <input required name="fullName" placeholder="Full name" className="field" />
-            <input required type="email" name="email" placeholder="Email" className="field" />
+            <label className="grid gap-1 text-xs text-muted">Full name<input required name="fullName" placeholder="Full name" className="field" /></label>
+            <label className="grid gap-1 text-xs text-muted">Email<input required type="email" name="email" placeholder="Email" className="field" /></label>
           </div>
           <Button type="submit">Create invite link</Button>
         </form>
@@ -164,9 +167,9 @@ export default async function SchoolDetailPage({
             const isExpired = !isAccepted && new Date(i.expiresAt).getTime() < Date.now();
             return (
               <li key={i.id} className="rounded-xl border border-border/70 p-3">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <div>{i.fullName} · {i.email}</div>
+                    <div className="break-all">{i.fullName} · {i.email}</div>
                     <MetaText>
                       {isAccepted
                         ? `accepted ${new Date(i.acceptedAt!).toLocaleDateString("en-GB")}`

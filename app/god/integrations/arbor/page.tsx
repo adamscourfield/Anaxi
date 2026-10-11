@@ -1,3 +1,4 @@
+import styles from "@/app/god/god.module.css";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { requireSuperAdminUser } from "@/lib/admin";
@@ -179,16 +180,7 @@ function IconClipboardList({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
-const SECTION_TILE_CLASS = {
-  connection: "bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]",
-  photos: "bg-cat-blue-bg text-cat-blue-text",
-  timetable: "bg-cat-indigo-bg text-cat-indigo-text",
-  people: "bg-cat-violet-bg text-cat-violet-text",
-  behaviour: "bg-scale-some-light text-scale-some-text",
-  attendance: "bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)]",
-  leave: "bg-cat-purple-bg text-cat-purple-text",
-  assessments: "bg-[color-mix(in_srgb,var(--warning)_16%,transparent)] text-[var(--warning-text,var(--warning))]",
-} as const;
+const SECTION_TILE_CLASS = Object.fromEntries(["connection","photos","timetable","people","behaviour","attendance","leave","assessments"].map(key=>[key,"border border-border bg-white text-[#ff6a52]"])) as Record<"connection"|"photos"|"timetable"|"people"|"behaviour"|"attendance"|"leave"|"assessments",string>;
 
 const SECTION_ICON = {
   connection: <IconPlug />,
@@ -447,10 +439,12 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
       <PageHeader
         variant="ledger"
         eyebrow="God Mode"
-        title="Arbor connection"
-        subtitle="Select a real school’s Arbor connection before reviewing or syncing its data."
-        actions={<Link href="/god"><Button variant="secondary" className="w-full sm:w-64">Back to schools</Button></Link>}
+        title="Arbor"
+        subtitle="Connections, sync health and school data operations."
+        actions={<Link href="/god" className="text-xs text-muted">Schools ↗</Link>}
       />
+
+      {integration?.status === "CONNECTED" && <nav className={styles.jumpNav} aria-label="Arbor operations">{[["connection","Connection"],["people","People"],["attendance","Attendance"],["behaviour","Behaviour"],["timetable","Timetable"],["assessments","Assessments"],["photos","Photos"],["leave","Leave"]].map(([id,label])=><a key={id} href={`#${id}`}>{label}</a>)}</nav>}
 
       <Card className="space-y-4" tone="inset">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -1013,7 +1007,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
           ) : null}
 
           <div className="space-y-3">
-            <CollapsibleCard id="connection" title="1. Connection" icon={SECTION_ICON.connection} iconClassName={SECTION_TILE_CLASS.connection} defaultOpen={false} attention={visibleAlert("connection", connectionAlert)} attentionKey="connection" attentionFingerprint={connectionAlert ?? undefined} attentionMessage="The Arbor connection needs review. Check the connection result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="connection" title="Connection" icon={SECTION_ICON.connection} iconClassName={SECTION_TILE_CLASS.connection} defaultOpen={false} attention={visibleAlert("connection", connectionAlert)} attentionKey="connection" attentionFingerprint={connectionAlert ?? undefined} attentionMessage="The Arbor connection needs review. Check the connection result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>{integration.label}</H3>
@@ -1028,7 +1022,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard id="photos" title="2. Photo access" icon={SECTION_ICON.photos} iconClassName={SECTION_TILE_CLASS.photos} defaultOpen={false} attention={visibleAlert("photos", photoAlert)} attentionKey="photos" attentionFingerprint={photoAlert ?? undefined} attentionMessage="Arbor photo access needs review. Check the photo result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="photos" title="Photo access" icon={SECTION_ICON.photos} iconClassName={SECTION_TILE_CLASS.photos} defaultOpen={false} attention={visibleAlert("photos", photoAlert)} attentionKey="photos" attentionFingerprint={photoAlert ?? undefined} attentionMessage="Arbor photo access needs review. Check the photo result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Profile photos update automatically</H3>
@@ -1041,7 +1035,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard id="timetable" title="3. Timetable access" icon={SECTION_ICON.timetable} iconClassName={SECTION_TILE_CLASS.timetable} defaultOpen={false} attention={visibleAlert("timetable", timetableAlert)} attentionKey="timetable" attentionFingerprint={timetableAlert ?? undefined} attentionMessage="The timetable sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="timetable" title="Timetable access" icon={SECTION_ICON.timetable} iconClassName={SECTION_TILE_CLASS.timetable} defaultOpen={false} attention={visibleAlert("timetable", timetableAlert)} attentionKey="timetable" attentionFingerprint={timetableAlert ?? undefined} attentionMessage="The timetable sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Subject teachers</H3>
@@ -1087,7 +1081,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard id="people" title="4. Staff and student syncing" icon={SECTION_ICON.people} iconClassName={SECTION_TILE_CLASS.people} defaultOpen={false} attention={visibleAlert("people", peopleAlert)} attentionKey="people" attentionFingerprint={peopleAlert ?? undefined} attentionMessage="The people sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="people" title="Staff and student syncing" icon={SECTION_ICON.people} iconClassName={SECTION_TILE_CLASS.people} defaultOpen={false} attention={visibleAlert("people", peopleAlert)} attentionKey="people" attentionFingerprint={peopleAlert ?? undefined} attentionMessage="The people sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>People records update nightly</H3>
@@ -1112,7 +1106,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard id="behaviour" title="5. Behaviour syncing" icon={SECTION_ICON.behaviour} iconClassName={SECTION_TILE_CLASS.behaviour} defaultOpen={false} attention={visibleAlert("behaviour", behaviourAlert)} attentionKey="behaviour" attentionFingerprint={behaviourAlert ?? undefined} attentionMessage="The latest behaviour sync needs review. Check the error below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="behaviour" title="Behaviour syncing" icon={SECTION_ICON.behaviour} iconClassName={SECTION_TILE_CLASS.behaviour} defaultOpen={false} attention={visibleAlert("behaviour", behaviourAlert)} attentionKey="behaviour" attentionFingerprint={behaviourAlert ?? undefined} attentionMessage="The latest behaviour sync needs review. Check the error below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <H3>Behaviour data updates nightly</H3>
                 <MetaText className="mt-1">Positive points, detentions, internal exclusions, and suspensions are imported into Anaxi&apos;s existing behaviour measures. No manual behaviour upload is needed.</MetaText>
@@ -1121,14 +1115,14 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard id="attendance" title="6. Attendance syncing" icon={SECTION_ICON.attendance} iconClassName={SECTION_TILE_CLASS.attendance} defaultOpen={false} attention={visibleAlert("attendance", attendanceAlert)} attentionKey="attendance" attentionFingerprint={attendanceAlert ?? undefined} attentionMessage="The attendance sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="attendance" title="Attendance syncing" icon={SECTION_ICON.attendance} iconClassName={SECTION_TILE_CLASS.attendance} defaultOpen={false} attention={visibleAlert("attendance", attendanceAlert)} attentionKey="attendance" attentionFingerprint={attendanceAlert ?? undefined} attentionMessage="The attendance sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div>
                 <H3>Attendance updates nightly</H3>
                 <MetaText className="mt-1">Academic-year attendance totals and daily snapshots refresh automatically. Anaxi then compares the selected 7, 14, 21, or 28-day period with the previous period.</MetaText>
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard id="leave" title="7. Leave of absence syncing" icon={SECTION_ICON.leave} iconClassName={SECTION_TILE_CLASS.leave} defaultOpen={false} attention={visibleAlert("leave", leaveAlert)} attentionKey="leave" attentionFingerprint={leaveAlert ?? undefined} attentionMessage="Arbor staff-absence access needs review. Check the permission result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="leave" title="Leave of absence syncing" icon={SECTION_ICON.leave} iconClassName={SECTION_TILE_CLASS.leave} defaultOpen={false} attention={visibleAlert("leave", leaveAlert)} attentionKey="leave" attentionFingerprint={leaveAlert ?? undefined} attentionMessage="Arbor staff-absence access needs review. Check the permission result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Check Arbor staff-absence access</H3>
@@ -1151,7 +1145,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
               </div>
             </CollapsibleCard>
 
-            <CollapsibleCard id="assessments" title="8. Assessment syncing" icon={SECTION_ICON.assessments} iconClassName={SECTION_TILE_CLASS.assessments} defaultOpen={false} attention={visibleAlert("assessments", assessmentAlert)} attentionKey="assessments" attentionFingerprint={assessmentAlert ?? undefined} attentionMessage="Assessment review needs attention. Check the cycle status below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
+            <CollapsibleCard id="assessments" title="Assessment syncing" icon={SECTION_ICON.assessments} iconClassName={SECTION_TILE_CLASS.assessments} defaultOpen={false} attention={visibleAlert("assessments", assessmentAlert)} attentionKey="assessments" attentionFingerprint={assessmentAlert ?? undefined} attentionMessage="Assessment review needs attention. Check the cycle status below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">
                 <div>
                   <H3>Assessment review</H3>

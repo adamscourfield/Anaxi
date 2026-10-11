@@ -11,9 +11,9 @@ export function homeHeaderCopy(variant: HomeVariant): HomeHeaderCopy {
     case "leadership":
       return {
         eyebrow: "Today",
-        title: "School pulse",
+        title: "School briefing",
         subtitle:
-          "Coverage, signals, and operational status for your school — tuned to the selected analysis window.",
+          "What needs attention, what’s happening today and where to look next.",
       };
     case "hod":
       return {

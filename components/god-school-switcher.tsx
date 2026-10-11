@@ -2,12 +2,16 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import styles from "@/app/god/god.module.css";
 import { useRouter } from "next/navigation";
 
 type School = { id: string; name: string; status: string };
 
 export function GodSchoolSwitcher() {
   const [schools, setSchools] = useState<School[]>([]);
+  const [query, setQuery] = useState("");
+  const [error, setError] = useState("");
+  const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -16,8 +20,10 @@ export function GodSchoolSwitcher() {
 
   useEffect(() => {
     fetch("/api/god/schools")
-      .then((r) => r.json())
-      .then((data) => setSchools(data.schools ?? []));
+      .then((r) => { if (!r.ok) throw new Error("Schools could not be loaded"); return r.json(); })
+      .then((data) => setSchools(data.schools ?? []))
+      .catch(() => setError("Schools could not be loaded."))
+      .finally(() => setLoaded(true));
   }, []);
 
   useEffect(() => {
@@ -37,22 +43,26 @@ export function GodSchoolSwitcher() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tenantId }),
       });
-      if (!ensure.ok) return;
+      if (!ensure.ok) { setError("School access could not be opened."); return; }
       await update({ targetTenantId: tenantId });
       router.push("/home");
       router.refresh();
+    } catch {
+      setError("School access could not be opened.");
     } finally {
       setSwitching(false);
     }
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" onKeyDown={event=>{if(event.key==="Escape"){setOpen(false);ref.current?.querySelector("button")?.focus();}}}>
       <button
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => { setOpen(!open); setQuery(""); }}
+        aria-expanded={open}
+        aria-controls={open ? "god-school-picker" : undefined}
         disabled={switching}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:bg-surface-container disabled:opacity-60"
+        className={styles.schoolTrigger}
         style={{ color: "var(--on-surface-variant)" }}
       >
         {switching ? "Switching..." : "Enter school"}
@@ -61,16 +71,21 @@ export function GodSchoolSwitcher() {
         </svg>
       </button>
 
-      {open && schools.length > 0 && (
-        <div className="absolute right-0 top-full z-50 mt-1 min-w-[220px] rounded-lg border border-border bg-surface-container-lowest py-1 shadow-lg">
-          {schools.map((school) => (
+      {!open && error && <span role="alert" className="text-xs text-error">{error}</span>}
+      {open && (
+        <div id="god-school-picker" className={styles.schoolPicker}>
+          <input type="search" autoFocus aria-label="Find a school to enter" placeholder="Find a school…" value={query} onChange={e=>setQuery(e.target.value)}/>
+          {!loaded && <p>Loading schools…</p>}
+          {error && <p role="alert">{error}</p>}
+          {loaded && !error && !schools.some(s=>s.name.toLowerCase().includes(query.toLowerCase())) && <p>No matching schools.</p>}
+          {schools.filter(s=>s.name.toLowerCase().includes(query.toLowerCase())).map((school) => (
             <button
               key={school.id}
               type="button"
               onClick={() => enterSchool(school.id)}
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-text transition-colors hover:bg-bg"
             >
-              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] font-bold bg-accentSurface text-accent">
+              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border text-[11px] font-semibold text-[#e14e36]">
                 {school.name.charAt(0).toUpperCase()}
               </span>
               <span className="flex-1 truncate">{school.name}</span>

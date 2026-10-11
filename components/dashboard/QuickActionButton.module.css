@@ -1,0 +1,13 @@
+.trigger { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; border:1px solid #1c1c1e; border-radius:10px; background:#1c1c1e; color:#fff; font-family:inherit; font-weight:600; font-size:13px; white-space:nowrap; transition:background 160ms; }
+.trigger:hover,.trigger[aria-expanded="true"] { background:#333335; }
+.trigger:focus-visible,.item:focus-visible { outline:2px solid #ff6a52; outline-offset:3px; }
+.menu { position:fixed; z-index:1000; overflow-y:auto; overscroll-behavior:contain; background:#fff; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:14px; padding:6px; box-shadow:0 14px 34px -12px #1c1c1e30; font-family:var(--font-figtree),Arial,sans-serif; }
+.label { padding:7px 10px 8px; font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#6e6e73; }
+.item { display:flex; align-items:center; gap:10px; min-height:46px; padding:8px 10px; border-radius:8px; font-size:13px; text-decoration:none; transition:background 160ms; }
+.item:hover,.item:focus { background:#fff3ef; color:#1c1c1e; }
+.icon { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; flex-shrink:0; color:#ff6a52; }
+.icon svg { width:17px; height:17px; color:#ff6a52 !important; }
+.arrow { margin-left:auto; color:#e14e36; }
+@media(prefers-reduced-motion:no-preference) { .menu { animation:appear 160ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes appear { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+@media(max-width:639px) { .trigger { min-height:44px; } }

@@ -193,6 +193,7 @@ export async function hydrateLeadershipHomeData({
   hasOnCallFeature,
   hasAssessmentsFeature,
   hasStudentAnalysisFeature,
+  hasAnalysisFeature = true,
 }: {
   user: SessionUser;
   windowDays: number;
@@ -200,6 +201,7 @@ export async function hydrateLeadershipHomeData({
   hasOnCallFeature: boolean;
   hasAssessmentsFeature?: boolean;
   hasStudentAnalysisFeature?: boolean;
+  hasAnalysisFeature?: boolean;
 }) {
   const pendingLeavePromise = hasLeaveFeature
     ? safe(
@@ -466,10 +468,10 @@ export async function hydrateLeadershipHomeData({
   );
 
   const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentHeadline, attendanceHeadline] = await Promise.all([
-    safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]),
-    safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]),
-    safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }),
-    hasStudentAnalysisFeature
+    hasAnalysisFeature ? safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]) : Promise.resolve([] as CpdPriorityRow[]),
+    hasAnalysisFeature ? safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]) : Promise.resolve([] as TeacherRiskRow[]),
+    hasAnalysisFeature ? safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }) : Promise.resolve({ rows: [] as CohortPivotRow[], computedAt: new Date() }),
+    hasAnalysisFeature && hasStudentAnalysisFeature
       ? safe(computeStudentRiskIndex(user.tenantId, windowDays, user.id), { rows: [] as StudentRiskRow[], computedAt: new Date() })
       : Promise.resolve({ rows: [] as StudentRiskRow[], computedAt: new Date() }),
     pendingLeavePromise,

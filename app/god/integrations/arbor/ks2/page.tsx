@@ -1,3 +1,4 @@
+import styles from "@/app/god/god.module.css";
 import Link from "next/link";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { decryptCredentials } from "@/lib/integrationSecrets";
@@ -31,28 +32,28 @@ export default async function Ks2ImportPage({ searchParams }: { searchParams: Pr
       coverage.set(key, value);
     }
     const scoreCount = plan.updates.reduce((total, update) => total + Object.keys(update.data).length, 0);
-    return <main className="mx-auto max-w-5xl space-y-6 p-8">
+    return <main className={styles.page}>
       <Link href={`/god/integrations/arbor?connectionId=${integration.id}`}>← Back to Arbor connection</Link>
       <h1 className="text-2xl font-semibold">KS2 prior attainment</h1>
       <p>Import reading and maths scaled scores from {integration.label}. Existing Anaxi values are preserved.</p>
       {params.updated !== undefined ? <p role="status" className="rounded border border-border p-4">Imported {params.scores} scores for {params.updated} students.</p> : null}
       {source.warning ? <p role="alert" className="rounded border border-border p-4">{source.warning}</p> : null}
       <p>Active students with both scores: {activePaired} / {active.length}. Totals below include archived students.</p>
-      <dl className="grid gap-4 sm:grid-cols-3">
-        <div><dt>Students with both scores</dt><dd className="text-2xl">{paired} / {students.length}</dd></div>
-        <div><dt>Students ready to update</dt><dd className="text-2xl">{plan.updates.length}</dd></div>
-        <div><dt>Missing scores found in Arbor</dt><dd className="text-2xl">{scoreCount}</dd></div>
+      <dl className={styles.stats}>
+        <div className={styles.stat}><dt>Students with both scores</dt><dd className="text-2xl">{paired} / {students.length}</dd></div>
+        <div className={styles.stat}><dt>Students ready to update</dt><dd className="text-2xl">{plan.updates.length}</dd></div>
+        <div className={styles.stat}><dt>Missing scores found in Arbor</dt><dd className="text-2xl">{scoreCount}</dd></div>
       </dl>
       <p>{source.results.length} valid scaled marks found across {source.matchedDefinitions.length} KS2 assessment definitions. {source.scanned} source marks checked. {plan.conflicts} conflicting scores skipped; {source.invalid} invalid or unavailable marks skipped.</p>
       {plan.updates.length ? <form action={importArborKs2}><input type="hidden" name="connectionId" value={integration.id} /><SubmitButton>Import missing KS2 scores</SubmitButton></form> : <p>No missing scores can currently be filled from this source.</p>}
       <h2 className="text-lg font-semibold">Active student coverage</h2>
-      <ul>{[...coverage.entries()].sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true })).map(([key, value]) => <li key={key}>{key}: {value.paired} / {value.total} with both scores</li>)}</ul>
+      <ul className="divide-y divide-border rounded-xl border border-border p-4">{[...coverage.entries()].sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true })).map(([key, value]) => <li key={key} className="py-3 text-sm">{key}: {value.paired} / {value.total} with both scores</li>)}</ul>
       <h2 className="text-lg font-semibold">Matched KS2 assessments</h2>
-      <ul>{source.matchedDefinitions.map((definition) => <li key={definition.id}>{definition.assessmentName || definition.displayName} ({definition.subject})</li>)}</ul>
+      <ul className="divide-y divide-border rounded-xl border border-border p-4">{source.matchedDefinitions.map((definition) => <li key={definition.id} className="py-3 text-sm">{definition.assessmentName || definition.displayName} ({definition.subject})</li>)}</ul>
       {!source.matchedDefinitions.length ? <details><summary>Available KS2 source definitions</summary><pre className="whitespace-pre-wrap text-sm">{JSON.stringify(source.catalogue, null, 2)}</pre></details> : null}
       <p className="text-sm text-muted">Only existing students linked to this connection’s enabled schools are updated. Missing scores remain blank. Each imported change is recorded in the integration audit trail.</p>
     </main>;
   } catch (error) {
-    return <main className="space-y-4 p-8"><h1>KS2 prior attainment</h1><p role="alert">{error instanceof Error ? error.message : "Unable to read Arbor KS2 scores."}</p><p>No scores were changed. Check Arbor source access, then refresh this page.</p></main>;
+    return <main className={styles.page}><h1>KS2 prior attainment</h1><p role="alert">{error instanceof Error ? error.message : "Unable to read Arbor KS2 scores."}</p><p>No scores were changed. Check Arbor source access, then refresh this page.</p></main>;
   }
 }

@@ -14,8 +14,10 @@ function persistWindow(days: number) {
 export function InsightWindowSelector({
   windowDays,
   extraQuery,
+  options = ALLOWED,
 }: {
   windowDays: number;
+  options?: readonly number[];
   /** e.g. `dept=abc` — preserved when switching window */
   extraQuery?: string;
 }) {
@@ -40,11 +42,12 @@ export function InsightWindowSelector({
       role="group"
       aria-label="Analysis window length"
     >
-      {ALLOWED.map((w) => (
+      {options.map((w) => (
         <Link
           key={w}
           href={hrefFor(w)}
           onClick={(e) => onSelect(w, e)}
+          aria-current={windowDays === w ? "page" : undefined}
           className={`segmented-toggle-btn touch-manipulation ${windowDays === w ? "segmented-toggle-btn-active" : ""}`}
         >
           {w}d

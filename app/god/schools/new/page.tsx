@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import styles from "@/app/god/god.module.css";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { getCsrfToken } from "@/lib/csrf";
 import { CsrfInput } from "@/components/CsrfInput";
@@ -22,9 +25,9 @@ export default async function NewSchoolPage() {
   const csrfToken = await getCsrfToken();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-6">
-      <H1>Create School</H1>
-      <MetaText>Creates a new tenant, enables selected modules, and creates initial school admin.</MetaText>
+    <div className={styles.page}>
+      <Link href="/god" className="text-xs text-muted">← Schools</Link>
+      <PageHeader variant="ledger" title="Create school" subtitle="School details, initial administrator and enabled modules."/>
 
       <Card>
         <form method="post" action="/api/god/schools" className="space-y-4">
@@ -52,7 +55,7 @@ export default async function NewSchoolPage() {
 
           <label className="block space-y-1.5 text-sm">
             <span className="font-medium">Temporary admin password</span>
-            <input name="temporaryPassword" defaultValue="ChangeMe123!" className="field w-full" />
+            <input type="password" autoComplete="new-password" name="temporaryPassword" defaultValue="ChangeMe123!" className="field w-full" />
           </label>
 
           <label className="block space-y-1.5 text-sm">
@@ -65,10 +68,10 @@ export default async function NewSchoolPage() {
 
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium">Enable modules</legend>
-            <div className="grid gap-1.5 sm:grid-cols-2">
+            <div className={styles.moduleGrid}>
               {DEFAULT_MODULES.map((m) => (
                 <label key={m} className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-surface/60 px-3 py-2 text-sm calm-transition hover:border-accent/30 hover:bg-[var(--accent-tint)]">
-                  <input type="checkbox" name="modules" value={m} defaultChecked className="accent-accent" /> {m}
+                  <input type="checkbox" name="modules" value={m} defaultChecked className="accent-accent" /> {m.toLowerCase().split("_").map(word=>word.charAt(0).toUpperCase()+word.slice(1)).join(" ")}
                 </label>
               ))}
             </div>

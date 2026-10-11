@@ -1,3 +1,6 @@
+import { LeaderBriefing } from "@/components/home/LeaderBriefing";
+import { fetchLeaderWork } from "@/modules/home/leaderWork";
+import { getTenantVocab } from "@/lib/vocab";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -12,24 +15,16 @@ import {
   TeacherRiskRow,
   RiskStatus,
 } from "@/modules/analysis/teacherRisk";
-import { StudentRiskRow } from "@/modules/analysis/studentRisk";
-import { CohortPivotRow } from "@/modules/analysis/cohortPivot";
 import { UserRole } from "@/lib/types";
 import { cookies } from "next/headers";
 import { assembleHomeCards } from "@/modules/home/assembler";
 import { resolveHomeVariant, showsInsightWindow } from "@/modules/home/roleVariant";
 import { homeHeaderCopy } from "@/modules/home/headerCopy";
-import { buildLeadershipAttentionItems, buildHodAttentionItems } from "@/modules/home/buildAttention";
+import { buildHodAttentionItems } from "@/modules/home/buildAttention";
 import { AttentionStrip } from "@/components/home/AttentionStrip";
 import { HomePageTitle } from "@/components/home/HomePageTitle";
-import { LeadershipTodayBar, type TodaySummaryChip } from "@/components/home/LeadershipTodayBar";
+import { LeadershipTodayBar } from "@/components/home/LeadershipTodayBar";
 import { ExplorerPromoBand } from "@/components/home/ExplorerPromoBand";
-import {
-  AttainmentSummaryCard,
-  CohortChangeCard,
-  MeetingsTodayCard,
-  PositiveMomentumCard,
-} from "@/components/home/LeadershipExtras";
 import { CoacheePrioritiesCard } from "@/components/home/CoachHomeSections";
 import { MeetingsTodayList } from "@/components/home/MeetingsTodayList";
 import {
@@ -38,17 +33,8 @@ import {
   hydrateTeacherHomeData,
   hydrateCoachHomeData,
   hydrateHodAttentionContext,
-  fetchBehaviourHeatmapMatrix,
-  PendingLeaveDetail,
-  OnCallDetail,
-  AttainmentSummary,
-  HomeAttainmentHeadline,
-  DualFlaggedStudent,
-  BehaviourHeatmapData,
 } from "@/modules/home/hydration";
-import { BehaviourHeatmap } from "@/components/dashboard/BehaviourHeatmap";
 import { DepartmentSwitcher } from "@/components/home/department-switcher";
-import { Button } from "@/components/ui/button";
 import {
   HomeCardHeading,
   HomeCardHeadingSm,
@@ -57,51 +43,17 @@ import {
   IconBell,
   IconBolt,
   IconCalendar,
-  IconChartBar,
   IconClipboard,
-  IconFlagOutline,
+  IconChartBar,
   IconPhone,
   IconSparkles,
-  IconStar,
   IconUmbrella,
   IconUsersTwo,
 } from "@/components/home/home-chrome";
-import { ppTableBadgeClass, sendTableBadgeClass } from "@/modules/assessments/attainmentColours";
 import { avatarUrlFor } from "@/lib/avatarUpload";
 
 const DEFAULT_WINDOW_DAYS = 21;
 const ALLOWED_WINDOW_DAYS = [7, 14, 21, 28];
-
-function studentAnalysisHref(studentId: string, windowDays: number): string {
-  const from = encodeURIComponent(`/home`);
-  return `/analysis/students/${studentId}?window=${windowDays}&from=${from}`;
-}
-
-/** Year-group pill — neutral grey chip (Attainment dual-flagged row) */
-const yearGroupPillClass =
-  "inline-flex shrink-0 items-center rounded-md bg-[var(--surface-container)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.02em] text-muted";
-
-function DualFlaggedRiskBadge({ band }: { band: string }) {
-  if (band === "URGENT") {
-    return (
-      <StatusPill variant="error" size="sm">
-        Urgent
-      </StatusPill>
-    );
-  }
-  if (band === "PRIORITY") {
-    return (
-      <span className="inline-flex shrink-0 items-center rounded-md border border-[#FDBA74] bg-[rgba(255,165,0,0.1)] px-2.5 py-1 text-[11px] font-semibold text-[#92400E]">
-        Priority
-      </span>
-    );
-  }
-  return (
-    <StatusPill variant="neutral" size="sm">
-      {band}
-    </StatusPill>
-  );
-}
 
 const RISK_STATUS_LABELS: Record<RiskStatus, string> = {
   SIGNIFICANT_DRIFT: "Significant",
@@ -150,630 +102,12 @@ function signalRubricDeltaBarWidthPct(delta: number): number {
 
 const INSIGHT_WINDOW_COOKIE = "anaxi_insight_window";
 
-function leaveGovernanceQuarterLabel(): string {
-  const month = new Date().getMonth();
-  const quarter = Math.floor(month / 3) + 1;
-  return `Q${quarter}`;
-}
-
-function leaveSubmissionLabel(createdAt: string): string {
-  const d = new Date(createdAt);
-  const today = new Date();
-  const sameDay =
-    d.getFullYear() === today.getFullYear() &&
-    d.getMonth() === today.getMonth() &&
-    d.getDate() === today.getDate();
-  if (sameDay) return "Today";
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
-
-const LEAVE_SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-
-function leaveDateRangeLabel(startDate: string, endDate: string): string {
-  const s = new Date(startDate);
-  const e = new Date(endDate);
-  const same =
-    s.getFullYear() === e.getFullYear() &&
-    s.getMonth() === e.getMonth() &&
-    s.getDate() === e.getDate();
-  const mon = (d: Date) => LEAVE_SHORT_MONTHS[d.getMonth()];
-  if (same) return `${mon(s)} ${s.getDate()}`;
-  const sameMonth = s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth();
-  if (sameMonth) return `${mon(s)} ${s.getDate()} - ${e.getDate()}`;
-  return `${mon(s)} ${s.getDate()} - ${mon(e)} ${e.getDate()}`;
-}
-
 function LeaveCalendarIcon({ className }: { className?: string }) {
   return (
     <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <path d="M16 2v4M8 2v4M3 10h18" />
     </svg>
-  );
-}
-
-function formatRelativeShort(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const sec = Math.max(0, Math.round(ms / 1000));
-  if (sec < 120) return `${sec}s ago`;
-  const mins = Math.round(sec / 60);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.round(mins / 60);
-  return `${hrs}h ago`;
-}
-
-
-function LeadershipHome({
-  windowDays,
-  cpdRows,
-  teacherRows,
-  cohortRows,
-  studentRows,
-  hasLeaveFeature,
-  pendingLeaveCount,
-  pendingLeaveDetails,
-  liveOnCallBanner,
-  weekObsCount,
-  weekObsTeachers,
-  attainmentSummary,
-  hasStudentAnalysisFeature,
-  watchlistStudents,
-  behaviourHeatmap,
-  topImproving,
-  meetingsTodayCount,
-  attainmentHeadline,
-  attendanceHeadline,
-}: {
-  windowDays: number;
-  cpdRows: CpdPriorityRow[];
-  teacherRows: TeacherRiskRow[];
-  cohortRows: CohortPivotRow[];
-  studentRows: StudentRiskRow[];
-  hasLeaveFeature: boolean;
-  pendingLeaveCount: number;
-  pendingLeaveDetails: PendingLeaveDetail[];
-  liveOnCallBanner: { count: number; latest: OnCallDetail | null };
-  weekObsCount: number;
-  weekObsTeachers: { id: string; name: string; avatarUpdatedAt: Date | null }[];
-  attainmentSummary: AttainmentSummary | null;
-  hasStudentAnalysisFeature?: boolean;
-  watchlistStudents?: StudentRiskRow[];
-  behaviourHeatmap: BehaviourHeatmapData | null;
-  topImproving: CpdPriorityRow[];
-  meetingsTodayCount: number;
-  attainmentHeadline: HomeAttainmentHeadline;
-  attendanceHeadline: { attendancePct: number | null; yesterdayPct: number | null; yesterdayLatenessPct: number | null; studentsCovered: number; asOf: Date | null };
-}) {
-  const allDriftingCpd = cpdRows.filter((r) => r.teachersDriftingDown > 0);
-  const topCpd = allDriftingCpd.slice(0, 3);
-
-  // Attendance: school-wide average weighted by how many students each year
-  // group's mean is based on -- an unweighted average-of-averages would let
-  // a small sixth form pull the figure as hard as a full-size year group.
-  const attendancePct = attendanceHeadline.attendancePct;
-  const attendanceYesterdayPct = attendanceHeadline.yesterdayPct;
-  const latenessYesterdayPct = attendanceHeadline.yesterdayLatenessPct;
-
-  const cohortWithAttendanceDelta = cohortRows.filter((r) => r.attendanceDelta !== null);
-  const attendanceDeltaStudentTotal = cohortWithAttendanceDelta.reduce((sum, r) => sum + r.pairedCount, 0);
-  const attendanceDelta =
-    attendanceDeltaStudentTotal > 0
-      ? cohortWithAttendanceDelta.reduce((sum, r) => sum + (r.attendanceDelta ?? 0) * r.pairedCount, 0) / attendanceDeltaStudentTotal
-      : null;
-
-  // Staff needing intervention (SIGNIFICANT_DRIFT or EMERGING_DRIFT)
-  const allInterventionStaff = teacherRows.filter(
-    (r) => r.status === "SIGNIFICANT_DRIFT" || r.status === "EMERGING_DRIFT"
-  );
-  const interventionStaff = allInterventionStaff.slice(0, 3);
-  const interventionBannerDetail = allInterventionStaff.some((r) => r.status === "SIGNIFICANT_DRIFT")
-    ? "Significant negative drift"
-    : "Emerging support signals";
-
-  // Watchlist students (prefer explicitly-provided watchlist rows, otherwise derive from student rows)
-  const bandOrder: Record<string, number> = { URGENT: 0, PRIORITY: 1, WATCH: 2, STABLE: 3 };
-  const derivedWatchlistStudents = studentRows
-    .filter((r) => r.onWatchlist)
-    .sort((a, b) => (bandOrder[a.band] ?? 9) - (bandOrder[b.band] ?? 9));
-  const effectiveWatchlistStudents = watchlistStudents ?? derivedWatchlistStudents;
-
-  const attentionItems = buildLeadershipAttentionItems({
-    liveOnCallCount: liveOnCallBanner.count,
-    latestLiveOnCall: liveOnCallBanner.latest,
-    interventionCount: allInterventionStaff.length,
-    interventionDetailLabel: interventionBannerDetail,
-    attendanceDelta,
-    pendingLeaveCount,
-    windowDays,
-  });
-
-  const todayChips: TodaySummaryChip[] = [
-    ...(liveOnCallBanner.count > 0
-      ? [{ label: "On-call", value: liveOnCallBanner.count, href: "/on-call", tone: "critical" as const }]
-      : []),
-    ...(allInterventionStaff.length > 0
-      ? [{
-          label: "Intervention",
-          value: allInterventionStaff.length,
-          href: `/insights/teaching?view=teachers&windowDays=${windowDays}`,
-          tone: "critical" as const,
-        }]
-      : []),
-    ...(pendingLeaveCount > 0
-      ? [{ label: "Leave", value: pendingLeaveCount, href: "/leave#pending-requests", tone: "warning" as const }]
-      : []),
-    { label: "Obs this week", value: weekObsCount, href: "/insights/teaching/observations" },
-    ...(meetingsTodayCount > 0 ? [{ label: "Meetings", value: meetingsTodayCount, href: "/meetings" }] : []),
-  ];
-
-  return (
-    <div key={windowDays} className="w-full min-w-0 space-y-8 motion-safe:animate-page-enter">
-      <LeadershipTodayBar chips={todayChips} />
-      <AttentionStrip items={attentionItems} />
-      <ExplorerPromoBand windowDays={windowDays} />
-
-      {/* ═══ Staff Signals + Operations ═══ */}
-      <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(240px,0.6fr)] lg:items-stretch">
-        {/* Left: Staff signals — CPD priorities + intervention combined */}
-        <Card className="flex h-full min-h-0 flex-col gap-6 rounded-sm !p-6 shadow-none">
-          <HomeCardHeading
-            icon={<IconUsersTwo />}
-            iconTileClassName="bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-none [&_svg]:text-[var(--on-primary)]"
-            title="Staff signals"
-            subtitle={`CPD drift and intervention — ${windowDays}-day window`}
-            end={
-              <Link href={`/insights/teaching?view=teachers&windowDays=${windowDays}`} className="link-accent shrink-0 text-xs font-semibold">
-                Teaching insights →
-              </Link>
-            }
-          />
-          {topCpd.length === 0 && allInterventionStaff.length === 0 ? (
-            <MetaText>All signals stable — no CPD drift or intervention needs detected this window.</MetaText>
-          ) : (
-            <div className="space-y-6">
-              {topCpd.length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">CPD priorities</p>
-                  <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]">
-                    {topCpd.map((row) => (
-                      <Link
-                        key={row.signalKey}
-                        href={`/analysis/cpd/${row.signalKey}?window=${windowDays}`}
-                        className="home-row-link flex items-center gap-4 py-3 first:pt-0"
-                      >
-                        <div className="min-w-0 flex-1 space-y-1.5">
-                          <p className="text-sm font-medium text-text">{row.label}</p>
-                          <div className="h-1 w-full overflow-hidden rounded-sm bg-[var(--surface-container)]">
-                            <div
-                              className="home-stat-bar-fill h-full rounded-sm bg-[var(--coral)]"
-                              style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                        <span className="shrink-0 tabular-nums text-sm font-bold text-text">
-                          {Math.round(row.driftRate * 100)}%
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                  <Link
-                    href={`/insights/teaching?view=cpd&windowDays=${windowDays}`}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-muted calm-transition hover:text-text"
-                  >
-                    View full CPD breakdown →
-                  </Link>
-                </div>
-              )}
-              {topCpd.length > 0 && allInterventionStaff.length > 0 && (
-                <div className="h-px bg-[color-mix(in_srgb,var(--outline-variant)_50%,transparent)]" aria-hidden />
-              )}
-              {allInterventionStaff.length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Intervention needed</p>
-                  <ul className="space-y-1">
-                    {interventionStaff.map((row) => (
-                      <li key={row.teacherMembershipId}>
-                        <Link
-                          href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
-                          className="home-row-link flex items-center justify-between gap-2 p-2"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <Avatar name={row.teacherName} avatarUrl={avatarUrlFor(row.teacherMembershipId, row.avatarUpdatedAt)} />
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-text truncate">{row.teacherName}</p>
-                              <p className="text-[11px] text-muted">{row.departmentNames.join(", ") || "No dept"}</p>
-                            </div>
-                          </div>
-                          <StatusPill variant={RISK_STATUS_PILL[row.status]} size="sm">
-                            {RISK_STATUS_LABELS[row.status]}
-                          </StatusPill>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                  {allInterventionStaff.length > 3 && (
-                    <Link
-                      href={`/insights/teaching?view=teachers&windowDays=${windowDays}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-muted calm-transition hover:text-text"
-                    >
-                      +{allInterventionStaff.length - 3} more →
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </Card>
-
-        {/* Right: Operations column */}
-        <div className="flex flex-col gap-4">
-          {/* Attendance */}
-          <Card className="flex flex-col gap-3 rounded-sm !p-5 shadow-none">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Attendance</p>
-              <Link
-                href={`/insights/students?windowDays=${windowDays}`}
-                className="text-xs font-semibold text-[var(--primary)] calm-transition hover:opacity-80"
-              >
-                Report →
-              </Link>
-            </div>
-            <p className="text-[2.25rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums">
-              {attendancePct !== null ? `${attendancePct.toFixed(1)}%` : "—"}
-            </p>
-            <p className="-mt-1 text-xs text-muted">Current cumulative attendance</p>
-            {attendancePct !== null && (
-              <div className="h-1.5 w-full overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--surface-container)_88%,transparent)]">
-                <div
-                  className="home-stat-bar-fill h-full rounded-sm bg-[var(--success)]"
-                  style={{ width: `${Math.min(attendancePct, 100)}%` }}
-                />
-              </div>
-            )}
-            <div className="mt-1 grid grid-cols-2 gap-3 border-t border-[color-mix(in_srgb,var(--outline-variant)_30%,transparent)] pt-3">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Attendance yesterday</p>
-                <p className="mt-0.5 text-base font-semibold tabular-nums text-text">
-                  {attendanceYesterdayPct !== null ? `${attendanceYesterdayPct.toFixed(1)}%` : "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Lateness yesterday</p>
-                <p className="mt-0.5 text-base font-semibold tabular-nums text-text">
-                  {latenessYesterdayPct !== null ? `${latenessYesterdayPct.toFixed(1)}%` : "—"}
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Observations this week */}
-          <Card className="flex flex-col gap-3 rounded-sm !p-5 shadow-none">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">Observations this week</p>
-              <Link
-                href="/insights/teaching/observations"
-                className="text-xs font-semibold text-[var(--primary)] calm-transition hover:opacity-80"
-              >
-                View all →
-              </Link>
-            </div>
-            <p className="text-[2.25rem] font-bold leading-none tracking-[-0.04em] text-text tabular-nums">
-              {weekObsCount}
-            </p>
-            {weekObsTeachers.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {weekObsTeachers.slice(0, 4).map((t) => (
-                  <Avatar key={t.id} name={t.name} avatarUrl={avatarUrlFor(t.id, t.avatarUpdatedAt)} size="sm" />
-                ))}
-                {weekObsTeachers.length > 4 && (
-                  <span className="inline-flex h-7 w-auto min-w-[28px] items-center justify-center rounded-md bg-[var(--primary)] px-1.5 text-[10px] font-semibold text-on-primary shadow-sm">
-                    +{weekObsTeachers.length - 4}
-                  </span>
-                )}
-              </div>
-            )}
-          </Card>
-
-          <MeetingsTodayCard count={meetingsTodayCount} />
-
-          {/* Live on-call — only rendered when there are active escalations */}
-          {liveOnCallBanner.count > 0 && (
-            <Link href="/on-call" className="block">
-              <div className="flex items-center gap-3 rounded-sm border border-[color-mix(in_srgb,var(--error)_28%,transparent)] bg-[color-mix(in_srgb,var(--error)_04%,var(--surface-container-lowest))] px-4 py-3.5 calm-transition hover:bg-[color-mix(in_srgb,var(--error)_07%,var(--surface-container-lowest))]">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--error)]" aria-hidden />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[var(--error)]">
-                    {liveOnCallBanner.count} live escalation{liveOnCallBanner.count === 1 ? "" : "s"}
-                  </p>
-                  {liveOnCallBanner.latest && (
-                    <p className="text-xs text-[var(--on-surface-variant)]">
-                      {liveOnCallBanner.latest.requesterName} · {formatRelativeShort(liveOnCallBanner.latest.createdAt)}
-                    </p>
-                  )}
-                </div>
-                <span className="shrink-0 text-xs font-semibold text-[var(--error)]" aria-hidden>→</span>
-              </div>
-            </Link>
-          )}
-
-          {/* Pending leave — only rendered when approvals are waiting */}
-          {hasLeaveFeature && pendingLeaveCount > 0 && (
-            <Link href="/leave#pending-requests" className="block">
-              <div className="flex items-center gap-3 rounded-sm border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)] px-4 py-3.5 calm-transition hover:bg-[var(--surface-container)]">
-                <IconUmbrella className="h-4 w-4 shrink-0 text-muted" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-text">
-                    {pendingLeaveCount} leave approval{pendingLeaveCount === 1 ? "" : "s"} pending
-                  </p>
-                  <p className="text-xs text-muted">Cover decisions waiting</p>
-                </div>
-                <span className="shrink-0 text-xs font-semibold text-muted" aria-hidden>→</span>
-              </div>
-            </Link>
-          )}
-        </div>
-      </section>
-
-      <section className="grid min-w-0 gap-5 lg:grid-cols-2">
-        <CohortChangeCard cohortRows={cohortRows} windowDays={windowDays} />
-        <PositiveMomentumCard topImproving={topImproving} windowDays={windowDays} />
-      </section>
-
-      <AttainmentSummaryCard headline={attainmentHeadline} windowDays={windowDays} />
-
-      {/* ═══ Behaviour Heatmap ═══ */}
-      {behaviourHeatmap && (
-        <section className="grid min-w-0 gap-5 lg:grid-cols-1 lg:items-stretch">
-          <Card className="rounded-sm !p-6 shadow-none">
-            <BehaviourHeatmap
-              yearGroups={behaviourHeatmap.yearGroups}
-              columnLabels={behaviourHeatmap.columnLabels}
-              matrix={behaviourHeatmap.matrix}
-              incidents={behaviourHeatmap.incidents}
-              ctaHref={`/insights/students/patterns?windowDays=${windowDays}#behaviour-heatmap`}
-              ctaLabel="View full map"
-            />
-          </Card>
-        </section>
-      )}
-
-      {/* ═══ Watchlist ═══ */}
-      {hasStudentAnalysisFeature && effectiveWatchlistStudents.length > 0 && (
-        <Card className="space-y-4">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-container)] text-scale-some-text [&_svg]:h-4 [&_svg]:w-4">
-                <IconStar />
-              </span>
-              <div>
-                <h2 className="text-base font-bold tracking-[-0.01em] text-text">Your watchlist</h2>
-                <p className="text-xs text-muted">
-                  {effectiveWatchlistStudents.length} student{effectiveWatchlistStudents.length !== 1 ? "s" : ""} being monitored
-                </p>
-              </div>
-            </div>
-            <Link href="/insights/students?view=watchlist" className="link-accent shrink-0 text-sm">
-              View all →
-            </Link>
-          </div>
-
-          {/* Horizontal scroll track */}
-          <div className="-mx-5 px-5">
-            <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {effectiveWatchlistStudents.map((s) => {
-                const bandCfg = {
-                  URGENT: {
-                    bar: "bg-[var(--error)]",
-                    tint: "bg-status-denied-light/70",
-                    badge: "text-status-denied-text bg-status-denied-light/80",
-                    label: "Urgent",
-                  },
-                  PRIORITY: {
-                    bar: "bg-[var(--warning)]",
-                    tint: "bg-scale-some-light/60",
-                    badge: "text-scale-some-text bg-scale-some-light/80",
-                    label: "Priority",
-                  },
-                  WATCH: {
-                    bar: "bg-[var(--accent)]",
-                    tint: "bg-cat-indigo-bg/50",
-                    badge: "text-[var(--accent)] bg-cat-indigo-bg/70",
-                    label: "Watch",
-                  },
-                  STABLE: {
-                    bar: "bg-[var(--success)]",
-                    tint: "bg-status-approved-light/50",
-                    badge: "text-status-approved-text bg-status-approved-light/70",
-                    label: "Stable",
-                  },
-                }[s.band] ?? {
-                  bar: "bg-[var(--accent)]",
-                  tint: "bg-cat-indigo-bg/50",
-                  badge: "text-[var(--accent)] bg-cat-indigo-bg/70",
-                  label: s.band,
-                };
-
-                return (
-                  <Link
-                    key={s.studentId}
-                    href={`/analysis/students/${s.studentId}?window=${windowDays}`}
-                    className={`home-card-tile group flex min-w-[176px] max-w-[196px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] ${bandCfg.tint}`}
-                  >
-                    {/* Risk band colour bar */}
-                    <div className={`h-1.5 w-full ${bandCfg.bar}`} />
-
-                    <div className="flex flex-1 flex-col gap-2.5 p-3.5">
-                      {/* Name + band badge */}
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold leading-snug text-text">{s.studentName}</p>
-                        <span className={`mt-0.5 shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold ${bandCfg.badge}`}>
-                          {bandCfg.label}
-                        </span>
-                      </div>
-
-                      {/* Year + flags */}
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {s.yearGroup && <span className="text-[11px] text-muted">{s.yearGroup}</span>}
-                        {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
-                        {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
-                      </div>
-
-                      {/* Attendance stat */}
-                      {s.attendancePct !== null && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] text-muted">Attendance</span>
-                          <span
-                            className={`text-[11px] font-bold ${
-                              s.attendancePct < 85
-                                ? "text-[var(--error)]"
-                                : s.attendancePct < 90
-                                ? "text-scale-some-text"
-                                : "text-[var(--success)]"
-                            }`}
-                          >
-                            {s.attendancePct.toFixed(1)}%
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Driver chips */}
-                      {s.drivers.length > 0 ? (
-                        <div className="mt-auto flex flex-wrap gap-1 pt-0.5">
-                          {s.drivers.slice(0, 3).map((d) => (
-                            <span
-                              key={d.metric}
-                              className="rounded-md bg-white/70 px-2 py-0.5 text-[10px] font-medium text-text/70 ring-1 ring-inset ring-black/[0.06]"
-                            >
-                              {d.label}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="mt-auto pt-0.5 text-[11px] text-muted/60">No active signals</p>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* ═══ Dual-flagged students ═══ */}
-      {attainmentSummary && attainmentSummary.topDualFlagged.length > 0 && (
-        <Card className="space-y-4 rounded-sm !p-6 shadow-none">
-          <div className="flex min-w-0 items-center justify-between gap-3">
-            <HomeCardHeadingSm
-              icon={<IconFlagOutline className="text-[var(--error)]" />}
-              title="Dual-flagged students"
-              subtitle={`${attainmentSummary.triangulatedCount} with overlapping attainment and behavioural concerns${attainmentSummary.urgentCount > 0 ? ` · ${attainmentSummary.urgentCount} urgent` : ""}`}
-            />
-            <Link href="/assessments/triangulation" className="link-accent shrink-0 text-sm font-semibold">
-              View all →
-            </Link>
-          </div>
-          <ul className="space-y-1">
-            {attainmentSummary.topDualFlagged.map((s: DualFlaggedStudent) => (
-              <li key={s.studentId}>
-                <Link
-                  href={studentAnalysisHref(s.studentId, windowDays)}
-                  className="home-row-link flex items-center gap-3 rounded-lg px-3 py-3"
-                >
-                  <Avatar name={s.studentName} studentId={s.studentId} size="md" tone="muted" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <span className="truncate text-sm font-semibold text-text">{s.studentName}</span>
-                      {s.yearGroup ? <span className={yearGroupPillClass}>{s.yearGroup}</span> : null}
-                      {s.ppFlag && <span className={ppTableBadgeClass}>PP</span>}
-                      {s.sendFlag && <span className={sendTableBadgeClass}>SEND</span>}
-                    </div>
-                    <p className="mt-1 truncate text-[12px] leading-snug text-muted">
-                      Lowest: {s.worstSubject} — {s.worstGrade}
-                      {s.worstNormalizedScore !== null && ` (${Math.round(s.worstNormalizedScore * 100)}%)`}
-                    </p>
-                  </div>
-                  <DualFlaggedRiskBadge band={s.behaviouralBand} />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {/* ═══ Leave governance — only shown when approvals are waiting ═══ */}
-      {hasLeaveFeature && pendingLeaveDetails.length > 0 && (
-        <section className="grid min-w-0 gap-5 lg:grid-cols-1 lg:items-stretch">
-          <Card className="flex h-full min-h-0 flex-col gap-5 rounded-sm !p-6 shadow-none">
-              <HomeCardHeading
-                icon={<IconUmbrella />}
-                title="Leave governance"
-                subtitle={`Pending administrative approvals for ${leaveGovernanceQuarterLabel()}`}
-                end={
-                  <Link href="/leave#pending-requests" className="link-accent shrink-0 text-sm font-semibold">
-                    View all →
-                  </Link>
-                }
-              />
-
-              <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_40%,transparent)] rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_28%,transparent)] bg-[var(--surface-container-lowest)]">
-                  {pendingLeaveDetails.map((leave) => {
-                    const reasonUpper = (leave.reasonLabel ?? "Personal").toUpperCase();
-                    const isEmergency = reasonUpper.includes("EMERGENCY") || reasonUpper.includes("URGENT");
-                    const isCpd = reasonUpper.includes("CPD") || reasonUpper.includes("TRAINING");
-                    const pillVariant: PillVariant = isEmergency ? "error" : isCpd ? "accent" : "neutral";
-                    const reasonDisplay = leave.reasonLabel?.trim() || (isEmergency ? "Emergency" : isCpd ? "CPD" : "Personal");
-                    const rangeLabel = leaveDateRangeLabel(leave.startDate, leave.endDate);
-                    return (
-                      <div
-                        key={leave.id}
-                        className={`flex min-w-0 flex-col gap-3 p-4 calm-transition first:rounded-t-[13px] last:rounded-b-[13px] sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:py-4 ${
-                          isEmergency ? "bg-[color-mix(in_srgb,var(--pill-error-bg)_40%,transparent)]" : ""
-                        }`}
-                      >
-                        <Link
-                          href={`/leave/${leave.id}`}
-                          className="home-row-link flex min-w-0 flex-1 items-start gap-3 sm:items-center"
-                        >
-                          <Avatar name={leave.requesterName} userId={leave.requesterUserId} size="md" />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex min-w-0 flex-wrap items-center gap-2">
-                              <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{leave.requesterName}</p>
-                              <StatusPill variant={pillVariant} size="sm">{reasonDisplay}</StatusPill>
-                            </div>
-                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
-                              <span className="inline-flex items-center gap-1">
-                                <IconCalendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                                {rangeLabel}
-                              </span>
-                              <span className="text-muted/80">Submitted {leaveSubmissionLabel(leave.createdAt)}</span>
-                            </div>
-                            {leave.notes ? (
-                              <p className="mt-1.5 line-clamp-2 text-xs text-muted">&ldquo;{leave.notes}&rdquo;</p>
-                            ) : null}
-                          </div>
-                        </Link>
-                        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
-                          <Button variant="primary" asChild className="min-h-0 rounded-md px-4 py-2 text-xs">
-                            <Link href={`/leave/${leave.id}`}>Review request</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              <Link
-                href="/leave"
-                className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-[var(--primary)] calm-transition hover:opacity-80"
-              >
-                Go to leave calendar →
-              </Link>
-          </Card>
-        </section>
-      )}
-
-    </div>
   );
 }
 
@@ -1382,6 +716,7 @@ export default async function HomePage({
   const coacheeCount = coachAssignments.length;
   const variant = resolveHomeVariant(user.role, coacheeCount);
   const headerCopy = homeHeaderCopy(variant);
+  const allowedWindows = variant === "leadership" ? [7,21,28] : ALLOWED_WINDOW_DAYS;
 
   const settings = await db.tenantSettings.findUnique({
     where: { tenantId: user.tenantId },
@@ -1394,11 +729,11 @@ export default async function HomePage({
   // otherwise anyone who has ever clicked a window toggle is permanently stuck on
   // whatever was the default at that time, no matter what the admin sets later.
   // An explicit `?window=` (clicking a toggle just now) still applies immediately.
-  const windowDays: number = ALLOWED_WINDOW_DAYS.includes(rawWindow)
+  const windowDays: number = allowedWindows.includes(rawWindow)
     ? rawWindow
-    : ALLOWED_WINDOW_DAYS.includes(settings?.defaultInsightWindowDays as number)
+    : allowedWindows.includes(settings?.defaultInsightWindowDays as number)
       ? (settings!.defaultInsightWindowDays as number)
-      : ALLOWED_WINDOW_DAYS.includes(cookieWindow)
+      : allowedWindows.includes(cookieWindow)
         ? cookieWindow
         : DEFAULT_WINDOW_DAYS;
 
@@ -1432,46 +767,20 @@ export default async function HomePage({
 
   const pageContent = async () => {
     if (variant === "leadership") {
-      if (!hasAnalysisFeature) {
-        return (
-          <Card>
-            <BodyText className="text-muted">Analysis features are not yet enabled.</BodyText>
-          </Card>
-        );
-      }
       const hasLeaveFeature = homeAssembly.has("operations.leave-approvals");
       const hasOnCallFeature = enabledFeatures.has("ON_CALL");
       const hasAssessmentsFeature = enabledFeatures.has("ASSESSMENTS");
-      const hasStudentAnalysisFeature = enabledFeatures.has("STUDENT_ANALYSIS");
+      const hasStudentAnalysisFeature = hasAnalysisFeature && enabledFeatures.has("STUDENTS");
 
-      const [leadershipData, behaviourHeatmap] = await Promise.all([
-        hydrateLeadershipHomeData({ user, windowDays, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature }),
-        hasOnCallFeature ? fetchBehaviourHeatmapMatrix(user.tenantId, windowDays) : Promise.resolve(null),
+      const [leadershipData, work, vocab] = await Promise.all([
+        hydrateLeadershipHomeData({ user, windowDays, hasAnalysisFeature, hasLeaveFeature, hasOnCallFeature, hasAssessmentsFeature, hasStudentAnalysisFeature }),
+        fetchLeaderWork(user, enabledFeatures.has("MEETINGS")),
+        getTenantVocab(user.tenantId),
       ]);
+      return <LeaderBriefing data={leadershipData} work={work} windowDays={windowDays}
+        features={{analysis:hasAnalysisFeature, students:hasAnalysisFeature && hasStudentAnalysisFeature && enabledFeatures.has("STUDENTS"), assessments:hasAssessmentsFeature, leave:hasLeaveFeature, onCall:hasOnCallFeature, observations:enabledFeatures.has("OBSERVATIONS")}}
+        reasons={{attendance:"Attendance has fallen", detentions:vocab.detentions.plural+" have increased", onCalls:vocab.on_calls.plural+" have increased", suspensions:vocab.suspensions.plural+" have increased", internalExclusions:vocab.internal_exclusions.plural+" have increased", lateness:"Lateness has increased"}} />;
 
-      return (
-        <LeadershipHome
-          windowDays={windowDays}
-          cpdRows={leadershipData.cpdRows}
-          teacherRows={leadershipData.teacherRows}
-          cohortRows={leadershipData.cohortRows}
-          studentRows={leadershipData.studentRows}
-          hasLeaveFeature={hasLeaveFeature}
-          pendingLeaveCount={leadershipData.pendingLeaveCount}
-          pendingLeaveDetails={leadershipData.pendingLeaveDetails}
-          liveOnCallBanner={leadershipData.liveOnCallBanner}
-          weekObsCount={leadershipData.weekObsCount}
-          weekObsTeachers={leadershipData.weekObsTeachers}
-          attainmentSummary={leadershipData.attainmentSummary ?? null}
-          hasStudentAnalysisFeature={hasStudentAnalysisFeature}
-          watchlistStudents={leadershipData.watchlistStudents}
-          behaviourHeatmap={behaviourHeatmap}
-          topImproving={leadershipData.topImproving}
-          meetingsTodayCount={leadershipData.meetingsTodayCount}
-          attainmentHeadline={leadershipData.attainmentHeadline}
-          attendanceHeadline={leadershipData.attendanceHeadline}
-        />
-      );
     }
 
     if (variant === "hod") {
@@ -1573,11 +882,11 @@ export default async function HomePage({
   const rawDeptQuery = typeof resolvedSearchParams.dept === "string" ? `dept=${resolvedSearchParams.dept}` : undefined;
 
   return (
-    <div className="w-full min-w-0 space-y-10">
+    <div className={variant === "leadership" ? "w-full min-w-0 space-y-6" : "w-full min-w-0 space-y-10"}>
       <HomePageTitle
         copy={headerCopy}
         windowDays={windowDays}
-        showWindowSelector={showsInsightWindow(variant)}
+        showWindowSelector={variant !== "leadership" && showsInsightWindow(variant)}
         windowExtraQuery={rawDeptQuery}
         quickActionItems={quickActionItems}
         role={user.role}

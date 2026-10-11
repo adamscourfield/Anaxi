@@ -196,6 +196,7 @@ export default async function StudentDetailPage({
   if (rawFrom.startsWith("/insights/students")) backLabel = "Back to student insights";
   else if (rawFrom.startsWith("/insights/attainment")) backLabel = "Back to attainment insights";
   else if (rawFrom.startsWith("/insights")) backLabel = "Back to insights";
+  else if (/^\/home(?:[?]|$)/.test(rawFrom)) backLabel = "Back to school briefing";
   else if (rawFrom.includes("/assessments")) backLabel = "Back to attainment";
   else if (rawFrom.includes("/students/my")) backLabel = "Back to my students";
   else if (rawFrom.includes("/insights/students")) backLabel = "Back to student list";

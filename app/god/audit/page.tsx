@@ -1,3 +1,4 @@
+import styles from "@/app/god/god.module.css";
 import Link from "next/link";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
@@ -43,21 +44,21 @@ export default async function GodAuditPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-6">
-      <PageHeader variant="ledger" eyebrow="Platform" title="God audit log" subtitle="Platform-wide activity across schools." />
+    <div className={styles.page}>
+      <PageHeader variant="ledger" eyebrow="Platform" title="Audit log" subtitle="Platform-wide activity across schools." />
 
       <Card>
-        <form className="grid gap-2 sm:grid-cols-4" method="get">
-          <input
+        <form className={styles.toolbar} method="get">
+          <label>Action<input
             name="action"
             defaultValue={action}
             placeholder="Filter action"
             className="field"
-          />
-          <select name="tenantId" defaultValue={tenantId} className="field">
+          /></label>
+          <label>School<select name="tenantId" defaultValue={tenantId} className="field">
             <option value="">All schools</option>
             {tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
+          </select></label>
           <input type="hidden" name="page" value="1" />
           <Button type="submit">Apply</Button>
         </form>
