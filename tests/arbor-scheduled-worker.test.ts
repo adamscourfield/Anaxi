@@ -1,0 +1,12 @@
+import { beforeEach, afterEach, expect, it, vi } from "vitest";
+const mocks=vi.hoisted(()=>({connections:vi.fn()}));
+vi.mock("@/lib/prisma",()=>({prisma:{sharedIntegration:{findMany:mocks.connections}}}));
+import { runScheduledArborSync } from "@/lib/integrations/arbor/runScheduledSync";
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
+import { config } from "@/middleware";
+beforeEach(()=>{mocks.connections.mockResolvedValue([{id:"school",label:"School"}]);});
+afterEach(()=>vi.unstubAllGlobals());
+it("allows the behaviour worker to reach its own credential check",()=>{expect(unstable_doesMiddlewareMatch({config,nextConfig:{},url:"/api/god/integrations/arbor/sync/behaviour"})).toBe(false);expect(unstable_doesMiddlewareMatch({config,nextConfig:{},url:"/api/god/integrations/arbor/preview/behaviour"})).toBe(true);});
+it("does not report a login page as a successful import",async()=>{vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response("<html>Sign in</html>",{status:200})));const result=await runScheduledArborSync(new Request("https://www.anaxi.io/api/cron/arbor-behaviour"),"/api/god/integrations/arbor/sync/behaviour");expect(result.failed).toBe(1);expect(result.results[0].status).toBe(502);});
+it("keeps protected JSON worker results",async()=>{const fetch=vi.fn().mockResolvedValue(Response.json({from:"2026-09-01",to:"2026-09-07",updated:7}));vi.stubGlobal("fetch",fetch);const result=await runScheduledArborSync(new Request("https://www.anaxi.io/api/cron/arbor-behaviour",{headers:{authorization:"Bearer test-secret"}}),"/api/god/integrations/arbor/sync/behaviour");expect(result.failed).toBe(0);expect(fetch.mock.calls[0][1].headers).toMatchObject({Authorization:"Bearer test-secret","x-arbor-scheduled-sync":"1"});});
+it("does not follow a sign-in redirect with scheduler credentials",async()=>{const fetch=vi.fn().mockResolvedValue(new Response(null,{status:307,headers:{location:"/login"}}));vi.stubGlobal("fetch",fetch);expect((await runScheduledArborSync(new Request("https://www.anaxi.io/api/cron/arbor-behaviour"),"/api/god/integrations/arbor/sync/behaviour")).failed).toBe(1);expect(fetch).toHaveBeenCalledTimes(1);});

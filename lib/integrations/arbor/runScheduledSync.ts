@@ -9,7 +9,7 @@ type ScheduledSyncResult = {
 };
 
 function isTrustedCanonicalRedirect(from: URL, to: URL) {
-  if (from.protocol !== to.protocol) return false;
+  if (from.protocol !== to.protocol || from.pathname !== to.pathname || from.search !== to.search) return false;
   return to.host === from.host
     || to.host === `www.${from.host}`
     || from.host === `www.${to.host}`;
@@ -54,7 +54,11 @@ export async function runScheduledArborSync(req: Request, path: string): Promise
       }
     }
     const body = await response.json().catch(() => null);
-    results.push({ connectionId: integration.id, label: integration.label, ok: response.ok, status: response.status, body });
+    const ok = response.ok && body !== null;
+    results.push({ connectionId: integration.id, label: integration.label, ok,
+      status: response.ok && body === null ? 502 : response.status,
+      body: body ?? { error: "The sync worker did not return JSON. Check authentication and redirects." },
+    });
   }
 
   return { results, failed: results.filter((result) => !result.ok).length };

@@ -41,6 +41,8 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
   const common = { viewBox: "0 0 20 20", fill: "none", className: "h-[18px] w-[18px] shrink-0", xmlns: "http://www.w3.org/2000/svg" };
 
   switch (name) {
+    case "classroom":
+      return <svg {...common}><path d="M3 3h14v9H3zM7 16h6M10 12v4M6 6h8M6 9h5" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
     case "home":
       return <svg {...common}><path d="M3.5 8.5 10 3.5l6.5 5v7a1 1 0 0 1-1 1h-3.5v-4.5h-4V16.5H4.5a1 1 0 0 1-1-1v-7Z" stroke={stroke} strokeWidth="1" strokeLinejoin="round" /></svg>;
     case "check-square":
@@ -96,6 +98,7 @@ function ChevronIcon({ direction }: { direction: "left" | "right" }) {
 
 function iconFor(href: string) {
   if (href === "/home") return "home";
+  if (href.startsWith("/classes")) return "classroom";
   if (href === "/my-actions") return "check-square";
   if (href.includes("/observe/history")) return "history";
   if (href.includes("/observe")) return "radar";

@@ -365,7 +365,7 @@ export function InstitutionalDashboard({
       <div className="flex flex-col gap-4 anx-page-header-shell">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-2">
-            
+
             <h1 className="anx-page-title">Admin Pulse</h1>
             <p className="anx-page-subtitle">
               Manage school setup, staff and data readiness.
