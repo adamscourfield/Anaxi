@@ -1,7 +1,7 @@
 # Historical assessment teacher attribution
 
-The 2025/2026 roster rebuild is version 3. On the next run of the existing
-`arbor-timetable-historic` scheduled worker, version 2 completion is ignored and
+The 2025/2026 roster rebuild is version 4. On the next run of the existing
+`arbor-timetable-historic` scheduled worker, version 3 completion is ignored and
 the roster is read again in resumable batches. God Mode shows the replacement
 as queued until it starts. It can also be advanced with the existing historic
 roster import action; no teacher data needs to be entered manually.
@@ -9,7 +9,7 @@ roster import action; no teacher data needs to be entered manually.
 Historical pupil links come from AcademicUnitEnrolment at 30 June 2026 and must
 identify a 2025/2026 (or 2025/26) class. Staff come exclusively from
 AcademicUnit.timetableSlots → timetableSlotStaff → staff. Each allocation
-has an effectiveDate and endDate; the importer retains only dated allocations
+may inherit its dates from a lesson slot explicitly bounded within the historical academic year; open-ended undated slots are rejected. The importer retains only dated allocations
 overlapping 1 September 2025 through 30 June 2026. Live Goresbrook schema
 inspection confirmed these relationships. Its computed timetabledStaffByDateRange
 field exposes no date arguments, so it cannot be used for historical attribution. An undated subject staff list is not
@@ -26,7 +26,7 @@ attainment association, not a causal estimate of individual teacher impact.
 
 1. Use the existing historic roster preview to confirm that the school's Arbor
    returns dated lesson allocations and former Maths staff.
-2. Allow the scheduled version 3 pass to complete (or advance it through the
+2. Allow the scheduled version 4 pass to complete (or advance it through the
    existing God Mode action). Check sync errors and the saved link count.
 3. Check a known pupil in the 2025/2026 Year 9 End of Year point against their
    former Arbor Maths class and teachers, including shared teaching if present.

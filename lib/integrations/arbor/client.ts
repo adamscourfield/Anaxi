@@ -1281,7 +1281,7 @@ export class ArborClient {
           diagnostics.mathsSamples.add(`${className}: ${slots.length} slots; ${dates}`);
         }
         // Only explicitly dated timetable staff are historical evidence.
-        const staff = historicTimetableStaff(unit.timetableSlots.flatMap((slot) => slot.timetableSlotStaff).map((record) => ({
+        const staff = historicTimetableStaff(unit.timetableSlots.flatMap((slot) => slot.timetableSlotStaff.map((record) => ({ ...record, slotEffectiveDate: slot.effectiveDate, slotEndDate: slot.endDate }))).map((record) => ({
           ...record, staff: record.staff ? { id: record.staff.id, fullName: personName(record.staff) } : null,
         })), yearStart, asOfDate);
         if (staff.length) diagnostics.staffedClasses.add(unit.id);
@@ -1316,7 +1316,7 @@ export class ArborClient {
       }
     }
     type Person = { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null };
-    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; timetableSlots: Array<{ id: string; timetableSlotStaff: Array<{ effectiveDate: string | null; endDate: string | null; staff: Person | null }> }> } | null };
+    type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; timetableSlots: Array<{ id: string; effectiveDate: string | null; endDate: string | null; timetableSlotStaff: Array<{ effectiveDate: string | null; endDate: string | null; staff: Person | null }> }> } | null };
     const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
     const date = new Date(asOfDate);
     if (Number.isNaN(date.getTime())) throw new Error("Invalid historic timetable date");
@@ -1328,7 +1328,7 @@ export class ArborClient {
         academicUnit {
           id displayName subject { displayName }
           timetableSlots {
-              id
+              id effectiveDate endDate
               timetableSlotStaff {
                 effectiveDate endDate
                 staff { id legalFirstName legalLastName preferredFirstName preferredLastName }
@@ -1353,7 +1353,7 @@ export class ArborClient {
       subjectClasses.add(unit.id);
       // Historic classes use their timetabled staff, not the broader subject
       // staff list, so Teacher Impact reflects who taught the class.
-      const staff = historicTimetableStaff(unit.timetableSlots.flatMap((slot) => slot.timetableSlotStaff).map((record) => ({
+      const staff = historicTimetableStaff(unit.timetableSlots.flatMap((slot) => slot.timetableSlotStaff.map((record) => ({ ...record, slotEffectiveDate: slot.effectiveDate, slotEndDate: slot.endDate }))).map((record) => ({
         ...record, staff: record.staff ? { id: record.staff.id, fullName: personName(record.staff) } : null,
       })), yearStart, asOfDate);
       if (staff.length) staffedClasses.add(unit.id);

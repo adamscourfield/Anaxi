@@ -8,7 +8,7 @@ const person = (id: string) => ({ id, legalFirstName: id, legalLastName: "Teache
 const allocation = (id: string, effectiveDate: string | null) => ({ effectiveDate, endDate: null, staff: person(id) });
 const enrolment = (records: unknown[]) => ({
   startDate: "2025-09-01", endDate: "2026-07-20", student: person("pupil"),
-  academicUnit: { id: "class", displayName: "Mathematics: 9H/Ma (2025/2026)", subject: { displayName: "Mathematics" }, timetableSlots: [{ id: "maths-slot", timetableSlotStaff: records }] },
+  academicUnit: { id: "class", displayName: "Mathematics: 9H/Ma (2025/2026)", subject: { displayName: "Mathematics" }, timetableSlots: [{ id: "maths-slot", effectiveDate: "2025-09-01", endDate: "2026-07-20", timetableSlotStaff: records }] },
 });
 const client = () => new ArborClient({ schoolHostname: "test", username: "test", password: "test" });
 beforeEach(() => query.mockReset());
@@ -29,7 +29,9 @@ describe("dated Arbor historical timetable", () => {
   });
   it("leaves the class unassigned when there are no dated staff records", async () => {
     filters();
-    query.mockResolvedValueOnce({ AcademicUnitEnrolment: [enrolment([allocation("undated", null)])] });
+    const row = enrolment([allocation("undated", null)]);
+    row.academicUnit.timetableSlots[0].endDate = null as unknown as string;
+    query.mockResolvedValueOnce({ AcademicUnitEnrolment: [row] });
     const batch = await client().listHistoricTimetableTeacherAssignmentsBatch("2026-06-30", 0, false);
     expect(batch.assignments).toEqual([]);
     expect(batch.diagnostics.staffedClasses).toBe(0);
@@ -52,4 +54,12 @@ describe("dated Arbor historical timetable", () => {
     const batch = await client().listHistoricTimetableTeacherAssignmentsBatch("2026-06-30", 0, false);
     expect(batch.assignments[0].staff).toHaveLength(1);
   });
+});
+
+
+it("uses closed previous-year lesson dates when a Maths allocation inherits them", async () => {
+  filters();
+  query.mockResolvedValueOnce({ AcademicUnitEnrolment: [enrolment([allocation("historic-maths", null)])] });
+  const batch = await client().listHistoricTimetableTeacherAssignmentsBatch("2026-06-30", 0, false);
+  expect(batch.assignments[0].staff.map((teacher) => teacher.id)).toEqual(["historic-maths"]);
 });

@@ -18,3 +18,18 @@ describe("historical timetable staff allocations", () => {
     ], "2025-09-01", "2026-07-15")).toEqual([staff]);
   });
 });
+
+
+describe("inherited historical lesson dates", () => {
+  const staff = { id: "maths", fullName: "Maths Teacher" };
+  const record = { staff, effectiveDate: null, endDate: null, slotEffectiveDate: "2025-09-01", slotEndDate: "2026-07-20" };
+  it("accepts a teacher allocated to a closed previous-year lesson slot", () => {
+    expect(historicTimetableStaff([record], "2025-09-01", "2026-06-30")).toEqual([staff]);
+  });
+  it("does not infer historic teaching from an open-ended undated slot", () => {
+    expect(historicTimetableStaff([{ ...record, slotEndDate: null }], "2025-09-01", "2026-06-30")).toEqual([]);
+  });
+  it("rejects explicitly current staff even on an old slot", () => {
+    expect(historicTimetableStaff([{ ...record, effectiveDate: "2026-09-01" }], "2025-09-01", "2026-06-30")).toEqual([]);
+  });
+});
