@@ -1,0 +1,20 @@
+.page { color:#1c1c1e; min-width:0; --accent:#ff6a52; --accentHover:#e14e36; }
+.page h1 { letter-spacing:-.045em; }
+.page > div[class*="border"] { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.page h2 { color:#1c1c1e; font-weight:600; letter-spacing:-.02em; }
+.page p, .page label { color:#6e6e73; }
+.page input, .page textarea, .page select { background:white; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; }
+.page input { min-height:42px; }
+.page span[class*="124,92,255"] { background:white; color:#ff6a52; border:1px solid #e5e5e6; border-radius:10px; }
+.page button { background:#1c1c1e; color:white; border:1px solid #1c1c1e; border-radius:10px; box-shadow:none; }
+.page button svg { color:inherit; }
+.page button:hover { background:#2e2e31; color:white; }
+.page th, .page thead { background:white; color:#6e6e73; }
+.page td, .page th, .page div[class*="border-b"], .page div[class*="border-t"] { border-color:#e5e5e6; }
+.page tr:hover { background:#fafafa; }
+.page :global(.calm-transition) { transition:background-color 160ms ease,color 160ms ease; }
+.page svg[class*="text-[#7C5CFF]"] { color:#ff6a52; }
+.page button svg[class*="text-[#7C5CFF]"] { color:inherit; }
+.page table input, .page table textarea { font-size:13px; line-height:1.5; }
+.page table th { font-size:10px; letter-spacing:.08em; }
+.page td svg, .page th svg { color:#ff6a52; }

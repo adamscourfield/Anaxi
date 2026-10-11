@@ -1,0 +1,17 @@
+.page { color:#1c1c1e; --accent:#ff6a52; --accentHover:#e14e36; }
+.page h1 { letter-spacing:-.045em; }
+.page button, .page a[href*="/export"] { background:#1c1c1e; color:white; border:1px solid #1c1c1e; border-radius:10px; box-shadow:none; }
+.page button svg, .page a[href*="/export"] svg { color:inherit; }
+.page button:hover, .page a[href*="/export"]:hover { background:#2e2e31; color:white; }
+.page input, .page select { background:white; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; }
+.createPanel, .page :global(.table-shell), .page [role="dialog"] { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.createPanel { padding:24px; }
+.createPanel h2 { font-size:16px; font-weight:600; letter-spacing:-.02em; }
+.createPanel p { font-size:13px; color:#6e6e73; margin-top:5px; }
+.createForm { display:flex; gap:12px; margin-top:20px; }
+.createForm input { max-width:none; flex:1; }
+.page thead, .page th { background:white; color:#6e6e73; }
+.page :global(.calm-transition) { transition:background-color 160ms ease,color 160ms ease; }
+.page > div:last-child { background:white; }
+@media(max-width:640px) { .createForm { flex-direction:column; } .createPanel { padding:20px; } }
+.page > div:last-child > svg, .page > div:last-child > div > svg { color:#ff6a52; }

@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "./page.module.css";
 import { useState, useTransition, useEffect, useId, useRef, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -257,7 +258,7 @@ function AreaModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/40 bg-background shadow-2xl outline-none animate-in fade-in zoom-in-95 duration-200 max-h-[min(90vh,calc(100dvh-2.5rem))] my-auto"
+          className={`${styles.dialog} relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/40 bg-background shadow-2xl outline-none animate-in fade-in zoom-in-95 duration-200 max-h-[min(90vh,calc(100dvh-2.5rem))] my-auto`}
           tabIndex={-1}
           onClick={(e) => e.stopPropagation()}
         >
@@ -626,7 +627,7 @@ function StrategyTile({
 
   return (
     <div
-      className={`flex flex-col rounded-2xl border border-border/30 bg-background p-5 shadow-ambient calm-transition motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-lg ${
+      className={`${styles.tile} flex flex-col rounded-2xl border border-border/30 bg-background p-5 shadow-ambient calm-transition motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-lg ${
         area.completed ? "opacity-50" : ""
       }`}
     >
@@ -701,68 +702,43 @@ function StrategyTile({
   );
 }
 
-// ─── Propose placeholder tile ─────────────────────────────────────────────────
-
-function ProposeTile({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex min-h-[180px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/50 bg-transparent text-muted calm-transition hover:border-accent/40 hover:text-accent"
-    >
-      <div className="flex h-10 w-10 items-center justify-center rounded-md border-2 border-current calm-transition group-hover:scale-105">
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </div>
-      <span className="text-[0.8125rem] font-semibold">Propose New Strategy</span>
-    </button>
-  );
-}
-
 // ─── Board ────────────────────────────────────────────────────────────────────
 
 export function StrategyBoardClient({ areas, canManage, staffList }: Props) {
   const [showCompleted, setShowCompleted] = useState(false);
   const [editingArea, setEditingArea] = useState<StrategyArea | null | undefined>(undefined);
 
-  const visible = areas.filter((a) => showCompleted || !a.completed);
+  const [search, setSearch] = useState("");
+  const [priority, setPriority] = useState("");
+  const visible = areas.filter(a => (showCompleted || !a.completed) && (!priority || a.priority === priority) && `${a.title} ${a.owner ?? ""} ${a.category ?? ""}`.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <>
+      <div className={styles.boardHeading}><div><h2>School priorities</h2><p>{areas.filter(a => !a.completed).length} active strategies · {areas.filter(a => a.completed).length} completed</p></div>{canManage && <button type="button" className={styles.newButton} onClick={() => setEditingArea(null)}><span aria-hidden>+</span> New strategy</button>}</div>
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-[0.75rem] font-medium text-muted calm-transition hover:border-outline-variant hover:text-text">
+      <div className={styles.toolbar}>
+        <label>Search strategies<input type="search" placeholder="Title, lead or target…" value={search} onChange={e => setSearch(e.target.value)} /></label>
+        <label>Priority<select value={priority} onChange={e => setPriority(e.target.value)}><option value="">All priorities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
+        <label className={styles.completedToggle}>
           <input
             type="checkbox"
-            className="sr-only"
+            className={styles.checkbox}
             checked={showCompleted}
             onChange={(e) => setShowCompleted(e.target.checked)}
           />
-          <span
-            className={`relative inline-block h-4 w-[30px] rounded-md transition-colors duration-200 ${
-              showCompleted ? "bg-accent" : "bg-surface-container-high"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 h-3 w-3 rounded-md bg-background shadow transition-transform duration-200 ${
-                showCompleted ? "translate-x-[14px]" : "translate-x-0.5"
-              }`}
-            />
-          </span>
           Show completed
         </label>
       </div>
 
       {/* Grid */}
-      {visible.length === 0 && !canManage ? (
-        <div className="panel p-8">
+      {visible.length === 0 ? (
+        <div className={styles.empty}>
           <EmptyState
-            title={areas.length === 0 ? "No strategies proposed yet" : "All strategies complete"}
+            title={areas.length === 0 ? "Plan your next school priority" : "No matching strategies"}
             description={
               areas.length === 0
-                ? "No strategies have been proposed yet."
-                : "Toggle Show completed to review them."
+                ? "Add a strategy to bring its target, lead and follow-up actions together."
+                : "Adjust your search or filters to see more strategies."
             }
           />
         </div>
@@ -776,9 +752,7 @@ export function StrategyBoardClient({ areas, canManage, staffList }: Props) {
               onEdit={setEditingArea}
             />
           ))}
-          {canManage && (
-            <ProposeTile onClick={() => setEditingArea(null)} />
-          )}
+
         </div>
       )}
 

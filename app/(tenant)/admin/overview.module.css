@@ -1,0 +1,26 @@
+.page { color:#1c1c1e; --accent:#ff6a52; --accentHover:#e14e36; }
+.page h1 { letter-spacing:-.045em; }
+.metric, .section { background:white !important; border:1px solid #e5e5e6 !important; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e !important; }
+.metric { min-height:180px; }
+.metric > div:first-child > span, .icon { background:white !important; color:#ff6a52 !important; border:1px solid #e5e5e6; border-radius:10px; box-shadow:none; }
+.page button, .page a[class*="anx-btn"] { background:#1c1c1e !important; color:white !important; border:1px solid #1c1c1e; border-radius:10px; }
+.page button svg, .page a[class*="anx-btn"] svg { color:inherit; }
+.page button:hover, .page a[class*="anx-btn"]:hover { background:#2e2e31 !important; color:white !important; }
+.page :global(.filter-panel) { background:white; border:1px solid #e5e5e6; border-radius:14px; padding:24px; }
+.page input { background:white; border-color:#e5e5e6; border-radius:10px; }
+.page > section[class*="border"] { background:white; border-color:#e5e5e6; border-radius:14px; }
+.page :global(.home-pressable-card):hover { transform:none; }
+.page :global(.calm-transition) { transition:background-color 160ms ease, color 160ms ease; }
+.section a > div:hover { background:#fafafa; }
+.page button[class*="h-full"], .page button[class*="group"] { background:transparent !important; color:#1c1c1e !important; border:0; box-shadow:none; }
+.page button[class*="h-full"]:hover, .page button[class*="group"]:hover { background:transparent !important; }
+.page button[class*="group"] p { color:#1c1c1e; }
+.page button[class*="group"] p + p { color:#6e6e73; }
+.attention { display:flex; align-items:center; gap:16px; padding:20px 24px; border:1px solid #e5e5e6; border-radius:14px; background:white; }
+.attentionIcon { display:flex; align-items:center; justify-content:center; width:36px; height:36px; flex-shrink:0; border:1px solid #e5e5e6; border-radius:10px; color:#e14e36; font-weight:600; }
+.attentionItems { flex:1; display:flex; flex-wrap:wrap; gap:16px 24px; }
+.attentionItems h2 { font-size:14px; font-weight:600; }
+.attentionItems p { margin-top:4px; color:#6e6e73; font-size:12px; }
+.attentionAction { padding:10px 14px; font-size:12px; font-weight:600; white-space:nowrap; }
+@media(max-width:640px) { .attention { flex-wrap:wrap; padding:20px; } .attentionItems { min-width:65%; } .attentionAction { margin-left:52px; } }
+@media(min-width:1280px) { .page > section[class*="xl:grid-cols-4"] { grid-template-columns:repeat(3,minmax(0,1fr)); } }

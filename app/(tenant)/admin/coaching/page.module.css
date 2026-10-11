@@ -1,0 +1,17 @@
+.page { min-width:0; color:#1c1c1e; --accent:#ff6a52; --accentHover:#e14e36; }
+.page h1 { letter-spacing:-.045em; }
+.page > div[class*="border"], .page :global(.filter-panel) { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.icon { background:white; color:#ff6a52; border:1px solid #e5e5e6; border-radius:10px; }
+.page button { background:#1c1c1e; color:white; border:1px solid #1c1c1e; border-radius:10px; box-shadow:none; }
+.page button svg { color:inherit; }
+.page button:hover { background:#2e2e31; color:white; }
+.page select, .page input { background:white; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; }
+.page th { color:#6e6e73; background:white; }
+.page td, .page th, .page > div > div[class*="border-b"] { border-color:#e5e5e6; }
+.assignmentForm { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto; gap:20px; align-items:end; padding:24px; }
+.assignmentForm label { min-width:0; }
+.assignmentForm button { min-height:44px; }
+.page > div:last-child svg { color:#ff6a52; }
+.page :global(.calm-transition) { transition:background-color 160ms ease,color 160ms ease; }
+@media(max-width:1000px) { .assignmentForm { grid-template-columns:1fr 1fr; } .assignmentForm button { grid-column:1/-1; } }
+@media(max-width:640px) { .assignmentForm { grid-template-columns:1fr; padding:20px; } }

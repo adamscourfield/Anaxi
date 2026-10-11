@@ -263,7 +263,7 @@ export function SignalKeyIcon({ signalKey }: { signalKey: string }) {
   const base = baseKeyFromCatalogKey(signalKey);
   const node = (ICON_BY_BASE[base] ?? (() => <GridIcon />))();
   return (
-    <span className="inline-flex shrink-0 items-center justify-center text-[#7C5CFF]" aria-hidden>
+    <span className="inline-flex shrink-0 items-center justify-center text-[#ff6a52]" aria-hidden>
       {node}
     </span>
   );

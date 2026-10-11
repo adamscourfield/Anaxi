@@ -11,7 +11,6 @@ export const ADMIN_SECTIONS = [
   "email-log",
   "taxonomies",
   "subjects",
-  "timetable",
   "imports",
 ] as const;
 
@@ -30,7 +29,6 @@ const LEGACY_PATH_TO_SECTION: Record<string, AdminSectionId> = {
   "/admin/email-log": "email-log",
   "/admin/taxonomies": "taxonomies",
   "/admin/subjects": "subjects",
-  "/admin/timetable": "timetable",
   "/admin/imports": "imports",
 };
 

@@ -1,0 +1,20 @@
+.page { min-width:0; color:#1c1c1e; --accent:#ff6a52; --accentHover:#e14e36; }
+.page h1 { letter-spacing:-.045em; }
+.page button { background:#1c1c1e; color:white; border:1px solid #1c1c1e; border-radius:10px; box-shadow:none; }
+.page button svg { color:inherit; }
+.page button:hover { background:#2e2e31; color:white; }
+.page input, .page select { background:white; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; }
+.createPanel, .page :global(.table-shell), .page > div:last-child { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.createPanel { padding:24px; }
+.createPanel h2 { font-size:16px; font-weight:600; letter-spacing:-.02em; }
+.createPanel p { font-size:13px; color:#6e6e73; margin-top:5px; }
+.createForm { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) auto; gap:20px; align-items:end; margin-top:20px; }
+.createForm label { display:flex; flex-direction:column; gap:8px; font-size:11px; color:#6e6e73; }
+.createForm input, .createForm select { width:100%; min-width:0; height:44px; padding:0 12px; font-size:14px; }
+.createForm button { height:44px; gap:8px; }
+.page :global(.table-head-row) { background:white; color:#6e6e73; }
+.page :global(.table-row) { background:white; border-color:#e5e5e6; }
+.page > div:last-child > svg { color:#ff6a52; }
+.page :global(.calm-transition) { transition:background-color 160ms ease,color 160ms ease; }
+@media(max-width:1000px) { .createForm { grid-template-columns:1fr 1fr; } .createForm button { grid-column:1/-1; } }
+@media(max-width:640px) { .createForm { grid-template-columns:1fr; } .createPanel { padding:20px; } }

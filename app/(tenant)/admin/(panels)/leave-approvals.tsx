@@ -1,3 +1,4 @@
+import styles from "../leave-approvals/page.module.css";
 import Link from "next/link";
 import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import { adminSectionPath } from "@/lib/admin-sections";
@@ -114,10 +115,10 @@ export async function LeaveApprovalsAdminPanel() {
   const groupList = groups as any[];
 
   return (
-    <div className="space-y-6">
+    <div className={`${styles.page} space-y-8`}>
       <AdminPageChrome area="Leave approvals"
-        title="Leave Approval Rules"
-        subtitle="Manage approval groups, approvers, and optional scoped staff coverage for leave requests."
+        title="Leave approval rules"
+        subtitle="Choose who approves leave and which staff each group covers."
         actions={
           <div className="flex items-center gap-3">
             <AdminSectionLink
@@ -128,32 +129,22 @@ export async function LeaveApprovalsAdminPanel() {
                 <path d="M10 6v4l3 3" />
                 <circle cx="10" cy="10" r="7" />
               </svg>
-              LOA Reasons
+              Leave reasons
             </AdminSectionLink>
-            <form action={createGroup} className="flex items-center gap-2">
-              <input
-                name="name"
-                placeholder="Group name…"
-                className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30 w-48"
-                required
-              />
-              <select
-                name="appliesTo"
-                className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text w-44"
-              >
-                <option value="ALL_STAFF">All staff</option>
-                <option value="SELECTED_MEMBERS">Selected members</option>
-              </select>
-              <Button type="submit" className="gap-2">
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M10 4v12M4 10h12" />
-                </svg>
-                Create Group
-              </Button>
-            </form>
+
           </div>
         }
       />
+
+      <section className={styles.createPanel}>
+        <h2>Create an approval group</h2>
+        <p>Set up a group, then add its approvers and staff coverage.</p>
+        <form action={createGroup} className={styles.createForm}>
+          <label>Group name<input name="name" placeholder="e.g. Teaching staff" required /></label>
+          <label>Staff coverage<select name="appliesTo"><option value="ALL_STAFF">All staff</option><option value="SELECTED_MEMBERS">Selected members</option></select></label>
+          <Button type="submit"><span aria-hidden>+</span> Create group</Button>
+        </form>
+      </section>
 
       {groupList.length === 0 ? (
         <EmptyState title="No approval groups yet" description="Create a group above to configure leave approvals." />

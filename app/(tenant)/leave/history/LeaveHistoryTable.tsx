@@ -97,10 +97,11 @@ export function LeaveHistoryTable({
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold tracking-tight text-text">Full Leave Ledger History</h2>
+        <h2 className="text-base font-semibold tracking-tight text-text">All requests</h2>
         <div className="flex flex-wrap items-center gap-2">
           {isManager ? (
             <Button type="button" variant="secondary" onClick={exportCsv}>
+              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4" strokeLinecap="round" strokeLinejoin="round" /></svg>
               Export CSV
             </Button>
           ) : null}

@@ -50,7 +50,6 @@ export function buildAdminHubSections(role: UserRole): AdminHubNavSection[] {
       items: [
         ...(canAccessAdminSettings ? [{ section: "taxonomies" as const, label: "Taxonomies" }] : []),
         ...(canAccessAdminSettings ? [{ section: "subjects" as const, label: "Subjects" }] : []),
-        ...(canAccessAdminSettings ? [{ section: "timetable" as const, label: "Timetable" }] : []),
         ...(canAccessAdmin ? [{ section: "imports" as const, label: "Import jobs" }] : []),
       ],
     },

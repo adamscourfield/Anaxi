@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "./page.module.css";
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { UserDirectoryClient } from "./UserDirectoryClient";
@@ -42,10 +43,9 @@ export function UserDirectoryPageShell({
   const [addOpen, setAddOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
+    <div className={`${styles.page} space-y-8`}>
       <PageHeader
         variant="ledger"
-        eyebrow={<>Administration&ensp;›&ensp;User management</>}
         title="User management"
         subtitle="Manage staff accounts, roles, and access permissions."
         actions={<UserDirectoryHeaderActions onAddStaff={() => setAddOpen(true)} />}

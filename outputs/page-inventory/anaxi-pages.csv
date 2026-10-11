@@ -11,7 +11,6 @@ School administration,Admin / Settings,/admin?section=settings,Admin workspace s
 School administration,Admin / Signals,/admin?section=signals,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
 School administration,Admin / Subjects,/admin?section=subjects,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
 School administration,Admin / Taxonomies,/admin?section=taxonomies,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
-School administration,Admin / Timetable,/admin?section=timetable,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
 School administration,Admin / Users,/admin?section=users,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
 School administration,Admin / Users Import,/admin?section=users-import,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
 School administration,Admin / Coaching,/admin/coaching,Redirect,,/admin?section=coaching,,app/(tenant)/admin/coaching/page.tsx
@@ -26,7 +25,6 @@ School administration,Admin / Signals,/admin/signals,Redirect,,/admin?section=si
 School administration,Admin / Subjects,/admin/subjects,Redirect,,/admin?section=subjects,,app/(tenant)/admin/subjects/page.tsx
 School administration,Admin / Taxonomies,/admin/taxonomies,Redirect,,/admin?section=taxonomies,Preserves the optional tab query parameter.,app/(tenant)/admin/taxonomies/page.tsx
 School administration,Admin / Terminology,/admin/terminology,Redirect,,/admin/language,,app/(tenant)/admin/terminology/page.tsx
-School administration,Admin / Timetable,/admin/timetable,Redirect,,/admin?section=timetable,,app/(tenant)/admin/timetable/page.tsx
 School administration,Admin / Users,/admin/users,Redirect,,/admin?section=users,,app/(tenant)/admin/users/page.tsx
 School administration,Admin / Users / Import,/admin/users/import,Page,,,,app/(tenant)/admin/users/import/page.tsx
 School administration,Admin / Vocab,/admin/vocab,Page,,,,app/(tenant)/admin/vocab/page.tsx

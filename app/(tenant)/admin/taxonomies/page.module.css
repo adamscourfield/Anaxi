@@ -1,0 +1,19 @@
+.page { min-width:0; color:#1c1c1e; --accent:#ff6a52; --accentHover:#e14e36; }
+.page h1 { font-size:34px; font-weight:600; letter-spacing:-.045em; }
+.page div[class*="border"], .page section[class*="border"] { border-color:#e5e5e6; }
+.page > div[class*="bg-"], .page div[class*="overflow-hidden"], .page :global(.table-shell) { background:white; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.page > div[class*="flex gap-3"] { background:white; border:1px solid #e5e5e6; border-radius:14px; }
+.page > div[class*="flex gap-3"] svg, .page a[class*="2563EB"] { color:#e14e36; }
+.page button, .page a[href*="leave-approvals"][class*="inline-flex"] { background:#1c1c1e; color:white; border:1px solid #1c1c1e; border-radius:10px; box-shadow:none; }
+.page button svg, .page a[class*="inline-flex"] svg { color:inherit; }
+.page button:hover { background:#2e2e31; color:white; }
+.page nav button { background:white; color:#1c1c1e; border:1px solid transparent; padding:10px 12px; align-items:center; }
+.page nav button span { color:inherit; }
+.page nav button > span:first-child { background:white; border:1px solid #e5e5e6; color:#ff6a52; border-radius:10px; }
+.page nav button[aria-pressed="true"] { border-color:#ff6a52; background:white; color:#1c1c1e; }
+.page nav button:hover { background:#fafafa; color:#1c1c1e; }
+.page input, .page select { background:white; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; }
+.page th, .page thead { background:white; color:#6e6e73; }
+.page :global(.calm-transition) { transition:background-color 160ms ease,color 160ms ease,border-color 160ms ease; }
+.page > div, .page > div > div { min-width:0; max-width:100%; }
+.page :global(.table-shell) { overflow-x:auto; }

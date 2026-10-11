@@ -1,0 +1,15 @@
+.page { min-width:0; color:#1c1c1e; }
+.page h1 { letter-spacing:-.045em; }
+.stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.stats > div, .page > div[class*="overflow-hidden"] { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.stats > div { padding:24px; }
+.stats span { display:block; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:#6e6e73; }
+.stats strong { display:block; margin-top:12px; font-size:30px; font-weight:600; letter-spacing:-.03em; }
+.stats > div:last-child strong { color:#e14e36; }
+.page > div[class*="overflow-hidden"] > div > div { background:white; border:0; box-shadow:none; }
+.page > div[class*="overflow-hidden"] svg { color:#ff6a52; }
+.page th, .page thead { background:white; color:#6e6e73; font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
+.page td, .page th { border-color:#e5e5e6; }
+.page table { min-width:600px; }
+.page :global(.table-shell) { background:white; }
+@media(max-width:640px) { .stats { gap:10px; } .stats > div { padding:16px; } .stats strong { font-size:26px; } }

@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "./page.module.css";
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { AdminSectionLink } from "@/components/admin/admin-section-link";
@@ -131,7 +132,7 @@ export default function StaffImportPage() {
     rowCount > 0 ? `Import ${rowCount} staff` : importing ? "Importing…" : "Import staff";
 
   return (
-    <div className="space-y-6">
+    <div className={`${styles.page} space-y-8`}>
       <PageHeader
         variant="ledger"
         eyebrow={
@@ -155,7 +156,7 @@ export default function StaffImportPage() {
 
       <Card className="space-y-3 border-border/30 bg-surface-container-lowest/50">
         <h2 className="text-sm font-semibold text-text">How it works</h2>
-        <ol className="list-decimal space-y-1.5 pl-5 text-sm text-muted">
+        <ol className={styles.steps}>
           <li>Download the template CSV and fill in staff details.</li>
           <li>Choose your file — we validate it automatically and show a preview.</li>
           <li>Import when the preview looks correct; download an error report if any rows fail.</li>
@@ -163,7 +164,7 @@ export default function StaffImportPage() {
       </Card>
 
       <Card className="space-y-4">
-        <h2 className="text-base font-semibold text-text">Upload CSV</h2>
+        <h2 className={`${styles.uploadTitle} text-base font-semibold text-text`}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden><path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5" /></svg>Upload CSV</h2>
         <div className="flex flex-wrap items-center gap-3">
           <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
           <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>

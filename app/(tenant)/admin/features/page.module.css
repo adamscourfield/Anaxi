@@ -1,0 +1,13 @@
+.page { color:#1c1c1e; min-width:0; }
+.page h1 { letter-spacing:-.045em; }
+.page > div[class*="overflow-hidden"] { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.page h2 { color:#1c1c1e; font-weight:600; }
+.page > div > div > div > span { background:white; color:#ff6a52; border:1px solid #e5e5e6; border-radius:10px; }
+.page form button { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:none; gap:16px; align-items:start; }
+.page form button:hover { background:white; border-color:#ff6a52; }
+.page form button > span:first-child { background:white; color:#ff6a52; border:1px solid #e5e5e6; border-radius:10px; }
+.page form button > span:last-child { background:#e5e5e6; background-image:none; border-radius:20px; box-shadow:none; }
+.page form button[aria-pressed="true"] > span:last-child { background:#1c1c1e; }
+.page form button > span:last-child > span { background:white; border-radius:50%; }
+.page :global(.calm-transition) { transition:border-color 160ms ease,color 160ms ease; }
+@media(min-width:1024px) { .page > div > div[class*="auto-rows-fr"] { grid-template-columns:repeat(2,minmax(0,1fr)); } }

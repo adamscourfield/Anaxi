@@ -1,0 +1,24 @@
+.page { color:#1c1c1e; --accent:#ff6a52; --accentHover:#e14e36; }
+.page h1 { letter-spacing:-.045em; }
+.page :global(.filter-panel), .page :global(.table-shell), .page section[class*="border"], .page li[class*="border"] { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.page :global(.filter-panel) { padding:24px; }
+.page button, .page a[class*="anx-btn"] { background:#1c1c1e; color:white; border-color:#1c1c1e; border-radius:10px; }
+.page button svg { color:inherit; }
+.page button:hover, .page a[class*="anx-btn"]:hover { background:#2e2e31; color:white; }
+.page button[role="combobox"], .page input, .page select { background:white !important; color:#1c1c1e !important; border:1px solid #e5e5e6; border-radius:10px; }
+.page button[role="combobox"] svg { color:#6e6e73; }
+.page thead, .page th { background:white; color:#6e6e73; }
+.page td, .page th { border-color:#e5e5e6; }
+.page :global(.calm-transition) { transition:background-color 160ms ease,color 160ms ease; }
+.page :global(.filter-panel) > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.page :global(.filter-panel) label { min-width:0; }
+.page :global(.filter-panel) button { border-color:#e5e5e6; }
+.page :global(.filter-panel) button svg { color:#6e6e73; }
+@media(min-width:1500px) { .page :global(.filter-panel) > div { grid-template-columns:2fr 1fr 1fr 1fr; } }
+@media(max-width:640px) { .page :global(.filter-panel) > div { grid-template-columns:1fr; } }
+.actionMenu { position:absolute; right:0; top:calc(100% + 8px); z-index:40; width:256px; padding:6px; background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 16px 42px -14px #1c1c1e40; text-align:left; }
+.menuHeading { margin:0 4px 4px; padding:9px 8px 12px; border-bottom:1px solid #e5e5e6; font-size:11px; font-weight:600; color:#6e6e73; }
+.page .actionMenu button[role="menuitem"] { display:flex; align-items:center; gap:12px; width:100%; padding:11px 12px; border:0; border-radius:8px; background:white; color:#1c1c1e; font-size:13px; font-weight:400; line-height:1.4; }
+.page .actionMenu button[role="menuitem"] svg { width:18px; height:18px; flex-shrink:0; color:#e14e36; }
+.page .actionMenu button[role="menuitem"]:hover, .page .actionMenu button[role="menuitem"]:focus-visible { background:#fff3ef; color:#1c1c1e; outline:none; }
+.page .actionMenu button[role="menuitem"]:last-child { margin-top:6px; border-top:1px solid #e5e5e6; border-radius:0 0 8px 8px; color:#c43c30; }

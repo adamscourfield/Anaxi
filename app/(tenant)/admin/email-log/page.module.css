@@ -1,0 +1,17 @@
+.page { min-width:0; color:#1c1c1e; }
+.page h1 { letter-spacing:-.045em; }
+.stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.stats > div, .page > div[class*="overflow-x-auto"] { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.stats > div { padding:24px; }
+.stats span { display:block; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:#6e6e73; }
+.stats strong { display:block; margin-top:12px; font-size:30px; font-weight:600; letter-spacing:-.03em; }
+.stats > div:last-child strong { color:#e14e36; }
+.page > div[class*="overflow-x-auto"] { padding:0; }
+.page table { min-width:600px; }
+.page th { padding:16px 20px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; background:white; color:#6e6e73; border-color:#e5e5e6; }
+.page td { padding:20px; border-color:#e5e5e6; }
+.page td[colspan] { padding:48px 24px; }
+.emptyIcon { width:32px; height:32px; margin:0 auto 20px; color:#ff6a52; }
+.page button { background:#1c1c1e; color:white; border-radius:10px; }
+.page button:hover { background:#2e2e31; color:white; }
+@media(max-width:640px) { .stats { gap:10px; } .stats > div { padding:16px; } .stats strong { font-size:26px; } }

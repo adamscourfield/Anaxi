@@ -1,10 +1,11 @@
 "use client";
+import styles from "./LeaveCalendarGrid.module.css";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { LeaveCalendarRequestJson } from "@/modules/leave/leaveCalendarMonthData";
-import { isApprovedStatus, isDeniedStatus } from "@/lib/leaveStatus";
+import { isApprovedStatus, isDeniedStatus, loaStatusUiBucket } from "@/lib/leaveStatus";
 import {
   WEEKDAYS,
   stripTime,
@@ -117,6 +118,14 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
   const [loading, setLoading] = useState(false);
   const [animTick, setAnimTick] = useState(0);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const filteredRequests = useMemo(() => requests.filter(request => {
+    if (statusFilter && loaStatusUiBucket(request.status) !== statusFilter) return false;
+    const text = `${request.requester?.fullName ?? ""} ${request.reason?.label ?? ""}`.toLowerCase();
+    return text.includes(search.trim().toLowerCase());
+  }), [requests, statusFilter, search]);
 
   useEffect(() => {
     setMonthKey(initialMonthKey);
@@ -190,7 +199,7 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
   }, [goToMonth]);
 
   return (
-    <div className="space-y-5">
+    <div className={`${styles.calendar} space-y-5`}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 flex-wrap items-baseline gap-2">
           <h2 className="text-[1.35rem] font-bold capitalize tracking-tight text-[var(--on-surface)] sm:text-[1.5rem]">
@@ -265,10 +274,14 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
                 <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
               </svg>
             </span>
-            <Link
-              href={basePath === "calendar" ? "/leave?view=list" : "/leave?view=list"}
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(open => !open)}
+              aria-expanded={filtersOpen}
+              aria-controls="leave-calendar-filters"
               className="inline-flex h-9 items-center gap-1 rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-2.5 text-[0.8125rem] font-semibold text-[var(--on-surface-variant)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
-              title="Switch to list view to filter"
+              title="Filter calendar"
+              aria-label="Filter calendar"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M4 6h16M6 12h12M9 18h6" strokeLinecap="round" />
@@ -280,10 +293,19 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
                   clipRule="evenodd"
                 />
               </svg>
-            </Link>
+            </button>
           </div>
         </div>
       </div>
+
+      {filtersOpen && <div id="leave-calendar-filters" className={styles.filters}>
+        <label><span>Search staff or reason</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Name or leave reason…" /></label>
+        <label><span>Status</span><select value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
+          <option value="">All statuses</option><option value="PENDING">Pending</option><option value="APPROVED">Approved</option><option value="DENIED">Declined</option><option value="CANCELLED">Cancelled</option>
+        </select></label>
+        <button type="button" onClick={() => { setSearch(""); setStatusFilter(""); }}>Clear filters</button>
+      </div>}
+      {(search.trim() || statusFilter) && <p role="status" className="text-sm text-muted">{filteredRequests.length} of {requests.length} requests match your filters.</p>}
 
       <div
         key={animTick}
@@ -308,7 +330,7 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
             const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0);
             const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 23, 59, 59);
 
-            const entries = requests.filter((r) => {
+            const entries = filteredRequests.filter((r) => {
               const rStart = new Date(r.startDate);
               const rEnd = new Date(r.endDate);
               return rStart <= dayEnd && rEnd >= dayStart;

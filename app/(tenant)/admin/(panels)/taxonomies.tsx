@@ -1,3 +1,4 @@
+import styles from "../taxonomies/page.module.css";
 import Link from "next/link";
 import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import { adminSectionPath } from "@/lib/admin-sections";
@@ -110,21 +111,10 @@ export async function TaxonomiesAdminPanel({
   }));
 
   return (
-    <div className="space-y-6 pb-8">
-      <AdminSectionLink
-        href="/admin"
-        className="inline-flex items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 py-2 text-[0.8125rem] font-semibold text-[var(--on-surface)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)]"
-      >
-        <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0 text-[var(--on-surface-variant)]" aria-hidden>
-          <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        Back to Admin
-      </AdminSectionLink>
-
+    <div className={`${styles.page} space-y-8 pb-8`}>
       <PageHeader
         variant="ledger"
         title="Taxonomies"
-        titleClassName="!text-[var(--on-surface)]"
         subtitleClassName="anx-page-subtitle !text-[var(--on-surface-variant)]"
         subtitle="Configure leave reasons, on-call options, and who can approve leave. Changes apply to new requests; existing records keep their labels."
         actions={

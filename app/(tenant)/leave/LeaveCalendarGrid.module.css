@@ -1,0 +1,21 @@
+.calendar { min-width:0; color:#1c1c1e; }
+.calendar h2 { font-weight:600; letter-spacing:-.03em; }
+.calendar button, .calendar > div:first-child a { background:#1c1c1e; color:#fff; border:1px solid #1c1c1e; border-radius:10px; box-shadow:none; }
+.calendar button svg, .calendar > div:first-child a svg { color:#fff; }
+.calendar :global(.loa-cal-month-enter) { background:#fff; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.calendar :global(.loa-cal-month-enter) > div:first-child { background:#fff; border-color:#e5e5e6; }
+.calendar div[role="button"] { background:#fff; border-color:#e5e5e6; }
+.calendar div[role="button"][class*="ring-1"] { box-shadow:inset 0 0 0 1px #ff6a52; }
+.calendar div[role="button"] a { background:#fff; border-color:#e5e5e6; }
+.calendar [aria-label="Leave status legend"] > span { background:#fff; border-color:#e5e5e6; }
+.calendar div[role="button"] button { background:#1c1c1e; color:#fff; }
+.calendar div[role="button"] span[class*="text-[var(--info)]"] { color:#e14e36; }
+.calendar > div:first-child button:hover:not(:disabled), .calendar > div:first-child a:hover { background:#ff6a52 !important; border-color:#ff6a52 !important; color:#1c1c1e !important; }
+.calendar > div:first-child button:hover:not(:disabled) svg, .calendar > div:first-child a:hover svg { color:#1c1c1e !important; }
+.filters { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto; gap:20px; align-items:end; padding:20px 24px; border:1px solid #e5e5e6; border-radius:14px; background:#fff; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.filters label { display:flex; flex-direction:column; gap:8px; min-width:0; }
+.filters label > span { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:#6e6e73; }
+.filters input, .filters select { min-width:0; width:100%; height:42px; padding:0 12px; border:1px solid #e5e5e6; border-radius:10px; background:#fff; color:#1c1c1e; }
+.filters button { height:42px; padding:0 16px; font-size:13px; }
+.calendar button[aria-expanded="true"] { outline:2px solid #ff6a52; outline-offset:2px; }
+@media(max-width:640px) { .filters { grid-template-columns:1fr; gap:16px; padding:20px; } }

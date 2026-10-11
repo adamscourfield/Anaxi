@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
 import { AvatarUploader } from "@/components/ui/avatar-uploader";
+import styles from "./page.module.css";
 import { updateOwnAvatar } from "./actions";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -43,23 +44,23 @@ export default async function ProfilePage() {
   const hodDepts = departments.filter((m: any) => m.isHeadOfDepartment);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <PageHeader variant="ledger" title="Your Profile" subtitle="Account details and permissions." />
+    <div className={styles.page}>
+      <PageHeader variant="ledger" title="Your profile" subtitle="Account details and permissions." />
 
       {/* Avatar + name */}
-      <Card className="flex items-center gap-5">
+      <Card className={styles.identity}>
         <AvatarUploader
           name={fullUser?.fullName ?? "?"}
           avatarUrl={avatarUrlFor(user.id, fullUser?.avatarUpdatedAt)}
           uploadAction={updateOwnAvatar}
         />
-        <div className="min-w-0">
+        <div className={styles.accountDetails}>
           <p className="text-lg font-semibold text-text">{fullUser?.fullName}</p>
           <p className="text-sm text-muted">{fullUser?.email}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <StatusPill variant="accent" size="sm">{ROLE_LABELS[fullUser?.role] ?? fullUser?.role}</StatusPill>
+            <span className={styles.role}>{ROLE_LABELS[fullUser?.role] ?? fullUser?.role}</span>
             {fullUser?.isActive ? (
-              <StatusPill variant="success" size="sm">Active</StatusPill>
+              <span className={styles.active}><i aria-hidden="true" />Active</span>
             ) : (
               <StatusPill variant="error" size="sm">Inactive</StatusPill>
             )}
@@ -68,15 +69,15 @@ export default async function ProfilePage() {
       </Card>
 
       {/* School */}
-      <Card className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted">School</p>
+      <Card className={styles.section}>
+        <h2 className={styles.sectionTitle}><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-5h6v5M9 9h.01M15 9h.01M9 12h.01M15 12h.01" /></svg></span>School</h2>
         <p className="text-sm font-medium text-text">{tenant?.name ?? "—"}</p>
       </Card>
 
       {/* Departments */}
       {departments.length > 0 && (
-        <Card className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted">Departments</p>
+        <Card className={styles.section}>
+          <h2 className={styles.sectionTitle}><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" /></svg></span>Departments</h2>
           <ul className="space-y-1.5">
             {departments.map((m: any) => (
               <li key={m.id} className="flex items-center gap-2 text-sm text-text">
@@ -89,9 +90,9 @@ export default async function ProfilePage() {
       )}
 
       {/* Permissions summary */}
-      <Card className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-muted">Permissions</p>
-        <div className="grid gap-3 sm:grid-cols-2 text-sm">
+      <Card className={styles.section}>
+        <h2 className={styles.sectionTitle}><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l8 4v5c0 5-8 9-8 9s-8-4-8-9V7zM8 12l3 3 5-5" /></svg></span>Permissions</h2>
+        <div className={styles.permissions}>
           <div className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2">
             <span className="text-muted">Approve all leave</span>
             <span className={`font-medium ${fullUser?.canApproveAllLoa ? "text-accent" : "text-muted"}`}>

@@ -1,3 +1,4 @@
+import styles from "../settings/page.module.css";
 import { revalidatePath } from "next/cache";
 import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
@@ -38,7 +39,7 @@ export async function SettingsAdminPanel() {
   }
 
   return (
-    <div className="space-y-8 pb-8">
+    <div className={`${styles.page} space-y-8 pb-8`}>
       <AdminPageChrome
         area="School settings"
         title="School settings"

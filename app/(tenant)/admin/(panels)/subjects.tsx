@@ -1,3 +1,4 @@
+import styles from "../subjects/page.module.css";
 import { PageHeader } from "@/components/ui/page-header";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
@@ -26,13 +27,12 @@ export async function SubjectsAdminPanel() {
   }));
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className={`${styles.page} space-y-8 pb-8`}>
       <PageHeader
         variant="ledger"
         title="Subjects"
-        titleClassName="!text-[var(--on-surface)]"
         subtitleClassName="anx-page-subtitle !text-[var(--on-surface-variant)]"
-        subtitle="The canonical subject list used by attainment uploads and grade entry, tagged by key stage."
+        subtitle="Manage subject names and key stages for assessment uploads and grade entry."
       />
 
       <SubjectsAdminView

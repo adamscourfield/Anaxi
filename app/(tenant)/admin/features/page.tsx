@@ -1,3 +1,4 @@
+import styles from "./page.module.css";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
@@ -16,7 +17,7 @@ export default async function AdminFeaturesPage() {
   const features = buildTenantFeatureList(rows);
 
   return (
-    <div className="space-y-8 pb-8">
+    <div className={`${styles.page} space-y-8 pb-8`}>
       <AdminPageChrome
         area="Feature flags"
         title="Module availability"

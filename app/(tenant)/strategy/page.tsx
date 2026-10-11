@@ -3,6 +3,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/card"; // used for db error display
 import { PageHeader } from "@/components/ui/page-header";
+import styles from "./page.module.css";
 import { StrategyBoardClient } from "./StrategyBoardClient";
 
 // ─── Auth guard ───────────────────────────────────────────────────────────────
@@ -53,34 +54,16 @@ export default async function StrategyPage() {
     // Non-critical — fall back to empty list
   }
 
-  const totalAreas     = areas.length;
-  const activeAreas    = areas.filter((a: any) => !a.completed).length;
-  const completedAreas = areas.filter((a: any) => a.completed).length;
 
   const canManage = canManageStrategy(user.role);
 
   return (
-    <div className="space-y-6">
+    <div className={`${styles.page} space-y-8`}>
       {/* Header */}
       <PageHeader variant="ledger"
         title="Strategy Board"
-        subtitle={<>{activeAreas} active · {completedAreas} complete · {totalAreas} total</>}
-        actions={
-          <>
-            <button type="button" className="anx-btn-pill-ghost calm-transition">
-              <svg className="anx-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
-                <line x1="4" y1="6" x2="20" y2="6" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="11" y1="18" x2="13" y2="18" />
-              </svg>
-              Filter
-            </button>
-            <button type="button" className="anx-btn-pill-primary calm-transition">
-              <svg className="h-3.5 w-3.5 shrink-0 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Export Ledger
-            </button>
-          </>
-        }
+        subtitle="Set school priorities and keep their actions moving."
+
       />
 
       {/* DB error — table may need to be created via prisma db push */}

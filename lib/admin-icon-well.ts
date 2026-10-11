@@ -6,7 +6,6 @@ const WELL_BY_PREFIX: Array<{ prefix: string; well: string }> = [
   { prefix: "/admin/departments", well: "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]" },
   { prefix: "/admin/taxonomies", well: "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]" },
   { prefix: "/admin/coaching", well: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]" },
-  { prefix: "/admin/timetable", well: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]" },
   { prefix: "/admin/leave-approvals", well: "bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]" },
   { prefix: "/admin/terminology", well: "bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]" },
   { prefix: "/admin/features", well: "bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]" },

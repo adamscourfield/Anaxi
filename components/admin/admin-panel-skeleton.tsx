@@ -107,7 +107,6 @@ const SECTION_LABELS: Partial<Record<AdminSectionId, string>> = {
   "email-log": "Email log",
   taxonomies: "Taxonomies",
   subjects: "Subjects",
-  timetable: "Timetable",
   imports: "Import jobs",
 };
 
@@ -120,7 +119,6 @@ export function AdminPanelSkeleton({ section = "overview" }: { section?: AdminSe
     "departments",
     "imports",
     "email-log",
-    "timetable",
     "coaching",
     "leave-approvals",
   ];

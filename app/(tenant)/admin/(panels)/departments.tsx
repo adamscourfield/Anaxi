@@ -1,3 +1,4 @@
+import styles from "../departments/page.module.css";
 import Link from "next/link";
 import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
@@ -131,11 +132,11 @@ export async function DepartmentsAdminPanel() {
   }));
 
   return (
-    <div className="space-y-8 pb-8">
+    <div className={`${styles.page} space-y-8 pb-8`}>
       <AdminPageChrome
         area="Departments"
-        title="Academic Departments"
-        subtitle="Structure your school: departments, heads of department, and staff assignments for the current year."
+        title="Departments"
+        subtitle="Organise departments, assign heads and manage staff membership."
         actions={
           <>
             <Link
@@ -143,11 +144,16 @@ export async function DepartmentsAdminPanel() {
               className="inline-flex items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold text-[var(--on-surface)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)]"
             >
               <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M10 3v14M6 13l4 4 4-4" />
+                <path d="M10 3v10M6 9l4 4 4-4M3 14v3h14v-3" />
               </svg>
-              Export ledger
+              Export CSV
             </Link>
-            <form action={createDepartment} className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+
+          </>
+        }
+      />
+
+      <section className={styles.createPanel}><h2>Add a department</h2><p>Give your department a name, then assign staff and a head of department.</p>            <form action={createDepartment} className={styles.createForm}>
               <input
                 name="name"
                 placeholder="New department name"
@@ -163,10 +169,7 @@ export async function DepartmentsAdminPanel() {
                 </svg>
                 Add department
               </button>
-            </form>
-          </>
-        }
-      />
+            </form></section>
 
       {deptList.length === 0 ? (
         <EmptyState title="No departments yet" description="Add your first department using the form above." />

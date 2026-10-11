@@ -1,3 +1,4 @@
+import styles from "../language/page.module.css";
 import Link from "next/link";
 import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import type { ReactNode } from "react";
@@ -193,17 +194,11 @@ export async function LanguageAdminPanel() {
   }
 
   return (
-    <div className="space-y-8 pb-8">
-      <AdminSectionLink href="/admin" className="inline-flex items-center gap-1.5 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text">
-        <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden>
-          <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        Back to Admin
-      </AdminSectionLink>
+    <div className={`${styles.page} space-y-8 pb-8`}>
       <AdminPageChrome
         area="Language"
         title="Terminology"
-        subtitle="Configure all language, vocabulary, and signal wording used across the product."
+        subtitle="Use your school’s language for behaviour, vocabulary and observation signals."
       />
 
       {/* ── Behaviour Labels ─────────────────────────────────────────── */}

@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "./taxonomy-tabs-shell.module.css";
 import type { ReactNode } from "react";
 
 /** Mobile taxonomy section picker; desktop uses sidebar tiles in the parent view. */
@@ -18,7 +19,9 @@ export function TaxonomyTabsShell({
 }) {
   return (
     <div className="space-y-6">
-      <div className="md:hidden">
+      <div className={styles.picker}>
+        <div><h2>Taxonomy settings</h2><p>Choose the list or permissions you want to manage.</p></div>
+        <div className={styles.control}>
         <label htmlFor="taxonomy-tab" className="mb-1.5 block text-sm font-medium text-[var(--on-surface)]">
           Section
         </label>
@@ -34,6 +37,7 @@ export function TaxonomyTabsShell({
             </option>
           ))}
         </select>
+        </div>
       </div>
       {children}
     </div>

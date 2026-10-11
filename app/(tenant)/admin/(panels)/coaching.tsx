@@ -1,3 +1,4 @@
+import styles from "../coaching/page.module.css";
 import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
 import { assertUsersBelongToTenant, requireAdminUser } from "@/lib/admin";
@@ -82,18 +83,18 @@ export async function CoachingAdminPanel() {
   }));
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className={`${styles.page} space-y-8 pb-8`}>
       <AdminPageChrome
         area="Coaching"
-        title="Coaching Assignments"
-        subtitle="Manage coach-to-coachee pairs across your institution."
+        title="Coaching assignments"
+        subtitle="Pair staff with coaches and manage their coaching assignments."
       />
 
       {/* New assignment */}
       <div className={CARD}>
         <div className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] px-6 py-6 sm:px-8 sm:py-7">
           <div className="flex gap-3 sm:gap-4">
-            <span className={ICON_WELL} aria-hidden>
+            <span className={`${styles.icon} ${ICON_WELL}`} aria-hidden>
               <PlusIcon className="h-5 w-5" />
             </span>
             <div className="min-w-0">
@@ -104,7 +105,7 @@ export async function CoachingAdminPanel() {
             </div>
           </div>
         </div>
-        <form action={addAssignment} className="flex flex-col gap-4 px-6 py-7 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-4 sm:gap-y-4 sm:px-8 sm:pb-8">
+        <form action={addAssignment} className={styles.assignmentForm}>
           <label className="min-w-0 flex-1 sm:min-w-[200px]">
             <span className={LABEL}>Coach</span>
             <select name="coachUserId" className={FIELD} required defaultValue="">
@@ -132,7 +133,7 @@ export async function CoachingAdminPanel() {
             className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--on-surface)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-[var(--primary-container)] sm:w-auto"
           >
             <PlusIcon className="h-4 w-4" />
-            Add Assignment
+            Add assignment
           </button>
         </form>
       </div>

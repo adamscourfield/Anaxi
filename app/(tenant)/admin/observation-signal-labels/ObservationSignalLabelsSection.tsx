@@ -95,7 +95,7 @@ export function ObservationSignalLabelsSection({
                   >
                     <td className="px-4 py-4 align-top sm:px-5">
                       <div className="flex items-start gap-3">
-                        <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,92,255,0.1)]">
+                        <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#e5e5e6] bg-white">
                           <SignalKeyIcon signalKey={signal.key} />
                         </span>
                         <span className="break-all pt-1.5 font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.04em] text-text">

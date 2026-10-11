@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "./page.module.css";
 import { useState, useMemo, useRef, useEffect, useTransition, type ReactNode } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { FormSelect } from "@/components/ui/form-select";
@@ -481,6 +482,7 @@ export function UserDirectoryTable({
                               type="button"
                               aria-expanded={openMenuId === u.id}
                               aria-haspopup="menu"
+                              aria-label={`More actions for ${u.fullName}`}
                               onClick={() => setOpenMenuId(openMenuId === u.id ? null : u.id)}
                               className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/70 bg-background text-muted calm-transition hover:bg-surface-container-low hover:text-text"
                             >
@@ -489,14 +491,17 @@ export function UserDirectoryTable({
                             {openMenuId === u.id ? (
                               <div
                                 role="menu"
-                                className="absolute right-0 top-full z-20 mt-1 min-w-[11rem] rounded-lg border border-border/40 bg-background py-1 shadow-lg"
+                                className={styles.actionMenu}
+                                aria-label={`Actions for ${u.fullName}`}
                               >
+                                <p className={styles.menuHeading}>{u.fullName}</p>
                                 <button
                                   type="button"
                                   role="menuitem"
                                   className="block w-full px-3 py-2 text-left text-[0.8125rem] text-text calm-transition hover:bg-surface-container-low"
                                   onClick={() => handleToggleActive(u)}
                                 >
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3v9M6.3 5.7a9 9 0 1 0 11.4 0"/></svg>
                                   {u.isActive ? "Deactivate" : "Activate"}
                                 </button>
                                 <button
@@ -505,6 +510,7 @@ export function UserDirectoryTable({
                                   className="block w-full px-3 py-2 text-left text-[0.8125rem] text-text calm-transition hover:bg-surface-container-low"
                                   onClick={() => handleResetPassword(u)}
                                 >
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M8 11V7a4 4 0 0 1 8 0v4M5 11h14v10H5z"/></svg>
                                   Reset password
                                 </button>
                                 <button
@@ -513,6 +519,7 @@ export function UserDirectoryTable({
                                   className="block w-full px-3 py-2 text-left text-[0.8125rem] text-text calm-transition hover:bg-surface-container-low"
                                   onClick={() => handleResendOnboarding(u)}
                                 >
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 5h18v14H3zM3 6l9 7 9-7"/></svg>
                                   Resend onboarding email
                                 </button>
                                 <button
@@ -524,6 +531,7 @@ export function UserDirectoryTable({
                                     setOpenMenuId(null);
                                   }}
                                 >
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 6h18M8 6V3h8v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg>
                                   Delete
                                 </button>
                               </div>

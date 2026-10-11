@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "./overview.module.css";
 import Link from "next/link";
 import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
@@ -203,7 +204,7 @@ function AdminRowItem({
         className={`flex items-center gap-4 px-5 py-4 calm-transition group-hover:bg-[color-mix(in_srgb,var(--surface-container-low)_65%,transparent)] ${!isLast ? "border-b border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)]" : ""}`}
       >
         <div
-          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-sm [&_svg]:shrink-0 calm-transition ${well}`}
+          className={`${styles.icon} flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-sm [&_svg]:shrink-0 calm-transition ${well}`}
         >
           {icon}
         </div>
@@ -223,7 +224,7 @@ function AdminRowItem({
 function SectionBlock({ title, tag, rows }: DashboardSectionDef) {
   return (
     <section className="space-y-0">
-      <div className="overflow-hidden rounded-2xl anx-elevated-card">
+      <div className={`${styles.section} overflow-hidden rounded-2xl anx-elevated-card`}>
         <div className="flex items-baseline justify-between gap-4 border-b border-[color-mix(in_srgb,var(--outline-variant)_14%,transparent)] px-5 py-4 sm:px-6">
           <h2 className="text-base font-semibold tracking-[-0.02em] text-text">{title}</h2>
           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted/55">{tag.toUpperCase()}</span>
@@ -269,7 +270,7 @@ function toneClasses(tone: DashboardMetricDef["tone"] = "default") {
 
 function MetricCard({ metric }: { metric: DashboardMetricDef }) {
   const content = (
-    <div className="home-hero-glass home-pressable-card flex h-full min-h-[142px] flex-col justify-between rounded-2xl p-5">
+    <div className={`${styles.metric} home-hero-glass home-pressable-card flex h-full min-h-[142px] flex-col justify-between rounded-2xl p-5`}>
       <div className="flex items-start justify-between gap-3">
         <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${toneClasses(metric.tone)}`}>
           {ICONS[metric.iconId]}
@@ -296,57 +297,11 @@ function MetricCard({ metric }: { metric: DashboardMetricDef }) {
 function AttentionBand({ items }: { items: DashboardAttentionDef[] }) {
   if (items.length === 0) return null;
 
-  const hasCritical = items.some((item) => item.tone === "critical");
-  const hasWarning = !hasCritical && items.some((item) => item.tone === "warning");
-
-  const bandTone = hasCritical
-    ? "border-[color-mix(in_srgb,var(--error)_16%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_40%,var(--surface-container-lowest))]"
-    : "border-[color-mix(in_srgb,var(--warning)_16%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_50%,var(--surface-container-lowest))]";
-
-  const iconBg = hasCritical ? "bg-[var(--error)]" : "bg-[var(--warning)]";
-
   return (
-    <section className={`rounded-sm border px-4 py-3 shadow-none sm:px-5 ${bandTone}`}>
-      <div className="flex flex-wrap items-start gap-3 xl:flex-nowrap xl:items-center">
-        <div className="flex min-w-0 flex-1 flex-col gap-2.5 md:flex-row md:items-center md:divide-x md:divide-[color-mix(in_srgb,var(--outline-variant)_25%,transparent)]">
-          <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${iconBg} text-[11px] font-bold text-white`} aria-hidden>
-            !
-          </span>
-          {items.slice(0, 3).map((item) => {
-            const Nav = item.href.startsWith("/admin") ? AdminSectionLink : Link;
-            return (
-            <Nav
-              key={`${item.title}-${item.href}`}
-              href={item.href}
-              className="group min-w-0 flex-1 rounded-lg py-0.5 calm-transition md:px-4 first:md:pl-2 hover:opacity-80"
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <span
-                  className={`h-2 w-2 shrink-0 rounded-full ${
-                    item.tone === "critical" ? "bg-[var(--error)]" : "bg-[var(--warning)]"
-                  }`}
-                  aria-hidden
-                />
-                <p className="truncate text-sm font-semibold text-text">{item.title}</p>
-              </div>
-              <p className="mt-0.5 truncate pl-4 text-xs text-muted">{item.detail}</p>
-            </Nav>
-          );
-          })}
-        </div>
-        {(() => {
-          const ctaHref = items[0]?.href ?? "/admin";
-          const CtaNav = ctaHref.startsWith("/admin") ? AdminSectionLink : Link;
-          return (
-        <CtaNav
-          href={ctaHref}
-          className="shrink-0 self-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] bg-[var(--surface-container-lowest)] px-3.5 py-2 text-xs font-semibold text-text calm-transition hover:bg-[var(--surface-container-low)]"
-        >
-          {items[0]?.cta ?? "View"} →
-        </CtaNav>
-          );
-        })()}
-      </div>
+    <section className={styles.attention} aria-label="Setup reminders">
+      <span className={styles.attentionIcon} aria-hidden>!</span>
+      <div className={styles.attentionItems}>{items.slice(0, 3).map(item => <div key={item.title}><h2>{item.title}</h2><p>{item.detail}</p></div>)}</div>
+      <AdminSectionLink href={items[0].href} className={styles.attentionAction}>{items[0].cta ?? "View"} →</AdminSectionLink>
     </section>
   );
 }
@@ -406,14 +361,14 @@ export function InstitutionalDashboard({
   const filterActive = filterOpen || q.length > 0;
 
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <div className="flex flex-col gap-4 anx-page-header-shell">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-2">
-            <p className="anx-eyebrow">Dashboard</p>
+            
             <h1 className="anx-page-title">Admin Pulse</h1>
             <p className="anx-page-subtitle">
-              Operational setup, data readiness, and administrative controls for your school. Use the section menu to configure users, language, imports, and more without leaving administration.
+              Manage school setup, staff and data readiness.
             </p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
               <Link

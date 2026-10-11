@@ -264,14 +264,13 @@ export default async function OnboardingPage({
 
       {step === 6 && (
         <Card className="space-y-4">
-          <H2>Step 6: Timetable upload (optional)</H2>
+          <H2>Step 6: School data</H2>
           <MetaText>
-            Optionally upload a timetable CSV. This can be done later from the Admin panel.
+            School data is provided through your Arbor connection. Continue to finish setup.
           </MetaText>
           <div className="flex flex-wrap gap-2">
             <a href="/onboarding?step=5"><Button type="button" variant="secondary">Back</Button></a>
-            <a href="/admin/timetable"><Button type="button" variant="secondary">Upload timetable</Button></a>
-            <a href="/onboarding?step=7"><Button type="button">Skip</Button></a>
+            <a href="/onboarding?step=7"><Button type="button">Continue</Button></a>
           </div>
         </Card>
       )}

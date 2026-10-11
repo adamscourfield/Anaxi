@@ -88,58 +88,8 @@ export function TaxonomiesAdminView({
   const globalAuthoriserSet = new Set(globalAuthoriserIds);
   const scopedApproverSet = new Set(scopedApproverIds);
 
-  const tabTile = (value: TaxonomyTab) => {
-    const meta = TAB_META[value];
-    const active = tab === value;
-    return (
-      <button
-        type="button"
-        key={value}
-        onClick={() => setTab(value)}
-        className={`flex w-full items-start gap-3 rounded-xl border px-4 py-3.5 text-left calm-transition ${
-          active
-            ? "border-[#3B82F6] bg-[color-mix(in_srgb,var(--info)_08%,var(--surface-container-lowest))] shadow-sm"
-            : "border-transparent hover:bg-[var(--surface-container-low)]"
-        }`}
-      >
-        <span
-          className={`${TAXONOMY_ICON_WELL_BASE} ${
-            active
-              ? "border-[#93C5FD] bg-[#DBEAFE] text-[#1D4ED8]"
-              : "border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]"
-          }`}
-        >
-          {meta.icon}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[0.9375rem] font-bold text-[var(--on-surface)]">{meta.label}</span>
-          <span className="mt-0.5 block text-[0.75rem] text-[var(--on-surface-variant)]">Manage…</span>
-        </span>
-      </button>
-    );
-  };
-
   return (
     <TaxonomyTabsShell tabs={TAXONOMY_TABS} activeTab={tab} onTabChange={(t) => setTab(t as TaxonomyTab)} labels={TAB_LABELS}>
-      <div className="hidden gap-4 lg:grid lg:grid-cols-2">
-        <div className={TAXONOMY_NAV_CARD}>
-          <p className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] px-5 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
-            Leave of absence
-          </p>
-          <nav className="flex flex-col divide-y divide-[#E5E7EB] p-2" aria-label="Leave taxonomy sections">
-            {LEAVE_TAXONOMY_TABS.map((t) => tabTile(t))}
-          </nav>
-        </div>
-        <div className={TAXONOMY_NAV_CARD}>
-          <p className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] px-5 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
-            On call
-          </p>
-          <nav className="flex flex-col divide-y divide-[#E5E7EB] p-2" aria-label="On-call taxonomy sections">
-            {ON_CALL_TAXONOMY_TABS.map((t) => tabTile(t))}
-          </nav>
-        </div>
-      </div>
-
       {tab === "loa-reasons" ? (
         <TaxonomyEditableSection
           title="LOA Reasons"

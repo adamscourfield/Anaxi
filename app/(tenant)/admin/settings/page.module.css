@@ -1,0 +1,14 @@
+.page { color:#1c1c1e; --accent:#ff6a52; --accentHover:#e14e36; }
+.page h1 { letter-spacing:-.045em; }
+.page > div[class*="overflow-hidden"] { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.page h2, .page summary > span { color:#1c1c1e; font-weight:600; }
+.page p, .page label { color:#6e6e73; }
+.page span[class*="bg-[#E0E7FF]"], .page summary > span:first-child { background:white; color:#ff6a52; border:1px solid #e5e5e6; border-radius:10px; box-shadow:none; }
+.page input, .page select { height:44px; background:white; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; }
+.page form > div:first-child, .page details { max-width:none; }
+.page details { background:white; border:1px solid #e5e5e6; border-radius:14px; overflow:hidden; }
+.page summary:hover { background:#fafafa; }
+.page button { background:#1c1c1e; color:white; border-radius:10px; }
+.page button svg { color:inherit; }
+.page button:hover { background:#2e2e31; color:white; }
+.page :global(.calm-transition) { transition:color 160ms ease,background-color 160ms ease,transform 160ms ease; }

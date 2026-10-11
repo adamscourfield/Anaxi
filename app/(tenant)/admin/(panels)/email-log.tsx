@@ -1,3 +1,4 @@
+import styles from "../email-log/page.module.css";
 import Link from "next/link";
 import { requireAdminUser } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
@@ -20,19 +21,19 @@ export async function EmailLogAdminPanel() {
   const failedCount = logs.filter((l) => l.status === "FAILED").length;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5 p-6">
+    <div className={`${styles.page} space-y-8`}>
       <AdminPageChrome
         area="Email"
         title="Email delivery log"
-        subtitle={
-          failedCount > 0
-            ? `Recent transactional emails for your school. ${failedCount} failed in this view.`
-            : "Recent transactional emails for your school. All recent sends succeeded or were skipped (not configured)."
-        }
+        subtitle="Track delivery status for the latest 100 school emails."
       />
 
+      <section className={styles.stats} aria-label="Email delivery summary">
+        {[{label:"Logged emails", value:logs.length}, {label:"Sent", value:logs.filter(log => log.status === "SENT").length}, {label:"Failed", value:failedCount}].map(stat => <div key={stat.label}><span>{stat.label}</span><strong>{stat.value}</strong></div>)}
+      </section>
+
       <Card className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-sm" aria-label="Recent email deliveries">
           <thead>
             <tr className="border-b border-border text-muted">
               <th className="py-2 pr-3 font-medium">When</th>
@@ -46,7 +47,8 @@ export async function EmailLogAdminPanel() {
             {logs.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-8 text-center text-muted">
-                  No emails logged yet.
+                  <svg className={styles.emptyIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>
+                  <p>No emails logged yet.</p><p className="mt-2 text-xs">School email deliveries will appear here.</p>
                 </td>
               </tr>
             ) : (

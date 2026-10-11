@@ -1,0 +1,8 @@
+.page { color:#1c1c1e; min-width:0; }
+.page h1 { font-size:34px; font-weight:600; letter-spacing:-.04em; }
+.page :global(.home-hero-glass) { background:#fff; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.page [aria-label="Leave view"] { background:#fff; border:1px solid #e5e5e6; border-radius:10px; padding:4px; }
+.page [aria-label="Leave view"] a { display:inline-flex; align-items:center; justify-content:center; height:32px; border-radius:7px; background:#fff; color:#6e6e73; box-shadow:none; }
+.page [aria-label="Leave view"] a[aria-current="page"] { background:#1c1c1e; color:#fff; }
+.page a[href="/leave/request"], .page > div:last-child > a { background:#1c1c1e; color:#fff; border:1px solid #1c1c1e; border-radius:10px; box-shadow:none; }
+.page > div[class*="grid"] > div { background:#fff; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }

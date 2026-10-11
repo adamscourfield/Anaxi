@@ -15,28 +15,24 @@ export async function OverviewAdminPanel() {
     onCallReasonCount,
     locationCount,
     recipientCount,
-    timetableCount,
     activeJobCount,
     activeUserCount,
     inactiveUserCount,
     departmentCount,
     hodCount,
     enabledFeatureCount,
-    timetableUnknownTeacherCount,
     failedEmailCount,
   ] = await Promise.all([
     prisma.loaReason.count({ where: { tenantId: tid } }),
     (prisma as any).onCallReason.count({ where: { tenantId: tid } }),
     (prisma as any).onCallLocation.count({ where: { tenantId: tid } }),
     (prisma as any).onCallRecipient.count({ where: { tenantId: tid } }),
-    (prisma as any).timetableEntry.count({ where: { tenantId: tid } }),
     prisma.importJob.count({ where: { tenantId: tid, status: { in: ["PENDING", "PROCESSING", "RUNNING"] } } }),
     prisma.user.count({ where: { tenantId: tid, isActive: true } }),
     prisma.user.count({ where: { tenantId: tid, isActive: false } }),
     prisma.department.count({ where: { tenantId: tid } }),
     prisma.departmentMembership.count({ where: { tenantId: tid, isHeadOfDepartment: true } }),
     prisma.tenantFeature.count({ where: { tenantId: tid, enabled: true } }),
-    (prisma as any).timetableEntry.count({ where: { tenantId: tid, teacherUserId: null } }),
     prisma.emailLog.count({
       where: {
         tenantId: tid,
@@ -47,7 +43,6 @@ export async function OverviewAdminPanel() {
   ]);
 
   const taxonomyCount = loaCount + onCallReasonCount + locationCount + recipientCount;
-  const hasTimetable = timetableCount > 0;
   const updatedAtLabel = new Date().toLocaleString("en-GB", {
     day: "numeric",
     month: "short",
@@ -73,17 +68,6 @@ export async function OverviewAdminPanel() {
       tone: departmentCount > 0 ? "success" : "warning",
     },
     {
-      label: "Timetable rows",
-      value: timetableCount,
-      detail:
-        timetableUnknownTeacherCount > 0
-          ? `${timetableUnknownTeacherCount} rows need teacher matching`
-          : "Teacher mapping is complete",
-      href: "/admin?section=timetable",
-      iconId: "timetable",
-      tone: !hasTimetable || timetableUnknownTeacherCount > 0 ? "warning" : "success",
-    },
-    {
       label: "Enabled modules",
       value: enabledFeatureCount,
       detail: `${taxonomyCount} taxonomy ${taxonomyCount === 1 ? "entry" : "entries"} configured`,
@@ -102,28 +86,6 @@ export async function OverviewAdminPanel() {
             href: "/admin?section=imports",
             tone: "critical" as const,
             cta: "Open imports",
-          },
-        ]
-      : []),
-    ...(!hasTimetable
-      ? [
-          {
-            title: "Timetable not synced",
-            detail: "Upload schedule data to unlock class context",
-            href: "/admin?section=timetable",
-            tone: "warning" as const,
-            cta: "Sync timetable",
-          },
-        ]
-      : []),
-    ...(timetableUnknownTeacherCount > 0
-      ? [
-          {
-            title: "Teacher matches needed",
-            detail: `${timetableUnknownTeacherCount} timetable rows are unassigned`,
-            href: "/admin?section=timetable",
-            tone: "warning" as const,
-            cta: "Resolve matches",
           },
         ]
       : []),

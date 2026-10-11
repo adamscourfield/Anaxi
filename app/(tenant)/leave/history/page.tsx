@@ -1,3 +1,4 @@
+import styles from "./page.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeatureForPage } from "@/lib/guards";
 import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
@@ -33,10 +34,9 @@ export default async function LeaveHistoryPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className={`${styles.page} space-y-8`}>
       <PageHeader variant="ledger"
-        eyebrow="Leave of Absence"
-        title="Ledger History"
+        title="Leave history"
         subtitle="Browse every leave request and filter by status or keyword."
       />
 

@@ -1,0 +1,15 @@
+.page { color:#1c1c1e; --accent:#ff6a52; --accentHover:#e14e36; min-width:0; }
+.page > div[class*="border"] { background:white; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; padding:24px; }
+.page h1 { letter-spacing:-.045em; }
+.page button:not([class*="hover:text-text"]), .page a[download] { background:#1c1c1e; color:white; border:1px solid #1c1c1e; border-radius:10px; }
+.page button:hover:not([class*="hover:text-text"]), .page a[download]:hover { background:#2e2e31; color:white; }
+.page button svg { color:inherit; }
+.page :global(.table-shell), .page thead { background:white; border-color:#e5e5e6; border-radius:10px; }
+.page th { color:#6e6e73; font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
+.steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; list-style:none; counter-reset:step; padding-top:8px; }
+.steps li { counter-increment:step; font-size:13px; line-height:1.65; color:#6e6e73; }
+.steps li::before { content:counter(step, decimal-leading-zero); display:block; margin-bottom:8px; font-size:22px; line-height:1; font-weight:600; color:#e14e36; }
+.uploadTitle { display:flex; align-items:center; gap:12px; }
+.uploadTitle svg { color:#ff6a52; }
+.page :global(.calm-transition) { transition:color 160ms ease, background-color 160ms ease; }
+@media(max-width:640px) { .steps { grid-template-columns:1fr; gap:20px; } .page > div[class*="border"] { padding:20px; } }

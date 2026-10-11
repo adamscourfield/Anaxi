@@ -1,4 +1,5 @@
 import Link from "next/link";
+import styles from "./page.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeatureForPage } from "@/lib/guards";
 import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
@@ -79,10 +80,10 @@ export default async function LeaveCalendarPage({
   });
 
   return (
-    <div className="space-y-6">
+    <div className={`${styles.page} space-y-8`}>
       <PageHeader
         variant="ledger"
-        title="Leave of Absence"
+        title="Leave calendar"
         subtitle="Calendar view of approved and pending leave"
         eyebrow={
           <Breadcrumb
@@ -114,7 +115,7 @@ export default async function LeaveCalendarPage({
             </Link>
           </div>
           <Button asChild variant="primary">
-            <Link href="/leave/request">Request Leave</Link>
+            <Link href="/leave/request">Request leave</Link>
           </Button>
         </div>
         }

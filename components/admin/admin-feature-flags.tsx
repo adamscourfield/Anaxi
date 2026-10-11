@@ -224,6 +224,7 @@ export function AdminFeatureFlags({
               <input type="hidden" name="enabled" value={String(feature.enabled)} />
               <button
                 type="submit"
+                aria-pressed={feature.enabled}
                 className={`group flex w-full items-center gap-4 rounded-2xl border p-4 text-left calm-transition sm:p-5 ${
                   feature.enabled
                     ? "border-[var(--anx-card-border-strong)] bg-[var(--surface-container-lowest)] shadow-none"
