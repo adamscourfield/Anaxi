@@ -2826,7 +2826,7 @@ function TeachingTab({
       </div>
 
       {data.subjects.map((subj) => {
-        if (!subj.classes.length) return null;
+
         const isExpanded = expandedSubject === subj.subject;
         const yearMeanVal = subj.yearMean;
 

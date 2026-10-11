@@ -31,7 +31,7 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("timetableHistoricClasses", String(preview.diagnostics.classes));
     url.searchParams.set("timetableHistoricSubjects", String(preview.diagnostics.subjectClasses));
     url.searchParams.set("timetableHistoricTeachers", String(preview.diagnostics.staffedClasses));
-    url.searchParams.set("timetableHistoricSamples", preview.diagnostics.sampleClasses.join("; ").slice(0, 700));
+    url.searchParams.set("timetableHistoricSamples", preview.diagnostics.sampleClasses.join("; ").slice(0, 1800));
     url.searchParams.set("connectionId", integration.id);
     return NextResponse.redirect(url);
   } catch (error) {
