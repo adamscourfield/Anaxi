@@ -5,6 +5,7 @@ import { MyActionsGrouped } from "@/components/actions/MyActionsGrouped";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
+import styles from "./actions.module.css";
 import { StatCard } from "@/components/ui/stat-card";
 
 export default async function MyActionsPage() {
@@ -21,7 +22,7 @@ export default async function MyActionsPage() {
   const doneCount = grouped.DONE?.length ?? 0;
 
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <PageHeader variant="ledger"
         eyebrow="Operations"
         title="My Actions"

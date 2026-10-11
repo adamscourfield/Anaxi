@@ -31,6 +31,8 @@ export function SignalTileGroup({
         return (
           <button
             key={option.key}
+            data-signal-rating
+            aria-pressed={isSelected}
             type="button"
             onClick={() => onSelect(option.key)}
             className={`relative w-full rounded-2xl p-5 text-left calm-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent border ${

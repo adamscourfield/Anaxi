@@ -1,3 +1,5 @@
+import styles from "../students/students.module.css";
+import teacherStyles from "./teachers.module.css";
 import Link from "next/link";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { notFound } from "next/navigation";
@@ -173,7 +175,7 @@ export default async function AssessmentTeachersPage({
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} ${teacherStyles.page} space-y-8`}>
       <ExplorerBackLink />
 
       <PageHeader
@@ -200,30 +202,28 @@ export default async function AssessmentTeachersPage({
         }
       />
 
-      {/* ── KPI strip ───────────────────────────────────────────────────────── */}
-      <div className="explorer-kpi-tile rounded-2xl p-6">
-        <div className="grid gap-6 sm:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)]">
-          <div className="lg:pr-8">
+      {/* ── KPI cards ───────────────────────────────────────────────────────── */}
+      <div className={styles.metrics}>
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Teachers tracked</p>
             <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-text">{assessment.teachers.length}</p>
           </div>
-          <div className="lg:px-8">
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Below threshold</p>
             <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-[var(--error)]">{withConcern}</p>
             <p className="text-[11px] text-muted">value-add &lt; −5pp</p>
           </div>
-          <div className="lg:px-8">
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Above threshold</p>
             <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-[var(--pill-success-text)]">{withPositive}</p>
             <p className="text-[11px] text-muted">value-add ≥ +5pp</p>
           </div>
-          <div className="lg:pl-8">
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">School avg value-add</p>
             <p className={`mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] ${avgValueAdd !== null && avgValueAdd < -0.02 ? "text-[var(--error)]" : "text-text"}`}>
               {valueAddStr(avgValueAdd)}
             </p>
           </div>
-        </div>
       </div>
 
       {/* ── Search + sort ────────────────────────────────────────────────────── */}
@@ -233,6 +233,7 @@ export default async function AssessmentTeachersPage({
           {cycleId && <input type="hidden" name="cycle" value={cycleId} />}
           <input type="hidden" name="sort" value={sortParam} />
           <input
+            aria-label="Search teachers"
             type="search"
             name="q"
             defaultValue={search}

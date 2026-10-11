@@ -4,21 +4,21 @@ import { type ReactNode, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
+import styles from "./OnCallDetail.module.css";
+
 import { OnCallStatusBadge } from "./OnCallStatusBadge";
 import { REQUEST_TYPE_LABELS } from "@/modules/oncall/types";
 import { StatusPill } from "@/components/ui/status-pill";
 import { toast } from "@/components/toast-provider";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
 
-/** Design tokens — on-call detail (indigo accent, slate text, soft cards) */
-const INDIGO = "#4F46E5";
-const INDIGO_SOFT = "#EEF2FF";
-const SLATE_900 = "#111827";
-const SLATE_600 = "#6B7280";
-const NEUTRAL_WELL_BG = "#F3F4F6";
-const DIVIDER = "#E5E7EB";
+/** RELAY family palette. */
+const INDIGO = "#e14e36";
+const INDIGO_SOFT = "#ffffff";
+const SLATE_900 = "#1c1c1e";
+const SLATE_600 = "#6e6e73";
+const NEUTRAL_WELL_BG = "#ffffff";
+const DIVIDER = "#e5e5e6";
 
 export type OnCallTimelineEventSerialized = {
   id: string;
@@ -76,7 +76,7 @@ function IconWell({ tone, children }: { tone: "indigo" | "neutral"; children: Re
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
       style={{
         backgroundColor: isIndigo ? INDIGO_SOFT : NEUTRAL_WELL_BG,
-        color: isIndigo ? INDIGO : SLATE_600,
+        color: INDIGO,
       }}
     >
       {children}
@@ -219,7 +219,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
     canDelete;
 
   return (
-    <div className="w-full min-w-0 space-y-6 pb-24 pt-1 md:pb-8">
+    <div className={`${styles.page} w-full min-w-0 space-y-6 pb-24 pt-1 md:pb-8`}>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 gap-3 sm:gap-4">
           <div
@@ -239,7 +239,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
               className="text-[1.65rem] font-bold leading-tight tracking-[-0.03em] sm:text-[1.875rem]"
               style={{ color: SLATE_900 }}
             >
-              On Call Request
+              On-call request<span className={styles.dot}>.</span>
             </h1>
             <p className="mt-1 text-[0.9375rem]" style={{ color: SLATE_600 }}>
               {request.student.fullName} · {REQUEST_TYPE_LABELS[request.requestType]}
@@ -256,7 +256,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
               <StatusPill
                 variant="neutral"
                 size="sm"
-                className="!bg-[#F3F4F6] !text-[#111827] !ring-0"
+                className="!bg-[#ffffff] !text-[#1c1c1e] !ring-0"
               >
                 {REQUEST_TYPE_LABELS[request.requestType]}
               </StatusPill>
@@ -271,10 +271,10 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
 
         <Link
           href={backHref}
-          className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-[#E5E7EB] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold shadow-sm calm-transition hover:bg-[#F9FAFB] lg:self-auto"
+          className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-[#e5e5e6] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold shadow-sm calm-transition hover:bg-[#F9FAFB] lg:self-auto"
           style={{ color: SLATE_900 }}
         >
-          <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" aria-hidden>
+          <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#6e6e73" strokeWidth="2" aria-hidden>
             <path d="M4 4h16v16H4z" strokeLinecap="round" strokeLinejoin="round" />
             <path d="m22 6-10 7L4 6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -282,7 +282,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
         </Link>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:items-stretch">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:items-start">
         <div className="flex min-h-0 flex-col gap-6">
           <div className={`${surfaceCard} overflow-hidden px-4 py-1 sm:px-5`}>
             <h2
@@ -312,7 +312,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
                   </svg>
                 }
                 label="Year group"
-                value={request.student.yearGroup ?? "—"}
+                value={request.student.yearGroup ? `Year ${request.student.yearGroup.replace(/^(?:Year\s*|Y)/i, "")}` : "—"}
               />
               <DetailLine
                 icon={
@@ -446,7 +446,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
           <div className="relative mt-5 flex min-h-0 flex-1 flex-col">
             {/* Continuous vertical line — spans full height of timeline column (grid-stretched aside). */}
             <div
-              className="pointer-events-none absolute top-0 bottom-0 z-0 w-px bg-[#E5E7EB]"
+              className="pointer-events-none absolute top-0 bottom-0 z-0 w-px bg-[#e5e5e6]"
               style={{ left: TIMELINE_LINE_LEFT }}
               aria-hidden
             />
@@ -455,7 +455,7 @@ export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, c
                 <li key={ev.id} className="relative flex gap-3">
                   <div className="relative z-[1] flex w-8 shrink-0 justify-center pt-1">
                     <span
-                      className="box-border h-3 w-3 shrink-0 rounded-md border-[3px] border-solid border-[#4F46E5] bg-white"
+                      className="box-border h-3 w-3 shrink-0 rounded-md border-[3px] border-solid border-[#e14e36] bg-white"
                       aria-hidden
                     />
                   </div>

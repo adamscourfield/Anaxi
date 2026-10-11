@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolType";
 import type { SignalDefinition } from "@/modules/observations/signalTypes";
-import { loadDraft, persistDraft } from "./observationDraft";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { emptyDraft, loadDraft, persistDraft } from "./observationDraft";
 import { ReviewStageChrome } from "./ReviewStageChrome";
 import {
   OBS_REVIEW_MUTED,
@@ -59,7 +60,12 @@ export function ReviewList({
 }) {
   const router = useRouter();
   const allSignals = useMemo(() => [...signals].sort((a, b) => a.order - b.order), [signals]);
-  const [draft, setDraft] = useState(() => loadDraft(draftKey, allSignals.map((s) => s.key)));
+  const [draft, setDraft] = useState(() => emptyDraft(allSignals.map((s) => s.key)));
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  useEffect(() => {
+    setDraft(loadDraft(draftKey, allSignals.map((s) => s.key)));
+    setDraftLoaded(true);
+  }, [draftKey, allSignals]);
   const orderedSignals = useMemo(
     () => getSignalsForPhase(draft.context.phase, schoolType),
     [draft.context.phase, schoolType],
@@ -129,6 +135,8 @@ export function ReviewList({
       <path d="M7 16l4-4 4 4 6-6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
+
+  if (!draftLoaded) return null;
 
   return (
     <ReviewStageChrome>
@@ -213,6 +221,7 @@ export function ReviewList({
                       return (
                         <button
                           key={signal.key}
+                          data-review-signal
                           type="button"
                           onClick={() => router.push(`/observe/new/signals?index=${index}`)}
                           className="flex w-full items-center gap-3 rounded-full bg-[var(--surface-container)]/90 px-5 py-3.5 text-left transition-colors hover:bg-[var(--surface-container)]"
@@ -315,6 +324,7 @@ export function ReviewList({
                   <div className="overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] shadow-sm">
                     <textarea
                       name="contextNote"
+                      aria-label="Concluding notes"
                       className="field min-h-[140px] w-full resize-y border-0 bg-transparent px-5 py-4 text-[0.875rem] text-[var(--on-surface)] shadow-none placeholder:text-[var(--on-surface-variant)] focus-visible:ring-0"
                       placeholder="Final reflections on this session — strengths and areas for development…"
                       rows={5}
@@ -334,8 +344,8 @@ export function ReviewList({
                 </div>
 
                 <div className="space-y-3">
-                  <button
-                    type="submit"
+                  <SubmitButton
+                    pendingLabel="Submitting…"
                     disabled={!allDone}
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary-container)] px-6 py-3.5 text-[0.875rem] font-semibold text-white shadow-sm transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
                   >
@@ -343,7 +353,7 @@ export function ReviewList({
                       <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                     </svg>
                     Submit observation
-                  </button>
+                  </SubmitButton>
 
                   <button
                     type="button"

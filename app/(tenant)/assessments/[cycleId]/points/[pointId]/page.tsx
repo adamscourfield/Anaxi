@@ -15,10 +15,10 @@ import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { SectionHeader } from "@/components/ui/section-header";
 import Link from "next/link";
+import styles from "./page.module.css";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
-import { AttainmentExplorerLink } from "@/components/assessments/AttainmentExplorerLink";
 import { AttainmentPointLoadingSkeleton } from "@/components/assessments/AttainmentPointLoadingSkeleton";
 import { AttainmentTabPanelSkeleton } from "@/components/assessments/AttainmentTabPanelSkeleton";
 import { LockedPointBanner } from "@/components/assessments/LockedPointBanner";
@@ -704,7 +704,6 @@ export default function ResultPointPage() {
 
   const headerActions = point ? (
     <div className="flex flex-wrap items-center gap-2">
-      <AttainmentExplorerLink cycleId={cycleId} />
       {point.resultStatus !== "LOCKED" && (
         point.dataSource === "ARBOR" ? (
           <Button asChild variant="secondary">
@@ -751,7 +750,7 @@ export default function ResultPointPage() {
   ) : null;
 
   return (
-    <AttainmentPageShell>
+    <div className={styles.page}><AttainmentPageShell>
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -765,7 +764,6 @@ export default function ResultPointPage() {
         variant="ledger"
         className="!mb-0 border-0 !pb-0"
         eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-[#6B7280]"
-        eyebrow="Result point"
         titleClassName="text-[1.75rem] font-bold tracking-tight text-[#111827] md:text-[2rem]"
         subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-[#374151]"
         title={point?.label ?? "Result point"}
@@ -827,16 +825,7 @@ export default function ResultPointPage() {
           </div>
 
           {/* Tab navigation (overview, upload, teacher impact + extensions) */}
-          <div className="mb-2 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => router.push(`/assessments/${cycleId}/points/${pointId}/upload`)}
-            >
-              Upload
-            </Button>
-          </div>
-          <div className="anx-attainment-tabs" role="tablist">
+          <div className={`${styles.tabs} anx-attainment-tabs`} role="tablist" aria-label="Result analysis views">
             {(["attainment", "pastoral", "teaching", ...(isGcse ? (["progress8"] as const) : [])] as const).map((tab) => {
               const labels: Record<string, string> = {
                 attainment: "Overview",
@@ -855,6 +844,12 @@ export default function ResultPointPage() {
                   onClick={() => selectTab(tab as "attainment" | "pastoral" | "teaching" | "progress8")}
                   className={`anx-attainment-tab ${activeTab === tab ? "anx-attainment-tab--active" : ""}`}
                 >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+                    {tab === "attainment" ? <path d="M4 20V10h4v10M10 20V4h4v16M16 20v-7h4v7" /> :
+                      tab === "pastoral" ? <><path d="M12 21s8-4 8-10V5l-8-3-8 3v6c0 6 8 10 8 10Z" /><path d="m8 11 3 3 5-5" /></> :
+                      tab === "teaching" ? <><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4h5v11h-4" /></> :
+                      <path d="M3 20h18M5 16l5-5 4 3 6-9M16 5h4v4" />}
+                  </svg>
                   {labels[tab]}
                 </button>
               );
@@ -1025,7 +1020,7 @@ export default function ResultPointPage() {
           {isALevel && metrics.aLevelSummary && (
             <Card className="space-y-4">
               <SectionHeader title="Overall Grade Profile" subtitle={`${metrics.aLevelSummary.total} entries`} />
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   { label: "A* rate", val: metrics.aLevelSummary.aStarPct, cls: aLevelBarClasses.aStar },
                   { label: "A or above", val: metrics.aLevelSummary.aPct, cls: aLevelBarClasses.a },
@@ -1424,7 +1419,7 @@ export default function ResultPointPage() {
                               {isExpanded && (
                                 <tr key={`${sm.subject}-detail`}>
                                   <td colSpan={8} className="bg-[var(--surface-container-low)] px-5 py-4">
-                                    <div className="grid grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                       {/* Teaching group breakdown */}
                                       {sm.teachingGroups.length > 0 && (
                                         <div>
@@ -1449,7 +1444,7 @@ export default function ResultPointPage() {
                                         </div>
                                       )}
                                       {/* Top & bottom students */}
-                                      <div className="grid grid-cols-2 gap-4">
+                                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         {[{ title: "Top 10", students: sm.topStudents, cls: "text-[var(--success)]" }, { title: "Bottom 10", students: sm.bottomStudents, cls: "text-[var(--error)]" }].map(({ title, students, cls }) => (
                                           <div key={title}>
                                             <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{title}</p>
@@ -1485,7 +1480,7 @@ export default function ResultPointPage() {
               </div>
 
               {/* Overall leaderboard */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {[
                   { title: "Top 10 students", subtitle: "Highest overall mean", students: pctSummary.overallTop, cls: "text-[var(--success)]" },
                   { title: "Bottom 10 students", subtitle: "Lowest overall mean — may need support", students: pctSummary.overallBottom, cls: "text-[var(--error)]" },
@@ -1686,7 +1681,7 @@ export default function ResultPointPage() {
       {teachingModal && (
         <TeachingModal modal={teachingModal} onClose={() => setTeachingModal(null)} />
       )}
-    </AttainmentPageShell>
+    </AttainmentPageShell></div>
   );
 }
 
@@ -2030,31 +2025,22 @@ function QuartileChart({
   const nonNull = values.filter((v): v is number => v !== null);
   const maxVal = nonNull.length ? Math.max(...nonNull) : 1;
   return (
-    <div className="rounded-sm border border-border bg-surface-container-lowest p-4 shadow-none">
-      <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{label}</p>
-      <div className="flex items-end gap-1.5" style={{ height: "7rem" }}>
+    <div className={styles.quartileChart}>
+      <p className={styles.chartLabel}>{label}</p>
+      <div className={styles.chartRows}>
         {quartiles.map((q, i) => {
           const val = values[i];
-          const h = val !== null && maxVal > 0 ? Math.max(Math.round((val / maxVal) * 100), 4) : 0;
-          const fill = QUARTILE_BAR_FILLS[i] ?? QUARTILE_BAR_FILLS[3];
+          const width = val !== null && maxVal > 0 ? (val / maxVal) * 100 : 0;
           return (
-            <button
-              key={q.label}
-              type="button"
-              disabled={!q.students.length}
+            <button key={q.label} type="button" disabled={!q.students.length}
               onClick={() => q.students.length > 0 && onBarClick(q)}
-              className="flex flex-1 flex-col items-center gap-1 group"
-            >
-              <span className="text-[9px] font-semibold tabular-nums text-[var(--on-surface)]">
-                {val !== null ? formatter(val) : "—"}
+              className={styles.chartRow}
+              aria-label={`${label}, ${q.label}: ${val !== null ? formatter(val) : "No data"}. View students`}>
+              <span className={styles.chartRowLabel}>{q.short}</span>
+              <span className={styles.chartTrack}>
+                <span className={styles.chartFill} style={{ width: `${width}%`, opacity: 1 - i * .14 }} />
               </span>
-              <div className="flex w-full items-end" style={{ height: "72px" }}>
-                <div
-                  className="w-full rounded-t calm-transition group-hover:opacity-80"
-                  style={{ height: `${h}%`, backgroundColor: fill }}
-                />
-              </div>
-              <span className="text-[9px] font-medium text-[var(--on-surface-muted)]">{q.short}</span>
+              <span className={styles.chartValue}>{val !== null ? formatter(val) : "—"}</span>
             </button>
           );
         })}
@@ -2425,7 +2411,7 @@ function PastoralTab({
         ].map((k) => (
           <div
             key={k.label}
-            className={`flex items-start gap-3 rounded-sm border border-border bg-surface-container-lowest p-4 shadow-none ${
+            className={`${styles.pastoralStat} flex items-start gap-3 ${
               k.warn ? "ring-1 ring-[var(--scale-limited-border)]" : ""
             }`}
           >
@@ -2445,12 +2431,12 @@ function PastoralTab({
 
       {/* ── Behaviour by Quartile Charts ── */}
       {quartiles.length >= 2 && (
-        <div className="rounded-sm border border-border bg-surface-container-lowest p-5 sm:p-6 shadow-none">
+        <div className={styles.analysisCard}>
           <h2 className="mb-1 text-xl font-bold tracking-tight text-[var(--on-surface)]">Behaviour by Attainment Quartile</h2>
           <p className="mb-5 text-[13px] leading-snug text-[var(--on-surface-muted)]">
             Mean per quartile — Q4 = highest attainment, Q1 = lowest. Click any bar to see students.
           </p>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <QuartileChart
               metric="attendancePct"
               label="Attendance %"
@@ -2485,7 +2471,7 @@ function PastoralTab({
 
       {/* ── Scatter Plots ── */}
       {withSnapshot > 0 && (
-        <div className="rounded-sm border border-border bg-surface-container-lowest p-5 sm:p-6 shadow-none">
+        <div className={styles.analysisCard}>
           <h2 className="mb-1 text-xl font-bold tracking-tight text-[var(--on-surface)]">Attainment vs Behaviour</h2>
           <p className="mb-4 text-[13px] leading-snug text-[var(--on-surface-muted)]">
             Each dot is one student.{" "}

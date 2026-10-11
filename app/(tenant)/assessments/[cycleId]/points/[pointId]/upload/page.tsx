@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import styles from "./page.module.css";
 import { useParams, useRouter } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -229,7 +230,7 @@ export default function UploadSubjectResultsPage() {
 
   if (step === "done" && importResult) {
     return (
-      <AttainmentPageShell>
+      <div className={styles.page}><AttainmentPageShell>
       <div className="mx-auto max-w-3xl space-y-8">
         <AssessmentsBreadcrumb
           items={[
@@ -238,7 +239,7 @@ export default function UploadSubjectResultsPage() {
             { label: "Upload complete" },
           ]}
         />
-        <PageHeader variant="ledger" eyebrow="Attainment" title="Upload complete" subtitle="Your file was processed and results are being matched to students." />
+        <PageHeader variant="ledger" title="Upload complete" subtitle="Your file was processed and results are being matched to students." />
         <Card className="space-y-5">
           <SectionHeader
             title={`${importResult.subjectsImported} subject${importResult.subjectsImported !== 1 ? "s" : ""} uploaded`}
@@ -303,13 +304,13 @@ export default function UploadSubjectResultsPage() {
           </div>
         </Card>
       </div>
-      </AttainmentPageShell>
+      </AttainmentPageShell></div>
     );
   }
 
   if (isLocked) {
     return (
-      <AttainmentPageShell>
+      <div className={styles.page}><AttainmentPageShell>
       <div className="mx-auto max-w-3xl space-y-8">
         <AssessmentsBreadcrumb
           items={[
@@ -319,19 +320,18 @@ export default function UploadSubjectResultsPage() {
           ]}
         />
         <PageHeader variant="ledger"
-          eyebrow="Attainment"
-          title="Result point locked"
+            title="Result point locked"
           subtitle="This result point has been locked and cannot accept new uploads."
         />
         <LockedPointBanner status="LOCKED" cycleId={cycleId} />
         <Button variant="ghost" onClick={() => router.push(`/assessments/${cycleId}`)}>← Back to cycle</Button>
       </div>
-      </AttainmentPageShell>
+      </AttainmentPageShell></div>
     );
   }
 
   return (
-    <AttainmentPageShell>
+    <div className={styles.page}><AttainmentPageShell>
     <div className="mx-auto max-w-3xl space-y-8">
       <AssessmentsBreadcrumb
         items={[
@@ -342,7 +342,6 @@ export default function UploadSubjectResultsPage() {
       />
 
       <PageHeader variant="ledger"
-        eyebrow="Attainment"
         title="Upload subject results"
         subtitle="Upload a CSV with grades for one or more subjects. The system will auto-detect subject columns."
       />
@@ -363,7 +362,7 @@ export default function UploadSubjectResultsPage() {
         <Card className="space-y-5">
           <SectionHeader title="Upload file" />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <label className="text-sm font-medium text-[var(--on-surface)]">Year group</label>
               <input
@@ -549,6 +548,6 @@ export default function UploadSubjectResultsPage() {
         </Card>
       )}
     </div>
-    </AttainmentPageShell>
+    </AttainmentPageShell></div>
   );
 }

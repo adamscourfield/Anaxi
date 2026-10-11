@@ -1,0 +1,28 @@
+.page { background: #fff; }
+.header { flex-wrap: wrap; padding-bottom: 16px; }
+.header h1 { font-family: inherit; font-size: clamp(28px,3vw,36px); font-weight: 600; letter-spacing: -.04em; }
+.header h1::after { content: "."; color: #ff6a52; }
+.header button { background: #fff; border: 1px solid #e5e5e6; border-radius: 8px; }
+.progress > div { border-radius: 999px; height: 4px; background: #e5e5e6; }
+.progress > div:nth-child(1) { background: #1c1c1e; }
+.progress > div:nth-child(2) { background: #ff6a52; }
+.card { border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.card h2 { font-size: 21px; font-weight: 600; letter-spacing: -.025em; line-height: 1.4; }
+.page [data-signal-rating] { border-radius: 12px; background: #fff; border: 1px solid #e5e5e6; padding: 20px; transition: transform 250ms cubic-bezier(.22,1,.36,1), border-color 200ms; }
+.page [data-signal-rating]:hover { transform: translateY(-2px); border-color: #cfcfd1; }
+.page [data-signal-rating][aria-pressed="true"] { border-color: #ff6a52; box-shadow: 0 0 0 1px #ff6a52; }
+.page [data-signal-rating] p:first-of-type { color: #1c1c1e; font-weight: 600; }
+.page [data-signal-rating] p:last-of-type { color: #6e6e73; }
+.page [data-signal-rating] > div > span { border: 1px solid #e5e5e6; border-radius: 6px; background: #fff; color: #6e6e73; }
+.page [data-signal-rating] > div > div { border-radius: 50%; background: #fff; border: 1px solid #cfcfd1; }
+.page [data-signal-rating][aria-pressed="true"] > div > div { background: #ff6a52; border-color: #ff6a52; }
+.page [data-signal-rating] svg { color: #fff; }
+.footer { gap: 16px; flex-wrap: wrap; }
+.footer > div { gap: 10px; }
+.footer button { min-height: 44px; border-radius: 10px; }
+.footer > div > button:last-child { background: linear-gradient(135deg,#1c1c1e,#333335); }
+.page :global(.glass-card) { border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; box-shadow: 0 16px 36px -12px #1c1c1e38; }
+@media (max-width: 600px) { .page { padding-top: 8px; } .card > div { grid-template-columns: 1fr; } .footer > div { width: 100%; } .footer > div > button { flex: 1; } }
+@media (prefers-reduced-motion: no-preference) { .card { animation: arrive 500ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page [data-signal-rating] { transition: none; } .page [data-signal-rating]:hover { transform: none; } }

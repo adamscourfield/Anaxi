@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import styles from "./page.module.css";
 import { useParams, useRouter } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -79,7 +80,7 @@ export default function NewResultPointPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-8">
+    <div className={`${styles.page} mx-auto max-w-3xl space-y-8`}>
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -89,7 +90,6 @@ export default function NewResultPointPage() {
       />
 
       <PageHeader variant="ledger"
-        eyebrow="Attainment"
         title="New result point"
         subtitle="A result point is a cohort-wide attainment snapshot — a mock, baseline, prediction, or final results."
       />
@@ -104,6 +104,7 @@ export default function NewResultPointPage() {
                 <button
                   key={opt.value}
                   type="button"
+                  aria-pressed={pointType === opt.value}
                   onClick={() => {
                     setPointType(opt.value);
                     if (!label) setLabel(opt.label === "Other" ? "" : opt.label);
@@ -123,7 +124,7 @@ export default function NewResultPointPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <label className="text-sm font-medium text-[var(--on-surface)]">Name</label>
               <input

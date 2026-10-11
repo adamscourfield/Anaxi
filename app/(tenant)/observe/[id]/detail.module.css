@@ -1,0 +1,30 @@
+.page { background: #fff; }
+.page :global(.anx-page-header-shell) { padding: 0 0 24px; border: 0; border-bottom: 1px solid #e5e5e6; border-radius: 0; background: #fff; box-shadow: none; }
+.page h1 { font-size: clamp(27px,3vw,36px); font-weight: 600; letter-spacing: -.04em; }
+.page h1::after { content: "."; color: #ff6a52; }
+.page h2, .page h3 { font-weight: 600; letter-spacing: -.025em; }
+.page button { border-radius: 10px; background: #fff; border-color: #e5e5e6; box-shadow: none; transition: border-color 200ms, color 200ms; }
+.page button:hover { border-color: #ff6a52; color: #e14e36; }
+.page button:focus-visible, .page a:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+.page [data-review-signal] { border: 1px solid #e5e5e6; border-radius: 12px; background: #fff; }
+.page [data-review-teacher] { border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page [data-review-teacher] h3, .page [data-review-teacher] li p { color: #1c1c1e; }
+.page [data-review-teacher] > div > p, .page [data-review-teacher] li p:first-child { color: #6e6e73; }
+.page [data-review-teacher] ul, .page [data-review-teacher] li { border-color: #e5e5e6; }
+.page aside > div > div[class*="overflow-hidden"], .page section > div[class*="overflow-hidden"] { border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page section > div > span[class*="bg-amber"], .page [data-review-signal] > span[class*="bg-amber"] { background: #fff; color: #e14e36; border: 1px solid #e5e5e6; border-radius: 10px; }
+.page [data-review-signal] > span[class*="bg-emerald"] { background: #fff; color: #4f9e74; border: 1px solid #e5e5e6; border-radius: 10px; }
+.page div[class*="border-l-4"] { border-color: #ff6a52; }
+.page aside div[class*="text-[var(--tertiary-fixed-dim)]"] { color: #4f9e74; }
+@media (prefers-reduced-motion: no-preference) { .page section, .page aside { animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; } .page aside { animation-delay: 70ms; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media print { .page section, .page aside { animation: none; } }
+/* Colour is concentrated in small controls and icon details. */
+.page section > div > span[class*="bg-amber"] { background: #fff; color: #e14e36; border: 0; }
+.page [data-review-teacher] > div > div > span { background: #ff6a52; color: #fff; border-radius: 50%; }
+.page [data-review-teacher] > div > div > img { border-radius: 50%; }
+.page [data-review-teacher] li > span { color: #e14e36; }
+.page :global(.anx-page-header-shell) button:first-child { background: #1c1c1e; border-color: #1c1c1e; color: #fff; }
+.page :global(.anx-page-header-shell) button:first-child:hover { background: #333335; border-color: #333335; }
+.page [data-review-signal] > span[class*="bg-amber"] { color: #e14e36; border-color: #ff6a52; border-radius: 50%; }
+.page [data-review-signal] > span[class*="bg-emerald"] { border-radius: 50%; border-color: #4f9e74; }

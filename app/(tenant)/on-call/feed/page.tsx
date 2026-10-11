@@ -1,4 +1,5 @@
 import Link from "next/link";
+import styles from "./page.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getTenantVocab } from "@/lib/vocab";
@@ -50,9 +51,10 @@ export default async function OnCallFeedPage({
   });
 
   return (
-    <div className="w-full min-w-0 space-y-5">
+    <div className={`${styles.page} w-full min-w-0 space-y-8`}>
       <PageHeader variant="ledger"
         title={`Today's ${vocab.on_calls.plural} feed`}
+        actions={<Link href="/on-call" className={styles.action}>Back to inbox</Link>}
         subtitle={`${requests.length} request${requests.length === 1 ? "" : "s"} · ${todayLabel}`}
       />
 
@@ -63,7 +65,7 @@ export default async function OnCallFeedPage({
       ) : null}
 
       <div className="filter-panel">
-        <form className="filter-bar" method="get">
+        <form className={styles.filters} method="get">
           <label className="flex min-w-0 flex-col gap-1.5 sm:min-w-[200px]">
             <span className="filter-field-label">Status</span>
             <select
@@ -72,10 +74,10 @@ export default async function OnCallFeedPage({
               className="field field-filter-trigger min-w-0 !py-2.5 !text-sm"
             >
               <option value="">All statuses</option>
-              <option value="OPEN">OPEN</option>
-              <option value="ACKNOWLEDGED">ACKNOWLEDGED</option>
-              <option value="RESOLVED">RESOLVED</option>
-              <option value="CANCELLED">CANCELLED</option>
+              <option value="OPEN">Open</option>
+              <option value="ACKNOWLEDGED">Acknowledged</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="CANCELLED">Cancelled</option>
             </select>
           </label>
 
@@ -133,7 +135,8 @@ export default async function OnCallFeedPage({
                       </Link>
                     </td>
                     <td className="px-4 py-3.5">
-                      {r.student?.fullName} ({r.student?.yearGroup || "-"})
+                      {r.student?.fullName}
+                      <span className="ml-2 text-muted">{r.student?.yearGroup ? `Year ${r.student.yearGroup.replace(/^(?:Year\s*|Y)/i, "")}` : "—"}</span>
                     </td>
                     <td className="px-4 py-3.5 text-center">{REQUEST_TYPE_LABELS[r.requestType as keyof typeof REQUEST_TYPE_LABELS] ?? r.requestType}</td>
                     <td className="px-4 py-3.5">{r.location || "-"}</td>

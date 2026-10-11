@@ -1,0 +1,24 @@
+.page { background: #fff; }
+.page :global(.anx-page-header-shell) { background: #fff; border: 0; border-bottom: 1px solid #e5e5e6; border-radius: 0; padding: 0 0 24px; box-shadow: none; }
+.page :global(.explorer-kpi-tile), .page :global(.table-shell) { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page :global(.explorer-kpi-tile) p[class*="text-[2.25rem]"] { font-weight: 600; letter-spacing: -.05em; }
+.metrics > div:first-child p:last-child { color: #e14e36; }
+.page > form { padding: 20px; border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; }
+.page button[type="submit"] { background: #1c1c1e; color: #fff; border: 1px solid #1c1c1e; border-radius: 10px; }
+.page button[type="submit"]:hover { background: #333335; }
+.page input:not([type="checkbox"]):not([type="hidden"]), .page select { border-color: #e5e5e6; border-radius: 10px; background: #fff; }
+.page input[type="checkbox"] { accent-color: #1c1c1e; }
+.page thead th { background: #fff; color: #6e6e73; font-size: 10px; font-weight: 600; letter-spacing: .06em; }
+.page tbody tr { background: #fff; border-color: #e5e5e6; }
+.page tbody tr:hover { background: #fafafa; }
+.page td:first-child div > span:first-child { border-radius: 50%; background: #ff6a52; color: #fff; }
+.page td:first-child div > span:last-child { font-weight: 600; }
+.page a:focus-visible, .page button:focus-visible, .page input:focus-visible, .page select:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+@media (max-width: 639px) { .page > form > input[type="search"], .page > form > select { width: 100%; } }
+@media (prefers-reduced-motion: no-preference) { .page :global(.table-shell) { animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 20px; }
+@media (max-width: 767px) { .metrics { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; } }
+
+.page button[type="submit"] svg { color: #fff; }

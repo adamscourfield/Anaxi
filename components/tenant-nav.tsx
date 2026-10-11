@@ -209,6 +209,7 @@ export function TenantNav({
       items: [
         ...(has("ASSESSMENTS") ? [navItem("Attainment", "/assessments")] : []),
         ...(has("STUDENTS") ? [navItem("Students", studentsHref)] : []),
+        navItem("Classes", "/classes"),
         navItem("On call", "/on-call", onCallCount),
       ],
     },
@@ -350,6 +351,7 @@ export function TenantNav({
                         ref={(el) => registerNavLink(item.href, el)}
                         href={item.href}
                         title={collapsed ? item.label : undefined}
+                        aria-current={active ? "page" : undefined}
                         onClick={() => isDrawer && onNavigate?.()}
                         className={`group flex items-center ${collapsed ? "justify-center px-2" : "justify-between pl-5 pr-3"} rounded-sm py-2 calm-transition motion-safe:active:scale-[0.99] ${
                           active

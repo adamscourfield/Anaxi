@@ -1,0 +1,21 @@
+.page { min-width:0; color:#1c1c1e; animation:arrive .45s cubic-bezier(.22,1,.36,1) both; }
+.page h1 { font-size:34px; font-weight:600; letter-spacing:-.04em; }
+.page h3 { font-weight:600; }
+.page :global(.home-hero-glass), .page :global(.explorer-kpi-tile) { background:#fff; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.page input:not([type="checkbox"]):not([type="hidden"]), .page textarea, .page select, .page button[aria-haspopup="listbox"] { min-width:0; max-width:100%; background:#fff; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; box-shadow:none; }
+.page button[type="submit"], .page a[href="/leave"][class*="inline-flex"] { background:#1c1c1e; border:1px solid #1c1c1e; border-radius:10px; color:#fff; min-height:42px; box-shadow:none; }
+.page button[type="submit"] svg { color:#fff; }
+.page label svg { color:#e14e36; }
+.page label[class*="uppercase"] { font-weight:500; letter-spacing:.08em; }
+.page input[type="checkbox"] { accent-color:#1c1c1e; }
+.page :global(.home-hero-glass) div:has(> svg), .page :global(.explorer-kpi-tile) > div:has(> svg) { background:#fff; color:#e14e36; border:1px solid #e5e5e6; border-radius:10px; }
+.page div[class*="border-l-"] { background:#fff; border:1px solid #e5e5e6; border-left:3px solid #ff6a52; border-radius:14px; box-shadow:none; }
+.page div[class*="border-l-"] p { color:#6e6e73; }
+.page label[for="loa-medical"] { background:#fff; border-color:#e5e5e6; border-radius:10px; }
+.page input::file-selector-button { background:#1c1c1e; color:#fff; border-radius:7px; }
+.page div[class*="grid"] > * { min-width:0; }
+@keyframes arrive { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+@media(prefers-reduced-motion:reduce) { .page { animation:none; } }
+
+.page button[role="combobox"] { background:#fff; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; box-shadow:none; }
+.page button:global(.field) { background:#fff; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; box-shadow:none; }

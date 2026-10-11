@@ -1,3 +1,4 @@
+import styles from "./departments.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
@@ -197,7 +198,7 @@ export default async function DepartmentsPage({
   /* ---------------------------------------------------------------- */
 
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <ExplorerBackLink />
 
       {/* ── Header ─────────────────────────────────────────────── */}
@@ -243,6 +244,7 @@ export default async function DepartmentsPage({
           {WINDOW_OPTIONS.map((w) => (
             <Link
               key={w}
+              aria-current={windowDays === w ? "true" : undefined}
               href={buildUrl({ windowDays: String(w) })}
               className={`filter-period-btn ${windowDays === w ? "filter-period-btn-active" : ""}`}
             >

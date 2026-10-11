@@ -3,6 +3,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import styles from "./page.module.css";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -261,7 +262,7 @@ export default async function CycleDetailPage({
         : "First data in cycle";
 
   return (
-    <AttainmentPageShell>
+    <div className={styles.page}><AttainmentPageShell>
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -297,30 +298,15 @@ export default async function CycleDetailPage({
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <CycleCompareLink
-              cycleId={cycle.id}
-              points={cycle.points.map((p) => ({
-                id: p.id,
-                entryCount: sumPointEntries(p),
-              }))}
-            />
             <CycleArchiveControl cycleId={cycle.id} isActive={cycle.isActive} />
             <CycleDeleteControl cycleId={cycle.id} cycleLabel={cycle.label} />
             {user.role === "SUPER_ADMIN" ? <CycleRenameControl cycleId={cycle.id} cycleLabel={cycle.label} /> : null}
-            <Button asChild>
-              <Link href={`/assessments/${cycle.id}/points/new`}>
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                </svg>
-                Add point
-              </Link>
-            </Button>
           </div>
         }
       />
 
       {/* Overview — compact stat strip */}
-      <div className="flex flex-col gap-5 rounded-sm border border-border bg-surface-container-lowest p-5 shadow-none sm:flex-row sm:items-center sm:gap-0 sm:p-0">
+      <div className={styles.summary}>
         <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&_svg]:h-[18px] [&_svg]:w-[18px] [&_svg]:stroke-[1.75]" aria-hidden>
             <IconTarget />
@@ -330,7 +316,7 @@ export default async function CycleDetailPage({
             <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{cycle.points.length}</p>
           </div>
         </div>
-        <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+        <div className="hidden" aria-hidden />
         <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&_svg]:h-[18px] [&_svg]:w-[18px] [&_svg]:stroke-[1.75]" aria-hidden>
             <IconBook />
@@ -340,7 +326,7 @@ export default async function CycleDetailPage({
             <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalSubjects}</p>
           </div>
         </div>
-        <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+        <div className="hidden" aria-hidden />
         <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&_svg]:h-[18px] [&_svg]:w-[18px] [&_svg]:stroke-[1.75]" aria-hidden>
             <IconTrend />
@@ -351,7 +337,7 @@ export default async function CycleDetailPage({
             <p className={`mt-0.5 text-[0.75rem] font-semibold ${entriesTrendPct >= 0 ? "text-[var(--status-approved-text)]" : "text-[var(--status-denied-text)]"}`}>{entriesTrendLabel}</p>
           </div>
         </div>
-        <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+        <div className="hidden" aria-hidden />
         <div className="flex min-w-0 flex-1 items-center gap-3 sm:p-5">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&_svg]:h-[18px] [&_svg]:w-[18px] [&_svg]:stroke-[1.75]" aria-hidden>
             <IconShieldCheck />
@@ -367,7 +353,7 @@ export default async function CycleDetailPage({
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-muted)]">Result Points</h2>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={`${styles.pointActions} flex flex-wrap items-center gap-2`}>
             <CycleCompareLink
               cycleId={cycle.id}
               points={cycle.points.map((p) => ({
@@ -526,6 +512,6 @@ export default async function CycleDetailPage({
           </Card>
         )}
       </section>
-    </AttainmentPageShell>
+    </AttainmentPageShell></div>
   );
 }

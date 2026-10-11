@@ -1,0 +1,19 @@
+.page :global(.home-hero-glass) { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; overflow: visible; }
+.page :global(.anx-page-header-shell) h1 { font-size: clamp(28px,3vw,36px); font-weight: 600; letter-spacing: -.04em; }
+.page :global(.anx-page-header-shell) h1::after { content: "."; color: #ff6a52; }
+.page h2, .page h3 { font-weight: 600; letter-spacing: -.02em; }
+.page label { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; color: #1c1c1e; }
+.page :global(.field) { min-height: 44px; border: 1px solid #e5e5e6; border-radius: 10px; background: #fff; font-family: inherit; color: #1c1c1e; box-shadow: none; }
+.page :global(.field):focus, .page :global(.field):focus-visible { border-color: #1c1c1e; outline: none; box-shadow: 0 0 0 3px #1c1c1e0d; }
+.page [data-observation-phase] { border: 1px solid #e5e5e6; border-radius: 12px; background: #fff; box-shadow: none; transition: border-color 200ms, transform 250ms cubic-bezier(.22,1,.36,1); }
+.page [data-observation-phase]:hover { border-color: #cfcfd1; transform: translateY(-2px); }
+.page [data-observation-phase][aria-pressed="true"] { border-color: #ff6a52; background: #fff; box-shadow: 0 0 0 1px #ff6a52; }
+.page button:disabled { cursor: not-allowed; }
+.page :global(.home-hero-glass) > div:last-child > button:last-child { background: linear-gradient(135deg,#1c1c1e,#333335); border-radius: 10px; }
+.page :global(.home-hero-glass) > div:last-child { border-color: #e5e5e6; }
+.page ol li { background: #fff; }
+.page :global(.anx-page-header-shell) + div span[class*="h-8"], .page ol li > span:first-child { border-radius: 10px; }
+.page :global(.home-hero-glass) span[class*="h-11"] { border-radius: 12px; }
+@media (prefers-reduced-motion: no-preference) { .page :global(.home-hero-glass) { animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page [data-observation-phase] { transition: none; } .page [data-observation-phase]:hover { transform: none; } }

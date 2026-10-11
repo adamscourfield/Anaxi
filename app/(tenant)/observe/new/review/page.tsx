@@ -6,6 +6,7 @@ import { getTenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import { getTenantSignalLabels } from "@/modules/observations/tenantSignalLabels";
 import { submitObservationDraft } from "../../actions";
+import styles from "./review.module.css";
 import { ReviewList } from "../../components/ReviewList";
 
 export default async function ObservationReviewPage() {
@@ -37,6 +38,7 @@ export default async function ObservationReviewPage() {
   }
 
   return (
+    <div className={styles.page}>
     <ReviewList
       draftKey={draftKey}
       signals={signalDefs as any[]}
@@ -47,5 +49,6 @@ export default async function ObservationReviewPage() {
       priorCountByTeacherId={priorCountByTeacherId}
       observerFullName={user.fullName}
     />
+    </div>
   );
 }

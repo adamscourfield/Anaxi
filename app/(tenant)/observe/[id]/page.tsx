@@ -1,3 +1,4 @@
+import styles from "./detail.module.css";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -192,7 +193,7 @@ export default async function ObservationDetailPage({
   );
 
   return (
-    <div className="relative min-h-0 pb-14 pt-1">
+    <div className={`${styles.page} relative min-h-0 pb-14 pt-1`}>
       <ClearDraftOnSuccess draftKey={draftKey} />
 
       <div className="mx-auto max-w-6xl">

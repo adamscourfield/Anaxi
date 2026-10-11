@@ -1,0 +1,35 @@
+.page { color: #1c1c1e; --on-surface: #1c1c1e; --on-surface-muted: #6e6e73; --outline-variant: #e5e5e6; }
+.page :global(.anx-attainment-page) { background: #fff; }
+.page h1 { font-size: 32px; letter-spacing: -.04em; font-weight: 600; }
+.page h1::after { content: "."; color: #ff6a52; }
+.page h2 { font-size: 18px; letter-spacing: -.025em; font-weight: 600; }
+.page [data-ui-card] { border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; padding: 24px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page input:not([type="checkbox"]):not([type="file"]), .page select { background: #fff; border: 1px solid #e5e5e6; border-radius: 10px; min-height: 42px; }
+.page label { font-size: 12px; font-weight: 600; color: #1c1c1e; }
+.page button, .page a[class*="inline-flex"] { background: #1c1c1e; background-image: none; border-radius: 10px; color: #fff; }
+.page button[aria-label^="Remove"] { background: transparent; color: #6e6e73; }
+.page [role="button"] { background: #fff; border: 1px dashed #cfcfd1; border-radius: 14px; }
+.page [role="button"]:hover { border-color: #ff6a52; background: #fff; }
+.page [role="button"] svg { color: #e14e36; }
+.page nav[aria-label="Progress"] { padding: 0 0 8px; }
+.page nav[aria-label="Progress"] > div { height: 2px; background: #f3f3f4; }
+.page nav[aria-label="Progress"] > div > div { background: #ff6a52; }
+.page [aria-current="step"] { background: #f5f5f5; border: 1px solid #e5e5e6; color: #1c1c1e; }
+.page [aria-current="step"] > span { background: #1c1c1e; color: #fff; }
+.page th { font-family: ui-monospace, monospace; font-size: 10px; color: #6e6e73; letter-spacing: .07em; }
+.page thead tr { background: #fff; }
+@media (max-width: 639px) { .page [data-ui-card] { padding: 18px; } }
+
+.page button[aria-pressed] { background: #fff; border: 1px solid #e5e5e6; color: #1c1c1e; border-radius: 12px; padding: 16px; }
+.page button[aria-pressed] span { background: transparent; color: #1c1c1e; padding: 0; font-size: 12px; }
+.page button[aria-pressed="true"] { border-color: #ff6a52; box-shadow: inset 0 0 0 1px #ff6a52; }
+.page button[aria-pressed="true"] span { color: #e14e36; }
+.page button[aria-pressed]:hover { border-color: #ff6a52; }
+.page form > div:last-child { flex-wrap: wrap; }
+.page :global(.grid) > * { min-width: 0; }
+.page { min-width: 0; }
+.page [data-ui-card] { min-width: 0; }
+.page button { max-width: 100%; white-space: normal; }
+.page button[aria-pressed] { overflow-wrap: anywhere; }
+.page input { max-width: 100%; min-width: 0; }
+@media(max-width: 639px) { .page form > div:last-child { flex-direction: column; } }

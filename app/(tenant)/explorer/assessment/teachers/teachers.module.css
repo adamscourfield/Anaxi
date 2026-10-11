@@ -1,0 +1,4 @@
+.page > div:has(> form[method="GET"]) { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; padding: 20px; }
+.page > div:has(> form[method="GET"]) a { border-radius: 8px; }
+.page :global(.explorer-kpi-tile):first-child p:nth-child(2) { color: #e14e36; }
+@media (max-width: 639px) { .page form[method="GET"] { width: 100%; } .page input[type="search"] { min-width: 0; width: 100%; } }

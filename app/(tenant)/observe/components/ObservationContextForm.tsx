@@ -172,6 +172,7 @@ export function ObservationContextForm({
                 options={teacherOptions}
                 value={context.teacherId}
                 onChange={(value) => setContext((c) => ({ ...c, teacherId: value }))}
+                ariaLabel="Staff member"
                 placeholder="Search staff profile…"
                 searchPlaceholder="Search by name or email…"
               />
@@ -193,6 +194,7 @@ export function ObservationContextForm({
                     subject: dept?.name || "",
                   }));
                 }}
+                ariaLabel="Department"
                 placeholder="Select department"
                 searchPlaceholder="Search department…"
               />
@@ -200,11 +202,12 @@ export function ObservationContextForm({
 
             {/* Class / Set */}
             <div className="space-y-2">
-              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
+              <label htmlFor="observation-class" className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
                 Class / Set
               </label>
               <div className="relative">
                 <input
+                  id="observation-class"
                   className="field"
                   placeholder="e.g. Year 10 Set A"
                   value={context.classCode}
@@ -224,11 +227,12 @@ export function ObservationContextForm({
 
             {/* Date of Observation */}
             <div className="space-y-2">
-              <label className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
+              <label htmlFor="observation-date" className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted">
                 Date of Observation
               </label>
               <div className="relative">
                 <input
+                  id="observation-date"
                   type="date"
                   className="field"
                   value={context.observedAt}
@@ -252,6 +256,8 @@ export function ObservationContextForm({
                 return (
                   <button
                     key={phase.key}
+                    aria-pressed={selected}
+                    data-observation-phase
                     type="button"
                     onClick={() => setContext((c) => ({ ...c, phase: phase.key }))}
                     className={`flex flex-col items-center gap-2.5 rounded-lg border-2 px-4 py-4 text-center calm-transition ${

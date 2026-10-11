@@ -4,6 +4,7 @@ import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { MeetingForm } from "@/components/meetings/MeetingForm";
 import { redirect } from "next/navigation";
+import styles from "./page.module.css";
 
 export default async function NewMeetingPage() {
   const user = await getSessionUserOrThrow();
@@ -17,7 +18,7 @@ export default async function NewMeetingPage() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className={`${styles.page} space-y-4`}>
       <MeetingForm users={users} currentUserId={user.id} />
     </div>
   );

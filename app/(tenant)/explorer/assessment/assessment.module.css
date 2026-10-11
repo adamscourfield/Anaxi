@@ -1,0 +1,14 @@
+.page { background: #fff; }
+.page :global(.anx-page-header-shell) { background: #fff; border: 0; border-bottom: 1px solid #e5e5e6; padding: 0 0 24px; border-radius: 0; box-shadow: none; }
+.page :global(.explorer-hub-kpi-card), .page div[class*="rounded-2xl"][class*="border"], .page a[class*="rounded-2xl"][class*="border"] { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page :global(.explorer-hub-kpi-card) > div:first-child > span, .page a > span[class*="h-9"] { color: #e14e36; background: #fff; border-radius: 10px; }
+.page :global(.explorer-hub-kpi-card) span[class*="text-[2.5rem]"] { font-weight: 600; letter-spacing: -.05em; }
+.page h2 { font-size: 15px; font-weight: 600; letter-spacing: -.025em; }
+.page a[aria-current="true"] { background: #1c1c1e; color: #fff; border-radius: 10px; }
+.page a[class*="text-accent"] { color: #e14e36; }
+.page a:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+.page :global(.explorer-hub-kpi-card), .page a[class*="rounded-2xl"][class*="border"] { transition: border-color 200ms, transform 250ms cubic-bezier(.22,1,.36,1); }
+.page a:hover :global(.explorer-hub-kpi-card), .page a[class*="rounded-2xl"][class*="border"]:hover { border-color: #ff6a52; transform: translateY(-2px); }
+@media (prefers-reduced-motion: no-preference) { .page > div:global(.grid) { animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page a:hover :global(.explorer-hub-kpi-card), .page a[class*="rounded-2xl"][class*="border"]:hover { transform: none; } }

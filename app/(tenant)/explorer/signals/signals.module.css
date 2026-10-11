@@ -1,0 +1,24 @@
+.page { background: #fff; }
+.page :global(.anx-page-header-shell) { background: #fff; border: 0; border-radius: 0; box-shadow: none; }
+.page h1 { font-size: clamp(28px,3vw,36px); font-weight: 600; letter-spacing: -.04em; }
+.page h1::after { content: "."; color: #ff6a52; }
+.page h2 { font-weight: 600; letter-spacing: -.025em; }
+.page div[class*="rounded-sm"][class*="border"], .page :global(.stat-card), .page [data-ui-card] { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page button, .page summary { border-radius: 10px; box-shadow: none; }
+.page button[type="submit"] { background: #1c1c1e; border-color: #1c1c1e; color: #fff; }
+.page button[type="submit"] svg { color: #fff; }
+.page button[type="submit"]:hover { background: #333335; }
+.page select { background: #fff; }
+.page a:focus-visible, .page button:focus-visible, .page summary:focus-visible, .page select:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+.page thead, .page th { background: #fff; color: #6e6e73; font-size: 10px; font-weight: 600; letter-spacing: .05em; }
+.page tbody tr { border-left: 0; }
+.page td:first-child a { text-decoration-color: #ff6a5266; }
+.page div[class*="h-2"][class*="overflow-hidden"] { height: 6px; background: #e7e7e7; box-shadow: none; border: 0; border-radius: 999px; }
+.page div[class*="h-2"][class*="overflow-hidden"] > div { border-radius: 999px; }
+.page div[class*="max-w-[36px]"] { max-width: 24px; border-radius: 6px 6px 0 0; }
+.page div[class*="bg-[#FAFAFA]"] { background: #fff; border-color: #e5e5e6; border-radius: 10px; }
+@media (prefers-reduced-motion: no-preference) { .page table { animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.page :global(.filter-period-toggle) { background: #fff; border: 1px solid #e5e5e6; border-radius: 10px; padding: 3px; }
+.page :global(.filter-period-btn) { border-radius: 7px; }
+.page :global(.filter-period-btn-active) { background: #1c1c1e; color: #fff; box-shadow: none; }

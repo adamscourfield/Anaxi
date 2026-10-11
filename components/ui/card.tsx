@@ -22,7 +22,7 @@ export function Card({
   tone?: CardTone;
 } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`rounded-sm p-5 sm:p-6 ${toneClasses[tone]} ${className}`} {...props}>
+    <div data-ui-card={tone} className={`rounded-sm p-5 sm:p-6 ${toneClasses[tone]} ${className}`} {...props}>
       {children}
     </div>
   );

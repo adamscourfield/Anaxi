@@ -1,0 +1,18 @@
+.page { min-width: 0; color: #1c1c1e; }
+.page :global(.rounded-sm.border), .page :global(.home-hero-glass), .page :global(.card) {
+  background: #fff;
+  border-color: #e5e5e6;
+  border-radius: 14px;
+  box-shadow: 0 14px 34px -22px #1c1c1e2e;
+}
+.page button, .page a[role="button"] { background: #1c1c1e; color: #fff; border-color: #1c1c1e; border-radius: 10px; }
+.page button:hover { background: #333; color: #fff; }
+.page :global(.segmented-toggle-btn-active) { background: #1c1c1e; color: #fff; }
+.page thead tr, .page th, .page td { background: #fff; }
+.page th { font-size: 10px; letter-spacing: .08em; }
+.page tbody tr:hover td { background: #fafafa; }
+.page h2 { letter-spacing: -.025em; }
+
+.headerActions > form > button { height: 44px; }
+.headerActions :global(.segmented-toggle) { height: 44px; box-sizing: border-box; }
+.headerActions :global(.segmented-toggle-btn) { display: flex; align-items: center; height: 100%; box-sizing: border-box; }

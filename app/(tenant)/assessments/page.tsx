@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
 import { getProgress8DashboardSummary } from "@/modules/assessments/progress8";
 import Link from "next/link";
+import styles from "./page.module.css";
 import type { QualificationType, PointType } from "@prisma/client";
 import { qualificationTypePillClasses } from "@/modules/assessments/attainmentColours";
 
@@ -171,7 +172,7 @@ export default async function AssessmentsPage() {
   const progress8Summary = await getProgress8DashboardSummary(user.tenantId);
 
   return (
-    <AttainmentPageShell>
+    <div className={styles.page}><AttainmentPageShell>
       <PageHeader
         variant="ledger"
         className="!mb-0 border-0 !pb-0"
@@ -195,20 +196,6 @@ export default async function AssessmentsPage() {
           </Button>
         }
       />
-
-      {cycles.length > 0 && (
-        <Card className="flex flex-col gap-3 border border-border bg-surface-container-low p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-text">Dual-flagged students</p>
-            <p className="mt-0.5 text-sm text-muted">
-              Students with high pastoral risk and low attainment — highest priority for intervention.
-            </p>
-          </div>
-          <Button asChild variant="secondary" className="shrink-0">
-            <Link href="/assessments/triangulation">View triangulation</Link>
-          </Button>
-        </Card>
-      )}
 
       {cycles.length === 0 && (
         <Card className="overflow-hidden p-0">
@@ -249,7 +236,7 @@ export default async function AssessmentsPage() {
       )}
 
       {(activeCycles.length > 0 || archivedCycles.length > 0) && (
-        <div className="flex flex-col gap-5 rounded-sm border border-border bg-surface-container-lowest p-5 shadow-none sm:flex-row sm:items-center sm:gap-0 sm:p-0">
+        <div className={styles.summary}>
           <div className="flex min-w-0 flex-1 items-start gap-3 sm:p-5">
             <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -262,7 +249,7 @@ export default async function AssessmentsPage() {
               <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalActive} active</p>
             </div>
           </div>
-          <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+          <div className="hidden" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3 sm:p-5">
             <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -276,7 +263,7 @@ export default async function AssessmentsPage() {
               <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalSubjectsAll}</p>
             </div>
           </div>
-          <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+          <div className="hidden" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3 sm:p-5">
             <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -289,7 +276,7 @@ export default async function AssessmentsPage() {
               <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalEntriesAll.toLocaleString()}</p>
             </div>
           </div>
-          <div className="hidden h-10 w-px shrink-0 bg-[var(--outline-variant)] sm:block" aria-hidden />
+          <div className="hidden" aria-hidden />
           <div className="flex min-w-0 flex-1 items-start gap-3 sm:p-5">
             <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -308,6 +295,6 @@ export default async function AssessmentsPage() {
           </div>
         </div>
       )}
-    </AttainmentPageShell>
+    </AttainmentPageShell></div>
   );
 }

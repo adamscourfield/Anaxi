@@ -1,0 +1,35 @@
+.page { background: #fff; }
+.page :global(.anx-page-header-shell) { background: #fff; border: 0; border-bottom: 1px solid #e5e5e6; padding: 0 0 24px; border-radius: 0; box-shadow: none; }
+.page > div[class*="overflow-hidden"][class*="rounded-2xl"], .page > div:global(.grid) > div, .page :global(.table-shell) { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page > div:global(.grid) > div { padding: 24px; }
+.page > div:global(.grid) > div p:first-child { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+.page > div:global(.grid) > div p:last-child { font-size: 36px; font-weight: 600; letter-spacing: -.05em; }
+.page > div:global(.grid) > div:first-child p:last-child { color: #e14e36; }
+.page button[type="submit"] { background: #1c1c1e; color: #fff; border-color: #1c1c1e; border-radius: 10px; }
+.page button[type="submit"]:hover { background: #333335; }
+.page :global(.field) { background: #fff; border-color: #e5e5e6; border-radius: 10px; }
+.page thead th { background: #fff; color: #6e6e73; font-size: 10px; font-weight: 600; letter-spacing: .06em; }
+.page tbody tr { background: #fff; border-color: #e5e5e6; }
+.page tbody tr:hover { background: #fafafa; }
+.page td:first-child a { text-decoration: underline; text-decoration-color: #ff6a52; text-underline-offset: 4px; }
+.page a:focus-visible, .page button:focus-visible, .page select:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) { .page :global(.table-shell) { animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.page .filters { box-shadow: none; }
+.filters > div:first-child { display: none; }
+.filters > div:last-child { display: flex; align-items: flex-end; gap: 16px; padding: 20px 24px; }
+.filters > div:last-child > form:first-child { display: grid; grid-template-columns: minmax(160px,220px) minmax(180px,240px) auto; align-items: end; gap: 20px; flex: 1; }
+.filters label { gap: 8px; }
+.filters label > span { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.filters :global(.field) { min-height: 40px; width: 100%; padding-top: 8px; padding-bottom: 8px; }
+.filters button { min-height: 40px; padding-left: 20px; padding-right: 20px; }
+.filters > div:last-child > form:first-child > button { justify-self: start; }
+.filters > div:last-child > form:last-child:not(:first-child) { margin-left: auto; }
+@media (max-width: 767px) {
+  .filters > div:last-child { padding: 18px; flex-wrap: wrap; }
+  .filters > div:last-child > form:first-child { grid-template-columns: repeat(2,minmax(0,1fr)); flex-basis: 100%; gap: 14px; }
+  .filters :global(.field) { min-width: 0; }
+}
+
+.page button[type="submit"] svg { color: #fff; }

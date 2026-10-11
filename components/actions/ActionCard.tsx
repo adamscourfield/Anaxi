@@ -39,6 +39,7 @@ export function ActionCard({ action, currentUserId, onComplete }: ActionCardProp
 
   return (
     <div
+      data-action-status={action.status}
       className={`group flex items-start gap-3.5 rounded-xl border bg-surface-container-lowest px-4 py-3.5 shadow-ambient calm-transition hover:shadow-lg ${
         overdue
           ? "border-error/40 bg-error/[0.03]"

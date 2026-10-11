@@ -10,6 +10,8 @@ import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chro
 import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import styles from "./page.module.css";
+import { formatYearGroup } from "@/modules/observations/yearGroup";
 import type { RiskBand } from "@/modules/analysis/studentRisk";
 import { triangulationPpClass, triangulationSendClass } from "@/modules/assessments/attainmentColours";
 
@@ -56,7 +58,7 @@ export default async function TriangulationPage() {
 
   return (
     <AttainmentPageShell>
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -65,7 +67,6 @@ export default async function TriangulationPage() {
       />
 
       <PageHeader variant="ledger"
-        eyebrow="Attainment"
         title="Dual-flagged students"
         subtitle="Students with both a high pastoral risk band and low attainment scores — highest priority for intervention."
       />
@@ -79,7 +80,7 @@ export default async function TriangulationPage() {
       </details>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="space-y-0.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-muted)]">Total flagged</p>
           <p className="text-2xl font-bold text-[var(--on-surface)]">{meta.total}</p>
@@ -111,7 +112,7 @@ export default async function TriangulationPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-[var(--on-surface)]">{student.studentName}</p>
                     {student.yearGroup && (
-                      <span className="text-xs text-[var(--on-surface-muted)]">{student.yearGroup}</span>
+                      <span className="text-xs text-[var(--on-surface-muted)]">{formatYearGroup(student.yearGroup)}</span>
                     )}
                     {student.ppFlag && (
                       <span className={triangulationPpClass}>PP</span>

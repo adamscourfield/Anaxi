@@ -1,0 +1,23 @@
+.page { color: #1c1c1e; min-width: 0; animation: arrive .45s cubic-bezier(.22,1,.36,1) both; }
+.page h1 { font-size: 34px; font-weight: 600; letter-spacing: -.04em; }
+.page h2 { font-weight: 600; }
+.page :global(.home-hero-glass), .page :global(.filter-panel), .page :global(.table-shell), .page section > div[class*="border-dashed"], .page section > div > div[class*="border-border"] { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page :global(.home-hero-glass) > div { min-height: 0; padding: 20px 24px; }
+.page :global(.home-hero-glass) span:has(> svg) { background: #fff; color: #e14e36; border: 1px solid #e5e5e6; border-radius: 10px; }
+.page :global(.home-hero-glass) p[class*="text-[2rem]"] { font-size: 28px; font-weight: 600; }
+.page :global(.filter-panel) { padding: 20px 24px; }
+.page :global(.filter-bar) { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; gap: 24px; align-items: end; }
+.page :global(.filter-bar) > * { min-width: 0; }
+.page :global(.filter-period-toggle) { display: inline-flex; min-height: 42px; padding: 4px; background: #fff; border: 1px solid #e5e5e6; border-radius: 10px; }
+.page :global(.filter-period-btn) { display: inline-flex; align-items: center; justify-content: center; text-align: center; line-height: 1; min-height: 32px; padding: 0 16px; background: #fff; color: #6e6e73; border-radius: 7px; font-size: 13px; box-shadow: none; }
+.page :global(.filter-period-btn-active) { background: #1c1c1e; color: #fff; }
+.page select { background: #fff; height: 42px; min-width: 0; width: 100%; border: 1px solid #e5e5e6; border-radius: 10px; box-shadow: none; }
+.page button, .page a[class*="inline-flex"], .page :global(.btn-filter-secondary), .page a[title="View meeting"], .page a[title="Download minutes"] { background: #1c1c1e; color: #fff; border: 1px solid #1c1c1e; border-radius: 10px; box-shadow: none; }
+.page button svg, .page a[class*="inline-flex"] svg, .page a[title] svg { color: #fff; }
+.page th { background: #fff; font-weight: 500; color: #6e6e73; }
+.page :global(.table-shell) { overflow: hidden; }
+.page section > div > div > div:first-child[class*="h-14"] { background: #fff; border: 1px solid #e5e5e6; border-radius: 10px; }
+.page section > div > div > div:first-child[class*="h-14"] span:last-child { color: #e14e36; }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media(max-width: 640px) { .page :global(.filter-bar) { grid-template-columns: 1fr; gap: 16px; } .page section > div > div[class*="border-border"] { flex-wrap: wrap; gap: 12px; } }
+@media(prefers-reduced-motion: reduce) { .page { animation: none; } }

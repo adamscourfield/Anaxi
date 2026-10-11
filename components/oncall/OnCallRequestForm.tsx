@@ -1,5 +1,7 @@
 "use client";
 
+import styles from "./OnCallRequestForm.module.css";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -104,11 +106,11 @@ export function OnCallRequestForm({
   const recentWindowTotal = hourlyBuckets.reduce((a, b) => a + b, 0);
 
   return (
-    <div className="w-full min-w-0 space-y-8 md:mx-auto md:max-w-2xl">
+    <div className={`${styles.page} w-full min-w-0 space-y-8 md:mx-auto md:max-w-3xl`}>
       <PageHeader
         variant="ledger"
         title="New on call request"
-        subtitle="Initiate an immediate response protocol for behaviour or medical incidents."
+        subtitle="Request support for a behaviour or medical incident."
         eyebrow={
           <Breadcrumb
             items={[
@@ -150,7 +152,7 @@ export function OnCallRequestForm({
           </div>
           <div className="min-w-0 pt-0.5">
             <p className="text-base font-bold tracking-[-0.02em] text-text">Request Details</p>
-            <p className="mt-0.5 text-pretty text-sm text-muted">Fill in the incident parameters for deployment</p>
+            <p className="mt-0.5 text-pretty text-sm text-muted">Tell the responding team who needs support and where.</p>
           </div>
         </div>
 
@@ -193,6 +195,7 @@ export function OnCallRequestForm({
                 return (
                   <button
                     key={t}
+                    aria-pressed={isActive}
                     type="button"
                     onClick={() => setRequestType(t)}
                     className={`relative flex items-center gap-3 rounded-lg border-2 px-4 py-4 text-left calm-transition ${

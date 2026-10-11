@@ -68,6 +68,7 @@ export function ObservationReviewSignalRow({
 }) {
   return (
     <div
+      data-review-signal
       className={`flex items-center gap-3 rounded-full bg-[var(--surface-container)]/90 px-5 py-3.5 ${OBS_REVIEW_TEXT}`}
     >
       {icon ?? (
@@ -94,7 +95,7 @@ export function ObservationReviewTeacherCard({
   rows: { icon: ReactNode; label: string; value: string }[];
 }) {
   return (
-    <div className={`overflow-hidden rounded-xl ${OBS_REVIEW_CARD_DARK} shadow-sm`}>
+    <div data-review-teacher className={`overflow-hidden rounded-xl ${OBS_REVIEW_CARD_DARK} shadow-sm`}>
       <div className="px-5 pb-6 pt-7 text-center">
         <div className="mx-auto">
           <Avatar name={name} userId={userId} size="lg" />

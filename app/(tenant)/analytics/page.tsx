@@ -1,3 +1,4 @@
+import styles from "./analytics.module.css";
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import { notFound } from "next/navigation";
@@ -899,7 +900,7 @@ async function StudentsTab({
           />
         ) : (
           <div className="anx-priorities-table-wrap">
-            <table className="anx-priorities-table min-w-[960px]">
+            <table className="anx-priorities-table min-w-[800px]">
               <thead>
                 <tr>
                   <th className="sticky left-0 z-20 border-r border-border bg-[var(--surface-container-low)]">
@@ -910,14 +911,6 @@ async function StudentsTab({
                   </th>
                   <th>Year</th>
                   <th>Band</th>
-                  <th>
-                    <span className="inline-flex items-center gap-1">
-                      Key drivers
-                      <span className="inline-flex" title="Top contributing metrics from the latest snapshot window.">
-                        {ICON_INFO}
-                      </span>
-                    </span>
-                  </th>
                   <th className="text-right">Attendance (%)</th>
                   <th className="text-right">{vocab.detentions.plural}</th>
                   <th className="text-right">{vocab.on_calls.plural}</th>
@@ -941,20 +934,11 @@ async function StudentsTab({
                         </span>
                       </Link>
                     </td>
-                    <td className="text-[#6B7280]">{row.yearGroup ?? "—"}</td>
+                    <td className="text-[#6B7280]">{row.yearGroup?.replace(/^(?:Year\s*|Y)?(\d+)$/i, "Year $1") ?? "—"}</td>
                     <td>
                       <span className={`rounded-md px-2.5 py-1 text-xs font-medium ${BAND_PILL[row.band]}`}>
                         {BAND_LABELS[row.band]}
                       </span>
-                    </td>
-                    <td>
-                      <div className="flex flex-wrap gap-1">
-                        {row.drivers.map((d) => (
-                          <span key={d.metric} className="anx-priorities-driver-pill">
-                            {d.label}
-                          </span>
-                        ))}
-                      </div>
                     </td>
                     <td className="text-right tabular-nums text-[#6B7280]">
                       {row.attendancePct !== null ? `${row.attendancePct.toFixed(1)}%` : "—"}
@@ -1131,7 +1115,7 @@ export default async function AnalyticsPage({
           : {};
 
   return (
-    <div className="anx-priorities-page anx-reports-page">
+    <div className={`${styles.page} anx-priorities-page anx-reports-page`}>
       <div className="anx-priorities-inner space-y-8">
         <PageHeader
           variant="ledger"
@@ -1142,7 +1126,6 @@ export default async function AnalyticsPage({
           subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-[#374151]"
           title="Priorities"
           subtitle="Teacher coverage, CPD drift, and student pastoral bands — driven by the tab and time window below."
-          meta={<p className="text-[0.8125rem] text-[#6B7280]">Same URL controls apply across all three tabs.</p>}
           actions={
             <PrioritiesExportButton
               userId={user.id}

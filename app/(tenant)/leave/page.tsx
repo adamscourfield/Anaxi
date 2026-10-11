@@ -1,4 +1,5 @@
 import Link from "next/link";
+import styles from "./page.module.css";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -67,12 +68,13 @@ export default async function LeavePage({
     : [];
 
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <Suspense fallback={null}>
         <LeaveCreatedToast />
       </Suspense>
       <PageHeader variant="ledger"
-        title="Leave of Absence"
+        title="Leave of absence"
+        subtitle="Request time away and keep track of approvals."
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <div className="segmented-toggle" role="group" aria-label="Leave view">
@@ -133,7 +135,7 @@ export default async function LeavePage({
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-                Request Leave
+                Request leave
               </Link>
             </Button>
           </div>

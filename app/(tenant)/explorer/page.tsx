@@ -1,3 +1,4 @@
+import styles from "./explorer.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -295,7 +296,7 @@ export default async function ExplorerPage() {
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <PageHeader variant="ledger"
         eyebrow="Explore"
         title="Explorer"

@@ -1,3 +1,4 @@
+import styles from "./students.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -46,13 +47,12 @@ function overallMovementLabel(row: AssessmentStudentRow): MovementLabel {
   return "STABLE";
 }
 
-function priorBandPill(band: string): string {
-  switch (band) {
-    case "HIGH": return "bg-[var(--pill-success-bg)] text-[var(--pill-success-text)]";
-    case "MID": return "bg-[var(--pill-warning-bg)] text-[var(--pill-warning-text)]";
-    case "LOW": return "bg-[var(--pill-error-bg)] text-[var(--pill-error-text)]";
-    default: return "bg-surface-container-high text-muted";
-  }
+function averageScaleScore(row: AssessmentStudentRow): string {
+  const scores = [row.ks2MathsScaledScore, row.ks2ReadingScaledScore]
+    .filter((score): score is number => score != null);
+  if (scores.length === 0) return "—";
+  const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+  return Number.isInteger(average) ? String(average) : average.toFixed(1);
 }
 
 function getInitials(name: string): string {
@@ -154,7 +154,7 @@ export default async function AssessmentStudentsPage({
   const computedAtStr = assessment.computedAt.toLocaleDateString("en-GB");
 
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <ExplorerBackLink />
 
       <PageHeader
@@ -181,32 +181,30 @@ export default async function AssessmentStudentsPage({
         }
       />
 
-      {/* ── KPI strip ───────────────────────────────────────────────────────── */}
-      <div className="explorer-kpi-tile rounded-2xl p-6">
-        <div className="grid gap-6 sm:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)]">
-          <div className="lg:pr-8">
+      {/* ── KPI cards ───────────────────────────────────────────────────────── */}
+      <div className={styles.metrics}>
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Tracked</p>
             <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-text">{assessment.students.length}</p>
           </div>
-          <div className="lg:px-8">
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Declining</p>
             <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-[var(--error)]">
               {assessment.students.filter((s) => overallMovementLabel(s) === "DECLINING").length}
             </p>
           </div>
-          <div className="lg:px-8">
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">With outliers</p>
             <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-text">
               {assessment.students.filter((s) => s.outliers.length > 0).length}
             </p>
           </div>
-          <div className="lg:pl-8">
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">SEND declining</p>
             <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-text">
               {assessment.students.filter((s) => s.sendFlag && overallMovementLabel(s) === "DECLINING").length}
             </p>
           </div>
-        </div>
       </div>
 
       {/* ── Filters ─────────────────────────────────────────────────────────── */}
@@ -214,17 +212,18 @@ export default async function AssessmentStudentsPage({
         <input type="hidden" name="windowDays" value={String(windowDays)} />
         {cycleId && <input type="hidden" name="cycle" value={cycleId} />}
         <input
+          aria-label="Search students"
           type="search"
           name="q"
           defaultValue={search}
           placeholder="Search student…"
           className="h-9 min-w-[160px] rounded-lg border border-border bg-white px-3 text-[13px] text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
         />
-        <select name="yearGroup" defaultValue={yearGroupFilter} className="h-9 rounded-lg border border-border bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-accent/40">
+        <select aria-label="Year group" name="yearGroup" defaultValue={yearGroupFilter} className="h-9 rounded-lg border border-border bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-accent/40">
           <option value="">All year groups</option>
           {yearGroups.map((yg) => <option key={yg} value={yg}>{yg}</option>)}
         </select>
-        <select name="movement" defaultValue={movementFilter} className="h-9 rounded-lg border border-border bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-accent/40">
+        <select aria-label="Movement" name="movement" defaultValue={movementFilter} className="h-9 rounded-lg border border-border bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-accent/40">
           <option value="">All movement</option>
           <option value="DECLINING">Declining</option>
           <option value="STABLE">Stable</option>
@@ -268,7 +267,7 @@ export default async function AssessmentStudentsPage({
                   <th className="px-5 py-3">Student</th>
                   <th className="px-4 py-3">Year</th>
                   <th className="px-4 py-3">Flags</th>
-                  <th className="px-4 py-3">Prior band</th>
+                  <th className="px-4 py-3" title="Average of available KS2 maths and reading scaled scores">Average scale score</th>
                   <th className="px-4 py-3">Overall mean</th>
                   <th className="px-4 py-3">Movement</th>
                   <th className="px-4 py-3">Subjects</th>
@@ -299,10 +298,8 @@ export default async function AssessmentStudentsPage({
                           {!row.sendFlag && !row.ppFlag && <span className="text-xs text-muted">—</span>}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5">
-                        <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${priorBandPill(row.priorBand)}`}>
-                          {row.priorBand === "UNKNOWN" ? "—" : row.priorBand}
-                        </span>
+                      <td className="px-4 py-3.5 tabular-nums font-semibold text-text">
+                        {averageScaleScore(row)}
                       </td>
                       <td className="px-4 py-3.5 tabular-nums font-semibold text-text">
                         {fmt(row.overallMean)}

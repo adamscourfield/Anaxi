@@ -60,7 +60,7 @@ export function StudentPrioritiesFilters({
               triggerClassName={triggerWhite}
               options={[
                 { value: "", label: "All years" },
-                ...yearGroups.map((y) => ({ value: y, label: y })),
+                ...yearGroups.map((y) => ({ value: y, label: y.replace(/^(?:Year\s*|Y)?(\d+)$/i, "Year $1") })),
               ]}
             />
           </label>

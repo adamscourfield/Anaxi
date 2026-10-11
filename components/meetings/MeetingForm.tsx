@@ -237,8 +237,8 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
     <form onSubmit={handleSubmit}>
       {/* ── Page Header ─────────────────────────────────────────── */}
       <PageHeader variant="ledger"
-        title="New Meeting"
-        subtitle="Schedule an institutional coordination or review session."
+        title="New meeting"
+        subtitle="Plan the agenda, choose attendees and set a time to meet."
         actions={
           <div className="flex flex-wrap items-center justify-end gap-3">
             <button
@@ -427,6 +427,7 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
                     key={u.id}
                     type="button"
                     onClick={() => !isCurrentUser && toggleAttendee(u)}
+                    aria-pressed={selected}
                     className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left calm-transition ${
                       selected
                         ? "bg-accent/10 border border-accent/20"

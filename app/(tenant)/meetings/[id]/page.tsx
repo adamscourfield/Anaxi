@@ -1,4 +1,4 @@
-import Link from "next/link";
+import styles from "./page.module.css";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -25,6 +25,20 @@ export default async function MeetingDetailPage({
     resolvedSearchParams.from && resolvedSearchParams.from.startsWith("/")
       ? resolvedSearchParams.from
       : "/meetings";
+
+  if (process.env.NODE_ENV === "development" && resolvedParams.id === "design-preview") {
+    return <div className={`${styles.page} space-y-6`}>
+      <PageHeader variant="ledger" title="Year team review" subtitle="Staff meeting · 11 Oct 2026, 09:00" eyebrow={<Breadcrumb items={[{ label: "Meetings", href: backHref }, { label: "Year team review" }]} />} />
+      <LiveMeetingView meetingId="design-preview" title="Year team review" type="Staff meeting" status="CONFIRMED" startDateTime="2026-10-11T09:00:00Z" startedAt={null} endedAt={null}
+        attendees={[{ id:"preview", userId:user.id, user:{id:user.id,fullName:"Example teacher",email:"preview@example.invalid"} }]}
+        initialNotes="Agenda
+
+Review attendance and pupil support.
+Agree priorities for the coming week."
+        actions={[{ id:"preview-action",description:"Review support plans before the next meeting",ownerUserId:user.id,owner:{id:user.id,fullName:"Example teacher"},status:"OPEN" }]}
+        canEdit={false} canStartMeeting={false} canAddActions={false} canDelete={false} previewMode />
+    </div>;
+  }
 
   let meeting: any;
   try {
@@ -73,7 +87,7 @@ export default async function MeetingDetailPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`${styles.page} space-y-6`}>
       <PageHeader
         variant="ledger"
         title={meeting.title}

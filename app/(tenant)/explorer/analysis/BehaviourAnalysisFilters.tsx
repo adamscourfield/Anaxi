@@ -70,7 +70,7 @@ export function BehaviourAnalysisFilters({
             defaultValue={defaults.yearGroup}
             placeholder="All years"
             triggerClassName={triggerField}
-            options={[{ value: "", label: "All years" }, ...yearGroups.map((yg) => ({ value: yg, label: yg }))]}
+            options={[{ value: "", label: "All years" }, ...yearGroups.map((yg) => ({ value: yg, label: yg.replace(/^Y(?:ear)?\s*(\d+)$/i, "Year $1") }))]}
           />
         </label>
 

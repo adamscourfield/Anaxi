@@ -1,3 +1,4 @@
+import styles from "./assessment.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -124,7 +125,7 @@ export default async function AssessmentHubPage({
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <ExplorerBackLink />
 
       <PageHeader
@@ -156,6 +157,7 @@ export default async function AssessmentHubPage({
           {assessment.cycles.map((c) => (
             <Link
               key={c.cycleId}
+              aria-current={activeCycle?.cycleId === c.cycleId ? "true" : undefined}
               href={cycleUrl(c.cycleId)}
               className={`rounded-md px-3 py-1 text-[12px] font-medium calm-transition ${
                 activeCycle?.cycleId === c.cycleId
@@ -363,6 +365,7 @@ export default async function AssessmentHubPage({
                 {([7, 21, 28, 90] as const).map((w) => (
                   <Link
                     key={w}
+                    aria-current={windowDays === w ? "true" : undefined}
                     href={windowUrl(w)}
                     className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold calm-transition ${
                       windowDays === w

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const COLORS = [
   "bg-[var(--cat-indigo-bg)] text-[var(--cat-indigo-text)]",
@@ -53,10 +53,6 @@ export function Avatar({
   const resolvedAvatarUrl = avatarUrl ?? (studentId ? `/api/students/${studentId}/avatar` : userId ? `/api/users/${userId}/avatar` : null);
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    setFailedAvatarUrl(null);
-  }, [resolvedAvatarUrl]);
-
   const sizeClass =
     size === "xs"
       ? "h-6 w-6 text-[8px]"
@@ -71,6 +67,9 @@ export function Avatar({
   if (resolvedAvatarUrl && failedAvatarUrl !== resolvedAvatarUrl) {
     return (
       <img
+        ref={(image) => {
+          if (image?.complete && image.naturalWidth === 0) setFailedAvatarUrl(resolvedAvatarUrl);
+        }}
         src={resolvedAvatarUrl}
         alt={name}
         title={name}

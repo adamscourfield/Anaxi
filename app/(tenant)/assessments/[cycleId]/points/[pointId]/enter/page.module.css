@@ -1,0 +1,61 @@
+.page { color: #1c1c1e; --on-surface: #1c1c1e; --on-surface-muted: #6e6e73; --outline-variant: #e5e5e6; }
+.page :global(.anx-attainment-page) { background: #fff; }
+.page h1 { font-size: 32px; letter-spacing: -.04em; font-weight: 600; }
+.page h1::after { content: "."; color: #ff6a52; }
+.page h2 { font-size: 18px; letter-spacing: -.025em; font-weight: 600; }
+.page [data-ui-card] { border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; padding: 24px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page input:not([type="checkbox"]):not([type="file"]), .page select { background: #fff; border: 1px solid #e5e5e6; border-radius: 10px; min-height: 42px; }
+.page label { font-size: 12px; font-weight: 600; color: #1c1c1e; }
+.page button, .page a[class*="inline-flex"] { background: #1c1c1e; background-image: none; border-radius: 10px; color: #fff; }
+.page button[aria-label^="Remove"] { background: transparent; color: #6e6e73; }
+.page [role="button"] { background: #fff; border: 1px dashed #cfcfd1; border-radius: 14px; }
+.page [role="button"]:hover { border-color: #ff6a52; background: #fff; }
+.page [role="button"] svg { color: #e14e36; }
+.page nav[aria-label="Progress"] { padding: 0 0 8px; }
+.page nav[aria-label="Progress"] > div { height: 2px; background: #f3f3f4; }
+.page nav[aria-label="Progress"] > div > div { background: #ff6a52; }
+.page [aria-current="step"] { background: #f5f5f5; border: 1px solid #e5e5e6; color: #1c1c1e; }
+.page [aria-current="step"] > span { background: #1c1c1e; color: #fff; }
+.page th { font-family: ui-monospace, monospace; font-size: 10px; color: #6e6e73; letter-spacing: .07em; }
+.page thead tr { background: #fff; }
+@media (max-width: 639px) { .page [data-ui-card] { padding: 18px; } }
+
+.page th button { background: transparent; color: #6e6e73; padding: 0; border-radius: 0; }
+.page td input { min-height: 36px; border: 1px solid #e5e5e6; }
+.page td input:focus { outline: 2px solid #ff6a52; outline-offset: 1px; }
+.page :global(.field) { border-radius: 10px; }
+.page th { background: #fff; }
+.page { min-width: 0; }
+.page :global(.grid) { grid-template-columns: minmax(0, 1fr); }
+.page :global(.grid) > *, .page [data-ui-card] { min-width: 0; }
+.page input, .page select { max-width: 100%; min-width: 0; }
+@media (min-width: 640px) { .page :global(.grid) { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+.sheetPage { min-width: 0; display: flex; flex-direction: column; gap: 24px; color: #1c1c1e; }
+.sheetHeader { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.sheetHeader h1 { font-size: 30px; font-weight: 600; letter-spacing: -.04em; }
+.sheetHeader h1 span { display: none; }
+.sheetHeader p { color: #6e6e73; margin-top: 6px; font-size: 13px; }
+.sheetHeader button { padding: 11px 20px; border-radius: 10px; background: #1c1c1e; color: #fff; white-space: nowrap; font-size: 13px; }
+.sheetHeader button:disabled { opacity: .4; }
+.workbook { min-width: 0; border: 1px solid #e5e5e6; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.sheetToolbar { display: flex; flex-wrap: wrap; gap: 16px; padding: 18px; }
+.sheetToolbar label { display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: #6e6e73; flex: 1 1 140px; }
+.sheetToolbar input, .sheetToolbar select { min-width: 0; height: 38px; padding: 0 10px; background: #fff; border: 1px solid #e5e5e6; border-radius: 8px; font-size: 13px; color: #1c1c1e; }
+.formulaBar { padding: 10px 18px; border-top: 1px solid #e5e5e6; border-bottom: 1px solid #e5e5e6; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 11px; color: #6e6e73; }
+.sheetScroll { overflow: auto; max-height: 65vh; min-height: 240px; }
+.sheetTable { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 13px; }
+.sheetTable th, .sheetTable td { border-right: 1px solid #e5e5e6; border-bottom: 1px solid #e5e5e6; }
+.sheetTable thead th { position: sticky; top: 0; z-index: 3; background: #f7f7f8; padding: 8px 14px; text-align: left; font-weight: 600; height: 54px; }
+.sheetTable thead th span { display: block; color: #9a9a9e; font-size: 10px; margin-bottom: 4px; }
+.sheetTable .studentColumn { position: sticky; left: 42px; min-width: 220px; background: #fff; padding: 8px 14px; text-align: left; font-weight: 500; z-index: 2; }
+.sheetTable thead .studentColumn { background: #f7f7f8; z-index: 4; }
+.studentColumn small { display: block; color: #9a9a9e; font-size: 10px; margin-top: 3px; }
+.sheetTable .rowNumber, .sheetTable .corner { position: sticky; left: 0; width: 42px; min-width: 42px; background: #f7f7f8; color: #9a9a9e; text-align: center; font-size: 10px; z-index: 2; }
+.sheetTable .corner { z-index: 5; }
+.sheetTable td { min-width: 150px; padding: 0; }
+.sheetTable td input { width: 100%; min-width: 150px; height: 48px; border: 0; background: #fff; padding: 0 14px; outline: none; font-variant-numeric: tabular-nums; }
+.sheetTable td input:focus { box-shadow: inset 0 0 0 2px #ff6a52; background: #fff9f7; }
+.sheetFooter { padding: 12px 18px; color: #6e6e73; font-size: 11px; border-top: 1px solid #e5e5e6; }
+.error { color: #d1453a; font-size: 13px; }
+.empty { padding: 24px; color: #6e6e73; }
+@media(max-width: 639px) { .sheetHeader { align-items: flex-start; flex-direction: column; } .sheetTable .studentColumn { min-width: 160px; } }

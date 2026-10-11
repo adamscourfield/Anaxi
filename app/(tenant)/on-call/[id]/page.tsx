@@ -19,6 +19,17 @@ export default async function OnCallDetailPage({
       ? resolvedSearchParams.from
       : "/on-call";
 
+  if (process.env.NODE_ENV === "development" && resolvedParams.id === "design-preview") {
+    return <OnCallDetail backHref={backHref} canViewResolveTime request={{
+      id: "design-preview", status: "ACKNOWLEDGED", requestType: "BEHAVIOUR",
+      student: { fullName: "Example student", upn: "Preview", yearGroup: "10" },
+      location: "Room 12", behaviourReasonCategory: "Classroom support",
+      notes: "Please support the student with a calm return to learning.",
+      requester: { fullName: "Example teacher" }, responder: { id: "preview", fullName: "Support team" },
+      createdAt: "2026-10-11T09:00:00Z", acknowledgedAt: "2026-10-11T09:02:00Z",
+    }} />;
+  }
+
   let request: Awaited<ReturnType<typeof getRequestDetail>>;
   try {
     request = await getRequestDetail(user.tenantId, resolvedParams.id);

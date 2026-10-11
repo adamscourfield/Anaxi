@@ -1,0 +1,23 @@
+.page { background: #fff; }
+.page :global(.anx-page-header-shell) { background: #fff; border: 0; border-bottom: 1px solid #e5e5e6; padding: 0 0 24px; border-radius: 0; box-shadow: none; }
+.page :global(.anx-page-subtitle) > span { border: 0; padding-left: 0; }
+.page :global(.filter-panel), .page :global(.table-shell), .page :global(.glass-card), .page > div:global(.grid) > div { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page :global(.filter-period-toggle) { border: 1px solid #e5e5e6; background: #fff; border-radius: 10px; padding: 3px; }
+.page :global(.filter-period-btn) { border-radius: 7px; font-weight: 500; }
+.page :global(.filter-period-btn-active) { background: #1c1c1e; color: #fff; box-shadow: none; }
+.page button { background: #1c1c1e; color: #fff; border-radius: 10px; }
+.page :global(.field) { background: #fff; border-color: #e5e5e6; border-radius: 10px; }
+.page h3 { color: #1c1c1e; font-weight: 600; letter-spacing: -.025em; }
+.page > div:global(.grid) > div:last-child, .page > div:global(.grid) > div:last-child p { color: #6e6e73; }
+.page > div:global(.grid) > div:last-child a { color: #1c1c1e; text-decoration-color: #ff6a52; text-transform: none; }
+.page > div:global(.grid) > div:last-child a svg { color: #e14e36; }
+.page div[class*="bg-accent/10"] { background: #fff; color: #e14e36; }
+.page div[class*="bg-accent/10"] svg { color: #e14e36; }
+.page div[class*="h-2"][class*="overflow-hidden"] { height: 6px; border-radius: 999px; background: #e7e7e7; }
+.page div[class*="h-2"][class*="overflow-hidden"] > div { background: #ff6a52; border-radius: 999px; }
+.page :global(.table-head-row), .page thead th { background: #fff; color: #6e6e73; font-size: 10px; font-weight: 600; letter-spacing: .06em; }
+.page tbody tr { background: #fff; border-color: #e5e5e6; }
+.page tbody tr:hover { background: #fafafa; }
+.page a:focus-visible, .page button:focus-visible, .page select:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) { .page > div:global(.grid), .page :global(.table-shell) { animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }

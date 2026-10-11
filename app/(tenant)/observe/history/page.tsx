@@ -1,4 +1,5 @@
 import Link from "next/link";
+import styles from "./history.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import type { UserRole } from "@/lib/types";
@@ -324,7 +325,7 @@ export default async function ObservationHistoryPage({
   const detailBackFrom = encodeURIComponent(pageUrl(page));
 
   return (
-    <div className="obs-history-scope space-y-6">
+    <div className={`${styles.page} obs-history-scope space-y-6`}>
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <PageHeader variant="ledger"
         title="Observation History"

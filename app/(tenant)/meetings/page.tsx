@@ -1,4 +1,5 @@
 import Link from "next/link";
+import styles from "./page.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
@@ -76,7 +77,7 @@ export default async function MeetingsPage({
     .sort((a, b) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime());
 
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <PageHeader variant="ledger"
         title="Meetings"
@@ -88,7 +89,7 @@ export default async function MeetingsPage({
                 <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4" aria-hidden>
                   <path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5h-4.5a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z" />
                 </svg>
-                New Meeting
+                New meeting
               </Link>
             </Button>
           ) : undefined
@@ -176,10 +177,10 @@ export default async function MeetingsPage({
         />
       </div>
 
-      {/* ── Upcoming Meetings ───────────────────────────────────────────── */}
+      {/* ── Upcoming meetings ───────────────────────────────────────────── */}
       <section>
         <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-lg font-bold tracking-[-0.02em] text-text">Upcoming Meetings</h2>
+          <h2 className="text-lg font-bold tracking-[-0.02em] text-text">Upcoming meetings</h2>
           {(scope === "mine" || type) && (
             <p className="text-[0.8125rem] text-muted">
               {upcoming.length + past.length} meeting{upcoming.length + past.length !== 1 ? "s" : ""} matching filters
@@ -277,9 +278,9 @@ export default async function MeetingsPage({
         )}
       </section>
 
-      {/* ── Past Meetings ───────────────────────────────────────────────── */}
+      {/* ── Past meetings ───────────────────────────────────────────────── */}
       <section>
-        <h2 className="mb-5 text-lg font-bold tracking-[-0.02em] text-text">Past Meetings</h2>
+        <h2 className="mb-5 text-lg font-bold tracking-[-0.02em] text-text">Past meetings</h2>
         <PastMeetingsList meetings={past} from={from} />
       </section>
     </div>

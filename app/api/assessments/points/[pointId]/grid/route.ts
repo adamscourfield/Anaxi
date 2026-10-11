@@ -157,3 +157,29 @@ export const POST = withApi(async function POST(
     { status: 201 }
   );
 });
+
+/** Load the complete cohort and existing grades for the marksheet. */
+export const GET = withApi(async function GET(_req: Request, { params }: { params: Promise<{ pointId: string }> }) {
+  const { pointId } = await params;
+  const user = await getSessionUserOrThrow();
+  await requireFeature(user.tenantId, "ASSESSMENTS");
+  requireAssessmentWrite(user);
+  const point = await prisma.assessmentPoint.findFirst({
+    where: { id: pointId, tenantId: user.tenantId },
+    include: { cycle: true, assessments: { include: { results: { select: { studentId: true, rawValue: true } } } } },
+  });
+  if (!point) return NextResponse.json({ error: "Result point not found" }, { status: 404 });
+  const yearGroups = [...new Set(point.assessments.map(a => a.yearGroup))];
+  const resultStudentIds = point.assessments.flatMap(a => a.results.map(r => r.studentId));
+  const students = await prisma.student.findMany({
+    where: { tenantId: user.tenantId, status: "ACTIVE", OR: [{ yearGroup: { in: yearGroups } }, { id: { in: resultStudentIds } }] },
+    select: { id: true, fullName: true, upn: true, yearGroup: true }, orderBy: { fullName: "asc" },
+  });
+  const values: Record<string, Record<string, string>> = {};
+  for (const assessment of point.assessments) for (const result of assessment.results) {
+    (values[result.studentId] ??= {})[assessment.subject] = result.rawValue;
+  }
+  return NextResponse.json({ point: { label: point.label, status: point.resultStatus, cycleLabel: point.cycle.label },
+    students, values, subjects: [...new Set(point.assessments.map(a => a.subject))].sort(),
+    assessments: point.assessments.map(a => ({ subject: a.subject, yearGroup: a.yearGroup, gradeFormat: a.gradeFormat, studentIds: a.results.map(r => r.studentId) })) });
+});

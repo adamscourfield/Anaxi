@@ -1,3 +1,4 @@
+import styles from "./analysis.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -204,7 +205,7 @@ export default async function AnalysisPage({
   const suspensionStudentCount = result.suspensionIncidents.length;
 
   return (
-    <div className="anx-reports-page space-y-8 pb-10 pt-1">
+    <div className={`${styles.page} anx-reports-page space-y-8 pb-10 pt-1`}>
       <ExplorerBackLink />
 
       <PageHeader
@@ -254,7 +255,7 @@ export default async function AnalysisPage({
                   <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
                   <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
                 </svg>
-                Export
+                Export CSV
               </button>
             </form>
           ) : null
@@ -489,7 +490,7 @@ export default async function AnalysisPage({
                             </Link>
                           </div>
                         </td>
-                        <td className="text-muted">{row.yearGroup ?? "—"}</td>
+                        <td className="text-muted">{row.yearGroup?.replace(/^Y(?:ear)?\s*(\d+)$/i, "Year $1") ?? "—"}</td>
                         <td className="text-right tabular-nums text-muted">{row.suspensionsCount}</td>
                         <td className="tabular-nums text-muted">{fmtSnapshotDate(row.snapshotDate)}</td>
                       </tr>
@@ -596,7 +597,7 @@ export default async function AnalysisPage({
                             {student.band === "URGENT" ? "Urgent" : "Priority"}
                           </StatusPill>
                         </td>
-                        <td className="text-muted">{student.yearGroup ?? "—"}</td>
+                        <td className="text-muted">{student.yearGroup?.replace(/^Y(?:ear)?\s*(\d+)$/i, "Year $1") ?? "—"}</td>
                         <td>
                           <div className="flex flex-wrap gap-1.5">
                             {student.ppFlag ? (

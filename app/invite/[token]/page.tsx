@@ -1,7 +1,9 @@
 import { createHash } from "crypto";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { AuthBackLink, AuthCard, AuthFieldLabel, AuthPageHeader } from "@/components/auth-shell";
+import Link from "next/link";
+import styles from "../../login/login.module.css";
+import { InviteForm } from "./invite-form";
 import { Button } from "@/components/ui/button";
 
 function hashToken(token: string) {
@@ -21,53 +23,27 @@ export default async function InviteAcceptPage({ params }: { params: Promise<{ t
 
   return (
     <>
-      <AuthPageHeader
-        title="School admin invite"
-        subtitle="Set a password to accept this invite and open your school workspace."
-      />
-
-      <AuthCard>
+      <h1 className={styles.title}>Accept invitation<span>.</span></h1>
+      <p className={styles.subtitle}>Set a password to accept your school admin invitation and open your workspace.</p>
+      <div className={styles.card}>
         {expired ? (
-          <div className="space-y-4 py-2 text-center">
-            <p className="text-[15px] font-semibold text-text">Invite unavailable</p>
-            <p className="text-sm text-muted">
+          <div className="space-y-4 py-2 text-center" role="alert">
+            <p className={styles.successTitle}>Invite unavailable</p>
+            <p className={styles.help}>
               This invite link has expired or was already used. Ask your school administrator to send a new invite.
             </p>
-            <Button asChild variant="secondary" className="w-full">
+            <Button asChild variant="secondary" className={`${styles.button} ${styles.secondary}`}>
               <a href="/login">Return to sign in</a>
             </Button>
           </div>
         ) : (
-          <form method="post" action="/api/invite/accept" className="space-y-5">
-            <p className="text-[13px] leading-relaxed text-muted">
-              <span className="font-medium text-text">{invite.fullName}</span>
-              <span className="text-muted"> · </span>
-              {invite.email}
-              <span className="text-muted"> · </span>
-              {invite.tenant.name}
-            </p>
-            <div className="space-y-2">
-              <AuthFieldLabel htmlFor="password">Password</AuthFieldLabel>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="new-password"
-                placeholder="At least 8 characters"
-                className="field"
-              />
-            </div>
-            <input type="hidden" name="token" value={resolvedParams.token} />
-            <Button type="submit" className="w-full">
-              Accept invite
-            </Button>
-          </form>
+          <InviteForm token={resolvedParams.token} fullName={invite.fullName} email={invite.email} schoolName={invite.tenant.name} />
         )}
-      </AuthCard>
+      </div>
 
-      <AuthBackLink href="/login" />
+      <div className="mt-7 flex justify-center">
+        <Link href="/login" className={styles.forgot}>← Back to sign in</Link>
+      </div>
     </>
   );
 }

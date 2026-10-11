@@ -1,6 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { Figtree } from "next/font/google";
+import homeStyles from "@/app/(tenant)/home/home.module.css";
+
+const figtree = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 import Link from "next/link";
 import { TenantNav } from "@/components/tenant-nav";
 import { SchoolSwitcher } from "@/components/school-switcher";
@@ -74,6 +79,7 @@ export function TenantLayoutClient({
   userRole,
   avatarUrl,
 }: TenantLayoutClientProps) {
+  const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const navProps = {
@@ -87,7 +93,7 @@ export function TenantLayoutClient({
   const initials = userInitials(userFullName || userEmail || "?");
 
   return (
-    <>
+    <div className={["/leave/request", "/leave", "/classes", "/meetings/new", "/meetings", "/on-call/new", "/on-call", "/assessments", "/home", "/explorer", "/explorer/teachers", "/explorer/departments", "/explorer/signals", "/explorer/assessment", "/explorer/assessment/students", "/explorer/assessment/teachers", "/explorer/assessment/cohorts", "/explorer/students", "/explorer/cohorts", "/explorer/analysis", "/explorer/observations", "/analytics", "/my-actions", "/observe/new", "/observe/new/signals", "/observe/new/review", "/observe/history"].includes(pathname) || /^\/leave\/[^/]+$/.test(pathname) || /^\/meetings\/[^/]+$/.test(pathname) || /^\/on-call\/[^/]+$/.test(pathname) || /^\/assessments\/[^/]+\/points\/[^/]+\/(?:upload|enter)$/.test(pathname) || /^\/assessments\/[^/]+\/points\/[^/]+$/.test(pathname) || /^\/assessments\/[^/]+\/compare$/.test(pathname) || /^\/assessments\/[^/]+$/.test(pathname) || /^\/(?:analysis\/)?students\/[^/]+$/.test(pathname) || /^\/analysis\/cpd\/[^/]+$/.test(pathname) || /^\/analysis\/teachers\/[^/]+$/.test(pathname) || /^\/observe\/(?!new$|history$)[^/]+$/.test(pathname) ? `${homeStyles.home} ${figtree.className}` : undefined}>
       <SkipToContent targetId="tenant-main" />
       <TenantNav {...navProps} variant="sidebar" />
 
@@ -163,6 +169,6 @@ export function TenantLayoutClient({
           </PageTransition>
         </main>
       </div>
-    </>
+    </div>
   );
 }

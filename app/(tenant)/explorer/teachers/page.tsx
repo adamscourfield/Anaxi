@@ -1,3 +1,4 @@
+import styles from "./teachers.module.css";
 import Link from "next/link";
 import { ClickableRow } from "@/components/ui/clickable-row";
 import { PageHeader } from "@/components/ui/page-header";
@@ -277,7 +278,7 @@ export default async function ExplorerTeachersPage({
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 pb-10">
+    <div className={`${styles.page} space-y-6 pb-10`}>
       <ExplorerBackLink section="Teachers" />
 
       <PageHeader

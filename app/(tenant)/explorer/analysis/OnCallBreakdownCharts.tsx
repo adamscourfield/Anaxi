@@ -41,9 +41,9 @@ function barWidthPct(count: number, max: number): number {
   return Math.round((count / max) * 100);
 }
 
-const CHART_VIOLET_DEEP = "#5B3FD9";
-const CHART_VIOLET = "#7C5CFF";
-const CHART_VIOLET_LIGHT = "#C4B5FF";
+const CHART_VIOLET_DEEP = "#e14e36";
+const CHART_VIOLET = "#ff6a52";
+const CHART_VIOLET_LIGHT = "#ff9b8b";
 const CHART_VIOLET_TRACK = "#F3F4F6";
 
 function reasonBarStyle(reason: string, pct: number): CSSProperties {

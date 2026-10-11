@@ -30,7 +30,20 @@ export function PriorAttainmentCard({ studentId, reading, maths, canEdit }: {
       </div>
       <dl className="mt-5 grid gap-4 sm:grid-cols-3">
         {[["Reading", reading], ["Maths", maths], ["Reading and maths average", complete ? (reading + maths) / 2 : null]].map(([label, score]) => (
-          <div key={String(label)}><dt className="text-sm text-muted">{label}</dt><dd className="mt-1 text-xl font-semibold tabular-nums text-text">{score ?? "Not recorded"}</dd></div>
+          <div key={String(label)} className="flex items-start gap-3 rounded-xl border border-border bg-white p-4 sm:p-5">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border text-[#e14e36]" aria-hidden="true">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                {label === "Reading" ? (
+                  <><path d="M12 5v15M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Z" /></>
+                ) : label === "Maths" ? (
+                  <><rect x="5" y="2" width="14" height="20" rx="2" /><path d="M8 6h8M8 11h1M12 11h1M16 11h.01M8 15h1M12 15h1M16 15h.01M8 19h1M12 19h1M16 19h.01" /></>
+                ) : (
+                  <><path d="M3 3v18h18" /><path d="M7 17v-5M12 17V7M17 17v-8" /></>
+                )}
+              </svg>
+            </span>
+            <div><dt className="text-sm text-muted">{label}</dt><dd className="mt-1 text-xl font-semibold tabular-nums text-text">{score ?? "Not recorded"}</dd></div>
+          </div>
         ))}
       </dl>
       {!complete ? <p className="mt-4 text-sm text-muted">Both scores are needed for the Progress 8 baseline.</p> : null}

@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { TenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolType";
 import type { SignalDefinition } from "@/modules/observations/signalTypes";
-import { loadDraft, persistDraft, ScaleKey } from "./observationDraft";
+import { emptyDraft, loadDraft, persistDraft, ScaleKey } from "./observationDraft";
 import { SignalHelpSheet } from "./SignalHelpSheet";
+import styles from "../new/signals/signals.module.css";
 import { SignalTileGroup } from "./SignalTileGroup";
 
 type LabelMap = Record<string, { displayName: string; description?: string }>;
@@ -30,7 +31,13 @@ export function SignalFlowScreen({
 
   const orderedByOrder = useMemo(() => [...signals].sort((a, b) => a.order - b.order), [signals]);
   const signalKeys = useMemo(() => orderedByOrder.map((s) => s.key), [orderedByOrder]);
-  const [draft, setDraft] = useState(() => loadDraft(draftKey, signalKeys));
+  const [draft, setDraft] = useState(() => emptyDraft(signalKeys));
+  const [draftLoaded, setDraftLoaded] = useState(false);
+
+  useEffect(() => {
+    setDraft(loadDraft(draftKey, signalKeys));
+    setDraftLoaded(true);
+  }, [draftKey, signalKeys]);
 
   const hasContext = Boolean(
     draft.context.teacherId &&
@@ -61,10 +68,11 @@ export function SignalFlowScreen({
     }
   }, [currentIndex, currentSignal?.key, draft.signalState]);
 
-  if (!hasContext) {
-    router.replace("/observe/new");
-    return null;
-  }
+  useEffect(() => {
+    if (draftLoaded && !hasContext) router.replace("/observe/new");
+  }, [draftLoaded, hasContext, router]);
+
+  if (!draftLoaded || !hasContext) return null;
 
   const goToIndex = (index: number) =>
     router.push(`/observe/new/signals?index=${Math.max(0, Math.min(index, total - 1))}`);
@@ -123,9 +131,9 @@ export function SignalFlowScreen({
   }));
 
   return (
-    <div className="w-full min-w-0 max-w-3xl py-8 md:mx-auto">
+    <div className={`${styles.page} w-full min-w-0 max-w-3xl py-8 md:mx-auto`}>
       {/* Page header */}
-      <div className="mb-3 flex items-start justify-between gap-4">
+      <div className={`${styles.header} mb-3 flex items-start justify-between gap-4`}>
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-[1.875rem] font-bold tracking-tight text-text leading-tight">{title}</h1>
           <span className="text-[0.9375rem] text-muted font-medium">
@@ -150,7 +158,7 @@ export function SignalFlowScreen({
       </div>
 
       {/* Stage progress bar */}
-      <div className="mb-8 flex items-center gap-1.5">
+      <div className={`${styles.progress} mb-8 flex items-center gap-1.5`}>
         {[1, 2, 3].map((stage) => (
           <div
             key={stage}
@@ -162,7 +170,7 @@ export function SignalFlowScreen({
       </div>
 
       {/* Main card */}
-      <div className="rounded-2xl border border-border/20 bg-surface-container-lowest px-4 py-6 shadow-ambient sm:px-8 sm:py-7">
+      <div className={`${styles.card} rounded-2xl border border-border/20 bg-surface-container-lowest px-4 py-6 shadow-ambient sm:px-8 sm:py-7`}>
         <h2 className="mb-2 text-[1.375rem] font-bold tracking-tight text-text">
           How would you assess {title}?
         </h2>
@@ -179,7 +187,7 @@ export function SignalFlowScreen({
       </div>
 
       {/* Bottom navigation */}
-      <div className="mt-6 flex items-center justify-between">
+      <div className={`${styles.footer} mt-6 flex items-center justify-between`}>
         <button
           type="button"
           onClick={skipSignal}

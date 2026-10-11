@@ -1,3 +1,4 @@
+import styles from "./signals.module.css";
 import Link from "next/link";
 import { ClickableRow } from "@/components/ui/clickable-row";
 import { PageHeader } from "@/components/ui/page-header";
@@ -86,8 +87,8 @@ function getImprovementLabel(index: number): { label: string; pillClass: string 
 }
 
 function getDriftBarColor(rate: number): string {
-  if (rate > 0.2) return "bg-[#F87171]";
-  return "bg-[#111827]";
+  if (rate > 0.2) return "bg-[#e14e36]";
+  return "bg-[#ff6a52]";
 }
 
 function InfoHint({ label }: { label: string }) {
@@ -232,7 +233,7 @@ export default async function SignalsPage({
   }
 
   return (
-    <div className="-mx-4 -mt-4 min-h-[calc(100vh-4rem)] px-4 pb-12 pt-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <div className={`${styles.page} -mx-4 -mt-4 min-h-[calc(100vh-4rem)] px-4 pb-12 pt-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8`}>
       <div className="mx-auto max-w-[1400px] space-y-8">
         <div className="mb-2">
           <Link
@@ -656,7 +657,7 @@ export default async function SignalsPage({
                     <div className="flex h-28 w-full items-end justify-center">
                       <div
                         className={`w-full max-w-[36px] rounded-t-md ${
-                          isHighDrift ? "bg-[#F87171]" : "bg-[#111827]"
+                          isHighDrift ? "bg-[#e14e36]" : "bg-[#ff6a52]"
                         }`}
                         style={{ height: `${barHeight}%` }}
                       />

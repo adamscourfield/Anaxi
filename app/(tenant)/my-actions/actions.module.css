@@ -1,0 +1,22 @@
+.page :global(.home-hero-glass) { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page :global(.home-stat-drill) { border-radius: 14px; transition: transform 250ms cubic-bezier(.22,1,.36,1); }
+.page :global(.home-stat-drill):hover { transform: translateY(-2px); }
+.page :global(.home-stat-drill) span:has(> svg) { border-radius: 10px; background: #fff; border: 1px solid #e5e5e6; color: #6e6e73; }
+.page :global(.home-stat-drill)[href="#open"] span:has(> svg) { color: #e14e36; }
+.page :global(.home-stat-drill)[href="#done"] span:has(> svg) { color: #4f9e74; }
+.page :global(.anx-btn-pill-ghost) { background: #fff; border: 1px solid #e5e5e6; border-radius: 10px; color: #1c1c1e; }
+.page :global(.segmented-toggle) { display: inline-flex; flex-wrap: wrap; gap: 4px; max-width: 100%; }
+.page :global(.segmented-toggle-btn-active) > span:last-child { color: #fff; opacity: .8; }
+.page [data-action-status] { border-radius: 12px; background: #fff; border-color: #e5e5e6; box-shadow: none; padding: 20px; transition: border-color 200ms, box-shadow 250ms cubic-bezier(.22,1,.36,1); }
+.page [data-action-status]:hover { border-color: #cfcfd1; box-shadow: 0 10px 24px -18px #1c1c1e33; }
+.page [data-action-status="BLOCKED"] { border-left: 3px solid #b8792f; }
+.page [data-action-status="DONE"] { border-left: 3px solid #4f9e74; }
+.page [data-action-status] p { line-height: 1.6; }
+.page [data-action-status] button { width: 22px; height: 22px; border-radius: 7px; }
+.page [data-action-status] button:hover { border-color: #ff6a52; }
+.page > div:has(> svg) { background: #fff; border-radius: 12px; }
+.page [data-actions-empty] { border-radius: 14px; border: 1px dashed #e5e5e6; background: #fff; }
+.page [data-actions-empty] > div { border: 1px solid #e5e5e6; border-radius: 12px; background: #fff; color: #e14e36; box-shadow: none; }
+@media (prefers-reduced-motion: no-preference) { .page [data-action-status], .page :global(.home-hero-glass) { animation: arrive 500ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page [data-action-status], .page :global(.home-stat-drill) { transition: none; } .page :global(.home-stat-drill):hover { transform: none; } }

@@ -1,10 +1,8 @@
 import Link from "next/link";
+import styles from "./page.module.css";
 import { hasPermission } from "@/lib/rbac";
 import { PriorAttainmentCard } from "@/components/students/prior-attainment-card";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
-import { StudentProfileNav } from "@/components/students/student-profile-nav";
-import { StudentProfileTabScroll } from "@/components/students/student-profile-tab-scroll";
 import { MatchSiblingHeight } from "@/components/students/match-sibling-height";
 import { TeacherAssignmentList, type TeacherAssignment } from "@/components/students/teacher-assignment-list";
 import type { GradeFormat } from "@prisma/client";
@@ -414,7 +412,7 @@ export default async function StudentDetailPage({
   });
 
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <Link href={backHref} className="anx-link-back calm-transition">
         <span aria-hidden>←</span> {backLabel}
       </Link>
@@ -455,7 +453,17 @@ export default async function StudentDetailPage({
               </p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className={`${styles.headerActions} flex shrink-0 flex-wrap items-center gap-3`}>
+            {analysisProfile && (
+              <div className="segmented-toggle home-pulse-window-toggle" role="group" aria-label="Analysis window length">
+                {WINDOW_OPTIONS.map((w) => (
+                  <Link key={w} href={`/students/${resolvedParams.id}?window=${w}`}
+                    className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}>
+                    {w}d
+                  </Link>
+                ))}
+              </div>
+            )}
             {student.status === "ACTIVE" ? (
               <form action={archiveStudentAction}>
                 <input type="hidden" name="studentId" value={student.id} />
@@ -477,10 +485,7 @@ export default async function StudentDetailPage({
         </div>
       </header>
 
-      <Suspense fallback={null}>
-        <StudentProfileNav studentId={resolvedParams.id} />
-        <StudentProfileTabScroll />
-      </Suspense>
+
 
       <div id="overview" className="scroll-mt-24 space-y-8">
       <PriorAttainmentCard studentId={student.id} reading={student.ks2ReadingScaledScore ?? null} maths={student.ks2MathsScaledScore ?? null} canEdit={hasPermission(user.role, "students:write")} />
@@ -542,21 +547,6 @@ export default async function StudentDetailPage({
               >
                 Confidence: {analysisProfile.confidence === "HIGH" ? "High" : "Low"}
               </span>
-            </div>
-          </div>
-
-          <div className="mb-4 flex items-center gap-2">
-            <MetaText className="mr-1">Window:</MetaText>
-            <div className="segmented-toggle">
-              {WINDOW_OPTIONS.map((w) => (
-                <Link
-                  key={w}
-                  href={`/students/${resolvedParams.id}?window=${w}`}
-                  className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}
-                >
-                  {w} days
-                </Link>
-              ))}
             </div>
           </div>
 

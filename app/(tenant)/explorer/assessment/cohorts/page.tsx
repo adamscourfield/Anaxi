@@ -1,3 +1,5 @@
+import styles from "../students/students.module.css";
+import cohortStyles from "./cohorts.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -161,7 +163,7 @@ export default async function AssessmentCohortsPage({
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} ${cohortStyles.page} space-y-8`}>
       <ExplorerBackLink />
 
       <PageHeader
@@ -189,30 +191,28 @@ export default async function AssessmentCohortsPage({
       />
 
       {/* ── KPI strip ───────────────────────────────────────────────────────── */}
-      <div className="explorer-kpi-tile rounded-2xl p-6">
-        <div className="grid gap-6 sm:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-[color-mix(in_srgb,var(--outline-variant)_22%,transparent)]">
-          <div className="lg:pr-8">
+      <div className={styles.metrics}>
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">School-wide mean</p>
             <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-text">{fmt(schoolWideMean)}</p>
           </div>
-          <div className="lg:px-8">
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Declining cells</p>
             <p className={`mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] ${decliningCells > 0 ? "text-[var(--error)]" : "text-text"}`}>{decliningCells}</p>
             <p className="text-[11px] text-muted">year × subject pairs</p>
           </div>
-          <div className="lg:px-8">
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Avg SEND gap</p>
             <p className={`mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] ${avgSendGap !== null && avgSendGap > 0.08 ? "text-[var(--error)]" : "text-text"}`}>{fmt(avgSendGap)}</p>
           </div>
-          <div className="lg:pl-8">
+          <div className="explorer-kpi-tile p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Avg PP gap</p>
             <p className={`mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] ${avgPpGap !== null && avgPpGap > 0.08 ? "text-[var(--error)]" : "text-text"}`}>{fmt(avgPpGap)}</p>
           </div>
-        </div>
       </div>
 
       {/* ── View mode + year group filters ───────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className={cohortStyles.filters}>
         <div className="flex items-center gap-1">
           <span className="mr-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Show:</span>
           {[
@@ -223,6 +223,7 @@ export default async function AssessmentCohortsPage({
           ].map(({ key, label }) => (
             <Link
               key={key}
+              aria-current={viewMode === key ? "true" : undefined}
               href={viewUrl(key)}
               className={`rounded-md px-2.5 py-1 text-[11px] font-medium calm-transition ${
                 viewMode === key
@@ -248,6 +249,7 @@ export default async function AssessmentCohortsPage({
             {yearGroups.map((yg) => (
               <Link
                 key={yg}
+                aria-current={yearGroupFilter === yg ? "true" : undefined}
                 href={yearUrl(yg)}
                 className={`rounded-md px-2.5 py-1 text-[11px] font-medium calm-transition ${
                   yearGroupFilter === yg

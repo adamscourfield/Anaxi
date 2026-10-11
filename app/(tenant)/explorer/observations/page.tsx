@@ -1,3 +1,4 @@
+import styles from "./observations.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -158,7 +159,7 @@ export default async function ExplorerObservationsPage({
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <ExplorerBackLink />
 
       <PageHeader variant="ledger"
@@ -380,7 +381,7 @@ export default async function ExplorerObservationsPage({
 
                       {/* Year Group */}
                       <td className="px-4 py-3 text-muted">
-                        {obs.yearGroup ? `Y${obs.yearGroup}` : "—"}
+                        {obs.yearGroup ? `Year ${obs.yearGroup.replace(/^(?:Year\s*|Y)/i, "")}` : "—"}
                       </td>
 
                       {/* Subject */}

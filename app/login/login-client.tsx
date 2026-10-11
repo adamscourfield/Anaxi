@@ -4,14 +4,13 @@ import { FormEvent, useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import {
-  AuthCard,
-  AuthFieldLabel,
-  AuthFlowMain,
-  AuthNav,
-  AuthPageHeader,
-  AuthShell,
-} from "@/components/auth-shell";
+import Link from "next/link";
+import { Figtree } from "next/font/google";
+import styles from "./login.module.css";
+import landing from "../landing.module.css";
+
+const figtree = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
+
 import { Button } from "@/components/ui/button";
 import { SkipToContent } from "@/components/skip-to-content";
 
@@ -92,32 +91,25 @@ export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: b
   }
 
   return (
-    <AuthShell variant="light">
+    <div className={`${landing.page} ${styles.page} ${figtree.className}`}>
       <SkipToContent targetId="auth-form" label="Skip to sign in form" />
-      <AuthNav />
-      <AuthFlowMain maxWidth="md">
-        <div className="mb-8 flex flex-col items-center sm:mb-10 sm:items-start">
-          <Image
-            src="/anaxi-logo.png"
-            alt="Anaxi"
-            width={56}
-            height={56}
-            priority
-            className="h-14 w-14 object-contain sm:h-12 sm:w-12"
-          />
-        </div>
-
+      <header className={landing.header}>
+        <Link href="/" className={landing.brand} aria-label="Anaxi home">
+          <Image src="/anaxi-logo.png" alt="" width={32} height={32} priority />
+          <span>Anaxi<span className={landing.brandDot}>.</span></span>
+        </Link>
+        <span className={landing.headerLabel}>Institutional intelligence</span>
+      </header>
+      <main className={styles.main}>
+        <div id="auth-form" className={styles.panel}>
         {step === "credentials" ? (
           <>
-            <AuthPageHeader
-              title="Sign in"
-              subtitle="Use your school email and password. If you belong to more than one school, you will choose which one to open."
-              align="start"
-            />
-            <AuthCard>
+            <h1 className={styles.title}>Welcome back<span>.</span></h1>
+            <p className={styles.subtitle}>Sign in with your school email and password.</p>
+            <div className={styles.card}>
               {microsoftEnabled && (
                 <div className="mb-5 space-y-3">
-                  <Button type="button" variant="secondary" disabled={loading} className="w-full"
+                  <Button type="button" variant="secondary" disabled={loading} className={`${styles.button} ${styles.secondary}`}
                     onClick={async () => {
                       setLoading(true);
                       setError(null);
@@ -135,7 +127,7 @@ export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: b
               )}
               <form onSubmit={onCredentialsSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <AuthFieldLabel htmlFor="login-email">Email</AuthFieldLabel>
+                  <label className={styles.label} htmlFor="login-email">School email</label>
                   <input
                     id="login-email"
                     type="email"
@@ -145,11 +137,11 @@ export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: b
                     autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="field"
+                    className={styles.field}
                   />
                 </div>
                 <div className="space-y-2">
-                  <AuthFieldLabel htmlFor="login-password">Password</AuthFieldLabel>
+                  <label className={styles.label} htmlFor="login-password">Password</label>
                   <input
                     id="login-password"
                     type="password"
@@ -158,39 +150,36 @@ export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: b
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="field"
+                    className={styles.field}
                   />
                 </div>
 
                 {error ? (
-                  <p className="text-center text-[13px] text-[var(--pill-error-text)]" role="alert">
+                  <p className={styles.error} role="alert">
                     {error}
                   </p>
                 ) : null}
 
-                <Button type="submit" disabled={loading} className="w-full">
+                <Button type="submit" disabled={loading} className={styles.button}>
                   {loading ? "Signing in…" : "Sign in"}
                 </Button>
 
                 <div className="flex justify-center pt-1">
                   <a
                     href="/login/forgot-password"
-                    className="link-muted-accent calm-transition text-[13px]"
+                    className={styles.forgot}
                   >
                     Forgot password?
                   </a>
                 </div>
               </form>
-            </AuthCard>
+            </div>
           </>
         ) : (
           <>
-            <AuthPageHeader
-              title="Choose school"
-              subtitle="Your account is linked to more than one organisation. Pick the one you want to open."
-              align="start"
-            />
-            <AuthCard>
+            <h1 className={styles.title}>Choose school<span>.</span></h1>
+            <p className={styles.subtitle}>Your account is linked to more than one organisation. Pick the one you want to open.</p>
+            <div className={styles.card}>
               <div className="flex flex-col gap-3">
                 {schools.map((school) => (
                   <Button
@@ -198,7 +187,7 @@ export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: b
                     type="button"
                     variant="secondary"
                     disabled={loading}
-                    className="h-auto w-full justify-start py-3.5 text-left font-medium"
+                    className={`${styles.button} ${styles.school}`}
                     onClick={() => onSchoolSelect(school.id)}
                   >
                     {school.name}
@@ -206,7 +195,7 @@ export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: b
                 ))}
 
                 {error ? (
-                  <p className="text-center text-[13px] text-[var(--pill-error-text)]" role="alert">
+                  <p className={styles.error} role="alert">
                     {error}
                   </p>
                 ) : null}
@@ -214,7 +203,7 @@ export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: b
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full"
+                  className={`${styles.button} ${styles.secondary}`}
                   disabled={loading}
                   onClick={() => {
                     setStep("credentials");
@@ -224,10 +213,16 @@ export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: b
                   ← Back
                 </Button>
               </div>
-            </AuthCard>
+            </div>
           </>
         )}
-      </AuthFlowMain>
-    </AuthShell>
+        <p className={styles.hint}>If you belong to more than one school, you’ll choose which one to open after signing in.</p>
+        </div>
+      </main>
+      <footer className={landing.footer}>
+        <p>Anaxi — institutional intelligence for schools</p>
+        <a href="mailto:hi@anaxi.io">hi@anaxi.io <span aria-hidden="true">↗</span></a>
+      </footer>
+    </div>
   );
 }

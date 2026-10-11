@@ -1,0 +1,9 @@
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; padding: 20px; border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; }
+.filters > div { flex-wrap: wrap; gap: 6px; }
+.filters a { border-radius: 8px; padding: 8px 12px; }
+.filters a[aria-current="true"] { background: #1c1c1e; color: #fff; }
+.page > div[class*="rounded-2xl"][class*="border"] { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page h2 { font-weight: 600; letter-spacing: -.025em; }
+.page tbody td { background: #fff; }
+.page :global(.explorer-kpi-tile):first-child p:nth-child(2) { color: #e14e36; }
+.page :global(.table-shell) th:first-child, .page :global(.table-shell) td:first-child { white-space: nowrap; }

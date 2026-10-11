@@ -1,4 +1,5 @@
 import Link from "next/link";
+import styles from "./page.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeatureForPage } from "@/lib/guards";
 import { businessDaysBetween } from "@/lib/leaveDates";
@@ -53,11 +54,11 @@ export default async function LeaveRequestPage({
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className={`${styles.page} mx-auto max-w-5xl space-y-8`}>
       <PageHeader
         variant="ledger"
         title="Request leave"
-        subtitle="Submit a formal absence request for administrative review. Attach medical documentation when required."
+        subtitle="Choose your dates and leave type, then add any cover requirements."
         eyebrow={
           <Breadcrumb
             items={[
@@ -98,7 +99,7 @@ export default async function LeaveRequestPage({
 
             <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-end">
               <SubmitButton className="w-full gap-2 rounded-md px-8 py-3 shadow-md sm:ml-auto sm:w-auto" pendingLabel="Submitting…">
-                Submit Request
+                Submit request
                 <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>
                   <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -109,7 +110,7 @@ export default async function LeaveRequestPage({
 
         <div className="space-y-5">
           <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] px-5 py-5 sm:px-6">
-            <h3 className="mb-4 text-base font-bold tracking-[-0.02em] text-text">Institutional Policy</h3>
+            <h3 className="mb-4 text-base font-bold tracking-[-0.02em] text-text">Leave policy</h3>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--status-approved-light)] text-[var(--status-approved-text)]">

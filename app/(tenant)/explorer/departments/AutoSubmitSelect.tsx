@@ -17,6 +17,7 @@ export function AutoSubmitSelect({
 }) {
   return (
     <select
+      aria-label="Department"
       name={name}
       defaultValue={defaultValue}
       className={className}

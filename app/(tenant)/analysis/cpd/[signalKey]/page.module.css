@@ -1,0 +1,21 @@
+.page { min-width: 0; color: #1c1c1e; }
+.page h1 { color: #1c1c1e; letter-spacing: -.04em; font-weight: 600; }
+.page h1::after { content: "."; color: #ff6a52; }
+.page > div > header { padding-bottom: 24px; border-bottom: 1px solid #e5e5e6; }
+.card { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; animation: arrive 420ms cubic-bezier(.22,1,.36,1) both; }
+.icon { background: #fff; color: #e14e36; border: 1px solid #e5e5e6; border-radius: 12px; }
+.window { flex-shrink: 0; align-self: flex-start; }
+.window :global(.segmented-toggle-btn-active) { background: #1c1c1e; color: #fff; }
+.page :global(.anx-priorities-definitions-card) { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; padding: 20px 24px; }
+.page thead tr, .page tbody tr { background: #fff; }
+.page tbody tr:hover { background: #fafafa; }
+.page :global(.anx-priorities-meta-bar) { background: #fff; }
+.page a[role="button"] { background: #1c1c1e; color: #fff; border-radius: 10px; }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .card { animation: none; } }
+
+.page .action { background: #1c1c1e; color: #fff; border-color: #1c1c1e; border-radius: 10px; }
+.page .action:hover { background: #333; color: #fff; }
+.page .icon svg { color: #e14e36; }
+.page table tbody tr:nth-child(odd) { background: #fff; }
+.page table tbody tr:hover { background: #fafafa; }

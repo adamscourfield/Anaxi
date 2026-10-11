@@ -76,6 +76,7 @@ export function TeachersFilterToolbar(props: TeachersFilterToolbarProps) {
           {VALID_WINDOWS.map((w) => (
             <Link
               key={w}
+              aria-current={w === windowDays ? "true" : undefined}
               href={buildUrl({ windowDays: String(w), page: "1" })}
               className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
             >
@@ -89,12 +90,14 @@ export function TeachersFilterToolbar(props: TeachersFilterToolbarProps) {
         <SectionHeader icon={<ChartIcon />} label="View" />
         <div className="filter-period-toggle w-fit max-w-full">
           <Link
+            aria-current={mode === "pivot" ? "true" : undefined}
             href={buildUrl({ mode: "pivot", page: "1" })}
             className={`filter-period-btn ${mode === "pivot" ? "filter-period-btn-active" : ""}`}
           >
             Performance view
           </Link>
           <Link
+            aria-current={mode === "priorities" ? "true" : undefined}
             href={buildUrl({ mode: "priorities", page: "1" })}
             className={`filter-period-btn ${mode === "priorities" ? "filter-period-btn-active" : ""}`}
           >

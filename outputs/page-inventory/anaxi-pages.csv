@@ -1,0 +1,109 @@
+Section,Page name,URL path or pattern,Type,Dynamic parameters,Redirect destination,Notes,Source file
+Public,Landing page,/,Page,,,Landing page; signed-in users redirect to /home.,app/page.tsx
+School administration,Admin,/admin,Page,,,,app/(tenant)/admin/(workspace)/page.tsx
+School administration,Admin / Coaching,/admin?section=coaching,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Departments,/admin?section=departments,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Email Log,/admin?section=email-log,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Imports,/admin?section=imports,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Language,/admin?section=language,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Leave Approvals,/admin?section=leave-approvals,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Settings,/admin?section=settings,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Signals,/admin?section=signals,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Subjects,/admin?section=subjects,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Taxonomies,/admin?section=taxonomies,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Timetable,/admin?section=timetable,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Users,/admin?section=users,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Users Import,/admin?section=users-import,Admin workspace section,,,Section of the shared admin workspace.,lib/admin-sections.ts; app/(tenant)/admin/(panels)/render-panel.tsx
+School administration,Admin / Coaching,/admin/coaching,Redirect,,/admin?section=coaching,,app/(tenant)/admin/coaching/page.tsx
+School administration,Admin / Departments,/admin/departments,Redirect,,/admin?section=departments,,app/(tenant)/admin/departments/page.tsx
+School administration,Admin / Email Log,/admin/email-log,Redirect,,/admin?section=email-log,,app/(tenant)/admin/email-log/page.tsx
+School administration,Admin / Features,/admin/features,Page,,,,app/(tenant)/admin/features/page.tsx
+School administration,Admin / Imports,/admin/imports,Redirect,,/admin?section=imports,,app/(tenant)/admin/imports/page.tsx
+School administration,Admin / Language,/admin/language,Redirect,,/admin?section=language,,app/(tenant)/admin/language/page.tsx
+School administration,Admin / Leave Approvals,/admin/leave-approvals,Redirect,,/admin?section=leave-approvals,,app/(tenant)/admin/leave-approvals/page.tsx
+School administration,Admin / Settings,/admin/settings,Redirect,,/admin?section=settings,Super admins go to /admin/features; other authorised users go to the settings section.,app/(tenant)/admin/settings/page.tsx
+School administration,Admin / Signals,/admin/signals,Redirect,,/admin?section=signals,,app/(tenant)/admin/signals/page.tsx
+School administration,Admin / Subjects,/admin/subjects,Redirect,,/admin?section=subjects,,app/(tenant)/admin/subjects/page.tsx
+School administration,Admin / Taxonomies,/admin/taxonomies,Redirect,,/admin?section=taxonomies,Preserves the optional tab query parameter.,app/(tenant)/admin/taxonomies/page.tsx
+School administration,Admin / Terminology,/admin/terminology,Redirect,,/admin/language,,app/(tenant)/admin/terminology/page.tsx
+School administration,Admin / Timetable,/admin/timetable,Redirect,,/admin?section=timetable,,app/(tenant)/admin/timetable/page.tsx
+School administration,Admin / Users,/admin/users,Redirect,,/admin?section=users,,app/(tenant)/admin/users/page.tsx
+School administration,Admin / Users / Import,/admin/users/import,Page,,,,app/(tenant)/admin/users/import/page.tsx
+School administration,Admin / Vocab,/admin/vocab,Page,,,,app/(tenant)/admin/vocab/page.tsx
+Analysis,Analysis / Cpd,/analysis/cpd,Configured redirect,,/analytics?tab=cpd,Permanent redirect defined in Next.js configuration.,next.config.mjs
+Analysis,Analysis / Cpd / Detail (signalKey),/analysis/cpd/[signalKey],Dynamic page,signalKey,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/analysis/cpd/[signalKey]/page.tsx
+Analysis,Analysis / Students,/analysis/students,Configured redirect,,/analytics?tab=students,Permanent redirect defined in Next.js configuration.,next.config.mjs
+Analysis,Analysis / Students / Detail (id),/analysis/students/[id],Dynamic page,id,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/analysis/students/[id]/page.tsx
+Analysis,Analysis / Teachers,/analysis/teachers,Configured redirect,,/analytics?tab=teachers,Permanent redirect defined in Next.js configuration.,next.config.mjs
+Analysis,Analysis / Teachers / Detail (memberId),/analysis/teachers/[memberId],Dynamic page,memberId,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/analysis/teachers/[memberId]/page.tsx
+Analytics,Analytics,/analytics,Page,,,,app/(tenant)/analytics/page.tsx
+Assessments,Assessments,/assessments,Page,,,,app/(tenant)/assessments/page.tsx
+Assessments,Assessments / Detail (cycleId),/assessments/[cycleId],Dynamic page,cycleId,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/assessments/[cycleId]/page.tsx
+Assessments,Assessments / Compare / Detail (cycleId),/assessments/[cycleId]/compare,Dynamic page,cycleId,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/assessments/[cycleId]/compare/page.tsx
+Assessments,Assessments / Points / Detail (cycleId; pointId),/assessments/[cycleId]/points/[pointId],Dynamic page,cycleId; pointId,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/assessments/[cycleId]/points/[pointId]/page.tsx
+Assessments,Assessments / Points / Corrections / Detail (cycleId; pointId),/assessments/[cycleId]/points/[pointId]/corrections,Dynamic page,cycleId; pointId,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/assessments/[cycleId]/points/[pointId]/corrections/page.tsx
+Assessments,Assessments / Points / Em / Detail (cycleId; pointId; threshold),/assessments/[cycleId]/points/[pointId]/em/[threshold],Dynamic page,cycleId; pointId; threshold,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/assessments/[cycleId]/points/[pointId]/em/[threshold]/page.tsx
+Assessments,Assessments / Points / Enter / Detail (cycleId; pointId),/assessments/[cycleId]/points/[pointId]/enter,Dynamic page,cycleId; pointId,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/assessments/[cycleId]/points/[pointId]/enter/page.tsx
+Assessments,Assessments / Points / Subjects / Detail (cycleId; pointId; subject),/assessments/[cycleId]/points/[pointId]/subjects/[subject],Dynamic page,cycleId; pointId; subject,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/assessments/[cycleId]/points/[pointId]/subjects/[subject]/page.tsx
+Assessments,Assessments / Points / Upload / Detail (cycleId; pointId),/assessments/[cycleId]/points/[pointId]/upload,Dynamic page,cycleId; pointId,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/assessments/[cycleId]/points/[pointId]/upload/page.tsx
+Assessments,Assessments / Points / New / Detail (cycleId),/assessments/[cycleId]/points/new,Dynamic page,cycleId,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/assessments/[cycleId]/points/new/page.tsx
+Assessments,Assessments / New,/assessments/new,Page,,,,app/(tenant)/assessments/new/page.tsx
+Assessments,Assessments / Setup,/assessments/setup,Redirect,,/assessments/new,,app/(tenant)/assessments/setup/page.tsx
+Assessments,Assessments / Triangulation,/assessments/triangulation,Page,,,,app/(tenant)/assessments/triangulation/page.tsx
+Explorer,Explorer,/explorer,Page,,,,app/(tenant)/explorer/page.tsx
+Explorer,Explorer / Analysis,/explorer/analysis,Page,,,,app/(tenant)/explorer/analysis/page.tsx
+Explorer,Explorer / Assessment,/explorer/assessment,Page,,,,app/(tenant)/explorer/assessment/page.tsx
+Explorer,Explorer / Assessment / Cohorts,/explorer/assessment/cohorts,Page,,,,app/(tenant)/explorer/assessment/cohorts/page.tsx
+Explorer,Explorer / Assessment / Students,/explorer/assessment/students,Page,,,,app/(tenant)/explorer/assessment/students/page.tsx
+Explorer,Explorer / Assessment / Teachers,/explorer/assessment/teachers,Page,,,,app/(tenant)/explorer/assessment/teachers/page.tsx
+Explorer,Explorer / Cohorts,/explorer/cohorts,Page,,,,app/(tenant)/explorer/cohorts/page.tsx
+Explorer,Explorer / Departments,/explorer/departments,Page,,,,app/(tenant)/explorer/departments/page.tsx
+Explorer,Explorer / Observations,/explorer/observations,Page,,,,app/(tenant)/explorer/observations/page.tsx
+Explorer,Explorer / Signals,/explorer/signals,Page,,,,app/(tenant)/explorer/signals/page.tsx
+Explorer,Explorer / Students,/explorer/students,Page,,,,app/(tenant)/explorer/students/page.tsx
+Explorer,Explorer / Teachers,/explorer/teachers,Page,,,,app/(tenant)/explorer/teachers/page.tsx
+Platform administration,God,/god,Page,,,,app/god/page.tsx
+Platform administration,God / Audit,/god/audit,Page,,,,app/god/audit/page.tsx
+Platform administration,God / Integrations / Arbor,/god/integrations/arbor,Page,,,,app/god/integrations/arbor/page.tsx
+Platform administration,God / Integrations / Arbor / Assessments / Detail (cycleKey),/god/integrations/arbor/assessments/[cycleKey],Dynamic page,cycleKey,,URL pattern: replace bracketed parameters with actual values.,app/god/integrations/arbor/assessments/[cycleKey]/page.tsx
+Platform administration,God / Integrations / Arbor / Assessments / Detail (cycleKey; assessmentId),/god/integrations/arbor/assessments/[cycleKey]/[assessmentId],Dynamic page,cycleKey; assessmentId,,URL pattern: replace bracketed parameters with actual values.,app/god/integrations/arbor/assessments/[cycleKey]/[assessmentId]/page.tsx
+Platform administration,God / Schools / Detail (tenantId),/god/schools/[tenantId],Dynamic page,tenantId,,URL pattern: replace bracketed parameters with actual values.,app/god/schools/[tenantId]/page.tsx
+Platform administration,God / Schools / New,/god/schools/new,Page,,,,app/god/schools/new/page.tsx
+Home,Home,/home,Page,,,,app/(tenant)/home/page.tsx
+Instruction,Instruction / Teachers,/instruction/teachers,Redirect,,/explorer/teachers,Preserves query parameters.,app/(tenant)/instruction/teachers/page.tsx
+Authentication,Invite / Detail (token),/invite/[token],Dynamic page,token,,URL pattern: replace bracketed parameters with actual values.,app/invite/[token]/page.tsx
+Leave,Leave,/leave,Page,,,,app/(tenant)/leave/page.tsx
+Leave,Leave / Detail (id),/leave/[id],Dynamic page,id,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/leave/[id]/page.tsx
+Leave,Leave / Calendar,/leave/calendar,Page,,,,app/(tenant)/leave/calendar/page.tsx
+Leave,Leave / History,/leave/history,Page,,,,app/(tenant)/leave/history/page.tsx
+Leave,Leave / Pending,/leave/pending,Configured redirect,,/leave#pending-requests,Permanent redirect defined in Next.js configuration.,next.config.mjs
+Leave,Leave / Request,/leave/request,Page,,,,app/(tenant)/leave/request/page.tsx
+Authentication,Login,/login,Page,,,,app/login/page.tsx
+Authentication,Login / Forgot Password,/login/forgot-password,Page,,,,app/login/forgot-password/page.tsx
+Authentication,Login / Reset Password,/login/reset-password,Page,,,,app/login/reset-password/page.tsx
+Authentication,Login / Sign Out,/login/sign-out,Page,,,,app/login/sign-out/page.tsx
+Meetings,Meetings,/meetings,Page,,,,app/(tenant)/meetings/page.tsx
+Meetings,Meetings / Detail (id),/meetings/[id],Dynamic page,id,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/meetings/[id]/page.tsx
+Meetings,Meetings / Actions,/meetings/actions,Redirect,,/my-actions,,app/(tenant)/meetings/actions/page.tsx
+Meetings,Meetings / New,/meetings/new,Page,,,,app/(tenant)/meetings/new/page.tsx
+My Actions,My Actions,/my-actions,Page,,,,app/(tenant)/my-actions/page.tsx
+Observe,Observe,/observe,Redirect,,/home,,app/(tenant)/observe/page.tsx
+Observe,Observe / Detail (id),/observe/[id],Dynamic page,id,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/observe/[id]/page.tsx
+Observe,Observe / History,/observe/history,Page,,,,app/(tenant)/observe/history/page.tsx
+Observe,Observe / New,/observe/new,Page,,,,app/(tenant)/observe/new/page.tsx
+Observe,Observe / New / Review,/observe/new/review,Page,,,,app/(tenant)/observe/new/review/page.tsx
+Observe,Observe / New / Signals,/observe/new/signals,Page,,,,app/(tenant)/observe/new/signals/page.tsx
+On Call,On Call,/on-call,Page,,,,app/(tenant)/on-call/page.tsx
+On Call,On Call / Detail (id),/on-call/[id],Dynamic page,id,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/on-call/[id]/page.tsx
+On Call,On Call / Feed,/on-call/feed,Page,,,,app/(tenant)/on-call/feed/page.tsx
+On Call,On Call / New,/on-call/new,Page,,,,app/(tenant)/on-call/new/page.tsx
+Onboarding,Onboarding,/onboarding,Page,,,,app/(tenant)/onboarding/page.tsx
+Profile,Profile,/profile,Page,,,,app/(tenant)/profile/page.tsx
+Strategy,Strategy,/strategy,Page,,,,app/(tenant)/strategy/page.tsx
+Students,Students,/students,Conditional redirect,,/explorer/students or /students/my,Role-dependent redirect to /explorer/students or /students/my; preserves relevant query parameters.,app/(tenant)/students/page.tsx
+Students,Students / Detail (id),/students/[id],Dynamic page,id,,URL pattern: replace bracketed parameters with actual values.,app/(tenant)/students/[id]/page.tsx
+Students,Students / Import Subject Teachers,/students/import-subject-teachers,Page,,,,app/(tenant)/students/import-subject-teachers/page.tsx
+Students,Students / My,/students/my,Page,,,May redirect to /students depending on user role.,app/(tenant)/students/my/page.tsx
+Compatibility,Tenant / Detail (slug),/tenant/[[...slug]],Compatibility redirect,slug,/home or /[slug],Optional catch-all: /tenant redirects to /home; /tenant/<path> redirects to /<path>.,app/tenant/[[...slug]]/page.tsx
+Classes,Classes,/classes,Page,,,,app/(tenant)/classes/page.tsx
+Classes,Classes / Detail (id),/classes/[id],Dynamic page,id,,,app/(tenant)/classes/[id]/page.tsx

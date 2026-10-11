@@ -1,0 +1,22 @@
+.page { background: #fff; }
+.page :global(.anx-page-header-shell) { background: #fff; border: 0; border-bottom: 1px solid #e5e5e6; border-radius: 0; padding: 0 0 24px; box-shadow: none; }
+.page h1 { font-size: clamp(30px,3vw,38px); font-weight: 600; letter-spacing: -.04em; }
+.page h1::after { content: "."; color: #ff6a52; }
+.page :global(.explorer-hub-kpi-card), .page :global(.explorer-hub-priorities), .page :global(.explorer-hub-intelligence-log) { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page :global(.explorer-hub-kpi-card) { padding: 20px; }
+.page :global(.explorer-hub-kpi-card) > div:first-child > span:first-child { background: #fff; color: #e14e36; border-radius: 10px; }
+.page :global(.explorer-hub-kpi-card) span[class*="text-[2.5rem]"] { font-weight: 600; letter-spacing: -.05em; }
+.page :global(.explorer-hub-kpi-label) { font-size: 10px; }
+.page :global(.explorer-hub-priorities) { color: #1c1c1e; }
+.page :global(.explorer-hub-priorities) :global(.text-white) { color: #1c1c1e; }
+.page :global(.explorer-hub-priorities) :global(.text-slate-300), .page :global(.explorer-hub-priorities) :global(.text-slate-400) { color: #6e6e73; }
+.page :global(.explorer-hub-priorities) > svg { color: #e14e36; }
+.page :global(.explorer-hub-priorities-column) { background: #fff; border-color: #e5e5e6; border-radius: 10px; }
+.page > div:global(.grid) > a { border-radius: 14px; }
+.page a:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+.page :global(.explorer-hub-kpi-card), .page :global(.explorer-hub-priorities) { transition: border-color 200ms, transform 250ms cubic-bezier(.22,1,.36,1); }
+.page a:hover :global(.explorer-hub-kpi-card), .page a:hover :global(.explorer-hub-priorities) { border-color: #ff6a52; transform: translateY(-2px); }
+@media (min-width: 1024px) { .page > div:global(.grid) { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (prefers-reduced-motion: no-preference) { .page > div:global(.grid) { animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page a:hover :global(.explorer-hub-kpi-card), .page a:hover :global(.explorer-hub-priorities) { transform: none; } }

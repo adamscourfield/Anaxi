@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import styles from "./page.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
@@ -13,10 +14,10 @@ import { SignalKeyIcon } from "@/app/(tenant)/admin/observation-signal-labels/Si
 const WINDOW_OPTIONS = [7, 21, 28] as const;
 
 const ELEVATED_SHELL =
-  "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
+  `${styles.card} overflow-hidden border border-border bg-white`;
 
 const KPI_ICON_WELL =
-  "flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[rgba(124,92,255,0.12)] text-[#7C5CFF] [&_svg]:h-[18px] [&_svg]:w-[18px]";
+  `${styles.icon} flex h-10 w-10 shrink-0 items-center justify-center [&_svg]:h-[18px] [&_svg]:w-[18px]`;
 
 const TH =
   "px-4 py-3.5 text-left text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[#6B7280] sm:px-5";
@@ -166,8 +167,8 @@ export default async function CpdSignalDrilldownPage({
   };
 
   return (
-    <div className="w-full min-w-0 space-y-5 pb-12 pt-1">
-      <div className="mx-auto max-w-[960px] space-y-5">
+    <div className={`${styles.page} w-full min-w-0 space-y-8 pb-12 pt-1`}>
+      <div className="mx-auto w-full space-y-8">
         <Link
           href={`/analytics?tab=cpd&${backParams.toString()}`}
           className="link-muted-accent inline-flex items-center gap-1 text-[0.8125rem] font-medium"
@@ -187,15 +188,20 @@ export default async function CpdSignalDrilldownPage({
               <SignalKeyIcon signalKey={signalKey} />
             </span>
             <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6B7280]">
-                CPD signal priority
-              </p>
               <h1 className="text-[1.75rem] font-bold tracking-tight text-[#111827] md:text-[2rem]">
                 {signalDisplayName}
               </h1>
               <p className="text-[0.9375rem] font-medium leading-relaxed text-[#374151]">
                 {sigDef.descriptionDefault}
               </p>
+            </div>
+            <div className={`${styles.window} segmented-toggle home-pulse-window-toggle`} role="group" aria-label="Analysis window length">
+              {WINDOW_OPTIONS.map((w) => (
+                <Link key={w} href={windowHref(w)} aria-current={w === windowDays ? "true" : undefined}
+                  className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}>
+                  {w}d
+                </Link>
+              ))}
             </div>
           </div>
 
@@ -208,24 +214,6 @@ export default async function CpdSignalDrilldownPage({
             ]}
           />
         </header>
-
-        <div className="anx-priorities-toolbar">
-          <div className="space-y-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6B7280]">Time window</p>
-            <p className="text-[0.8125rem] text-[#6B7280]">Choose how many recent days feed these metrics.</p>
-          </div>
-          <div className="filter-period-toggle w-fit max-w-full bg-[#F3F4F6]">
-            {WINDOW_OPTIONS.map((w) => (
-              <Link
-                key={w}
-                href={windowHref(w)}
-                className={`filter-period-btn ${w === windowDays ? "filter-period-btn-active" : ""}`}
-              >
-                {w} days
-              </Link>
-            ))}
-          </div>
-        </div>
 
         <details className="anx-priorities-definitions anx-priorities-definitions-card">
           <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-[#111827]">
@@ -426,7 +414,7 @@ export default async function CpdSignalDrilldownPage({
         )}
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
-          <Button asChild variant="secondary">
+          <Button asChild variant="secondary" className={styles.action}>
             <Link href={`/observe/history?signalKey=${signalKey}&window=${windowDays}`}>View observations</Link>
           </Button>
         </div>

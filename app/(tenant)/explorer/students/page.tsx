@@ -1,3 +1,4 @@
+import styles from "./students.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
@@ -290,7 +291,7 @@ export default async function StudentsPage({
   );
 
   return (
-    <div className="space-y-6">
+    <div className={`${styles.page} space-y-6`}>
       <ExplorerBackLink />
 
       <PageHeader

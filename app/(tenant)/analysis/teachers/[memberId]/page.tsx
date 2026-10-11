@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import styles from "./page.module.css";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -33,7 +34,7 @@ const STATUS_PILL: Record<RiskStatus, string> = {
 };
 
 const OBS_CARD_SHELL =
-  "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
+  `${styles.card} overflow-hidden border border-border bg-white`;
 
 function IconCircle({
   children,
@@ -44,7 +45,7 @@ function IconCircle({
 }) {
   return (
     <span
-      className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] ${className}`}
+      className={`${styles.icon} inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] ${className}`}
     >
       {children}
     </span>
@@ -308,7 +309,7 @@ export default async function TeacherProfilePage({
   const fullProfileAnchor = `${profileHref}#teacher-full-signal-profile`;
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className={`${styles.page} space-y-8 pb-10`}>
       <AnalysisBreadcrumb
         items={[
           { label: "Teachers", href: "/explorer/teachers" },
@@ -335,57 +336,25 @@ export default async function TeacherProfilePage({
           </StatusPill>
         }
         actions={
-          <Link
-            href={`/explorer/teachers?window=${windowDays}`}
-            className="text-sm font-semibold text-accent underline-offset-2 hover:text-accentHover"
-          >
-            Explorer teacher view →
-          </Link>
+          <div className={styles.coverageControls}>
+            <div className="segmented-toggle home-pulse-window-toggle" role="group" aria-label="Analysis window length">
+              {WINDOW_OPTIONS.map((w) => (
+                <Link
+                  key={w}
+                  href={buildWindowHref(teacherId, w, refSource)}
+                  aria-current={w === windowDays ? "true" : undefined}
+                  className={`segmented-toggle-btn ${w === windowDays ? "segmented-toggle-btn-active" : ""}`}
+                >
+                  {w}d
+                </Link>
+              ))}
+            </div>
+          </div>
         }
+
       />
 
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.8125rem] leading-relaxed text-muted">
-          <span className="inline-flex items-center gap-1.5">
-            <IconCalendarSmall />
-            <span>
-              <span className="font-medium text-text">Coverage:</span> {profile.teacherCoverage} observation
-              {profile.teacherCoverage !== 1 ? "s" : ""} in last {windowDays} days
-            </span>
-          </span>
-          {profile.lastObservationAt && (
-            <>
-              <span className="text-border" aria-hidden>
-                ·
-              </span>
-              <span>Last observed {formatShortDate(new Date(profile.lastObservationAt))}</span>
-            </>
-          )}
-          <span className="text-border" aria-hidden>
-            ·
-          </span>
-          <span>Updated {computedAt}</span>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-[0.8125rem] font-medium text-muted">Window:</span>
-          <div className="inline-flex flex-wrap gap-2">
-            {WINDOW_OPTIONS.map((w) => (
-              <Link
-                key={w}
-                href={buildWindowHref(teacherId, w, refSource)}
-                className={`rounded-md px-3.5 py-1.5 text-[0.8125rem] font-semibold calm-transition ${
-                  w === windowDays
-                    ? "bg-[var(--surface-container-high)] text-text shadow-sm"
-                    : "bg-[var(--surface-container-low)] text-muted hover:bg-[var(--surface-container)] hover:text-text"
-                }`}
-              >
-                {w} days
-              </Link>
-            ))}
-          </div>
-        </div>
-      </header>
 
       <div className="grid gap-5 lg:grid-cols-2 lg:gap-6">
         {/* Observed (observee) */}
@@ -427,7 +396,7 @@ export default async function TeacherProfilePage({
                         </p>
                       </div>
                       <span className="inline-flex shrink-0 items-center gap-2">
-                        <span className="rounded-md bg-[color-mix(in_srgb,var(--scale-strong-bar)_18%,var(--surface-container-lowest))] px-2.5 py-1 text-[0.6875rem] font-semibold text-scale-strong-text calm-transition group-hover:bg-[color-mix(in_srgb,var(--scale-strong-bar)_28%,var(--surface-container-lowest))]">
+                        <span data-open-observation className="rounded-md bg-[color-mix(in_srgb,var(--scale-strong-bar)_18%,var(--surface-container-lowest))] px-2.5 py-1 text-[0.6875rem] font-semibold text-scale-strong-text calm-transition group-hover:bg-[color-mix(in_srgb,var(--scale-strong-bar)_28%,var(--surface-container-lowest))]">
                           Open
                         </span>
                         <IconChevronRight />
@@ -496,7 +465,7 @@ export default async function TeacherProfilePage({
                         </p>
                       </div>
                       <span className="inline-flex shrink-0 items-center gap-2">
-                        <span className="rounded-md bg-[color-mix(in_srgb,var(--scale-strong-bar)_18%,var(--surface-container-lowest))] px-2.5 py-1 text-[0.6875rem] font-semibold text-scale-strong-text calm-transition group-hover:bg-[color-mix(in_srgb,var(--scale-strong-bar)_28%,var(--surface-container-lowest))]">
+                        <span data-open-observation className="rounded-md bg-[color-mix(in_srgb,var(--scale-strong-bar)_18%,var(--surface-container-lowest))] px-2.5 py-1 text-[0.6875rem] font-semibold text-scale-strong-text calm-transition group-hover:bg-[color-mix(in_srgb,var(--scale-strong-bar)_28%,var(--surface-container-lowest))]">
                           Open
                         </span>
                         <IconChevronRight />
@@ -675,7 +644,7 @@ export default async function TeacherProfilePage({
               : `Instructional drift score (IDS): ${profile.normalizedIDS.toFixed(1)} · Sorted by change (weakest first)`}
           </p>
         </div>
-        <div className="overflow-x-auto">
+        <div className={styles.signalScroll}>
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_10%,transparent)] bg-[var(--surface-container-low)]/50 text-[0.6875rem] font-semibold uppercase tracking-wide text-muted">
@@ -732,6 +701,7 @@ export default async function TeacherProfilePage({
       </section>
 
       <div className="flex flex-wrap justify-center gap-4 pt-2">
+        <span className="text-xs text-muted">Updated {computedAt}</span>
         <Link
           href={historyHref}
           className="text-[0.8125rem] font-semibold text-muted hover:text-text hover:underline"

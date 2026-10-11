@@ -1,4 +1,5 @@
 import Link from "next/link";
+import styles from "./page.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { hasOnCallPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
@@ -118,7 +119,7 @@ export default async function OnCallHomePage({
     todayClosed > 0 ? Math.round((todayResolved / todayClosed) * 100) : 0;
 
   return (
-    <div className="w-full min-w-0 space-y-8">
+    <div className={`${styles.page} w-full min-w-0 space-y-8`}>
       <PageHeader variant="ledger"
         title="On Call"
         actions={

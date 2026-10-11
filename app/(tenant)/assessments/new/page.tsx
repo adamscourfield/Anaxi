@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import styles from "./page.module.css";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -220,15 +221,15 @@ export default function NewCyclePage() {
 
   if (step === "done") {
     return (
-      <AttainmentPageShell>
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className={styles.page}><AttainmentPageShell>
+      <div className="mx-auto max-w-3xl space-y-8">
         <AssessmentsBreadcrumb
           items={[
             { label: "Attainment", href: "/assessments" },
             { label: "Cycle created" },
           ]}
         />
-        <PageHeader variant="ledger" eyebrow="Attainment" title="Cycle created" subtitle={`"${cycleLabel}" is ready.`} />
+        <PageHeader variant="ledger" title="Cycle created" subtitle={`"${cycleLabel}" is ready.`} />
         <Card className="space-y-4">
           <p className="text-sm text-muted">Next steps to unlock analysis:</p>
           <ol className="list-decimal space-y-2 pl-5 text-sm text-text">
@@ -247,13 +248,13 @@ export default function NewCyclePage() {
           </div>
         </Card>
       </div>
-      </AttainmentPageShell>
+      </AttainmentPageShell></div>
     );
   }
 
   return (
-    <AttainmentPageShell>
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className={styles.page}><AttainmentPageShell>
+    <div className="mx-auto max-w-3xl space-y-8">
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -261,7 +262,6 @@ export default function NewCyclePage() {
         ]}
       />
       <PageHeader variant="ledger"
-        eyebrow="Attainment"
         title="New cycle"
         subtitle="A cycle tracks one cohort's outcomes across an academic year."
       />
@@ -281,6 +281,7 @@ export default function NewCyclePage() {
                   <button
                     key={q.value}
                     type="button"
+                    aria-pressed={qualificationType === q.value}
                     onClick={() => handleQualChange(q.value)}
                     className={`rounded-xl border-2 p-3 text-left transition-all ${
                       qualificationType === q.value
@@ -295,7 +296,7 @@ export default function NewCyclePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-sm font-medium text-[var(--on-surface)]">Cohort</label>
                 <input
@@ -342,7 +343,7 @@ export default function NewCyclePage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-sm font-medium text-[var(--on-surface)]">Start date</label>
                 <input type="date" className="field w-full" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
@@ -419,6 +420,6 @@ export default function NewCyclePage() {
         </Card>
       )}
     </div>
-    </AttainmentPageShell>
+    </AttainmentPageShell></div>
   );
 }

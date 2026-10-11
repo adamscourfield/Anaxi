@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { FormSelect } from "@/components/ui/form-select";
 
 interface HistoryFiltersProps {
@@ -39,10 +40,18 @@ export function HistoryFilters({
   showTeacherFilters,
   hasFilters,
 }: HistoryFiltersProps) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const sync = () => { if (detailsRef.current) detailsRef.current.open = media.matches; };
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
   const triggerWhite = "field-filter-trigger";
 
   return (
-    <details className="filter-panel obs-history-filter-panel md:open">
+    <details ref={detailsRef} open className="filter-panel obs-history-filter-panel">
       <summary className="mb-4 cursor-pointer text-sm font-semibold text-text md:hidden">Filters</summary>
       <form
         method="get"

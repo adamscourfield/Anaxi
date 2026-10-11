@@ -1,0 +1,28 @@
+.page { background: #fff; }
+.main { flex: 1; display: grid; place-items: center; padding: 64px 24px; }
+.panel { width: 100%; max-width: 400px; animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; }
+.page .title { margin: 16px 0 0; font-family: inherit; color: #1c1c1e; font-size: 40px; font-weight: 600; letter-spacing: -.045em; line-height: 1.15; }
+.title span { color: #ff6a52; }
+.subtitle { margin-top: 12px; color: #6e6e73; font-size: 14px; line-height: 1.7; }
+.card { margin-top: 28px; padding: 28px; border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.label { display: block; color: #1c1c1e; font-size: 13px; font-weight: 500; }
+.page .field { width: 100%; height: 44px; padding: 0 14px; background: #fff; color: #1c1c1e; border: 1px solid #e5e5e6; border-radius: 10px; font: inherit; font-size: 14px; outline: none; transition: border-color 150ms, box-shadow 150ms; }
+.page .field::placeholder { color: #76767b; }
+.page .field:focus { border-color: #1c1c1e; box-shadow: 0 0 0 3px #1c1c1e0d; }
+.page .button { width: 100%; min-height: 44px; border: 1px solid #1c1c1e; border-radius: 10px; font: inherit; font-weight: 600; font-size: 14px; color: #fff; background: linear-gradient(135deg,#1c1c1e,#333335); transition: transform 200ms cubic-bezier(.22,1,.36,1), box-shadow 200ms; }
+.page .button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 16px -9px #1c1c1e66; }
+.page .button:active:not(:disabled) { transform: scale(.97); }
+.page .school, .page .secondary { background: #fff; color: #1c1c1e; border-color: #e5e5e6; }
+.page .school { text-align: left; justify-content: flex-start; }
+.page .button:focus-visible, .forgot:focus-visible { outline: 2px solid #ff6a52; outline-offset: 4px; box-shadow: none; }
+.forgot { color: #6e6e73; font-size: 13px; text-decoration: none; transition: color 150ms; }
+.forgot:hover { color: #1c1c1e; text-decoration: underline; text-decoration-color: #ff6a52; text-underline-offset: 4px; }
+.error { padding: 10px 12px; border-left: 2px solid #d1453a; color: #b9342b; font-size: 13px; line-height: 1.6; }
+.hint { margin: 22px auto 0; max-width: 340px; color: #6e6e73; text-align: center; font-size: 12px; line-height: 1.7; }
+.help { color: #6e6e73; font-size: 12px; line-height: 1.7; }
+.successIcon { display: grid; place-items: center; margin: 0 auto; width: 48px; height: 48px; border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; color: #e14e36; }
+.successTitle { color: #1c1c1e; font-size: 17px; font-weight: 600; letter-spacing: -.02em; }
+.inviteIdentity { display: grid; gap: 6px; padding-bottom: 20px; border-bottom: 1px solid #e5e5e6; overflow-wrap: anywhere; }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (max-width: 600px) { .main { padding: 48px 24px; } .card { padding: 24px; } .page .title { font-size: 36px; } }
+@media (prefers-reduced-motion: reduce) { .panel, .page .button, .field, .forgot { animation: none; transition: none; } .page .button:hover:not(:disabled), .page .button:active:not(:disabled) { transform: none; } }

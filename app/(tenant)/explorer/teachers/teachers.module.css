@@ -1,0 +1,29 @@
+.page { background: #fff; }
+.page :global(.anx-page-header-shell) { background: #fff; border: 0; border-bottom: 1px solid #e5e5e6; padding: 0 0 24px; border-radius: 0; box-shadow: none; }
+.page :global(.teachers-filter-toolbar), .page :global(.table-shell) { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page :global(.teachers-filter-toolbar__icon) { color: #e14e36; background: #fff; }
+.page :global(.teachers-filter-toolbar__label) { color: #6e6e73; font-size: 10px; letter-spacing: .08em; }
+.page :global(.filter-period-toggle) { border: 1px solid #e5e5e6; background: #fff; border-radius: 10px; padding: 3px; }
+.page :global(.filter-period-btn) { border-radius: 7px; font-weight: 500; }
+.page :global(.filter-period-btn-active) { background: #1c1c1e; color: #fff; box-shadow: none; }
+.page button[type="submit"] { background: #1c1c1e; color: #fff; border-color: #1c1c1e; border-radius: 10px; }
+.page button[type="submit"]:hover { background: #333335; }
+.page :global(.field) { background: #fff; border-color: #e5e5e6; }
+.page :global(.table-head-row), .page thead th { background: #fff; color: #6e6e73; font-size: 10px; font-weight: 600; letter-spacing: .06em; }
+.page tbody tr { background: #fff; border-color: #e5e5e6; transition: background 180ms; }
+.page tbody tr:hover { background: #fafafa; }
+.page td:first-child p:first-child { font-weight: 600; }
+.page td:first-child a > span { border-radius: 50%; background: #ff6a52; color: #fff; }
+.page button:focus-visible, .page a:focus-visible, .page select:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) { .page :global(.table-shell) { animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page tbody tr { transition: none; } }
+@media (min-width: 1024px) {
+  .page :global(.teachers-filter-toolbar) { display: grid; grid-template-columns: 1fr 1.05fr 1.2fr; }
+  .page :global(.teachers-filter-toolbar__divider) { display: none; }
+  .page :global(.teachers-filter-toolbar__section) + :global(.teachers-filter-toolbar__divider) + :global(.teachers-filter-toolbar__section) { border-left: 1px solid #e5e5e6; }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .page :global(.teachers-filter-toolbar) { flex-wrap: wrap; }
+  .page :global(.teachers-filter-toolbar__section):last-child { flex-basis: 100%; border-top: 1px solid #e5e5e6; }
+}

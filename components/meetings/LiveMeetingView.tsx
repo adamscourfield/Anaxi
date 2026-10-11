@@ -46,6 +46,7 @@ interface LiveMeetingViewProps {
   canAddActions: boolean;
   canDelete: boolean;
   avgActionsForType?: number;
+  previewMode?: boolean;
 }
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
@@ -336,6 +337,7 @@ export function LiveMeetingView({
   canAddActions,
   canDelete,
   avgActionsForType = 0,
+  previewMode = false,
 }: LiveMeetingViewProps) {
   const router = useRouter();
   const timerAnchor = initialStartedAt;
@@ -654,9 +656,7 @@ export function LiveMeetingView({
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="text-[1.65rem] font-bold leading-tight tracking-[-0.02em] text-text sm:text-[1.875rem]">
-              {title}
-            </h1>
+
             <div className="flex flex-wrap items-center gap-4">
               <span
                 className="flex items-center gap-2 font-mono text-sm tabular-nums text-muted"
@@ -692,6 +692,7 @@ export function LiveMeetingView({
             <Button
               type="button"
               variant="secondary"
+              disabled={previewMode}
               onClick={handleSaveDraft}
               className="rounded-xl px-4 py-2.5"
             >
@@ -706,6 +707,7 @@ export function LiveMeetingView({
               <Button
                 variant="danger"
                 className="rounded-xl px-5 py-2.5 text-[0.8125rem]"
+                disabled={previewMode}
                 onClick={() => setEndMeetingOpen(true)}
               >
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>

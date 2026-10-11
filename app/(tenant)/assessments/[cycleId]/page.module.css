@@ -1,0 +1,21 @@
+.page { min-width: 0; }
+.page :global(.anx-attainment-page) { background: #fff; }
+.page h1 { font-weight: 600; color: #1c1c1e; letter-spacing: -.04em; }
+.page h1::after { content: "."; color: #ff6a52; }
+.page [data-ui-card] { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page a:has(> svg), .page a[class*="inline-flex"] { background: #1c1c1e; background-image: none; color: #fff; border-color: #1c1c1e; border-radius: 10px; }
+.page thead tr { background: #fff; }
+.page tbody tr { background: #fff; }
+.page tbody tr:hover { background: #fafafa; }
+.page th { color: #6e6e73; font-size: 10px; letter-spacing: .08em; font-weight: 600; }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+.summary > div:not([aria-hidden]) { padding: 20px; background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.summary span[aria-hidden] { background: #fff; color: #e14e36; border: 1px solid #e5e5e6; border-radius: 12px; }
+@media (max-width: 1023px) { .summary { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 639px) { .summary { grid-template-columns: 1fr; } }
+
+.page button, .page summary[class*="inline-flex"], .page a[class*="inline-flex"] { background: #1c1c1e; background-image: none; color: #fff; border-color: #1c1c1e; border-radius: 10px; }
+.page button svg, .page summary[class*="inline-flex"] svg { color: #fff; }
+.page button:hover { background: #333; color: #fff; }
+
+.pointActions > a, .pointActions > button { width: 144px; height: 40px; padding: 0 16px; font-size: 13px; box-sizing: border-box; justify-content: center; }

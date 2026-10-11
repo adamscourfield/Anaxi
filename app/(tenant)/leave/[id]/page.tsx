@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import styles from "./page.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -202,14 +203,23 @@ export default async function LeaveDetailPage({
   const resolvedParams = await params;
   const query = (await searchParams) ?? {};
 
-  const request = await prisma.lOARequest.findFirst({
+  const preview = process.env.NODE_ENV === "development" && resolvedParams.id === "design-preview";
+  const request = preview ? {
+    id:"design-preview", requesterId:user.id, requester:{fullName:"Example staff member"},
+    reason:{label:"Personal leave"}, status:"PENDING" as const,
+    startDate:new Date("2026-10-19T00:00:00"), endDate:new Date("2026-10-20T00:00:00"),
+    createdAt:new Date("2026-10-11T09:00:00"), updatedAt:new Date("2026-10-11T09:00:00"),
+    reasonText:"A personal appointment requiring time away from school.",
+    coverRequirements:"Cover notes will be shared with the team before the absence.",
+    medicalEvidenceUrl:null, notes:null, decisionNotes:null,
+  } : await prisma.lOARequest.findFirst({
     where: { id: resolvedParams.id, tenantId: user.tenantId },
     include: { requester: true, reason: true },
   });
   if (!request) notFound();
 
   const isOwner = request.requesterId === user.id;
-  const manager = !isOwner && (await canManageLoa(user, request.requesterId));
+  const manager = !preview && !isOwner && (await canManageLoa(user, request.requesterId));
   if (!manager && !isOwner) notFound();
 
   const startDate = new Date(request.startDate);
@@ -217,8 +227,8 @@ export default async function LeaveDetailPage({
   const days = businessDaysBetween(startDate, endDate);
   const status = normalizeLoaStatus(request.status) as string;
   const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.PENDING;
-  const canCancel = isOwner && isPendingStatus(request.status);
-  const canDelete = hasPermission(user.role, "leave:delete");
+  const canCancel = !preview && isOwner && isPendingStatus(request.status);
+  const canDelete = !preview && hasPermission(user.role, "leave:delete");
 
   const fromCalendar = query.from === "calendar";
   const calendarMonth = String(query.month || "");
@@ -232,7 +242,7 @@ export default async function LeaveDetailPage({
   const surfaceCard = LEAVE_ELEVATED_CARD;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 pb-24 pt-1 md:pb-8">
+    <div className={`${styles.page} mx-auto max-w-3xl space-y-6 pb-24 pt-1 md:pb-8`}>
       <PageHeader
         variant="ledger"
         title={request.requester?.fullName ?? "Staff member"}

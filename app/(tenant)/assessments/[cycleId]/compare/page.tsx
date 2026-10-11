@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import Link from "next/link";
+import styles from "./page.module.css";
 import { DataTableEmpty } from "@/components/ui/data-table-empty";
 import { AssessmentsBreadcrumb } from "@/components/assessments/assessments-chrome";
 import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
@@ -337,7 +338,7 @@ export default function ComparisonPage() {
     .slice(0, 10);
 
   return (
-    <AttainmentPageShell>
+    <div className={styles.page}><AttainmentPageShell>
       <AssessmentsBreadcrumb
         items={[
           { label: "Attainment", href: "/assessments" },
@@ -347,14 +348,13 @@ export default function ComparisonPage() {
       />
 
       <PageHeader variant="ledger"
-        eyebrow="Attainment"
         title="Compare result points"
         subtitle="Track progress, accuracy, and movement between any two result points in this cycle."
       />
 
       {/* Point selectors */}
       <Card className="space-y-4">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5 items-end">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-5 items-end">
           <div className="sm:col-span-2 space-y-1">
             <label className="text-xs font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">From</label>
             <select className="field w-full" value={fromId} onChange={(e) => setFromId(e.target.value)}>
@@ -417,7 +417,7 @@ export default function ComparisonPage() {
       {!loading && data && data.subjects.length > 0 && (
         <div key={`${data.fromPoint.id}-${data.toPoint.id}`} className="motion-safe:animate-page-enter space-y-8">
           {/* Summary cards */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {(() => {
               const avgDelta = data.summary.avgDelta;
               const avgUp = avgDelta !== null && avgDelta > 0;
@@ -764,7 +764,7 @@ export default function ComparisonPage() {
                   title="Rank Movement"
                   subtitle="Overall rank based on mean score across all subjects. Positive = moved up."
                 />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {[
                     {
                       title: "Biggest rank rises",
@@ -848,7 +848,7 @@ export default function ComparisonPage() {
           )}
 
           {/* Top improvers / decliners */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {[
               { title: "Top Improvers", students: topImprovers, valueCls: "text-[var(--success)]", icon: <IconTrendUp />, iconBg: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]" },
               { title: "Biggest Declines", students: topDecliners, valueCls: "text-[var(--error)]", icon: <IconTrendDown />, iconBg: "bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]" },
@@ -876,6 +876,6 @@ export default function ComparisonPage() {
           </div>
         </div>
       )}
-    </AttainmentPageShell>
+    </AttainmentPageShell></div>
   );
 }

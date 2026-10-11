@@ -1,0 +1,15 @@
+.page { color: #1c1c1e; animation: arrive .45s cubic-bezier(.22,1,.36,1) both; }
+.dot { color: #ff6a52; }
+.page h1 { font-size: 34px; font-weight: 600; letter-spacing: -.04em; }
+.page h2 { font-weight: 600; }
+.page > div:first-child { padding-bottom: 28px; border-bottom: 1px solid #e5e5e6; }
+.page :global(.shadow-none) { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
+.page span:has(> svg) { border: 1px solid #e5e5e6; border-radius: 10px; }
+.page button { background: #1c1c1e !important; color: #fff !important; border: 1px solid #1c1c1e !important; border-radius: 10px; min-height: 40px; box-shadow: none; }
+.page button svg { color: #fff; }
+.page aside li > div:last-child { border: 1px solid #e5e5e6; border-radius: 10px; }
+.page aside ul { flex: none; }
+.page aside li p:first-child { font-weight: 600; }
+.page > div:first-child > div > div:first-child { background: #fff !important; border: 1px solid #e5e5e6; }
+@keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media(prefers-reduced-motion: reduce) { .page { animation: none; } }

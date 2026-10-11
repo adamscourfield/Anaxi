@@ -75,7 +75,7 @@ function ChartTooltip({ state }: { state: TooltipState }) {
   return createPortal(
     <div
       ref={ref}
-      className="pointer-events-none fixed z-[100] max-w-[min(280px,calc(100vw-1.5rem))] rounded-sm border border-border bg-[var(--surface-container-lowest)] px-3.5 py-2.5 text-[0.8125rem] text-text shadow-none"
+      className="pointer-events-none fixed z-[100] max-w-[min(280px,calc(100vw-1.5rem))] rounded-lg bg-[#1c1c1e] px-3 py-2 text-[11.5px] text-white shadow-xl"
       style={{
         left: pos?.left ?? state.x + TOOLTIP_GAP,
         top: pos?.top ?? state.y + TOOLTIP_GAP,
@@ -86,11 +86,11 @@ function ChartTooltip({ state }: { state: TooltipState }) {
       <div className="whitespace-pre-wrap">
         {state.text.split("\n").map((line, i) =>
           i === 0 ? (
-            <p key={i} className="font-bold text-[var(--on-surface)]">
+            <p key={i} className="font-semibold text-white">
               {line}
             </p>
           ) : (
-            <p key={i} className="mt-0.5 text-[var(--on-surface-variant)]">
+            <p key={i} className="mt-0.5 text-white/75">
               {line}
             </p>
           ),
@@ -105,8 +105,8 @@ function ChartTooltip({ state }: { state: TooltipState }) {
 const TIMELINE_PAD = { L: 36, R: 8, T: 12, B: 28, W: 640, H: 160 };
 
 /** Primary ink for observation intelligence charts (ledger / monochrome mock). */
-const OBS_CHART_INK = "#111827";
-const OBS_CHART_INK_SOFT = "#374151";
+const OBS_CHART_INK = "#ff6a52";
+const OBS_CHART_INK_SOFT = "#ff6a52";
 /** Bar fill: deep slate → softer slate (horizontal emphasis without violet chrome). */
 const ROLE_BAR_GRADIENT = `linear-gradient(90deg, ${OBS_CHART_INK} 0%, ${OBS_CHART_INK_SOFT} 100%)`;
 
@@ -203,7 +203,7 @@ function pointOnPolylineAtX(pts: PolyPoint[], targetX: number): { x: number; y: 
   const b = pts[i + 1];
   const denom = b.x - a.x;
   const t = denom === 0 ? 0 : (tx - a.x) / denom;
-  const y = a.y + t * (b.y - a.y);
+  const y = a.y + t * t * (3 - 2 * t) * (b.y - a.y);
 
   let pathD = `M ${pts[0].x} ${pts[0].y}`;
   for (let k = 1; k <= i; k++) {
@@ -466,7 +466,12 @@ export function ObservationHistoryAnalysis({
       const y = padT + innerH - (row.count / maxTimeline) * innerH;
       return { x, y, label: row.label, count: row.count, weekKey: row.weekKey };
     });
-    const lineD = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+    const lineD = pts.map((p, i) => {
+      if (i === 0) return `M ${p.x} ${p.y}`;
+      const prev = pts[i - 1];
+      const dx = (p.x - prev.x) / 3;
+      return `C ${prev.x + dx} ${prev.y} ${p.x - dx} ${p.y} ${p.x} ${p.y}`;
+    }).join(" ");
     const fillD = `${lineD} L ${pts[pts.length - 1].x.toFixed(1)} ${(padT + innerH).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(padT + innerH).toFixed(1)} Z`;
     return { d: lineD, fillD, points: pts, w, h, padL, padR, padT, padB };
   }, [chartTimelineWeeks, maxTimeline]);
@@ -598,7 +603,7 @@ export function ObservationHistoryAnalysis({
   }, [linePoints, timelineSnapIdx, timelineGuide]);
 
   const barTrack =
-    "relative h-8 min-w-0 w-full overflow-hidden rounded-md bg-[var(--surface-container-low)] calm-transition";
+    "relative h-1.5 min-w-0 w-full overflow-hidden rounded-full bg-[#e7e7e7]";
 
   const hasRoles = roleCounts.some((r) => r.count > 0);
   const hasTimeline = timelineWeeks.length > 0;
@@ -731,7 +736,7 @@ export function ObservationHistoryAnalysis({
                     <li key={row.role}>
                       <button
                         type="button"
-                        className="grid w-full cursor-default grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)_3.25rem] items-center gap-x-3 rounded-md py-0.5 text-left text-sm calm-transition hover:bg-neutral-950/[0.04] sm:grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_3.5rem]"
+                        className="grid w-full cursor-default grid-cols-[minmax(0,5rem)_minmax(0,1fr)_2rem] items-center gap-x-3 rounded-md py-0.5 text-left text-sm calm-transition hover:bg-neutral-950/[0.04] sm:grid-cols-[minmax(0,5rem)_minmax(0,1fr)_2rem]"
                         onMouseEnter={(e) =>
                           showTip(
                             e,
@@ -746,7 +751,7 @@ export function ObservationHistoryAnalysis({
                         </span>
                         <div className={barTrack}>
                           <span
-                            className="pointer-events-none absolute inset-y-0 left-0 rounded-sm"
+                            className="pointer-events-none absolute inset-y-0 left-0 rounded-full obs-relay-bar"
                             style={{
                               width: `${pct}%`,
                               minWidth: row.count > 0 ? "0.5rem" : 0,
@@ -767,7 +772,7 @@ export function ObservationHistoryAnalysis({
                 })}
               </ul>
               <p className="mt-auto pt-5 text-[0.6875rem] text-[var(--on-surface-variant)]">
-                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-sm align-middle bg-neutral-950" />{" "}
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-sm align-middle bg-[#ff6a52]" />{" "}
                 Total observations
               </p>
             </>
@@ -818,9 +823,9 @@ export function ObservationHistoryAnalysis({
             <p className="mt-4 text-sm text-muted">No weeks in range.</p>
           ) : (
             (() => {
-              const { padL, padT, plotW, plotH, pts, snapIdx, segmentD, hoverX } = timelineSvgPlot;
+              const { padL, padT, plotW, plotH, pts, snapIdx, hoverX } = timelineSvgPlot;
               return (
-                <div className="mt-4 w-full flex-1 overflow-x-auto rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)] p-4">
+                <div className="mt-4 w-full flex-1 overflow-x-auto bg-white pt-3">
                   <svg
                     viewBox={`0 0 ${linePoints.w} ${linePoints.h}`}
                     className="h-48 w-full min-w-[280px] cursor-crosshair calm-transition"
@@ -838,7 +843,7 @@ export function ObservationHistoryAnalysis({
                   >
                     <defs>
                       <linearGradient id={`${chartSvgId}-fill`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={OBS_CHART_INK} stopOpacity="0.14" />
+                        <stop offset="0%" stopColor={OBS_CHART_INK} stopOpacity="0.22" />
                         <stop offset="55%" stopColor={OBS_CHART_INK} stopOpacity="0.06" />
                         <stop offset="100%" stopColor={OBS_CHART_INK} stopOpacity="0" />
                       </linearGradient>
@@ -922,29 +927,19 @@ export function ObservationHistoryAnalysis({
                       strokeWidth="2.5"
                       strokeLinejoin="round"
                       strokeLinecap="round"
-                      className="pointer-events-none calm-transition"
-                      strokeOpacity={snapIdx !== null ? 0.22 : 1}
+                      className="pointer-events-none obs-relay-line"
+                      pathLength={1}
+                      strokeOpacity={1}
                     />
-                    {segmentD ? (
-                      <path
-                        d={segmentD}
-                        fill="none"
-                        stroke={OBS_CHART_INK}
-                        strokeWidth="3"
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        className="pointer-events-none calm-transition"
-                        strokeOpacity={1}
-                      />
-                    ) : null}
                     {hoverX != null ? (
                       <line
                         x1={hoverX}
                         x2={hoverX}
                         y1={padT}
                         y2={padT + plotH}
-                        stroke={OBS_CHART_INK}
-                        strokeOpacity={0.28}
+                        stroke="#cfcfd1"
+                        strokeDasharray="3 4"
+                        strokeOpacity={1}
                         strokeWidth="1"
                         className="pointer-events-none"
                       />
@@ -957,21 +952,13 @@ export function ObservationHistoryAnalysis({
                           <circle
                             cx={p.x}
                             cy={p.y}
-                            r={active ? 7.5 : 5}
-                            fill="#FFFFFF"
-                            stroke={OBS_CHART_INK}
-                            strokeWidth={active ? 2.75 : 2}
-                            opacity={dim ? 0.3 : 1}
+                            r={active ? 5 : 3}
+                            fill={active ? "#ff6a52" : OBS_CHART_INK}
+                            stroke="#FFFFFF"
+                            strokeWidth={1.5}
+                            opacity={dim ? 0.45 : p.count === 0 && !active ? 0 : 1}
                           />
-                          {p.count > 0 ? (
-                            <circle
-                              cx={p.x}
-                              cy={p.y}
-                              r={active ? 3.25 : 2.25}
-                              fill={OBS_CHART_INK}
-                              opacity={dim ? 0.35 : 1}
-                            />
-                          ) : null}
+
                         </g>
                       );
                     })}

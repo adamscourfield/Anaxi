@@ -2,15 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import {
-  AuthBackLink,
-  AuthCard,
-  AuthFieldLabel,
-  AuthFlowMain,
-  AuthNav,
-  AuthPageHeader,
-  AuthShell,
-} from "@/components/auth-shell";
+import Image from "next/image";
+import { Figtree } from "next/font/google";
+import styles from "../login.module.css";
+import landing from "../../landing.module.css";
+import { SkipToContent } from "@/components/skip-to-content";
+
+const figtree = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
+
 import { Button } from "@/components/ui/button";
 
 type State = "idle" | "loading" | "sent" | "error";
@@ -23,15 +22,11 @@ export default function ForgotPasswordPage() {
     setState("loading");
     const fd = new FormData(e.currentTarget);
     const email = String(fd.get("email") || "");
-    const tenantId = String(fd.get("tenantId") || "").trim();
     try {
       await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          ...(tenantId ? { tenantId } : {}),
-        }),
+        body: JSON.stringify({ email }),
       });
       setState("sent");
     } catch {
@@ -40,30 +35,35 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <AuthShell variant="light">
-      <AuthNav />
-      <AuthFlowMain>
-        <AuthPageHeader
-          title="Reset password"
-          subtitle="Enter your email and we'll send you a link to set a new password."
-        />
-
-        <AuthCard>
+    <div className={`${landing.page} ${styles.page} ${figtree.className}`}>
+      <SkipToContent targetId="auth-form" label="Skip to reset password form" />
+      <header className={landing.header}>
+        <Link href="/" className={landing.brand} aria-label="Anaxi home">
+          <Image src="/anaxi-logo.png" alt="" width={32} height={32} priority />
+          <span>Anaxi<span className={landing.brandDot}>.</span></span>
+        </Link>
+        <span className={landing.headerLabel}>Institutional intelligence</span>
+      </header>
+      <main className={styles.main}>
+        <div id="auth-form" className={styles.panel}>
+        <h1 className={styles.title}>Reset password<span>.</span></h1>
+        <p className={styles.subtitle}>Enter your school email and we’ll send you a link to set a new password.</p>
+        <div className={styles.card}>
           {state === "sent" ? (
-            <div className="space-y-4 py-2 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-[var(--surface-container-low)]">
+            <div className="space-y-4 py-2 text-center" role="status">
+              <div className={styles.successIcon}>
                 <svg viewBox="0 0 20 20" fill="none" className="h-6 w-6" aria-hidden>
                   <path
                     d="M3.5 10 7.5 14l9-8"
-                    stroke="var(--on-surface)"
+                    stroke="currentColor"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                 </svg>
               </div>
-              <p className="text-[15px] font-semibold text-text">Check your email</p>
-              <p className="text-[13px] leading-relaxed text-muted">
+              <p className={styles.successTitle}>Check your email</p>
+              <p className={styles.help}>
                 If an account exists for that address, we&apos;ve sent a password reset link. It expires in 1
                 hour. Check your spam or junk folder if it does not arrive within a few minutes.
               </p>
@@ -71,64 +71,40 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={onSubmit} className="space-y-5">
               <div className="space-y-2">
-                <AuthFieldLabel htmlFor="email">Email</AuthFieldLabel>
+                <label className={styles.label} htmlFor="email">School email</label>
                 <input
                   id="email"
                   name="email"
                   type="email"
                   placeholder="you@school.edu"
-                  className="field"
+                  className={styles.field}
                   required
                   autoComplete="email"
                 />
               </div>
 
-              <div className="space-y-2">
-                <AuthFieldLabel htmlFor="tenantId">School ID (optional)</AuthFieldLabel>
-                <input
-                  id="tenantId"
-                  name="tenantId"
-                  type="text"
-                  placeholder="e.g. demo_academy"
-                  className="field"
-                  autoComplete="off"
-                />
-                <p className="text-xs text-muted">
-                  Use this if your email is registered at more than one school.
-                </p>
-              </div>
-
               {state === "error" ? (
-                <div
-                  className="rounded-md border border-[var(--coral-border)] px-4 py-3"
-                  style={{ background: "var(--pill-error-bg)" }}
-                >
-                  <p className="text-[13px] text-[var(--pill-error-text)]">
-                    Something went wrong. Please try again.
-                  </p>
-                </div>
+                <p className={styles.error} role="alert">Something went wrong. Please try again.</p>
               ) : null}
 
-              <Button type="submit" disabled={state === "loading"} className="w-full">
+              <Button type="submit" disabled={state === "loading"} className={styles.button}>
                 {state === "loading" ? "Sending…" : "Send reset link"}
               </Button>
             </form>
           )}
-        </AuthCard>
+        </div>
 
-        {state === "sent" ? (
-          <div className="mt-8 flex justify-center">
-            <Link
-              href="/login"
-              className="calm-transition text-[13px] text-muted hover:opacity-70"
-            >
-              Return to sign in
-            </Link>
-          </div>
-        ) : (
-          <AuthBackLink href="/login" />
-        )}
-      </AuthFlowMain>
-    </AuthShell>
+        <div className="mt-7 flex justify-center">
+          <Link href="/login" className={styles.forgot}>
+            {state === "sent" ? "Return to sign in" : "← Back to sign in"}
+          </Link>
+        </div>
+        </div>
+      </main>
+      <footer className={landing.footer}>
+        <p>Anaxi — institutional intelligence for schools</p>
+        <a href="mailto:hi@anaxi.io">hi@anaxi.io <span aria-hidden="true">↗</span></a>
+      </footer>
+    </div>
   );
 }

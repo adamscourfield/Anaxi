@@ -1,3 +1,4 @@
+import styles from "./cohorts.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
@@ -50,6 +51,11 @@ function fmtNum(val: number | null, decimals = 2): string {
 }
 
 /* ─── Page ─────────────────────────────────────────────────────────────────── */
+
+function formatYearGroup(value: string): string {
+  const match = value.trim().match(/^(?:Y(?:ear)?\s*)?(\d+)$/i);
+  return match ? `Year ${match[1]}` : value;
+}
 
 export default async function CohortsPage({
   searchParams,
@@ -129,13 +135,27 @@ export default async function CohortsPage({
 
   // ── render ──────────────────────────────────────────────────────
   return (
-    <div className="space-y-8">
+    <div className={`${styles.page} space-y-8`}>
       <ExplorerBackLink />
 
       <PageHeader variant="ledger"
         eyebrow="Explorer"
         title="Cohorts"
         subtitle="Year group behaviour metrics — attendance, incidents and welfare indicators aggregated by cohort."
+        actions={showExport ? (
+          <form action="/api/explorer/export" method="POST" className="inline">
+            <input type="hidden" name="view" value="BEHAVIOUR_COHORTS_PIVOT" />
+            <input type="hidden" name="windowDays" value={String(windowDays)} />
+            <button type="submit" className="anx-btn-pill-ghost calm-transition font-semibold">
+              <svg className="anx-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
+              </svg>
+              Export CSV
+            </button>
+          </form>
+        ) : undefined}
         meta={
           <span className="text-xs text-muted">
             {windowDays}d window · {allRows.length} cohort
@@ -146,7 +166,7 @@ export default async function CohortsPage({
       />
 
       {/* ── Controls bar ────────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient">
+      <div className={`${styles.filters} overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient`}>
         <div className="border-b border-border/30 px-5 py-3">
           <p className="text-[0.75rem] font-semibold uppercase tracking-[0.08em] text-muted">Filters</p>
         </div>
@@ -175,7 +195,7 @@ export default async function CohortsPage({
                 <option value="">All years</option>
                 {yearGroups.map((yg) => (
                   <option key={yg} value={yg}>
-                    {yg}
+                    {formatYearGroup(yg)}
                   </option>
                 ))}
               </select>
@@ -197,18 +217,7 @@ export default async function CohortsPage({
               Clear
             </Link>
           )}
-          {showExport && (
-            <form action="/api/explorer/export" method="POST" className="inline">
-              <input type="hidden" name="view" value="BEHAVIOUR_COHORTS_PIVOT" />
-              <input type="hidden" name="windowDays" value={String(windowDays)} />
-              <button
-                type="submit"
-                className="rounded-lg border border-border bg-surface-container-lowest/70 px-4 py-2 text-[0.8125rem] font-medium text-muted calm-transition hover:text-text"
-              >
-                Export CSV
-              </button>
-            </form>
-          )}
+
         </div>
       </div>
 
@@ -289,7 +298,7 @@ export default async function CohortsPage({
                         href={`/analysis/students?yearGroup=${encodeURIComponent(row.yearGroup)}&window=${windowDays}`}
                         className="link-accent calm-transition"
                       >
-                        {row.yearGroup}
+                        {formatYearGroup(row.yearGroup)}
                       </Link>
                     </td>
 
