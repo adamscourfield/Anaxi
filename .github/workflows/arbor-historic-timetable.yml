@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: arbor-historic-timetable
+  group: arbor-assessment-discovery
   cancel-in-progress: false
 
 jobs:
@@ -30,7 +30,12 @@ jobs:
           data = json.load(open('/tmp/historic-timetable-result.json'))
           connections = data.get('connections', [])
           assert connections, 'No connected Arbor schools were processed'
-          assert all(c.get('ok') and isinstance(c.get('body'), dict) and 'error' not in c['body'] for c in connections), str(data)
+          failures = [c for c in connections if not c.get('ok') or not isinstance(c.get('body'), dict) or 'error' in c['body']]
+          if failures:
+              assert all('429' in str(c.get('body', {})) for c in failures), str(data)
+              print('Arbor rate limit reached; progress is saved. Retrying after a cooldown.')
+              print('RATE_LIMITED')
+              raise SystemExit(0)
           for c in connections:
               body = c['body']
               print(f"{c['label']}: page {body.get('page')}, next {body.get('nextPage')}, saved {body.get('linked')}, complete {body.get('complete')}")
@@ -38,8 +43,15 @@ jobs:
           PY
             )
             printf '%s\n' "$result"
-            if [ "$(printf '%s\n' "$result" | tail -n 1)" = COMPLETE ]; then
+            state=$(printf '%s\n' "$result" | tail -n 1)
+            if [ "$state" = COMPLETE ]; then
               exit 0
+            elif [ "$state" = RATE_LIMITED ]; then
+              sleep 45
+            else
+              # Each server request reads five roster pages plus their schema
+              # checks. Pace batches to stay below Arbor's request limit.
+              sleep 8
             fi
           done
           echo 'Historic roster did not finish within 80 bounded passes' >&2
