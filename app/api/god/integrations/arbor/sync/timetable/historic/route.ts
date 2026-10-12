@@ -22,7 +22,7 @@ const EFFECTIVE_TO = new Date("2026-08-31T23:59:59.999Z");
 const PAGES_PER_RUN = 5;
 // Version 3 joins classroom timetable slots to dated staff allocations.
 // Computed staff relations are undated in Arbor and cannot prove history.
-const HISTORIC_TIMETABLE_MAPPING_VERSION = 8;
+const HISTORIC_TIMETABLE_MAPPING_VERSION = 9;
 
 /** Imports only dated 2025/26 classroom assignments; current timetable rows are untouched. */
 export const POST = withApi(async function POST(req: Request) {

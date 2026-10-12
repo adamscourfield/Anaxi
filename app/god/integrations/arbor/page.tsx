@@ -295,7 +295,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
     ? integration.config.historicTimetableSyncs as Record<string, { version?: unknown; page?: unknown; completedAt?: unknown; membershipsProcessed?: unknown; linksSaved?: unknown; totalMemberships?: unknown; totalPages?: unknown }>
     : {};
   const historicTimetableState = historicTimetableSyncs["2025/2026"] ?? {};
-  const HISTORIC_TIMETABLE_MAPPING_VERSION = 8;
+  const HISTORIC_TIMETABLE_MAPPING_VERSION = 9;
   const historicTimetableVersionCurrent = historicTimetableState.version === HISTORIC_TIMETABLE_MAPPING_VERSION;
   const historicTimetableComplete = historicTimetableVersionCurrent && typeof historicTimetableState.completedAt === "string";
   const historicTimetablePagesCompleted = typeof historicTimetableState.page === "number" ? historicTimetableState.page : 0;

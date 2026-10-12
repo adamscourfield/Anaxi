@@ -1,3 +1,4 @@
+import { historicAcademicYearStart, historicEnrolmentIncluded } from "./historicEnrolment";
 import { arborPersonName } from "./personName";
 import { runArborGraphqlQuery } from "./graphqlClient";
 import { historicTimetableStaff } from "./historicTimetableStaff";
@@ -1038,7 +1039,7 @@ export class ArborClient {
   }
 
   /** Applies a date filter to the direct pupil-to-class table when Arbor exposes it. */
-  private async academicUnitEnrolmentFiltersAt(date: string): Promise<string> {
+  private async academicUnitEnrolmentFiltersAt(date: string, from = date): Promise<string> {
     const data = await runArborGraphqlQuery<{
       __schema: { queryType: { fields: Array<{ name: string; args: Array<{ name: string }> }> } | null };
     }>(this.credentials, `{
@@ -1048,7 +1049,7 @@ export class ArborClient {
     const argumentsByName = new Set(enrolmentQuery?.args.map((argument) => argument.name) ?? []);
     const filters: string[] = [];
     if (argumentsByName.has("startDate_before_or_equal")) filters.push(`startDate_before_or_equal: ${JSON.stringify(date)}`);
-    if (argumentsByName.has("endDate_after_or_equal")) filters.push(`endDate_after_or_equal: ${JSON.stringify(date)}`);
+    if (argumentsByName.has("endDate_after_or_equal")) filters.push(`endDate_after_or_equal: ${JSON.stringify(from)}`);
     return filters.length === 2 ? `, ${filters.join(", ")}` : "";
   }
 
@@ -1237,12 +1238,12 @@ export class ArborClient {
 
     type Person = { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null };
     type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; timetableSlots: Array<{ id: string; effectiveDate: string | null; endDate: string | null; timetableSlotStaff: Array<{ effectiveDate: string | null; endDate: string | null; staff: Person | null }> }> } | null };
-    const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
+    const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate, historicAcademicYearStart(asOfDate));
     const date = new Date(asOfDate);
     if (Number.isNaN(date.getTime())) throw new Error("Invalid historic timetable date");
     const yearStart = `${date.getUTCFullYear() - (date.getUTCMonth() < 8 ? 1 : 0)}-09-01`;
     const personName = arborPersonName;
-    const activeOnDate = (enrolment: Enrolment) => (!enrolment.startDate || enrolment.startDate <= asOfDate) && (!enrolment.endDate || enrolment.endDate >= asOfDate);
+    const activeOnDate = (enrolment: Enrolment) => historicEnrolmentIncluded(enrolment, asOfDate);
     const diagnostics = { pages: 0, memberships: 0, activeMemberships: 0, classes: new Set<string>(), subjectClasses: new Set<string>(), staffedClasses: new Set<string>(), sampleClasses: new Set<string>(), mathsSamples: new Set<string>() };
     const assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; className: string; subject: string; staff: Array<{ id: string; fullName: string }> }> = [];
 
@@ -1284,7 +1285,7 @@ export class ArborClient {
         // Only explicitly dated timetable staff are historical evidence.
         const staff = historicTimetableStaff(unit.timetableSlots.flatMap((slot) => slot.timetableSlotStaff.map((record) => ({ ...record, slotEffectiveDate: slot.effectiveDate, slotEndDate: slot.endDate }))).map((record) => ({
           ...record, staff: record.staff ? { id: record.staff.id, fullName: personName(record.staff) } : null,
-        })), yearStart, asOfDate);
+        })), yearStart, enrolment.endDate && enrolment.endDate.slice(0, 10) < asOfDate ? enrolment.endDate.slice(0, 10) : asOfDate);
         if (staff.length) diagnostics.staffedClasses.add(unit.id);
         if (enrolment.student && staff.length) assignments.push({ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, className, subject, staff });
       }
@@ -1318,7 +1319,7 @@ export class ArborClient {
     }
     type Person = { id: string; legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null };
     type Enrolment = { startDate: string | null; endDate: string | null; student: Person | null; academicUnit: { id: string; displayName: string | null; subject: { displayName: string } | null; timetableSlots: Array<{ id: string; effectiveDate: string | null; endDate: string | null; timetableSlotStaff: Array<{ effectiveDate: string | null; endDate: string | null; staff: Person | null }> }> } | null };
-    const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
+    const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate, historicAcademicYearStart(asOfDate));
     const date = new Date(asOfDate);
     if (Number.isNaN(date.getTime())) throw new Error("Invalid historic timetable date");
     const yearStart = `${date.getUTCFullYear() - (date.getUTCMonth() < 8 ? 1 : 0)}-09-01`;
@@ -1339,7 +1340,7 @@ export class ArborClient {
       }
     }`);
     const personName = arborPersonName;
-    const activeOnDate = (enrolment: Enrolment) => (!enrolment.startDate || enrolment.startDate <= asOfDate) && (!enrolment.endDate || enrolment.endDate >= asOfDate);
+    const activeOnDate = (enrolment: Enrolment) => historicEnrolmentIncluded(enrolment, asOfDate);
     const classes = new Set<string>();
     const subjectClasses = new Set<string>();
     const staffedClasses = new Set<string>();
@@ -1356,7 +1357,7 @@ export class ArborClient {
       // staff list, so Teacher Impact reflects who taught the class.
       const staff = historicTimetableStaff(unit.timetableSlots.flatMap((slot) => slot.timetableSlotStaff.map((record) => ({ ...record, slotEffectiveDate: slot.effectiveDate, slotEndDate: slot.endDate }))).map((record) => ({
         ...record, staff: record.staff ? { id: record.staff.id, fullName: personName(record.staff) } : null,
-      })), yearStart, asOfDate);
+      })), yearStart, enrolment.endDate && enrolment.endDate.slice(0, 10) < asOfDate ? enrolment.endDate.slice(0, 10) : asOfDate);
       if (staff.length) staffedClasses.add(unit.id);
       return enrolment.student && staff.length ? [{ studentId: enrolment.student.id, studentName: personName(enrolment.student), teachingGroupId: unit.id, className: unit.displayName?.trim() || subject, subject, staff }] : [];
     });
@@ -1369,7 +1370,7 @@ export class ArborClient {
 
   /** Counts dated roster pages with a bounded binary search; no Anaxi data is changed. */
   async countHistoricTimetableRoster(asOfDate: string): Promise<{ memberships: number; pages: number }> {
-    const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate);
+    const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate, historicAcademicYearStart(asOfDate));
     const pageLength = async (page: number) => {
       const data = await runArborGraphqlQuery<{ AcademicUnitEnrolment: Array<{ startDate: string | null }> }>(this.credentials, `{
         AcademicUnitEnrolment(page_size: 100, page_num: ${page}${filters}) { startDate }
