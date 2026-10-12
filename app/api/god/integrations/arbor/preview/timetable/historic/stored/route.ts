@@ -24,7 +24,7 @@ export const POST = withApi(async function POST(req: Request) {
     db.studentSubjectTeacher.findMany({ where: baseWhere, select: { className: true }, distinct: ["className"], take: 8, orderBy: { className: "asc" } }),
   ]);
   const examPoints = await db.assessmentPoint.findMany({
-    where: { tenantId: { in: tenantIds }, cycle: { academicYear: ACADEMIC_YEAR }, label: { in: ["Final Results", "GCSE Actual Results", "Actual Results"] } },
+    where: { tenantId: { in: tenantIds }, cycle: { academicYear: { in: [ACADEMIC_YEAR, "2025/26"] } }, label: { in: ["Final Results", "GCSE Actual Results", "Actual Results"] } },
     select: { id: true, label: true, cycle: { select: { label: true } }, assessments: { select: { results: { select: { student: { select: { id: true, fullName: true, externalId: true } } } } } } },
   });
   const roster = await db.studentSubjectTeacher.findMany({ where: { ...baseWhere, className: { contains: ACADEMIC_YEAR } }, select: { studentId: true, className: true, subject: { select: { name: true } }, student: { select: { fullName: true, externalId: true } } } });
