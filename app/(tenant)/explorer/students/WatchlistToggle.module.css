@@ -1,0 +1,25 @@
+button.toggle[aria-pressed] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #e5e5e6;
+  border-radius: 9px;
+  background: #fff;
+  color: #737378;
+  cursor: pointer;
+  transition: background 160ms, border-color 160ms, color 160ms;
+}
+button.toggle[aria-pressed]:hover, button.toggle[aria-pressed][aria-pressed="true"] {
+  background: #fff3ef;
+  border-color: #ffb9aa;
+  color: #e14e36;
+}
+button.toggle[aria-pressed][aria-pressed="true"]:hover { background: #ffe8e0; border-color: #ff6a52; }
+button.toggle[aria-pressed] svg { color: inherit; }
+button.toggle[aria-pressed]:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+button.toggle[aria-pressed]:disabled { opacity: .5; cursor: wait; }
+@media (prefers-reduced-motion: reduce) { button.toggle[aria-pressed] { transition: none; } }

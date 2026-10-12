@@ -2835,7 +2835,8 @@ function TeachingTab({
             <button
               type="button"
               onClick={() => setExpandedSubject(isExpanded ? null : subj.subject)}
-              className="flex w-full items-center justify-between p-5 text-left hover:bg-[var(--surface-container-low)] calm-transition"
+              className={styles.subjectDisclosure}
+              aria-expanded={isExpanded}
             >
               <div className="flex items-center gap-3">
                 <SubjectIcon subject={subj.subject} />

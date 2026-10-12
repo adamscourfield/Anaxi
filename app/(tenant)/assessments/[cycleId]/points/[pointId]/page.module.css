@@ -112,3 +112,25 @@
   .page .tabs { display: flex; width: 100%; }
   .page .tabs button { padding: 0 9px; font-size: 12px; gap: 6px; }
 }
+
+.page button.subjectDisclosure {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #fff;
+  color: #1c1c1e;
+  border-radius: 0;
+  text-align: left;
+  transition: background 160ms;
+}
+.page button.subjectDisclosure:hover { background: #fff8f5; }
+.page button.subjectDisclosure[aria-expanded="true"] { background: #fafafa; }
+.page button.subjectDisclosure p:first-child { color: #1c1c1e; font-size: 14px; font-weight: 600; }
+.page button.subjectDisclosure p + p { color: #6e6e73; margin-top: 3px; line-height: 1.5; }
+.page button.subjectDisclosure > svg { color: #e14e36; width: 18px; height: 18px; transition: transform 180ms; }
+.page button.subjectDisclosure:focus-visible { outline: 2px solid #ff6a52; outline-offset: -3px; }
+@media (max-width: 640px) { .page button.subjectDisclosure { padding: 14px; } }
+@media (prefers-reduced-motion: reduce) { .page button.subjectDisclosure, .page button.subjectDisclosure > svg { transition: none; } }
