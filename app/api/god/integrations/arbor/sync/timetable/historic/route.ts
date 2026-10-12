@@ -22,7 +22,7 @@ const EFFECTIVE_TO = new Date("2026-08-31T23:59:59.999Z");
 const PAGES_PER_RUN = 5;
 // Version 3 joins classroom timetable slots to dated staff allocations.
 // Computed staff relations are undated in Arbor and cannot prove history.
-const HISTORIC_TIMETABLE_MAPPING_VERSION = 6;
+const HISTORIC_TIMETABLE_MAPPING_VERSION = 7;
 
 /** Imports only dated 2025/26 classroom assignments; current timetable rows are untouched. */
 export const POST = withApi(async function POST(req: Request) {
@@ -98,14 +98,14 @@ export const POST = withApi(async function POST(req: Request) {
       // A missing former teacher must not prevent an otherwise unique Arbor
       // pupil identity from being imported. Keep ambiguous school matches out.
       const selected = eligibleStudents.length === 1 ? eligibleStudents[0]
-        : matches.length === 1 && matches[0].method === "EXTERNAL_ID" ? matches[0] : null;
+        : matches.length === 1 ? matches[0] : null;
       if (!selected) continue;
       const student = selected.person;
       for (const arborStaff of assignment.staff) {
         let teacher: { id: string } | undefined = staffResolver.staff(student.tenantId, arborStaff.id, arborStaff.fullName)?.person;
         const referenceKey = `${student.tenantId}:${arborStaff.id}`;
         if (!teacher) teacher = historicalTeachers.get(referenceKey);
-        if (!teacher && selected.method === "EXTERNAL_ID" && arborStaff.id && arborStaff.fullName.trim()) {
+        if (!teacher && arborStaff.id && arborStaff.fullName.trim()) {
           // Left staff may never have had an Anaxi account. Store their Arbor
           // identity disabled, with no credentials or notification delivery.
           // Existing accounts are reused without changing access or settings.
