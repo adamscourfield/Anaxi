@@ -59,3 +59,5 @@ assessed year group within the verified academic year, prefers the main class ov
 specific subjects from departmental labels (for example Science: Biology).
 
 Version 10 stores separate class identities for each pupil, subject and teacher, including main lessons, intervention lessons and Further Maths. The replacement index retains all existing links and preserves duplicate protection for unnamed manual links. Rebuild historical rosters after applying this migration.
+
+Historical pupils who changed core classes retain their verified same-year teaching teams. Teacher totals deduplicate the pupil across their lesson groups. This does not use current-year classes or select an arbitrary teacher.

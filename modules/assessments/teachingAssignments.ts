@@ -84,15 +84,8 @@ export function teachersForAssessmentClass(assignments: TeachingAssignment[], ye
   }
   const core = matches.filter((assignment) => !/\b(?:CCE|intervention)\b|\bCore\s+(?:PE|RE)\b/i.test(assignment.className));
   const selected = core.length ? core : matches;
-  // Separate lesson groups can share exactly the same teaching team. Teacher
-  // attribution remains certain, and the metrics deduplicate each pupil.
-  const teams = new Map<string, Set<string>>();
-  for (const assignment of selected) {
-    if (!teams.has(assignment.className)) teams.set(assignment.className, new Set());
-    teams.get(assignment.className)!.add(assignment.teacherId);
-  }
-  if (new Set([...teams.values()].map((team) => [...team].sort().join(":"))).size === 1) {
-    return [...new Map(selected.map((assignment) => [`${assignment.teacherId}:${assignment.className}`, assignment])).values()];
-  }
-  return teachersForOneClass(selected);
+  // Every retained historic link is an actual dated Arbor membership. Pupils
+  // who moved core classes still have a known teaching team in each group;
+  // retain those teachers and let the metrics count each pupil once per teacher.
+  return [...new Map(selected.map((assignment) => [`${assignment.teacherId}:${assignment.className}`, assignment])).values()];
 }

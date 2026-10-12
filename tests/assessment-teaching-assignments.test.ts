@@ -94,10 +94,11 @@ describe("historical subject and class evidence", () => {
     ];
     expect(teachersForAssessmentClass(links, "13")).toEqual(links);
   });
-  it("still rejects two competing core classes in the assessed cohort", () => {
-    expect(teachersForAssessmentClass([
+  it("retains verified historical core memberships when a pupil changed classes", () => {
+    const links = [
       { teacherId: "one", className: "French: Year 11: 11X1/Fr (2025/2026)" },
       { teacherId: "two", className: "French: Year 11: 11X2/Fr (2025/2026)" },
-    ], "11")).toEqual([]);
+    ];
+    expect(teachersForAssessmentClass(links, "11")).toEqual(links);
   });
 });
