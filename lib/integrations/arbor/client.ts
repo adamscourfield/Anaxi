@@ -1277,7 +1277,7 @@ export class ArborClient {
         diagnostics.subjectClasses.add(unit.id);
         if (/math/i.test(subject)) {
           const slots = unit.timetableSlots;
-          const dates = slots.slice(0, 3).map((slot) => `${slot.effectiveDate ?? "no-start"}/${slot.endDate ?? "no-end"} staff:${slot.timetableSlotStaff.map((r) => `${r.staff?.id ?? "none"}@${r.effectiveDate ?? "no-start"}/${r.endDate ?? "no-end"}`).join(",")}`).join("; ");
+          const dates = slots.slice(0, 3).map((slot) => `${slot.effectiveDate ?? "no-start"}/${slot.endDate ?? "no-end"} staff:${slot.timetableSlotStaff.map((r) => `${r.staff ? `${r.staff.id} name=[${personName(r.staff)}] legal=[${r.staff.legalFirstName ?? ""} ${r.staff.legalLastName ?? ""}]` : "none"}@${r.effectiveDate ?? "no-start"}/${r.endDate ?? "no-end"}`).join(",")}`).join("; ");
           diagnostics.mathsSamples.add(`${className}: ${slots.length} slots; ${dates}`);
         }
         // Only explicitly dated timetable staff are historical evidence.
