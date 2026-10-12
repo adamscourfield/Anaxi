@@ -1557,24 +1557,15 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
       if (!teacherId) continue;
       const classStudents = y7StudentIds.slice(classIdx * CLASS_SIZE, (classIdx + 1) * CLASS_SIZE);
       for (const studentId of classStudents) {
-        await prisma.studentSubjectTeacher.upsert({
-          where: {
-            tenantId_studentId_subjectId_teacherId_effectiveFrom: {
-              tenantId: tenant.id,
-              studentId,
-              subjectId: subjectRecord.id,
-              teacherId,
-              effectiveFrom: new Date("2024-09-01"),
-            },
-          },
-          update: {},
-          create: {
+        await prisma.studentSubjectTeacher.createMany({
+          data: [{
             tenantId: tenant.id,
             studentId,
             subjectId: subjectRecord.id,
             teacherId,
             effectiveFrom: new Date("2024-09-01"),
-          },
+          }],
+          skipDuplicates: true,
         });
       }
     }

@@ -1,3 +1,4 @@
+import { arborAcademicUnitSubject } from "./academicUnitSubject";
 import { historicAcademicYearStart, historicEnrolmentIncluded } from "./historicEnrolment";
 import { arborPersonName } from "./personName";
 import { runArborGraphqlQuery } from "./graphqlClient";
@@ -1175,7 +1176,7 @@ export class ArborClient {
     const currentUnitIds = new Set(currentEnrolments.flatMap((enrolment) => enrolment.academicUnit ? [enrolment.academicUnit.id] : []));
     const assignments = currentEnrolments.flatMap((enrolment) => {
         const unit = enrolment.academicUnit;
-        const subject = unit?.subject?.displayName?.trim();
+        const subject = unit ? arborAcademicUnitSubject(unit.subject?.displayName, unit.displayName) : "";
         const scheduledStaff = unit?.timetabledStaffByDateRange ?? [];
         const directStaff = unit?.staff ?? [];
         const staff = [...new Map((scheduledStaff.length ? scheduledStaff : directStaff).map((teacher) => [teacher.id, { id: teacher.id, fullName: personName(teacher) }])).values()];
@@ -1271,7 +1272,7 @@ export class ArborClient {
         if (!enrolment.academicUnit || !activeOnDate(enrolment)) continue;
         diagnostics.activeMemberships++;
         const unit = enrolment.academicUnit;
-        const subject = unit.subject?.displayName?.trim();
+        const subject = arborAcademicUnitSubject(unit.subject?.displayName, unit.displayName);
         const className = unit.displayName?.trim() || subject || "Unnamed class";
         diagnostics.classes.add(unit.id);
         diagnostics.sampleClasses.add(className);
@@ -1349,7 +1350,7 @@ export class ArborClient {
       if (!enrolment.academicUnit || !activeOnDate(enrolment)) return [];
       activeMemberships++;
       const unit = enrolment.academicUnit;
-      const subject = unit.subject?.displayName?.trim();
+      const subject = arborAcademicUnitSubject(unit.subject?.displayName, unit.displayName);
       classes.add(unit.id);
       if (!subject) return [];
       subjectClasses.add(unit.id);

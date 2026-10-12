@@ -22,7 +22,7 @@ const EFFECTIVE_TO = new Date("2026-08-31T23:59:59.999Z");
 const PAGES_PER_RUN = 5;
 // Version 3 joins classroom timetable slots to dated staff allocations.
 // Computed staff relations are undated in Arbor and cannot prove history.
-const HISTORIC_TIMETABLE_MAPPING_VERSION = 9;
+const HISTORIC_TIMETABLE_MAPPING_VERSION = 10;
 
 /** Imports only dated 2025/26 classroom assignments; current timetable rows are untouched. */
 export const POST = withApi(async function POST(req: Request) {
@@ -131,10 +131,10 @@ export const POST = withApi(async function POST(req: Request) {
       if (!subjects.has(key)) subjects.set(key, await db.subject.upsert({ where: { tenantId_name: { tenantId: item.tenantId, name: item.subject } }, create: { tenantId: item.tenantId, name: item.subject }, update: { active: true } }));
     }
     const rows = [...candidates.values()].map((item) => ({ tenantId: item.tenantId, studentId: item.studentId, teacherId: item.teacherId, className: item.className, subjectId: subjects.get(`${item.tenantId}:${item.subject.toLocaleLowerCase()}`)!.id, effectiveFrom: EFFECTIVE_FROM, effectiveTo: EFFECTIVE_TO, dataSource: "ARBOR" as const, arborSyncedAt: startedAt }));
-    const existing = rows.length ? await db.studentSubjectTeacher.findMany({ where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", effectiveFrom: EFFECTIVE_FROM, studentId: { in: [...new Set(rows.map((row) => row.studentId))] } }, select: { id: true, tenantId: true, studentId: true, subjectId: true, teacherId: true } }) : [];
-    const existingKeys = new Map(existing.map((row: { id: string; tenantId: string; studentId: string; subjectId: string; teacherId: string }) => [`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}`, row.id]));
+    const existing = rows.length ? await db.studentSubjectTeacher.findMany({ where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", effectiveFrom: EFFECTIVE_FROM, studentId: { in: [...new Set(rows.map((row) => row.studentId))] } }, select: { id: true, tenantId: true, studentId: true, subjectId: true, teacherId: true, className: true } }) : [];
+    const existingKeys = new Map(existing.map((row: { id: string; tenantId: string; studentId: string; subjectId: string; teacherId: string; className: string | null }) => [`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}:${row.className ?? ""}`, row.id]));
     for (const row of rows) {
-      const id = existingKeys.get(`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}`);
+      const id = existingKeys.get(`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}:${row.className ?? ""}`);
       if (id) await db.studentSubjectTeacher.update({ where: { id }, data: { className: row.className, effectiveTo: EFFECTIVE_TO, arborSyncedAt: startedAt } });
     }
     if (rows.length) await db.studentSubjectTeacher.createMany({ data: rows, skipDuplicates: true });

@@ -423,7 +423,7 @@ model StudentSubjectTeacher {
   subject       Subject   @relation(fields: [tenantId, subjectId], references: [tenantId, id])
   teacher       User      @relation("SubjectTeacher", fields: [tenantId, teacherId], references: [tenantId, id])
 
-  @@unique([tenantId, studentId, subjectId, teacherId, effectiveFrom])
+  @@unique([tenantId, studentId, subjectId, teacherId, effectiveFrom, className], map: "StudentSubjectTeacher_class_identity_key")
   @@index([tenantId, studentId, subjectId, effectiveFrom])
 }
 

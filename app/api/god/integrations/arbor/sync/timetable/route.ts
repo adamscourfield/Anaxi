@@ -80,7 +80,7 @@ export const POST = withApi(async function POST(req: Request) {
         if (!teacher || !subject) continue;
         if (studentMatch.method === "EXTERNAL_ID" && teacherMatch.method === "EXTERNAL_ID") linkedByExternalId++;
         else linkedByUniqueName++;
-        candidates.set(`${student.id}:${teacher.id}:${subject.toLocaleLowerCase()}`, { tenantId: student.tenantId, studentId: student.id, teacherId: teacher.id, subject, className: assignment.className });
+        candidates.set(`${student.id}:${teacher.id}:${subject.toLocaleLowerCase()}:${assignment.teachingGroupId}`, { tenantId: student.tenantId, studentId: student.id, teacherId: teacher.id, subject, className: assignment.className });
       }
     }
 
@@ -105,11 +105,11 @@ export const POST = withApi(async function POST(req: Request) {
     }));
     const existing = rows.length ? await db.studentSubjectTeacher.findMany({
       where: { tenantId: { in: tenantIds }, dataSource: "ARBOR", studentId: { in: [...new Set(rows.map((row) => row.studentId))] }, effectiveFrom },
-      select: { id: true, tenantId: true, studentId: true, subjectId: true, teacherId: true },
+      select: { id: true, tenantId: true, studentId: true, subjectId: true, teacherId: true, className: true },
     }) : [];
-    const existingKeys = new Map((existing as Array<{ id: string; tenantId: string; studentId: string; subjectId: string; teacherId: string }>).map((row) => [`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}`, row.id]));
+    const existingKeys = new Map((existing as Array<{ id: string; tenantId: string; studentId: string; subjectId: string; teacherId: string; className: string | null }>).map((row) => [`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}:${row.className ?? ""}`, row.id]));
     for (const row of rows) {
-      const existingId = existingKeys.get(`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}`);
+      const existingId = existingKeys.get(`${row.tenantId}:${row.studentId}:${row.subjectId}:${row.teacherId}:${row.className ?? ""}`);
       if (existingId) await db.studentSubjectTeacher.update({ where: { id: existingId }, data: { arborSyncedAt: startedAt, className: row.className } });
     }
     if (rows.length) await db.studentSubjectTeacher.createMany({ data: rows, skipDuplicates: true });

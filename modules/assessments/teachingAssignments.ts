@@ -1,3 +1,5 @@
+import { arborClassSubjectName } from "@/lib/integrations/arbor/academicUnitSubject";
+
 export type TeachingAssignment = { teacherId: string; className: string };
 
 /** Shared teachers of one verified class are valid; competing classes are ambiguous. */
@@ -70,10 +72,7 @@ export function uniqueHistoricPupilAliases(
 }
 
 export function teachingClassSubjectKey(className: string | null): string {
-  const parts = (className ?? "").split(":").map((part) => part.trim());
-  const yearIndex = parts.findIndex((part) => /^Year\s+\d+\b/i.test(part));
-  const yearSubject = yearIndex >= 0 ? parts[yearIndex].replace(/^Year\s+\d+\b/i, "").trim() : "";
-  return teachingSubjectKey(yearSubject || parts[yearIndex > 0 ? yearIndex - 1 : 0] || "");
+  return teachingSubjectKey(arborClassSubjectName(className));
 }
 
 export function teachersForAssessmentClass(assignments: TeachingAssignment[], yearGroup: string): TeachingAssignment[] {
@@ -83,7 +82,7 @@ export function teachersForAssessmentClass(assignments: TeachingAssignment[], ye
     const cohort = assignments.filter((assignment) => new RegExp(`\\bYear\\s+${year}\\b`, "i").test(assignment.className));
     matches = cohort;
   }
-  const core = matches.filter((assignment) => !/\b(?:CCE|intervention)\b/i.test(assignment.className));
+  const core = matches.filter((assignment) => !/\b(?:CCE|intervention)\b|\bCore\s+(?:PE|RE)\b/i.test(assignment.className));
   const selected = core.length ? core : matches;
   // Separate lesson groups can share exactly the same teaching team. Teacher
   // attribution remains certain, and the metrics deduplicate each pupil.

@@ -1,6 +1,6 @@
 # Historical assessment teacher attribution
 
-The 2025/2026 roster rebuild is version 9. On the next run of the existing
+The 2025/2026 roster rebuild is version 10. On the next run of the existing
 `arbor-timetable-historic` scheduled worker, version 6 completion is ignored and
 the roster is read again in resumable batches. God Mode shows the replacement
 as queued until it starts. It can also be advanced with the existing historic
@@ -26,7 +26,7 @@ attainment association, not a causal estimate of individual teacher impact.
 
 1. Use the existing historic roster preview to confirm that the school's Arbor
    returns dated lesson allocations and former Maths staff.
-2. Allow the scheduled version 9 pass to complete (or advance it through the
+2. Allow the scheduled version 10 pass to complete (or advance it through the
    existing God Mode action). Check sync errors and the saved link count.
 3. Check a known pupil in the 2025/2026 Year 9 End of Year point against their
    former Arbor Maths class and teachers, including shared teaching if present.
@@ -57,3 +57,5 @@ without moving results, merging profiles, or overriding an existing external ID.
 Duplicate Arbor names remain unresolved. Historical class matching requires the
 assessed year group, prefers the main class over CCE/intervention groups, and reads
 specific subjects from departmental labels (for example Science: Biology).
+
+Version 10 stores separate class identities for each pupil, subject and teacher, including main lessons, intervention lessons and Further Maths. The replacement index retains all existing links and preserves duplicate protection for unnamed manual links. Rebuild historical rosters after applying this migration.
