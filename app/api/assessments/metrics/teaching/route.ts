@@ -15,7 +15,7 @@ import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import type { GradeFormat } from "@prisma/client";
 import { withApi } from "@/lib/apiRoute";
-import { teachersForOneClass, teachingSubjectKey as subjectKey, historicPointDate } from "@/modules/assessments/teachingAssignments";
+import { teachersForOneClass, teachersForAssessmentClass, uniqueHistoricPupilAliases, teachingClassSubjectKey, teachingSubjectKey as subjectKey, historicPointDate } from "@/modules/assessments/teachingAssignments";
 
 const A_LEVEL_SCORE: Record<string, number> = {
   "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1,
@@ -66,7 +66,7 @@ function academicYearLabelVariants(academicYear: string): string[] {
 
 /** The leading segment of Arbor's class label is its displayed class subject. */
 function classSubjectKey(className: string | null): string {
-  return subjectKey((className ?? "").split(":", 1)[0] ?? "");
+  return teachingClassSubjectKey(className);
 }
 
 export const GET = withApi(async function GET(req: Request) {
@@ -104,6 +104,7 @@ export const GET = withApi(async function GET(req: Request) {
     select: {
       id: true,
       subject: true,
+      yearGroup: true,
       gradeFormat: true,
       results: {
         where: { tenantId: user.tenantId, status: "PRESENT" },
@@ -117,6 +118,7 @@ export const GET = withApi(async function GET(req: Request) {
             select: {
               id: true,
               fullName: true,
+              externalId: true,
               ppFlag: true,
               sendFlag: true,
             },
@@ -133,6 +135,13 @@ export const GET = withApi(async function GET(req: Request) {
 
   // ── 3. Load StudentSubjectTeacher for all students + subjects at this point ──
   const studentIds = [...new Set(assessments.flatMap((a) => a.results.map((r) => r.studentId)))];
+  const assessedPupils = assessments.flatMap((a) => a.results.map((r) => r.student));
+  const unlinkedNames = [...new Set(assessedPupils.filter((p) => !p.externalId).map((p) => p.fullName))];
+  const historicPupilCandidates = historicCycle && unlinkedNames.length
+    ? await prisma.student.findMany({
+        where: { tenantId: user.tenantId, dataSource: "ARBOR", externalId: { not: null }, fullName: { in: unlinkedNames, mode: "insensitive" } },
+        select: { id: true, fullName: true, externalId: true },
+      }) : [];
   const subjectNames = [...new Set(assessments.map((a) => a.subject))];
 
   // Find subjects by name in this tenant
@@ -179,7 +188,10 @@ export const GET = withApi(async function GET(req: Request) {
   const assignments = await prisma.studentSubjectTeacher.findMany({
     where: {
       tenantId: user.tenantId,
-      studentId: { in: studentIds },
+      ...(historicCycle && unlinkedNames.length ? { OR: [
+        { studentId: { in: studentIds } },
+        { studentId: { in: historicPupilCandidates.map((pupil) => pupil.id) } },
+      ] } : { studentId: { in: studentIds } }),
       // Teacher impact is based on verified Arbor classroom links only. This
       // prevents a legacy or manually-created assignment from attributing a
       // historic assessment to a teacher who was not teaching that class.
@@ -206,6 +218,7 @@ export const GET = withApi(async function GET(req: Request) {
     },
     select: {
       studentId: true,
+      student: { select: { id: true, fullName: true, externalId: true } },
       subjectId: true,
       teacherId: true,
       className: true,
@@ -244,6 +257,8 @@ export const GET = withApi(async function GET(req: Request) {
         : undefined,
     }, { headers: { "Cache-Control": "private, no-store" } });
   }
+
+  const historicPupilAliases = historicCycle ? uniqueHistoricPupilAliases(assessedPupils, historicPupilCandidates) : new Map<string, string>();
 
   type DatedAssignment = { teacherId: string; className: string };
   // First prefer Anaxi's exact subject ID. The secondary map is only for safe
@@ -287,7 +302,11 @@ export const GET = withApi(async function GET(req: Request) {
     // as possible keys; assignmentFor accepts one only when it is unambiguous.
     const keys = new Set([subjectKey(a.subject.name), classSubjectKey(a.className)]);
     for (const key of keys) {
-      if (key) bySubjectKey.set(key, [...(bySubjectKey.get(key) ?? []), datedAssignment]);
+      const aliases = key === "english" ? [key, "englishlanguage", "englishliterature"]
+        : key === "science" ? [key, "combinedscience"] : [key];
+      for (const alias of aliases) {
+        if (alias) bySubjectKey.set(alias, [...(bySubjectKey.get(alias) ?? []), datedAssignment]);
+      }
     }
     if (!teacherInfoMap.has(a.teacherId)) {
       teacherInfoMap.set(a.teacherId, {
@@ -298,21 +317,22 @@ export const GET = withApi(async function GET(req: Request) {
     }
   }
 
-  function assignmentFor(studentId: string, subjectId: string | undefined, assessmentSubject: string): DatedAssignment[] {
+  function assignmentFor(studentId: string, subjectId: string | undefined, assessmentSubject: string, yearGroup: string): DatedAssignment[] {
+    studentId = historicPupilAliases.get(studentId) ?? studentId;
     if (historicCycle) {
       historicRosterDiagnostic.resultsChecked++;
       if (studentSubjectTeacher.has(studentId)) historicRosterDiagnostic.studentsWithRoster++;
       else historicRosterDiagnostic.missingStudentRoster++;
     }
     const exactMatches = subjectId ? studentSubjectTeacher.get(studentId)?.get(subjectId) ?? [] : [];
-    const exactUniqueMatches = teachersForOneClass(exactMatches);
+    const exactUniqueMatches = historicCycle ? teachersForAssessmentClass(exactMatches, yearGroup) : teachersForOneClass(exactMatches);
     if (exactUniqueMatches.length) {
       if (historicCycle) historicRosterDiagnostic.exactSubjectMatches++;
       return exactUniqueMatches;
     }
     const matches = studentSubjectKeyAssignments.get(studentId)?.get(subjectKey(assessmentSubject)) ?? [];
     // Never guess when a simplified label could point at more than one class.
-    const uniqueMatches = teachersForOneClass(matches);
+    const uniqueMatches = historicCycle ? teachersForAssessmentClass(matches, yearGroup) : teachersForOneClass(matches);
     if (uniqueMatches.length) {
       if (historicCycle) historicRosterDiagnostic.labelVariantMatches++;
       return uniqueMatches;
@@ -453,7 +473,7 @@ export const GET = withApi(async function GET(req: Request) {
     const unassigned: StudentRow[] = [];
 
     for (const r of asmt.results) {
-      const assignment = assignmentFor(r.studentId, subjectId, asmt.subject);
+      const assignment = assignmentFor(r.studentId, subjectId, asmt.subject, asmt.yearGroup);
 
       const sRow: StudentRow = {
         studentId: r.studentId,

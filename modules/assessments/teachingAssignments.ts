@@ -46,3 +46,43 @@ export function historicPointDate(point: {
   // month-end attribution cutoff when Arbor has not supplied the actual date.
   return new Date(Date.UTC(startYear + 1, 5, 30));
 }
+
+export function uniqueHistoricPupilAliases(
+  assessed: Array<{ id: string; fullName: string; externalId: string | null }>,
+  roster: Array<{ id: string; fullName: string; externalId: string | null }>,
+): Map<string, string> {
+  const nameKey = (value: string) => value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const candidates = new Map<string, Set<string>>();
+  for (const pupil of roster) {
+    if (!pupil.externalId || !nameKey(pupil.fullName)) continue;
+    const key = nameKey(pupil.fullName);
+    if (!candidates.has(key)) candidates.set(key, new Set());
+    candidates.get(key)!.add(pupil.id);
+  }
+  const aliases = new Map<string, string>();
+  for (const pupil of assessed) {
+    // An existing Arbor identity must never be replaced by a name match.
+    if (pupil.externalId) continue;
+    const matches = candidates.get(nameKey(pupil.fullName));
+    if (matches?.size === 1) aliases.set(pupil.id, [...matches][0]);
+  }
+  return aliases;
+}
+
+export function teachingClassSubjectKey(className: string | null): string {
+  const parts = (className ?? "").split(":").map((part) => part.trim());
+  const yearIndex = parts.findIndex((part) => /^Year\s+\d+\b/i.test(part));
+  const yearSubject = yearIndex >= 0 ? parts[yearIndex].replace(/^Year\s+\d+\b/i, "").trim() : "";
+  return teachingSubjectKey(yearSubject || parts[yearIndex > 0 ? yearIndex - 1 : 0] || "");
+}
+
+export function teachersForAssessmentClass(assignments: TeachingAssignment[], yearGroup: string): TeachingAssignment[] {
+  const year = yearGroup.match(/\d+/)?.[0];
+  let matches = assignments;
+  if (year) {
+    const cohort = assignments.filter((assignment) => new RegExp(`\\bYear\\s+${year}\\b`, "i").test(assignment.className));
+    matches = cohort;
+  }
+  const core = matches.filter((assignment) => !/\b(?:CCE|intervention)\b/i.test(assignment.className));
+  return teachersForOneClass(core.length ? core : matches);
+}

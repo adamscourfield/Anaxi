@@ -50,3 +50,10 @@ Existing pupils without a saved Arbor ID may use the existing unique full-name f
 Version 8 falls back to legal names when Arbor preferred names are empty or whitespace, restoring historical staff allocations previously discarded as unnamed.
 
 Version 9 retains Year 11 and Year 13 class memberships that ended during the assessment teaching year before the June fallback date. Staff allocations must precede the membership end date; other cohorts still require membership on the assessment fallback date.
+
+Final-results uploads may contain separate pupil records without Arbor IDs. Teacher
+Impact resolves these to a single uniquely named Arbor pupil in the same tenant,
+without moving results, merging profiles, or overriding an existing external ID.
+Duplicate Arbor names remain unresolved. Historical class matching requires the
+assessed year group, prefers the main class over CCE/intervention groups, and reads
+specific subjects from departmental labels (for example Science: Biology).

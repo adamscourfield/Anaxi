@@ -46,3 +46,44 @@ describe("historical assessment date", () => {
     expect(historicPointDate({ ...point, dataSource: "MANUAL" })).toEqual(point.assessedAt);
   });
 });
+
+import { uniqueHistoricPupilAliases, teachingClassSubjectKey, teachersForAssessmentClass } from "@/modules/assessments/teachingAssignments";
+
+describe("uploaded pupil historical identities", () => {
+  const uploaded = { id: "upload", fullName: "Alex Smith", externalId: null };
+  const arbor = { id: "arbor", fullName: "Alex Smith", externalId: "123" };
+  it("links an uploaded pupil without an Arbor ID to one unique Arbor roster identity", () => {
+    expect(uniqueHistoricPupilAliases([uploaded], [arbor, arbor]).get("upload")).toBe("arbor");
+  });
+  it("does not choose between two Arbor pupils with the same name", () => {
+    expect(uniqueHistoricPupilAliases([uploaded], [arbor, { ...arbor, id: "other", externalId: "456" }]).size).toBe(0);
+  });
+  it("never replaces an existing external identity or matches an unnamed pupil", () => {
+    expect(uniqueHistoricPupilAliases([{ ...uploaded, externalId: "456" }], [arbor]).size).toBe(0);
+    expect(uniqueHistoricPupilAliases([{ ...uploaded, fullName: "" }], [{ ...arbor, fullName: "" }]).size).toBe(0);
+  });
+});
+
+describe("historical subject and class evidence", () => {
+  it("uses the specific subject inside Arbor's departmental class label", () => {
+    expect(teachingClassSubjectKey("Art: Year 11 Fine Art: 11A/FA (2025/2026)")).toBe("fineart");
+    expect(teachingClassSubjectKey("Science: Biology: Year 13: 13C/Bi (2025/2026)")).toBe("biology");
+    expect(teachingClassSubjectKey("Mathematics: Year 9: 9F/Ma (2025/2026)")).toBe("maths");
+  });
+  it("prefers the assessed cohort's class over CCE and earlier-year groups", () => {
+    const core = { teacherId: "teacher", className: "Mathematics: Year 13: 13A/Ma (2025/2026)" };
+    expect(teachersForAssessmentClass([core,
+      { teacherId: "support", className: "Mathematics: CCE Maths (2025/2026)" },
+      { teacherId: "previous", className: "Mathematics: Year 12: 12A/Ma (2025/2026)" },
+    ], "Year 13")).toEqual([core]);
+  });
+  it("does not credit Year 12 lessons for Year 13 results", () => {
+    expect(teachersForAssessmentClass([{ teacherId: "previous", className: "English: Year 12: 12D/En (2025/2026)" }], "13")).toEqual([]);
+  });
+  it("still rejects two competing core classes in the assessed cohort", () => {
+    expect(teachersForAssessmentClass([
+      { teacherId: "one", className: "French: Year 11: 11X1/Fr (2025/2026)" },
+      { teacherId: "two", className: "French: Year 11: 11X2/Fr (2025/2026)" },
+    ], "11")).toEqual([]);
+  });
+});
