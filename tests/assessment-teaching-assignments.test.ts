@@ -55,6 +55,9 @@ describe("uploaded pupil historical identities", () => {
   it("links an uploaded pupil without an Arbor ID to one unique Arbor roster identity", () => {
     expect(uniqueHistoricPupilAliases([uploaded], [arbor, arbor]).get("upload")).toBe("arbor");
   });
+  it("matches accents and punctuation only when the full normalized name is unique", () => {
+    expect(uniqueHistoricPupilAliases([{ ...uploaded, fullName: "José O’Brien" }], [{ ...arbor, fullName: "Jose O'Brien" }]).get("upload")).toBe("arbor");
+  });
   it("does not choose between two Arbor pupils with the same name", () => {
     expect(uniqueHistoricPupilAliases([uploaded], [arbor, { ...arbor, id: "other", externalId: "456" }]).size).toBe(0);
   });
@@ -77,8 +80,9 @@ describe("historical subject and class evidence", () => {
       { teacherId: "previous", className: "Mathematics: Year 12: 12A/Ma (2025/2026)" },
     ], "Year 13")).toEqual([core]);
   });
-  it("does not credit Year 12 lessons for Year 13 results", () => {
-    expect(teachersForAssessmentClass([{ teacherId: "previous", className: "English: Year 12: 12D/En (2025/2026)" }], "13")).toEqual([]);
+  it("retains a verified same-year class for mixed cohorts or early exam entries", () => {
+    const link = { teacherId: "previous", className: "English: Year 12: 12D/En (2025/2026)" };
+    expect(teachersForAssessmentClass([link], "13")).toEqual([link]);
   });
   it("retains separate lesson groups with the same verified teaching team", () => {
     const links = [

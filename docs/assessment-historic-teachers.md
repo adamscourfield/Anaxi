@@ -54,8 +54,8 @@ Version 9 retains Year 11 and Year 13 class memberships that ended during the as
 Final-results uploads may contain separate pupil records without Arbor IDs. Teacher
 Impact resolves these to a single uniquely named Arbor pupil in the same tenant,
 without moving results, merging profiles, or overriding an existing external ID.
-Duplicate Arbor names remain unresolved. Historical class matching requires the
-assessed year group, prefers the main class over CCE/intervention groups, and reads
+Duplicate Arbor names remain unresolved. Historical class matching prefers the
+assessed year group within the verified academic year, prefers the main class over CCE/intervention groups, and reads
 specific subjects from departmental labels (for example Science: Biology).
 
 Version 10 stores separate class identities for each pupil, subject and teacher, including main lessons, intervention lessons and Further Maths. The replacement index retains all existing links and preserves duplicate protection for unnamed manual links. Rebuild historical rosters after applying this migration.

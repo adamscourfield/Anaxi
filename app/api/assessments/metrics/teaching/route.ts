@@ -139,9 +139,10 @@ export const GET = withApi(async function GET(req: Request) {
   const unlinkedNames = [...new Set(assessedPupils.filter((p) => !p.externalId).map((p) => p.fullName))];
   const historicPupilCandidates = historicCycle && unlinkedNames.length
     ? await prisma.student.findMany({
-        where: { tenantId: user.tenantId, dataSource: "ARBOR", externalId: { not: null }, fullName: { in: unlinkedNames, mode: "insensitive" } },
+        where: { tenantId: user.tenantId, dataSource: "ARBOR", externalId: { not: null } },
         select: { id: true, fullName: true, externalId: true },
       }) : [];
+  const historicPupilAliases = historicCycle ? uniqueHistoricPupilAliases(assessedPupils, historicPupilCandidates) : new Map<string, string>();
   const subjectNames = [...new Set(assessments.map((a) => a.subject))];
 
   // Find subjects by name in this tenant
@@ -190,7 +191,7 @@ export const GET = withApi(async function GET(req: Request) {
       tenantId: user.tenantId,
       ...(historicCycle && unlinkedNames.length ? { OR: [
         { studentId: { in: studentIds } },
-        { studentId: { in: historicPupilCandidates.map((pupil) => pupil.id) } },
+        { studentId: { in: [...new Set(historicPupilAliases.values())] } },
       ] } : { studentId: { in: studentIds } }),
       // Teacher impact is based on verified Arbor classroom links only. This
       // prevents a legacy or manually-created assignment from attributing a
@@ -257,8 +258,6 @@ export const GET = withApi(async function GET(req: Request) {
         : undefined,
     }, { headers: { "Cache-Control": "private, no-store" } });
   }
-
-  const historicPupilAliases = historicCycle ? uniqueHistoricPupilAliases(assessedPupils, historicPupilCandidates) : new Map<string, string>();
 
   type DatedAssignment = { teacherId: string; className: string };
   // First prefer Anaxi's exact subject ID. The secondary map is only for safe

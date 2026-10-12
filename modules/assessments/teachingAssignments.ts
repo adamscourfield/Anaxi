@@ -80,7 +80,7 @@ export function teachersForAssessmentClass(assignments: TeachingAssignment[], ye
   let matches = assignments;
   if (year) {
     const cohort = assignments.filter((assignment) => new RegExp(`\\bYear\\s+${year}\\b`, "i").test(assignment.className));
-    matches = cohort;
+    if (cohort.length) matches = cohort;
   }
   const core = matches.filter((assignment) => !/\b(?:CCE|intervention)\b|\bCore\s+(?:PE|RE)\b/i.test(assignment.className));
   const selected = core.length ? core : matches;
