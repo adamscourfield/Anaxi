@@ -303,7 +303,9 @@ export const GET = withApi(async function GET(req: Request) {
     const keys = new Set([subjectKey(a.subject.name), classSubjectKey(a.className)]);
     for (const key of keys) {
       const aliases = key === "english" ? [key, "englishlanguage", "englishliterature"]
-        : key === "science" ? [key, "combinedscience"] : [key];
+        : key === "science" ? [key, "combinedscience", ...(/\bYear\s+11\b/i.test(a.className ?? "") ? ["biology", "chemistry", "physics"] : [])]
+        : key === "physicaleducation" ? [key, "pe"]
+        : key === "religiouseducation" || key === "religiousstudies" ? [key, "re"] : [key];
       for (const alias of aliases) {
         if (alias) bySubjectKey.set(alias, [...(bySubjectKey.get(alias) ?? []), datedAssignment]);
       }

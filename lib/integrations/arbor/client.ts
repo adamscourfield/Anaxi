@@ -1368,6 +1368,37 @@ export class ArborClient {
     };
   }
 
+  /** Read-only evidence for specialist exam subjects omitted from teacher impact. */
+  async previewHistoricExamClasses(): Promise<string> {
+    const schema = await runArborGraphqlQuery<{ __schema: { queryType: { fields: Array<{ name: string; args: Array<{ name: string; type: { name: string | null; ofType: { name: string | null } | null } }> }> } } }>(this.credentials, `{
+      __schema { queryType { fields { name args { name type { name ofType { name } } } } } }
+    }`);
+    const idArgument = schema.__schema.queryType.fields.find((field) => field.name === "AcademicUnit")?.args.find((arg) => arg.name === "id");
+    type Unit = { id: string; displayName: string | null; subject: { displayName: string } | null };
+    const found: Unit[] = [];
+    for (let page = 0; page < 12; page++) {
+      const data = await runArborGraphqlQuery<{ AcademicUnit: Unit[] }>(this.credentials, `{
+        AcademicUnit(page_size: 500, page_num: ${page}) { id displayName subject { displayName } }
+      }`);
+      found.push(...data.AcademicUnit.filter((unit) => /2025\/(?:2026|26)/.test(unit.displayName ?? "") && /\bYear\s+(?:11|13)\b/i.test(unit.displayName ?? "") && /further|\/FM\b|sport|physical|religious|\/RE\b|\/PE\b/i.test(`${unit.displayName} ${unit.subject?.displayName}`)));
+      if (data.AcademicUnit.length < 500) break;
+    }
+    const reports: string[] = [];
+    for (const unit of found.slice(0, 20)) {
+      if (!idArgument) { reports.push(`${unit.displayName}: ${unit.subject?.displayName}; no unit-ID query exposed`); continue; }
+      const typeName = idArgument.type.name ?? idArgument.type.ofType?.name;
+      const idValue = typeName === "Int" ? String(Number(unit.id)) : JSON.stringify(unit.id);
+      type Slot = { effectiveDate: string | null; endDate: string | null; timetableSlotStaff: Array<{ effectiveDate: string | null; endDate: string | null; staff: { id: string; preferredFirstName: string | null; preferredLastName: string | null; legalFirstName: string | null; legalLastName: string | null } | null }> };
+      const detail = await runArborGraphqlQuery<{ AcademicUnit: Array<{ timetableSlots: Slot[] }> }>(this.credentials, `{
+        AcademicUnit(id: ${idValue}) { timetableSlots { effectiveDate endDate timetableSlotStaff { effectiveDate endDate staff { id preferredFirstName preferredLastName legalFirstName legalLastName } } } }
+      }`);
+      const records = detail.AcademicUnit.flatMap((item) => item.timetableSlots.flatMap((slot) => slot.timetableSlotStaff.map((record) => ({ ...record, slotEffectiveDate: slot.effectiveDate, slotEndDate: slot.endDate, staff: record.staff ? { id: record.staff.id, fullName: arborPersonName(record.staff) } : null }))));
+      const teachers = historicTimetableStaff(records, "2025-09-01", "2026-06-30");
+      reports.push(`${unit.displayName} [${unit.subject?.displayName}]: ${teachers.map((teacher) => teacher.fullName).join(", ") || "no dated lesson teacher"}`);
+    }
+    return reports.join("; ") || "No specialist Year 11/13 academic units found for 2025/2026 in the bounded unit scan";
+  }
+
   /** Counts dated roster pages with a bounded binary search; no Anaxi data is changed. */
   async countHistoricTimetableRoster(asOfDate: string): Promise<{ memberships: number; pages: number }> {
     const filters = await this.academicUnitEnrolmentFiltersAt(asOfDate, historicAcademicYearStart(asOfDate));

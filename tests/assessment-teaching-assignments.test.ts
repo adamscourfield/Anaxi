@@ -80,6 +80,13 @@ describe("historical subject and class evidence", () => {
   it("does not credit Year 12 lessons for Year 13 results", () => {
     expect(teachersForAssessmentClass([{ teacherId: "previous", className: "English: Year 12: 12D/En (2025/2026)" }], "13")).toEqual([]);
   });
+  it("retains separate lesson groups with the same verified teaching team", () => {
+    const links = [
+      { teacherId: "psychology", className: "Psychology: Year 13: 13A/Ps1 (2025/2026)" },
+      { teacherId: "psychology", className: "Psychology: Year 13: 13A/Ps2 (2025/2026)" },
+    ];
+    expect(teachersForAssessmentClass(links, "13")).toEqual(links);
+  });
   it("still rejects two competing core classes in the assessed cohort", () => {
     expect(teachersForAssessmentClass([
       { teacherId: "one", className: "French: Year 11: 11X1/Fr (2025/2026)" },

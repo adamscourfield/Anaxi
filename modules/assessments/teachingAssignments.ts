@@ -84,5 +84,16 @@ export function teachersForAssessmentClass(assignments: TeachingAssignment[], ye
     matches = cohort;
   }
   const core = matches.filter((assignment) => !/\b(?:CCE|intervention)\b/i.test(assignment.className));
-  return teachersForOneClass(core.length ? core : matches);
+  const selected = core.length ? core : matches;
+  // Separate lesson groups can share exactly the same teaching team. Teacher
+  // attribution remains certain, and the metrics deduplicate each pupil.
+  const teams = new Map<string, Set<string>>();
+  for (const assignment of selected) {
+    if (!teams.has(assignment.className)) teams.set(assignment.className, new Set());
+    teams.get(assignment.className)!.add(assignment.teacherId);
+  }
+  if (new Set([...teams.values()].map((team) => [...team].sort().join(":"))).size === 1) {
+    return [...new Map(selected.map((assignment) => [`${assignment.teacherId}:${assignment.className}`, assignment])).values()];
+  }
+  return teachersForOneClass(selected);
 }

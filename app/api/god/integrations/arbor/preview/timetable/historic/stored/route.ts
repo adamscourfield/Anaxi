@@ -3,7 +3,12 @@ import { requireSuperAdminUser } from "@/lib/admin";
 import { withApi } from "@/lib/apiRoute";
 import { assertCsrfFromForm } from "@/lib/csrf";
 import { arborConnectionWhere } from "@/lib/integrations/arbor/connectionScope";
+import { ArborClient } from "@/lib/integrations/arbor/client";
+import { decryptCredentials } from "@/lib/integrationSecrets";
+import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
+
+export const maxDuration = 300;
 
 const ACADEMIC_YEAR = "2025/2026";
 const EFFECTIVE_FROM = new Date("2025-09-01T00:00:00.000Z");
@@ -37,11 +42,14 @@ export const POST = withApi(async function POST(req: Request) {
     const classes = [...new Set(roster.filter((row: any) => pupils.some((pupil: any) => pupil.id === row.studentId)).map((row: any) => `${row.subject.name}: ${row.className}`))];
     return `${point.cycle.label} ${point.label}: ${pupils.length} assessed pupils; ${pupils.length - missing.length} with historic roster; ${missing.filter((p: any) => p.externalId).length} missing pupils have external IDs; ${otherId} match another roster pupil by external ID; ${otherName} by exact name. Classes: ${classes.join("; ").slice(0, 650)}`;
   });
+  let specialistReport: string;
+  try { specialistReport = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).previewHistoricExamClasses(); }
+  catch (error) { specialistReport = `Specialist Arbor check: ${error instanceof Error ? error.message.slice(0, 300) : "unavailable"}`; }
   const url = new URL("/god/integrations/arbor", req.url);
   url.searchParams.set("timetableHistoricStored", "success");
   url.searchParams.set("timetableHistoricStoredAll", String(allRows));
   url.searchParams.set("timetableHistoricStoredVerified", String(verifiedRows));
-  url.searchParams.set("timetableHistoricStoredSamples", (examReports.length ? examReports.join(" | ") : samples.map((row: { className: string | null }) => row.className || "No class label").join("; ")).slice(0, 5000));
+  url.searchParams.set("timetableHistoricStoredSamples", (`${specialistReport} | ` + (examReports.length ? examReports.join(" | ") : samples.map((row: { className: string | null }) => row.className || "No class label").join("; "))).slice(0, 6500));
   url.searchParams.set("connectionId", integration.id);
   return NextResponse.redirect(url);
 });
