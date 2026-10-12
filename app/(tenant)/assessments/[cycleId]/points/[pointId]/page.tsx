@@ -2852,34 +2852,59 @@ function TeachingModal({
   onClose: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    if (panelRef.current && previous) panelRef.current.style.fontFamily = getComputedStyle(previous).fontFamily;
+    panelRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); onClose(); }
+      if (event.key !== "Tab") return;
+      const targets = panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href]');
+      if (!targets?.length) return;
+      const first = targets[0], last = targets[targets.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = overflow; document.removeEventListener("keydown", onKey); previous?.focus(); };
+  }, [mounted, onClose]);
 
   const sorted = [...modal.students].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
   const dialog = (
-    <div className="fixed inset-0 z-[100] overflow-y-auto">
+    <div className={styles.teachingOverlay}>
       <button
         type="button"
-        className="fixed inset-0 z-0 bg-black/35 backdrop-blur-[2px] animate-in fade-in duration-200"
+        className={styles.teachingBackdrop}
+        tabIndex={-1}
         aria-label="Close dialog"
         onClick={onClose}
       />
-      <div className="relative z-10 flex min-h-full items-start justify-center p-4 pt-[max(1rem,8vh)] pb-8 sm:p-6 sm:pt-[max(1.5rem,10vh)] pointer-events-none">
+      <div className={styles.teachingDialogPosition}>
         <div
-          className="pointer-events-auto flex w-full max-w-2xl max-h-[min(85vh,calc(100dvh-4rem))] flex-col overflow-hidden rounded-xl border border-[var(--outline-variant)]/50 bg-[var(--surface)] text-[var(--on-surface)] shadow-xl animate-in fade-in zoom-in-95 duration-200"
+          className={styles.teachingDialog}
+          ref={panelRef}
+          aria-labelledby="teaching-dialog-title"
           role="dialog"
           aria-modal="true"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between p-4 border-b border-[var(--outline-variant)]/20">
+          <div className={styles.teachingDialogHeader}>
             <div>
-              <h2 className="text-lg font-bold">{modal.teacherName} — {modal.subject}</h2>
-              <p className="text-xs text-[var(--on-surface-muted)] mt-0.5">Sorted by score (highest first)</p>
+              <p className={styles.teachingDialogEyebrow}>{modal.subject} · Student results</p>
+              <h2 id="teaching-dialog-title">{modal.teacherName}</h2>
+              <p className="text-xs text-[var(--on-surface-muted)] mt-0.5">{sorted.length} student{sorted.length === 1 ? "" : "s"} · Highest score first</p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] p-2 rounded-lg hover:bg-[var(--surface-container)] transition-colors"
+              className={styles.teachingDialogClose}
               aria-label="Close dialog"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2917,6 +2942,7 @@ function TeachingModal({
               </tbody>
             </table>
           </div>
+          <footer className={styles.teachingDialogFooter}>Select a student to open their profile.</footer>
         </div>
       </div>
     </div>

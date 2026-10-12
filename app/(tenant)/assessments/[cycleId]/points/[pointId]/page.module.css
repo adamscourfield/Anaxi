@@ -173,3 +173,28 @@
 .teachingToolbar select:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
 .page button.teachingTableLink { transition: background 160ms, color 160ms; }
 @media (prefers-reduced-motion: reduce) { .page button.teachingTableLink { transition: none; } }
+
+.teachingOverlay { position: fixed; inset: 0; z-index: 150; overflow-y: auto; color: #1c1c1e; }
+.teachingBackdrop { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0; background: #1c1c1e40; backdrop-filter: blur(3px); }
+.teachingDialogPosition { position: relative; min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 28px; pointer-events: none; }
+.teachingDialog { pointer-events: auto; width: 100%; max-width: 700px; max-height: calc(100dvh - 56px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #ffffffb3; border-radius: 18px; background: #fff; box-shadow: 0 24px 80px -24px #1c1c1e66; }
+.teachingDialogHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 24px 26px 20px; border-bottom: 1px solid #e5e5e6; background: #ffffffeb; }
+.teachingDialogEyebrow { color: #e14e36; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 7px; }
+.teachingDialogHeader h2 { font-size: 23px; font-weight: 600; letter-spacing: -.025em; line-height: 1.3; }
+.teachingDialogHeader h2 + p { color: #6e6e73; font-size: 12px; margin-top: 6px; }
+button.teachingDialogClose { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; background: #fff; color: #6e6e73; border: 1px solid #e5e5e6; border-radius: 50%; transition: background 160ms, color 160ms; }
+button.teachingDialogClose:hover { background: #fff3ef; color: #e14e36; border-color: #ffb9aa; }
+.teachingDialog table { font-size: 13px; border-collapse: collapse; }
+.teachingDialog thead { background: #fafafa; border-bottom: 1px solid #e5e5e6; }
+.teachingDialog th { color: #6e6e73; font-size: 10px; letter-spacing: .08em; font-weight: 500; padding: 11px 24px; }
+.teachingDialog td { padding: 11px 24px; border-bottom: 1px solid #eeeeef; }
+.teachingDialog tbody tr { background: #fff; transition: background 160ms; }
+.teachingDialog tbody tr:hover { background: #fff8f5; }
+.teachingDialog td a { color: #1c1c1e; font-weight: 500; }
+.teachingDialog td a:hover { color: #e14e36; }
+.teachingDialog :is(a,button):focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+.teachingDialogFooter { padding: 12px 24px; border-top: 1px solid #e5e5e6; font-size: 11px; color: #6e6e73; background: #fafafa; }
+@media (prefers-reduced-motion: no-preference) { .teachingDialog { animation: teachingDialogIn 260ms cubic-bezier(.22,1,.36,1); } }
+@keyframes teachingDialogIn { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: none; } }
+@media (max-width: 640px) { .teachingDialogPosition { padding: 12px; }.teachingDialog { max-height: calc(100dvh - 24px); }.teachingDialogHeader { padding: 20px; }.teachingDialog td,.teachingDialog th { padding: 11px 14px; } }
+@media (prefers-reduced-motion: reduce) { .teachingDialog * { transition: none; } }
