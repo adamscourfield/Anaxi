@@ -58,6 +58,9 @@ describe("uploaded pupil historical identities", () => {
   it("matches accents and punctuation only when the full normalized name is unique", () => {
     expect(uniqueHistoricPupilAliases([{ ...uploaded, fullName: "José O’Brien" }], [{ ...arbor, fullName: "Jose O'Brien" }]).get("upload")).toBe("arbor");
   });
+  it("does not turn different word boundaries into a pupil match", () => {
+    expect(uniqueHistoricPupilAliases([{ ...uploaded, fullName: "Ann A Smith" }], [{ ...arbor, fullName: "Anna Smith" }]).size).toBe(0);
+  });
   it("does not choose between two Arbor pupils with the same name", () => {
     expect(uniqueHistoricPupilAliases([uploaded], [arbor, { ...arbor, id: "other", externalId: "456" }]).size).toBe(0);
   });

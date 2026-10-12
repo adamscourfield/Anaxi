@@ -53,7 +53,7 @@ export function uniqueHistoricPupilAliases(
   assessed: Array<{ id: string; fullName: string; externalId: string | null }>,
   roster: Array<{ id: string; fullName: string; externalId: string | null }>,
 ): Map<string, string> {
-  const nameKey = (value: string) => value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const nameKey = (value: string) => value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9]+/g, " ").trim();
   const candidates = new Map<string, Set<string>>();
   for (const pupil of roster) {
     if (!pupil.externalId || !nameKey(pupil.fullName)) continue;

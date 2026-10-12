@@ -1381,11 +1381,11 @@ export class ArborClient {
       const data = await runArborGraphqlQuery<{ AcademicUnit: Unit[] }>(this.credentials, `{
         AcademicUnit(page_size: 500, page_num: ${page}) { id displayName subject { displayName } }
       }`);
-      found.push(...data.AcademicUnit.filter((unit) => /2025\/(?:2026|26)/.test(unit.displayName ?? "") && /\bYear\s+(?:11|13)\b/i.test(unit.displayName ?? "") && /further|\/FM\b|sport|physical|religious|\/RE\b|\/PE\b/i.test(`${unit.displayName} ${unit.subject?.displayName}`)));
+      found.push(...data.AcademicUnit.filter((unit) => /2025\/(?:2026|26)/.test(unit.displayName ?? "") && /\bYear\s+(?:11|13)\b/i.test(unit.displayName ?? "") && /further|\/FM\b|sport|physical|religious|\/RE\b|\/PE\b|11Y2\/(?:En|Sc|Ma)|11X1\/Sc/i.test(`${unit.displayName} ${unit.subject?.displayName}`) && !/Core (?:PE|RE)/i.test(unit.displayName ?? "")));
       if (data.AcademicUnit.length < 500) break;
     }
     const reports: string[] = [];
-    for (const unit of found.slice(0, 20)) {
+    for (const unit of found.slice(0, 30)) {
       if (!idArgument) { reports.push(`${unit.displayName}: ${unit.subject?.displayName}; no unit-ID query exposed`); continue; }
       const typeName = idArgument.type.name ?? idArgument.type.ofType?.name;
       const idValue = typeName === "Int" ? String(Number(unit.id)) : JSON.stringify(unit.id);
@@ -1395,7 +1395,7 @@ export class ArborClient {
       }`);
       const records = detail.AcademicUnit.flatMap((item) => item.timetableSlots.flatMap((slot) => slot.timetableSlotStaff.map((record) => ({ ...record, slotEffectiveDate: slot.effectiveDate, slotEndDate: slot.endDate, staff: record.staff ? { id: record.staff.id, fullName: arborPersonName(record.staff) } : null }))));
       const teachers = historicTimetableStaff(records, "2025-09-01", "2026-06-30");
-      reports.push(`${unit.displayName} [${unit.subject?.displayName}]: ${teachers.map((teacher) => teacher.fullName).join(", ") || "no dated lesson teacher"}`);
+      reports.push(`${unit.displayName} [${unit.subject?.displayName}]: ${teachers.map((teacher) => teacher.fullName).join(", ") || `no dated lesson teacher; raw ${records.slice(0, 3).map((record) => `${record.staff?.fullName ?? "none"} staff ${record.effectiveDate ?? "undated"}/${record.endDate ?? "open"} slot ${record.slotEffectiveDate ?? "undated"}/${record.slotEndDate ?? "open"}`).join(", ")}`}`);
     }
     return reports.join("; ") || "No specialist Year 11/13 academic units found for 2025/2026 in the bounded unit scan";
   }
