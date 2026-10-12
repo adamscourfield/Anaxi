@@ -2728,7 +2728,7 @@ function TeachingTab({
   loading: boolean;
   onOpenModal: (subject: string, teacherName: string, students: TeachingStudent[]) => void;
 }) {
-  const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
+  const [subjectFilter, setSubjectFilter] = useState("");
 
   if (loading) {
     return <AttainmentTabPanelSkeleton label="teaching data" />;
@@ -2767,31 +2767,41 @@ function TeachingTab({
     );
   }
 
-  const teacherImpactRows = data.subjects
-    .flatMap((subject) =>
-      subject.teacherImpact
-        .filter((teacher) => teacher.mean !== null)
-        .map((teacher) => ({
-          subject: subject.subject,
-          teacherName: teacher.teacherName,
-          classNames: teacher.classNames,
-          count: teacher.count,
-          average: teacher.meanDisplay ?? "—",
-          vsYearMean: teacher.vsYearMean,
-        })),
-    )
-    .sort((a, b) => a.subject.localeCompare(b.subject) || a.teacherName.localeCompare(b.teacherName));
+  const subjects = data.subjects.filter(subject => !subjectFilter || subject.subject === subjectFilter);
+  const teacherImpactRows = subjects.flatMap(subject => {
+    const assigned = subject.teacherImpact.filter(teacher => teacher.mean !== null).map(teacher => ({
+      key: `${subject.subject}:${teacher.teacherId}`,
+      subject: subject.subject,
+      teacherName: teacher.teacherName,
+      classNames: teacher.classNames,
+      count: teacher.count,
+      average: teacher.meanDisplay ?? "—",
+      vsYearMean: teacher.vsYearMean,
+      unassigned: false,
+      students: Array.from(new Map(subject.classes.filter(cls => cls.teacherId === teacher.teacherId).flatMap(cls => cls.students).map(student => [student.studentId, student])).values()),
+    }));
+    if (subject.unassigned.length) assigned.push({
+      key: `${subject.subject}:unassigned`, subject: subject.subject, teacherName: "Unassigned",
+      classNames: [], count: subject.unassigned.length, average: "—", vsYearMean: null,
+      unassigned: true, students: subject.unassigned,
+    });
+    return assigned;
+  }).sort((a, b) => a.subject.localeCompare(b.subject) || Number(a.unassigned) - Number(b.unassigned) || a.teacherName.localeCompare(b.teacherName));
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-[var(--on-surface-muted)]">
-        Teacher averages use the students linked to each teacher for the assessed subject. Historical assessments use Arbor class rosters and timetable staff from that academic year. Shared classes appear for each verified teacher. This is an attainment indicator, not a causal measure of impact.
-      </p>
+      <div className={styles.teachingToolbar}>
+        <label>Subject<select aria-label="Subject" value={subjectFilter} onChange={event => setSubjectFilter(event.target.value)}>
+          <option value="">All subjects</option>
+          {data.subjects.map(subject => <option key={subject.subject} value={subject.subject}>{subject.subject}</option>)}
+        </select></label>
+        <span>{teacherImpactRows.length} rows{subjectFilter ? ` · Subject mean ${subjects[0]?.yearMeanDisplay ?? "—"}` : ` · ${subjects.length} subjects`}</span>
+      </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-[var(--surface-container-lowest)] shadow-ambient">
+      <div className={styles.teachingTable}>
         <div className="border-b border-border/30 px-5 py-4">
           <p className="font-bold text-[var(--on-surface)]">Teacher impact</p>
-          <p className="mt-1 text-xs text-[var(--on-surface-muted)]">Average result for each teacher&apos;s linked students at this assessment point.</p>
+          <p className="mt-1 text-xs text-[var(--on-surface-muted)]">Average result for each teacher’s linked students. Select a teacher to review their students.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-sm">
@@ -2807,11 +2817,13 @@ function TeachingTab({
             </thead>
             <tbody className="divide-y divide-border/20">
               {teacherImpactRows.map((row) => (
-                <tr key={`${row.teacherName}:${row.subject}`}>
-                  <td className="px-5 py-3 font-medium text-[var(--on-surface)]">{row.teacherName}</td>
+                <tr key={row.key}>
+                  <td className="px-5 py-3 font-medium text-[var(--on-surface)]">
+                    <button type="button" className={styles.teachingTableLink} disabled={!row.students.length} onClick={() => onOpenModal(row.subject, row.teacherName, row.students)}>{row.teacherName}<span aria-hidden="true">↗</span></button>
+                  </td>
                   <td className="px-4 py-3 text-[var(--on-surface-muted)]">{row.subject}</td>
                   <td className="px-4 py-3 text-[var(--on-surface-muted)]" title={row.classNames.join(", ") || undefined}>
-                    {row.classNames.length ? <>{row.classNames[0]}{row.classNames.length > 1 ? ` +${row.classNames.length - 1}` : ""}</> : "Class not recorded"}
+                    {row.classNames.length ? row.classNames.join(", ") : row.unassigned ? "No verified teaching assignment" : "Class not recorded"}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-[var(--on-surface-muted)]">{row.count}</td>
                   <td className="px-4 py-3 text-right font-semibold tabular-nums text-[var(--on-surface)]">{row.average}</td>
@@ -2820,98 +2832,12 @@ function TeachingTab({
                   </td>
                 </tr>
               ))}
+              {!teacherImpactRows.length && <tr><td colSpan={6} className="px-5 py-8 text-center text-muted">No teacher results for this subject.</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
-
-      {data.subjects.map((subj) => {
-
-        const isExpanded = expandedSubject === subj.subject;
-        const yearMeanVal = subj.yearMean;
-
-        return (
-          <div key={subj.subject} className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] shadow-ambient overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setExpandedSubject(isExpanded ? null : subj.subject)}
-              className={styles.subjectDisclosure}
-              aria-expanded={isExpanded}
-            >
-              <div className="flex items-center gap-3">
-                <SubjectIcon subject={subj.subject} />
-                <div>
-                  <p className="font-bold text-[var(--on-surface)]">{subj.subject}</p>
-                  <p className="text-xs text-[var(--on-surface-muted)]">
-                    {subj.classes.length} class{subj.classes.length !== 1 ? "es" : ""} · {subj.presentCount} students · year mean {subj.yearMeanDisplay ?? "—"}
-                  </p>
-                </div>
-              </div>
-              <svg
-                className={`h-5 w-5 shrink-0 text-[var(--on-surface-muted)] calm-transition ${isExpanded ? "rotate-180" : ""}`}
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-
-            {isExpanded && (
-              <div className="border-t border-[var(--outline-variant)]/20">
-                <div className="px-5 pt-4 pb-4 space-y-4">
-                  {subj.classes.map((cls) => {
-                    const isAbove = (cls.vsYearMean ?? 0) >= 0;
-                    const barWidthPct = yearMeanVal !== null && cls.mean !== null
-                      ? Math.min(100, Math.max(4, (cls.mean / Math.max(yearMeanVal * 1.5, 0.01)) * 100))
-                      : 50;
-
-                    return (
-                      <div key={`${cls.teacherId}:${cls.className}`} className={styles.teachingClassRow}>
-                        <div className={styles.teachingClassHeading}>
-                          <button
-                            type="button"
-                            onClick={() => onOpenModal(subj.subject, `${cls.className} · ${cls.teacherName}`, cls.students)}
-                            className={styles.teachingClassLink}
-                          >
-                            <span className={styles.teachingClassName}>{cls.className}<span aria-hidden="true">↗</span></span>
-                            <span className={styles.teachingClassMeta}>{cls.teacherName} · {cls.count} students</span>
-                          </button>
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-sm font-bold tabular-nums text-[var(--on-surface)]">{cls.meanDisplay ?? "—"}</span>
-                            {cls.vsYearMean !== null && (
-                              <span className={`text-[11px] font-semibold tabular-nums ${isAbove ? "text-[var(--success)]" : "text-[var(--error)]"}`}>
-                                {isAbove ? "+" : ""}{cls.vsYearMean}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="h-3 overflow-hidden rounded-md bg-[var(--surface-container-low)]">
-                          <div
-                            className={`h-full rounded-md calm-transition ${isAbove ? barPositiveClass : barNegativeClass}`}
-                            style={{ width: `${barWidthPct}%` }}
-                          />
-                        </div>
-                        {cls.observationCount > 0 && (
-                          <p className="text-[10px] text-[var(--on-surface-muted)]">
-                            {cls.observationCount} observation{cls.observationCount !== 1 ? "s" : ""} this year
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {subj.unassigned.length > 0 && (
-                  <div className="border-t border-[var(--outline-variant)]/10 px-5 py-3">
-                    <p className="text-[11px] text-[var(--on-surface-muted)]">
-                      {subj.unassigned.length} student{subj.unassigned.length !== 1 ? "s" : ""} without a teaching group assignment
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+      <details className={styles.teachingNotes}><summary>About these results</summary><p>Historical results use Arbor rosters and staff assignments from the assessment date. Shared classes appear for each verified teacher. Unassigned students are shown separately and excluded from teacher averages. These results indicate attainment, not a causal measure of teaching impact.</p></details>
     </div>
   );
 }
