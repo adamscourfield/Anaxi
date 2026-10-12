@@ -1,4 +1,4 @@
-import { historicTeacherReference } from "@/lib/integrations/arbor/historicTeacherReference";
+import { historicClassSchoolType, historicTeacherReference } from "@/lib/integrations/arbor/historicTeacherReference";
 import { NextResponse } from "next/server";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { withApi } from "@/lib/apiRoute";
@@ -22,7 +22,7 @@ const EFFECTIVE_TO = new Date("2026-08-31T23:59:59.999Z");
 const PAGES_PER_RUN = 5;
 // Version 3 joins classroom timetable slots to dated staff allocations.
 // Computed staff relations are undated in Arbor and cannot prove history.
-const HISTORIC_TIMETABLE_MAPPING_VERSION = 5;
+const HISTORIC_TIMETABLE_MAPPING_VERSION = 6;
 
 /** Imports only dated 2025/26 classroom assignments; current timetable rows are untouched. */
 export const POST = withApi(async function POST(req: Request) {
@@ -40,7 +40,7 @@ export const POST = withApi(async function POST(req: Request) {
   const db = prisma as any;
   const integration = await db.sharedIntegration.findFirst({
     where: arborConnectionWhere(req),
-    include: { schools: { where: { enabled: true }, select: { tenantId: true } } },
+    include: { schools: { where: { enabled: true }, select: { tenantId: true, tenant: { select: { tenantSettings: { select: { schoolType: true } } } } } } },
   });
   if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") {
     return NextResponse.redirect(new URL("/god/integrations/arbor?timetableHistoricSync=not-connected", req.url));
@@ -90,7 +90,10 @@ export const POST = withApi(async function POST(req: Request) {
       // label itself names the academic year, so require it before historic
       // links can be stored for assessment attribution.
       if (![ACADEMIC_YEAR, "2025/26"].some((year) => assignment.className.includes(year))) continue;
-      const matches = studentResolver.studentCandidates(assignment.studentId, assignment.studentName);
+      const classSchoolType = historicClassSchoolType(assignment.className);
+      const schoolIds = classSchoolType ? integration.schools.filter((school: any) => school.tenant.tenantSettings?.schoolType === classSchoolType).map((school: any) => school.tenantId) : [];
+      const matches = studentResolver.studentCandidates(assignment.studentId, assignment.studentName)
+        .filter((match) => schoolIds.length !== 1 || match.person.tenantId === schoolIds[0]);
       const eligibleStudents = matches.filter((match) => assignment.staff.some((arborStaff) => staffResolver.staff(match.person.tenantId, arborStaff.id, arborStaff.fullName)));
       // A missing former teacher must not prevent an otherwise unique Arbor
       // pupil identity from being imported. Keep ambiguous school matches out.

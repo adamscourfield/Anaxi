@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { historicTeacherReference } from "@/lib/integrations/arbor/historicTeacherReference";
+import { historicClassSchoolType, historicTeacherReference } from "@/lib/integrations/arbor/historicTeacherReference";
 
 describe("historical Arbor teacher reporting references", () => {
   it("retains the MIS identity without granting access or enabling notifications", () => {
@@ -14,4 +14,11 @@ describe("historical Arbor teacher reporting references", () => {
     expect(first.email).toMatch(/^arbor-history-[a-f0-9]+@history\.invalid$/);
     expect(first.email).toBe(historicTeacherReference("secondary", { id: "staff/891", fullName: "Changed Name" }).email);
   });
+});
+
+it("routes a historical class only when it explicitly identifies a supported school year", () => {
+  expect(historicClassSchoolType("Mathematics: Year 9: 9F/Ma (2025/2026)")).toBe("SECONDARY");
+  expect(historicClassSchoolType("Maths: Year 6 (2025/2026)")).toBe("PRIMARY");
+  expect(historicClassSchoolType("Mathematics (2025/2026)")).toBeNull();
+  expect(historicClassSchoolType("Year 99")).toBeNull();
 });
