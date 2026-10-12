@@ -1,7 +1,7 @@
 # Historical assessment teacher attribution
 
-The 2025/2026 roster rebuild is version 4. On the next run of the existing
-`arbor-timetable-historic` scheduled worker, version 3 completion is ignored and
+The 2025/2026 roster rebuild is version 5. On the next run of the existing
+`arbor-timetable-historic` scheduled worker, version 4 completion is ignored and
 the roster is read again in resumable batches. God Mode shows the replacement
 as queued until it starts. It can also be advanced with the existing historic
 roster import action; no teacher data needs to be entered manually.
@@ -26,7 +26,7 @@ attainment association, not a causal estimate of individual teacher impact.
 
 1. Use the existing historic roster preview to confirm that the school's Arbor
    returns dated lesson allocations and former Maths staff.
-2. Allow the scheduled version 4 pass to complete (or advance it through the
+2. Allow the scheduled version 5 pass to complete (or advance it through the
    existing God Mode action). Check sync errors and the saved link count.
 3. Check a known pupil in the 2025/2026 Year 9 End of Year point against their
    former Arbor Maths class and teachers, including shared teaching if present.
@@ -40,3 +40,5 @@ or whether the school has additional source-data/identity gaps.
 
 The school confirmed these assessments took place in June 2026. The end-of-June
 cutoff is an attribution fallback, not a claim that every exam occurred on 30 June.
+
+Former staff absent from Anaxi are stored automatically from their historical Arbor staff ID and name as disabled reporting references. They have no password, notification delivery, or login access. Existing accounts are reused unchanged. Ambiguous pupil school identities remain skipped.
