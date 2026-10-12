@@ -1,3 +1,4 @@
+import { arborPersonName } from "./personName";
 import { runArborGraphqlQuery } from "./graphqlClient";
 import { historicTimetableStaff } from "./historicTimetableStaff";
 import type {
@@ -1164,7 +1165,7 @@ export class ArborClient {
       }
     }`);
     const enrolmentData = await readEnrolmentPage(membershipPage);
-    const personName = (person: { legalFirstName: string | null; legalLastName: string | null; preferredFirstName: string | null; preferredLastName: string | null }) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
+    const personName = arborPersonName;
     const isCurrentEnrolment = (enrolment: TimetableData["AcademicUnitEnrolment"][number]) =>
       (!enrolment.startDate || enrolment.startDate <= today) && (!enrolment.endDate || enrolment.endDate >= today);
     const groupsWithSubjects = new Set<string>();
@@ -1240,7 +1241,7 @@ export class ArborClient {
     const date = new Date(asOfDate);
     if (Number.isNaN(date.getTime())) throw new Error("Invalid historic timetable date");
     const yearStart = `${date.getUTCFullYear() - (date.getUTCMonth() < 8 ? 1 : 0)}-09-01`;
-    const personName = (person: Person) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
+    const personName = arborPersonName;
     const activeOnDate = (enrolment: Enrolment) => (!enrolment.startDate || enrolment.startDate <= asOfDate) && (!enrolment.endDate || enrolment.endDate >= asOfDate);
     const diagnostics = { pages: 0, memberships: 0, activeMemberships: 0, classes: new Set<string>(), subjectClasses: new Set<string>(), staffedClasses: new Set<string>(), sampleClasses: new Set<string>(), mathsSamples: new Set<string>() };
     const assignments: Array<{ studentId: string; studentName: string; teachingGroupId: string; className: string; subject: string; staff: Array<{ id: string; fullName: string }> }> = [];
@@ -1337,7 +1338,7 @@ export class ArborClient {
         }
       }
     }`);
-    const personName = (person: Person) => [person.preferredFirstName ?? person.legalFirstName, person.preferredLastName ?? person.legalLastName].filter(Boolean).join(" ").trim();
+    const personName = arborPersonName;
     const activeOnDate = (enrolment: Enrolment) => (!enrolment.startDate || enrolment.startDate <= asOfDate) && (!enrolment.endDate || enrolment.endDate >= asOfDate);
     const classes = new Set<string>();
     const subjectClasses = new Set<string>();

@@ -1,6 +1,6 @@
 # Historical assessment teacher attribution
 
-The 2025/2026 roster rebuild is version 7. On the next run of the existing
+The 2025/2026 roster rebuild is version 8. On the next run of the existing
 `arbor-timetable-historic` scheduled worker, version 6 completion is ignored and
 the roster is read again in resumable batches. God Mode shows the replacement
 as queued until it starts. It can also be advanced with the existing historic
@@ -26,7 +26,7 @@ attainment association, not a causal estimate of individual teacher impact.
 
 1. Use the existing historic roster preview to confirm that the school's Arbor
    returns dated lesson allocations and former Maths staff.
-2. Allow the scheduled version 7 pass to complete (or advance it through the
+2. Allow the scheduled version 8 pass to complete (or advance it through the
    existing God Mode action). Check sync errors and the saved link count.
 3. Check a known pupil in the 2025/2026 Year 9 End of Year point against their
    former Arbor Maths class and teachers, including shared teaching if present.
@@ -46,3 +46,5 @@ Former staff absent from Anaxi are stored automatically from their historical Ar
 For a shared Primary/Secondary Arbor connection, an explicit historical class year is matched to the uniquely configured school phase before pupil identity resolution. Missing or ambiguous school-phase configuration does not choose a tenant.
 
 Existing pupils without a saved Arbor ID may use the existing unique full-name fallback within the configured school phase; multiple candidates remain unassigned.
+
+Version 8 falls back to legal names when Arbor preferred names are empty or whitespace, restoring historical staff allocations previously discarded as unnamed.
