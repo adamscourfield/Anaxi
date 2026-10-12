@@ -15,7 +15,12 @@
 @media (max-width: 639px) { .summary { grid-template-columns: 1fr; } }
 
 .page select { background: #fff; border: 1px solid #e5e5e6; border-radius: 10px; min-height: 42px; }
-.page button { background: #1c1c1e; color: #fff; border-radius: 10px; }
+.page button { background: transparent; color: #1c1c1e; border-radius: 8px; }
 .page span:has(> svg) { background: #fff; color: #e14e36; border: 1px solid #e5e5e6; border-radius: 12px; }
 
 .page [data-ui-card], .page :global(.grid) > * { min-width: 0; }
+
+.page button.linkControl { background: transparent; color: #e14e36; padding: 6px 10px; border: 1px solid #e5e5e6; border-radius: 8px; font-size: 12px; }
+.page button.linkControl:hover { background: #fff3ef; border-color: #ffb9aa; }
+.page input { background: #fff; border: 1px solid #e5e5e6; border-radius: 9px; color: #1c1c1e; }
+.page button:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }

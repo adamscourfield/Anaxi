@@ -743,7 +743,7 @@ export default function ComparisonPage() {
                           <button
                             type="button"
                             onClick={() => setP8ShowAll((v) => !v)}
-                            className="link-accent text-[0.8125rem] font-semibold"
+                            className={styles.linkControl}
                           >
                             {p8ShowAll ? "Show fewer" : `Show all ${filtered.length}`}
                           </button>

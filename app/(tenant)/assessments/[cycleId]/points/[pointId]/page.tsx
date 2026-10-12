@@ -377,7 +377,7 @@ function DistBar({ distribution, format, onGradeClick }: { distribution: Array<{
           const pct = Math.round((d.count / total) * 100);
           const { swatch } = gradeDistributionBarStyle(d.grade, format === "GCSE" ? "GCSE" : "A_LEVEL");
           return (
-            <button type="button" key={d.grade} className={`flex items-center gap-1 text-[9px] text-[var(--on-surface-muted)] ${onGradeClick ? 'hover:text-[var(--on-surface)] cursor-pointer' : ''}`}
+            <button type="button" key={d.grade} className={styles.gradeLegend}
                     onClick={() => onGradeClick && onGradeClick(d.grade)}>
               <span className={`inline-block h-2 w-2 rounded-sm ${swatch}`} />
               {d.grade}: {d.count} ({pct}%)
@@ -925,7 +925,7 @@ export default function ResultPointPage() {
                       type="button"
                       role="tab"
                       aria-selected={gcseGapView === "pp"}
-                      className={`segmented-toggle-btn ${gcseGapView === "pp" ? "segmented-toggle-btn-active" : ""}`}
+                      className={`${styles.equityToggle} segmented-toggle-btn ${gcseGapView === "pp" ? "segmented-toggle-btn-active" : ""}`}
                       onClick={() => setGcseGapView("pp")}
                     >
                       PP
@@ -934,7 +934,7 @@ export default function ResultPointPage() {
                       type="button"
                       role="tab"
                       aria-selected={gcseGapView === "send"}
-                      className={`segmented-toggle-btn ${gcseGapView === "send" ? "segmented-toggle-btn-active" : ""}`}
+                      className={`${styles.equityToggle} segmented-toggle-btn ${gcseGapView === "send" ? "segmented-toggle-btn-active" : ""}`}
                       onClick={() => setGcseGapView("send")}
                     >
                       SEND
@@ -1171,8 +1171,8 @@ export default function ResultPointPage() {
               <div className="flex items-center justify-between">
                 <SectionHeader title="Equity Gap by Subject" subtitle="Percentage-point gap between cohorts" />
                 <div className="flex overflow-hidden rounded-lg border border-[var(--outline-variant)]/60 text-xs font-semibold">
-                  <button type="button" onClick={() => setGapView("pp")} className={`px-4 py-1.5 calm-transition ${gapView === "pp" ? "bg-[var(--surface-container-high)] text-[var(--on-surface)]" : "text-[var(--on-surface-muted)] hover:bg-[var(--surface-container-low)]"}`}>Pupil Premium</button>
-                  <button type="button" onClick={() => setGapView("send")} className={`border-l border-[var(--outline-variant)]/60 px-4 py-1.5 calm-transition ${gapView === "send" ? "bg-[var(--surface-container-high)] text-[var(--on-surface)]" : "text-[var(--on-surface-muted)] hover:bg-[var(--surface-container-low)]"}`}>SEND</button>
+                  <button type="button" aria-pressed={gapView === "pp"} onClick={() => setGapView("pp")} className={`px-4 py-1.5 calm-transition ${gapView === "pp" ? "bg-[var(--surface-container-high)] text-[var(--on-surface)]" : "text-[var(--on-surface-muted)] hover:bg-[var(--surface-container-low)]"}`}>Pupil Premium</button>
+                  <button type="button" aria-pressed={gapView === "send"} onClick={() => setGapView("send")} className={`border-l border-[var(--outline-variant)]/60 px-4 py-1.5 calm-transition ${gapView === "send" ? "bg-[var(--surface-container-high)] text-[var(--on-surface)]" : "text-[var(--on-surface-muted)] hover:bg-[var(--surface-container-low)]"}`}>SEND</button>
                 </div>
               </div>
               {gapView === "pp" && metrics.subjects.some((sm) => sm.pp) && (
@@ -2865,16 +2865,15 @@ function TeachingTab({
                       : 50;
 
                     return (
-                      <div key={`${cls.teacherId}:${cls.className}`} className="space-y-1.5">
-                        <div className="flex items-baseline justify-between">
+                      <div key={`${cls.teacherId}:${cls.className}`} className={styles.teachingClassRow}>
+                        <div className={styles.teachingClassHeading}>
                           <button
                             type="button"
                             onClick={() => onOpenModal(subj.subject, `${cls.className} · ${cls.teacherName}`, cls.students)}
-                            className="text-sm font-semibold text-[var(--on-surface)] hover:text-[var(--accent)] calm-transition text-left"
+                            className={styles.teachingClassLink}
                           >
-                            {cls.className}
-                            <span className="ml-1.5 text-xs text-[var(--on-surface-muted)] font-normal">{cls.teacherName}</span>
-                            <span className="ml-1.5 text-xs text-[var(--on-surface-muted)] font-normal">({cls.count} students)</span>
+                            <span className={styles.teachingClassName}>{cls.className}<span aria-hidden="true">↗</span></span>
+                            <span className={styles.teachingClassMeta}>{cls.teacherName} · {cls.count} students</span>
                           </button>
                           <div className="flex items-baseline gap-2">
                             <span className="text-sm font-bold tabular-nums text-[var(--on-surface)]">{cls.meanDisplay ?? "—"}</span>

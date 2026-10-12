@@ -134,3 +134,23 @@
 .page button.subjectDisclosure:focus-visible { outline: 2px solid #ff6a52; outline-offset: -3px; }
 @media (max-width: 640px) { .page button.subjectDisclosure { padding: 14px; } }
 @media (prefers-reduced-motion: reduce) { .page button.subjectDisclosure, .page button.subjectDisclosure > svg { transition: none; } }
+
+.teachingClassRow { padding: 12px 0; border-bottom: 1px solid #eeeeef; }
+.teachingClassRow:last-child { border-bottom: 0; }
+.teachingClassHeading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 10px; }
+.page button.teachingClassLink { display: grid; gap: 5px; min-width: 0; padding: 7px 9px; margin: -7px -9px; background: transparent; color: #1c1c1e; border: 1px solid transparent; border-radius: 8px; text-align: left; transition: background 160ms, border-color 160ms; }
+.page button.teachingClassLink:hover { background: #fff3ef; border-color: #ffd4c8; }
+.page button.teachingClassLink:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
+.teachingClassName { display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.teachingClassName > span { color: #e14e36; font-size: 14px; }
+.teachingClassMeta { color: #6e6e73; font-size: 12px; font-weight: 400; line-height: 1.5; }
+.teachingClassHeading > div { flex-shrink: 0; }
+@media (max-width: 640px) { .teachingClassHeading { align-items: flex-start; gap: 12px; }.teachingClassMeta { font-size: 11px; } }
+@media (prefers-reduced-motion: reduce) { .page button.teachingClassLink { transition: none; } }
+
+.page button.gradeLegend { display: inline-flex; align-items: center; gap: 5px; background: #fff; color: #6e6e73; border: 1px solid #eeeeef; border-radius: 5px; padding: 3px 5px; font-size: 10px; line-height: 1.2; transition: background 160ms, color 160ms; }
+.page button.gradeLegend:hover { background: #fff3ef; color: #1c1c1e; border-color: #ffb9aa; }
+.page button.equityToggle, .page button[aria-pressed] { background: #fff; color: #6e6e73; border: 1px solid transparent; border-radius: 7px; }
+.page button.equityToggle[aria-selected="true"], .page button[aria-pressed="true"] { background: #fff3ef; color: #b13f2c; border-color: #ffd4c8; }
+.page button.equityToggle:hover, .page button[aria-pressed]:hover { background: #fff8f5; color: #b13f2c; }
+.page button.gradeLegend:focus-visible, .page button.equityToggle:focus-visible { outline: 2px solid #ff6a52; outline-offset: 2px; }

@@ -362,7 +362,7 @@ export default async function CycleDetailPage({
               }))}
             />
             <Button asChild variant="secondary" className="h-8 py-0 text-xs">
-              <Link href={`/assessments/${cycle.id}/points/new`}>
+              <Link className={styles.addPoint} href={`/assessments/${cycle.id}/points/new`}>
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                 </svg>

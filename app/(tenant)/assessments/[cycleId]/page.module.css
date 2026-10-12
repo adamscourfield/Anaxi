@@ -3,7 +3,7 @@
 .page h1 { font-weight: 600; color: #1c1c1e; letter-spacing: -.04em; }
 .page h1::after { content: "."; color: #ff6a52; }
 .page [data-ui-card] { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
-.page a:has(> svg), .page a[class*="inline-flex"] { background: #1c1c1e; background-image: none; color: #fff; border-color: #1c1c1e; border-radius: 10px; }
+.page a:has(> svg), .page a[class*="inline-flex"] { background: #fff; background-image: none; color: #1c1c1e; border: 1px solid #e5e5e6; border-radius: 9px; }
 .page thead tr { background: #fff; }
 .page tbody tr { background: #fff; }
 .page tbody tr:hover { background: #fafafa; }
@@ -14,8 +14,17 @@
 @media (max-width: 1023px) { .summary { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 639px) { .summary { grid-template-columns: 1fr; } }
 
-.page button, .page summary[class*="inline-flex"], .page a[class*="inline-flex"] { background: #1c1c1e; background-image: none; color: #fff; border-color: #1c1c1e; border-radius: 10px; }
-.page button svg, .page summary[class*="inline-flex"] svg { color: #fff; }
-.page button:hover { background: #333; color: #fff; }
+.page button, .page summary[class*="inline-flex"], .page a[class*="inline-flex"] { background: #fff; background-image: none; color: #1c1c1e; border: 1px solid #e5e5e6; border-radius: 9px; }
+.page button svg, .page summary[class*="inline-flex"] svg { color: #e14e36; }
+.page button:hover, .page a[class*="inline-flex"]:hover, .page summary[class*="inline-flex"]:hover { background: #fff3ef; color: #1c1c1e; border-color: #ffb9aa; }
 
 .pointActions > a, .pointActions > button { width: 144px; height: 40px; padding: 0 16px; font-size: 13px; box-sizing: border-box; justify-content: center; }
+
+.page td button { background: transparent; color: #6e6e73; border-color: transparent; }
+.page td button:hover { background: #fff3ef; color: #e14e36; border-color: #ffd4c8; }
+.page td summary { background: #f7f7f8; color: #525258; border: 1px solid #e5e5e6; border-radius: 6px; }
+.page td a[class*="inline-flex"] { height: 32px; font-weight: 500; }
+.page .pointActions .addPoint { background: #1c1c1e; color: #fff; border-color: #1c1c1e; }
+.page .pointActions .addPoint svg { color: #fff; }
+.page .pointActions .addPoint:hover { background: #333335; }
+.page :is(button,a,summary):focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
