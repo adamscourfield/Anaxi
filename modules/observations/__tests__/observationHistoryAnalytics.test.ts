@@ -182,3 +182,36 @@ describe("computeObservationHistoryAnalytics", () => {
     expect(sumTimeline).toBe(1);
   });
 });
+
+describe("coaching academic-year coverage", () => {
+  it("excludes summer weeks and observations, including 31 August in the first September week", () => {
+    const result = computeObservationHistoryAnalytics({
+      range: { start: new Date(2026, 3, 13), end: new Date(2026, 9, 13, 12) },
+      observations: [
+        { id: "summer", observerId: "c", observedTeacherId: "t", observedAt: new Date(2026, 7, 20), observerRole: "SLT" },
+        { id: "aug31", observerId: "c", observedTeacherId: "t", observedAt: new Date(2026, 7, 31, 12), observerRole: "SLT" },
+        { id: "sep1", observerId: "c", observedTeacherId: "t", observedAt: new Date(2026, 8, 1, 12), observerRole: "SLT" },
+      ],
+      coachAssignments: [{ coachUserId: "c", coacheeUserId: "t", coachName: "Coach", coacheeName: "Teacher" }],
+      showCoachingSection: true,
+    });
+    const pair = result.pairWeekly[0];
+    expect(pair.weekLabels[0]).toMatch(/^01 Sep/);
+    expect(pair.weekHit).toHaveLength(7);
+    expect(pair.observationCount).toBe(1);
+    expect(pair.weeksWithObservation).toBe(1);
+    expect(pair.weekObservationIds[0]).toBe("sep1");
+    // Explicit long-range charts still retain their own historical observations.
+    expect(result.timelineWeeks.reduce((sum, w) => sum + w.count, 0)).toBe(3);
+  });
+
+  it("uses the previous September for dates before the new school year and respects shorter windows", () => {
+    for (const start of [new Date(2025, 6, 1), new Date(2026, 0, 5)]) {
+      const result = computeObservationHistoryAnalytics({
+        range: { start, end: new Date(2026, 0, 20) }, observations: [],
+        coachAssignments: [{ coachUserId: "c", coacheeUserId: "t", coachName: "Coach", coacheeName: "Teacher" }], showCoachingSection: true,
+      });
+      expect(result.pairWeekly[0].weekLabels[0]).toMatch(start.getFullYear() === 2025 ? /^01 Sep/ : /^05 Jan/);
+    }
+  });
+});

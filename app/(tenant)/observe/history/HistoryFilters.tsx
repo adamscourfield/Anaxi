@@ -19,7 +19,7 @@ interface HistoryFiltersProps {
   };
   /** When set, a hidden `window` field is submitted so date-window deep links stay applied. */
   preservedWindowDays: number | null;
-  /** Preserves chart preset across "Apply filters" (default 26w is omitted). */
+  /** Preserves chart preset across "Apply filters" (default academic year is omitted). */
   preservedAnalysisPreset?: string;
   preservedCoachingCoachId?: string;
   preservedCoachingCoacheeId?: string;
@@ -50,7 +50,7 @@ export function HistoryFilters({
   }, []);
   const activeCount = Object.values(defaults).filter(Boolean).length;
   const clearParams = new URLSearchParams();
-  if (preservedAnalysisPreset && preservedAnalysisPreset !== "26w") clearParams.set("analysis", preservedAnalysisPreset);
+  if (preservedAnalysisPreset && preservedAnalysisPreset !== "academic_year") clearParams.set("analysis", preservedAnalysisPreset);
   if (preservedCoachingCoachId) clearParams.set("coachingCoach", preservedCoachingCoachId);
   if (preservedCoachingCoacheeId) clearParams.set("coachingCoachee", preservedCoachingCoacheeId);
   const clearHref = `/observe/history${clearParams.size ? `?${clearParams}` : ""}`;
@@ -67,7 +67,7 @@ export function HistoryFilters({
         {preservedWindowDays != null && preservedWindowDays > 0 ? (
           <input type="hidden" name="window" value={String(preservedWindowDays)} />
         ) : null}
-        {preservedAnalysisPreset && preservedAnalysisPreset !== "26w" ? (
+        {preservedAnalysisPreset && preservedAnalysisPreset !== "academic_year" ? (
           <input type="hidden" name="analysis" value={preservedAnalysisPreset} />
         ) : null}
         {preservedCoachingCoachId ? (

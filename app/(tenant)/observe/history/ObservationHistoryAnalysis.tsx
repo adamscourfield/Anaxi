@@ -290,7 +290,7 @@ function formatObsDate(iso: string): string {
 
 function analysisHref(preset: ObservationAnalysisPreset, baseQuery: string): string {
   const params = new URLSearchParams(baseQuery);
-  if (preset === "26w") params.delete("analysis");
+  if (preset === "academic_year") params.delete("analysis");
   else params.set("analysis", preset);
   const qs = params.toString();
   return `/observe/history${qs ? `?${qs}` : ""}`;
@@ -656,7 +656,7 @@ export function ObservationHistoryAnalysis({
                 className="inline-flex items-center gap-1.5 calm-transition hover:text-text"
               >
                 <CalendarOutlineIcon className="h-3.5 w-3.5 shrink-0" stroke="currentColor" />
-                Academic year ~26 weeks
+                Academic year (from 1 September)
               </Link>
             </div>
           </div>
@@ -1167,7 +1167,7 @@ export function ObservationHistoryAnalysis({
                 <div className="inline-flex items-center gap-2">
                   <CalendarOutlineIcon className="h-4 w-4 shrink-0" stroke="currentColor" />
                   <span>
-                    Window: <span className="font-semibold text-text">{rangeLabel}</span>
+                    Weeks: <span className="font-semibold text-text">{pairWeekly[0]?.weekLabels[0]} – {pairWeekly[0]?.weekLabels.at(-1)}</span>
                     {pairWeekly[0]?.weekHit.length ? (
                       <span className="text-muted"> ({pairWeekly[0].weekHit.length} weeks)</span>
                     ) : null}

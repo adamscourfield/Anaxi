@@ -86,7 +86,7 @@ export default async function ObservationHistoryPage({
   const useWindow = Number.isFinite(windowDays) && windowDays > 0 && !from && !to;
   const windowStart = useWindow ? new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000) : null;
   const analysisPresetRaw = String(resolvedSearchParams.analysis || "").trim();
-  const analysisPreset = parseObservationAnalysisPreset(analysisPresetRaw) ?? "26w";
+  const analysisPreset = parseObservationAnalysisPreset(analysisPresetRaw) ?? "academic_year";
   const coachingCoachIdRaw = String(resolvedSearchParams.coachingCoach || "").trim();
   const coachingCoacheeIdRaw = String(resolvedSearchParams.coachingCoachee || "").trim();
 
@@ -275,7 +275,7 @@ export default async function ObservationHistoryPage({
     !!phaseFilter ||
     !!signalKeyFilter ||
     useWindow ||
-    analysisPreset !== "26w" ||
+    analysisPreset !== "academic_year" ||
     !!coachingCoachId ||
     !!coachingCoacheeId;
 
@@ -298,7 +298,7 @@ export default async function ObservationHistoryPage({
     if (phaseFilter) params.set("phase", phaseFilter);
     if (signalKeyFilter) params.set("signalKey", signalKeyFilter);
     if (useWindow) params.set("window", String(windowDays));
-    if (analysisPreset !== "26w") params.set("analysis", analysisPreset);
+    if (analysisPreset !== "academic_year") params.set("analysis", analysisPreset);
     if (coachingCoachId) params.set("coachingCoach", coachingCoachId);
     if (coachingCoacheeId) params.set("coachingCoachee", coachingCoacheeId);
     if (p > 1) params.set("page", String(p));
@@ -316,7 +316,7 @@ export default async function ObservationHistoryPage({
   if (phaseFilter) historyFilterQuery.set("phase", phaseFilter);
   if (signalKeyFilter) historyFilterQuery.set("signalKey", signalKeyFilter);
   if (useWindow) historyFilterQuery.set("window", String(windowDays));
-  if (analysisPreset !== "26w") historyFilterQuery.set("analysis", analysisPreset);
+  if (analysisPreset !== "academic_year") historyFilterQuery.set("analysis", analysisPreset);
   if (coachingCoachId) historyFilterQuery.set("coachingCoach", coachingCoachId);
   if (coachingCoacheeId) historyFilterQuery.set("coachingCoachee", coachingCoacheeId);
   const historyFilterQueryString = historyFilterQuery.toString();

@@ -1,5 +1,5 @@
 import type { UserRole } from "@/lib/types";
-import { observationWeekKey } from "@/modules/observations/observationHistoryAnalysisRange";
+import { academicYearBounds, observationWeekKey } from "@/modules/observations/observationHistoryAnalysisRange";
 
 export type RoleCountRow = { role: string; label: string; count: number };
 
@@ -108,7 +108,7 @@ export function computeObservationHistoryAnalytics(input: {
 
   const weekStarts = enumerateWeeks(range.start, range.end);
   const weekKeys = weekStarts.map((w) => observationWeekKey(w));
-  const weekLabels = weekStarts.map((w) => formatWeekLabel(w));
+  const weekLabels = weekStarts.map((w) => formatWeekLabel(new Date(Math.max(w.getTime(), range.start.getTime()))));
 
   const timelineMap = new Map<string, number>();
   for (const k of weekKeys) timelineMap.set(k, 0);
@@ -122,14 +122,19 @@ export function computeObservationHistoryAnalytics(input: {
     count: timelineMap.get(weekKeys[i]) ?? 0,
   }));
 
+  // Current coaching assignments must not inherit weeks from the previous school year.
+  const coachingStart = new Date(Math.max(range.start.getTime(), academicYearBounds(range.end).start.getTime()));
+  const coachingWeekStarts = enumerateWeeks(coachingStart, range.end);
+  const coachingWeekKeys = coachingWeekStarts.map(observationWeekKey);
+  const coachingWeekLabels = coachingWeekStarts.map(w => formatWeekLabel(new Date(Math.max(w.getTime(), coachingStart.getTime()))));
   const pairWeekly: CoachingPairWeeklyRow[] = [];
   if (showCoachingSection && coachAssignments.length > 0) {
     for (const a of coachAssignments) {
       const pairObs = obsInRange.filter(
-        (o) => o.observerId === a.coachUserId && o.observedTeacherId === a.coacheeUserId,
+        (o) => o.observerId === a.coachUserId && o.observedTeacherId === a.coacheeUserId && new Date(o.observedAt) >= coachingStart,
       );
       const hitKeys = new Set(pairObs.map((o) => observationWeekKey(new Date(o.observedAt))));
-      const weekHit = weekKeys.map((k) => hitKeys.has(k));
+      const weekHit = coachingWeekKeys.map((k) => hitKeys.has(k));
 
       const bestByWeek = new Map<string, { id: string; at: number }>();
       for (const o of pairObs) {
@@ -138,8 +143,8 @@ export function computeObservationHistoryAnalytics(input: {
         const prev = bestByWeek.get(k);
         if (!prev || t > prev.at) bestByWeek.set(k, { id: o.id, at: t });
       }
-      const weekObservationIds = weekKeys.map((k) => bestByWeek.get(k)?.id ?? null);
-      const weekObservationDates = weekKeys.map((k) => {
+      const weekObservationIds = coachingWeekKeys.map((k) => bestByWeek.get(k)?.id ?? null);
+      const weekObservationDates = coachingWeekKeys.map((k) => {
         const v = bestByWeek.get(k);
         return v ? new Date(v.at).toISOString() : null;
       });
@@ -151,7 +156,7 @@ export function computeObservationHistoryAnalytics(input: {
         coacheeName: a.coacheeName,
         observationCount: pairObs.length,
         weeksWithObservation: weekHit.filter(Boolean).length,
-        weekLabels,
+        weekLabels: coachingWeekLabels,
         weekHit,
         weekObservationIds,
         weekObservationDates,
