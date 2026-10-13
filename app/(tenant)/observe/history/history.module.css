@@ -32,3 +32,36 @@
 @media (prefers-reduced-motion: no-preference) { .page :global(.obs-history-elevated-card), .page :global(.obs-history-filter-panel), .page :global(.obs-history-table-shell) { animation: arrive 500ms cubic-bezier(.22,1,.36,1) both; } }
 @keyframes arrive { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .page :global(.table-row) { transition: none; } }
+
+/* One surface joins controls, records and pagination. Native menus are never clipped. */
+.page :global(.obs-history-results) { border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; }
+.page :global(.obs-history-results-header) { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 22px 24px 18px; }
+.page :global(.obs-history-results-header) h2 { font-size: 17px; letter-spacing: -.02em; }
+.page :global(.obs-history-results-header) p { margin-top: 4px; font-size: 12px; color: #6e6e73; }
+.page :global(.obs-history-results-header) > span { color: #6e6e73; font-size: 12px; }
+.page :global(.obs-history-filters) { padding: 0 24px 22px; border-bottom: 1px solid #e5e5e6; background: #fafafb; position: relative; }
+.page :global(.obs-history-filter-summary) { display: none; }
+.page :global(.obs-history-filter-form) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding-top: 20px; }
+.page :global(.obs-history-filter-field) { display: flex; flex-direction: column; min-width: 0; gap: 7px; }
+.page :global(.obs-history-select), .page :global(.obs-history-date) { display: block; width: 100%; height: 44px; min-width: 0; padding: 0 12px; border: 1px solid #c9cbd0; border-radius: 8px; background-color: #fff; font: inherit; font-size: 13px; color: #1c1c1e; box-shadow: 0 1px 2px #1c1c1e05; }
+.page :global(.obs-history-select) { appearance: none; padding-right: 34px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%23555860' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-position: right 11px center; background-repeat: no-repeat; }
+.page :global(.obs-history-select):hover, .page :global(.obs-history-date):hover { border-color: #858993; }
+.page :global(.obs-history-select):focus-visible, .page :global(.obs-history-date):focus-visible { outline: 2px solid #ff6a52; outline-offset: 2px; }
+.page :global(.obs-history-filter-actions) { grid-column: span 2; display: flex; justify-content: flex-end; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
+.page :global(.obs-history-filter-actions) > * { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; font-size: 13px; }
+.page :global(.obs-history-results .obs-history-table-shell) { border: 0; border-radius: 0 0 14px 14px; box-shadow: none; animation: none; }
+.page :global(.obs-history-results .obs-history-elevated-card) { border: 0; border-radius: 0 0 14px 14px; box-shadow: none; }
+@media (min-width: 768px) and (max-width: 1100px) { .page :global(.obs-history-filter-form) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+  .page :global(.obs-history-results-header) { padding: 18px 16px; }
+  .page :global(.obs-history-results-header) > span { display: none; }
+  .page :global(.obs-history-filters) { padding: 0 16px; }
+  .page :global(.obs-history-filters[open]) { padding-bottom: 18px; }
+  .page :global(.obs-history-filter-summary) { display: flex; align-items: center; gap: 10px; padding: 15px 0; cursor: pointer; font-size: 13px; font-weight: 600; list-style: none; }
+  .page :global(.obs-history-filter-summary)::-webkit-details-marker { display: none; }
+  .page :global(.obs-history-filter-summary) span:first-child { font-size: 11px; color: #6e6e73; font-weight: 400; }
+  .page :global(.obs-history-filter-summary) span:last-child { margin-left: auto; }
+  .page :global(.obs-history-filter-form) { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-top: 0; gap: 14px 12px; }
+  .page :global(.obs-history-filter-actions) { justify-content: flex-start; }
+  .page :global(.obs-history-filter-actions) > * { flex: 1; padding: 0 10px; }
+}
