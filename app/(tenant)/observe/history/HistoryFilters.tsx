@@ -146,16 +146,16 @@ export function HistoryFilters({
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">To</span>
           <input aria-label="To" name="to" type="date" defaultValue={defaults.to} onChange={(event) => updateFilters(event.currentTarget.form!)} className="obs-history-date" />
         </label>
-        <div className="obs-history-filter-actions">
-          {hasFilters && (
+        {hasFilters && (
+          <div className="obs-history-filter-actions">
             <button type="button" className="btn-filter-secondary" disabled={isPending} onClick={() => navigateToFilters(clearHref)}>
               Clear filters
             </button>
-          )}
-          <span className="obs-history-filter-status" role="status" aria-live="polite">
-            {isPending ? "Updating results…" : ""}
-          </span>
-        </div>
+          </div>
+        )}
+        <span className="sr-only" role="status" aria-live="polite">
+          {isPending ? "Updating results…" : ""}
+        </span>
       </form>
     </details>
   );
