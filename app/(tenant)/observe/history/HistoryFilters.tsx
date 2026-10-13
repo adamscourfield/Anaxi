@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useRef, useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 
 
 interface HistoryFiltersProps {
@@ -19,7 +19,7 @@ interface HistoryFiltersProps {
   };
   /** When set, a hidden `window` field is submitted so date-window deep links stay applied. */
   preservedWindowDays: number | null;
-  /** Preserves chart preset across "Apply filters" (default academic year is omitted). */
+  /** Preserves chart preset while observation filters change (default academic year is omitted). */
   preservedAnalysisPreset?: string;
   preservedCoachingCoachId?: string;
   preservedCoachingCoacheeId?: string;
@@ -75,9 +75,8 @@ export function HistoryFilters({
     });
   }
 
-  function applyFilters(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+  function updateFilters(form: HTMLFormElement) {
+    const formData = new FormData(form);
     const params = new URLSearchParams();
     for (const [key, value] of formData.entries()) {
       const text = String(value).trim();
@@ -93,7 +92,11 @@ export function HistoryFilters({
         key={JSON.stringify(defaults)}
         method="get"
         action="/observe/history"
-        onSubmit={applyFilters}
+        onSubmit={(event) => {
+          event.preventDefault();
+          updateFilters(event.currentTarget);
+        }}
+        aria-busy={isPending}
         className="obs-history-filter-form" aria-label="Filter observations"
       >
         {preservedWindowDays != null && preservedWindowDays > 0 ? (
@@ -112,21 +115,21 @@ export function HistoryFilters({
           <>
             <label className="obs-history-filter-field">
               <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Teacher</span>
-              <select aria-label="Teacher" name="teacherId" defaultValue={defaults.teacherId} className="obs-history-select"><option value="">All teachers</option>{teachers.map((t) => <option key={t.id} value={t.id}>{t.fullName}</option>)}</select>
+              <select aria-label="Teacher" name="teacherId" defaultValue={defaults.teacherId} onChange={(event) => updateFilters(event.currentTarget.form!)} className="obs-history-select"><option value="">All teachers</option>{teachers.map((t) => <option key={t.id} value={t.id}>{t.fullName}</option>)}</select>
             </label>
             <label className="obs-history-filter-field">
               <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Observer</span>
-              <select aria-label="Observer" name="observerId" defaultValue={defaults.observerId} className="obs-history-select"><option value="">All observers</option>{observers.map((o) => <option key={o.id} value={o.id}>{o.fullName}</option>)}</select>
+              <select aria-label="Observer" name="observerId" defaultValue={defaults.observerId} onChange={(event) => updateFilters(event.currentTarget.form!)} className="obs-history-select"><option value="">All observers</option>{observers.map((o) => <option key={o.id} value={o.id}>{o.fullName}</option>)}</select>
             </label>
           </>
         )}
         <label className="obs-history-filter-field">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Subject</span>
-          <select aria-label="Subject" name="subject" defaultValue={defaults.subject} className="obs-history-select"><option value="">All subjects</option>{subjects.map((s) => <option key={s} value={s}>{s}</option>)}</select>
+          <select aria-label="Subject" name="subject" defaultValue={defaults.subject} onChange={(event) => updateFilters(event.currentTarget.form!)} className="obs-history-select"><option value="">All subjects</option>{subjects.map((s) => <option key={s} value={s}>{s}</option>)}</select>
         </label>
         <label className="obs-history-filter-field">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Signal</span>
-          <select aria-label="Signal" name="signalKey" defaultValue={defaults.signalKey} className="obs-history-select"><option value="">Any signal</option>{signalOptions.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}</select>
+          <select aria-label="Signal" name="signalKey" defaultValue={defaults.signalKey} onChange={(event) => updateFilters(event.currentTarget.form!)} className="obs-history-select"><option value="">Any signal</option>{signalOptions.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}</select>
         </label>
         <label className="obs-history-filter-field">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">From</span>
@@ -135,22 +138,23 @@ export function HistoryFilters({
             name="from"
             type="date"
             defaultValue={defaults.from}
+            onChange={(event) => updateFilters(event.currentTarget.form!)}
             className="obs-history-date"
           />
         </label>
         <label className="obs-history-filter-field">
           <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">To</span>
-          <input aria-label="To" name="to" type="date" defaultValue={defaults.to} className="obs-history-date" />
+          <input aria-label="To" name="to" type="date" defaultValue={defaults.to} onChange={(event) => updateFilters(event.currentTarget.form!)} className="obs-history-date" />
         </label>
         <div className="obs-history-filter-actions">
-          <button type="submit" className="btn-filter-primary" disabled={isPending}>
-            {isPending ? "Applying…" : "Apply filters"}
-          </button>
           {hasFilters && (
             <button type="button" className="btn-filter-secondary" disabled={isPending} onClick={() => navigateToFilters(clearHref)}>
               Clear filters
             </button>
           )}
+          <span className="obs-history-filter-status" role="status" aria-live="polite">
+            {isPending ? "Updating results…" : ""}
+          </span>
         </div>
       </form>
     </details>

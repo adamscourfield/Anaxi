@@ -49,6 +49,7 @@
 .page :global(.obs-history-select):focus-visible, .page :global(.obs-history-date):focus-visible { outline: 2px solid #ff6a52; outline-offset: 2px; }
 .page :global(.obs-history-filter-actions) { grid-column: span 2; display: flex; justify-content: flex-end; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
 .page :global(.obs-history-filter-actions) > * { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; font-size: 13px; }
+.page :global(.obs-history-filter-status) { min-width: 118px; padding: 0; color: #6e6e73; justify-content: flex-start; }
 .page :global(.obs-history-results .obs-history-table-shell) { border: 0; border-radius: 0 0 14px 14px; box-shadow: none; animation: none; }
 .page :global(.obs-history-results .obs-history-elevated-card) { border: 0; border-radius: 0 0 14px 14px; box-shadow: none; }
 @media (min-width: 768px) and (max-width: 1100px) { .page :global(.obs-history-filter-form) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
