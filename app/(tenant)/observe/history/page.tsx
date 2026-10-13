@@ -361,7 +361,7 @@ export default async function ObservationHistoryPage({
         coachingCoacheeId={coachingCoacheeId}
       />
 
-      <section className="obs-history-results" aria-labelledby="observation-records-title">
+      <section id="observation-records" className="obs-history-results scroll-mt-4" aria-labelledby="observation-records-title">
       <div className="obs-history-results-header">
         <div><h2 id="observation-records-title">Observation records</h2><p>{Number(totalCount).toLocaleString("en-GB")} {Number(totalCount) === 1 ? "observation" : "observations"}{hasFilters ? " matching your filters" : " recorded"}</p></div>
         <span>Filter the list below</span>

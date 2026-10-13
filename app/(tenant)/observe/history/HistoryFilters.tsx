@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useRef, useTransition } from "react";
 
 
 interface HistoryFiltersProps {
@@ -40,7 +40,10 @@ export function HistoryFilters({
   showTeacherFilters,
   hasFilters,
 }: HistoryFiltersProps) {
+  const router = useRouter();
   const detailsRef = useRef<HTMLDetailsElement>(null);
+  const keepPositionAfterNavigationRef = useRef(false);
+  const [isPending, startTransition] = useTransition();
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)");
     const sync = () => { if (detailsRef.current) detailsRef.current.open = media.matches; };
@@ -48,12 +51,40 @@ export function HistoryFilters({
     media.addEventListener("change", sync);
     return () => media.removeEventListener("change", sync);
   }, []);
+  useEffect(() => {
+    if (!keepPositionAfterNavigationRef.current) return;
+    keepPositionAfterNavigationRef.current = false;
+    requestAnimationFrame(() => keepRecordsInView());
+  }, [defaults]);
   const activeCount = Object.values(defaults).filter(Boolean).length;
   const clearParams = new URLSearchParams();
   if (preservedAnalysisPreset && preservedAnalysisPreset !== "academic_year") clearParams.set("analysis", preservedAnalysisPreset);
   if (preservedCoachingCoachId) clearParams.set("coachingCoach", preservedCoachingCoachId);
   if (preservedCoachingCoacheeId) clearParams.set("coachingCoachee", preservedCoachingCoacheeId);
   const clearHref = `/observe/history${clearParams.size ? `?${clearParams}` : ""}`;
+
+  function keepRecordsInView() {
+    document.getElementById("observation-records")?.scrollIntoView({ block: "start" });
+  }
+
+  function navigateToFilters(href: string) {
+    keepPositionAfterNavigationRef.current = true;
+    keepRecordsInView();
+    startTransition(() => {
+      router.replace(`${href}#observation-records`, { scroll: false });
+    });
+  }
+
+  function applyFilters(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const params = new URLSearchParams();
+    for (const [key, value] of formData.entries()) {
+      const text = String(value).trim();
+      if (text) params.set(key, text);
+    }
+    navigateToFilters(`/observe/history${params.size ? `?${params}` : ""}`);
+  }
 
   return (
     <details ref={detailsRef} open className="obs-history-filters">
@@ -62,6 +93,7 @@ export function HistoryFilters({
         key={JSON.stringify(defaults)}
         method="get"
         action="/observe/history"
+        onSubmit={applyFilters}
         className="obs-history-filter-form" aria-label="Filter observations"
       >
         {preservedWindowDays != null && preservedWindowDays > 0 ? (
@@ -111,13 +143,13 @@ export function HistoryFilters({
           <input aria-label="To" name="to" type="date" defaultValue={defaults.to} className="obs-history-date" />
         </label>
         <div className="obs-history-filter-actions">
-          <button type="submit" className="btn-filter-primary">
-            Apply filters
+          <button type="submit" className="btn-filter-primary" disabled={isPending}>
+            {isPending ? "Applying…" : "Apply filters"}
           </button>
           {hasFilters && (
-            <Link href={clearHref} className="btn-filter-secondary">
+            <button type="button" className="btn-filter-secondary" disabled={isPending} onClick={() => navigateToFilters(clearHref)}>
               Clear filters
-            </Link>
+            </button>
           )}
         </div>
       </form>
