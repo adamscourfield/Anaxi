@@ -1053,7 +1053,7 @@ export function ObservationHistoryAnalysis({
               </p>
             ) : (
               <>
-              <div className="obs-history-table-shell table-shell mt-4">
+              <div className="obs-history-coaching-table -mx-5 mt-5 border-t border-[#e5e5e6] md:-mx-6">
                 <div className="hidden overflow-x-auto md:block">
                   <table className="w-full min-w-[640px] text-left text-sm">
                     <thead>
