@@ -52,12 +52,41 @@
 .toneWatch { color:#b5790a; }
 .toneNeutral { color:#3a3a3c; }
 
-/* ── Attendance comparison chips ──────────────────────────────────── */
-.deltaRow { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
-.chip { font-size:10px; font-weight:600; border-radius:999px; padding:3px 8px; white-space:nowrap; border:1px solid transparent; }
-.chipPositive { color:#1e7a4d; background:#eef8f1; border-color:#c9ead3; }
-.chipNegative { color:#ad3429; background:#fff4f1; border-color:#ffd3ca; }
-.chipNeutral { color:#6e6e73; background:#f4f4f5; border-color:#e5e5e6; }
+/* ── Briefing grid: visual cards replacing a text summary ───────────── */
+.briefingGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-top:14px; padding-top:14px; border-top:1px solid #eeeeef; }
+.briefingCard { border:1px solid #eeeeef; border-radius:11px; background:#fff; padding:13px 15px; min-width:0; display:grid; align-content:start; gap:9px; }
+.briefingCardTitle { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#8a8a8f; }
+.briefingHero { font-size:26px; font-weight:700; letter-spacing:-.03em; line-height:1.1; font-variant-numeric:normal; }
+.briefingHero span { display:block; margin-top:2px; font-size:11px; font-weight:500; text-transform:none; letter-spacing:0; color:#8a8a8f; }
+.briefingEmpty { font-size:12px; color:#8a8a8f; line-height:1.5; }
+
+/* Meters: a labelled bar + value, used for attendance deltas and signal rates. */
+.meterRow { display:grid; grid-template-columns:minmax(0,1fr); gap:3px; }
+.meterLabel { font-size:11px; color:#6e6e73; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.meterTrack { display:block; height:6px; border-radius:999px; background:#f1f1f2; overflow:hidden; }
+.meterFill { display:block; height:100%; border-radius:999px; }
+.meterValue { font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; justify-self:start; background:none; }
+.fillPositive { background:#1e7a4d; }
+.fillNegative { background:#ad3429; }
+.fillNeutral { background:#c7c7cc; }
+.textPositive { color:#1e7a4d; }
+.textNegative { color:#ad3429; }
+.textNeutral { color:#6e6e73; }
+
+/* Stacked composition bars (student bands, staff split) + legend. */
+.stackTrack { display:flex; gap:2px; height:9px; border-radius:999px; overflow:hidden; background:#f1f1f2; }
+.stackSegment { display:block; height:100%; min-width:2px; }
+.stackSegment[data-band="URGENT"] { background:#ad3429; }
+.stackSegment[data-band="PRIORITY"] { background:#d98a1f; }
+.stackSegment[data-band="WATCH"] { background:#9c9ca1; }
+.stackSegment[data-band="STABLE"] { background:#1e7a4d; }
+.legendRow { display:flex; flex-wrap:wrap; gap:4px 11px; }
+.legendItem { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:#6e6e73; }
+.legendDot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.legendDot[data-band="URGENT"] { background:#ad3429; }
+.legendDot[data-band="PRIORITY"] { background:#d98a1f; }
+.legendDot[data-band="WATCH"] { background:#9c9ca1; }
+.legendDot[data-band="STABLE"] { background:#1e7a4d; }
 
 /* ── Worth celebrating ────────────────────────────────────────────── */
 .celebrateIcon { display:inline-flex; color:#ff6a52; margin-right:7px; vertical-align:-3px; }
