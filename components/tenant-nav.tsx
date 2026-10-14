@@ -211,7 +211,7 @@ export function TenantNav({
         ...(has("ASSESSMENTS") ? [navItem("Attainment", "/assessments")] : []),
         ...(has("STUDENTS") ? [navItem("Students", studentsHref)] : []),
         navItem("Classes", "/classes"),
-        navItem("On call", "/on-call", onCallCount),
+        ...(has("ON_CALL") ? [navItem("On call", "/on-call", onCallCount)] : []),
       ],
     },
     {
@@ -219,7 +219,7 @@ export function TenantNav({
       items: [
         ...(has("MEETINGS") ? [navItem("Meetings", "/meetings")] : []),
         ...(has("LEAVE") ? [navItem("Leave of absence", "/leave", leaveCount)] : []),
-        ...(canViewStrategy ? [navItem("Strategy Board", "/strategy")] : []),
+        ...(has("STRATEGY") && canViewStrategy ? [navItem("Strategy Board", "/strategy")] : []),
       ],
     },
     {

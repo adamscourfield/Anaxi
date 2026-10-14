@@ -5,6 +5,7 @@ export type FeatureKey =
   | "STUDENTS"
   | "STUDENTS_IMPORT"
   | "LEAVE"
+  | "STRATEGY"
   | "ON_CALL"
   | "MEETINGS"
   | "TIMETABLE"
@@ -16,7 +17,7 @@ export type FeatureKey =
 
 export const ALL_FEATURE_KEYS: FeatureKey[] = [
   "OBSERVATIONS", "SIGNALS", "STUDENTS", "STUDENTS_IMPORT",
-  "LEAVE", "ON_CALL", "MEETINGS", "TIMETABLE", "ADMIN", "ADMIN_SETTINGS",
+  "LEAVE", "STRATEGY", "ON_CALL", "MEETINGS", "TIMETABLE", "ADMIN", "ADMIN_SETTINGS",
   "ANALYSIS", "STUDENT_ANALYSIS", "ASSESSMENTS",
 ];
 

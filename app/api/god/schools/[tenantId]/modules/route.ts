@@ -11,6 +11,7 @@ const ALLOWED_MODULES = new Set([
   "STUDENTS_IMPORT",
   "LEAVE",
   "ON_CALL",
+  "STRATEGY",
   "MEETINGS",
   "TIMETABLE",
   "ADMIN",

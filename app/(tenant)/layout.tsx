@@ -4,7 +4,7 @@ import { TenantLayoutClient } from "@/components/tenant-layout-client";
 import { getOpenOnCallCount } from "@/lib/oncall/badge";
 import { canManageLoa, loaManageableRequesterIds } from "@/lib/loa";
 import { hasPermission } from "@/lib/rbac";
-import { ALL_FEATURE_KEYS, FeatureKey } from "@/lib/types";
+import { FeatureKey } from "@/lib/types";
 import { loaPendingApprovalWhere } from "@/modules/leave/leaveQuery";
 import { avatarUrlFor } from "@/lib/avatarUpload";
 
@@ -63,7 +63,7 @@ export default async function TenantLayout({ children }: { children: React.React
   return (
     <TenantLayoutClient
       role={user.role}
-      enabledFeatures={isSuperAdmin ? ALL_FEATURE_KEYS : features.map((f) => f.key as FeatureKey)}
+      enabledFeatures={features.map((f) => f.key as FeatureKey)}
       onCallCount={onCallCount}
       leaveCount={leaveCount}
       coacheeCount={coacheeCount}

@@ -19,6 +19,7 @@ export async function toggleTenantFeature(formData: FormData) {
     update: { enabled: !enabled },
   });
 
+  revalidatePath("/", "layout");
   revalidatePath("/admin/features");
   revalidatePath("/admin");
   revalidatePath("/admin/settings");
