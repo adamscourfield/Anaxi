@@ -34,6 +34,9 @@ export type RiskStatus =
   | "SIGNIFICANT_DRIFT"
   | "LOW_COVERAGE";
 
+/** Mirrors RiskStatus for positive movement, used for the "worth celebrating" home-page list. */
+export type MomentumStatus = "NONE" | "EMERGING_IMPROVEMENT" | "STRONG_IMPROVEMENT";
+
 export type TopDriver = {
   signalKey: string;
   delta: number;
@@ -52,6 +55,9 @@ export type TeacherRiskRow = {
   normalizedIDS: number;
   status: RiskStatus;
   topDrivers: TopDriver[];
+  normalizedPositiveIDS: number;
+  momentumStatus: MomentumStatus;
+  topImprovingDrivers: TopDriver[];
 };
 
 export type SignalProfileEntry = {
@@ -141,6 +147,42 @@ function classifyStatus(normalizedIDS: number, teacherCoverage: number, minCover
   if (normalizedIDS >= SIGNIFICANT_DRIFT_THRESHOLD) return "SIGNIFICANT_DRIFT";
   if (normalizedIDS >= EMERGING_DRIFT_THRESHOLD) return "EMERGING_DRIFT";
   return "STABLE";
+}
+
+/** Same movement calculation as computeIDS, mirrored for deltas rising above the drift threshold. */
+function computePositiveIDS(
+  currentMeans: SignalMeans,
+  prevMeans: SignalMeans,
+  driftThreshold: number,
+  allSignalKeys: string[]
+): { normalizedPositiveIDS: number } {
+  let positiveIds = 0;
+  let eligibleSignals = 0;
+
+  for (const signalKey of allSignalKeys) {
+    const curr = currentMeans.get(signalKey);
+    const prev = prevMeans.get(signalKey);
+    const currentMean = curr ? computeMean(curr.scores) : null;
+    const prevMean = prev ? computeMean(prev.scores) : null;
+
+    if (currentMean === null || prevMean === null) continue;
+
+    eligibleSignals++;
+    const delta = currentMean - prevMean;
+    if (delta > driftThreshold) {
+      positiveIds += delta;
+    }
+  }
+
+  const normalizedPositiveIDS = eligibleSignals > 0 ? positiveIds * (allSignalKeys.length / eligibleSignals) : 0;
+  return { normalizedPositiveIDS };
+}
+
+function classifyMomentum(normalizedPositiveIDS: number, teacherCoverage: number, minCoverage: number): MomentumStatus {
+  if (teacherCoverage < minCoverage) return "NONE";
+  if (normalizedPositiveIDS >= SIGNIFICANT_DRIFT_THRESHOLD) return "STRONG_IMPROVEMENT";
+  if (normalizedPositiveIDS >= EMERGING_DRIFT_THRESHOLD) return "EMERGING_IMPROVEMENT";
+  return "NONE";
 }
 
 const STATUS_ORDER: Record<RiskStatus, number> = {
@@ -241,9 +283,13 @@ export async function computeTeacherRiskIndex(
 
     const { normalizedIDS } = computeIDS(currentMeans, prevMeans, driftThreshold, allSignalKeys);
     const status = classifyStatus(normalizedIDS, teacherCoverage, minCoverage);
+    const { normalizedPositiveIDS } = computePositiveIDS(currentMeans, prevMeans, driftThreshold, allSignalKeys);
+    const momentumStatus = classifyMomentum(normalizedPositiveIDS, teacherCoverage, minCoverage);
 
-    // Compute top drivers (signals with driftContribution > 0)
+    // Compute top drivers (signals with driftContribution > 0), and the mirrored
+    // improving drivers (signals rising above the same threshold).
     const topDrivers: TopDriver[] = [];
+    const topImprovingDrivers: TopDriver[] = [];
     for (const signalKey of allSignalKeys) {
       const curr = currentMeans.get(signalKey);
       const prev = prevMeans.get(signalKey);
@@ -253,9 +299,12 @@ export async function computeTeacherRiskIndex(
       const delta = currentMeanVal - prevMeanVal;
       if (delta < -driftThreshold) {
         topDrivers.push({ signalKey, delta, currentMean: currentMeanVal, prevMean: prevMeanVal });
+      } else if (delta > driftThreshold) {
+        topImprovingDrivers.push({ signalKey, delta, currentMean: currentMeanVal, prevMean: prevMeanVal });
       }
     }
     topDrivers.sort((a, b) => a.delta - b.delta);
+    topImprovingDrivers.sort((a, b) => b.delta - a.delta);
 
     rows.push({
       teacherMembershipId: teacherId,
@@ -268,6 +317,9 @@ export async function computeTeacherRiskIndex(
       normalizedIDS,
       status,
       topDrivers: topDrivers.slice(0, 3),
+      normalizedPositiveIDS,
+      momentumStatus,
+      topImprovingDrivers: topImprovingDrivers.slice(0, 3),
     });
   }
 

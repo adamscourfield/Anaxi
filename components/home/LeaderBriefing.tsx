@@ -1,8 +1,9 @@
 import Link from "next/link";
-import type { hydrateLeadershipHomeData } from "@/modules/home/hydration";
+import { NATIONAL_ATTENDANCE_BENCHMARK_PCT, type hydrateLeadershipHomeData } from "@/modules/home/hydration";
 import type { fetchLeaderWork } from "@/modules/home/leaderWork";
+import { buildLeaderSummary, type SummaryTone } from "@/modules/home/leaderSummary";
 import { InsightWindowSelector } from "./InsightWindowSelector";
-import { IconUsersTwo, IconChartBar, IconClipboard, IconUmbrella, IconPhone, IconCalendar } from "./home-chrome";
+import { IconUsersTwo, IconChartBar, IconClipboard, IconUmbrella, IconPhone, IconCalendar, IconSparkles, IconStar, IconTrendUp } from "./home-chrome";
 import styles from "./LeaderBriefing.module.css";
 
 type Props = {
@@ -13,18 +14,42 @@ type Props = {
   reasons: Record<string, string>;
 };
 const date = (value: Date | string | null) => value ? new Date(value).toLocaleDateString("en-GB", { day:"numeric", month:"short", timeZone:"Europe/London" }) : "not available";
+const toneClass: Record<SummaryTone, string> = { positive: styles.tonePositive, negative: styles.toneNegative, watch: styles.toneWatch, neutral: styles.toneNeutral };
+function DeltaChip({label, delta}: {label: string; delta: number | null}) {
+  if (delta === null) return null;
+  const rounded = Math.round(delta * 10) / 10;
+  const tone = rounded >= 0.5 ? styles.chipPositive : rounded <= -0.5 ? styles.chipNegative : styles.chipNeutral;
+  return <span className={`${styles.chip} ${tone}`}>{label} {rounded > 0 ? "+" : ""}{rounded.toFixed(1)}pts</span>;
+}
 
 export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
   const teaching = `/insights/teaching?windowDays=${windowDays}`;
   const students = `/insights/students?windowDays=${windowDays}`;
   const teachersToReview = data.teacherRows.filter(t=>t.status === "SIGNIFICANT_DRIFT" || t.status === "EMERGING_DRIFT");
+  const teachersToCelebrate = data.teacherRows.filter(t=>t.momentumStatus === "STRONG_IMPROVEMENT" || t.momentumStatus === "EMERGING_IMPROVEMENT")
+    .sort((a,b)=>b.normalizedPositiveIDS-a.normalizedPositiveIDS);
   const studentsToReview = data.studentRows.filter(s=>s.band === "URGENT" || s.band === "PRIORITY")
     .sort((a,b)=>(a.band === "URGENT" ? 0:1)-(b.band === "URGENT" ? 0:1)||b.riskScore-a.riskScore);
   const cpd = data.cpdRows.find(s=>s.teachersDriftingDown>0);
   const coverage = data.teacherRows.filter(t=>t.status!=="LOW_COVERAGE").length;
   const from = encodeURIComponent(`/home?window=${windowDays}`);
   const concerns = studentsToReview.length+teachersToReview.length+(cpd?1:0);
+  const summary = features.analysis ? buildLeaderSummary({
+    attendanceHeadline: data.attendanceHeadline,
+    attendanceTrend: data.attendanceTrend,
+    studentRows: features.students ? data.studentRows : [],
+    teacherRows: data.teacherRows,
+    cpdRows: data.cpdRows,
+    topImproving: data.topImproving,
+  }) : null;
   return <div className={styles.briefing}>
+    {summary && <section aria-labelledby="week-briefing" className={styles.narrative}>
+      <div className={styles.head}><div><h2 id="week-briefing">This week, at a glance</h2><p>Auto-generated from live school data · not written by AI</p></div></div>
+      <p className={`${styles.narrativeHeadline} ${toneClass[summary.headlineTone]}`}>{summary.headline}</p>
+      {summary.lines.length > 0 && <ul className={styles.narrativeLines}>
+        {summary.lines.map(l=><li key={l.id} className={toneClass[l.tone]}>{l.text}</li>)}
+      </ul>}
+    </section>}
     {features.analysis && <section aria-labelledby="school-snapshot">
       <div className={styles.head}><h2 id="school-snapshot">School snapshot</h2></div>
       <div className={styles.snapshot}>
@@ -32,6 +57,11 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
           <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Attendance</span>
           <strong className={styles.value}>{data.attendanceHeadline.attendancePct === null ? "—" : `${data.attendanceHeadline.attendancePct.toFixed(1)}%`}</strong>
           <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)}</> : "No snapshot"}</p>
+          {data.attendanceHeadline.attendancePct !== null && <div className={styles.deltaRow}>
+            <DeltaChip label="vs national avg" delta={data.attendanceHeadline.attendancePct - NATIONAL_ATTENDANCE_BENCHMARK_PCT}/>
+            <DeltaChip label="vs last week" delta={data.attendanceTrend.last7DaysPct !== null && data.attendanceTrend.prior7DaysPct !== null ? data.attendanceTrend.last7DaysPct - data.attendanceTrend.prior7DaysPct : null}/>
+            <DeltaChip label="vs last month" delta={data.attendanceTrend.last28DaysPct !== null && data.attendanceTrend.prior28DaysPct !== null ? data.attendanceTrend.last28DaysPct - data.attendanceTrend.prior28DaysPct : null}/>
+          </div>}
         </Link>}
         {features.observations && <Link className={styles.stat} href="/observe/history">
           <span className={styles.statTitle}><span className={styles.icon}><IconClipboard/></span>Lessons observed</span><strong className={styles.value}>{data.weekObsCount}</strong><p>Last 7 days</p>
@@ -69,6 +99,11 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
         </div>
       </section>
     </div>
+    {features.analysis && (teachersToCelebrate.length > 0 || data.topImproving.length > 0) && <section className={styles.panel} aria-labelledby="worth-celebrating">
+      <div className={styles.head}><div><h2 id="worth-celebrating"><span className={styles.celebrateIcon}><IconSparkles/></span>Worth celebrating</h2></div></div>
+      {data.topImproving.slice(0,1).map(s=><Link key={s.signalKey} className={styles.row} href={`${teaching}&view=cpd`}><span className={styles.icon}><IconTrendUp/></span><div><h3>{s.label}</h3><p>{s.teachersImproving} of {s.teachersCovered} teachers are improving.</p><small>Last {windowDays} days</small></div><span className={`${styles.tag} ${styles.positive}`}>Signal</span><span className={styles.arrow}>→</span></Link>)}
+      {teachersToCelebrate.slice(0,3).map(t=><Link key={t.teacherMembershipId} className={styles.row} href={`/analysis/teachers/${t.teacherMembershipId}?window=${windowDays}&from=${encodeURIComponent(teaching+"&view=teachers")}`}><span className={styles.icon}><IconStar/></span><div><h3>{t.teacherName}</h3><p>Lesson signals trending up</p><small>{t.teacherCoverage} observations · Last observed {date(t.lastObservationAt)}</small></div><span className={`${styles.tag} ${styles.positive}`}>Teaching</span><span className={styles.arrow}>→</span></Link>)}
+    </section>}
     {features.analysis && <section aria-labelledby="continue-investigating"><div className={styles.head}><div><h2 id="continue-investigating">Insights</h2></div><Link href={`/insights?windowDays=${windowDays}`}>All insights →</Link></div><nav className={styles.areas} aria-label="Explore Insights">
       <Link className={styles.area} href={teaching}><span className={styles.icon}><IconClipboard/></span><div><h3>Teaching</h3><p>Lesson patterns & CPD</p></div><span className={styles.arrow}>→</span></Link>
       {features.students && <Link className={styles.area} href={students}><span className={styles.icon}><IconUsersTwo/></span><div><h3>Students</h3><p>Attendance & behaviour</p></div><span className={styles.arrow}>→</span></Link>}

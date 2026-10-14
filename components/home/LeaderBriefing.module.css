@@ -39,6 +39,30 @@
 @media(max-width:600px) { .areas { grid-template-columns:1fr; } .panel { padding:16px; } .tag { display:none; } .stat { padding:14px; } .period { width:100%; justify-content:space-between; } }
 .period > span { white-space:nowrap; }
 .period > div { width:auto; }
+
+/* ── Weekly narrative briefing (template-generated, not AI) ─────────── */
+.narrative { border:1px solid #e5e5e6; border-radius:14px; background:linear-gradient(180deg,#fff7f5,#ffffff); box-shadow:0 14px 34px -22px #1c1c1e2e; padding:18px 20px; }
+.narrative .head p { margin-top:2px; }
+.narrativeHeadline { font-size:16px; font-weight:600; letter-spacing:-.01em; line-height:1.4; }
+.narrativeLines { display:grid; gap:7px; margin-top:12px; padding-top:12px; border-top:1px solid #eeeeef; }
+.narrativeLines li { font-size:13px; line-height:1.5; padding-left:16px; position:relative; color:#3a3a3c; }
+.narrativeLines li::before { content:""; position:absolute; left:0; top:7px; width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.55; }
+.tonePositive { color:#1e7a4d; }
+.toneNegative { color:#ad3429; }
+.toneWatch { color:#b5790a; }
+.toneNeutral { color:#3a3a3c; }
+
+/* ── Attendance comparison chips ──────────────────────────────────── */
+.deltaRow { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+.chip { font-size:10px; font-weight:600; border-radius:999px; padding:3px 8px; white-space:nowrap; border:1px solid transparent; }
+.chipPositive { color:#1e7a4d; background:#eef8f1; border-color:#c9ead3; }
+.chipNegative { color:#ad3429; background:#fff4f1; border-color:#ffd3ca; }
+.chipNeutral { color:#6e6e73; background:#f4f4f5; border-color:#e5e5e6; }
+
+/* ── Worth celebrating ────────────────────────────────────────────── */
+.celebrateIcon { display:inline-flex; color:#ff6a52; margin-right:7px; vertical-align:-3px; }
+.celebrateIcon svg { width:16px; height:16px; }
+.positive { color:#1e7a4d; background:#eef8f1; border-color:#c9ead3; }
 /* Compact RELAY rhythm: quiet surfaces, concise rows, movement only as feedback. */
 .briefing { gap:20px; }
 .head { margin-bottom:10px; }

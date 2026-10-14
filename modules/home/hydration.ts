@@ -53,6 +53,21 @@ export type AttainmentSummary = {
   topDualFlagged: DualFlaggedStudent[];
 };
 
+/**
+ * UK DfE overall absence benchmark for state-funded secondary schools (~94-95%
+ * attendance), used as a static comparison point on the leadership home page
+ * until a real external data source is wired up. Update termly/yearly as the
+ * published figure changes.
+ */
+export const NATIONAL_ATTENDANCE_BENCHMARK_PCT = 94.5;
+
+export type AttendanceTrend = {
+  last7DaysPct: number | null;
+  prior7DaysPct: number | null;
+  last28DaysPct: number | null;
+  prior28DaysPct: number | null;
+};
+
 export type AttendanceHeadline = {
   /** Academic-year-to-date attendance. */
   attendancePct: number | null;
@@ -162,6 +177,63 @@ async function fetchAttendanceHeadline(tenantId: string): Promise<AttendanceHead
       : null,
     studentsCovered,
     asOf,
+  };
+}
+
+/**
+ * Rolling attendance comparison windows for the leadership home page: the
+ * trailing 7 and 28 days versus the 7/28 days immediately before them.
+ *
+ * StudentSnapshot rows are YEAR_TO_DATE cumulative totals (one per student per
+ * school day), so a windowed rate is derived the same way fetchAttendanceHeadline
+ * derives "yesterday": by subtracting the cumulative possible/present counts at
+ * two boundary snapshots and turning that difference into a rate.
+ */
+async function fetchAttendanceTrend(tenantId: string): Promise<AttendanceTrend> {
+  const today = londonToday();
+  const boundaries = [0, 7, 14, 28, 56].map((daysAgo) => addDays(today, -daysAgo));
+
+  const students = await (prisma as any).student.findMany({
+    where: { tenantId, status: "ACTIVE" },
+    select: {
+      snapshots: {
+        where: { countScope: "YEAR_TO_DATE", attendancePossibleCount: { gt: 0 } },
+        orderBy: { snapshotDate: "desc" },
+        // Covers ~56 calendar days of school-day snapshots with headroom for gaps.
+        take: 50,
+        select: { attendancePossibleCount: true, attendancePresentCount: true, snapshotDate: true },
+      },
+    },
+  });
+
+  // For each boundary, the latest snapshot on or before that date -- same
+  // "nearest prior row" approach as the yesterday fallback above.
+  const totalsAtBoundary = boundaries.map(() => ({ possible: 0, present: 0 }));
+
+  for (const student of students as Array<{ snapshots: AttendanceSnapshot[] }>) {
+    const rows = student.snapshots;
+    for (let i = 0; i < boundaries.length; i++) {
+      const boundary = boundaries[i];
+      const row = rows.find((r) => r.snapshotDate <= boundary);
+      if (!row) continue;
+      totalsAtBoundary[i].possible += row.attendancePossibleCount;
+      totalsAtBoundary[i].present += row.attendancePresentCount;
+    }
+  }
+
+  const [atToday, atWeekAgo, atTwoWeeksAgo, atFourWeeksAgo, atEightWeeksAgo] = totalsAtBoundary;
+
+  const windowRate = (end: { possible: number; present: number }, start: { possible: number; present: number }): number | null => {
+    const possible = Math.max(0, end.possible - start.possible);
+    const present = Math.max(0, end.present - start.present);
+    return possible > 0 ? Math.round((present / possible) * 1000) / 10 : null;
+  };
+
+  return {
+    last7DaysPct: windowRate(atToday, atWeekAgo),
+    prior7DaysPct: windowRate(atWeekAgo, atTwoWeeksAgo),
+    last28DaysPct: windowRate(atToday, atFourWeeksAgo),
+    prior28DaysPct: windowRate(atFourWeeksAgo, atEightWeeksAgo),
   };
 }
 
@@ -467,7 +539,7 @@ export async function hydrateLeadershipHomeData({
     { count: 0, recentTeachers: [] as { id: string; name: string; avatarUpdatedAt: Date | null }[] }
   );
 
-  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentHeadline, attendanceHeadline] = await Promise.all([
+  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentHeadline, attendanceHeadline, attendanceTrend] = await Promise.all([
     hasAnalysisFeature ? safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]) : Promise.resolve([] as CpdPriorityRow[]),
     hasAnalysisFeature ? safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]) : Promise.resolve([] as TeacherRiskRow[]),
     hasAnalysisFeature ? safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }) : Promise.resolve({ rows: [] as CohortPivotRow[], computedAt: new Date() }),
@@ -486,6 +558,7 @@ export async function hydrateLeadershipHomeData({
       ? fetchHomeAttainmentHeadline(user.tenantId)
       : Promise.resolve({ gcse: null, aLevel: null } as HomeAttainmentHeadline),
     safe(fetchAttendanceHeadline(user.tenantId), { attendancePct: null, yesterdayPct: null, yesterdayLatenessPct: null, studentsCovered: 0, asOf: null } as AttendanceHeadline),
+    safe(fetchAttendanceTrend(user.tenantId), { last7DaysPct: null, prior7DaysPct: null, last28DaysPct: null, prior28DaysPct: null } as AttendanceTrend),
   ]);
 
   return {
@@ -504,6 +577,7 @@ export async function hydrateLeadershipHomeData({
     attainmentSummary,
     attainmentHeadline,
     attendanceHeadline,
+    attendanceTrend,
     meetingsTodayCount: meetingsTodayCount as number,
     watchlistStudents: studentResult.rows.filter((r) => r.onWatchlist),
   };
