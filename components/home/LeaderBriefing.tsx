@@ -15,27 +15,12 @@ type Props = {
 };
 const date = (value: Date | string | null) => value ? new Date(value).toLocaleDateString("en-GB", { day:"numeric", month:"short", timeZone:"Europe/London" }) : "not available";
 const toneClass: Record<SummaryTone, string> = { positive: styles.tonePositive, negative: styles.toneNegative, watch: styles.toneWatch, neutral: styles.toneNeutral };
-/** Delta meter: a labelled bar scaled to +/-MAX_SCALE, used for attendance comparisons. */
-const DELTA_METER_SCALE = 10;
-function DeltaMeter({label, delta}: {label: string; delta: number | null}) {
-  const rounded = delta === null ? null : Math.round(delta * 10) / 10;
-  const barTone = rounded === null ? styles.fillNeutral : rounded >= 0.5 ? styles.fillPositive : rounded <= -0.5 ? styles.fillNegative : styles.fillNeutral;
-  const textTone = rounded === null ? styles.textNeutral : rounded >= 0.5 ? styles.textPositive : rounded <= -0.5 ? styles.textNegative : styles.textNeutral;
-  const widthPct = rounded === null ? 0 : Math.min(100, Math.round((Math.abs(rounded) / DELTA_METER_SCALE) * 100));
-  return <div className={styles.meterRow}>
-    <span className={styles.meterLabel}>{label}</span>
-    <span className={styles.meterTrack}><span className={`${styles.meterFill} ${barTone}`} style={{width: `${widthPct}%`}}/></span>
-    <span className={`${styles.meterValue} ${textTone}`}>{rounded === null ? "—" : `${rounded > 0 ? "+" : ""}${rounded.toFixed(1)}`}</span>
-  </div>;
-}
-/** Rate meter: a labelled bar for a 0-1 ratio, used for weak/strong teaching signals. */
-function RateMeter({label, rate, count, tone}: {label: string; rate: number; count: string; tone: "positive" | "negative"}) {
-  const widthPct = Math.round(Math.min(1, rate) * 100);
-  return <div className={styles.meterRow}>
-    <span className={styles.meterLabel}>{label}</span>
-    <span className={styles.meterTrack}><span className={`${styles.meterFill} ${tone === "positive" ? styles.fillPositive : styles.fillNegative}`} style={{width: `${widthPct}%`}}/></span>
-    <span className={styles.meterValue}>{count}</span>
-  </div>;
+/** Compact delta pill, e.g. "vs last week -3.6pts" -- used in the Attendance snapshot tile. */
+function DeltaChip({label, delta}: {label: string; delta: number | null}) {
+  if (delta === null) return null;
+  const rounded = Math.round(delta * 10) / 10;
+  const tone = rounded >= 0.5 ? styles.chipPositive : rounded <= -0.5 ? styles.chipNegative : styles.chipNeutral;
+  return <span className={`${styles.chip} ${tone}`}>{label} {rounded > 0 ? "+" : ""}{rounded.toFixed(1)}pts</span>;
 }
 
 export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
@@ -52,8 +37,6 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
   const from = encodeURIComponent(`/home?window=${windowDays}`);
   const concerns = studentsToReview.length+teachersToReview.length+(cpd?1:0);
   const bandCounts = features.students ? data.studentRows.reduce((acc,s)=>{acc[s.band]=(acc[s.band]??0)+1; return acc;}, {} as Record<string,number>) : {};
-  const studentTotal = features.students ? data.studentRows.length : 0;
-  const staffTotal = teachersToReview.length+teachersToCelebrate.length;
   const nationalDelta = data.attendanceHeadline.attendancePct !== null ? data.attendanceHeadline.attendancePct - NATIONAL_ATTENDANCE_BENCHMARK_PCT : null;
   const weekDelta = data.attendanceTrend.last7DaysPct !== null && data.attendanceTrend.prior7DaysPct !== null ? data.attendanceTrend.last7DaysPct - data.attendanceTrend.prior7DaysPct : null;
   const monthDelta = data.attendanceTrend.last28DaysPct !== null && data.attendanceTrend.prior28DaysPct !== null ? data.attendanceTrend.last28DaysPct - data.attendanceTrend.prior28DaysPct : null;
@@ -66,63 +49,47 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
     topImproving: data.topImproving,
   }) : null;
   return <div className={styles.briefing}>
-    {summary && <section aria-labelledby="week-briefing" className={styles.narrative}>
-      <div className={styles.head}><div><h2 id="week-briefing">This week, at a glance</h2><p>Live data, recomputed on every visit · not written by AI</p></div></div>
-      <p className={`${styles.narrativeHeadline} ${toneClass[summary.headlineTone]}`}>{summary.headline}</p>
-      <div className={styles.briefingGrid}>
-        {features.students && <div className={styles.briefingCard}>
-          <p className={styles.briefingCardTitle}>Attendance</p>
-          <DeltaMeter label="vs national avg" delta={nationalDelta}/>
-          <DeltaMeter label="vs last week" delta={weekDelta}/>
-          <DeltaMeter label="vs last month" delta={monthDelta}/>
-        </div>}
-        <div className={styles.briefingCard}>
-          <p className={styles.briefingCardTitle}>Lesson signals</p>
-          {cpd && <RateMeter label={cpd.label} rate={cpd.driftRate} count={`${cpd.teachersDriftingDown} of ${cpd.teachersCovered}`} tone="negative"/>}
-          {strongestSignal && <RateMeter label={strongestSignal.label} rate={strongestSignal.improvingRate} count={`${strongestSignal.teachersImproving} of ${strongestSignal.teachersCovered}`} tone="positive"/>}
-          {!cpd && !strongestSignal && <p className={styles.briefingEmpty}>Not enough evidence yet.</p>}
-        </div>
-        {features.students && <div className={styles.briefingCard}>
-          <p className={styles.briefingCardTitle}>Students</p>
-          <p className={styles.briefingHero}>{(bandCounts.URGENT??0)+(bandCounts.PRIORITY??0)}<span>needing focus</span></p>
-          {studentTotal > 0 && <div className={styles.stackTrack}>
-            {(["URGENT","PRIORITY","WATCH","STABLE"] as const).filter(b=>bandCounts[b]).map(b=>
-              <span key={b} className={styles.stackSegment} style={{width: `${(bandCounts[b]!/studentTotal)*100}%`}} data-band={b}/>
-            )}
-          </div>}
-          <div className={styles.legendRow}>
-            {(["URGENT","PRIORITY","WATCH","STABLE"] as const).filter(b=>bandCounts[b]).map(b=>
-              <span key={b} className={styles.legendItem}><span className={styles.legendDot} data-band={b}/>{bandCounts[b]} {b.toLowerCase()}</span>
-            )}
-          </div>
-        </div>}
-        <div className={styles.briefingCard}>
-          <p className={styles.briefingCardTitle}>Staff</p>
-          {staffTotal > 0 ? <>
-            <div className={styles.stackTrack}>
-              {teachersToReview.length > 0 && <span className={styles.stackSegment} style={{width: `${(teachersToReview.length/staffTotal)*100}%`}} data-band="URGENT"/>}
-              {teachersToCelebrate.length > 0 && <span className={styles.stackSegment} style={{width: `${(teachersToCelebrate.length/staffTotal)*100}%`}} data-band="STABLE"/>}
-            </div>
-            <div className={styles.legendRow}>
-              {teachersToReview.length > 0 && <span className={styles.legendItem}><span className={styles.legendDot} data-band="URGENT"/>{teachersToReview.length} need support</span>}
-              {teachersToCelebrate.length > 0 && <span className={styles.legendItem}><span className={styles.legendDot} data-band="STABLE"/>{teachersToCelebrate.length} worth celebrating</span>}
-            </div>
-          </> : <p className={styles.briefingEmpty}>No notable movement this window.</p>}
-        </div>
-      </div>
-      {summary.lines.length > 0 && <details className={styles.evidenceNote}>
-        <summary>Read as text</summary>
-        <ul className={styles.narrativeLines}>{summary.lines.map(l=><li key={l.id} className={toneClass[l.tone]}>{l.text}</li>)}</ul>
-      </details>}
-    </section>}
-    {features.analysis && <section aria-labelledby="school-snapshot">
+    {features.analysis && <section aria-labelledby="school-snapshot" className={summary ? styles.narrative : undefined}>
       <div className={styles.head}><h2 id="school-snapshot">School snapshot</h2></div>
+      {summary && <p className={`${styles.narrativeHeadline} ${toneClass[summary.headlineTone]}`}>{summary.headline}</p>}
       <div className={styles.snapshot}>
         {features.students && <Link className={styles.stat} href={`${students}&view=all&sort=attendance_asc`}>
           <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Attendance</span>
           <strong className={styles.value}>{data.attendanceHeadline.attendancePct === null ? "—" : `${data.attendanceHeadline.attendancePct.toFixed(1)}%`}</strong>
           <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)}</> : "No snapshot"}</p>
+          <div className={styles.deltaRow}>
+            <DeltaChip label="vs national avg" delta={nationalDelta}/>
+            <DeltaChip label="vs last week" delta={weekDelta}/>
+            <DeltaChip label="vs last month" delta={monthDelta}/>
+          </div>
         </Link>}
+        <Link className={styles.stat} href={`${teaching}&view=cpd`}>
+          <span className={styles.statTitle}><span className={styles.icon}><IconChartBar/></span>Lesson signals</span>
+          <strong className={styles.value}>{cpd ? cpd.teachersDriftingDown : "—"}</strong>
+          <p>{cpd ? <>declining on {cpd.label}</> : "No declining signal"}</p>
+          {(cpd || strongestSignal) && <div className={styles.legendRow}>
+            {cpd && <span className={styles.legendItem}><span className={styles.legendDot} data-band="URGENT"/>{cpd.label} ↓ {cpd.teachersDriftingDown}/{cpd.teachersCovered}</span>}
+            {strongestSignal && <span className={styles.legendItem}><span className={styles.legendDot} data-band="STABLE"/>{strongestSignal.label} ↑ {strongestSignal.teachersImproving}/{strongestSignal.teachersCovered}</span>}
+          </div>}
+        </Link>
+        {features.students && <Link className={styles.stat} href={students}>
+          <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Students</span>
+          <strong className={styles.value}>{(bandCounts.URGENT??0)+(bandCounts.PRIORITY??0)}</strong>
+          <p>needing focus</p>
+          <div className={styles.legendRow}>
+            {(["URGENT","PRIORITY"] as const).filter(b=>bandCounts[b]).map(b=>
+              <span key={b} className={styles.legendItem}><span className={styles.legendDot} data-band={b}/>{bandCounts[b]} {b.toLowerCase()}</span>
+            )}
+          </div>
+        </Link>}
+        <Link className={styles.stat} href={`${teaching}&view=teachers`}>
+          <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Staff</span>
+          <strong className={styles.value}>{teachersToReview.length}</strong>
+          <p>need support</p>
+          {teachersToCelebrate.length > 0 && <div className={styles.legendRow}>
+            <span className={styles.legendItem}><span className={styles.legendDot} data-band="STABLE"/>{teachersToCelebrate.length} worth celebrating</span>
+          </div>}
+        </Link>
         {features.observations && <Link className={styles.stat} href="/observe/history">
           <span className={styles.statTitle}><span className={styles.icon}><IconClipboard/></span>Lessons observed</span><strong className={styles.value}>{data.weekObsCount}</strong><p>Last 7 days</p>
         </Link>}
@@ -134,6 +101,10 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
           <p>{data.attainmentSummary ? `${data.attainmentSummary.cycleLabel} · ${data.attainmentSummary.latestPointLabel ?? "No result point"}` : "No results"}{data.attainmentSummary && <><br/>Students assessed</>}</p>
         </Link>}
       </div>
+      {summary && summary.lines.length > 0 && <details className={styles.evidenceNote}>
+        <summary>Read as text</summary>
+        <ul className={styles.narrativeLines}>{summary.lines.map(l=><li key={l.id} className={toneClass[l.tone]}>{l.text}</li>)}</ul>
+      </details>}
     </section>}
     <div className={styles.columns}>
       <section className={styles.panel} aria-labelledby="briefing-attention">
