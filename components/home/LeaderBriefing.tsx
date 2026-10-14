@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buildLeaderSummary, buildStudentSummary } from "@/modules/home/leaderSummary";
 import type { hydrateLeadershipHomeData } from "@/modules/home/hydration";
 import type { fetchLeaderWork } from "@/modules/home/leaderWork";
 import { InsightWindowSelector } from "./InsightWindowSelector";
@@ -23,8 +24,32 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
   const cpd = data.cpdRows.find(s=>s.teachersDriftingDown>0);
   const coverage = data.teacherRows.filter(t=>t.status!=="LOW_COVERAGE").length;
   const from = encodeURIComponent(`/home?window=${windowDays}`);
-  const concerns = studentsToReview.length+teachersToReview.length+(cpd?1:0);
+  const concerns = (features.students ? studentsToReview.length : 0)+teachersToReview.length+(cpd?1:0);
+  const improvingTeachers = data.teacherRows
+    .filter(t => t.momentumStatus === "IMPROVING" && t.status === "STABLE")
+    .sort((a, b) => (b.normalizedPositiveIDS ?? 0) - (a.normalizedPositiveIDS ?? 0));
+  const strength = data.topImproving.find(signal => signal.teachersImproving > 0);
+  const studentSummary = buildStudentSummary({
+    attendancePct: features.students ? data.attendanceHeadline.attendancePct : null,
+    studentFocusEnabled: features.students,
+    studentFocusCount: features.students && data.studentRows.some(s => s.lastSnapshotDate) ? studentsToReview.length : null,
+  });
+  const summary = buildLeaderSummary({
+    attendancePct: null, studentFocusCount: null,
+    teacherFocusCount: teachersToReview.length, teachersCovered: coverage,
+    focus: cpd, strength,
+  });
   return <div className={styles.briefing}>
+    {features.analysis && <section className={styles.summary} aria-labelledby="weekly-briefing">
+      <div className={styles.head}><div><span className={styles.eyebrow}>Leadership briefing</span><h2 id="weekly-briefing">This week, at a glance</h2></div>
+        <div className={styles.period}><span>Teaching evidence</span><InsightWindowSelector windowDays={windowDays} options={[7,21,28]}/></div>
+      </div>
+      <div className={styles.briefingTopics}>
+        {features.students && <div className={styles.briefingTopic}><h3>Student focus</h3><p className={styles.narrative}>{studentSummary.join(" ")}</p><Link href={students}>Review student insights →</Link></div>}
+        <div className={styles.briefingTopic}><h3>Teaching focus</h3><p className={styles.narrative}>{summary.join(" ")}</p></div>
+      </div>
+      <div className={styles.summaryMeta}><span>Auto-generated from live school data</span><span>Teaching: last {windowDays} days vs preceding {windowDays}</span></div>
+    </section>}
     {features.analysis && <section aria-labelledby="school-snapshot">
       <div className={styles.head}><h2 id="school-snapshot">School snapshot</h2></div>
       <div className={styles.snapshot}>
@@ -32,6 +57,11 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
           <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Attendance</span>
           <strong className={styles.value}>{data.attendanceHeadline.attendancePct === null ? "—" : `${data.attendanceHeadline.attendancePct.toFixed(1)}%`}</strong>
           <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)}</> : "No snapshot"}</p>
+          <div className={styles.attendanceComparisons}>
+            <span>Last 7 days <b>{data.attendanceTrend.weekPct === null ? "Unavailable" : `${data.attendanceTrend.weekPct.toFixed(1)}%`}</b></span>
+            <span>Previous 7 days <b>{data.attendanceTrend.previousWeekPct === null ? "Unavailable" : `${data.attendanceTrend.previousWeekPct.toFixed(1)}%`}</b></span>
+            <span>Last 28 days <b>{data.attendanceTrend.monthPct === null ? "Unavailable" : `${data.attendanceTrend.monthPct.toFixed(1)}%`}</b></span>
+          </div>
         </Link>}
         {features.observations && <Link className={styles.stat} href="/observe/history">
           <span className={styles.statTitle}><span className={styles.icon}><IconClipboard/></span>Lessons observed</span><strong className={styles.value}>{data.weekObsCount}</strong><p>Last 7 days</p>
@@ -46,10 +76,10 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
       </div>
     </section>}
     <div className={styles.columns}>
-      <section className={styles.panel} aria-labelledby="briefing-attention">
-        <div className={styles.head}><div><h2 id="briefing-attention">Needs attention</h2></div></div>
+      <div className={styles.focusColumn}><section className={styles.panel} aria-labelledby="briefing-attention">
+        <div className={styles.head}><div><h2 id="briefing-attention">Where to focus</h2></div></div>
         {features.onCall && data.liveOnCallBanner.count > 0 && <Link className={styles.row} href="/on-call"><span className={styles.icon}><IconPhone/></span><div><h3>{data.liveOnCallBanner.count} active on-call request{data.liveOnCallBanner.count===1?"":"s"}</h3><p>{data.liveOnCallBanner.latest ? `${data.liveOnCallBanner.latest.requesterName}${data.liveOnCallBanner.latest.location ? " · "+data.liveOnCallBanner.latest.location : ""}` : "Review the live queue"}</p><small>Live queue · includes acknowledged requests</small></div><span className={styles.arrow}>→</span></Link>}
-        {features.analysis && <><div className={styles.head}><div className={styles.period}><span>Evidence period</span><InsightWindowSelector windowDays={windowDays} options={[7,21,28]}/></div></div>
+        {features.analysis && <>
           {features.students && studentsToReview.slice(0,2).map(s=><Link key={s.studentId} className={styles.row} href={`/students/${s.studentId}?window=${windowDays}&from=${from}#pastoral-evidence`}><div><h3>{s.studentName}</h3><p>{s.drivers.length?s.drivers.slice(0,2).map(d=>reasons[d.metric]??d.label).join(" · ")+(s.drivers.length>2?` · +${s.drivers.length-2} more`:""):"Review the recorded priority indicators"}</p><small>Snapshot {date(s.lastSnapshotDate)}{s.confidence==="LOW"?" · Limited comparison evidence":""}</small></div><span className={`${styles.tag} ${s.band==="URGENT"?styles.urgent:""}`}>{s.band==="URGENT"?"Urgent":"Priority"}</span><span className={styles.arrow}>→</span></Link>)}
           {teachersToReview.slice(0,1).map(t=><Link key={t.teacherMembershipId} className={styles.row} href={`/analysis/teachers/${t.teacherMembershipId}?window=${windowDays}&from=${encodeURIComponent(teaching+"&view=teachers")}`}><div><h3>{t.teacherName}</h3><p>Lesson signals declining</p><small>{t.teacherCoverage} observations · Last observed {date(t.lastObservationAt)}</small></div><span className={styles.tag}>Teaching</span><span className={styles.arrow}>→</span></Link>)}
           {cpd && <Link className={styles.row} href={`${teaching}&view=cpd`}><div><h3>{cpd.label}</h3><p>{cpd.teachersDriftingDown} of {cpd.teachersCovered} teachers show a decline.</p><small>Last {windowDays} days</small></div><span className={styles.tag}>CPD</span><span className={styles.arrow}>→</span></Link>}
@@ -59,6 +89,14 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
         </>}
         {!features.analysis && <p className={styles.empty}>Insights not enabled.</p>}
       </section>
+      {features.analysis && <section className={`${styles.panel} ${styles.celebration}`} aria-labelledby="celebration-title">
+        <div className={styles.head}><div><span className={styles.eyebrow}>Positive movement</span><h2 id="celebration-title">Worth celebrating</h2></div><span className={styles.positiveMark} aria-hidden="true">↗</span></div>
+        {strength && <Link className={styles.row} href={`${teaching}&view=cpd`}><div><h3>{strength.label}</h3><p>Improving signals for {strength.teachersImproving} of {strength.teachersCovered} teachers covered.</p><small>School-wide pattern · last {windowDays} days</small></div><span className={styles.arrow}>→</span></Link>}
+        {improvingTeachers.slice(0, 3).map(t => <Link key={t.teacherMembershipId} className={styles.row} href={`/analysis/teachers/${t.teacherMembershipId}?window=${windowDays}&from=${from}`}><div><h3>{t.teacherName}</h3><p>Improving lesson signals</p><small>{t.teacherCoverage} observations · comparable evidence in both periods</small></div><span className={styles.positiveTag}>Improving</span><span className={styles.arrow}>→</span></Link>)}
+        {!strength && !improvingTeachers.length && <p className={styles.empty}>No sustained improvement is flagged yet. Positive patterns appear here when there is enough evidence to compare.</p>}
+        <p className={styles.note}>A prompt to recognise progress and explore practice, based on recorded lesson signals.</p>
+      </section>}
+      </div>
       <section className={styles.work} aria-label="Today's work">
         <div className={styles.panel}><div className={styles.head}><h2>Today’s work</h2></div>
           {features.leave && <><Link className={styles.workRow} href="/leave#pending-requests"><span className={styles.icon}><IconUmbrella/></span><span>Leave approvals</span><strong>{data.pendingLeaveCount}</strong><span className={styles.arrow}>→</span></Link>{data.pendingLeaveDetails.slice(0,2).map(l=><Link key={l.id} className={styles.row} href={`/leave/${l.id}`}><div><h3>{l.requesterName}</h3><small>{l.reasonLabel} · {date(l.startDate)}–{date(l.endDate)}</small></div><span className={styles.arrow}>→</span></Link>)}</>}

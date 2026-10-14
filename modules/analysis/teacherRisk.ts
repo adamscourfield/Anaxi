@@ -52,6 +52,9 @@ export type TeacherRiskRow = {
   normalizedIDS: number;
   status: RiskStatus;
   topDrivers: TopDriver[];
+  momentumStatus?: "IMPROVING" | "STABLE" | "LOW_COVERAGE";
+  normalizedPositiveIDS?: number;
+  topImprovingDrivers?: TopDriver[];
 };
 
 export type SignalProfileEntry = {
@@ -256,6 +259,23 @@ export async function computeTeacherRiskIndex(
       }
     }
     topDrivers.sort((a, b) => a.delta - b.delta);
+    const topImprovingDrivers: TopDriver[] = [];
+    let comparableSignals = 0;
+    for (const signalKey of allSignalKeys) {
+      const currentMean = computeMean(currentMeans.get(signalKey)?.scores ?? []);
+      const prevMean = computeMean(prevMeans.get(signalKey)?.scores ?? []);
+      if (currentMean === null || prevMean === null) continue;
+      comparableSignals++;
+      const delta = currentMean - prevMean;
+      if (delta > driftThreshold) topImprovingDrivers.push({ signalKey, delta, currentMean, prevMean });
+    }
+    topImprovingDrivers.sort((a, b) => b.delta - a.delta);
+    const normalizedPositiveIDS = comparableSignals
+      ? topImprovingDrivers.reduce((sum, driver) => sum + driver.delta, 0) * allSignalKeys.length / comparableSignals : 0;
+    // Match CPD's coverage guardrail in both comparison windows.
+    const momentumStatus = teacherCoverage < minCoverage || prevTeacherObs.length < minCoverage
+      ? "LOW_COVERAGE" as const
+      : normalizedPositiveIDS >= EMERGING_DRIFT_THRESHOLD ? "IMPROVING" as const : "STABLE" as const;
 
     rows.push({
       teacherMembershipId: teacherId,
@@ -268,6 +288,9 @@ export async function computeTeacherRiskIndex(
       normalizedIDS,
       status,
       topDrivers: topDrivers.slice(0, 3),
+      momentumStatus,
+      normalizedPositiveIDS,
+      topImprovingDrivers: topImprovingDrivers.slice(0, 3),
     });
   }
 

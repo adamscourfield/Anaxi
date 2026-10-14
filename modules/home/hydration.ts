@@ -1,3 +1,4 @@
+import { fetchAttendanceTrend, EMPTY_ATTENDANCE_TREND } from "./attendanceTrend";
 import { prisma } from "@/lib/prisma";
 import { SessionUser } from "@/lib/types";
 import { meetsGcseThreshold } from "@/modules/assessments/gradeNormalizer";
@@ -467,7 +468,7 @@ export async function hydrateLeadershipHomeData({
     { count: 0, recentTeachers: [] as { id: string; name: string; avatarUpdatedAt: Date | null }[] }
   );
 
-  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentHeadline, attendanceHeadline] = await Promise.all([
+  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentHeadline, attendanceHeadline, attendanceTrend] = await Promise.all([
     hasAnalysisFeature ? safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]) : Promise.resolve([] as CpdPriorityRow[]),
     hasAnalysisFeature ? safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]) : Promise.resolve([] as TeacherRiskRow[]),
     hasAnalysisFeature ? safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }) : Promise.resolve({ rows: [] as CohortPivotRow[], computedAt: new Date() }),
@@ -486,9 +487,11 @@ export async function hydrateLeadershipHomeData({
       ? fetchHomeAttainmentHeadline(user.tenantId)
       : Promise.resolve({ gcse: null, aLevel: null } as HomeAttainmentHeadline),
     safe(fetchAttendanceHeadline(user.tenantId), { attendancePct: null, yesterdayPct: null, yesterdayLatenessPct: null, studentsCovered: 0, asOf: null } as AttendanceHeadline),
+    hasAnalysisFeature && hasStudentAnalysisFeature ? safe(fetchAttendanceTrend(user.tenantId, londonToday()), EMPTY_ATTENDANCE_TREND) : Promise.resolve(EMPTY_ATTENDANCE_TREND),
   ]);
 
   return {
+    attendanceTrend,
     cpdRows,
     teacherRows,
     cohortRows: cohortResult.rows,

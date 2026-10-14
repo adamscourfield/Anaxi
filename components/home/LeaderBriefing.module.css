@@ -69,3 +69,23 @@
 }
 @media(max-width:1050px) { .columns { grid-template-columns:1fr; } }
 @media(prefers-reduced-motion:reduce) { .arrow,.stat,.area,.row,.workRow { transition:none; } .row:hover .arrow,.area:hover .arrow,.workRow:hover .arrow { transform:none; } }
+
+.summary { padding:24px 26px; border:1px solid #e4e5e2; border-radius:16px; background:linear-gradient(115deg,#faf9f6,#f3f6f3); }
+.summary .head { align-items:flex-start; margin-bottom:16px; }
+.summary .head h2 { font-size:25px; letter-spacing:-.035em; }
+.eyebrow { display:block; font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#6e6e73; margin-bottom:6px; }
+.narrative { max-width:85ch; font-size:15px; line-height:1.85; color:#363c39; text-wrap:pretty; }
+.summaryMeta { display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:20px; padding-top:14px; border-top:1px solid #dde2db; font-size:11px; line-height:1.6; color:#626a64; }
+.focusColumn { display:grid; gap:14px; min-width:0; }
+.celebration { border-color:#dce7df; }
+.positiveMark { display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:#edf5ef; color:#37694a; font-size:21px; }
+.positiveTag { font-size:10px; border-radius:5px; padding:3px 6px; background:#edf5ef; color:#37694a; }
+.celebration .note { border-top:1px solid #eeeeef; padding-top:12px; line-height:1.6; }
+@media(max-width:600px) { .summary { padding:18px; } .summary .head h2 { font-size:22px; } .narrative { font-size:14px; } .positiveTag { display:none; } }
+.attendanceComparisons { display:grid; gap:5px; border-top:1px solid #eeeeef; padding-top:9px; margin-top:5px; font-size:11px; color:#6e6e73; }
+.attendanceComparisons span { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px; }
+.attendanceComparisons b { color:#363c39; font-weight:500; }
+.briefingTopics { display:grid; gap:16px; }
+.briefingTopic h3 { font-size:12px; font-weight:600; color:#363c39; margin-bottom:4px; }
+.briefingTopic + .briefingTopic { border-top:1px solid #dde2db; padding-top:14px; }
+.briefingTopic > a { display:inline-block; font-size:12px; font-weight:500; margin-top:6px; }
