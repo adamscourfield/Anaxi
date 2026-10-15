@@ -339,6 +339,10 @@ model DailyAttendanceCheck {
   /// Late pupils in the morning-registration check. Older checks predate this
   /// field, so null means the rate is not available rather than zero.
   lateCount     Int?
+  /// Final statutory AM/PM session totals, separate from the AM-only check.
+  fullDayPossibleCount Int?
+  fullDayPresentCount Int?
+  fullDayStudentsCovered Int?
   checkedAt     DateTime @default(now())
   tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 

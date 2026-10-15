@@ -4,7 +4,7 @@ import { assertCronAuthorized } from "@/lib/cronAuth";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
 import { addDays, dateKey } from "@/lib/integrations/arbor/attendanceSync";
-import { summariseMorningAttendance } from "@/lib/integrations/arbor/attendanceSummary";
+import { summariseStatutoryAttendance } from "@/lib/integrations/arbor/statutoryAttendance";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 import { withApi } from "@/lib/apiRoute";
@@ -19,7 +19,7 @@ function londonToday(): Date {
 /**
  * Captures a school-wide "in by morning registration" figure for today, read
  * directly from Arbor. GitHub Actions may delay a scheduled call, so the sync
- * always reads each pupil's first register of the day and backfills yesterday
+ * always reads each pupil's final statutory AM roll-call mark and backfills yesterday
  * too. That preserves a reliable morning-registration measure at any run time.
  */
 export const POST = withApi(async function POST(req: Request) {
@@ -51,8 +51,8 @@ export const POST = withApi(async function POST(req: Request) {
     const completedDates: string[] = [];
 
     for (const checkDate of daysToCheck) {
-      const records = await client.listAllAttendanceRecords(dateKey(checkDate), dateKey(addDays(checkDate, 1)));
-      const byStudent = summariseMorningAttendance(records, linkedExternalIds).byStudent;
+      const records = await client.listAllStatutoryAttendanceRecords(dateKey(checkDate), dateKey(addDays(checkDate, 1)));
+      const byStudent = summariseStatutoryAttendance(records, linkedExternalIds, true).byStudent;
       const totalsByTenant = new Map<string, { possible: number; present: number; late: number }>();
       for (const student of students) {
         const daily = byStudent.get(student.externalId);

@@ -1,3 +1,4 @@
+import type { StatutoryAttendanceRecord } from "./statutoryAttendance";
 import { arborAcademicUnitSubject } from "./academicUnitSubject";
 import { historicAcademicYearStart, historicEnrolmentIncluded } from "./historicEnrolment";
 import { arborPersonName } from "./personName";
@@ -884,6 +885,29 @@ export class ArborClient {
       if (page.length < 500) return records;
     }
     throw new Error("Attendance preview exceeded 100,000 records and stopped safely.");
+  }
+
+  /** Confirmed by live schema inspection: final statutory AM/PM roll-call marks. */
+  async listStatutoryAttendanceRecords(pageSize = 500, pageNum = 0, from?: string, before?: string): Promise<StatutoryAttendanceRecord[]> {
+    const dates = from && before ? `, recordDate_after_or_equal: ${JSON.stringify(from)}, recordDate_before: ${JSON.stringify(before)}` : "";
+    const data = await runArborGraphqlQuery<{ AttendanceRollCallRecord: StatutoryAttendanceRecord[] }>(this.credentials, `{
+      AttendanceRollCallRecord(page_size: ${pageSize}, page_num: ${pageNum}${dates}) {
+        id recordDate student { id } attendanceRollCall { id code }
+        attendanceMark { code isStatisticalPresent isStatisticalApprovedEducationalActivity isStatisticalPossibleAttendance isDefaultLate }
+        minutesLate
+      }
+    }`);
+    return data.AttendanceRollCallRecord;
+  }
+
+  async listAllStatutoryAttendanceRecords(from: string, before: string) {
+    const records: StatutoryAttendanceRecord[] = [];
+    for (let pageNum = 0; pageNum < 200; pageNum++) {
+      const page = await this.listStatutoryAttendanceRecords(500, pageNum, from, before);
+      records.push(...page);
+      if (page.length < 500) return records;
+    }
+    throw new Error("Statutory attendance exceeded 100,000 records and stopped safely.");
   }
 
   private async getPhoto(path: string): Promise<{ bytes: Buffer; mimeType: string } | null> {

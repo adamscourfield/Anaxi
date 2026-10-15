@@ -7,7 +7,7 @@ import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
 import { academicYearStart, addDays, attendancePercentage, dateKey } from "@/lib/integrations/arbor/attendanceSync";
-import { summariseAttendance, summariseMorningAttendance } from "@/lib/integrations/arbor/attendanceSummary";
+import { summariseStatutoryAttendance } from "@/lib/integrations/arbor/statutoryAttendance";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
@@ -106,9 +106,9 @@ export const POST = withApi(async function POST(req: Request) {
 
     for (let day = start; day <= batchEnd; day = addDays(day, 1)) {
       const nextDay = addDays(day, 1);
-      const records = await client.listAllAttendanceRecords(dateKey(day), dateKey(nextDay));
-      const daily = summariseAttendance(records, linkedExternalIds).byStudent;
-      const morning = summariseMorningAttendance(records, linkedExternalIds).byStudent;
+      const records = await client.listAllStatutoryAttendanceRecords(dateKey(day), dateKey(nextDay));
+      const daily = summariseStatutoryAttendance(records, linkedExternalIds).byStudent;
+      const morning = summariseStatutoryAttendance(records, linkedExternalIds, true).byStudent;
       const creates: Array<Record<string, unknown>> = [];
       const updates: Array<() => Promise<unknown>> = [];
       for (const student of students) {
@@ -139,8 +139,7 @@ export const POST = withApi(async function POST(req: Request) {
       await updateInChunks(updates);
 
       // Backfill the same completed-day figures used by the home page. This is
-      // deliberately calculated from the first register only, so lateness is
-      // the morning-registration rate rather than a mixture of AM and PM.
+      // calculated from the statutory AM roll call only.
       const dailyTotalsByTenant = new Map<string, Totals>();
       for (const student of students) {
         const attendance = morning.get(student.externalId);
@@ -151,13 +150,30 @@ export const POST = withApi(async function POST(req: Request) {
         totals.late += attendance.late;
         dailyTotalsByTenant.set(student.tenantId, totals);
       }
-      await Promise.all([...dailyTotalsByTenant.entries()].map(([tenantId, totals]) =>
-        db.dailyAttendanceCheck.upsert({
+      // Full-day totals are independent of manual/behaviour snapshots. Include
+      // zero-session dates so a holiday is distinguishable from a missing sync.
+      const fullDayByTenant = new Map<string, Totals & { studentsCovered: number }>();
+      for (const student of students) {
+        const totals = fullDayByTenant.get(student.tenantId) ?? { possible: 0, present: 0, late: 0, studentsCovered: 0 };
+        const attendance = daily.get(student.externalId);
+        totals.possible += attendance?.possible ?? 0;
+        totals.present += attendance?.present ?? 0;
+        if ((totalsByStudent.get(student.id)?.possible ?? 0) > 0) totals.studentsCovered++;
+        fullDayByTenant.set(student.tenantId, totals);
+      }
+      await Promise.all([...fullDayByTenant.entries()].map(([tenantId, fullDay]) => {
+        const morningTotals = dailyTotalsByTenant.get(tenantId) ?? { possible: 0, present: 0, late: 0 };
+        const data = {
+          possibleCount: morningTotals.possible, presentCount: morningTotals.present, lateCount: morningTotals.late,
+          fullDayPossibleCount: fullDay.possible, fullDayPresentCount: fullDay.present,
+          fullDayStudentsCovered: fullDay.studentsCovered,
+        };
+        return db.dailyAttendanceCheck.upsert({
           where: { tenantId_checkDate: { tenantId, checkDate: day } },
-          create: { tenantId, checkDate: day, possibleCount: totals.possible, presentCount: totals.present, lateCount: totals.late },
-          update: { possibleCount: totals.possible, presentCount: totals.present, lateCount: totals.late, checkedAt: new Date() },
-        })
-      ));
+          create: { tenantId, checkDate: day, ...data },
+          update: { ...data, checkedAt: new Date() },
+        });
+      }));
     }
 
     await db.sharedIntegrationSyncRun.update({ where: { id: run.id }, data: { status: "SUCCESS", recordsProcessed: created + updated, recordsCreated: created, recordsUpdated: updated, finishedAt: new Date() } });

@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
 type Snapshot = { snapshotDate: Date; attendancePossibleCount: number; attendancePresentCount: number };
-export type AttendanceTrend = { weekPct: number | null; previousWeekPct: number | null; monthPct: number | null; loadError?: boolean };
-export const EMPTY_ATTENDANCE_TREND: AttendanceTrend = { weekPct: null, previousWeekPct: null, monthPct: null };
+export type AttendanceTrend = { weekPct: number | null; threeWeekPct: number | null; monthPct: number | null; loadError?: boolean };
+export const EMPTY_ATTENDANCE_TREND: AttendanceTrend = { weekPct: null, threeWeekPct: null, monthPct: null };
 
 /** Exact calendar-date pairs only: never stretch a missing baseline into a rolling period. */
 export function attendanceRateBetween(students: { snapshots: Snapshot[] }[], start: Date, end: Date): number | null {
@@ -34,7 +34,7 @@ export async function fetchAttendanceTrend(tenantId: string, today: Date): Promi
   });
   return {
     weekPct: attendanceRateBetween(students, daysBefore(8), end),
-    previousWeekPct: attendanceRateBetween(students, daysBefore(15), daysBefore(8)),
+    threeWeekPct: attendanceRateBetween(students, daysBefore(22), end),
     monthPct: attendanceRateBetween(students, daysBefore(29), end),
   };
 }

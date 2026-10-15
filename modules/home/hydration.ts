@@ -1,4 +1,5 @@
-import { fetchAttendanceTrend, EMPTY_ATTENDANCE_TREND } from "./attendanceTrend";
+import { fetchSchoolAttendance } from "./schoolAttendance";
+import { EMPTY_ATTENDANCE_TREND } from "./attendanceTrend";
 import { prisma } from "@/lib/prisma";
 import { SessionUser } from "@/lib/types";
 import { meetsGcseThreshold } from "@/modules/assessments/gradeNormalizer";
@@ -468,7 +469,7 @@ export async function hydrateLeadershipHomeData({
     { count: 0, recentTeachers: [] as { id: string; name: string; avatarUpdatedAt: Date | null }[] }
   );
 
-  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentHeadline, attendanceHeadline, attendanceTrend] = await Promise.all([
+  const [cpdRows, teacherRows, cohortResult, studentResult, pendingLeaveCount, liveOnCallBanner, pendingLeaveDetails, onCallDetails, onCallStats, weekObs, attainmentSummary, meetingsTodayCount, attainmentHeadline, attendanceHeadline, schoolAttendance] = await Promise.all([
     hasAnalysisFeature ? safe(computeCpdPriorities(user.tenantId, windowDays), [] as CpdPriorityRow[]) : Promise.resolve([] as CpdPriorityRow[]),
     hasAnalysisFeature ? safe(computeTeacherRiskIndex(user.tenantId, windowDays), [] as TeacherRiskRow[]) : Promise.resolve([] as TeacherRiskRow[]),
     hasAnalysisFeature ? safe(computeCohortPivot(user.tenantId, windowDays), { rows: [] as CohortPivotRow[], computedAt: new Date() }) : Promise.resolve({ rows: [] as CohortPivotRow[], computedAt: new Date() }),
@@ -487,14 +488,14 @@ export async function hydrateLeadershipHomeData({
       ? fetchHomeAttainmentHeadline(user.tenantId)
       : Promise.resolve({ gcse: null, aLevel: null } as HomeAttainmentHeadline),
     safe(fetchAttendanceHeadline(user.tenantId), { attendancePct: null, yesterdayPct: null, yesterdayLatenessPct: null, studentsCovered: 0, asOf: null } as AttendanceHeadline),
-    hasAnalysisFeature && hasStudentAnalysisFeature ? fetchAttendanceTrend(user.tenantId, londonToday()).catch((error: unknown) => {
-      console.error("[home] Attendance comparisons could not be loaded", error);
-      return { ...EMPTY_ATTENDANCE_TREND, loadError: true };
-    }) : Promise.resolve(EMPTY_ATTENDANCE_TREND),
+    hasAnalysisFeature && hasStudentAnalysisFeature ? fetchSchoolAttendance(user.tenantId, londonToday()).catch((error: unknown) => {
+      console.error("[home] Daily attendance totals could not be loaded", error);
+      return { headline: null, trend: { ...EMPTY_ATTENDANCE_TREND, loadError: true } };
+    }) : Promise.resolve(null),
   ]);
 
   return {
-    attendanceTrend,
+    attendanceTrend: schoolAttendance?.trend ?? EMPTY_ATTENDANCE_TREND,
     cpdRows,
     teacherRows,
     cohortRows: cohortResult.rows,
@@ -509,7 +510,7 @@ export async function hydrateLeadershipHomeData({
     weekObsTeachers: weekObs.recentTeachers,
     attainmentSummary,
     attainmentHeadline,
-    attendanceHeadline,
+    attendanceHeadline: { ...attendanceHeadline, ...(schoolAttendance?.headline ?? { attendancePct: null, asOf: null, studentsCovered: 0 }) },
     meetingsTodayCount: meetingsTodayCount as number,
     watchlistStudents: studentResult.rows.filter((r) => r.onWatchlist),
   };

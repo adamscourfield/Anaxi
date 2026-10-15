@@ -19,15 +19,25 @@ export async function GET(req: Request) {
     const credentials = decryptCredentials<ArborCredentials>(integration.credentialsCiphertext);
     const schema = await runArborGraphqlQuery<{ __schema: { types: { name: string }[]; queryType: { fields: { name: string; args: { name: string }[] }[] } } }>(credentials,
       "{ __schema { types { name } queryType { fields { name args { name } } } } }");
-    const names = schema.__schema.types.map(type => type.name).filter(name => /Attendance|RollCall/i.test(name));
+    const names = schema.__schema.types.map(type => type.name).filter(name => ["AttendanceRollCallRecord", "AttendanceRollCall", "AttendanceMark"].includes(name));
     const fields: Record<string, unknown> = {};
     for (const name of names) {
       const data = await runArborGraphqlQuery<{ __type: unknown }>(credentials,
         `{ __type(name: ${JSON.stringify(name)}) { name fields { name type { name kind ofType { name kind ofType { name kind } } } } } }`);
       fields[name] = data.__type;
     }
-    results.push({ connectionId: integration.id,
-      queries: schema.__schema.queryType.fields.filter(field => /Attendance|RollCall/i.test(field.name)), fields });
+    let accessResult: Record<string, unknown>;
+    try {
+      const access = await runArborGraphqlQuery<{ AttendanceRollCallRecord: { id: string }[] }>(credentials,
+        "{ AttendanceRollCallRecord(page_size: 1, page_num: 0) { id recordDate student { id } attendanceRollCall { id code } attendanceMark { code isStatisticalPresent isStatisticalApprovedEducationalActivity isStatisticalPossibleAttendance isDefaultLate } minutesLate } }");
+      const rollCalls = await runArborGraphqlQuery<{ AttendanceRollCall: { id: string; code: string; shortName: string }[] }>(credentials,
+        "{ AttendanceRollCall(page_size: 10, page_num: 0) { id code shortName } }");
+      accessResult = { rollCalls: rollCalls.AttendanceRollCall, statutoryReadConfirmed: Array.isArray(access.AttendanceRollCallRecord) };
+    } catch (error) {
+      accessResult = { statutoryReadConfirmed: false, error: error instanceof Error ? error.message : "Statutory attendance access check failed" };
+    }
+    results.push({ ...accessResult, connectionId: integration.id,
+      queries: schema.__schema.queryType.fields.filter(field => ["AttendanceRollCallRecord", "AttendanceRollCall"].includes(field.name)), fields });
   }
   return NextResponse.json({ results });
 }

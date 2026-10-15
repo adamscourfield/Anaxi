@@ -1,8 +1,8 @@
 import { academicYearStart, addDays } from "./attendanceSync";
 
-// Replay once to repair dates previously skipped because behaviour had already
-// created a snapshot. Thereafter, only a completed attendance batch advances us.
-export const ATTENDANCE_SYNC_VERSION = 1;
+// Version 2 backfills independent statutory AM/PM session totals, including dates with
+// manual student snapshots. Only a completed attendance batch advances us.
+export const ATTENDANCE_SYNC_VERSION = 2;
 export function attendanceBatchStart(config: Record<string, unknown>, end: Date): Date {
   const yearStart = academicYearStart(end);
   const checkpoint = typeof config.attendanceLastSyncedDate === "string"

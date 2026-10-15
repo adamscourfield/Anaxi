@@ -60,17 +60,17 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
         {features.students && <Link className={styles.stat} href={`${students}&view=all&sort=attendance_asc`}>
           <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Attendance</span>
           <strong className={styles.value}>{data.attendanceHeadline.attendancePct === null ? "—" : `${data.attendanceHeadline.attendancePct.toFixed(1)}%`}</strong>
-          <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)}</> : "No snapshot"}</p>
+          <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)} · Statutory AM/PM</> : "Statutory attendance history is being prepared"}</p>
           {attendanceStale && <p>Attendance updates are overdue. Ask your administrator to check the school sync.</p>}
           <div className={styles.attendanceComparisons}>
             <span>Last 7 days <b>{data.attendanceTrend.weekPct === null ? attendanceMissing : `${data.attendanceTrend.weekPct.toFixed(1)}%`}</b></span>
-            <span>Previous 7 days <b>{data.attendanceTrend.previousWeekPct === null ? attendanceMissing : `${data.attendanceTrend.previousWeekPct.toFixed(1)}%`}</b></span>
+            <span>Last 21 days <b>{data.attendanceTrend.threeWeekPct === null ? attendanceMissing : `${data.attendanceTrend.threeWeekPct.toFixed(1)}%`}</b></span>
             <span>Last 28 days <b>{data.attendanceTrend.monthPct === null ? attendanceMissing : `${data.attendanceTrend.monthPct.toFixed(1)}%`}</b></span>
           </div>
           {data.attendanceTrend.loadError
             ? <p>Attendance comparisons could not be loaded. Please try again.</p>
-            : [data.attendanceTrend.weekPct, data.attendanceTrend.previousWeekPct, data.attendanceTrend.monthPct].some(value => value === null)
-              && <p>Comparisons need attendance totals on both dates for each period.</p>}
+            : [data.attendanceTrend.weekPct, data.attendanceTrend.threeWeekPct, data.attendanceTrend.monthPct].some(value => value === null)
+              && <p>Comparisons need complete daily attendance totals for each period.</p>}
         </Link>}
         {features.observations && <Link className={styles.stat} href="/observe/history">
           <span className={styles.statTitle}><span className={styles.icon}><IconClipboard/></span>Lessons observed</span><strong className={styles.value}>{data.weekObsCount}</strong><p>Last 7 days</p>
