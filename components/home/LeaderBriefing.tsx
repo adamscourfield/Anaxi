@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { londonToday } from "@/modules/home/hydration";
 import { buildLeaderSummary, buildStudentSummary } from "@/modules/home/leaderSummary";
 import type { hydrateLeadershipHomeData } from "@/modules/home/hydration";
 import type { fetchLeaderWork } from "@/modules/home/leaderWork";
@@ -16,6 +17,9 @@ type Props = {
 const date = (value: Date | string | null) => value ? new Date(value).toLocaleDateString("en-GB", { day:"numeric", month:"short", timeZone:"Europe/London" }) : "not available";
 
 export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
+  const attendanceStale = data.attendanceHeadline.asOf
+    && londonToday().getTime() - new Date(data.attendanceHeadline.asOf).getTime() > 3 * 86400000;
+  const attendanceMissing = data.attendanceTrend.loadError ? "Could not load" : "Missing history";
   const teaching = `/insights/teaching?windowDays=${windowDays}`;
   const students = `/insights/students?windowDays=${windowDays}`;
   const teachersToReview = data.teacherRows.filter(t=>t.status === "SIGNIFICANT_DRIFT" || t.status === "EMERGING_DRIFT");
@@ -57,11 +61,16 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
           <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Attendance</span>
           <strong className={styles.value}>{data.attendanceHeadline.attendancePct === null ? "—" : `${data.attendanceHeadline.attendancePct.toFixed(1)}%`}</strong>
           <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)}</> : "No snapshot"}</p>
+          {attendanceStale && <p>Attendance updates are overdue. Ask your administrator to check the school sync.</p>}
           <div className={styles.attendanceComparisons}>
-            <span>Last 7 days <b>{data.attendanceTrend.weekPct === null ? "Unavailable" : `${data.attendanceTrend.weekPct.toFixed(1)}%`}</b></span>
-            <span>Previous 7 days <b>{data.attendanceTrend.previousWeekPct === null ? "Unavailable" : `${data.attendanceTrend.previousWeekPct.toFixed(1)}%`}</b></span>
-            <span>Last 28 days <b>{data.attendanceTrend.monthPct === null ? "Unavailable" : `${data.attendanceTrend.monthPct.toFixed(1)}%`}</b></span>
+            <span>Last 7 days <b>{data.attendanceTrend.weekPct === null ? attendanceMissing : `${data.attendanceTrend.weekPct.toFixed(1)}%`}</b></span>
+            <span>Previous 7 days <b>{data.attendanceTrend.previousWeekPct === null ? attendanceMissing : `${data.attendanceTrend.previousWeekPct.toFixed(1)}%`}</b></span>
+            <span>Last 28 days <b>{data.attendanceTrend.monthPct === null ? attendanceMissing : `${data.attendanceTrend.monthPct.toFixed(1)}%`}</b></span>
           </div>
+          {data.attendanceTrend.loadError
+            ? <p>Attendance comparisons could not be loaded. Please try again.</p>
+            : [data.attendanceTrend.weekPct, data.attendanceTrend.previousWeekPct, data.attendanceTrend.monthPct].some(value => value === null)
+              && <p>Comparisons need attendance totals on both dates for each period.</p>}
         </Link>}
         {features.observations && <Link className={styles.stat} href="/observe/history">
           <span className={styles.statTitle}><span className={styles.icon}><IconClipboard/></span>Lessons observed</span><strong className={styles.value}>{data.weekObsCount}</strong><p>Last 7 days</p>

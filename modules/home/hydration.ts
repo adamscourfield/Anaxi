@@ -487,7 +487,10 @@ export async function hydrateLeadershipHomeData({
       ? fetchHomeAttainmentHeadline(user.tenantId)
       : Promise.resolve({ gcse: null, aLevel: null } as HomeAttainmentHeadline),
     safe(fetchAttendanceHeadline(user.tenantId), { attendancePct: null, yesterdayPct: null, yesterdayLatenessPct: null, studentsCovered: 0, asOf: null } as AttendanceHeadline),
-    hasAnalysisFeature && hasStudentAnalysisFeature ? safe(fetchAttendanceTrend(user.tenantId, londonToday()), EMPTY_ATTENDANCE_TREND) : Promise.resolve(EMPTY_ATTENDANCE_TREND),
+    hasAnalysisFeature && hasStudentAnalysisFeature ? fetchAttendanceTrend(user.tenantId, londonToday()).catch((error: unknown) => {
+      console.error("[home] Attendance comparisons could not be loaded", error);
+      return { ...EMPTY_ATTENDANCE_TREND, loadError: true };
+    }) : Promise.resolve(EMPTY_ATTENDANCE_TREND),
   ]);
 
   return {

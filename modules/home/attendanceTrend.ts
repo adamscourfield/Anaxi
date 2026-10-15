@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 type Snapshot = { snapshotDate: Date; attendancePossibleCount: number; attendancePresentCount: number };
-export type AttendanceTrend = { weekPct: number | null; previousWeekPct: number | null; monthPct: number | null };
+export type AttendanceTrend = { weekPct: number | null; previousWeekPct: number | null; monthPct: number | null; loadError?: boolean };
 export const EMPTY_ATTENDANCE_TREND: AttendanceTrend = { weekPct: null, previousWeekPct: null, monthPct: null };
 
 /** Exact calendar-date pairs only: never stretch a missing baseline into a rolling period. */
@@ -27,7 +27,7 @@ export async function fetchAttendanceTrend(tenantId: string, today: Date): Promi
   const students = await prisma.student.findMany({
     where: { tenantId, status: "ACTIVE" },
     select: { snapshots: {
-      where: { countScope: "YEAR_TO_DATE", attendancePossibleCount: { gt: 0 }, snapshotDate: { gte: daysBefore(29), lt: today } },
+      where: { countScope: "YEAR_TO_DATE", snapshotDate: { gte: daysBefore(29), lt: today } },
       orderBy: { snapshotDate: "desc" },
       select: { snapshotDate: true, attendancePossibleCount: true, attendancePresentCount: true },
     } },

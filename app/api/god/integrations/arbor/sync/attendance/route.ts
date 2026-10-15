@@ -12,6 +12,8 @@ import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
+import { attendanceBatchStart, ATTENDANCE_SYNC_VERSION } from "@/lib/integrations/arbor/attendanceProgress";
+
 const DAYS_PER_BATCH = 7;
 
 type Totals = { possible: number; present: number; late: number };
@@ -62,26 +64,9 @@ export const POST = withApi(async function POST(req: Request) {
     where: { tenantId: { in: tenantIds }, status: "ACTIVE", externalId: { not: null } },
     select: { id: true, tenantId: true, externalId: true },
   });
-  const existingCoverage = await db.studentSnapshot.findMany({
-    where: { studentId: { in: students.map((student) => student.id) }, snapshotDate: { gte: startOfYear, lte: end } },
-    select: { studentId: true, snapshotDate: true },
-  });
-  const coveredStudentsByDay = new Map<string, Set<string>>();
-  for (const snapshot of existingCoverage) {
-    const key = dateKey(new Date(snapshot.snapshotDate));
-    const covered = coveredStudentsByDay.get(key) ?? new Set<string>();
-    covered.add(snapshot.studentId);
-    coveredStudentsByDay.set(key, covered);
-  }
-  let start: Date | null = null;
-  for (let day = startOfYear; day <= end; day = addDays(day, 1)) {
-    if ((coveredStudentsByDay.get(dateKey(day))?.size ?? 0) < students.length) {
-      start = day;
-      break;
-    }
-  }
-
-  if (!start) {
+  const config = (integration.config ?? {}) as Record<string, unknown>;
+  const start = attendanceBatchStart(config, end);
+  if (!students.length || start > end) {
     if (isScheduledRun) return NextResponse.json({ upToDate: true });
     return NextResponse.redirect(new URL("/god/integrations/arbor?attendanceSync=up-to-date", req.url));
   }
@@ -99,7 +84,7 @@ export const POST = withApi(async function POST(req: Request) {
     const studentByExternalId = new Map(students.map((student) => [student.externalId, student]));
     const linkedExternalIds = new Set(studentByExternalId.keys());
     const existingBefore = await db.studentSnapshot.findMany({
-      where: { studentId: { in: students.map((student) => student.id) }, dataSource: "ARBOR", countScope: "YEAR_TO_DATE", snapshotDate: { lt: start } },
+      where: { studentId: { in: students.map((student) => student.id) }, dataSource: "ARBOR", countScope: "YEAR_TO_DATE", snapshotDate: { gte: startOfYear, lt: start } },
       orderBy: { snapshotDate: "desc" },
       select: { studentId: true, attendancePossibleCount: true, attendancePresentCount: true, latenessCount: true },
     });
@@ -176,7 +161,7 @@ export const POST = withApi(async function POST(req: Request) {
     }
 
     await db.sharedIntegrationSyncRun.update({ where: { id: run.id }, data: { status: "SUCCESS", recordsProcessed: created + updated, recordsCreated: created, recordsUpdated: updated, finishedAt: new Date() } });
-    await db.sharedIntegration.update({ where: { id: integration.id }, data: { lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null } });
+    await db.sharedIntegration.update({ where: { id: integration.id }, data: { config: { ...config, attendanceLastSyncedDate: dateKey(batchEnd), attendanceSyncVersion: ATTENDANCE_SYNC_VERSION }, lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null } });
     if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.attendance_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { from: dateKey(start), to: dateKey(batchEnd), created, updated, preservedManual } } });
     if (isScheduledRun) return NextResponse.json({ from: dateKey(start), to: dateKey(batchEnd), created, updated, preservedManual });
     const url = new URL("/god/integrations/arbor", req.url);
