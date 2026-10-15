@@ -1,3 +1,4 @@
+import styles from "./LeadershipHeader.module.css";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { HomePageHeader } from "@/components/home/home-chrome";
@@ -30,6 +31,18 @@ export function HomePageTitle({
         Platform setup →
       </Link>
     ) : null;
+
+  if (["SLT", "ADMIN", "SUPER_ADMIN"].includes(role)) {
+    const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" });
+    return <header className={styles.header}>
+      <div>
+        <div className={styles.kicker}><span>Leadership workspace</span><span className={styles.divider} aria-hidden="true"/><span>{today}</span></div>
+        <h1 className={styles.title}>{copy.title}<span>.</span></h1>
+        <p className={styles.subtitle}>{copy.subtitle}</p>
+      </div>
+      <div className={styles.actions}>{adminLink}{quickActionItems.length > 0 && <QuickActionButton items={quickActionItems}/>}</div>
+    </header>;
+  }
 
   return (
     <HomePageHeader

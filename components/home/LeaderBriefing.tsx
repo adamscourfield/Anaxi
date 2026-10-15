@@ -14,6 +14,7 @@ type Props = {
   features: { analysis: boolean; students: boolean; assessments: boolean; leave: boolean; onCall: boolean; observations: boolean };
   reasons: Record<string, string>;
 };
+const initials = (name: string) => name.trim().split(/\s+/).slice(0,2).map(part => part[0]).join("");
 const date = (value: Date | string | null) => value ? new Date(value).toLocaleDateString("en-GB", { day:"numeric", month:"short", timeZone:"Europe/London" }) : "not available";
 
 export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
@@ -55,9 +56,9 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
       <div className={styles.summaryMeta}><span>Auto-generated from live school data</span><span>Teaching: last {windowDays} days vs preceding {windowDays}</span></div>
     </section>}
     {features.analysis && <section aria-labelledby="school-snapshot">
-      <div className={styles.head}><h2 id="school-snapshot">School snapshot</h2></div>
+      <div className={styles.head}><h2 id="school-snapshot">School snapshot</h2><span className={styles.eyebrow}>The numbers that matter</span></div>
       <div className={styles.snapshot}>
-        {features.students && <Link className={styles.stat} href={`${students}&view=all&sort=attendance_asc`}>
+        {features.students && <Link className={`${styles.stat} ${styles.attendanceStat}`} href={`${students}&view=all&sort=attendance_asc`}>
           <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Attendance</span>
           <strong className={styles.value}>{data.attendanceHeadline.attendancePct === null ? "—" : `${data.attendanceHeadline.attendancePct.toFixed(1)}%`}</strong>
           <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)} · Lesson marks</> : "Attendance history is being refreshed"}</p>
@@ -73,24 +74,24 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
               && <p>Comparisons need complete daily attendance totals for each period.</p>}
         </Link>}
         {features.observations && <Link className={styles.stat} href="/observe/history">
-          <span className={styles.statTitle}><span className={styles.icon}><IconClipboard/></span>Lessons observed</span><strong className={styles.value}>{data.weekObsCount}</strong><p>Last 7 days</p>
+          <span className={styles.statTitle}><span className={styles.icon}><IconClipboard/></span>Lessons observed</span><strong className={styles.value}>{data.weekObsCount}</strong><p>Last 7 days</p><div className={styles.metricFooter}>Observation history<span aria-hidden="true">↗</span></div>
         </Link>}
         <Link className={styles.stat} href={`${teaching}&view=teachers&status=LOW_COVERAGE`}>
-          <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Observation coverage</span><strong className={styles.value}>{coverage}<span className="text-sm font-normal text-muted"> / {data.teacherRows.length}</span></strong><p>Sufficient evidence · {windowDays} days</p>
+          <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Observation coverage</span><strong className={styles.value}>{coverage}<span className={styles.valueSuffix}> / {data.teacherRows.length}</span></strong><p>Sufficient evidence · {windowDays} days</p><div className={styles.coverageTrack} aria-hidden="true"><span style={{width:`${data.teacherRows.length ? coverage/data.teacherRows.length*100 : 0}%`}}/></div><div className={styles.metricFooter}>Teachers covered<span aria-hidden="true">↗</span></div>
         </Link>
         {features.assessments && <Link className={styles.stat} href="/insights/attainment">
           <span className={styles.statTitle}><span className={styles.icon}><IconChartBar/></span>Latest assessment</span><strong className={styles.value}>{data.attainmentSummary?.studentCount ?? "—"}</strong>
-          <p>{data.attainmentSummary ? `${data.attainmentSummary.cycleLabel} · ${data.attainmentSummary.latestPointLabel ?? "No result point"}` : "No results"}{data.attainmentSummary && <><br/>Students assessed</>}</p>
+          <p>{data.attainmentSummary ? `${data.attainmentSummary.cycleLabel} · ${data.attainmentSummary.latestPointLabel ?? "No result point"}` : "No results"}{data.attainmentSummary && <><br/>Students assessed</>}</p><div className={styles.metricFooter}>Explore attainment<span aria-hidden="true">↗</span></div>
         </Link>}
       </div>
     </section>}
     <div className={styles.columns}>
       <div className={styles.focusColumn}><section className={styles.panel} aria-labelledby="briefing-attention">
-        <div className={styles.head}><div><h2 id="briefing-attention">Where to focus</h2></div></div>
+        <div className={styles.head}><div><span className={styles.eyebrow}>Priorities</span><h2 id="briefing-attention">Where to focus</h2></div><span className={styles.sectionIcon}><IconClipboard/></span></div>
         {features.onCall && data.liveOnCallBanner.count > 0 && <Link className={styles.row} href="/on-call"><span className={styles.icon}><IconPhone/></span><div><h3>{data.liveOnCallBanner.count} active on-call request{data.liveOnCallBanner.count===1?"":"s"}</h3><p>{data.liveOnCallBanner.latest ? `${data.liveOnCallBanner.latest.requesterName}${data.liveOnCallBanner.latest.location ? " · "+data.liveOnCallBanner.latest.location : ""}` : "Review the live queue"}</p><small>Live queue · includes acknowledged requests</small></div><span className={styles.arrow}>→</span></Link>}
         {features.analysis && <>
-          {features.students && studentsToReview.slice(0,2).map(s=><Link key={s.studentId} className={styles.row} href={`/students/${s.studentId}?window=${windowDays}&from=${from}#pastoral-evidence`}><div><h3>{s.studentName}</h3><p>{s.drivers.length?s.drivers.slice(0,2).map(d=>reasons[d.metric]??d.label).join(" · ")+(s.drivers.length>2?` · +${s.drivers.length-2} more`:""):"Review the recorded priority indicators"}</p><small>Snapshot {date(s.lastSnapshotDate)}{s.confidence==="LOW"?" · Limited comparison evidence":""}</small></div><span className={`${styles.tag} ${s.band==="URGENT"?styles.urgent:""}`}>{s.band==="URGENT"?"Urgent":"Priority"}</span><span className={styles.arrow}>→</span></Link>)}
-          {teachersToReview.slice(0,1).map(t=><Link key={t.teacherMembershipId} className={styles.row} href={`/analysis/teachers/${t.teacherMembershipId}?window=${windowDays}&from=${encodeURIComponent(teaching+"&view=teachers")}`}><div><h3>{t.teacherName}</h3><p>Lesson signals declining</p><small>{t.teacherCoverage} observations · Last observed {date(t.lastObservationAt)}</small></div><span className={styles.tag}>Teaching</span><span className={styles.arrow}>→</span></Link>)}
+          {features.students && studentsToReview.slice(0,2).map(s=><Link key={s.studentId} className={styles.row} href={`/students/${s.studentId}?window=${windowDays}&from=${from}#pastoral-evidence`}><span className={styles.avatar} aria-hidden="true">{initials(s.studentName)}</span><div><h3>{s.studentName}</h3><p>{s.drivers.length?s.drivers.slice(0,2).map(d=>reasons[d.metric]??d.label).join(" · ")+(s.drivers.length>2?` · +${s.drivers.length-2} more`:""):"Review the recorded priority indicators"}</p><small>Snapshot {date(s.lastSnapshotDate)}{s.confidence==="LOW"?" · Limited comparison evidence":""}</small></div><span className={`${styles.tag} ${s.band==="URGENT"?styles.urgent:""}`}>{s.band==="URGENT"?"Urgent":"Priority"}</span><span className={styles.arrow}>→</span></Link>)}
+          {teachersToReview.slice(0,1).map(t=><Link key={t.teacherMembershipId} className={styles.row} href={`/analysis/teachers/${t.teacherMembershipId}?window=${windowDays}&from=${encodeURIComponent(teaching+"&view=teachers")}`}><span className={styles.avatar} aria-hidden="true">{initials(t.teacherName)}</span><div><h3>{t.teacherName}</h3><p>Lesson signals declining</p><small>{t.teacherCoverage} observations · Last observed {date(t.lastObservationAt)}</small></div><span className={styles.tag}>Teaching</span><span className={styles.arrow}>→</span></Link>)}
           {cpd && <Link className={styles.row} href={`${teaching}&view=cpd`}><div><h3>{cpd.label}</h3><p>{cpd.teachersDriftingDown} of {cpd.teachersCovered} teachers show a decline.</p><small>Last {windowDays} days</small></div><span className={styles.tag}>CPD</span><span className={styles.arrow}>→</span></Link>}
           {!concerns && <p className={styles.empty}>{data.teacherRows.length || data.studentRows.length ? "No priorities in the available evidence." : "Not enough evidence yet."}</p>}
           <div className={styles.footer}><Link href={`${teaching}&view=teachers`}>{teachersToReview.length} teacher{teachersToReview.length===1?"":"s"} to review →</Link>{features.students && <Link href={students}>{studentsToReview.length} students needing attention →</Link>}</div>
@@ -107,7 +108,7 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
       </section>}
       </div>
       <section className={styles.work} aria-label="Today's work">
-        <div className={styles.panel}><div className={styles.head}><h2>Today’s work</h2></div>
+        <div className={styles.panel}><div className={styles.head}><div><span className={styles.eyebrow}>Your day</span><h2>Today’s work</h2></div><span className={styles.icon}><IconCalendar/></span></div>
           {features.leave && <><Link className={styles.workRow} href="/leave#pending-requests"><span className={styles.icon}><IconUmbrella/></span><span>Leave approvals</span><strong>{data.pendingLeaveCount}</strong><span className={styles.arrow}>→</span></Link>{data.pendingLeaveDetails.slice(0,2).map(l=><Link key={l.id} className={styles.row} href={`/leave/${l.id}`}><div><h3>{l.requesterName}</h3><small>{l.reasonLabel} · {date(l.startDate)}–{date(l.endDate)}</small></div><span className={styles.arrow}>→</span></Link>)}</>}
           {work && <><Link className={styles.workRow} href="/my-actions"><span className={styles.icon}><IconClipboard/></span><span>Your open actions</span><strong>{work.actionCount??"—"}</strong><span className={styles.arrow}>→</span></Link>{work.actions===null?<p className={styles.empty}>Actions unavailable</p>:work.actions.slice(0,3).map(a=><Link className={styles.row} key={a.id} href="/my-actions"><div><h3>{a.description}</h3><small>{a.dueDate?`Due ${date(a.dueDate)}`:"No due date"}{a.status==="BLOCKED"?" · Blocked":""}</small></div><span className={styles.arrow}>→</span></Link>)}
           <Link className={styles.workRow} href="/meetings"><span className={styles.icon}><IconCalendar/></span><span>Your meetings today</span><strong>{work.meetings?.length??"—"}</strong><span className={styles.arrow}>→</span></Link>{work.meetings===null?<p className={styles.empty}>Meetings unavailable</p>:work.meetings.slice(0,3).map(m=><Link key={m.id} href={`/meetings/${m.id}`} className={styles.row}><div><h3>{m.title}</h3><small>{m.startDateTime.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:"Europe/London"})}{m.location?` · ${m.location}`:""}</small></div><span className={styles.arrow}>→</span></Link>)}</>}
@@ -116,7 +117,7 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
         </div>
       </section>
     </div>
-    {features.analysis && <section aria-labelledby="continue-investigating"><div className={styles.head}><div><h2 id="continue-investigating">Insights</h2></div><Link href={`/insights?windowDays=${windowDays}`}>All insights →</Link></div><nav className={styles.areas} aria-label="Explore Insights">
+    {features.analysis && <section aria-labelledby="continue-investigating"><div className={styles.head}><div><h2 id="continue-investigating">Explore your school</h2></div><Link href={`/insights?windowDays=${windowDays}`}>All insights →</Link></div><nav className={styles.areas} aria-label="Explore Insights">
       <Link className={styles.area} href={teaching}><span className={styles.icon}><IconClipboard/></span><div><h3>Teaching</h3><p>Lesson patterns & CPD</p></div><span className={styles.arrow}>→</span></Link>
       {features.students && <Link className={styles.area} href={students}><span className={styles.icon}><IconUsersTwo/></span><div><h3>Students</h3><p>Attendance & behaviour</p></div><span className={styles.arrow}>→</span></Link>}
       {features.assessments && <Link className={styles.area} href="/insights/attainment"><span className={styles.icon}><IconChartBar/></span><div><h3>Attainment</h3><p>Subjects & groups</p></div><span className={styles.arrow}>→</span></Link>}
