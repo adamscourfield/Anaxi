@@ -31,7 +31,8 @@ jobs:
         run: |
           curl --fail --silent --show-error \
             --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
-            "${ANAXI_APP_URL%/}/api/cron/arbor-attendance-schema"
+            "${ANAXI_APP_URL%/}/api/cron/arbor-attendance-schema" > /tmp/attendance-schema.json
+          python3 -c 'import json; print(json.dumps(json.load(open("/tmp/attendance-schema.json")), indent=2))'
       - name: Catch up attendance totals
         if: ${{ inputs.scope != 'behaviour' && inputs.scope != 'attendance-schema' }}
         env:
