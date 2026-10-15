@@ -859,13 +859,13 @@ export class ArborClient {
   }
 
   /** A one-page, read-only attendance check. It intentionally does not retain marks. */
-  async listAttendanceRecords(pageSize = 1, pageNum = 0, startAfter?: string, startBefore?: string): Promise<Array<{ id: string; student: { id: string }; attendanceMark: { code: string; isStatisticalPresent: boolean; isStatisticalPossibleAttendance: boolean; isDefaultLate: boolean } | null; startDatetime: string | null; minutesLate: number | null; isRedundant: boolean }>> {
+  async listAttendanceRecords(pageSize = 1, pageNum = 0, startAfter?: string, startBefore?: string): Promise<Array<{ id: string; student: { id: string }; attendanceMark: { code: string; isStatisticalPresent: boolean; isStatisticalApprovedEducationalActivity: boolean; isStatisticalPossibleAttendance: boolean; isDefaultLate: boolean } | null; startDatetime: string | null; minutesLate: number | null; isRedundant: boolean }>> {
     const dateFilters = startAfter && startBefore ? `, startDatetime_after: "${startAfter}", startDatetime_before: "${startBefore}"` : "";
     const query = `{
       AttendanceRecord(page_size: ${pageSize}, page_num: ${pageNum}${dateFilters}) {
         id
         student { id }
-        attendanceMark { code isStatisticalPresent isStatisticalPossibleAttendance isDefaultLate }
+        attendanceMark { code isStatisticalPresent isStatisticalApprovedEducationalActivity isStatisticalPossibleAttendance isDefaultLate }
         startDatetime
         endDatetime
         minutesLate
@@ -873,7 +873,7 @@ export class ArborClient {
         modifiedDatetime
       }
     }`;
-    const data = await runArborGraphqlQuery<{ AttendanceRecord: Array<{ id: string; student: { id: string }; attendanceMark: { code: string; isStatisticalPresent: boolean; isStatisticalPossibleAttendance: boolean; isDefaultLate: boolean } | null; startDatetime: string | null; minutesLate: number | null; isRedundant: boolean }> }>(this.credentials, query);
+    const data = await runArborGraphqlQuery<{ AttendanceRecord: Array<{ id: string; student: { id: string }; attendanceMark: { code: string; isStatisticalPresent: boolean; isStatisticalApprovedEducationalActivity: boolean; isStatisticalPossibleAttendance: boolean; isDefaultLate: boolean } | null; startDatetime: string | null; minutesLate: number | null; isRedundant: boolean }> }>(this.credentials, query);
     return data.AttendanceRecord;
   }
 

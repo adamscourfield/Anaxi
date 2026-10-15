@@ -7,7 +7,7 @@ import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
 import { academicYearStart, addDays, attendancePercentage, dateKey } from "@/lib/integrations/arbor/attendanceSync";
-import { summariseStatutoryAttendance } from "@/lib/integrations/arbor/statutoryAttendance";
+import { summariseAttendance, summariseMorningAttendance } from "@/lib/integrations/arbor/attendanceSummary";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
@@ -106,9 +106,9 @@ export const POST = withApi(async function POST(req: Request) {
 
     for (let day = start; day <= batchEnd; day = addDays(day, 1)) {
       const nextDay = addDays(day, 1);
-      const records = await client.listAllStatutoryAttendanceRecords(dateKey(day), dateKey(nextDay));
-      const daily = summariseStatutoryAttendance(records, linkedExternalIds).byStudent;
-      const morning = summariseStatutoryAttendance(records, linkedExternalIds, true).byStudent;
+      const records = await client.listAllAttendanceRecords(dateKey(day), dateKey(nextDay));
+      const daily = summariseAttendance(records, linkedExternalIds).byStudent;
+      const morning = summariseMorningAttendance(records, linkedExternalIds).byStudent;
       const creates: Array<Record<string, unknown>> = [];
       const updates: Array<() => Promise<unknown>> = [];
       for (const student of students) {
@@ -139,7 +139,7 @@ export const POST = withApi(async function POST(req: Request) {
       await updateInChunks(updates);
 
       // Backfill the same completed-day figures used by the home page. This is
-      // calculated from the statutory AM roll call only.
+      // calculated from the earliest available register, as a morning proxy.
       const dailyTotalsByTenant = new Map<string, Totals>();
       for (const student of students) {
         const attendance = morning.get(student.externalId);

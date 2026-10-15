@@ -60,7 +60,7 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
         {features.students && <Link className={styles.stat} href={`${students}&view=all&sort=attendance_asc`}>
           <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Attendance</span>
           <strong className={styles.value}>{data.attendanceHeadline.attendancePct === null ? "—" : `${data.attendanceHeadline.attendancePct.toFixed(1)}%`}</strong>
-          <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)} · Statutory AM/PM</> : "Statutory attendance history is being prepared"}</p>
+          <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)} · Lesson marks</> : "Attendance history is being refreshed"}</p>
           {attendanceStale && <p>Attendance updates are overdue. Ask your administrator to check the school sync.</p>}
           <div className={styles.attendanceComparisons}>
             <span>Last 7 days <b>{data.attendanceTrend.weekPct === null ? attendanceMissing : `${data.attendanceTrend.weekPct.toFixed(1)}%`}</b></span>

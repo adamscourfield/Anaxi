@@ -1,8 +1,8 @@
 import { academicYearStart, addDays } from "./attendanceSync";
 
-// Version 2 backfills independent statutory AM/PM session totals, including dates with
-// manual student snapshots. Only a completed attendance batch advances us.
-export const ATTENDANCE_SYNC_VERSION = 2;
+// Version 3 backfills independent totals from the accessible lesson marks.
+// Roll-call access is unavailable; never mix these with statutory totals.
+export const ATTENDANCE_SYNC_VERSION = 3;
 export function attendanceBatchStart(config: Record<string, unknown>, end: Date): Date {
   const yearStart = academicYearStart(end);
   const checkpoint = typeof config.attendanceLastSyncedDate === "string"

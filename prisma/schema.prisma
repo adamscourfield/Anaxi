@@ -339,7 +339,7 @@ model DailyAttendanceCheck {
   /// Late pupils in the morning-registration check. Older checks predate this
   /// field, so null means the rate is not available rather than zero.
   lateCount     Int?
-  /// Final statutory AM/PM session totals, separate from the AM-only check.
+  /// Complete-day totals from the configured attendance source, separate from the morning check.
   fullDayPossibleCount Int?
   fullDayPresentCount Int?
   fullDayStudentsCovered Int?
