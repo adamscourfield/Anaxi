@@ -33,11 +33,35 @@ jobs:
           test -n "$ANAXI_CRON_SECRET"
           # Attendance runs first so unrelated catalogue jobs cannot delay it.
           # Each request imports at most seven days; eight cover the current backlog.
-          for _ in $(seq 1 8); do
-            curl --fail --silent --show-error --retry 2 \
-              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
-              "${ANAXI_APP_URL%/}/api/cron/arbor-attendance" > /tmp/attendance-result.json
-            python3 -c 'import json; d=json.load(open("/tmp/attendance-result.json")); print(json.dumps(d)); assert "skipped" not in d and isinstance(d.get("connections"), list) and all(c["ok"] and isinstance(c.get("body"), dict) and "error" not in c["body"] for c in d["connections"]), "Attendance sync did not complete"'
+          for batch in $(seq 1 8); do
+            for attempt in $(seq 1 3); do
+              # Arbor shares its request allowance with the other school syncs.
+              # Allow the window to reset before each batch and any 429 retry.
+              sleep 60
+              curl --fail --silent --show-error --retry 2 \
+                --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+                "${ANAXI_APP_URL%/}/api/cron/arbor-attendance" > /tmp/attendance-result.json
+              set +e
+              python3 - <<'PYTHON'
+          import json, sys
+          d = json.load(open("/tmp/attendance-result.json"))
+          print(json.dumps(d))
+          connections = d.get("connections")
+          if "skipped" in d or not isinstance(connections, list):
+              sys.exit(1)
+          failed = [c for c in connections if not c.get("ok") or not isinstance(c.get("body"), dict) or "error" in c["body"]]
+          if failed:
+              sys.exit(2 if all("429" in str(c.get("body")) for c in failed) else 1)
+          PYTHON
+              result=$?
+              set -e
+              if [ "$result" -eq 0 ]; then break; fi
+              if [ "$result" -ne 2 ] || [ "$attempt" -eq 3 ]; then
+                echo "Attendance catch-up failed; see the response above."
+                exit 1
+              fi
+              echo "Arbor rate limited this batch; waiting before retrying."
+            done
           done
       - name: Trigger the protected Anaxi sync
         if: ${{ inputs.scope != 'behaviour' && inputs.scope != 'attendance' }}
