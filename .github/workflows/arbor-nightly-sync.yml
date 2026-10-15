@@ -11,7 +11,7 @@ on:
         description: Data to refresh
         type: choice
         default: all
-        options: [all, behaviour]
+        options: [all, behaviour, attendance]
 
 # Prevent the full nightly catch-up and a lighter progress pass from querying
 # the same Arbor assessment catalogue concurrently.
@@ -23,8 +23,24 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger the protected Anaxi sync
+      - name: Catch up attendance totals
         if: ${{ inputs.scope != 'behaviour' }}
+        env:
+          ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
+          ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
+        run: |
+          test -n "$ANAXI_APP_URL"
+          test -n "$ANAXI_CRON_SECRET"
+          # Attendance runs first so unrelated catalogue jobs cannot delay it.
+          # Each request imports at most seven days; eight cover the current backlog.
+          for _ in $(seq 1 8); do
+            curl --fail --silent --show-error --retry 2 \
+              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+              "${ANAXI_APP_URL%/}/api/cron/arbor-attendance" > /tmp/attendance-result.json
+            python3 -c 'import json; d=json.load(open("/tmp/attendance-result.json")); print(json.dumps(d)); assert "skipped" not in d and isinstance(d.get("connections"), list) and all(c["ok"] and isinstance(c.get("body"), dict) and "error" not in c["body"] for c in d["connections"]), "Attendance sync did not complete"'
+          done
+      - name: Trigger the protected Anaxi sync
+        if: ${{ inputs.scope != 'behaviour' && inputs.scope != 'attendance' }}
         env:
           ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
           ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
@@ -66,14 +82,6 @@ jobs:
               --retry 2 \
               --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
               "${ANAXI_APP_URL%/}/api/cron/arbor-photos"
-          done
-          # Each call imports at most seven completed days. Repeating it lets the
-          # first run catch up the academic year without requiring a larger plan.
-          for _ in $(seq 1 8); do
-            curl --fail --silent --show-error \
-              --retry 2 \
-              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
-            "${ANAXI_APP_URL%/}/api/cron/arbor-attendance"
           done
           for _ in $(seq 1 8); do
             curl --fail --silent --show-error \
