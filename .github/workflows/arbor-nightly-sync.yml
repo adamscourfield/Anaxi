@@ -11,7 +11,7 @@ on:
         description: Data to refresh
         type: choice
         default: all
-        options: [all, behaviour, attendance]
+        options: [all, behaviour, attendance, attendance-schema]
 
 # Prevent the full nightly catch-up and a lighter progress pass from querying
 # the same Arbor assessment catalogue concurrently.
@@ -23,8 +23,17 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
+      - name: Inspect statutory attendance schema
+        if: ${{ inputs.scope == 'attendance-schema' }}
+        env:
+          ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
+          ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
+        run: |
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+            "${ANAXI_APP_URL%/}/api/cron/arbor-attendance-schema"
       - name: Catch up attendance totals
-        if: ${{ inputs.scope != 'behaviour' }}
+        if: ${{ inputs.scope != 'behaviour' && inputs.scope != 'attendance-schema' }}
         env:
           ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
           ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
@@ -64,7 +73,7 @@ jobs:
             done
           done
       - name: Trigger the protected Anaxi sync
-        if: ${{ inputs.scope != 'behaviour' && inputs.scope != 'attendance' }}
+        if: ${{ inputs.scope != 'behaviour' && inputs.scope != 'attendance' && inputs.scope != 'attendance-schema' }}
         env:
           ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
           ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
