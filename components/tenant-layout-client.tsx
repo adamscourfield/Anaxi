@@ -81,6 +81,7 @@ export function TenantLayoutClient({
 }: TenantLayoutClientProps) {
   const pathname = usePathname();
   const leadershipHome = pathname === "/home" && ["SLT", "ADMIN", "SUPER_ADMIN"].includes(role);
+  const overviewPage = leadershipHome || pathname === "/insights" || pathname === "/insights/students" || pathname === "/observe/history";
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const navProps = {
@@ -162,8 +163,8 @@ export function TenantLayoutClient({
             )}
           </Link>
         </header>
-        <main id="tenant-main" style={leadershipHome ? { paddingTop: 28, paddingBottom: 32 } : undefined} className="anx-workspace-main min-w-0 flex-1 px-4 py-7 sm:px-6 md:px-8 md:py-10 lg:px-10">
-          <PageTransition className={`mx-auto min-w-0 ${leadershipHome ? "max-w-[1720px]" : "max-w-[1400px]"}`}>
+        <main id="tenant-main" style={overviewPage ? { paddingTop: 28, paddingBottom: 32 } : undefined} className="anx-workspace-main min-w-0 flex-1 px-4 py-7 sm:px-6 md:px-8 md:py-10 lg:px-10">
+          <PageTransition className={`mx-auto min-w-0 ${overviewPage ? "max-w-[1720px]" : "max-w-[1400px]"}`}>
             <TenantUiProvider role={role} enabledFeatures={enabledFeatures}>
               {children}
             </TenantUiProvider>

@@ -53,11 +53,11 @@ export default async function StudentInsights({ searchParams }: {
   return <div className={styles.page}>
     <InvestigationScroll />
     <Link className={styles.back} href={`/insights?windowDays=${windowDays}`}>← Insights</Link>
-    <PageHeader variant="ledger" title="Student insights" subtitle="Understand who needs attention, review the evidence and decide what to do next." />
+    <PageHeader variant="ledger" className={styles.header} eyebrow="Student intelligence" title="Student insights" subtitle="Understand who needs attention, review the evidence and decide what to do next." />
     <div className={styles.summary}>
-      <div><span>Needs attention</span><strong>{priorityCount}</strong><p>Students in the priority or urgent bands</p></div>
+      <div className={styles.featured}><span>Needs attention</span><strong>{priorityCount}</strong><p>Students in the priority or urgent bands</p></div>
       <div><span>My watchlist</span><strong>{allRows.filter(r=>r.onWatchlist).length}</strong><p>Students you have chosen to follow</p></div>
-      <div><span>Evidence available</span><strong>{allRows.length-missing} / {allRows.length}</strong><p>Active students with a snapshot</p></div>
+      <div><span>Evidence available</span><strong>{allRows.length-missing}<span className={styles.total}> / {allRows.length}</span></strong><p>Active students with a snapshot</p></div>
     </div>
     <section aria-label="Find students" className={styles.filters}>
       <nav aria-label="Student insight views" className={styles.tabs}>
@@ -84,12 +84,13 @@ export default async function StudentInsights({ searchParams }: {
         <div className={styles.actions}><button type="submit">Apply filters</button><Link href={href({q:"",yearGroup:"",send:"",pp:"",confidence:"",attendanceBelow:"",band:"",sort:""})}>Clear filters</Link></div>
       </form>
     </section>
-    <div className={styles.heading}><h2>{view==="attention"?"Students needing attention":view==="watchlist"?"Your watchlist":"All active students"}</h2><span>{rows.length} students</span></div>
+    <div className={styles.heading}><div><span className={styles.eyebrow}>Student review</span><h2>{view==="attention"?"Students needing attention":view==="watchlist"?"Your watchlist":"All active students"}</h2></div><span className={styles.resultCount}>{rows.length} students</span></div>
     <p className={styles.note}>Attendance and behaviour use the latest available snapshots. Changes compare snapshots across the selected {windowDays}-day periods; they are not incident totals for that period. Open a profile to review the full evidence.</p>
     <div className={styles.list}>
+      {rows.length > 0 && <div className={styles.listHeader} aria-hidden="true"><span>Student</span><span>Latest evidence</span><span>Attendance</span><span>Follow</span></div>}
       {!rows.length && <div className={styles.empty}><h3>No students in this view</h3><p>{allRows.length?"Try All students or adjust the filters.":"No active student snapshots are available yet."}</p><Link href={href({view:"all",q:"",yearGroup:"",band:"",send:"",pp:"",confidence:"",attendanceBelow:""})}>View all students</Link></div>}
       {rows.slice((page-1)*25,page*25).map(row=><article key={row.studentId} className={styles.row}>
-        <div className={styles.person}><span className={styles.avatar} aria-hidden="true">{row.studentName.split(" ").map(n=>n[0]).slice(0,2).join("")}</span><div><Link data-student-profile href={`/students/${row.studentId}?window=${windowDays}&from=${encodeURIComponent(returnPath)}#pastoral-evidence`}>{row.studentName}</Link><p>{formatYearGroup(row.yearGroup)} · {BAND_LABELS[row.band]}</p></div></div>
+        <div className={styles.person}><span className={styles.avatar} aria-hidden="true">{row.studentName.split(" ").map(n=>n[0]).slice(0,2).join("")}</span><div><Link data-student-profile href={`/students/${row.studentId}?window=${windowDays}&from=${encodeURIComponent(returnPath)}#pastoral-evidence`}>{row.studentName}</Link><p>{formatYearGroup(row.yearGroup)}<span className={`${styles.band} ${row.band === "URGENT" ? styles.urgent : row.band === "PRIORITY" ? styles.priority : ""}`}>{BAND_LABELS[row.band]}</span></p></div></div>
         <div className={styles.evidence}><p>{row.drivers.length?row.drivers.map(d=>reasons[d.metric] ?? d.label).join(" · "):row.lastSnapshotDate?"No priority indicators recorded":"No snapshot available"}</p><span>{row.lastSnapshotDate?"Snapshot "+new Date(row.lastSnapshotDate).toLocaleDateString("en-GB"):"Evidence missing"}{row.confidence==="LOW"?" · Limited comparison evidence":""}</span></div>
         <div className={styles.attendance}><span>Attendance</span><strong>{row.attendancePct===null?"—":row.attendancePct.toFixed(1)+"%"}</strong></div>
         <WatchlistToggle studentId={row.studentId} initialOnWatchlist={row.onWatchlist} />

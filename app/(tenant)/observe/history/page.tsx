@@ -325,10 +325,10 @@ export default async function ObservationHistoryPage({
   const detailBackFrom = encodeURIComponent(pageUrl(page));
 
   return (
-    <div className={`${styles.page} obs-history-scope space-y-6`}>
+    <div className={`${styles.page} obs-history-scope`}>
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <PageHeader variant="ledger"
-        title="Observation History"
+      <PageHeader variant="ledger" className={styles.header} eyebrow="Teaching & development"
+        title="Observation history"
         subtitle="Institutional observation record — filter by teacher, observer, dates, phase, and pedagogical signals."
         actions={
           (user.role !== "TEACHER" && user.role !== "SUPPORT") ? (
@@ -344,6 +344,8 @@ export default async function ObservationHistoryPage({
           ) : undefined
         }
       />
+
+      <nav className={styles.sectionNav} aria-label="Observation history sections"><a href="#observation-analysis">Overview</a>{showPairMatrix ? <a href="#coaching-coverage">Coaching coverage</a> : null}<a href="#observation-records">Observation records <span>{Number(totalCount).toLocaleString("en-GB")}</span></a></nav>
 
       <ObservationHistoryAnalysis
         rangeLabel={analysisRange.label}

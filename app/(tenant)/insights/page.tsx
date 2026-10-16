@@ -12,6 +12,7 @@ import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis
 import { getTenantVocab } from "@/lib/vocab";
 import styles from "./page.module.css";
 
+const initials = (name: string) => name.trim().split(/\s+/).slice(0,2).map(part => part[0]).join("");
 const date = (value: Date | null) => value ? value.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" }) : "No dated evidence";
 
 function AreaIcon({ kind }: { kind: "students" | "teaching" | "attainment" }) {
@@ -49,35 +50,37 @@ export default async function InsightsPage({ searchParams }: {
   const teachingHref = `/insights/teaching?windowDays=${windowDays}`;
   const attainmentHref = "/insights/attainment";
   return <div className={styles.page}>
-    <PageHeader variant="ledger" title="Insights" subtitle="See what deserves a closer look, then explore the evidence." actions={
+    <PageHeader variant="ledger" className={styles.header} eyebrow="School intelligence" title="Insights" subtitle="See what deserves a closer look, then explore the evidence." actions={
       <div className={styles.period}><span>Comparison period</span><nav aria-label="Insights comparison period">{[7,21,28].map(w=><Link key={w} href={`/insights?windowDays=${w}`} aria-current={w===windowDays?"page":undefined}>{w}d</Link>)}</nav></div>
     } />
     <nav className={styles.areas} aria-label="Insight areas">
       {[{kind:"teaching" as const,name:"Teaching",href:teachingHref,description:"Lesson patterns and professional development",count:teacherConcerns.length,label:teacherConcerns.length===1?"teacher to review":"teachers to review"},
         {kind:"students" as const,name:"Students",href:studentHref,description:"Attendance, behaviour and individual priorities",count:studentConcerns.length,label:"students needing attention"},
         {kind:"attainment" as const,name:"Attainment",href:attainmentHref,description:"Assessment outcomes, subjects and groups",count:assessment?.cycles.some(c=>c.previousPointLabel)?declineStudents.length:"—",label:assessment?.cycles.some(c=>c.previousPointLabel)?"students with declining subject results":"no assessment comparison available"}
-      ].map(a=><Link className={styles.area} href={a.href} key={a.kind}><div className={styles.areaTitle}><span className={styles.icon}><AreaIcon kind={a.kind}/></span><h2>{a.name}</h2><span className={styles.arrow}>↗</span></div><p>{a.description}</p><div className={styles.areaCount}><strong>{a.count}</strong><span>{a.label}</span></div></Link>)}
+      ].map(a=><Link className={`${styles.area} ${a.kind === "teaching" ? styles.featured : ""}`} href={a.href} key={a.kind}><div className={styles.areaTitle}><span className={styles.icon}><AreaIcon kind={a.kind}/></span><h2>{a.name}</h2><span className={styles.arrow}>↗</span></div><p>{a.description}</p><div className={styles.areaCount}><strong>{a.count}</strong><span>{a.label}</span></div><div className={styles.areaFooter}><span>Explore {a.name.toLowerCase()}</span><span aria-hidden="true">→</span></div></Link>)}
     </nav>
-    <div className={styles.sectionTitle}><h2>Worth a closer look</h2><p>Priorities from the available evidence, grouped by area.</p></div>
+    <div className={styles.sectionTitle}><div><span className={styles.eyebrow}>Your review queue</span><h2>Worth a closer look</h2><p>Priorities from the available evidence, grouped by area.</p></div><span className={styles.windowNote}>Last {windowDays} days · compared with preceding {windowDays}</span></div>
+    <div className={styles.findingsGrid}>
     <section className={styles.section} aria-labelledby="student-changes">
-      <div className={styles.sectionHead}><h3 id="student-changes">Students</h3><Link href={studentHref}>View student insights →</Link></div>
+      <div className={styles.sectionHead}><span className={styles.sectionIcon}><AreaIcon kind="students"/></span><h3 id="student-changes">Students</h3><Link href={studentHref}>View student insights →</Link></div>
       {!studentConcerns.length?<p className={styles.empty}>{studentRows.length?"No students are in the priority or urgent bands. You can still review all students.":"No active student snapshots are available yet."}</p>:
-        studentConcerns.slice(0,3).map(s=><Link className={styles.finding} key={s.studentId} href={`/students/${s.studentId}?window=${windowDays}&from=${encodeURIComponent("/insights?windowDays="+windowDays)}#pastoral-evidence`}><div><h4>{s.studentName}</h4><p>{s.drivers.length?s.drivers.map(d=>reasons[d.metric]??d.label).join(" · "):"Review the recorded priority indicators"}</p><span>Snapshot {date(s.lastSnapshotDate)}{s.confidence==="LOW"?" · Limited comparison evidence":""}</span></div><span className={styles.tag}>{s.band==="URGENT"?"Urgent":"Priority"} <span aria-hidden="true">→</span></span></Link>)}
+        studentConcerns.slice(0,3).map(s=><Link className={styles.finding} key={s.studentId} href={`/students/${s.studentId}?window=${windowDays}&from=${encodeURIComponent("/insights?windowDays="+windowDays)}#pastoral-evidence`}><span className={styles.avatar} aria-hidden="true">{initials(s.studentName)}</span><div><h4>{s.studentName}</h4><p>{s.drivers.length?s.drivers.map(d=>reasons[d.metric]??d.label).join(" · "):"Review the recorded priority indicators"}</p><span>Snapshot {date(s.lastSnapshotDate)}{s.confidence==="LOW"?" · Limited comparison evidence":""}</span></div><span className={`${styles.tag} ${s.band === "URGENT" ? styles.urgent : ""}`}>{s.band==="URGENT"?"Urgent":"Priority"} <span aria-hidden="true">→</span></span></Link>)}
       <p className={styles.caption}>Latest snapshots; changes compare the selected {windowDays}-day periods. Snapshot counts are not incident totals within that period.</p>
     </section>
     <section className={styles.section} aria-labelledby="teaching-changes">
-      <div className={styles.sectionHead}><h3 id="teaching-changes">Teaching</h3><Link href={teachingHref}>Review teaching →</Link></div>
+      <div className={styles.sectionHead}><span className={styles.sectionIcon}><AreaIcon kind="teaching"/></span><h3 id="teaching-changes">Teaching</h3><Link href={teachingHref}>Review teaching →</Link></div>
       {!teacherConcerns.length?<p className={styles.empty}>{visibleTeachers.some(t=>t.status!=="LOW_COVERAGE")?"No teachers crossed the decline thresholds in this period.": "There are not enough observations for a reliable comparison yet."}</p>:
-        teacherConcerns.slice(0,3).map(t=><Link key={t.teacherMembershipId} className={styles.finding} href={`/analysis/teachers/${t.teacherMembershipId}?window=${windowDays}`}><div><h4>{t.teacherName}</h4><p>Observation signals have weakened compared with the previous period.</p><span>{t.teacherCoverage} observations · Last observed {date(t.lastObservationAt)}</span></div><span className={styles.tag}>Review <span aria-hidden="true">→</span></span></Link>)}
+        teacherConcerns.slice(0,3).map(t=><Link key={t.teacherMembershipId} className={styles.finding} href={`/analysis/teachers/${t.teacherMembershipId}?window=${windowDays}`}><span className={styles.avatar} aria-hidden="true">{initials(t.teacherName)}</span><div><h4>{t.teacherName}</h4><p>Observation signals have weakened compared with the previous period.</p><span>{t.teacherCoverage} observations · Last observed {date(t.lastObservationAt)}</span></div><span className={styles.tag}>Review <span aria-hidden="true">→</span></span></Link>)}
       <p className={styles.caption}>{visibleTeachers.filter(t=>t.status==="LOW_COVERAGE").length} teachers have insufficient observations for a reliable comparison. These indicators support review; they are not teacher grades.</p>
     </section>
     <section className={styles.section} aria-labelledby="attainment-changes">
-      <div className={styles.sectionHead}><h3 id="attainment-changes">Attainment</h3><Link href={attainmentHref}>Explore attainment →</Link></div>
+      <div className={styles.sectionHead}><span className={styles.sectionIcon}><AreaIcon kind="attainment"/></span><h3 id="attainment-changes">Attainment</h3><Link href={attainmentHref}>Explore attainment →</Link></div>
       {!assessment?.cycles.some(c=>c.previousPointLabel)?<p className={styles.empty}>No eligible assessment comparisons are available yet.</p>:<div className={styles.assessment}>
         <p>{declineStudents.length? `${declineStudents.length} students have a declining result in at least one subject.`:"No declining subject results were identified in the available comparisons."}</p>
         <p>Assessment comparisons use recorded result points, independently of the {windowDays}-day pastoral and observation period.</p>
         <ul>{assessment.cycles.map(c=><li key={c.cycleId}><strong>{c.cycleLabel}</strong><span>{c.previousPointLabel??"No previous point"} → {c.currentPointLabel}</span></li>)}</ul>
       </div>}
     </section>
+    </div>
   </div>;
 }

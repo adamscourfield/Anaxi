@@ -69,3 +69,68 @@
   .page :global(.obs-history-filter-actions) { justify-content: flex-start; }
   .page :global(.obs-history-filter-actions) > * { flex: 1; padding: 0 10px; }
 }
+
+/* Observation workspace: a shared visual language with the insights pages. */
+.page { --ink:#28323b; --muted:#697580; --rule:#e8ebee; display:grid; gap:24px; min-width:0; color:var(--ink); }
+.page > * { min-width:0; }
+.page .header:global(.anx-page-header-shell) { margin-bottom:0; padding-bottom:0; border-bottom:0; }
+.header :global(.anx-page-title) { font-size:clamp(29px,2.8vw,40px); font-weight:500; letter-spacing:-.055em; line-height:1.15; }
+.header :global(.anx-eyebrow) { color:#64707b; font-size:10px; font-weight:500; letter-spacing:.12em; }
+.header :global(.anx-page-subtitle) { color:var(--muted); font-size:12px; line-height:1.7; }
+.page .header a { border-radius:8px; background:#28323b; font-size:11px; font-weight:500; padding:11px 16px; }
+.page :global(.obs-history-analysis) { display:grid; gap:18px; min-width:0; }
+.page :global(.obs-history-elevated-card),.page :global(.obs-history-results) { min-width:0; border-color:var(--rule); border-radius:16px; box-shadow:0 4px 14px -10px #1d293933; }
+.page :global(.obs-history-window) { position:relative; background:#232b32 radial-gradient(ellipse at 100% 0%,#3c454d 0%,transparent 70%); border-color:#303940; padding:23px 26px; color:#fff; }
+.page :global(.obs-history-window)::before { content:""; position:absolute; left:0; top:23px; bottom:23px; width:3px; border-radius:0 3px 3px 0; background:#ff8a72; }
+.page :global(.obs-history-window) p,.page :global(.obs-history-window) a,.page :global(.obs-history-window) svg { color:#c1cbd3; }
+.page :global(.obs-history-window) p { font-size:11px; line-height:1.8; }
+.page :global(.obs-history-window) > div > div:first-child > p:first-child,.page :global(.obs-history-window) > div > div:last-child > p:first-child { font-size:9px; letter-spacing:.13em; font-weight:500; }
+.page :global(.obs-history-window) > div > div:last-child > div:first-of-type p { color:#fff; font-size:20px; font-weight:500; letter-spacing:-.035em; line-height:1.4; }
+.page :global(.obs-history-window) > div > div:last-child > div:first-of-type svg { width:19px; height:19px; }
+.page :global(.obs-history-window) a { font-size:10px; font-weight:500; }
+.page :global(.obs-history-window) a:hover { color:#fff; }
+.page :global(.obs-history-window) [aria-label="Chart time window"] { margin-top:16px; background:#ffffff09; border-color:#ffffff20; padding:3px; }
+.page :global(.obs-history-window) [aria-label="Chart time window"] a { min-height:32px; padding:6px 9px; color:#c1cbd3; }
+.page :global(.obs-history-window) [aria-label="Chart time window"] a:hover { background:#ffffff10; }
+.page :global(.obs-history-window) [aria-label="Chart time window"] a[aria-current="true"] { background:#fff; color:#28323b; box-shadow:0 1px 4px #00000015; }
+.page :global(.obs-history-window) > p { color:#28323b; }
+.page :global(.obs-history-charts) { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2.1fr); gap:18px; align-items:stretch; }
+.page :global(.obs-history-chart-card),.page :global(.obs-history-coaching) { padding:22px 24px; }
+.page :global(.obs-history-chart-card) h3,.page :global(.obs-history-coaching) h3 { font-size:12px; font-weight:500; letter-spacing:-.015em; text-transform:none; color:var(--ink); }
+.page :global(.obs-history-chart-card) p,.page :global(.obs-history-coaching) > p { font-size:11px; line-height:1.7; color:var(--muted); }
+.page :global(.obs-history-chart-card) li button { font-size:12px; }
+.page :global(.obs-history-chart-card) li button > span { font-weight:500; }
+.page :global(.obs-history-chart-card) select { height:34px; min-width:166px; font-size:11px; border-color:#e2e7eb; box-shadow:none; border-radius:8px; }
+.page :global(.obs-history-coaching-table) { margin-left:-24px; margin-right:-24px; border-color:var(--rule); }
+.page th { font-size:9px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.page :global(.table-head-row) { background:#fafbfc; border-color:var(--rule); }
+.page td { font-size:12px; padding-top:15px; padding-bottom:15px; }
+.page td :global(.font-semibold) { font-weight:500; }
+.page :global(.table-row) { border-color:#edf0f2; }
+.page :global(.table-row):hover { background:#fafbfc; }
+.page :global(.obs-history-results-header) { padding:20px 24px 17px; }
+.page :global(.obs-history-results-header) h2 { font-size:20px; font-weight:500; letter-spacing:-.035em; }
+.page :global(.obs-history-results-header) p,.page :global(.obs-history-results-header) > span { font-size:11px; color:var(--muted); }
+.page :global(.obs-history-filters) { background:#fafbfc; border-color:var(--rule); }
+.page :global(.obs-history-filter-field) > span { font-size:10px; color:#63717e; }
+.page :global(.obs-history-select),.page :global(.obs-history-date) { height:35px; font-size:11px; color:#3a4651; border-color:#e2e7eb; box-shadow:none; }
+.page :global(.obs-history-filter-actions) > * { min-height:35px; font-size:11px; border-color:#e2e7eb; }
+.page :global(.obs-history-results .obs-history-table-shell) { border-radius:0 0 16px 16px; }
+@media (max-width:1100px) { .page :global(.obs-history-charts) { grid-template-columns:minmax(0,1fr) minmax(0,1.7fr); } }
+@media (max-width:900px) { .page :global(.obs-history-charts) { grid-template-columns:1fr; } }
+@media (max-width:767px) {
+  .page { gap:20px; }
+  .page :global(.obs-history-window),.page :global(.obs-history-chart-card),.page :global(.obs-history-coaching) { padding:20px 18px; }
+  .page :global(.obs-history-window) > div { gap:22px; }
+  .page :global(.obs-history-coaching-table) { margin-left:-18px; margin-right:-18px; }
+  .page :global(.obs-history-results-header) { padding:18px 16px; }
+  .page :global(.obs-history-results-header) h2 { font-size:18px; }
+}
+.sectionNav { display:flex; flex-wrap:wrap; align-items:center; gap:22px; border-bottom:1px solid var(--rule); padding-bottom:12px; margin-top:-4px; font-size:11px; color:var(--muted); }
+.sectionNav a { display:inline-flex; align-items:center; gap:8px; }
+.sectionNav a:hover { color:var(--ink); }
+.sectionNav span { border:1px solid var(--rule); border-radius:5px; padding:1px 6px; font-size:9px; font-variant-numeric:tabular-nums; }
+.page :global(.obs-history-chart-card .obs-history-role-total) { display:flex; flex-wrap:wrap; align-items:baseline; gap:12px; margin-top:20px; }
+.page :global(.obs-history-role-total) strong { font-size:40px; line-height:1.1; color:var(--ink); font-weight:500; letter-spacing:-.055em; font-variant-numeric:tabular-nums; }
+.page :global(.obs-history-role-total) span { font-size:10px; }
+.page :global(#coaching-coverage),.page :global(#observation-analysis) { scroll-margin-top:20px; }

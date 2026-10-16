@@ -614,10 +614,10 @@ export function ObservationHistoryAnalysis({
     "relative flex min-h-[2.5rem] flex-1 items-center justify-center rounded-md px-3 py-2 text-center text-[0.8125rem] font-semibold calm-transition focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_35%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
   return (
-    <section className="space-y-5" onMouseLeave={hideTip}>
+    <section id="observation-analysis" className="obs-history-analysis" aria-label="Observation analysis" onMouseLeave={hideTip}>
       <ChartTooltip state={tip} />
 
-      <div className={`${analysisCardClass} overflow-hidden p-5 md:p-6`}>
+      <div className={`${analysisCardClass} obs-history-window overflow-hidden p-5 md:p-6`}>
         <div className="flex flex-col gap-8 md:flex-row md:items-stretch md:gap-0">
           {/* Analysis copy + quick presets */}
           <div className="min-w-0 flex-1 md:pr-8">
@@ -712,8 +712,8 @@ export function ObservationHistoryAnalysis({
         ) : null}
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.38fr)_minmax(0,1fr)] lg:items-stretch">
-        <div className={`${analysisCardClass} flex flex-col p-5 md:p-6`}>
+      <div className="obs-history-charts">
+        <div className={`${analysisCardClass} obs-history-chart-card flex flex-col p-5 md:p-6`}>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
@@ -727,6 +727,7 @@ export function ObservationHistoryAnalysis({
             <p className="mt-4 text-sm text-muted">No observations in the current filter.</p>
           ) : (
             <>
+              <p className="obs-history-role-total"><strong>{roleCounts.reduce((total, row) => total + row.count, 0).toLocaleString()}</strong><span>observations in this window</span></p>
               <ul className="mt-5 space-y-3.5">
                 {roleCounts.map((row, rank) => {
                   const isLead = rank === 0;
@@ -779,7 +780,7 @@ export function ObservationHistoryAnalysis({
           )}
         </div>
 
-        <div className={`${analysisCardClass} flex flex-col p-5 md:p-6`}>
+        <div className={`${analysisCardClass} obs-history-chart-card flex flex-col p-5 md:p-6`}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -1028,7 +1029,7 @@ export function ObservationHistoryAnalysis({
       </div>
 
       {showCoachingSection ? (
-        <div className={`${analysisCardClass} p-5 md:p-6`}>
+        <div className={`${analysisCardClass} obs-history-coaching p-5 md:p-6`} id="coaching-coverage">
             <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-text">
               Coaching pairs — weekly coverage
             </h3>
