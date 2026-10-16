@@ -81,7 +81,7 @@ export function TenantLayoutClient({
 }: TenantLayoutClientProps) {
   const pathname = usePathname();
   const leadershipHome = pathname === "/home" && ["SLT", "ADMIN", "SUPER_ADMIN"].includes(role);
-  const overviewPage = leadershipHome || pathname === "/insights" || pathname === "/insights/students" || pathname === "/observe/history";
+  const overviewPage = leadershipHome || pathname === "/insights" || pathname === "/insights/students" || pathname === "/observe/history" || pathname === "/students";
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const navProps = {

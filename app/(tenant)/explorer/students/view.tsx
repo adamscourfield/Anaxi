@@ -291,11 +291,12 @@ export default async function StudentsPage({
   );
 
   return (
-    <div className={`${styles.page} space-y-6`}>
+    <div className={styles.page}>
       <ExplorerBackLink />
 
       <PageHeader
         variant="ledger"
+        className={styles.header}
         eyebrow="Pastoral intelligence"
         title="Student directory"
         subtitle="Find student records, manage their status and open their profiles."
@@ -324,20 +325,24 @@ export default async function StudentsPage({
         windowDays={windowDays}
       />
 
-      <StudentsBandChips
-        basePath={BASE_PATH}
-        urlBase={urlBase}
-        bandCounts={bandCounts}
-        activeBand={bandFilter}
-        activeView={effectiveView}
-      />
-
       <StudentsCriticalBanner
         basePath={BASE_PATH}
         urlBase={urlBase}
         priorityCount={priorityCount}
         windowDays={windowDays}
         computedAt={computedAt}
+      />
+
+      <section className={styles.directory} aria-label="Student records">
+      <div className={styles.listHeading}><div><span>Student records</span><h2>{statusFilter === "archived" ? "Archived students" : effectiveView === "attention" ? "Students needing attention" : "Student directory"}</h2></div><span className={styles.resultCount}>{totalFiltered.toLocaleString("en-GB")} students</span></div>
+
+      <section className={styles.filters} aria-label="Find students">
+      <StudentsBandChips
+        basePath={BASE_PATH}
+        urlBase={urlBase}
+        bandCounts={bandCounts}
+        activeBand={bandFilter}
+        activeView={effectiveView}
       />
 
       <StudentsToolbar
@@ -347,6 +352,8 @@ export default async function StudentsPage({
         activeChips={activeChips}
         canManageStudents={canManageStudents}
       />
+
+      </section>
 
       {rows.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
@@ -378,6 +385,8 @@ export default async function StudentsPage({
           showStatusColumn={statusFilter === "all"}
         />
       )}
+
+      </section>
 
       <p className="text-[0.75rem] text-muted">
         {windowDays}-day window · Updated {computedAt.toLocaleDateString("en-GB")}

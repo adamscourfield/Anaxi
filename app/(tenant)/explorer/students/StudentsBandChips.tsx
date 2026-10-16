@@ -49,6 +49,7 @@ export function StudentsBandChips({
         return (
           <Link
             key={band}
+            aria-current={isActive ? "true" : undefined}
             href={href}
             className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold calm-transition ${isActive ? CHIP_ACTIVE[band] : CHIP_IDLE}`}
           >
@@ -58,6 +59,7 @@ export function StudentsBandChips({
         );
       })}
       <Link
+        aria-current={activeView === "attention" && !activeBand ? "true" : undefined}
         href={buildStudentsListUrl(basePath, {
           ...urlBase,
           view: "attention",

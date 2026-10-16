@@ -29,7 +29,7 @@ export function StudentsCriticalBanner({
   });
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--scale-limited-bar)_28%,transparent)] bg-[color-mix(in_srgb,var(--scale-limited-light)_55%,var(--surface-container-lowest))] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+    <div className="students-priority-banner flex flex-col gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--scale-limited-bar)_28%,transparent)] bg-[color-mix(in_srgb,var(--scale-limited-light)_55%,var(--surface-container-lowest))] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
       <div className="flex min-w-0 items-start gap-3">
         <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--pill-error-bg)]">
           <span className="h-2.5 w-2.5 rounded-full bg-[var(--error)]" aria-hidden />

@@ -187,9 +187,9 @@ export function StudentsToolbar({
   const triggerWhite = "field-filter-trigger";
 
   return (
-    <div className="space-y-4">
+    <div className="students-toolbar space-y-4">
       <div className="filter-panel">
-        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="students-fields grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <label className="flex min-w-0 flex-col gap-1.5 sm:col-span-2 lg:col-span-1">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               Search
@@ -214,6 +214,7 @@ export function StudentsToolbar({
                   setSearch(v);
                   schedulePush({ studentSearch: v || undefined }, 350);
                 }}
+                aria-label="Search students"
                 placeholder="Search by name…"
                 className={`field w-full !py-2.5 !pl-[2.875rem] pr-4 ${triggerWhite}`}
               />
@@ -260,6 +261,49 @@ export function StudentsToolbar({
           </label>
 
           <label className="flex min-w-0 flex-col gap-1.5">
+            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+              Sort by
+            </span>
+            <FormSelect
+              name="sort"
+              defaultValue={sort}
+              key={`sort-${sort}`}
+              placeholder="Risk (default)"
+              triggerClassName={triggerWhite}
+              options={SORT_OPTIONS}
+              onChange={(v) => {
+                const next = v as StudentsSortMode;
+                setSort(next);
+                pushParams({ sort: next });
+              }}
+            />
+          </label>
+
+          {canManageStudents && (
+            <label className="flex min-w-0 flex-col gap-1.5">
+              <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
+                Status
+              </span>
+              <FormSelect
+                name="status"
+                defaultValue={status}
+                key={`status-${status}`}
+                placeholder="Active students"
+                triggerClassName={triggerWhite}
+                options={STATUS_OPTIONS}
+                onChange={(v) => {
+                  const next = v as StudentsStatusFilter;
+                  setStatus(next);
+                  pushParams({ status: next });
+                }}
+              />
+            </label>
+          )}
+
+
+        </div>
+
+        <details className="students-more-filters" open={!!(send || pp || confidence)}><summary>More filters<span>SEN, pupil premium & confidence</span></summary><div className="students-advanced-fields">          <label className="flex min-w-0 flex-col gap-1.5">
             <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
               SEN
             </span>
@@ -325,47 +369,10 @@ export function StudentsToolbar({
             />
           </label>
 
-          <label className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-              Sort by
-            </span>
-            <FormSelect
-              name="sort"
-              defaultValue={sort}
-              key={`sort-${sort}`}
-              placeholder="Risk (default)"
-              triggerClassName={triggerWhite}
-              options={SORT_OPTIONS}
-              onChange={(v) => {
-                const next = v as StudentsSortMode;
-                setSort(next);
-                pushParams({ sort: next });
-              }}
-            />
-          </label>
+</div></details>
 
-          {canManageStudents && (
-            <label className="flex min-w-0 flex-col gap-1.5">
-              <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-                Status
-              </span>
-              <FormSelect
-                name="status"
-                defaultValue={status}
-                key={`status-${status}`}
-                placeholder="Active students"
-                triggerClassName={triggerWhite}
-                options={STATUS_OPTIONS}
-                onChange={(v) => {
-                  const next = v as StudentsStatusFilter;
-                  setStatus(next);
-                  pushParams({ status: next });
-                }}
-              />
-            </label>
-          )}
-
-          <label className="flex items-center gap-2 self-end pb-2.5">
+        <div className="students-view-actions mt-3 flex flex-wrap items-center gap-2 border-t border-border/20 pt-3">
+          <label className="flex items-center gap-2 mr-auto">
             <input
               type="checkbox"
               checked={watchlist}
@@ -377,9 +384,6 @@ export function StudentsToolbar({
             />
             <span className="text-[0.8125rem] font-medium text-text">Watchlist only</span>
           </label>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/20 pt-4">
           {savedViews.length > 0 && (
             <FormSelect
               name="savedView"
@@ -405,6 +409,7 @@ export function StudentsToolbar({
             type="text"
             value={saveName}
             onChange={(e) => setSaveName(e.target.value)}
+            aria-label="Saved view name"
             placeholder="Name this view…"
             className={`field max-w-[160px] !py-2 !text-[0.8125rem] ${triggerWhite}`}
           />

@@ -32,7 +32,7 @@ function KpiCard({
   warm?: boolean;
 }) {
   return (
-    <Card className={`rounded-sm !p-5 shadow-none ${warm ? "border-coral/25 bg-coral-10" : ""}`}>
+    <Card className={`students-kpi ${warm ? "students-kpi-featured" : ""} rounded-sm !p-5 shadow-none ${warm ? "border-coral/25 bg-coral-10" : ""}`}>
       <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
       <Link
         href={href}
@@ -77,7 +77,7 @@ export function StudentsKpiStrip({
   });
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="students-summary grid grid-cols-2 gap-4 lg:grid-cols-4">
       <KpiCard
         label="Cohort"
         value={cohortCount.toLocaleString()}
