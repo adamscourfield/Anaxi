@@ -1,6 +1,7 @@
 import Link from "next/link";
 import styles from "./page.module.css";
-import { hasPermission } from "@/lib/rbac";
+import { hasPermission, hasOnCallPermission } from "@/lib/rbac";
+import { StudentOnCallLog } from "@/components/students/student-oncall-log";
 import { PriorAttainmentCard } from "@/components/students/prior-attainment-card";
 import { notFound } from "next/navigation";
 import { MatchSiblingHeight } from "@/components/students/match-sibling-height";
@@ -218,7 +219,14 @@ export default async function StudentDetailPage({
         include: { subject: true, teacher: { select: { id: true, fullName: true, email: true } } },
         orderBy: { subject: { name: "asc" } },
       },
-      onCallRequests: { orderBy: { createdAt: "desc" }, take: 20 },
+      onCallRequests: {
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        include: {
+          requester: { select: { fullName: true } },
+          responder: { select: { fullName: true } },
+        },
+      },
     },
   });
   if (!student) notFound();
@@ -783,36 +791,12 @@ export default async function StudentDetailPage({
 
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <Card id="on-call" className="scroll-mt-24">
-          <SectionHeader title="On-call log" subtitle="Recent requests" />
-          {(student.onCallRequests as any[]).length === 0 ? (
-            <BodyText className="mt-4 text-muted">No on-call entries.</BodyText>
-          ) : (
-            <ul className="mt-4 space-y-3">
-              {(student.onCallRequests as any[]).map((oc: any) => (
-                <li
-                  key={oc.id}
-                  className="rounded-xl bg-surface-container-low px-4 py-3 text-sm leading-relaxed text-text"
-                >
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-                      {fmtDate(oc.createdAt)}
-                    </span>
-                    <span className="font-medium">{oc.requestType}</span>
-                    <StatusPill variant="neutral" size="sm">
-                      {oc.status}
-                    </StatusPill>
-                  </div>
-                  <MetaText className="mt-1 !text-[13px] !text-muted">
-                    {[oc.location, oc.behaviourReasonCategory].filter(Boolean).join(" · ") || "—"}
-                  </MetaText>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
+      <StudentOnCallLog
+        studentId={student.id}
+        entries={student.onCallRequests}
+        canViewTimings={hasOnCallPermission(user.role, "oncall:view_resolve_time")}
+        label={vocab.on_calls}
+      />
     </div>
   );
 }
