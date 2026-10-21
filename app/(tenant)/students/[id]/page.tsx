@@ -218,7 +218,6 @@ export default async function StudentDetailPage({
         include: { subject: true, teacher: { select: { id: true, fullName: true, email: true } } },
         orderBy: { subject: { name: "asc" } },
       },
-      changeFlags: { orderBy: { createdAt: "desc" }, take: 50 },
       onCallRequests: { orderBy: { createdAt: "desc" }, take: 20 },
     },
   });
@@ -784,34 +783,7 @@ export default async function StudentDetailPage({
 
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
-          <SectionHeader title="Change flags" subtitle="Automated alerts from snapshot deltas" />
-          {(student.changeFlags as any[]).length === 0 ? (
-            <BodyText className="mt-4 text-muted">No flags recorded.</BodyText>
-          ) : (
-            <ul className="mt-4 space-y-3">
-              {(student.changeFlags as any[]).map((f: any) => (
-                <li
-                  key={f.id}
-                  className="flex flex-wrap items-center gap-2 rounded-xl bg-surface-container-low px-4 py-3"
-                >
-                  <span className="font-medium text-text">{f.flagKey}</span>
-                  <StatusPill
-                    variant={f.severity === "URGENT" ? "error" : f.severity === "PRIORITY" ? "warning" : "neutral"}
-                    size="sm"
-                  >
-                    {f.severity}
-                  </StatusPill>
-                  <StatusPill variant={f.resolvedAt ? "success" : "info"} size="sm">
-                    {f.resolvedAt ? "Resolved" : "Open"}
-                  </StatusPill>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
+      <div className="grid grid-cols-1 gap-6">
         <Card id="on-call" className="scroll-mt-24">
           <SectionHeader title="On-call log" subtitle="Recent requests" />
           {(student.onCallRequests as any[]).length === 0 ? (
