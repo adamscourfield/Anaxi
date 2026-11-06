@@ -40,7 +40,7 @@ export function schoolAttendanceSummary(rows: Day[], today: Date) {
 
 export async function fetchSchoolAttendance(tenantId: string, today: Date) {
   const rows = await prisma.dailyAttendanceCheck.findMany({
-    where: { tenantId, checkDate: { gte: academicYearStart(addDays(today, -1)), lt: today } },
+    where: { tenantId, fullDayBasis: "AM_PM", checkDate: { gte: academicYearStart(addDays(today, -1)), lt: today } },
     select: { checkDate: true, fullDayPossibleCount: true, fullDayPresentCount: true, fullDayStudentsCovered: true },
   });
   return schoolAttendanceSummary(rows, today);

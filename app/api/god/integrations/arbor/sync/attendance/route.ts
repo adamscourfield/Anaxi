@@ -7,7 +7,7 @@ import { assertCsrfFromForm } from "@/lib/csrf";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
 import { academicYearStart, addDays, attendancePercentage, dateKey } from "@/lib/integrations/arbor/attendanceSync";
-import { summariseAttendance, summariseMorningAttendance } from "@/lib/integrations/arbor/attendanceSummary";
+import { summariseSessionAttendance } from "@/lib/integrations/arbor/sessionAttendance";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
@@ -81,8 +81,6 @@ export const POST = withApi(async function POST(req: Request) {
       data: { integrationId: integration.id, entityType: "ATTENDANCE", triggeredBy: isScheduledRun ? "CRON" : actor!.id },
     });
     runId = run.id;
-    const studentByExternalId = new Map(students.map((student) => [student.externalId, student]));
-    const linkedExternalIds = new Set(studentByExternalId.keys());
     const existingBefore = await db.studentSnapshot.findMany({
       where: { studentId: { in: students.map((student) => student.id) }, dataSource: "ARBOR", countScope: "YEAR_TO_DATE", snapshotDate: { gte: startOfYear, lt: start } },
       orderBy: { snapshotDate: "desc" },
@@ -107,8 +105,16 @@ export const POST = withApi(async function POST(req: Request) {
     for (let day = start; day <= batchEnd; day = addDays(day, 1)) {
       const nextDay = addDays(day, 1);
       const records = await client.listAllAttendanceRecords(dateKey(day), dateKey(nextDay));
-      const daily = summariseAttendance(records, linkedExternalIds).byStudent;
-      const morning = summariseMorningAttendance(records, linkedExternalIds).byStudent;
+      const daily = new Map<string, { possible: number; present: number; late: number; unknown: number }>();
+      const morning = new Map<string, { possible: number; present: number; late: number; unknown: number }>();
+      // Each school determines its own missing-session coverage: a secondary
+      // afternoon must not create a missing primary session on a half day.
+      for (const tenantId of tenantIds) {
+        const linked = new Set(students.filter(student => student.tenantId === tenantId).map(student => student.externalId));
+        const summary = summariseSessionAttendance(records, linked, dateKey(day));
+        summary.byStudent.forEach((value, id) => daily.set(id, value));
+        summary.morningByStudent.forEach((value, id) => morning.set(id, value));
+      }
       const creates: Array<Record<string, unknown>> = [];
       const updates: Array<() => Promise<unknown>> = [];
       for (const student of students) {
@@ -139,7 +145,7 @@ export const POST = withApi(async function POST(req: Request) {
       await updateInChunks(updates);
 
       // Backfill the same completed-day figures used by the home page. This is
-      // calculated from the earliest available register, as a morning proxy.
+      // calculated using the same morning session rule as the pupil snapshots.
       const dailyTotalsByTenant = new Map<string, Totals>();
       for (const student of students) {
         const attendance = morning.get(student.externalId);
@@ -152,12 +158,13 @@ export const POST = withApi(async function POST(req: Request) {
       }
       // Full-day totals are independent of manual/behaviour snapshots. Include
       // zero-session dates so a holiday is distinguishable from a missing sync.
-      const fullDayByTenant = new Map<string, Totals & { studentsCovered: number }>();
+      const fullDayByTenant = new Map<string, Totals & { studentsCovered: number; unknown: number }>();
       for (const student of students) {
-        const totals = fullDayByTenant.get(student.tenantId) ?? { possible: 0, present: 0, late: 0, studentsCovered: 0 };
+        const totals = fullDayByTenant.get(student.tenantId) ?? { possible: 0, present: 0, late: 0, studentsCovered: 0, unknown: 0 };
         const attendance = daily.get(student.externalId);
         totals.possible += attendance?.possible ?? 0;
         totals.present += attendance?.present ?? 0;
+        totals.unknown += attendance?.unknown ?? 0;
         if ((totalsByStudent.get(student.id)?.possible ?? 0) > 0) totals.studentsCovered++;
         fullDayByTenant.set(student.tenantId, totals);
       }
@@ -167,6 +174,7 @@ export const POST = withApi(async function POST(req: Request) {
           possibleCount: morningTotals.possible, presentCount: morningTotals.present, lateCount: morningTotals.late,
           fullDayPossibleCount: fullDay.possible, fullDayPresentCount: fullDay.present,
           fullDayStudentsCovered: fullDay.studentsCovered,
+          fullDayBasis: "AM_PM", fullDayUnknownSessionCount: fullDay.unknown,
         };
         return db.dailyAttendanceCheck.upsert({
           where: { tenantId_checkDate: { tenantId, checkDate: day } },

@@ -32,3 +32,25 @@ attendance path and schedule, test the protected endpoint via the fallback,
 and check the recorded date on the live homepage. Registration and a manual
 test do not prove the next overnight invocation has run: check Vercel's Cron
 logs after the next scheduled window if investigating freshness again.
+
+## Half-day calculation (sync version 4)
+
+The agreed session boundary is 12:00 Europe/London for both schools. A pupil
+contributes at most one AM and one PM session per date. Any statistical present
+or approved-activity evidence in an eligible lesson marks that session attended.
+Repeated lessons do not add denominator units. Known eligible absence evidence
+counts once when no present or incomplete evidence exists in that session.
+Missing marks, missing timestamps and unavailable registers are never invented
+as absences. Unknown sessions are excluded and counted separately in the daily
+audit aggregate. Non-counting codes remain outside the denominator.
+
+These are half-day inferences from lesson marks, not Arbor statutory roll-call
+records. In particular, later presence can differ from the official registration
+code. User-facing dashboard labels remain unchanged. The underlying lesson
+source remains identified by the existing dashboard label.
+
+Version 4 replays the current academic year from 1 September. Each day's
+independent totals are tagged AM_PM, so the homepage cannot sum old per-lesson
+totals together with new half-day totals. The fallback allows sixteen bounded
+batches, enough to rebuild the current academic-year backlog, and must confirm
+upToDate before reporting success.

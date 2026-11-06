@@ -4,7 +4,7 @@ import { assertCronAuthorized } from "@/lib/cronAuth";
 import { decryptCredentials } from "@/lib/integrationSecrets";
 import { ArborClient } from "@/lib/integrations/arbor/client";
 import { addDays, dateKey } from "@/lib/integrations/arbor/attendanceSync";
-import { summariseMorningAttendance } from "@/lib/integrations/arbor/attendanceSummary";
+import { summariseSessionAttendance } from "@/lib/integrations/arbor/sessionAttendance";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 import { withApi } from "@/lib/apiRoute";
@@ -52,7 +52,7 @@ export const POST = withApi(async function POST(req: Request) {
 
     for (const checkDate of daysToCheck) {
       const records = await client.listAllAttendanceRecords(dateKey(checkDate), dateKey(addDays(checkDate, 1)));
-      const byStudent = summariseMorningAttendance(records, linkedExternalIds).byStudent;
+      const byStudent = summariseSessionAttendance(records, linkedExternalIds, dateKey(checkDate)).morningByStudent;
       const totalsByTenant = new Map<string, { possible: number; present: number; late: number }>();
       for (const student of students) {
         const daily = byStudent.get(student.externalId);

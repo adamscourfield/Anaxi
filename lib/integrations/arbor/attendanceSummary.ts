@@ -1,6 +1,6 @@
 export type ArborAttendanceRecord = {
   student: { id: string };
-  attendanceMark: { isStatisticalPresent: boolean; isStatisticalApprovedEducationalActivity?: boolean; isStatisticalPossibleAttendance: boolean; isDefaultLate: boolean } | null;
+  attendanceMark: { code?: string; isStatisticalPresent: boolean; isStatisticalApprovedEducationalActivity?: boolean; isStatisticalPossibleAttendance: boolean; isDefaultLate: boolean } | null;
   minutesLate: number | null;
   isRedundant: boolean;
   startDatetime?: string | null;

@@ -343,6 +343,9 @@ model DailyAttendanceCheck {
   fullDayPossibleCount Int?
   fullDayPresentCount Int?
   fullDayStudentsCovered Int?
+  /// Keeps lesson totals and half-day session totals separate during rebuilds.
+  fullDayBasis String @default("LESSON")
+  fullDayUnknownSessionCount Int?
   checkedAt     DateTime @default(now())
   tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 

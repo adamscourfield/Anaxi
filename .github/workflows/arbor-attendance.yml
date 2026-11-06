@@ -23,7 +23,7 @@ jobs:
         run: |
           test -n "$ANAXI_APP_URL"
           test -n "$ANAXI_CRON_SECRET"
-          for batch in $(seq 1 8); do
+          for batch in $(seq 1 16); do
             for attempt in $(seq 1 3); do
               status=$(curl --silent --show-error --max-time 330 \
                 --retry 2 --retry-delay 60 \
