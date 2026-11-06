@@ -34,7 +34,9 @@ jobs:
             "${ANAXI_APP_URL%/}/api/cron/arbor-attendance-schema" > /tmp/attendance-schema.json
           python3 -c 'import json; print(json.dumps(json.load(open("/tmp/attendance-schema.json")), indent=2))'
       - name: Catch up attendance totals
-        if: ${{ inputs.scope != 'behaviour' && inputs.scope != 'attendance-schema' }}
+        # Scheduled attendance has its own Vercel trigger and independent
+        # fallback queue. Keep this option for deliberate manual catch-ups.
+        if: ${{ inputs.scope == 'attendance' }}
         env:
           ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
           ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}

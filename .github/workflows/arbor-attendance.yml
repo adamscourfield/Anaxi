@@ -1,0 +1,62 @@
+name: Arbor attendance fallback
+
+on:
+  # The primary daily trigger is Vercel Cron at 01:17 UTC. This independent
+  # fallback is 04:17 GMT / 05:17 BST and never queues behind assessments.
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: arbor-attendance-fallback
+  cancel-in-progress: false
+
+jobs:
+  attendance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Refresh completed-day attendance
+        env:
+          ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
+          ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
+        run: |
+          test -n "$ANAXI_APP_URL"
+          test -n "$ANAXI_CRON_SECRET"
+          for batch in $(seq 1 8); do
+            for attempt in $(seq 1 3); do
+              status=$(curl --silent --show-error --max-time 330 \
+                --retry 2 --retry-delay 60 \
+                --output /tmp/attendance-result.json --write-out "%{http_code}" \
+                --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+                "${ANAXI_APP_URL%/}/api/cron/arbor-attendance")
+              set +e
+              python3 - "$status" <<'PYTHON'
+          import json, sys
+          d = json.load(open("/tmp/attendance-result.json"))
+          print(json.dumps(d))
+          connections = d.get("connections")
+          if "skipped" in d or not isinstance(connections, list) or not connections:
+              sys.exit(1)
+          failed = [c for c in connections if not c.get("ok") or not isinstance(c.get("body"), dict) or "error" in c["body"]]
+          if failed:
+              sys.exit(2 if all("429" in str(c.get("body")) for c in failed) else 1)
+          if not 200 <= int(sys.argv[1]) < 300:
+              sys.exit(1)
+          if all(c["body"].get("upToDate") is True for c in connections):
+              sys.exit(3)
+          PYTHON
+              result=$?
+              set -e
+              if [ "$result" -eq 3 ]; then exit 0; fi
+              if [ "$result" -eq 0 ]; then break; fi
+              if [ "$result" -ne 2 ] || [ "$attempt" -eq 3 ]; then
+                echo "Attendance sync failed; see the response above."
+                exit 1
+              fi
+              sleep 60
+            done
+            sleep 60
+          done
+          echo "Attendance catch-up has not yet confirmed it is up to date."
+          exit 1

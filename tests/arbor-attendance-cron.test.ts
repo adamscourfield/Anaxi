@@ -19,4 +19,12 @@ describe("attendance scheduler", () => {
     expect((await GET(new Request("https://example.test/api/cron/arbor-attendance"))).status).toBe(403);
     expect(mocks.sync).not.toHaveBeenCalled();
   });
+  it("reports a failed school import as an HTTP failure for the scheduler", async () => {
+    mocks.authorized.mockReturnValue(null);
+    const results = [{ ok: false, status: 429, body: { error: "Arbor rate limited the import" } }];
+    mocks.sync.mockResolvedValue({ results, failed: 1 });
+    const response = await GET(new Request("https://example.test/api/cron/arbor-attendance"));
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({ connections: results });
+  });
 });

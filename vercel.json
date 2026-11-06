@@ -1,3 +1,9 @@
 {
-  "buildCommand": "node scripts/migrate-deploy.cjs && npx next build"
+  "buildCommand": "node scripts/migrate-deploy.cjs && npx next build",
+  "crons": [
+    {
+      "path": "/api/cron/arbor-attendance",
+      "schedule": "17 1 * * *"
+    }
+  ]
 }
