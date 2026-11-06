@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 type Snapshot = { snapshotDate: Date; attendancePossibleCount: number; attendancePresentCount: number };
-export type AttendanceTrend = { weekPct: number | null; threeWeekPct: number | null; monthPct: number | null; loadError?: boolean };
+export type AttendanceTrend = { weekPct: number | null; threeWeekPct: number | null; monthPct: number | null; loadError?: boolean; asOf?: Date };
 export const EMPTY_ATTENDANCE_TREND: AttendanceTrend = { weekPct: null, threeWeekPct: null, monthPct: null };
 
 /** Exact calendar-date pairs only: never stretch a missing baseline into a rolling period. */

@@ -16,6 +16,20 @@ describe("cumulative attendance within each reporting period", () => {
   it("weights sessions instead of averaging daily percentages", () => {
     expect(attendanceTotalsBetween([row(date("2026-10-01"), 100, 90), row(date("2026-10-02"), 2, 0)], date("2026-10-01"), date("2026-10-02"))?.pct).toBeCloseTo(90 / 102 * 100);
   });
+  it("retains complete rates when the latest overnight import is delayed", () => {
+    const rows = Array.from({ length: 65 }, (_, i) => row(new Date(date("2026-09-01").getTime() + i * 86400000), 10, 9)).reverse();
+    const result = schoolAttendanceSummary(rows, date("2026-11-06"));
+    expect(result.headline?.attendancePct).toBe(90);
+    expect(result.headline?.asOf).toEqual(date("2026-11-04"));
+    expect(result.trend).toMatchObject({ weekPct: 90, threeWeekPct: 90, monthPct: 90, asOf: date("2026-11-04") });
+  });
+  it("does not conceal a gap within a reporting window", () => {
+    const rows = Array.from({ length: 65 }, (_, i) => row(new Date(date("2026-09-01").getTime() + i * 86400000), 10, 9));
+    rows.splice(60, 1);
+    const result = schoolAttendanceSummary(rows, date("2026-11-06"));
+    expect(result.headline).toBeNull();
+    expect(result.trend.weekPct).toBeNull();
+  });
   it("accepts imported weekends with no possible sessions but rejects missing or legacy days", () => {
     const rows = [row(date("2026-10-01"), 10, 9), row(date("2026-10-02"), 0, 0)];
     expect(attendanceTotalsBetween(rows, date("2026-10-01"), date("2026-10-02"))?.pct).toBe(90);

@@ -68,6 +68,7 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
             <span>Last 21 days <b>{data.attendanceTrend.threeWeekPct === null ? attendanceMissing : `${data.attendanceTrend.threeWeekPct.toFixed(1)}%`}</b></span>
             <span>Last 28 days <b>{data.attendanceTrend.monthPct === null ? attendanceMissing : `${data.attendanceTrend.monthPct.toFixed(1)}%`}</b></span>
           </div>
+          {data.attendanceTrend.asOf && <p>Periods ending {date(data.attendanceTrend.asOf)}{new Date(data.attendanceTrend.asOf).getTime() < londonToday().getTime() - 86400000 ? " · Awaiting the latest daily import" : ""}.</p>}
           {data.attendanceTrend.loadError
             ? <p>Attendance comparisons could not be loaded. Please try again.</p>
             : [data.attendanceTrend.weekPct, data.attendanceTrend.threeWeekPct, data.attendanceTrend.monthPct].some(value => value === null)
