@@ -5,6 +5,9 @@ The primary trigger is Vercel Cron (`vercel.json`), calling the protected
 or 02:17 BST. On Hobby, Vercel can invoke it anywhere within that hour;
 this is an early overnight window, not a guaranteed exact start time.
 The existing production `CRON_SECRET` authenticates the request.
+The attendance worker is called through the public `NEXTAUTH_URL` origin,
+because deployment URLs can require Vercel sign-in. Worker authentication
+still requires the same cron secret.
 
 The independent `Arbor attendance fallback` GitHub workflow runs at 04:17 UTC
 (04:17 GMT / 05:17 BST). It has its own concurrency group, so assessment

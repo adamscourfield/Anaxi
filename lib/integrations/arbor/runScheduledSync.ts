@@ -20,7 +20,7 @@ function isTrustedCanonicalRedirect(from: URL, to: URL) {
  * are intentionally serial: Arbor throttles aggressively and one school's
  * catch-up must not starve the next school's credentials.
  */
-export async function runScheduledArborSync(req: Request, path: string): Promise<{ results: ScheduledSyncResult[]; failed: number }> {
+export async function runScheduledArborSync(req: Request, path: string, workerBaseUrl = req.url): Promise<{ results: ScheduledSyncResult[]; failed: number }> {
   const integrations = await (prisma as any).sharedIntegration.findMany({
     where: { provider: "ARBOR", status: "CONNECTED" },
     select: { id: true, label: true },
@@ -29,7 +29,7 @@ export async function runScheduledArborSync(req: Request, path: string): Promise
 
   const results: ScheduledSyncResult[] = [];
   for (const integration of integrations) {
-    const url = new URL(path, req.url);
+    const url = new URL(path, workerBaseUrl);
     url.searchParams.set("connectionId", integration.id);
     const request = {
       method: "POST",

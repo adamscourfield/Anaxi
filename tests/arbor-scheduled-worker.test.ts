@@ -15,3 +15,11 @@ it("lets the attendance worker authenticate cron calls without browser login", (
   expect(unstable_doesMiddlewareMatch({ config, nextConfig: {}, url: "/api/god/integrations/arbor/sync/attendance" })).toBe(false);
   expect(unstable_doesMiddlewareMatch({ config, nextConfig: {}, url: "/api/god/integrations/arbor/test" })).toBe(true);
 });
+it("uses the configured public worker origin for a protected Vercel deployment trigger", async () => {
+  const fetch = vi.fn().mockResolvedValue(Response.json({ upToDate: true }));
+  vi.stubGlobal("fetch", fetch);
+  const result = await runScheduledArborSync(new Request("https://deployment.vercel.app/api/cron/arbor-attendance", { headers: { authorization: "Bearer fixture" } }), "/api/god/integrations/arbor/sync/attendance", "https://www.anaxi.io");
+  expect(result.failed).toBe(0);
+  expect(fetch.mock.calls[0][0].origin).toBe("https://www.anaxi.io");
+  expect(fetch.mock.calls[0][1].headers.Authorization).toBe("Bearer fixture");
+});
