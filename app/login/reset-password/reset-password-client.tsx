@@ -4,12 +4,11 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Figtree } from "next/font/google";
+import { figtree } from "@/app/fonts/figtree";
 import styles from "../login.module.css";
 import landing from "../../landing.module.css";
 import { SkipToContent } from "@/components/skip-to-content";
 
-const figtree = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
 import { Button } from "@/components/ui/button";
 

@@ -1,27 +1,13 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import { SessionProvider } from "@/components/session-provider";
 import { motionRootCssProperties } from "@/lib/motion/tokens";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-inter",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-space-grotesk",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-jetbrains-mono",
-});
+const inter = localFont({ src: "./fonts/inter.woff2", weight: "300 700", variable: "--font-inter", display: "swap" });
+const spaceGrotesk = localFont({ src: "./fonts/space-grotesk.woff2", weight: "400 700", variable: "--font-space-grotesk", display: "swap" });
+const jetbrainsMono = localFont({ src: "./fonts/jetbrains-mono.woff2", weight: "400 700", variable: "--font-jetbrains-mono", display: "swap", adjustFontFallback: false, fallback: ["monospace"] });
 
 /** Inline font stacks so `var(--font-*)` always resolves (layer / hydration safe). */
 const rootFontVars = {

@@ -3,10 +3,9 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
-import { Figtree } from "next/font/google";
+import { figtree } from "@/app/fonts/figtree";
 import styles from "./landing.module.css";
 
-const figtree = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
 export default async function LandingPage() {
   const session = await getServerSession(authOptions);

@@ -1,11 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Figtree } from "next/font/google";
+import { figtree } from "@/app/fonts/figtree";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { GodSchoolSwitcher } from "@/components/god-school-switcher";
 import { PlatformNav } from "@/components/god/PlatformNav";
 import styles from "./god.module.css";
-const figtree=Figtree({subsets:["latin"],weight:["400","500","600","700"]});
 export default async function GodLayout({children}:{children:React.ReactNode}) {
   await requireSuperAdminUser();
   return <div className={`${styles.shell} ${figtree.className}`}>

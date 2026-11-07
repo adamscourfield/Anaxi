@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Figtree } from "next/font/google";
+import { figtree } from "@/app/fonts/figtree";
 import homeStyles from "@/app/(tenant)/home/home.module.css";
 
-const figtree = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 import Link from "next/link";
 import { TenantNav } from "@/components/tenant-nav";
 import { SchoolSwitcher } from "@/components/school-switcher";

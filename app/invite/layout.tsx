@@ -1,11 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Figtree } from "next/font/google";
+import { figtree } from "@/app/fonts/figtree";
 import landing from "../landing.module.css";
 import styles from "../login/login.module.css";
 import { SkipToContent } from "@/components/skip-to-content";
 
-const figtree = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
 export default function InviteLayout({ children }: { children: React.ReactNode }) {
   return (
