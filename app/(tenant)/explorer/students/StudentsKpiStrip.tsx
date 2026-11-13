@@ -95,14 +95,19 @@ export function StudentsKpiStrip({
         value={String(priorityCount)}
         href={attentionHref}
         hoverClassName="hover:text-[var(--error)]"
-        warm
+        // Only spotlight this tile when there is someone to act on; a highlighted zero points at nothing.
+        warm={priorityCount > 0}
         meta={
-          <>
-            Students in urgent or priority bands ·{" "}
-            <Link href={attentionHref} className="font-medium text-accent hover:underline">
-              Review queue
-            </Link>
-          </>
+          priorityCount > 0 ? (
+            <>
+              Students in urgent or priority bands ·{" "}
+              <Link href={attentionHref} className="font-medium text-accent hover:underline">
+                Review queue
+              </Link>
+            </>
+          ) : (
+            "No students in urgent or priority bands"
+          )
         }
       />
       <KpiCard

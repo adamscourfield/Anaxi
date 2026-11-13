@@ -12,7 +12,7 @@ export type TodaySummaryChip = {
 
 function toneClass(tone: TodaySummaryChip["tone"]) {
   if (tone === "critical") return "text-[var(--error)]";
-  if (tone === "warning") return "text-[var(--warning)]";
+  if (tone === "warning") return "text-[var(--warning-text)]";
   return "text-text";
 }
 

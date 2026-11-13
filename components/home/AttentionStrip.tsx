@@ -20,7 +20,7 @@ const TONE_STYLES: Record<AttentionItem["tone"], { iconBg: string; iconText: str
   },
   warning: {
     iconBg: "bg-[color-mix(in_srgb,var(--warning)_14%,transparent)]",
-    iconText: "text-[var(--warning)]",
+    iconText: "text-[var(--warning-text)]",
     ring: "border-[color-mix(in_srgb,var(--warning)_26%,transparent)] hover:border-[color-mix(in_srgb,var(--warning)_42%,transparent)]",
   },
 };

@@ -86,7 +86,7 @@ export default async function MyActionsPage() {
           valueClassName={`mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums ${blockedCount > 0 ? "text-text" : "text-muted"}`}
           context={
             blockedCount > 0 ? (
-              <span className="font-semibold text-[var(--warning)]">Needs unblock</span>
+              <span className="font-semibold text-[var(--warning-text)]">Needs unblock</span>
             ) : (
               <span className="font-medium text-muted">None waiting</span>
             )

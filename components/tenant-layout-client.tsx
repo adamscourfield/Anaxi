@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { figtree } from "@/app/fonts/figtree";
 import homeStyles from "@/app/(tenant)/home/home.module.css";
@@ -82,6 +82,21 @@ export function TenantLayoutClient({
   const leadershipHome = pathname === "/home" && ["SLT", "ADMIN", "SUPER_ADMIN"].includes(role);
   const overviewPage = leadershipHome || pathname === "/insights" || pathname === "/insights/students" || pathname === "/observe/history" || pathname === "/students";
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // Mobile menu: Escape closes it and the page behind stops scrolling while it is open.
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileNavOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileNavOpen]);
 
   const navProps = {
     role,

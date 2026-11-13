@@ -308,7 +308,7 @@ function HodHome({
                         <div key={sig.signalKey} className="space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                            <span className="text-[11px] font-bold text-[var(--warning)] tabular-nums">
+                            <span className="text-[11px] font-bold text-[var(--warning-text)] tabular-nums">
                               {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
                             </span>
                           </div>
@@ -510,7 +510,7 @@ function TeacherHome({
                       <div key={sig.signalKey} className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                          <span className="text-[11px] font-bold text-[var(--warning)] tabular-nums">
+                          <span className="text-[11px] font-bold text-[var(--warning-text)] tabular-nums">
                             {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
                           </span>
                         </div>

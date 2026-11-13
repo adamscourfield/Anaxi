@@ -34,52 +34,55 @@ export function OnCallFilters({
   const router = useRouter();
   const hasFilters = Boolean(yearGroup) || Boolean(reason);
 
+  const selectClass =
+    "h-10 w-full min-w-0 rounded-[10px] border border-[#e5e5e6] bg-white pl-3 pr-9 text-[13px] font-medium text-[#1c1c1e] sm:w-auto sm:min-w-[168px]";
+  // A filter that is doing something gets a dark outline, so a narrowed list is never mistaken for the full one.
+  const activeStyle = { borderColor: "#1c1c1e", boxShadow: "inset 0 0 0 1px #1c1c1e" };
+
   return (
-    <div className="filter-panel">
-      <div className="filter-bar flex-wrap items-end gap-4">
-        <label className="flex min-w-0 flex-col gap-1.5 sm:min-w-[180px]">
-          <span className="filter-field-label">Year group</span>
-          <select
-            value={yearGroup ?? ""}
-            onChange={(e) => router.push(buildOnCallHref(range, e.target.value || undefined, reason))}
-            className="field field-filter-trigger min-w-0 !py-2.5 !text-sm"
-            aria-label="Filter by year group"
-          >
-            <option value="">All year groups</option>
-            {yearGroupOptions.map((yg) => (
-              <option key={yg} value={yg}>
-                {formatYearGroup(yg)}
-              </option>
-            ))}
-          </select>
-        </label>
+    <div
+      role="group"
+      aria-label="Filter on-call requests"
+      className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:justify-end"
+    >
+      <select
+        value={yearGroup ?? ""}
+        onChange={(e) => router.push(buildOnCallHref(range, e.target.value || undefined, reason))}
+        className={selectClass}
+        style={yearGroup ? activeStyle : undefined}
+        aria-label="Filter by year group"
+      >
+        <option value="">All year groups</option>
+        {yearGroupOptions.map((yg) => (
+          <option key={yg} value={yg}>
+            {formatYearGroup(yg)}
+          </option>
+        ))}
+      </select>
 
-        <label className="flex min-w-0 flex-col gap-1.5 sm:min-w-[200px]">
-          <span className="filter-field-label">Behaviour reason</span>
-          <select
-            value={reason ?? ""}
-            onChange={(e) => router.push(buildOnCallHref(range, yearGroup, e.target.value || undefined))}
-            className="field field-filter-trigger min-w-0 !py-2.5 !text-sm"
-            aria-label="Filter by behaviour reason"
-          >
-            <option value="">All reasons</option>
-            {reasonOptions.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </label>
+      <select
+        value={reason ?? ""}
+        onChange={(e) => router.push(buildOnCallHref(range, yearGroup, e.target.value || undefined))}
+        className={selectClass}
+        style={reason ? activeStyle : undefined}
+        aria-label="Filter by behaviour reason"
+      >
+        <option value="">All reasons</option>
+        {reasonOptions.map((r) => (
+          <option key={r} value={r}>
+            {r}
+          </option>
+        ))}
+      </select>
 
-        {hasFilters && (
-          <Link
-            href={buildOnCallHref(range)}
-            className="btn-filter-secondary text-center no-underline"
-          >
-            Clear filters
-          </Link>
-        )}
-      </div>
+      {hasFilters && (
+        <Link
+          href={buildOnCallHref(range)}
+          className="link-muted-accent col-span-2 text-[13px] font-medium sm:col-span-1 sm:px-1"
+        >
+          Clear filters
+        </Link>
+      )}
     </div>
   );
 }

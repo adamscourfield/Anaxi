@@ -100,7 +100,9 @@ const config: Config = {
         // Merge default blue scale so bg-blue-400 / text-blue-700 etc. work;
         // a plain string here replaced the whole palette and broke those utilities.
         blue: { ...colors.blue, DEFAULT: "#6366f1" },
-        amber:  "#fdc683",
+        // Same fix as blue: a plain string wiped the amber scale, so bg-amber-50 /
+        // text-amber-700 etc. (warning banners) silently produced no CSS.
+        amber: { ...colors.amber, DEFAULT: "#fdc683" },
 
         // ── Extended tints ─────────────────────────────────────────
         "coral-10":  "rgba(254,159,159,0.10)",

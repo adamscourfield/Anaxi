@@ -5,8 +5,8 @@
 .page span:has(> svg) { background:#fff; color:#e14e36; border-color:#e5e5e6; }
 .page span[class*="h-10"]:has(> svg) { border:1px solid #e5e5e6; border-radius:10px; }
 .page svg[stroke="var(--accent)"] { stroke:#e14e36; }
-.page button, .page a[class*="inline-flex"] { background:#1c1c1e; color:#fff; border:1px solid #1c1c1e; border-radius:10px; min-height:42px; box-shadow:none; }
-.page button svg { color:#fff; }
+
+
 .page textarea { background:#fff; border:1px solid #e5e5e6; border-radius:10px; box-shadow:none; }
 .page label:has(input[type="radio"]) { background:#fff; border:1px solid #e5e5e6; border-radius:10px; box-shadow:none; }
 .page label:has(input[type="radio"]:checked) { border-color:#ff6a52; box-shadow:inset 0 0 0 1px #ff6a52; }

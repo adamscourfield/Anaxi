@@ -6,7 +6,7 @@
 .page :global(.segmented-toggle) { display:inline-flex; align-items:center; padding:4px; gap:4px; background:#fff; border:1px solid #e5e5e6; border-radius:10px; }
 .page :global(.segmented-toggle-btn) { display:inline-flex; align-items:center; justify-content:center; min-height:32px; padding:0 12px; border-radius:7px; background:#fff; color:#6e6e73; font-size:13px; line-height:1; box-shadow:none; border:0; }
 .page :global(.segmented-toggle-btn-active) { background:#1c1c1e; color:#fff; }
-.page a[href="/leave/request"], .page td > a[class*="inline-flex"] { background:#1c1c1e; color:#fff; border:1px solid #1c1c1e; border-radius:10px; min-height:42px; box-shadow:none; }
+.page a[href="/leave/request"], .page td > a[class*="inline-flex"]:where(:not([class*="underline"])) { background:#1c1c1e; color:#fff; border:1px solid #1c1c1e; border-radius:10px; min-height:42px; box-shadow:none; }
 .page a[href="/leave/request"] svg { color:#fff; }
 .page > div[class*="border-dashed"] > div:has(> svg) { border:1px solid #e5e5e6; background:#fff; border-radius:10px; }
 .page > div[class*="border-dashed"] svg { color:#e14e36; }

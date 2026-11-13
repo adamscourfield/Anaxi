@@ -4,8 +4,8 @@
 .page div[class*="shadow-none"] { background:#fff; border:1px solid #e5e5e6; border-radius:14px; color:#1c1c1e; box-shadow:0 14px 34px -22px #1c1c1e2e; }
 .page span:has(> svg) { background:#fff; color:#e14e36; }
 .page span[class*="h-9"]:has(> svg) { border:1px solid #e5e5e6; border-radius:10px; }
-.page button { background:#1c1c1e; color:#fff; border:1px solid #1c1c1e; border-radius:10px; box-shadow:none; }
-.page button svg { color:#fff; }
+
+
 .page input,.page select { min-width:0; max-width:100%; background:#fff; border:1px solid #e5e5e6; border-radius:10px; box-shadow:none; }
 .page textarea { background:#fff; }
 .page label { font-weight:500; color:#6e6e73; }

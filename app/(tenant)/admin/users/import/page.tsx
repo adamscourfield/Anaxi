@@ -187,7 +187,7 @@ export default function StaffImportPage() {
           <h2 className="text-base font-semibold text-text">Validation issues ({parseErrors.length})</h2>
           <ul className="space-y-1 text-sm">
             {parseErrors.slice(0, 20).map((e, i) => (
-              <li key={i} className={e.errorCode === "MISSING_FULL_NAME" ? "text-warning" : "text-error"}>
+              <li key={i} className={e.errorCode === "MISSING_FULL_NAME" ? "text-[var(--warning-text)]" : "text-error"}>
                 Row {e.rowNumber} — {e.field}: {e.message}
               </li>
             ))}

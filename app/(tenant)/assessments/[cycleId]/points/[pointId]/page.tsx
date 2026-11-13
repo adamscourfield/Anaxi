@@ -331,7 +331,7 @@ function SubjectIcon({ subject }: { subject: string }) {
 
 function gapCls(gap: number) {
   if (gap <= 5) return "text-[var(--success)]";
-  if (gap <= 15) return "text-[var(--warning)]";
+  if (gap <= 15) return "text-[var(--warning-text)]";
   return "text-[var(--error)]";
 }
 

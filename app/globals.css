@@ -102,9 +102,10 @@
   --divider:            var(--surface-container-low);
 
   /* ── Primary action (now deep slate, not indigo) ────────────────── */
-  --accent:             var(--primary);
-  --accent-hover:       #1a1a1a;
-  --accent-active:      #333333;
+  /* Redesign near-black for actions (was pure #000). */
+  --accent:             #1c1c1e;
+  --accent-hover:       #2e2e31;
+  --accent-active:      #3a3a3d;
   --accent-tint:        rgba(0,0,0,0.05);
 
   /* ── Semantic colours ──────────────────────────────────────────── */
@@ -157,12 +158,13 @@
   --shadow-btn-hover:   none;
 
   /* ── Button aliases (now using deep slate) ──────────────────────── */
-  --primary-btn:        var(--primary);
-  --primary-btn-hover:  #1a1a1a;
-  --primary-btn-active: #333333;
-  --danger-btn:         #fe9f9f;
-  --danger-btn-hover:   #fd8a8a;
-  --danger-btn-active:  #fc7575;
+  --primary-btn:        #1c1c1e;
+  --primary-btn-hover:  #2e2e31;
+  --primary-btn-active: #3a3a3d;
+  /* Destructive buttons carry white text: pale coral gave ~1.9:1. Error red gives 6.5:1. */
+  --danger-btn:         #ba1a1a;
+  --danger-btn-hover:   #a31515;
+  --danger-btn-active:  #8c1010;
   --overlay:            rgba(0,0,0,0.25);
 
   /* ── Status pills ──────────────────────────────────────────────── */
@@ -330,10 +332,11 @@ body {
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* Thumb must be visible: wide tables rely on it to signal horizontal scroll. */
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.06); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.12); }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.32); }
 
 /* ── Form inputs (ghost border treatment per design spec) ─────── */
 input[type="text"],
@@ -360,7 +363,7 @@ textarea {
 input::placeholder,
 textarea::placeholder {
   color: var(--on-surface-variant);
-  opacity: 0.5;
+  opacity: 0.8;
 }
 
 /* ── Styled selects ────────────────────────────────────────────── */
@@ -390,8 +393,8 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0,0,0,0.10);
-  border-color: rgba(0,0,0,0.40);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.16);
+  border-color: var(--on-surface);
 }
 
 .calm-transition {
@@ -512,7 +515,7 @@ textarea:focus-visible {
 
   .field::placeholder {
     color: var(--on-surface-variant);
-    opacity: 0.5;
+    opacity: 0.8;
   }
 
   .field:hover { border-color: rgba(198,198,205,0.40); }
@@ -520,8 +523,8 @@ textarea:focus-visible {
   .field:focus-visible {
     outline: none;
     background: var(--surface-container-lowest);
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
-    border-color: rgba(0,0,0,0.40);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.16);
+    border-color: var(--on-surface);
   }
 
   /* Dark hero / sign-in: inputs on radial gradient (Stage 1 auth) */
@@ -584,7 +587,8 @@ textarea:focus-visible {
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   font-weight: 600;
-  box-shadow: none;
+  /* Hairline keeps the selected segment readable; white-on-light-grey alone was ~1.2:1. */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--outline) 45%, transparent);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -962,7 +966,7 @@ textarea:focus-visible {
   background: var(--surface-container-lowest);
   color: var(--on-surface);
   font-weight: 600;
-  box-shadow: none;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--outline) 45%, transparent);
 }
 
 /* Teachers table filter bar (Explorer + Instruction) — segmented row with dividers */
@@ -1464,7 +1468,7 @@ textarea:focus-visible {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: color-mix(in srgb, var(--on-surface-variant) 55%, transparent);
+  color: var(--on-surface-variant);
 }
 
 /* Ghost pill (toolbar / secondary actions) — fixed min-height for alignment */
@@ -2336,4 +2340,32 @@ main h1:not(.font-sans) {
 
 .rounded-full {
   border-radius: 9999px;
+}
+
+/* ── Keyboard focus (global) ──────────────────────────────────────────────────
+   Most links, buttons and custom controls had no focus style, and the ones that
+   did used a 10%-black ring. One consistent indicator everywhere: dark outline
+   with a white inner ring so it also reads on the dark hero / priorities panels.
+   Text inputs keep their own border + ring treatment above. */
+:root :is(a, button, summary, [role="button"], [role="tab"], [role="menuitem"], [role="option"], [role="switch"], [role="checkbox"], [tabindex]:not([tabindex="-1"]), input[type="checkbox"], input[type="radio"], input[type="file"], input[type="range"]):focus-visible {
+  outline: 2px solid var(--on-surface);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+/* ── Buttons: redesign shape ──────────────────────────────────────────────────
+   Controls are 10px in the redesign. This sits after the 4px micro-radius lock so
+   <Button> and the shared filter/primary button classes pick it up everywhere,
+   without any page stylesheet having to restyle "every button on the page". */
+[data-variant],
+.btn-filter-primary,
+.btn-filter-secondary,
+.btn-priorities-apply,
+.btn-teachers-toolbar-apply,
+:is(button, a):is([class*="bg-accent "], [class$="bg-accent"], [class*="bg-primaryBtn"], [class*="bg-[var(--on-surface)]"], [class*="bg-neutral-950"]) {
+  border-radius: 10px;
+}
+/* Destructive text actions ("Delete request") keep their red inside ghost/secondary buttons. */
+[data-variant][class*="text-error"] {
+  color: var(--error);
 }

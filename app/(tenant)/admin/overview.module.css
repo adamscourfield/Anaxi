@@ -3,9 +3,9 @@
 .metric, .section { background:white !important; border:1px solid #e5e5e6 !important; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e !important; }
 .metric { min-height:180px; }
 .metric > div:first-child > span, .icon { background:white !important; color:#ff6a52 !important; border:1px solid #e5e5e6; border-radius:10px; box-shadow:none; }
-.page button, .page a[class*="anx-btn"] { background:#1c1c1e !important; color:white !important; border:1px solid #1c1c1e; border-radius:10px; }
+
 .page button svg, .page a[class*="anx-btn"] svg { color:inherit; }
-.page button:hover, .page a[class*="anx-btn"]:hover { background:#2e2e31 !important; color:white !important; }
+
 .page :global(.filter-panel) { background:white; border:1px solid #e5e5e6; border-radius:14px; padding:24px; }
 .page input { background:white; border-color:#e5e5e6; border-radius:10px; }
 .page > section[class*="border"] { background:white; border-color:#e5e5e6; border-radius:14px; }

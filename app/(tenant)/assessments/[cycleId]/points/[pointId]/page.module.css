@@ -3,7 +3,7 @@
 .page h1 { font-weight: 600; color: #1c1c1e; letter-spacing: -.04em; }
 .page h1::after { content: "."; color: #ff6a52; }
 .page [data-ui-card] { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
-.page a:has(> svg), .page a[class*="inline-flex"] { background: #1c1c1e; background-image: none; color: #fff; border-color: #1c1c1e; border-radius: 10px; }
+
 .page thead tr { background: #fff; }
 .page tbody tr { background: #fff; }
 .page tbody tr:hover { background: #fafafa; }
@@ -15,7 +15,7 @@
 @media (max-width: 639px) { .summary { grid-template-columns: 1fr; } }
 
 .page select { background: #fff; border: 1px solid #e5e5e6; border-radius: 10px; min-height: 42px; }
-.page button { background: #1c1c1e; color: #fff; border-radius: 10px; }
+
 .page span:has(> svg) { background: #fff; color: #e14e36; border: 1px solid #e5e5e6; border-radius: 12px; }
 
 .page [data-ui-card], .page :global(.grid) > * { min-width: 0; }

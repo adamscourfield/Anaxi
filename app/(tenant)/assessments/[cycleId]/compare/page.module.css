@@ -3,7 +3,7 @@
 .page h1 { font-weight: 600; color: #1c1c1e; letter-spacing: -.04em; }
 .page h1::after { content: "."; color: #ff6a52; }
 .page [data-ui-card] { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
-.page a:has(> svg), .page a[class*="inline-flex"] { background: #1c1c1e; background-image: none; color: #fff; border-color: #1c1c1e; border-radius: 10px; }
+
 .page thead tr { background: #fff; }
 .page tbody tr { background: #fff; }
 .page tbody tr:hover { background: #fafafa; }

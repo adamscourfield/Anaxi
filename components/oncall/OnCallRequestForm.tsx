@@ -295,7 +295,7 @@ export function OnCallRequestForm({
           {/* Warning + Submit */}
           <div className="flex flex-col gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_55%,var(--surface-container-lowest))] px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5">
             <div className="flex min-w-0 items-start gap-2.5">
-              <svg className="mt-0.5 h-4 w-4 shrink-0 text-[var(--warning)]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <svg className="mt-0.5 h-4 w-4 shrink-0 text-[var(--warning-text)]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
               </svg>
               <p className="min-w-0 text-pretty text-[13px] font-medium leading-relaxed text-[var(--warning-text)]">

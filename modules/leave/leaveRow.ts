@@ -40,7 +40,10 @@ function fmtShortRange(start: Date, end: Date) {
   if (start.toDateString() === end.toDateString() && !hasTimeOfDay(start) && !hasTimeOfDay(end)) return a;
   const sameMonth =
     start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth();
-  const b = withTime(end, end.toLocaleDateString("en-GB", sameMonth ? { day: "numeric" } : opts));
+  // Only drop the end month for plain day ranges ("19 — 24 Oct" style). With a time attached,
+  // "24 1:12 pm" reads as nonsense, so keep "24 Oct 1:12 pm".
+  const compactEnd = sameMonth && !hasTimeOfDay(start) && !hasTimeOfDay(end);
+  const b = withTime(end, end.toLocaleDateString("en-GB", compactEnd ? { day: "numeric" } : opts));
   return `${a} — ${b}`;
 }
 

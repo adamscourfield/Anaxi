@@ -6,7 +6,7 @@
 .page [data-ui-card] { border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; padding: 24px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
 .page input:not([type="checkbox"]):not([type="file"]), .page select { background: #fff; border: 1px solid #e5e5e6; border-radius: 10px; min-height: 42px; }
 .page label { font-size: 12px; font-weight: 600; color: #1c1c1e; }
-.page button, .page a[class*="inline-flex"] { background: #1c1c1e; background-image: none; border-radius: 10px; color: #fff; }
+
 .page button[aria-label^="Remove"] { background: transparent; color: #6e6e73; }
 .page [role="button"] { background: #fff; border: 1px dashed #cfcfd1; border-radius: 14px; }
 .page [role="button"]:hover { border-color: #ff6a52; background: #fff; }

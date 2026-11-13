@@ -1,11 +1,37 @@
 # Design System Strategy: The Modern Academic Ledger
 
-## Implementation notes (shipped in app, May 2026)
+## Implementation notes (canonical — redesign, November 2026)
 
-The running product intentionally differs from some aspirational rules below. **Canonical for engineering:**
+**The redesign is the design language.** Where the sections below disagree with this table, this table wins; the older "Modern Academic Ledger" rules (4px radius everywhere, no shadows, Space Grotesk/Newsreader titles) are historical.
 
-| Topic | Shipped choice |
-|-------|----------------|
+| Topic | Canonical choice |
+|-------|------------------|
+| Typeface | **Figtree** for redesigned workspaces (Home, Insights); **Inter** for body/UI elsewhere. Page-title `h1`s still fall back to Space Mono in `globals.css` on pages not yet moved over |
+| Ink / primary action | `#1c1c1e` (hover `#2e2e31`) — `--accent`, `--primary-btn` |
+| Accent | Coral `#ff6a52` (title full stop, icons, focus on redesigned pages) |
+| Radius | **10px** controls (buttons, inputs, selects), **14px** cards and panels, full pills for counts |
+| Borders / elevation | `1px solid #e5e5e6` on white; one soft shadow on cards (`0 14px 34px -22px #1c1c1e2e`) |
+| Muted text | `#6e6e73` |
+| Theme | Light only |
+
+### Buttons — one rule
+
+Use `<Button>` (`components/ui/button.tsx`) and pick a variant; never restyle "every button on the page" from a page stylesheet.
+
+- `primary` — near-black fill. **One per view or per row.**
+- `secondary` — white, outlined. Download, Acknowledge, Clear, Back.
+- `ghost` — text only. Cancel, low-stakes actions. Add `text-error` for destructive text actions.
+- `danger` — error red fill, white text. Confirming a destructive action.
+
+Page CSS modules must not contain blanket selectors such as `.page button { background: … }` or `.page a[class*="inline-flex"] { … }`. They flatten the hierarchy above (every action looks primary) and were removed in November 2026. Scope module rules to a class you own.
+
+### Other shipped rules
+
+- Warning **text** uses `--warning-text`; `--warning` / amber `#fdc683` is a fill colour only (1.5:1 on white).
+- Keyboard focus is global (`globals.css`, "Keyboard focus"): do not add `outline-none` without a replacement.
+- Empty numbers render as "—" with a sentence explaining why, not a phrase at stat size.
+
+-------|----------------|
 | Display / page titles | **Space Grotesk** on `main h1` (`--font-space-grotesk`) |
 | Body / UI | **Inter** |
 | Border radius | **4px** globally (`tailwind` `borderRadius`) |

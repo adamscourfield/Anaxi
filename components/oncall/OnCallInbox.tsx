@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
@@ -39,6 +39,10 @@ interface OnCallInboxProps {
   totalLogsToday: number;
   avgResponseMs: number;
   resolutionRate: number;
+  /** Requests resolved or cancelled today. With none, rate and status have nothing to report yet. */
+  closedToday?: number;
+  /** Filter controls, rendered in the open-requests header so they sit next to what they filter. */
+  toolbar?: ReactNode;
 }
 
 function timeAgo(dateVal: Date | string): string {
@@ -49,6 +53,20 @@ function timeAgo(dateVal: Date | string): string {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
+}
+
+/** How long a request has been waiting, e.g. "4 min", "2h 05m", "3d". */
+function waitingFor(dateVal: Date | string): string {
+  const mins = Math.max(0, Math.floor((Date.now() - new Date(dateVal).getTime()) / 60000));
+  if (mins < 1) return "under 1 min";
+  if (mins < 60) return `${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ${String(mins % 60).padStart(2, "0")}m`;
+  return `${Math.floor(hrs / 24)}d`;
+}
+
+function isToday(dateVal: Date | string): boolean {
+  return new Date(dateVal).toDateString() === new Date().toDateString();
 }
 
 function formatDuration(ms: number): string {
@@ -101,6 +119,8 @@ export function OnCallInbox({
   totalLogsToday,
   avgResponseMs,
   resolutionRate,
+  closedToday,
+  toolbar,
 }: OnCallInboxProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -126,15 +146,14 @@ export function OnCallInbox({
 
   const openCount = openRequests.filter((r) => r.status === "OPEN").length;
 
-  // Determine "last updated" from most recent open request
-  const lastUpdated =
-    openRequests.length > 0
-      ? timeAgo(
-          openRequests.reduce((latest, r) =>
-            new Date(r.createdAt) > new Date(latest.createdAt) ? r : latest
-          , openRequests[0]).createdAt
-        )
-      : null;
+  const filtersActive = searchParams.has("yearGroup") || searchParams.has("reason");
+  const acknowledgedCount = openRequests.filter((r) => r.status === "ACKNOWLEDGED").length;
+  const oldestOpen = openRequests
+    .filter((r) => r.status === "OPEN")
+    .reduce<InboxRequest | null>(
+      (oldest, r) => (!oldest || new Date(r.createdAt) < new Date(oldest.createdAt) ? r : oldest),
+      null,
+    );
 
   async function handleAction(id: string, action: string) {
     setActionPending(`${id}-${action}`);
@@ -147,61 +166,95 @@ export function OnCallInbox({
   }
 
   const avg = formatAvgResponse(avgResponseMs);
-  const healthLabel = resolutionRate >= 90 ? "STABLE" : resolutionRate >= 70 ? "WARNING" : "CRITICAL";
+  // Until something has been closed today there is no rate to judge, so say so rather than "0% / Critical".
+  const hasClosedToday = closedToday === undefined ? totalLogsToday > 0 : closedToday > 0;
+  const healthLabel = !hasClosedToday ? "No data yet" : resolutionRate >= 90 ? "Stable" : resolutionRate >= 70 ? "Warning" : "Critical";
+  const healthDot = !hasClosedToday
+    ? "bg-[#d4d4d8]"
+    : healthLabel === "Stable"
+      ? "bg-scale-strong-bar"
+      : healthLabel === "Warning"
+        ? "bg-scale-some-bar"
+        : "bg-scale-limited-bar";
+  const statCell = "min-w-0 px-5 py-4";
+  const statLabel = "text-[12px] font-medium text-muted";
+  const statValue = "mt-1 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-text tabular-nums";
 
   return (
     <div className="w-full min-w-0 space-y-8">
+      {/* ── Today at a glance ─────────────────────────────────── */}
+      <section
+        aria-label="Today at a glance"
+        className="grid grid-cols-2 divide-[#e5e5e6] overflow-hidden rounded-[14px] border border-[#e5e5e6] bg-white max-lg:[&>*:nth-child(-n+2)]:border-b max-lg:[&>*:nth-child(odd)]:border-r lg:grid-cols-4 lg:divide-x"
+      >
+        <div className={statCell}>
+          <p className={statLabel}>Logged today</p>
+          <p className={statValue}>{totalLogsToday}</p>
+        </div>
+        <div className={statCell}>
+          <p className={statLabel}>Average response</p>
+          <p className={statValue}>
+            {avgResponseMs > 0 ? (
+              <>
+                {avg.mins}
+                <span className="text-[13px] font-medium text-muted">m </span>
+                {avg.secs}
+                <span className="text-[13px] font-medium text-muted">s</span>
+              </>
+            ) : (
+              "—"
+            )}
+          </p>
+        </div>
+        <div className={statCell}>
+          <p className={statLabel}>Resolution rate</p>
+          <p className={statValue}>{hasClosedToday ? `${resolutionRate}%` : "—"}</p>
+        </div>
+        <div className={statCell}>
+          <p className={statLabel}>Status</p>
+          <p className={`${statValue} flex items-center gap-2`}>
+            <span className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${healthDot}`} aria-hidden />
+            <span className={hasClosedToday ? "" : "text-muted"}>{healthLabel}</span>
+          </p>
+        </div>
+      </section>
+
       {/* ── Open Requests Section ─────────────────────────────── */}
       <section>
-        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-3 sm:gap-y-1">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
-            <h2 className="text-lg font-bold tracking-[-0.02em] text-text">Open Requests</h2>
-            {openCount > 0 && (
-              <span className="inline-flex shrink-0 items-center rounded-md bg-[var(--pill-error-bg)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
-                {openCount} pending
-              </span>
-            )}
-          </div>
-          {lastUpdated && (
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted not-italic">
-              Last updated: {lastUpdated}
-            </span>
-          )}
-        </div>
-
-        {/* Alert banner */}
-        {openCount >= 1 && (
-          <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--error)_22%,transparent)] bg-[color-mix(in_srgb,var(--pill-error-bg)_45%,var(--surface-container-lowest))] px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:px-5 sm:py-4">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--error)_12%,transparent)] text-[var(--error)]">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-pretty text-sm font-semibold text-[var(--error)]">
-                {openCount} high priority incident{openCount !== 1 ? "s" : ""} requiring immediate response
-              </p>
-              <p className="mt-0.5 text-pretty text-xs text-muted">
-                Response time average is currently above target.
-              </p>
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+              <h2 className="text-lg font-bold tracking-[-0.02em] text-text">Open requests</h2>
+              {openCount > 0 && (
+                <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--pill-error-bg)] px-2.5 py-0.5 text-[12px] font-semibold text-[var(--pill-error-text)] ring-1 ring-inset ring-[var(--pill-error-ring)]">
+                  {openCount} waiting
+                </span>
+              )}
+              {acknowledgedCount > 0 && (
+                <span className="inline-flex shrink-0 items-center rounded-full bg-[#f4f4f5] px-2.5 py-0.5 text-[12px] font-semibold text-[#1c1c1e]">
+                  {acknowledgedCount} in hand
+                </span>
+              )}
             </div>
-            <Link
-              href="/on-call/feed"
-              className="inline-flex shrink-0 items-center gap-1 self-start text-xs font-semibold text-[var(--error)] underline decoration-[color-mix(in_srgb,var(--error)_35%,transparent)] underline-offset-2 calm-transition hover:decoration-[var(--error)] sm:self-auto"
-            >
-              View priority log
-              <span aria-hidden>→</span>
-            </Link>
+            <p className="mt-1 text-[13px] text-muted">
+              {oldestOpen ? <>Longest wait: {waitingFor(oldestOpen.createdAt)}. </> : null}
+              <Link href="/on-call/feed" className="link-muted-accent font-medium">
+                Open the live feed
+              </Link>
+            </p>
           </div>
-        )}
+          {toolbar}
+        </div>
 
         {/* Open requests table */}
         {openRequests.length === 0 ? (
           <EmptyState
-            title="No open requests"
-            description="All clear — no pending on-call requests right now."
+            title={filtersActive ? "No open requests match these filters" : "No open requests"}
+            description={
+              filtersActive
+                ? "Other year groups or reasons may still have requests waiting. Clear the filters to see everything."
+                : "All clear — no pending on-call requests right now."
+            }
           />
         ) : (
           <>
@@ -292,13 +345,12 @@ export function OnCallInbox({
                 <thead>
                   <tr className="table-head-row">
                     <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
-                      Student name
+                      Student
                     </th>
-                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Year</th>
-                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Incident type</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Type</th>
                     <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Location</th>
                     <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Raised by</th>
-                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Time of report</th>
+                    <th className="px-4 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Waiting</th>
                     {(canAcknowledge || canResolve) && (
                       <th className="px-4 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Actions</th>
                     )}
@@ -317,13 +369,11 @@ export function OnCallInbox({
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
                             <Avatar name={r.student.fullName} avatarUrl={r.student.avatarUrl} size="md" tone="muted" />
-                            <span className="font-semibold text-text">
-                              {r.student.fullName}
+                            <span className="min-w-0">
+                              <span className="block font-semibold text-text">{r.student.fullName}</span>
+                              <span className="block text-[12px] text-muted">{formatYearGroup(r.student.yearGroup)}</span>
                             </span>
                           </div>
-                        </td>
-                        <td className="px-4 py-4 font-medium uppercase text-text">
-                          {formatYearGroup(r.student.yearGroup)}
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex flex-wrap items-center gap-1.5">
@@ -339,14 +389,20 @@ export function OnCallInbox({
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-4 font-medium uppercase text-text">
+                        <td className="px-4 py-4 font-medium text-text">
                           {r.location}
                         </td>
                         <td className="px-4 py-4 text-text">
                           {r.requester.fullName}
                         </td>
-                        <td className="px-4 py-4 font-mono text-text">
-                          {formatTime(r.createdAt)}
+                        <td className="px-4 py-4">
+                          <span className="block font-semibold tabular-nums text-text">
+                            {r.status === "ACKNOWLEDGED" ? "In hand" : waitingFor(r.createdAt)}
+                          </span>
+                          <span className="block text-[12px] tabular-nums text-muted">
+                            Raised {isToday(r.createdAt) ? "" : `${formatDate(r.createdAt)}, `}
+                            {formatTime(r.createdAt)}
+                          </span>
                         </td>
                         {(canAcknowledge || canResolve) && (
                           <td className="px-4 py-4 text-right" onClick={(e) => e.stopPropagation()}>
@@ -602,57 +658,6 @@ export function OnCallInbox({
             </div>
           </>
         )}
-      </section>
-
-      {/* ── Stats Cards ───────────────────────────────────────── */}
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-ambient sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-            Total Logs Today
-          </p>
-          <p className="mt-2 text-[32px] font-bold leading-tight tracking-[-0.02em] text-text">
-            {totalLogsToday}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-ambient sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-            Avg Response
-          </p>
-          <p className="mt-2 text-[32px] font-bold leading-tight tracking-[-0.02em] text-text">
-            {avg.mins}<span className="text-[16px] font-semibold text-muted">M </span>
-            {avg.secs}<span className="text-[16px] font-semibold text-muted">S</span>
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-border/40 bg-[var(--surface-container-lowest)] p-4 shadow-ambient sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-            Resolution Rate
-          </p>
-          <p className="mt-2 text-[32px] font-bold leading-tight tracking-[-0.02em] text-text">
-            {resolutionRate}%
-          </p>
-        </div>
-
-        <div className="rounded-2xl bg-[var(--primary-container)] p-4 sm:p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-primary-container)]">
-            Operational Health
-          </p>
-          <div className="mt-2 flex items-center gap-3">
-            <p className="text-[28px] font-bold leading-tight tracking-[-0.02em] text-[var(--on-primary)]">
-              {healthLabel}
-            </p>
-            <span
-              className={`inline-block h-3.5 w-3.5 rounded-md ${
-                healthLabel === "STABLE"
-                  ? "bg-scale-strong-bar"
-                  : healthLabel === "WARNING"
-                    ? "bg-scale-some-bar"
-                    : "bg-scale-limited-bar"
-              }`}
-            />
-          </div>
-        </div>
       </section>
     </div>
   );

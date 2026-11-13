@@ -334,7 +334,7 @@ export default async function StudentsPage({
       />
 
       <section className={styles.directory} aria-label="Student records">
-      <div className={styles.listHeading}><div><span>Student records</span><h2>{statusFilter === "archived" ? "Archived students" : effectiveView === "attention" ? "Students needing attention" : "Student directory"}</h2></div><span className={styles.resultCount}>{totalFiltered.toLocaleString("en-GB")} students</span></div>
+      <div className={styles.listHeading}><div><h2>{statusFilter === "archived" ? "Archived students" : effectiveView === "attention" ? "Students needing attention" : "All students"}</h2></div><span className={styles.resultCount}>{totalFiltered.toLocaleString("en-GB")} students</span></div>
 
       <section className={styles.filters} aria-label="Find students">
       <StudentsBandChips

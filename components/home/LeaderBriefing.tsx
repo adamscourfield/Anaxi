@@ -20,7 +20,8 @@ const date = (value: Date | string | null) => value ? new Date(value).toLocaleDa
 export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
   const attendanceStale = data.attendanceHeadline.asOf
     && londonToday().getTime() - new Date(data.attendanceHeadline.asOf).getTime() > 3 * 86400000;
-  const attendanceMissing = data.attendanceTrend.loadError ? "Could not load" : "Missing history";
+  // A dash, not a phrase: "Missing history" ×3 at stat size wrapped and shouted. The sentence under the row explains why.
+  const attendanceMissing = "—";
   const teaching = `/insights/teaching?windowDays=${windowDays}`;
   const students = `/insights/students?windowDays=${windowDays}`;
   const teachersToReview = data.teacherRows.filter(t=>t.status === "SIGNIFICANT_DRIFT" || t.status === "EMERGING_DRIFT");
@@ -87,6 +88,9 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
       </div>
     </section>}
     <div className={styles.columns}>
+      {/* Left side stacks the briefing cards and "Explore your school", so a long "Today's work" list
+          on the right no longer leaves an empty block under two short cards. */}
+      <div className={styles.mainColumn}>
       <div className={styles.focusColumn}><section className={styles.panel} aria-labelledby="briefing-attention">
         <div className={styles.head}><div><span className={styles.eyebrow}>Priorities</span><h2 id="briefing-attention">Where to focus</h2></div><span className={styles.sectionIcon}><IconClipboard/></span></div>
         {features.onCall && data.liveOnCallBanner.count > 0 && <Link className={styles.row} href="/on-call"><span className={styles.icon}><IconPhone/></span><div><h3>{data.liveOnCallBanner.count} active on-call request{data.liveOnCallBanner.count===1?"":"s"}</h3><p>{data.liveOnCallBanner.latest ? `${data.liveOnCallBanner.latest.requesterName}${data.liveOnCallBanner.latest.location ? " · "+data.liveOnCallBanner.latest.location : ""}` : "Review the live queue"}</p><small>Live queue · includes acknowledged requests</small></div><span className={styles.arrow}>→</span></Link>}
@@ -108,6 +112,12 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
         <p className={styles.note}>A prompt to recognise progress and explore practice, based on recorded lesson signals.</p>
       </section>}
       </div>
+    {features.analysis && <section aria-labelledby="continue-investigating"><div className={styles.head}><div><h2 id="continue-investigating">Explore your school</h2></div><Link href={`/insights?windowDays=${windowDays}`}>All insights →</Link></div><nav className={styles.areas} aria-label="Explore Insights">
+      <Link className={styles.area} href={teaching}><span className={styles.icon}><IconClipboard/></span><div><h3>Teaching</h3><p>Lesson patterns & CPD</p></div><span className={styles.arrow}>→</span></Link>
+      {features.students && <Link className={styles.area} href={students}><span className={styles.icon}><IconUsersTwo/></span><div><h3>Students</h3><p>Attendance & behaviour</p></div><span className={styles.arrow}>→</span></Link>}
+      {features.assessments && <Link className={styles.area} href="/insights/attainment"><span className={styles.icon}><IconChartBar/></span><div><h3>Attainment</h3><p>Subjects & groups</p></div><span className={styles.arrow}>→</span></Link>}
+    </nav></section>}
+      </div>
       <section className={styles.work} aria-label="Today's work">
         <div className={styles.panel}><div className={styles.head}><div><span className={styles.eyebrow}>Your day</span><h2>Today’s work</h2></div><span className={styles.icon}><IconCalendar/></span></div>
           {features.leave && <><Link className={styles.workRow} href="/leave#pending-requests"><span className={styles.icon}><IconUmbrella/></span><span>Leave approvals</span><strong>{data.pendingLeaveCount}</strong><span className={styles.arrow}>→</span></Link>{data.pendingLeaveDetails.slice(0,2).map(l=><Link key={l.id} className={styles.row} href={`/leave/${l.id}`}><div><h3>{l.requesterName}</h3><small>{l.reasonLabel} · {date(l.startDate)}–{date(l.endDate)}</small></div><span className={styles.arrow}>→</span></Link>)}</>}
@@ -118,10 +128,5 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
         </div>
       </section>
     </div>
-    {features.analysis && <section aria-labelledby="continue-investigating"><div className={styles.head}><div><h2 id="continue-investigating">Explore your school</h2></div><Link href={`/insights?windowDays=${windowDays}`}>All insights →</Link></div><nav className={styles.areas} aria-label="Explore Insights">
-      <Link className={styles.area} href={teaching}><span className={styles.icon}><IconClipboard/></span><div><h3>Teaching</h3><p>Lesson patterns & CPD</p></div><span className={styles.arrow}>→</span></Link>
-      {features.students && <Link className={styles.area} href={students}><span className={styles.icon}><IconUsersTwo/></span><div><h3>Students</h3><p>Attendance & behaviour</p></div><span className={styles.arrow}>→</span></Link>}
-      {features.assessments && <Link className={styles.area} href="/insights/attainment"><span className={styles.icon}><IconChartBar/></span><div><h3>Attainment</h3><p>Subjects & groups</p></div><span className={styles.arrow}>→</span></Link>}
-    </nav></section>}
   </div>;
 }

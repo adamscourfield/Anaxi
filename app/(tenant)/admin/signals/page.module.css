@@ -6,9 +6,9 @@
 .page input, .page textarea, .page select { background:white; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; }
 .page input { min-height:42px; }
 .page span[class*="124,92,255"] { background:white; color:#ff6a52; border:1px solid #e5e5e6; border-radius:10px; }
-.page button { background:#1c1c1e; color:white; border:1px solid #1c1c1e; border-radius:10px; box-shadow:none; }
+
 .page button svg { color:inherit; }
-.page button:hover { background:#2e2e31; color:white; }
+
 .page th, .page thead { background:white; color:#6e6e73; }
 .page td, .page th, .page div[class*="border-b"], .page div[class*="border-t"] { border-color:#e5e5e6; }
 .page tr:hover { background:#fafafa; }

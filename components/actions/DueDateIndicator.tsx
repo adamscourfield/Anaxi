@@ -25,7 +25,7 @@ export function DueDateIndicator({ dueDate, status }: DueDateIndicatorProps) {
 
   if (days <= 3) {
     return (
-      <span title={`${days} day${days !== 1 ? "s" : ""} remaining`} className="text-xs font-semibold text-warning">
+      <span title={`${days} day${days !== 1 ? "s" : ""} remaining`} className="text-xs font-semibold text-[var(--warning-text)]">
         Due {formatted} ({days}d)
       </span>
     );

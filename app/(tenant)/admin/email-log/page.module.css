@@ -12,6 +12,6 @@
 .page td { padding:20px; border-color:#e5e5e6; }
 .page td[colspan] { padding:48px 24px; }
 .emptyIcon { width:32px; height:32px; margin:0 auto 20px; color:#ff6a52; }
-.page button { background:#1c1c1e; color:white; border-radius:10px; }
-.page button:hover { background:#2e2e31; color:white; }
+
+
 @media(max-width:640px) { .stats { gap:10px; } .stats > div { padding:16px; } .stats strong { font-size:26px; } }

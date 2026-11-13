@@ -8,7 +8,7 @@
 .page form > div:first-child, .page details { max-width:none; }
 .page details { background:white; border:1px solid #e5e5e6; border-radius:14px; overflow:hidden; }
 .page summary:hover { background:#fafafa; }
-.page button { background:#1c1c1e; color:white; border-radius:10px; }
+
 .page button svg { color:inherit; }
-.page button:hover { background:#2e2e31; color:white; }
+
 .page :global(.calm-transition) { transition:color 160ms ease,background-color 160ms ease,transform 160ms ease; }

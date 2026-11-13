@@ -10,7 +10,7 @@
 .page thead tr, .page tbody tr { background: #fff; }
 .page tbody tr:hover { background: #fafafa; }
 .page :global(.anx-priorities-meta-bar) { background: #fff; }
-.page a[role="button"] { background: #1c1c1e; color: #fff; border-radius: 10px; }
+
 @keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .card { animation: none; } }
 

@@ -91,7 +91,7 @@ export default async function TriangulationPage() {
         </Card>
         <Card className="space-y-0.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-muted)]">Priority</p>
-          <p className="text-2xl font-bold text-[var(--warning)]">{meta.priority}</p>
+          <p className="text-2xl font-bold text-[var(--warning-text)]">{meta.priority}</p>
         </Card>
       </div>
 

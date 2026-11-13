@@ -161,7 +161,7 @@ export default async function LeaveRequestPage({
           </div>
 
           <div className="rounded-2xl border-l-[3px] border-l-[var(--warning)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_55%,var(--surface-container-lowest))] px-5 py-5 ring-1 ring-inset ring-[color-mix(in_srgb,var(--pill-warning-ring)_35%,transparent)]">
-            <p className="text-[1.35rem] font-serif leading-none text-[var(--warning)]">&ldquo;</p>
+            <p className="text-[1.35rem] font-serif leading-none text-[var(--warning-text)]">&ldquo;</p>
             <p className="mt-2 text-[0.8125rem] italic leading-relaxed text-[var(--warning-text)]">
               Ensuring educational continuity is our priority. Please ensure your cover notes are detailed.
             </p>

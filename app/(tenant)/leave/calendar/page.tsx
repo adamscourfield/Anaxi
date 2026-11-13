@@ -156,7 +156,7 @@ export default async function LeaveCalendarPage({
           contextVariant="inline"
           context={
             <span
-              className={`font-medium ${avgDays !== null && avgDays > 5 ? "font-semibold text-warning" : "text-muted"}`}
+              className={`font-medium ${avgDays !== null && avgDays > 5 ? "font-semibold text-[var(--warning-text)]" : "text-muted"}`}
             >
               {avgDays !== null && avgDays > 5 ? "Above target" : "Median turnaround"}
             </span>

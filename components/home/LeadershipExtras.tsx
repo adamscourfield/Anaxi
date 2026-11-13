@@ -34,7 +34,7 @@ export function CohortChangeCard({ cohortRows, windowDays }: { cohortRows: Cohor
   return (
     <Card className="space-y-4 rounded-sm !p-6 shadow-none">
       <HomeCardHeadingSm
-        icon={<IconTrendDown className="text-[var(--warning)]" />}
+        icon={<IconTrendDown className="text-[var(--warning-text)]" />}
         title="Cohort change"
         subtitle={`Attendance movement — ${windowDays}-day window`}
         end={
@@ -49,7 +49,7 @@ export function CohortChangeCard({ cohortRows, windowDays }: { cohortRows: Cohor
             <span className="text-sm font-medium text-text">
               Year {row.yearGroup.trim().replace(/^(?:year\s*|y(?=\d))+/i, "")}
             </span>
-            <span className="text-sm font-semibold tabular-nums text-negative">
+            <span className="text-sm font-semibold tabular-nums text-[var(--pill-error-text)]">
               {(row.attendanceDelta ?? 0).toFixed(1)}%
             </span>
           </li>
