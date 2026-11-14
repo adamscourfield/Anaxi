@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { toast } from "@/components/toast-provider";
+import { SchoolSwitchProgress, type SchoolSwitchStage } from "@/components/school-switch-progress";
 
 type TenantOption = {
   tenantId: string;
@@ -19,10 +19,17 @@ export function SchoolSwitcher({
   tenants: TenantOption[];
 }) {
   const [open, setOpen] = useState(false);
-  const [switching, setSwitching] = useState(false);
+  // `null` when idle; otherwise the school being switched to and how far the switch has got.
+  const [progress, setProgress] = useState<{
+    schoolName: string;
+    stage: SchoolSwitchStage;
+    failedStage?: SchoolSwitchStage;
+  } | null>(null);
+  const [navigating, startNavigation] = useTransition();
   const ref = useRef<HTMLDivElement>(null);
   const { update } = useSession();
   const router = useRouter();
+  const switching = progress !== null;
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -32,25 +39,45 @@ export function SchoolSwitcher({
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  async function switchTenant(tenantId: string) {
+  // The last stage ends when the new school's home page has actually rendered,
+  // which is when the navigation transition settles.
+  useEffect(() => {
+    if (progress?.stage !== "loading" || navigating) return;
+    setProgress((p) => (p ? { ...p, stage: "done" } : p));
+  }, [progress?.stage, navigating]);
+
+  // Show the finished state briefly, then get out of the way.
+  useEffect(() => {
+    if (progress?.stage !== "done") return;
+    const t = window.setTimeout(() => setProgress(null), 700);
+    return () => window.clearTimeout(t);
+  }, [progress?.stage]);
+
+  async function switchTenant(tenantId: string, schoolName: string) {
     setOpen(false);
-    setSwitching(true);
+    let stage: SchoolSwitchStage = "access";
+    setProgress({ schoolName, stage });
+    const fail = () => setProgress({ schoolName, stage: "error", failedStage: stage });
     try {
       const res = await fetch("/api/auth/switch-tenant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tenantId }),
       });
-      if (!res.ok) {
-        toast("Could not switch school", "error");
-        return;
-      }
+      if (!res.ok) return fail();
+
+      stage = "session";
+      setProgress({ schoolName, stage });
       await update({ targetTenantId: tenantId });
-      toast("Switched school", "success");
-      router.push("/home");
-      router.refresh();
-    } finally {
-      setSwitching(false);
+
+      stage = "loading";
+      startNavigation(() => {
+        router.push("/home");
+        router.refresh();
+      });
+      setProgress({ schoolName, stage });
+    } catch {
+      fail();
     }
   }
 
@@ -81,7 +108,7 @@ export function SchoolSwitcher({
             <button
               key={t.tenantId}
               type="button"
-              onClick={() => !t.isCurrent && switchTenant(t.tenantId)}
+              onClick={() => !t.isCurrent && switchTenant(t.tenantId, t.tenantName)}
               disabled={t.isCurrent || switching}
               className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] calm-transition ${
                 t.isCurrent
@@ -102,6 +129,15 @@ export function SchoolSwitcher({
           ))}
         </div>
       )}
+
+      {progress ? (
+        <SchoolSwitchProgress
+          schoolName={progress.schoolName}
+          stage={progress.stage}
+          failedStage={progress.failedStage}
+          onClose={() => setProgress(null)}
+        />
+      ) : null}
     </div>
   );
 }
