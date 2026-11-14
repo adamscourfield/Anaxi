@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import styles from "@/app/god/god.module.css";
 import { useRouter } from "next/navigation";
+import { SchoolSwitchProgress, type SchoolSwitchStage } from "@/components/school-switch-progress";
 
 type School = { id: string; name: string; status: string };
 
@@ -13,7 +14,14 @@ export function GodSchoolSwitcher() {
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
-  const [switching, setSwitching] = useState(false);
+  // `null` when idle; otherwise the school being entered and how far the switch has got.
+  const [progress, setProgress] = useState<{
+    schoolName: string;
+    stage: SchoolSwitchStage;
+    failedStage?: SchoolSwitchStage;
+  } | null>(null);
+  const [navigating, startNavigation] = useTransition();
+  const switching = progress !== null;
   const ref = useRef<HTMLDivElement>(null);
   const { update } = useSession();
   const router = useRouter();
@@ -34,23 +42,45 @@ export function GodSchoolSwitcher() {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  async function enterSchool(tenantId: string) {
+  // The last stage ends when the school's home page has actually rendered.
+  useEffect(() => {
+    if (progress?.stage !== "loading" || navigating) return;
+    setProgress((p) => (p ? { ...p, stage: "done" } : p));
+  }, [progress?.stage, navigating]);
+
+  // Show the finished state briefly, then get out of the way.
+  useEffect(() => {
+    if (progress?.stage !== "done") return;
+    const t = window.setTimeout(() => setProgress(null), 700);
+    return () => window.clearTimeout(t);
+  }, [progress?.stage]);
+
+  async function enterSchool(tenantId: string, schoolName: string) {
     setOpen(false);
-    setSwitching(true);
+    setError("");
+    let stage: SchoolSwitchStage = "access";
+    setProgress({ schoolName, stage });
+    const fail = () => setProgress({ schoolName, stage: "error", failedStage: stage });
     try {
       const ensure = await fetch("/api/god/enter-school", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tenantId }),
       });
-      if (!ensure.ok) { setError("School access could not be opened."); return; }
+      if (!ensure.ok) return fail();
+
+      stage = "session";
+      setProgress({ schoolName, stage });
       await update({ targetTenantId: tenantId });
-      router.push("/home");
-      router.refresh();
+
+      stage = "loading";
+      startNavigation(() => {
+        router.push("/home");
+        router.refresh();
+      });
+      setProgress({ schoolName, stage });
     } catch {
-      setError("School access could not be opened.");
-    } finally {
-      setSwitching(false);
+      fail();
     }
   }
 
@@ -65,7 +95,7 @@ export function GodSchoolSwitcher() {
         className={styles.schoolTrigger}
         style={{ color: "var(--on-surface-variant)" }}
       >
-        {switching ? "Switching..." : "Enter school"}
+        Enter school
         <svg viewBox="0 0 16 16" fill="none" className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} xmlns="http://www.w3.org/2000/svg">
           <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -82,7 +112,7 @@ export function GodSchoolSwitcher() {
             <button
               key={school.id}
               type="button"
-              onClick={() => enterSchool(school.id)}
+              onClick={() => enterSchool(school.id, school.name)}
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-text transition-colors hover:bg-bg"
             >
               <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border text-[11px] font-semibold text-[#e14e36]">
@@ -96,6 +126,16 @@ export function GodSchoolSwitcher() {
           ))}
         </div>
       )}
+
+      {progress ? (
+        <SchoolSwitchProgress
+          schoolName={progress.schoolName}
+          stage={progress.stage}
+          failedStage={progress.failedStage}
+          errorMessage="School access could not be opened. You are still in the console."
+          onClose={() => setProgress(null)}
+        />
+      ) : null}
     </div>
   );
 }
