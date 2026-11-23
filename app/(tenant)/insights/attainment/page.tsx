@@ -11,7 +11,7 @@ import { formatYearGroup } from "@/modules/observations/yearGroup";
 import styles from "./page.module.css";
 
 const index = (v:number|null) => v===null?"—":(v*100).toFixed(1);
-const change = (v:number|null) => v===null?"No comparison":(v>0?"+":"")+(v*100).toFixed(1)+" index points";
+const change = (v:number|null) => { if (v===null) return "No comparison"; const r=Math.round(v*1000)/10; return r===0?"No change":(r>0?"+":"")+r.toFixed(1)+" index points"; };
 export default async function AttainmentInsights({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}) {
   const params = await searchParams;
   const value = (key:string) => {const v=params[key];return (Array.isArray(v)?v[0]:v)??"";};
@@ -50,7 +50,7 @@ export default async function AttainmentInsights({searchParams}:{searchParams:Pr
   const studentList=(rows:typeof studentRows)=><div className={styles.rows}>{rows.map(s=><Link className={styles.row} key={s.studentId} href={`/students/${s.studentId}?from=${encodeURIComponent(from)}#attainment`}><div><h3>{s.studentName}</h3><p>{formatYearGroup(s.yearGroup)}{s.sendFlag?" · SEND":""}{s.ppFlag?" · Pupil premium":""}</p></div><div><span className={styles.status}>{s.subjects.filter(r=>r.movementLabel==="DECLINING").length} declining · {s.subjects.filter(r=>r.movementLabel==="IMPROVING").length} improving subjects</span><p>{s.subjects.filter(r=>r.movement!==null).length} of {s.subjects.length} subjects have a comparison</p></div><span aria-hidden="true">→</span></Link>)}</div>;
   return <div className={styles.page}>
     <Link className={styles.back} href="/insights">← Insights</Link>
-    <PageHeader variant="ledger" title="Attainment insights" subtitle="Understand results, find patterns and review the students behind them." actions={<Link className={styles.workspace} href={selected?"/assessments/"+selected.id:"/assessments"}>Assessment workspace ↗</Link>}/>
+    <PageHeader variant="ledger" title="Attainment insights" subtitle="Understand results, find patterns and review the students behind them." actions={<Link className={styles.workspace} href={selected?"/assessments/"+selected.id:"/assessments"}>Assessment workspace</Link>}/>
     <div className={styles.viewBar}><nav className={styles.tabs} aria-label="Attainment insight views">{[["overview","Overview"],["subjects","Subjects"],["groups","Groups"],["students","Students"]].map(([v,l])=><Link key={v} href={href({view:v,q:"",movement:""})} aria-current={view===v?"page":undefined}>{l}</Link>)}</nav></div>
     <section className={styles.controls} aria-label="Assessment dataset and filters"><form action="/insights/attainment"><input type="hidden" name="view" value={view}/><div className={styles.fields}>
       <label>Assessment cycle<select name="cycle" defaultValue={selected?.id}>{!cycles.length&&<option value="">No assessment cycles</option>}{cycles.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></label>

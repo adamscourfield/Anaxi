@@ -251,7 +251,7 @@ export default async function SignalsPage({
           variant="ledger"
           className="!mb-8 border-0 !pb-0"
           eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-[#6B7280]"
-          eyebrow="Explorer"
+          eyebrow="Insights"
           titleClassName="text-[1.75rem] font-bold tracking-tight text-[#111827] md:text-[2rem]"
           subtitleClassName="text-[0.875rem] font-medium leading-relaxed text-[#6B7280]"
           title="Signals"

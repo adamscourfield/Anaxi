@@ -13,7 +13,7 @@
 .page tbody tr { background: #fff; border-color: #e5e5e6; transition: background 180ms; }
 .page tbody tr:hover { background: #fafafa; }
 .page td:first-child p:first-child { font-weight: 600; }
-.page td:first-child a > span { border-radius: 50%; background: #ff6a52; color: #fff; }
+.page td:first-child a > span:not(:has(*)) { border-radius: 10px; background: #f2f2f2; color: #1c1c1e; }
 .page button:focus-visible, .page a:focus-visible, .page select:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
 @media (prefers-reduced-motion: no-preference) { .page :global(.table-shell) { animation: arrive 550ms cubic-bezier(.22,1,.36,1) both; } }
 @keyframes arrive { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }

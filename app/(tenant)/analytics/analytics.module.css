@@ -24,5 +24,5 @@
 .page a[class*="rounded-sm"][class*="border"][class*="p-4"]:hover { border-color: #ff6a52; }
 .page :global(.anx-priorities-student-filters) { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; padding: 24px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
 .page :global(.anx-priorities-student-filters) :global(.field), .page :global(.anx-priorities-student-filters) button:not([type="submit"]) { background: #fff; border-color: #e5e5e6; border-radius: 10px; }
-.page td:first-child a > span:first-child:not([class*="min-w-0"]) { border-radius: 50%; background: #ff6a52; color: #fff; }
+.page td:first-child a > span:first-child:not([class*="min-w-0"]) { border-radius: 10px; background: #f2f2f2; color: #1c1c1e; }
 .page table:has(th.sticky) td:nth-child(2) { white-space: nowrap; }

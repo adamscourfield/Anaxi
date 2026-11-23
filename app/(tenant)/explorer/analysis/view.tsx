@@ -211,7 +211,7 @@ export default async function AnalysisPage({
       <PageHeader
         variant="ledger"
         eyebrowClassName="anx-eyebrow"
-        eyebrow="Explorer"
+        eyebrow="Insights"
         title="Behaviour analysis"
         subtitle="Cohort behaviour, attendance, and on-call patterns for the selected window."
         meta={

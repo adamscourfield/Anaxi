@@ -163,7 +163,7 @@ export default async function ExplorerObservationsPage({
       <ExplorerBackLink />
 
       <PageHeader variant="ledger"
-        eyebrow="Explorer"
+        eyebrow="Insights"
         title="Observations"
         subtitle="Recent classroom observations with signal coverage details."
         actions={

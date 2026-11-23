@@ -321,8 +321,11 @@ async function TeachersTab({
       if (statusDiff !== 0) return statusDiff;
       return b.normalizedIDS - a.normalizedIDS;
     }
+    // STATUS_ORDER ranks the most serious status lowest (Significant drift = 0), so "desc"
+    // (the default, worst first) keeps that order and "asc" reverses it. It was the other way
+    // round, which listed low-coverage and stable teachers above significant drift.
     const statusDiff = TEACHER_STATUS_ORDER[a.status] - TEACHER_STATUS_ORDER[b.status];
-    if (statusDiff !== 0) return sortDir === "asc" ? statusDiff : -statusDiff;
+    if (statusDiff !== 0) return sortDir === "asc" ? -statusDiff : statusDiff;
     const scoreCmp = a.normalizedIDS - b.normalizedIDS;
     if (scoreCmp !== 0) return sortDir === "asc" ? scoreCmp : -scoreCmp;
     return collator.compare(a.teacherName, b.teacherName);
@@ -433,7 +436,7 @@ async function TeachersTab({
                         href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}`}
                         className="flex min-w-0 items-center gap-3"
                       >
-                        <Avatar name={row.teacherName} userId={row.teacherMembershipId} size="md" />
+                        <Avatar name={row.teacherName} userId={row.teacherMembershipId} size="md" tone="muted" />
                         <span className="min-w-0 truncate font-semibold text-[#111827] underline decoration-[color-mix(in_srgb,#111827_35%,transparent)] underline-offset-2 hover:decoration-[#111827]">
                           {row.teacherName}
                         </span>
@@ -790,8 +793,9 @@ async function StudentsTab({
       if (bandDiff !== 0) return bandDiff;
       return b.riskScore - a.riskScore;
     }
+    // Same as teachers: BAND_ORDER has Urgent = 0, so the default "desc" (worst first) keeps it.
     const bandDiff = BAND_ORDER[a.band] - BAND_ORDER[b.band];
-    if (bandDiff !== 0) return sortDir === "asc" ? bandDiff : -bandDiff;
+    if (bandDiff !== 0) return sortDir === "asc" ? -bandDiff : bandDiff;
     const scoreCmp = a.riskScore - b.riskScore;
     if (scoreCmp !== 0) return sortDir === "asc" ? scoreCmp : -scoreCmp;
     return collator.compare(a.studentName, b.studentName);
@@ -1121,7 +1125,7 @@ export default async function AnalyticsPage({
           variant="ledger"
           className="!mb-0 border-0 !pb-0"
           eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-[#6B7280]"
-          eyebrow="Analysis"
+          eyebrow="Insights"
           titleClassName="text-[1.75rem] font-bold tracking-tight text-[#111827] md:text-[2rem]"
           subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-[#374151]"
           title="Priorities"

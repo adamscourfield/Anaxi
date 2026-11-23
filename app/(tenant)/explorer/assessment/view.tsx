@@ -130,7 +130,7 @@ export default async function AssessmentHubPage({
 
       <PageHeader
         variant="ledger"
-        eyebrow="Explorer"
+        eyebrow="Insights"
         title="Assessment"
         subtitle="Attainment KPIs follow the selected assessment cycle. Behaviour correlations use the pastoral window below."
         meta={

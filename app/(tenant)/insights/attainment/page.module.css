@@ -64,7 +64,7 @@
 .row h3 { font-size:14px; font-weight:600; }
 .row p { font-size:12px; color:#6e6e73; margin-top:4px; line-height:1.5; }
 .status { font-size:12px; }
-.row > span:last-child { color:#e14e36; }
+.row > span:last-child { color:#a1a1aa; transition:color 160ms,transform 160ms; }.row:hover > span:last-child { color:#1c1c1e; transform:translateX(2px); }
 .shortcuts { display:flex; flex-wrap:wrap; gap:12px 24px; font-size:13px; }
 .page input:focus-visible,.page select:focus-visible,.page button:focus-visible { outline:2px solid #ff6a52; outline-offset:3px; }
 @media(prefers-reduced-motion:no-preference) { .rows { animation:arrive .4s cubic-bezier(.22,1,.36,1) both; } }
@@ -85,7 +85,7 @@
 .page .period a { transition:background .16s ease,color .16s ease; }
 @media(max-width:800px) { .controls form { flex-wrap:wrap; } .fields { flex-basis:100%; flex-wrap:wrap; } .fields label { flex:1 1 160px; } }
 @media(max-width:500px) { .viewBar .tabs { width:100%; } .viewBar .tabs a { flex:1; text-align:center; padding:8px 10px; font-size:12px; } .fields label { flex-basis:100%; } }
-.workspace { background:#1c1c1e; color:#fff; padding:10px 16px; border-radius:10px; font-size:13px; white-space:nowrap; }
+.workspace { display:inline-flex; align-items:center; min-height:40px; background:#fff; color:#1c1c1e; border:1px solid #d4d4d8; padding:0 16px; border-radius:10px; font-size:13px; font-weight:600; white-space:nowrap; }.workspace:hover { background:#f4f4f5; border-color:#a1a1aa; }
 .comparison { display:flex; align-items:flex-start; gap:12px; padding:2px 0; }
 .dot { width:7px; height:7px; border-radius:50%; background:#ff6a52; margin-top:7px; flex-shrink:0; }
 .comparison strong { font-size:13px; font-weight:600; }

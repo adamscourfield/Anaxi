@@ -203,7 +203,7 @@ export default async function DepartmentsPage({
 
       {/* ── Header ─────────────────────────────────────────────── */}
       <PageHeader variant="ledger"
-        eyebrow="Explorer"
+        eyebrow="Insights"
         title="Departments"
         meta={<MetaText>{totalSignals} signals monitored</MetaText>}
         subtitle={

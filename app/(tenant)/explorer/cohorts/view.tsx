@@ -139,7 +139,7 @@ export default async function CohortsPage({
       <ExplorerBackLink />
 
       <PageHeader variant="ledger"
-        eyebrow="Explorer"
+        eyebrow="Insights"
         title="Cohorts"
         subtitle="Year group behaviour metrics — attendance, incidents and welfare indicators aggregated by cohort."
         actions={showExport ? (

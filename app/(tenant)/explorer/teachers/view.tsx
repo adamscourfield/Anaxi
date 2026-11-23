@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ClickableRow } from "@/components/ui/clickable-row";
 import { PageHeader } from "@/components/ui/page-header";
 import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
-import { ExplorerBreadcrumb } from "@/components/explorer/explorer-breadcrumb";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
@@ -52,15 +51,17 @@ const ITEMS_PER_PAGE = 20;
 function formatDrift(value: number): { text: string; arrow: string; color: string } {
   const abs = Math.abs(value);
   const formatted = abs.toFixed(1);
-  if (value > 0.5) return { text: `+${formatted}`, arrow: "↗", color: "text-scale-strong-text" };
-  if (value < -0.5) return { text: `-${formatted}`, arrow: "↘", color: "text-scale-limited-text" };
+  // A higher drift score means signals have weakened more (see modules/analysis/teacherRisk.ts),
+  // so it reads as a decline: red and pointing down. It used to show as green "+6.7 ↗".
+  if (value > 0.5) return { text: formatted, arrow: "↘", color: "text-scale-limited-text" };
+  if (value < -0.5) return { text: `-${formatted}`, arrow: "↗", color: "text-scale-strong-text" };
   const sign = value < 0 ? "-" : "+";
   return { text: `${sign}${formatted}`, arrow: "→", color: "text-muted" };
 }
 
 /** Zero-pad a number to 2 digits */
 function zeroPad(n: number): string {
-  return String(n).padStart(2, "0");
+  return String(n);
 }
 
 /* ─── Page ─────────────────────────────────────────────────────────────────── */
@@ -283,7 +284,6 @@ export default async function ExplorerTeachersPage({
 
       <PageHeader
         variant="ledger"
-        eyebrow={<ExplorerBreadcrumb items={[{ label: "Teachers" }]} />}
         title="Teachers"
         subtitle="Observation coverage, signal means, and drift — switch window and pivot vs priorities."
         actions={
@@ -400,10 +400,9 @@ export default async function ExplorerTeachersPage({
                               href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}&ref=explorer`}
                               className="flex items-center gap-3.5 calm-transition group-hover:text-accent"
                             >
-                              <Avatar name={row.teacherName} size="md" avatarUrl={teacherAvatarUrlById.get(row.teacherMembershipId)} />
+                              <Avatar name={row.teacherName} size="md" tone="muted" avatarUrl={teacherAvatarUrlById.get(row.teacherMembershipId)} />
                               <div className="min-w-0">
                                 <p className="truncate font-semibold text-[var(--text)]">{row.teacherName}</p>
-                                <p className="truncate text-xs text-muted">Teacher</p>
                               </div>
                             </Link>
                           </td>
@@ -546,10 +545,9 @@ export default async function ExplorerTeachersPage({
                               href={`/analysis/teachers/${row.teacherMembershipId}?window=${windowDays}&ref=explorer`}
                               className="flex items-center gap-3.5 calm-transition group-hover:text-accent"
                             >
-                              <Avatar name={row.teacherName} size="md" avatarUrl={teacherAvatarUrlById.get(row.teacherMembershipId)} />
+                              <Avatar name={row.teacherName} size="md" tone="muted" avatarUrl={teacherAvatarUrlById.get(row.teacherMembershipId)} />
                               <div className="min-w-0">
                                 <p className="truncate font-semibold text-[var(--text)]">{row.teacherName}</p>
-                                <p className="truncate text-xs text-muted">Teacher</p>
                               </div>
                             </Link>
                           </td>

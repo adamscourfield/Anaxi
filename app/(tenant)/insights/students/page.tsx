@@ -55,7 +55,7 @@ export default async function StudentInsights({ searchParams }: {
     <Link className={styles.back} href={`/insights?windowDays=${windowDays}`}>← Insights</Link>
     <PageHeader variant="ledger" className={styles.header} eyebrow="Student intelligence" title="Student insights" subtitle="Understand who needs attention, review the evidence and decide what to do next." />
     <div className={styles.summary}>
-      <div className={styles.featured}><span>Needs attention</span><strong>{priorityCount}</strong><p>Students in the priority or urgent bands</p></div>
+      <div className={priorityCount > 0 ? styles.featured : undefined}><span>Needs attention</span><strong>{priorityCount}</strong><p>Students in the priority or urgent bands</p></div>
       <div><span>My watchlist</span><strong>{allRows.filter(r=>r.onWatchlist).length}</strong><p>Students you have chosen to follow</p></div>
       <div><span>Evidence available</span><strong>{allRows.length-missing}<span className={styles.total}> / {allRows.length}</span></strong><p>Active students with a snapshot</p></div>
     </div>
