@@ -67,6 +67,7 @@ export default async function SchoolDetailPage({
   const schoolType = settings?.schoolType ?? "SECONDARY";
 
   const enabled = new Set(school.features.filter((f) => f.enabled).map((f) => f.key));
+  const statusLabel = school.status.charAt(0) + school.status.slice(1).toLowerCase();
 
   return (
     <div className={styles.page}>
@@ -82,36 +83,36 @@ export default async function SchoolDetailPage({
           </details>
         </Card>
       ) : null}
-      <Link href="/god" className="text-xs text-muted">← Schools</Link>
-      <PageHeader variant="ledger" title={school.name} subtitle={`${school.slug ?? "No slug"} · ${school.status.toLowerCase()}`} />
-      <nav className={styles.jumpNav} aria-label="School settings"><a href="#school-configuration">Configuration</a><a href="#school-modules">Modules</a><a href="#school-admins">Administrators</a><a href="#school-invites">Invitations</a><Link href={`/god/audit?tenantId=${school.id}`}>School activity ↗</Link></nav>
+      <Link href="/god" className={styles.backLink}>← Schools</Link>
+      <PageHeader variant="ledger" title={school.name} subtitle={`${school.slug ?? "No slug set"} · ${statusLabel}`} />
+      <nav className={styles.jumpNav} aria-label="School settings"><a href="#school-configuration">Configuration</a><a href="#school-modules">Modules</a><a href="#school-admins">Administrators</a><a href="#school-invites">Invitations</a><Link href={`/god/audit?tenantId=${school.id}`}>School activity</Link></nav>
       <div id="school-configuration" className={styles.settingsGrid}>
       <Card>
-        <form method="post" action={`/api/god/schools/${school.id}/status`} className="flex items-end gap-3">
+        <form method="post" action={`/api/god/schools/${school.id}/status`} className={styles.inlineForm}>
           <CsrfInput token={csrfToken} />
-          <label className="text-sm font-medium">
+          <label>
             Status
-            <select name="status" defaultValue={school.status} className="field ml-2">
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="PAUSED">PAUSED</option>
-              <option value="ARCHIVED">ARCHIVED</option>
+            <select name="status" defaultValue={school.status} className="field">
+              <option value="ACTIVE">Active</option>
+              <option value="PAUSED">Paused</option>
+              <option value="ARCHIVED">Archived</option>
             </select>
           </label>
-          <Button type="submit">Update</Button>
+          <Button type="submit" variant="secondary">Save status</Button>
         </form>
       </Card>
 
       <Card>
-        <form method="post" action={`/api/god/schools/${school.id}/school-type`} className="flex items-end gap-3">
+        <form method="post" action={`/api/god/schools/${school.id}/school-type`} className={styles.inlineForm}>
           <CsrfInput token={csrfToken} />
-          <label className="text-sm font-medium">
+          <label>
             School type
-            <select name="schoolType" defaultValue={schoolType} className="field ml-2">
+            <select name="schoolType" defaultValue={schoolType} className="field">
               <option value="SECONDARY">Secondary</option>
               <option value="PRIMARY">Primary</option>
             </select>
           </label>
-          <Button type="submit">Update</Button>
+          <Button type="submit" variant="secondary">Save type</Button>
         </form>
         <MetaText className="mt-2">
           Sets the school’s observation signal catalogue.
@@ -125,8 +126,8 @@ export default async function SchoolDetailPage({
           <H2>Modules</H2>
           <div className={styles.moduleGrid}>
             {MODULES.map((m) => (
-              <label key={m} className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-surface/60 px-3 py-2 text-sm calm-transition hover:border-accent/30 hover:bg-[var(--accent-tint)]">
-                <input type="checkbox" name="modules" value={m} defaultChecked={enabled.has(m)} className="accent-accent" />
+              <label key={m} className="flex items-center gap-2.5 rounded-[10px] border border-[#e5e5e6] bg-white px-3 py-2.5 text-sm calm-transition hover:bg-[#fafafa]">
+                <input type="checkbox" name="modules" value={m} defaultChecked={enabled.has(m)} />
                 {m.toLowerCase().split("_").map(word=>word.charAt(0).toUpperCase()+word.slice(1)).join(" ")}
               </label>
             ))}
@@ -137,14 +138,16 @@ export default async function SchoolDetailPage({
 
       <Card id="school-admins">
         <SectionHeader title="Administrators" subtitle={`${school.users.length} admin account${school.users.length === 1 ? "" : "s"}`} />
-        <ul className="mt-2 space-y-1.5 text-sm">
+        <ul className="mt-2">
           {school.users.map((u) => (
-            <li key={u.id} className="flex flex-wrap items-center gap-2 border-b border-border py-3">
-              <span>{u.fullName} · {u.email}</span>
+            <li key={u.id} className={styles.adminRow}>
+              <strong>{u.fullName}</strong>
+              <span>{u.email}</span>
+              <StatusPill variant="neutral" size="sm">{u.role === "SUPER_ADMIN" ? "Super user" : "Administrator"}</StatusPill>
               <StatusPill variant={u.isActive ? "success" : "neutral"} size="sm">{u.isActive ? "Active" : "Inactive"}</StatusPill>
-              <StatusPill variant="neutral" size="sm">{u.role}</StatusPill>
             </li>
           ))}
+          {school.users.length === 0 ? <li className="py-3 text-sm text-muted">No administrators yet. Invite one below.</li> : null}
         </ul>
       </Card>
 
@@ -167,28 +170,28 @@ export default async function SchoolDetailPage({
             const isAccepted = Boolean(i.acceptedAt);
             const isExpired = !isAccepted && new Date(i.expiresAt).getTime() < Date.now();
             return (
-              <li key={i.id} className="rounded-xl border border-border/70 p-3">
+              <li key={i.id} className="rounded-[10px] border border-[#e5e5e6] p-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="break-all">{i.fullName} · {i.email}</div>
                     <MetaText>
                       {isAccepted
-                        ? `accepted ${new Date(i.acceptedAt!).toLocaleDateString("en-GB")}`
+                        ? `Accepted ${new Date(i.acceptedAt!).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
                         : isExpired
-                          ? "expired"
-                          : `expires ${new Date(i.expiresAt).toLocaleDateString("en-GB")}`}
+                          ? "Expired"
+                          : `Expires ${new Date(i.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`}
                     </MetaText>
                   </div>
                   {!isAccepted ? (
                     <div className="flex gap-1">
                       <form method="post" action={`/api/god/schools/${school.id}/invites/${i.id}/resend`}>
                         <CsrfInput token={csrfToken} />
-                        <Button variant="secondary" type="submit" className="px-2 py-1 text-xs">Resend</Button>
+                        <Button variant="secondary" type="submit" className="h-8 px-3 py-0 text-xs">Resend</Button>
                       </form>
                       {!isExpired ? (
                         <form method="post" action={`/api/god/schools/${school.id}/invites/${i.id}/revoke`}>
                           <CsrfInput token={csrfToken} />
-                          <Button variant="ghost" type="submit" className="px-2 py-1 text-xs">Revoke</Button>
+                          <Button variant="ghost" type="submit" className="h-8 px-3 py-0 text-xs text-error">Revoke</Button>
                         </form>
                       ) : null}
                     </div>
@@ -197,7 +200,7 @@ export default async function SchoolDetailPage({
               </li>
             );
           })}
-          {school.adminInvites.length === 0 ? <li className="text-muted">No invites yet.</li> : null}
+          {school.adminInvites.length === 0 ? <li className="text-muted">No invites sent yet.</li> : null}
         </ul>
       </Card>
     </div>

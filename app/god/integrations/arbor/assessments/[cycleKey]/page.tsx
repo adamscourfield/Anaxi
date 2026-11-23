@@ -52,7 +52,7 @@ export default async function ArborAssessmentCycleReviewPage({ params, searchPar
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
       <PageHeader
-        eyebrow="God Mode · Arbor"
+        eyebrow="Arbor"
         title={cycle.cycleLabel}
         subtitle={historicDiscoveryComplete
           ? "Read-only review of the Arbor marks that would be imported into this cycle. No results are created or changed here."

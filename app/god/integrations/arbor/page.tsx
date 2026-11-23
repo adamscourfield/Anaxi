@@ -438,10 +438,8 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
     <div className="mx-auto max-w-[1400px] space-y-6 p-6">
       <PageHeader
         variant="ledger"
-        eyebrow="God Mode"
         title="Arbor"
         subtitle="Connections, sync health and school data operations."
-        actions={<Link href="/god" className="text-xs text-muted">Schools ↗</Link>}
       />
 
       {integration?.status === "CONNECTED" && <nav className={styles.jumpNav} aria-label="Arbor operations">{[["connection","Connection"],["people","People"],["attendance","Attendance"],["behaviour","Behaviour"],["timetable","Timetable"],["assessments","Assessments"],["photos","Photos"],["leave","Leave"]].map(([id,label])=><a key={id} href={`#${id}`}>{label}</a>)}</nav>}
@@ -449,10 +447,9 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
       <Card className="space-y-4" tone="inset">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-accent">Arbor connections</div>
-            <H3 className="mt-1">Choose a school connection</H3>
+            <H3>{integrations.length ? "Choose a school connection" : "No Arbor connections yet"}</H3>
+            <MetaText className="mt-1">Each connection has separate credentials, sync state, alerts and approvals.</MetaText>
           </div>
-          <MetaText>Each connection has separate credentials, sync state, alerts, and approvals.</MetaText>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           {integrations.map((item: { id: string; label: string; status: string; schools: Array<{ tenant: { name: string } }> }) => {
@@ -462,7 +459,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
               <MetaText className="mt-1">{item.schools.map((school) => school.tenant.name).join(" · ") || "No Anaxi schools linked"}</MetaText>
             </Link>;
           })}
-          <Link href="/god/integrations/arbor?new=1" className="rounded-sm border border-dashed border-border px-4 py-4 text-sm font-semibold text-accent hover:border-accent">+ Add another Arbor connection</Link>
+          <Link href="/god/integrations/arbor?new=1" className="rounded-[10px] border border-dashed border-[#d4d4d8] px-4 py-4 text-sm font-semibold text-[#1c1c1e] calm-transition hover:border-[#a1a1aa] hover:bg-[#fafafa]">{integrations.length ? "+ Add another Arbor connection" : "+ Add an Arbor connection"}</Link>
         </div>
       </Card>
 
@@ -1353,23 +1350,26 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
             </div>
           </div>
 
-          <fieldset className="space-y-3 border-t border-border/70 pt-5">
+          {/* The rule sits on a wrapper: on the fieldset itself the browser draws it through the legend. */}
+          <div className="border-t border-border/70 pt-5">
+          <fieldset className="space-y-3">
             <legend className="p-0">
               <H3>Schools that receive Arbor data</H3>
             </legend>
             <MetaText>Attach every Anaxi view that belongs to this real school. Their data remains separated inside Anaxi.</MetaText>
             <div className="grid gap-2 sm:grid-cols-2">
               {schools.map((school) => (
-                <label key={school.id} className="flex items-center gap-3 rounded-sm border border-border/70 bg-surface/60 px-3 py-3 text-sm">
+                <label key={school.id} className="flex items-center gap-3 rounded-[10px] border border-[#e5e5e6] bg-white px-3 py-3 text-sm calm-transition hover:bg-[#fafafa]">
                   <input type="checkbox" name="tenantIds" value={school.id} defaultChecked={selected.has(school.id)} className="accent-accent" />
                   <span>
                     <span className="block font-medium">{school.name}</span>
-                    <MetaText>{school.tenantSettings?.schoolType === "PRIMARY" ? "Primary" : "Secondary"} · {school.status.toLowerCase()}</MetaText>
+                    <MetaText>{school.tenantSettings?.schoolType === "PRIMARY" ? "Primary" : "Secondary"} · {school.status.charAt(0) + school.status.slice(1).toLowerCase()}</MetaText>
                   </span>
                 </label>
               ))}
             </div>
           </fieldset>
+          </div>
 
           <SubmitButton className={actionButtonClass}>{integration ? "Save this Arbor connection" : "Create Arbor connection"}</SubmitButton>
         </form>

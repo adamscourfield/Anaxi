@@ -30,6 +30,7 @@ Page CSS modules must not contain blanket selectors such as `.page button { back
 - Warning **text** uses `--warning-text`; `--warning` / amber `#fdc683` is a fill colour only (1.5:1 on white).
 - Keyboard focus is global (`globals.css`, "Keyboard focus"): do not add `outline-none` without a replacement.
 - Empty numbers render as "—" with a sentence explaining why, not a phrase at stat size.
+- God mode (`app/god`) has its own shell but the same spec: it must not override colour tokens (`--accent`, `--error`, `--text` …) in `god.module.css`. Coral stays an accent; checkboxes and actions are ink.
 
 -------|----------------|
 | Display / page titles | **Space Grotesk** on `main h1` (`--font-space-grotesk`) |

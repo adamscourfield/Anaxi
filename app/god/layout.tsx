@@ -9,8 +9,8 @@ export default async function GodLayout({children}:{children:React.ReactNode}) {
   await requireSuperAdminUser();
   return <div className={`${styles.shell} ${figtree.className}`}>
     <a href="#platform-main" className={styles.skip}>Skip to workspace</a>
-    <header className={styles.topbar}><Link href="/god" className={styles.brand}><Image src="/anaxi-logo.png" alt="Anaxi" width={28} height={28}/><span>ANAXI<small>PLATFORM</small></span></Link><div className={styles.topActions}><span className={styles.access}>Super user</span><GodSchoolSwitcher/><Link href="/home">Exit GOD mode ↗</Link></div></header>
-    <aside className={styles.sidebar}><div><p className={styles.navLabel}>GOD mode</p><PlatformNav/></div><div className={styles.sidebarFoot}><span className={styles.liveDot}/>Live platform<Link href="/login/sign-out?callbackUrl=/login&returnTo=/home">Sign out ↗</Link></div></aside>
+    <header className={styles.topbar}><Link href="/god" className={styles.brand}><Image src="/anaxi-logo.png" alt="Anaxi" width={28} height={28}/><span>ANAXI<small>PLATFORM</small></span></Link><div className={styles.topActions}><span className={styles.access}>Super user</span><GodSchoolSwitcher/><Link href="/home">Exit god mode</Link></div></header>
+    <aside className={styles.sidebar}><div><p className={styles.navLabel}>God mode</p><PlatformNav/></div><div className={styles.sidebarFoot}><span className={styles.liveDot}/>Live platform<Link href="/login/sign-out?callbackUrl=/login&returnTo=/home">Sign out</Link></div></aside>
     <main id="platform-main" className={styles.main}><div className={styles.context}><span>Platform administration</span><span>Changes apply to live schools</span></div><div className={styles.content}>{children}</div></main>
   </div>;
 }

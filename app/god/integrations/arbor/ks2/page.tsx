@@ -7,6 +7,7 @@ import { planKs2Backfill } from "@/lib/integrations/arbor/ks2PriorAttainment";
 import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { PageHeader } from "@/components/ui/page-header";
 import { importArborKs2 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,17 @@ export default async function Ks2ImportPage({ searchParams }: { searchParams: Pr
   await requireSuperAdminUser();
   const params = await searchParams;
   const integration = await prisma.sharedIntegration.findFirst({ where: { provider: "ARBOR", ...(params.connectionId ? { id: params.connectionId } : {}) }, include: { schools: { where: { enabled: true }, select: { tenantId: true } } } });
-  if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") return <p>Arbor is not connected.</p>;
+  if (!integration?.credentialsCiphertext || integration.status !== "CONNECTED") {
+    return <div className={styles.page}>
+      <Link href="/god/integrations/arbor" className={styles.backLink}>← Arbor</Link>
+      <PageHeader variant="ledger" title="KS2 prior attainment" subtitle="Import reading and maths scaled scores from Arbor." />
+      <div className={styles.emptyPanel}>
+        <h2>Arbor isn’t connected yet</h2>
+        <p>KS2 scores are read from a connected Arbor school. Set up and verify a connection first, then come back here.</p>
+        <Link href="/god/integrations/arbor" className={styles.primaryLink}>Go to Arbor connections</Link>
+      </div>
+    </div>;
+  }
   const students = await prisma.student.findMany({ where: { tenantId: { in: integration.schools.map((school) => school.tenantId) }, externalId: { not: null } }, select: { id: true, tenantId: true, externalId: true, ks2ReadingScaledScore: true, ks2MathsScaledScore: true, status: true, yearGroup: true, tenant: { select: { name: true } } } });
   try {
     const source = await loadArborKs2Results(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
@@ -32,28 +43,34 @@ export default async function Ks2ImportPage({ searchParams }: { searchParams: Pr
       coverage.set(key, value);
     }
     const scoreCount = plan.updates.reduce((total, update) => total + Object.keys(update.data).length, 0);
-    return <main className={styles.page}>
-      <Link href={`/god/integrations/arbor?connectionId=${integration.id}`}>← Back to Arbor connection</Link>
-      <h1 className="text-2xl font-semibold">KS2 prior attainment</h1>
-      <p>Import reading and maths scaled scores from {integration.label}. Existing Anaxi values are preserved.</p>
-      {params.updated !== undefined ? <p role="status" className="rounded border border-border p-4">Imported {params.scores} scores for {params.updated} students.</p> : null}
-      {source.warning ? <p role="alert" className="rounded border border-border p-4">{source.warning}</p> : null}
+    return <div className={styles.page}>
+      <Link href={`/god/integrations/arbor?connectionId=${integration.id}`} className={styles.backLink}>← {integration.label}</Link>
+      <PageHeader variant="ledger" title="KS2 prior attainment" subtitle={`Import reading and maths scaled scores from ${integration.label}. Existing Anaxi values are preserved.`} />
+      {params.updated !== undefined ? <p role="status" className={styles.notice}>Imported {params.scores} scores for {params.updated} students.</p> : null}
+      {source.warning ? <p role="alert" className={styles.notice}>{source.warning}</p> : null}
       <p>Active students with both scores: {activePaired} / {active.length}. Totals below include archived students.</p>
       <dl className={styles.stats}>
-        <div className={styles.stat}><dt>Students with both scores</dt><dd className="text-2xl">{paired} / {students.length}</dd></div>
-        <div className={styles.stat}><dt>Students ready to update</dt><dd className="text-2xl">{plan.updates.length}</dd></div>
-        <div className={styles.stat}><dt>Missing scores found in Arbor</dt><dd className="text-2xl">{scoreCount}</dd></div>
+        <div className={styles.stat}><dt>Students with both scores</dt><dd>{paired} / {students.length}</dd></div>
+        <div className={styles.stat}><dt>Students ready to update</dt><dd>{plan.updates.length}</dd></div>
+        <div className={styles.stat}><dt>Missing scores found in Arbor</dt><dd>{scoreCount}</dd></div>
       </dl>
       <p>{source.results.length} valid scaled marks found across {source.matchedDefinitions.length} KS2 assessment definitions. {source.scanned} source marks checked. {plan.conflicts} conflicting scores skipped; {source.invalid} invalid or unavailable marks skipped.</p>
       {plan.updates.length ? <form action={importArborKs2}><input type="hidden" name="connectionId" value={integration.id} /><SubmitButton>Import missing KS2 scores</SubmitButton></form> : <p>No missing scores can currently be filled from this source.</p>}
       <h2 className="text-lg font-semibold">Active student coverage</h2>
-      <ul className="divide-y divide-border rounded-xl border border-border p-4">{[...coverage.entries()].sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true })).map(([key, value]) => <li key={key} className="py-3 text-sm">{key}: {value.paired} / {value.total} with both scores</li>)}</ul>
+      <ul className="divide-y divide-[#eeeeef] rounded-[14px] border border-[#e5e5e6] bg-white px-5 py-1">{[...coverage.entries()].sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true })).map(([key, value]) => <li key={key} className="py-3 text-sm">{key}: {value.paired} / {value.total} with both scores</li>)}</ul>
       <h2 className="text-lg font-semibold">Matched KS2 assessments</h2>
-      <ul className="divide-y divide-border rounded-xl border border-border p-4">{source.matchedDefinitions.map((definition) => <li key={definition.id} className="py-3 text-sm">{definition.assessmentName || definition.displayName} ({definition.subject})</li>)}</ul>
+      <ul className="divide-y divide-[#eeeeef] rounded-[14px] border border-[#e5e5e6] bg-white px-5 py-1">{source.matchedDefinitions.map((definition) => <li key={definition.id} className="py-3 text-sm">{definition.assessmentName || definition.displayName} ({definition.subject})</li>)}</ul>
       {!source.matchedDefinitions.length ? <details><summary>Available KS2 source definitions</summary><pre className="whitespace-pre-wrap text-sm">{JSON.stringify(source.catalogue, null, 2)}</pre></details> : null}
       <p className="text-sm text-muted">Only existing students linked to this connection’s enabled schools are updated. Missing scores remain blank. Each imported change is recorded in the integration audit trail.</p>
-    </main>;
+    </div>;
   } catch (error) {
-    return <main className={styles.page}><h1>KS2 prior attainment</h1><p role="alert">{error instanceof Error ? error.message : "Unable to read Arbor KS2 scores."}</p><p>No scores were changed. Check Arbor source access, then refresh this page.</p></main>;
+    return <div className={styles.page}>
+      <Link href={`/god/integrations/arbor?connectionId=${integration.id}`} className={styles.backLink}>← {integration.label}</Link>
+      <PageHeader variant="ledger" title="KS2 prior attainment" />
+      <div role="alert" className={styles.notice}>
+        <p className="font-semibold text-error">{error instanceof Error ? error.message : "Unable to read Arbor KS2 scores."}</p>
+        <p className="mt-1 text-muted">No scores were changed. Check Arbor source access, then refresh this page.</p>
+      </div>
+    </div>;
   }
 }

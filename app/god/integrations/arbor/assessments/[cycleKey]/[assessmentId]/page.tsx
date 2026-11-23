@@ -364,7 +364,7 @@ export default async function ArborAssessmentMarkSheetPage({
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <PageHeader
-        eyebrow="God Mode · Arbor · Assessment review"
+        eyebrow="Arbor · Assessment review"
         title={definition.label}
         subtitle="Read-only Arbor mark sheet. Historic cycles follow the same pupils into their current cohort where they remain enrolled; archived leavers stay visible as historic records."
         actions={<Link href={arborConnectionHref(reviewPath, integration.id)}><Button variant="secondary">Back to subject assessments</Button></Link>}

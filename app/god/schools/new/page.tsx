@@ -8,7 +8,27 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { H1, MetaText } from "@/components/ui/typography";
 
-const DEFAULT_MODULES = [
+/** Every module a school can have. Leave, Timetable, Student Analysis and Assessments were
+ *  previously missing here, so they could only be switched on after the school was created. */
+const ALL_MODULES = [
+  "OBSERVATIONS",
+  "SIGNALS",
+  "STUDENTS",
+  "STUDENTS_IMPORT",
+  "LEAVE",
+  "ON_CALL",
+  "STRATEGY",
+  "MEETINGS",
+  "TIMETABLE",
+  "ADMIN",
+  "ADMIN_SETTINGS",
+  "ANALYSIS",
+  "STUDENT_ANALYSIS",
+  "ASSESSMENTS",
+] as const;
+
+/** Ticked by default when creating a school (unchanged). */
+const DEFAULT_MODULES = new Set<string>([
   "OBSERVATIONS",
   "SIGNALS",
   "STUDENTS",
@@ -19,7 +39,7 @@ const DEFAULT_MODULES = [
   "ADMIN",
   "ADMIN_SETTINGS",
   "ANALYSIS",
-];
+]);
 
 export default async function NewSchoolPage() {
   await requireSuperAdminUser();
@@ -27,7 +47,7 @@ export default async function NewSchoolPage() {
 
   return (
     <div className={styles.page}>
-      <Link href="/god" className="text-xs text-muted">← Schools</Link>
+      <Link href="/god" className={styles.backLink}>← Schools</Link>
       <PageHeader variant="ledger" title="Create school" subtitle="School details, initial administrator and enabled modules."/>
 
       <Card>
@@ -70,9 +90,9 @@ export default async function NewSchoolPage() {
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium">Enable modules</legend>
             <div className={styles.moduleGrid}>
-              {DEFAULT_MODULES.map((m) => (
-                <label key={m} className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-surface/60 px-3 py-2 text-sm calm-transition hover:border-accent/30 hover:bg-[var(--accent-tint)]">
-                  <input type="checkbox" name="modules" value={m} defaultChecked className="accent-accent" /> {m.toLowerCase().split("_").map(word=>word.charAt(0).toUpperCase()+word.slice(1)).join(" ")}
+              {ALL_MODULES.map((m) => (
+                <label key={m} className="flex items-center gap-2.5 rounded-[10px] border border-[#e5e5e6] bg-white px-3 py-2.5 text-sm calm-transition hover:bg-[#fafafa]">
+                  <input type="checkbox" name="modules" value={m} defaultChecked={DEFAULT_MODULES.has(m)} /> {m.toLowerCase().split("_").map(word=>word.charAt(0).toUpperCase()+word.slice(1)).join(" ")}
                 </label>
               ))}
             </div>

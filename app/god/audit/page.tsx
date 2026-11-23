@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { MetaText } from "@/components/ui/typography";
 
 const PAGE_SIZE = 30;
 
@@ -45,7 +44,7 @@ export default async function GodAuditPage({
 
   return (
     <div className={styles.page}>
-      <PageHeader variant="ledger" eyebrow="Platform" title="Audit log" subtitle="Platform-wide activity across schools." />
+      <PageHeader variant="ledger" title="Audit log" subtitle="Platform-wide activity across schools." />
 
       <Card>
         <form className={styles.toolbar} method="get">
@@ -61,62 +60,61 @@ export default async function GodAuditPage({
           </select></label>
           <input type="hidden" name="page" value="1" />
           <Button type="submit">Apply</Button>
+          {action || tenantId ? <Link href="/god/audit">Clear filters</Link> : null}
         </form>
       </Card>
 
-      <Card className="overflow-hidden p-0">
-        <div className="table-shell border-0 rounded-none shadow-none">
-          <div className="overflow-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="table-head-row">
-                  <th className="px-5 py-3">When</th>
-                  <th className="px-4 py-3">Actor</th>
-                  <th className="px-4 py-3">Action</th>
-                  <th className="px-4 py-3">School</th>
-                  <th className="px-4 py-3">Target</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r: any) => (
-                  <tr key={r.id} className="table-row calm-transition">
-                    <td className="px-5 py-3.5 whitespace-nowrap tabular-nums text-muted">
-                      {new Date(r.createdAt).toLocaleString("en-GB")}
-                    </td>
-                    <td className="px-4 py-3.5">{r.actor?.fullName ?? r.actor?.email ?? "—"}</td>
-                    <td className="px-4 py-3.5">{r.action}</td>
-                    <td className="px-4 py-3.5">{r.tenant?.name ?? "platform"}</td>
-                    <td className="px-4 py-3.5">
-                      {r.targetType}
-                      {r.targetId ? `:${r.targetId}` : ""}
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-sm text-muted">
-                      No audit rows.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </Card>
+      <div className={styles.tableCard}>
+        <table className="text-sm">
+          <thead>
+            <tr>
+              <th>When</th>
+              <th>Actor</th>
+              <th>Action</th>
+              <th>School</th>
+              <th>Target</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r: any) => (
+              <tr key={r.id}>
+                <td className="whitespace-nowrap tabular-nums text-muted">
+                  {new Date(r.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </td>
+                <td>{r.actor?.fullName ?? r.actor?.email ?? "—"}</td>
+                <td>{r.action}</td>
+                <td>{r.tenant?.name ?? "Platform"}</td>
+                <td className="break-all text-muted">
+                  {r.targetType}
+                  {r.targetId ? `:${r.targetId}` : ""}
+                </td>
+              </tr>
+            ))}
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-10 text-center text-sm text-muted">
+                  {action || tenantId ? "No activity matches these filters." : "No activity recorded yet."}
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <MetaText>Page {page} of {totalPages}</MetaText>
-        <div className="flex gap-2">
+      <div className={styles.pager}>
+        <span>Page {page} of {totalPages} · {total.toLocaleString("en-GB")} entr{total === 1 ? "y" : "ies"}</span>
+        <nav aria-label="Audit log pages">
           <Link
             href={`/god/audit?action=${encodeURIComponent(action)}&tenantId=${encodeURIComponent(tenantId)}&page=${Math.max(1, page - 1)}`}
-            className={`calm-transition rounded-lg border border-border px-3 py-1.5 text-sm ${page <= 1 ? "pointer-events-none opacity-50" : "hover:border-accent/30 hover:bg-[var(--accent-tint)]"}`}
-          >Prev</Link>
+            aria-disabled={page <= 1}
+            tabIndex={page <= 1 ? -1 : undefined}
+          >Previous</Link>
           <Link
             href={`/god/audit?action=${encodeURIComponent(action)}&tenantId=${encodeURIComponent(tenantId)}&page=${Math.min(totalPages, page + 1)}`}
-            className={`calm-transition rounded-lg border border-border px-3 py-1.5 text-sm ${page >= totalPages ? "pointer-events-none opacity-50" : "hover:border-accent/30 hover:bg-[var(--accent-tint)]"}`}
+            aria-disabled={page >= totalPages}
+            tabIndex={page >= totalPages ? -1 : undefined}
           >Next</Link>
-        </div>
+        </nav>
       </div>
     </div>
   );
