@@ -9,7 +9,8 @@ type Props = {
   basePath: string;
   urlBase: StudentsUrlParams;
   cohortCount: number;
-  avgAttendance: number;
+  /** Mean over students with recorded attendance; null when nobody has any. */
+  avgAttendance: number | null;
   priorityCount: number;
   lowAttendanceCount: number;
   windowDays: number;
@@ -86,12 +87,12 @@ export function StudentsKpiStrip({
       />
       <KpiCard
         label="Avg attendance"
-        value={`${avgAttendance.toFixed(1)}%`}
+        value={avgAttendance === null ? "—" : `${avgAttendance.toFixed(1)}%`}
         href={allHref}
-        meta="Cohort mean across visible students"
+        meta={avgAttendance === null ? "No attendance recorded in this window" : "Mean across students with recorded attendance"}
       />
       <KpiCard
-        label="Urgent + priority"
+        label="Needs attention"
         value={String(priorityCount)}
         href={attentionHref}
         hoverClassName="hover:text-[var(--error)]"

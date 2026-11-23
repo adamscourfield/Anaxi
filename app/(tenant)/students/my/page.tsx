@@ -1,3 +1,4 @@
+import styles from "@/app/(tenant)/explorer/students/students.module.css";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
@@ -173,10 +174,13 @@ export default async function MyStudentsPage({
   const pageEnd = Math.min(pageStart + perPage, totalFiltered);
   const pageRows = rows.slice(pageStart, pageEnd);
 
+  // Average only over students who have attendance recorded. Counting the rest as 0% (and dividing by
+  // everyone) dragged the figure down whenever data was incomplete, and showed "0.0%" when there was none.
+  const withAttendance = allRows.filter((r) => r.attendancePct !== null);
   const avgAttendance =
-    allRows.length > 0
-      ? allRows.reduce((sum, r) => sum + (r.attendancePct ?? 0), 0) / allRows.length
-      : 0;
+    withAttendance.length > 0
+      ? withAttendance.reduce((sum, r) => sum + (r.attendancePct ?? 0), 0) / withAttendance.length
+      : null;
   const priorityCount = bandCounts.PRIORITY + bandCounts.URGENT;
   const lowAttendanceCount = allRows.filter(
     (r) => r.attendancePct !== null && r.attendancePct < 80,
@@ -191,7 +195,9 @@ export default async function MyStudentsPage({
   }
 
   const pagination = (
+    // Keyed: it is passed into the client list and rendered alongside other children there.
     <TablePagination
+      key="pagination"
       page={safePage}
       totalPages={totalPages}
       totalItems={totalFiltered}
@@ -201,18 +207,12 @@ export default async function MyStudentsPage({
     />
   );
 
+  // Same layout as the school-wide Student directory, so teachers and leaders learn one page.
   return (
-    <div className="space-y-6">
-      <nav className="text-[0.8125rem] text-muted" aria-label="Breadcrumb">
-        <Link href="/home" className="hover:text-text">
-          Home
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="text-text">My students</span>
-      </nav>
-
+    <div className={styles.page}>
       <PageHeader
         variant="ledger"
+        className={styles.header}
         title="My students"
         subtitle="Pastoral risk and attendance for students in your classes."
       />
@@ -227,14 +227,6 @@ export default async function MyStudentsPage({
         windowDays={windowDays}
       />
 
-      <StudentsBandChips
-        basePath={BASE_PATH}
-        urlBase={urlBase}
-        bandCounts={bandCounts}
-        activeBand={bandFilter}
-        activeView={viewMode}
-      />
-
       <StudentsCriticalBanner
         basePath={BASE_PATH}
         urlBase={urlBase}
@@ -243,27 +235,59 @@ export default async function MyStudentsPage({
         computedAt={computedAt}
       />
 
-      <StudentsToolbar
-        basePath={BASE_PATH}
-        yearGroups={yearGroups}
-        urlBase={urlBase}
-        activeChips={activeChips}
-      />
+      <section className={styles.directory} aria-label="Your students">
+        <div className={styles.listHeading}>
+          <div>
+            <h2>{viewMode === "attention" ? "Students needing attention" : "Students in your classes"}</h2>
+          </div>
+          <span className={styles.resultCount}>{totalFiltered.toLocaleString("en-GB")} students</span>
+        </div>
 
-      {rows.length === 0 ? (
-        <p className="text-sm text-muted">No students match your filters.</p>
-      ) : (
-        <StudentsListSection
-          pageRows={pageRows}
-          windowDays={windowDays}
-          listPath={listPath}
-          showBehaviourColumns={showBehaviourColumns}
-          pageStart={pageStart}
-          pageEnd={pageEnd}
-          totalFiltered={totalFiltered}
-          pagination={pagination}
-        />
-      )}
+        <section className={styles.filters} aria-label="Find students">
+          <StudentsBandChips
+            basePath={BASE_PATH}
+            urlBase={urlBase}
+            bandCounts={bandCounts}
+            activeBand={bandFilter}
+            activeView={viewMode}
+          />
+          <StudentsToolbar
+            basePath={BASE_PATH}
+            yearGroups={yearGroups}
+            urlBase={urlBase}
+            activeChips={activeChips}
+          />
+        </section>
+
+        {rows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
+            <p className="text-[0.875rem] font-semibold text-text">
+              {allRows.length === 0 ? "No students linked to your classes yet" : "No matches"}
+            </p>
+            <p className="mt-1 text-[0.8125rem] text-muted">
+              {allRows.length === 0
+                ? "Students appear here once your classes are set up."
+                : "Try adjusting your filters."}
+            </p>
+            {activeChips.length > 0 && (
+              <Link href={buildStudentsListUrl(BASE_PATH, { windowDays })} className="mt-4 link-accent text-sm">
+                Clear all filters
+              </Link>
+            )}
+          </div>
+        ) : (
+          <StudentsListSection
+            pageRows={pageRows}
+            windowDays={windowDays}
+            listPath={listPath}
+            showBehaviourColumns={showBehaviourColumns}
+            pageStart={pageStart}
+            pageEnd={pageEnd}
+            totalFiltered={totalFiltered}
+            pagination={pagination}
+          />
+        )}
+      </section>
     </div>
   );
 }

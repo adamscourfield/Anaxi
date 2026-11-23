@@ -2,7 +2,6 @@ import styles from "./students.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
-import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireFeature } from "@/lib/guards";
@@ -259,10 +258,13 @@ export default async function StudentsPage({
   );
   const pageRowsWithAvatars = pageRows.map((row) => ({ ...row, avatarUrl: studentAvatarUrlById.get(row.studentId) ?? null }));
 
+  // Average only over students who have attendance recorded. Counting the rest as 0% (and dividing by
+  // everyone) dragged the figure down whenever data was incomplete, and showed "0.0%" when there was none.
+  const withAttendance = activeRows.filter((r) => r.attendancePct !== null);
   const avgAttendance =
-    activeRows.length > 0
-      ? activeRows.reduce((sum, r) => sum + (r.attendancePct ?? 0), 0) / activeRows.length
-      : 0;
+    withAttendance.length > 0
+      ? withAttendance.reduce((sum, r) => sum + (r.attendancePct ?? 0), 0) / withAttendance.length
+      : null;
   const priorityCount = bandCounts.PRIORITY + bandCounts.URGENT;
   const lowAttendanceCount = activeRows.filter(
     (r) => r.attendancePct !== null && r.attendancePct < 80,
@@ -280,7 +282,9 @@ export default async function StudentsPage({
   }
 
   const pagination = (
+    // Keyed: it is passed into the client list and rendered alongside other children there.
     <TablePagination
+      key="pagination"
       page={safePage}
       totalPages={totalPages}
       totalItems={totalFiltered}
@@ -292,12 +296,9 @@ export default async function StudentsPage({
 
   return (
     <div className={styles.page}>
-      <ExplorerBackLink />
-
       <PageHeader
         variant="ledger"
         className={styles.header}
-        eyebrow="Pastoral intelligence"
         title="Student directory"
         subtitle="Find student records, manage their status and open their profiles."
         actions={

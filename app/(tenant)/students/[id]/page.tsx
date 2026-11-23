@@ -499,7 +499,6 @@ export default async function StudentDetailPage({
 
 
       <div id="overview" className="scroll-mt-24 space-y-8">
-      <PriorAttainmentCard studentId={student.id} reading={student.ks2ReadingScaledScore ?? null} maths={student.ks2MathsScaledScore ?? null} canEdit={hasPermission(user.role, "students:write")} />
       {/* Latest behaviour snapshot */}
       {latestSnapshot && attDisplay !== null ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -788,6 +787,8 @@ export default async function StudentDetailPage({
           </div>
         ) : null}
       </div>
+      {/* KS2 sits with attainment, after the pastoral picture. */}
+      <PriorAttainmentCard studentId={student.id} reading={student.ks2ReadingScaledScore ?? null} maths={student.ks2MathsScaledScore ?? null} canEdit={hasPermission(user.role, "students:write")} />
 
       </div>
 

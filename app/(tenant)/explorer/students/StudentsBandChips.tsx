@@ -38,6 +38,38 @@ export function StudentsBandChips({
 }: Props) {
   return (
     <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by risk band">
+      {/* "All" gives a one-click way back after picking a band. */}
+      <Link
+        aria-current={activeView === "all" && !activeBand ? "true" : undefined}
+        href={buildStudentsListUrl(basePath, { ...urlBase, view: "all", band: undefined, page: undefined })}
+        className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold calm-transition ${
+          activeView === "all" && !activeBand ? "bg-accent text-on-primary ring-2 ring-accent" : CHIP_IDLE
+        }`}
+      >
+        All
+        <span className="tabular-nums opacity-90">
+          {bandCounts.URGENT + bandCounts.PRIORITY + bandCounts.WATCH + bandCounts.STABLE}
+        </span>
+      </Link>
+      <Link
+        aria-current={activeView === "attention" && !activeBand ? "true" : undefined}
+        href={buildStudentsListUrl(basePath, {
+          ...urlBase,
+          view: "attention",
+          band: undefined,
+          page: undefined,
+        })}
+        className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold calm-transition ${
+          activeView === "attention" && !activeBand
+            ? "bg-accent text-on-primary ring-2 ring-accent"
+            : CHIP_IDLE
+        }`}
+      >
+        Needs attention
+        <span className="tabular-nums opacity-90">
+          {bandCounts.URGENT + bandCounts.PRIORITY}
+        </span>
+      </Link>
       {BAND_ORDER.map((band) => {
         const isActive = activeBand === band;
         const href = buildStudentsListUrl(basePath, {
@@ -58,25 +90,6 @@ export function StudentsBandChips({
           </Link>
         );
       })}
-      <Link
-        aria-current={activeView === "attention" && !activeBand ? "true" : undefined}
-        href={buildStudentsListUrl(basePath, {
-          ...urlBase,
-          view: "attention",
-          band: undefined,
-          page: undefined,
-        })}
-        className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold calm-transition ${
-          activeView === "attention" && !activeBand
-            ? "bg-accent text-on-primary ring-2 ring-accent"
-            : CHIP_IDLE
-        }`}
-      >
-        Needs attention
-        <span className="tabular-nums opacity-90">
-          {bandCounts.URGENT + bandCounts.PRIORITY}
-        </span>
-      </Link>
     </div>
   );
 }
