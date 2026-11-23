@@ -106,7 +106,7 @@ export function LeaveHistoryTable({
             </Button>
           ) : null}
           <Button variant="secondary" asChild>
-            <Link href="/leave">Back to dashboard</Link>
+            <Link href="/leave">Back to leave</Link>
           </Button>
         </div>
       </div>

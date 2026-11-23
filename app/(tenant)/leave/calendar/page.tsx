@@ -71,7 +71,9 @@ export default async function LeaveCalendarPage({
           return sum + diff / (1000 * 60 * 60 * 24);
         }, 0) / resolved.length
       : null;
-  const avgResponseStr = avgDays !== null ? `${avgDays.toFixed(1)}d` : "—";
+  // Under a day reads better in hours than as "0.0d".
+  const avgResponseStr =
+    avgDays === null ? "—" : avgDays < 1 ? `${Math.max(1, Math.round(avgDays * 24))}h` : `${avgDays.toFixed(1)}d`;
 
   const calendarRequests = await fetchLeaveCalendarMonthRequests({
     tenantId: user.tenantId,
@@ -124,7 +126,7 @@ export default async function LeaveCalendarPage({
       <div className="grid grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label="Total pending"
-          value={String(pendingForApprover).padStart(2, "0")}
+          value={String(pendingForApprover)}
           tone="glass"
           contextVariant="inline"
           context={
@@ -137,14 +139,14 @@ export default async function LeaveCalendarPage({
         />
         <StatCard
           label="Approved (month)"
-          value={String(approvedThisMonth).padStart(2, "0")}
+          value={String(approvedThisMonth)}
           tone="glass"
           contextVariant="inline"
           context={<span className="font-medium text-muted">This month</span>}
         />
         <StatCard
           label="Denied (month)"
-          value={String(deniedThisMonth).padStart(2, "0")}
+          value={String(deniedThisMonth)}
           tone="glass"
           contextVariant="inline"
           context={<span className="font-medium text-muted">This month</span>}
@@ -158,7 +160,7 @@ export default async function LeaveCalendarPage({
             <span
               className={`font-medium ${avgDays !== null && avgDays > 5 ? "font-semibold text-[var(--warning-text)]" : "text-muted"}`}
             >
-              {avgDays !== null && avgDays > 5 ? "Above target" : "Median turnaround"}
+              {avgDays !== null && avgDays > 5 ? "Above target" : "Request to decision"}
             </span>
           }
         />
@@ -170,22 +172,6 @@ export default async function LeaveCalendarPage({
         basePath="calendar"
       />
 
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href="/leave?view=list"
-          className="rounded-lg border border-border/60 bg-surface-container-lowest/70 px-3.5 py-2 text-sm font-medium text-muted backdrop-blur-sm calm-transition hover:border-accent/30 hover:text-accent"
-        >
-          ← List view
-        </Link>
-        {isApprover && (
-          <Link
-            href="/leave#pending-requests"
-            className="rounded-lg border border-border/60 bg-surface-container-lowest/70 px-3.5 py-2 text-sm font-medium text-muted backdrop-blur-sm calm-transition hover:border-accent/30 hover:text-accent"
-          >
-            Pending approvals
-          </Link>
-        )}
-      </div>
     </div>
   );
 }

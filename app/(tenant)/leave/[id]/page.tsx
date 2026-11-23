@@ -290,7 +290,7 @@ export default async function LeaveDetailPage({
               <InfoCell
                 icon={<ClockGlyph className="h-5 w-5" />}
                 label="Duration"
-                value={`${days} school day${days !== 1 ? "s" : ""}`}
+                value={`${days} working day${days !== 1 ? "s" : ""}`}
                 className="border-b border-border sm:border-r sm:border-t sm:border-border sm:border-b-0"
               />
               <InfoCell
@@ -358,19 +358,6 @@ export default async function LeaveDetailPage({
         </div>
       ) : null}
 
-      {canDelete ? (
-        <div className={surfaceCard}>
-          <div className="flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-            <div>
-              <h2 className="text-lg font-bold text-text">Delete request</h2>
-              <p className="mt-1 text-[0.8125rem] text-muted">
-                Permanently remove this leave request from the record. This cannot be undone.
-              </p>
-            </div>
-            <DeleteLoaRequestButton requestId={request.id} />
-          </div>
-        </div>
-      ) : null}
 
       <section aria-labelledby="leave-audit-heading" className={surfaceCard}>
         <div className="border-b border-border px-6 py-5 sm:px-8">
@@ -385,14 +372,13 @@ export default async function LeaveDetailPage({
       </section>
 
       {manager && isPendingStatus(request.status) ? (
-        <div className={`${surfaceCard} md:static fixed inset-x-0 bottom-0 z-30 border-t border-border md:border-t-0`}>
-          <div className="hidden border-b border-border px-6 py-6 sm:px-8 md:block">
+        <div className={surfaceCard}>
+          <div className="border-b border-border px-6 py-6 sm:px-8">
             <h2 className="text-lg font-bold text-text">Make a decision</h2>
             <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
               Your decision will be recorded with a timestamp.
             </p>
           </div>
-          <p className="px-6 pt-4 text-sm font-semibold text-text md:hidden">Approve or deny</p>
           <form action={decideLoaRequest} className="space-y-6 px-6 py-5 sm:px-8 sm:py-8">
             <input type="hidden" name="requestId" value={request.id} />
 
@@ -446,6 +432,21 @@ export default async function LeaveDetailPage({
               Save decision
             </SubmitButton>
           </form>
+        </div>
+      ) : null}
+
+      {/* Destructive action last, after the decision and audit trail. */}
+      {canDelete ? (
+        <div className={surfaceCard}>
+          <div className="flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <div>
+              <h2 className="text-lg font-bold text-text">Delete request</h2>
+              <p className="mt-1 text-[0.8125rem] text-muted">
+                Permanently remove this leave request from the record. This cannot be undone.
+              </p>
+            </div>
+            <DeleteLoaRequestButton requestId={request.id} />
+          </div>
         </div>
       ) : null}
     </div>

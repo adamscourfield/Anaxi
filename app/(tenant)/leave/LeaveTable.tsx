@@ -51,7 +51,7 @@ function PendingTable({
                 <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Requested dates
                 </th>
-                <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                <th className="hidden px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted sm:table-cell">
                   Reason
                 </th>
                 <th className="px-5 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
@@ -75,7 +75,7 @@ function PendingTable({
                     {isManager && (
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <Avatar name={row.requesterName ?? "?"} userId={row.requesterUserId} size="md" />
+                          <span className="hidden sm:inline-flex"><Avatar name={row.requesterName ?? "?"} userId={row.requesterUserId} size="md" /></span>
                           <span className="font-semibold text-text">{row.requesterName ?? "—"}</span>
                         </div>
                       </td>
@@ -85,8 +85,10 @@ function PendingTable({
                       <p className="mt-0.5 text-[0.8125rem] text-muted">
                         {row.days} working day{row.days !== 1 ? "s" : ""}
                       </p>
+                      {/* On phones the Reason column is hidden, so show it here instead. */}
+                      <p className="mt-0.5 text-[0.8125rem] text-muted sm:hidden">{row.reasonLabel ?? "—"}</p>
                     </td>
-                    <td className="max-w-[min(28rem,50vw)] px-5 py-4 text-text">
+                    <td className="hidden max-w-[min(28rem,50vw)] px-5 py-4 text-text sm:table-cell">
                       <span className="line-clamp-2">{row.reasonLabel ?? "—"}</span>
                     </td>
                     <td className="px-5 py-4 text-right">
@@ -160,7 +162,7 @@ function CompletedTable({
                 <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Requested dates
                 </th>
-                <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
+                <th className="hidden px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted sm:table-cell">
                   Reason
                 </th>
                 <th className="px-5 py-3.5 text-right text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">
@@ -184,7 +186,7 @@ function CompletedTable({
                     {isManager && (
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <Avatar name={row.requesterName ?? "?"} userId={row.requesterUserId} size="md" />
+                          <span className="hidden sm:inline-flex"><Avatar name={row.requesterName ?? "?"} userId={row.requesterUserId} size="md" /></span>
                           <span className="font-semibold text-text">{row.requesterName ?? "—"}</span>
                         </div>
                       </td>
@@ -195,9 +197,10 @@ function CompletedTable({
                         <p className="mt-0.5 text-[0.8125rem] text-muted">
                           {row.days} working day{row.days !== 1 ? "s" : ""}
                         </p>
+                        <p className="mt-0.5 text-[0.8125rem] text-muted sm:hidden">{row.reasonLabel ?? "—"}</p>
                       </Link>
                     </td>
-                    <td className="max-w-[min(28rem,50vw)] px-5 py-4 text-text">
+                    <td className="hidden max-w-[min(28rem,50vw)] px-5 py-4 text-text sm:table-cell">
                       <span className="line-clamp-2">{row.reasonLabel ?? "—"}</span>
                     </td>
                     <td className="px-5 py-4 text-right">{statusPill(row)}</td>

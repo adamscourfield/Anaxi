@@ -252,7 +252,7 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
               className="inline-flex items-center gap-1.5 rounded-md border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-[var(--on-surface-variant)]"
             >
               <span className="h-2 w-2 shrink-0 rounded-full bg-[#ef4444]" aria-hidden />
-              Declined
+              Denied
             </span>
           </div>
 
@@ -336,13 +336,6 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
               return rStart <= dayEnd && rEnd >= dayStart;
             });
 
-            const showSpanDot = entries.some((request) => {
-              const rStart = new Date(request.startDate);
-              const rEnd = new Date(request.endDate);
-              const span = daysSpan(rStart, rEnd);
-              if (span <= 1 || request.status === "DENIED") return false;
-              return rStart <= dayEnd && rEnd >= dayStart;
-            });
 
             const eventBlocks: CalendarBlock[] = entries.flatMap((request): CalendarBlock[] => {
               const rStart = new Date(request.startDate);
@@ -402,9 +395,6 @@ export function LeaveCalendarGrid({ initialMonthKey, initialRequests, basePath }
                     {day.getDate()}
                   </span>
                   <div className="flex shrink-0 items-center gap-1">
-                    {showSpanDot ? (
-                      <span className="mt-0.5 inline-block h-1.5 w-1.5 rounded-full bg-[var(--on-surface)]" title="Multi-day leave" />
-                    ) : null}
                     {inMonth && day.getDay() !== 0 && day.getDay() !== 6 ? (
                       <Link
                         href={`/leave/request?date=${key}`}

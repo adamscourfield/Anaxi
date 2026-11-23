@@ -3,7 +3,7 @@
 .page h3 { font-weight:600; }
 .page :global(.home-hero-glass), .page :global(.explorer-kpi-tile) { background:#fff; border:1px solid #e5e5e6; border-radius:14px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
 .page input:not([type="checkbox"]):not([type="hidden"]), .page textarea, .page select, .page button[aria-haspopup="listbox"] { min-width:0; max-width:100%; background:#fff; color:#1c1c1e; border:1px solid #e5e5e6; border-radius:10px; box-shadow:none; }
-.page button[type="submit"], .page a[href="/leave"][class*="inline-flex"] { background:#1c1c1e; border:1px solid #1c1c1e; border-radius:10px; color:#fff; min-height:42px; box-shadow:none; }
+.page button[type="submit"] { background:#1c1c1e; border:1px solid #1c1c1e; border-radius:10px; color:#fff; min-height:42px; box-shadow:none; }
 .page button[type="submit"] svg { color:#fff; }
 .page label svg { color:#e14e36; }
 .page label[class*="uppercase"] { font-weight:500; letter-spacing:.08em; }
