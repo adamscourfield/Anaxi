@@ -1,84 +1,23 @@
 import styles from "../language/page.module.css";
-import Link from "next/link";
 import { AdminSectionLink } from "@/components/admin/admin-section-link";
 import type { ReactNode } from "react";
 import { revalidatePath } from "next/cache";
 import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_VOCAB, getTenantVocab, pluralLabel } from "@/lib/vocab";
 import { requireAdminUser } from "@/lib/admin";
 import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import { Button } from "@/components/ui/button";
 import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
 
-const BEHAVIOUR_FIELDS = [
-  { key: "positivePointsLabel", heading: "Positive points label", default: "Positive Points" },
-  { key: "detentionLabel", heading: "Detention label", default: "Detention" },
-  { key: "internalExclusionLabel", heading: "Internal exclusion label", default: "Internal Exclusion" },
-  { key: "suspensionLabel", heading: "Suspension label", default: "Suspension" },
-  { key: "onCallLabel", heading: "On call label", default: "On Call" },
+/** The five behaviour events, with the tenant-settings field that holds the older single label. */
+const BEHAVIOUR_WORDS = [
+  { key: "positive_points", title: "Positive points", settingsField: "positivePointsLabel" },
+  { key: "detentions", title: "Detentions", settingsField: "detentionLabel" },
+  { key: "internal_exclusions", title: "Internal exclusions", settingsField: "internalExclusionLabel" },
+  { key: "suspensions", title: "Suspensions", settingsField: "suspensionLabel" },
+  { key: "on_calls", title: "On calls", settingsField: "onCallLabel" },
 ] as const;
-
-const VOCAB_KEYS = ["positive_points", "detentions", "internal_exclusions", "on_calls", "suspensions"] as const;
-
-/** Same lavender well + tag glyph as behaviour labels above (terminology admin pattern). */
-const VOCAB_ICON_WELL =
-  "flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[rgba(124,92,255,0.12)] text-[#7C5CFF]";
-
-const VOCAB_ROWS: {
-  key: (typeof VOCAB_KEYS)[number];
-  title: string;
-  singularPlaceholder: string;
-  pluralPlaceholder: string;
-}[] = [
-  {
-    key: "positive_points",
-    title: "Positive points",
-    singularPlaceholder: "Positive Point",
-    pluralPlaceholder: "Positive Points",
-  },
-  {
-    key: "detentions",
-    title: "Detentions",
-    singularPlaceholder: "Detention",
-    pluralPlaceholder: "Detentions",
-  },
-  {
-    key: "internal_exclusions",
-    title: "Internal exclusions",
-    singularPlaceholder: "Internal Exclusion",
-    pluralPlaceholder: "Internal Exclusions",
-  },
-  {
-    key: "suspensions",
-    title: "Suspensions",
-    singularPlaceholder: "Suspension",
-    pluralPlaceholder: "Suspensions",
-  },
-  {
-    key: "on_calls",
-    title: "On calls",
-    singularPlaceholder: "On Call",
-    pluralPlaceholder: "On Calls",
-  },
-];
-
-function TagIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M12 2H2v10l9.29 9.29a1 1 0 001.41 0l6.59-6.59a1 1 0 000-1.41L12 2z" />
-      <circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
 
 function TerminologyCard({ children, className = "", id }: { children: ReactNode; className?: string; id?: string }) {
   return (
@@ -99,44 +38,38 @@ export async function LanguageAdminPanel() {
   });
   const observationsEnabled = observationsFeature?.enabled ?? false;
 
-  const [settings, vocab] = await Promise.all([
-    (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } }),
-    prisma.tenantVocab.findMany({ where: { tenantId: user.tenantId }, orderBy: { key: "asc" } }),
-  ]);
+  // The words people actually see: Vocabulary entries, falling back to the older single
+  // behaviour labels, then the defaults (see lib/vocab.ts).
+  const words = await getTenantVocab(user.tenantId);
 
-  const vocabByKey = new Map<string, any>((vocab as any[]).map((v: any) => [v.key, v]));
-
-  async function saveBehaviourLabels(formData: FormData) {
+  /**
+   * One editor for behaviour words. It writes both stores so every page agrees: the
+   * singular/plural vocabulary (read through getTenantVocab) and the older single label on
+   * tenant settings, which onboarding and a few pages still read.
+   */
+  async function saveBehaviourWords(formData: FormData) {
     "use server";
     await assertSafeServerAction(formData);
     const admin = await requireAdminUser();
-    const data: Record<string, string> = {};
-    for (const field of BEHAVIOUR_FIELDS) {
-      const val = String(formData.get(field.key) || field.default).trim();
-      data[field.key] = val || field.default;
+    const settingsData: Record<string, string> = {};
+    for (const row of BEHAVIOUR_WORDS) {
+      const singular = String(formData.get(`${row.key}_singular`) || "").trim() || DEFAULT_VOCAB[row.key].singular;
+      const plural = String(formData.get(`${row.key}_plural`) || "").trim() || pluralLabel(singular);
+      await prisma.tenantVocab.upsert({
+        where: { tenantId_key: { tenantId: admin.tenantId, key: row.key } },
+        create: { tenantId: admin.tenantId, key: row.key, labelSingular: singular, labelPlural: plural },
+        update: { labelSingular: singular, labelPlural: plural },
+      });
+      // Positive points has always been stored as the plural ("Positive Points") in settings.
+      settingsData[row.settingsField] = row.key === "positive_points" ? plural : singular;
     }
     await (prisma as any).tenantSettings.upsert({
       where: { tenantId: admin.tenantId },
-      update: data,
-      create: { tenantId: admin.tenantId, ...data },
+      update: settingsData,
+      create: { tenantId: admin.tenantId, ...settingsData },
     });
     revalidateAdmin("language");
-  }
-
-  async function saveVocab(formData: FormData) {
-    "use server";
-    await assertSafeServerAction(formData);
-    const admin = await requireAdminUser();
-    for (const key of VOCAB_KEYS) {
-      const singular = String(formData.get(`${key}_singular`) || "");
-      const plural = String(formData.get(`${key}_plural`) || "");
-      await prisma.tenantVocab.upsert({
-        where: { tenantId_key: { tenantId: admin.tenantId, key } },
-        create: { tenantId: admin.tenantId, key, labelSingular: singular, labelPlural: plural },
-        update: { labelSingular: singular, labelPlural: plural },
-      });
-    }
-    revalidateAdmin("language");
+    revalidatePath("/", "layout");
   }
 
   return (
@@ -147,70 +80,21 @@ export async function LanguageAdminPanel() {
         subtitle="Use your school’s own words for behaviour events across Anaxi."
       />
 
-      {/* ── Behaviour Labels ─────────────────────────────────────────── */}
-      <TerminologyCard>
-        <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
-          <h2 className="text-lg font-bold tracking-tight text-text">Behaviour labels</h2>
-          <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
-            Override labels used across behaviour and leave workflows.
-          </p>
-        </div>
-        <form action={saveBehaviourLabels} className="px-5 py-6 sm:px-7 sm:pb-7">
-          <div className="grid gap-6 sm:grid-cols-2">
-            {BEHAVIOUR_FIELDS.map((field) => (
-              <div key={field.key} className="flex gap-3 sm:gap-4">
-                <span className={`mt-0.5 ${VOCAB_ICON_WELL}`}>
-                  <TagIcon className="h-[18px] w-[18px]" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <label
-                    htmlFor={`beh-${field.key}`}
-                    className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted"
-                  >
-                    {field.heading.replace(/\s+label$/i, "").trim()} label
-                  </label>
-                  <input
-                    id={`beh-${field.key}`}
-                    name={field.key}
-                    defaultValue={settings?.[field.key] ?? field.default}
-                    placeholder={field.default}
-                    className="field w-full"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-8">
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900"
-            >
-              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="17 21 17 13 7 13 7 21" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="7 3 7 8 15 8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Save behaviour labels
-            </button>
-          </div>
-        </form>
-      </TerminologyCard>
-
-      {/* ── Vocabulary ───────────────────────────────────────────────── */}
       <TerminologyCard className="overflow-hidden scroll-mt-24" id="vocabulary">
         <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
-          <h2 className="text-lg font-bold tracking-tight text-text">Vocabulary</h2>
+          <h2 className="text-lg font-bold tracking-tight text-text">Behaviour words</h2>
           <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
-            Set singular and plural labels for behaviour event nouns shown across views.
+            The words Anaxi uses for each behaviour event, on its own (one detention) and in counts and headings
+            (three detentions). Leave the plural blank to add an “s”.
           </p>
         </div>
-        <form action={saveVocab}>
+        <form action={saveBehaviourWords}>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] text-left text-sm">
               <thead>
                 <tr className="border-b border-border/25 bg-transparent">
                   <th className="px-5 py-3.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted sm:px-7">
-                    Event type
+                    Event
                   </th>
                   <th className="px-4 py-3.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
                     Singular
@@ -221,52 +105,36 @@ export async function LanguageAdminPanel() {
                 </tr>
               </thead>
               <tbody>
-                {VOCAB_ROWS.map((row) => {
-                  const v = vocabByKey.get(row.key);
-                  return (
-                    <tr key={row.key} className="border-b border-border/15 last:border-b-0 calm-transition hover:bg-surface-container-low/40">
-                      <td className="px-5 py-4 sm:px-7">
-                        <div className="flex items-center gap-3">
-                          <span className={VOCAB_ICON_WELL}>
-                            <TagIcon className="h-[18px] w-[18px]" />
-                          </span>
-                          <span className="font-semibold text-text">{row.title}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 align-middle">
-                        <input
-                          name={`${row.key}_singular`}
-                          defaultValue={v?.labelSingular || ""}
-                          placeholder={row.singularPlaceholder}
-                          className="field w-full min-w-[8rem]"
-                        />
-                      </td>
-                      <td className="px-4 py-4 align-middle sm:pr-7">
-                        <input
-                          name={`${row.key}_plural`}
-                          defaultValue={v?.labelPlural || ""}
-                          placeholder={row.pluralPlaceholder}
-                          className="field w-full min-w-[8rem]"
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
+                {BEHAVIOUR_WORDS.map((row) => (
+                  <tr key={row.key} className="border-b border-border/15 last:border-b-0">
+                    <td className="px-5 py-4 font-semibold text-text sm:px-7">{row.title}</td>
+                    <td className="px-4 py-4 align-middle">
+                      <input
+                        name={`${row.key}_singular`}
+                        aria-label={`${row.title}, singular`}
+                        defaultValue={words[row.key]?.singular ?? DEFAULT_VOCAB[row.key].singular}
+                        placeholder={DEFAULT_VOCAB[row.key].singular}
+                        maxLength={60}
+                        className="field w-full min-w-[8rem]"
+                      />
+                    </td>
+                    <td className="px-4 py-4 align-middle sm:pr-7">
+                      <input
+                        name={`${row.key}_plural`}
+                        aria-label={`${row.title}, plural`}
+                        defaultValue={words[row.key]?.plural ?? DEFAULT_VOCAB[row.key].plural}
+                        placeholder={DEFAULT_VOCAB[row.key].plural}
+                        maxLength={60}
+                        className="field w-full min-w-[8rem]"
+                      />
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
           <div className="border-t border-border/20 px-5 py-5 sm:px-7">
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900"
-            >
-              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="17 21 17 13 7 13 7 21" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="7 3 7 8 15 8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Save vocabulary
-            </button>
+            <Button type="submit">Save behaviour words</Button>
           </div>
         </form>
       </TerminologyCard>

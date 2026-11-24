@@ -5,7 +5,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { buildViewerContext } from "@/lib/viewerContext";
-import { pluralLabel } from "@/lib/vocab";
+import { getTenantVocab } from "@/lib/vocab";
 import {
   canViewExplorer,
   canViewBehaviourExplorer,
@@ -138,28 +138,31 @@ export default async function AnalysisPage({
   const ppFilter = params.pp === "1";
   const sendFilter = params.send === "1";
 
-  const [tenantSettings, onCallFeature] = await Promise.all([
+  const [tenantSettings, onCallFeature, words] = await Promise.all([
     (prisma as any).tenantSettings.findUnique({
       where: { tenantId: user.tenantId },
     }),
     (prisma as any).tenantFeature.findUnique({
       where: { tenantId_key: { tenantId: user.tenantId, key: "ON_CALL" } },
     }),
+    getTenantVocab(user.tenantId),
   ]);
   const hasOnCallFeature = onCallFeature?.enabled === true;
+  // Same behaviour words as every other page (Admin › Language). This page used to read only the
+  // older single labels, so changes to the singular/plural vocabulary never reached it.
   const labels = {
-    positivePoints: tenantSettings?.positivePointsLabel ?? "Positive Points",
+    positivePoints: words.positive_points.plural,
     negativePoints: tenantSettings?.negativePointsLabel ?? "Negative Points",
-    detention: tenantSettings?.detentionLabel ?? "Detention",
-    internalExclusion: tenantSettings?.internalExclusionLabel ?? "Internal Exclusion",
-    suspension: tenantSettings?.suspensionLabel ?? "Suspension",
-    onCall: tenantSettings?.onCallLabel ?? "On Call",
+    detention: words.detentions.singular,
+    internalExclusion: words.internal_exclusions.singular,
+    suspension: words.suspensions.singular,
+    onCall: words.on_calls.singular,
   };
 
-  const detentionPlural = pluralLabel(labels.detention);
-  const internalExclusionPlural = pluralLabel(labels.internalExclusion);
-  const suspensionPlural = pluralLabel(labels.suspension);
-  const onCallPlural = pluralLabel(labels.onCall);
+  const detentionPlural = words.detentions.plural;
+  const internalExclusionPlural = words.internal_exclusions.plural;
+  const suspensionPlural = words.suspensions.plural;
+  const onCallPlural = words.on_calls.plural;
 
   const result = await computeBehaviourAnalysis(
     user.tenantId,

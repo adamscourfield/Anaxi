@@ -89,6 +89,42 @@ export async function updateTaxonomyItem(formData: FormData) {
   revalidateAdmin("taxonomies");
 }
 
+/** Saves every row of one taxonomy list in a single submit. */
+export async function saveTaxonomyItems(formData: FormData) {
+  await assertSafeServerAction(formData);
+  const admin = await requireAdminUser();
+  const type = String(formData.get("type"));
+  const ids = formData.getAll("rowId").map(String).filter(Boolean);
+  if (!ids.length) return;
+  const delegate: any =
+    type === "loa"
+      ? prisma.loaReason
+      : type === "reason"
+        ? (prisma as any).onCallReason
+        : type === "location"
+          ? (prisma as any).onCallLocation
+          : type === "recipient"
+            ? (prisma as any).onCallRecipient
+            : null;
+  if (!delegate) return;
+  const updates = ids.flatMap((id) => {
+    const active = formData.get(`active_${id}`) === "on";
+    const data: Record<string, unknown> = { active };
+    if (type === "recipient") {
+      data.notifiesBehaviour = formData.get(`notifiesBehaviour_${id}`) !== null;
+      data.notifiesFirstAid = formData.get(`notifiesFirstAid_${id}`) !== null;
+    } else {
+      const label = String(formData.get(`label_${id}`) || "").trim();
+      if (!label) return [];
+      data.label = label;
+      if (type === "loa") data.requiresMedicalEvidence = formData.get(`requiresMedicalEvidence_${id}`) !== null;
+    }
+    return [delegate.updateMany({ where: { id, tenantId: admin.tenantId }, data })];
+  });
+  await prisma.$transaction(updates);
+  revalidateAdmin("taxonomies");
+}
+
 export async function toggleTaxonomyActive(formData: FormData) {
   await assertSafeServerAction(formData);
   const admin = await requireAdminUser();

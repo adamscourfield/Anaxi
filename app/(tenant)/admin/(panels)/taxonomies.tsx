@@ -15,8 +15,7 @@ import {
   removeScopedAuthoriser,
   removeScopedTarget,
   reorderTaxonomy,
-  toggleTaxonomyActive,
-  updateTaxonomyItem,
+  saveTaxonomyItems,
 } from "@/app/(tenant)/admin/taxonomies/actions";
 
 export async function TaxonomiesAdminPanel({
@@ -157,8 +156,7 @@ export async function TaxonomiesAdminPanel({
         globalAuthoriserIds={globalAuthoriserIds}
         scopedApproverIds={scopedApproverIds}
         addItem={addTaxonomyItem}
-        updateItem={updateTaxonomyItem}
-        toggleActive={toggleTaxonomyActive}
+        saveItems={saveTaxonomyItems}
         deleteItem={deleteTaxonomyItem}
         reorderTaxonomy={reorderTaxonomy}
         removeAuthoriser={removeLoaAuthoriser}

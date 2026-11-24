@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SUBJECT_STAGES, SUBJECT_STAGE_LABELS, type SubjectStage } from "@/lib/subjectStages";
 
@@ -30,25 +31,6 @@ function GripIcon({ className }: { className?: string }) {
   );
 }
 
-function SaveDiskIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points="17 21 17 13 7 13 7 21" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points="7 3 7 8 15 8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function CheckCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function MoreVerticalIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -59,12 +41,12 @@ function MoreVerticalIcon({ className }: { className?: string }) {
   );
 }
 
-function StageCheckboxes({ defaultStages }: { defaultStages: string[] }) {
+function StageCheckboxes({ defaultStages, name = "stages" }: { defaultStages: string[]; name?: string }) {
   return (
     <div className="flex flex-wrap items-center gap-3 text-[0.75rem] text-[var(--on-surface-variant)]">
       {SUBJECT_STAGES.map((stage) => (
         <label key={stage} className="inline-flex items-center gap-1.5">
-          <input type="checkbox" name="stages" value={stage} defaultChecked={defaultStages.includes(stage)} />
+          <input type="checkbox" name={name} value={stage} defaultChecked={defaultStages.includes(stage)} />
           {SUBJECT_STAGE_LABELS[stage]}
         </label>
       ))}
@@ -97,15 +79,13 @@ function stageBadges(stages: string[]) {
 export function SubjectsAdminView({
   rows: initialRows,
   addSubject,
-  updateSubject,
-  toggleSubjectActive,
+  saveSubjects,
   deleteSubject,
   reorderSubjects,
 }: {
   rows: SubjectRow[];
   addSubject: (formData: FormData) => Promise<void>;
-  updateSubject: (formData: FormData) => Promise<void>;
-  toggleSubjectActive: (formData: FormData) => Promise<void>;
+  saveSubjects: (formData: FormData) => Promise<void>;
   deleteSubject: (formData: FormData) => Promise<void>;
   reorderSubjects: (formData: FormData) => Promise<void>;
 }) {
@@ -189,19 +169,19 @@ export function SubjectsAdminView({
             description="Add your subjects below. Attainment uploads and grade entry will suggest exactly these names, so spelling stays consistent across cycles."
           />
         ) : (
+          <form action={saveSubjects}>
           <div className="overflow-x-auto rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)]">
-            <table className="w-full min-w-[720px] border-collapse text-left">
+            <table className="w-full min-w-[620px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)]">
                   <th className="w-10 px-2 py-3 sm:w-12" aria-hidden />
                   <th className="px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Subject</th>
-                  <th className="w-[120px] px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Status</th>
-                  <th className="min-w-[240px] px-4 py-3 text-right text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Actions</th>
+                  <th className="w-[120px] px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Active</th>
+                  <th className="w-14 px-4 py-3" aria-label="More actions" />
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => {
-                  const formId = `subject-update-${row.id}`;
                   return (
                     <tr key={row.id} className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] last:border-b-0" onDragEnter={() => handleDragEnter(row.id)}>
                       <td className="align-middle px-2 py-4">
@@ -218,47 +198,20 @@ export function SubjectsAdminView({
                         </button>
                       </td>
                       <td className="min-w-0 px-4 py-4 align-middle">
-                        <form id={formId} action={updateSubject} className="flex min-w-0 flex-col gap-2">
-                          <input type="hidden" name="id" value={row.id} />
-                          <input name="name" defaultValue={row.name} aria-label="Subject name" className={FIELD} required />
-                          <StageCheckboxes defaultStages={row.stages} />
-                        </form>
+                        <div className="flex min-w-0 flex-col gap-2">
+                          <input type="hidden" name="rowId" value={row.id} />
+                          <input name={`name_${row.id}`} defaultValue={row.name} aria-label="Subject name" className={FIELD} required />
+                          <StageCheckboxes defaultStages={row.stages} name={`stages_${row.id}`} />
+                        </div>
                       </td>
                       <td className="px-4 py-4 align-middle">
-                        <span
-                          className={`inline-flex rounded-md px-2.5 py-1 text-[0.6875rem] font-semibold ${
-                            row.active ? "bg-[#ECFDF5] text-[#166534]" : "bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]"
-                          }`}
-                        >
-                          {row.active ? "Active" : "Inactive"}
-                        </span>
-                        <div className="mt-1.5">{stageBadges(row.stages)}</div>
+                        <label className="inline-flex items-center gap-2 text-[0.8125rem] text-[var(--on-surface)]">
+                          <input type="checkbox" name={`active_${row.id}`} defaultChecked={row.active} />
+                          Active
+                        </label>
                       </td>
                       <td className="whitespace-nowrap px-4 py-4 text-right align-middle">
-                        <div className="inline-flex flex-wrap items-center justify-end gap-2">
-                          <button
-                            type="submit"
-                            form={formId}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[0.8125rem] font-semibold text-[var(--on-surface)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)]"
-                          >
-                            <SaveDiskIcon className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)]" />
-                            Save
-                          </button>
-                          <form action={toggleSubjectActive} className="inline">
-                            <input type="hidden" name="id" value={row.id} />
-                            <input type="hidden" name="active" value={String(row.active)} />
-                            <button
-                              type="submit"
-                              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[0.8125rem] font-semibold calm-transition ${
-                                row.active
-                                  ? "border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"
-                                  : "border-[#86EFAC] bg-[#ECFDF5] text-[#166534] hover:bg-[#D1FAE5]"
-                              }`}
-                            >
-                              <CheckCircleIcon className="h-4 w-4 shrink-0" />
-                              {row.active ? "Deactivate" : "Activate"}
-                            </button>
-                          </form>
+                        <div className="inline-flex items-center justify-end">
                           <div className="relative inline-block" ref={menuOpenId === row.id ? menuRef : undefined}>
                             <button
                               type="button"
@@ -278,16 +231,20 @@ export function SubjectsAdminView({
                                 className="absolute right-0 top-full z-20 mt-1 min-w-[10rem] rounded-sm border border-border bg-[var(--surface-container-lowest)] py-1 shadow-none"
                                 role="menu"
                               >
-                                <form action={deleteSubject}>
-                                  <input type="hidden" name="id" value={row.id} />
-                                  <button
-                                    type="submit"
-                                    className="flex w-full px-3 py-2 text-left text-[0.8125rem] font-medium text-error hover:bg-error/10"
-                                    role="menuitem"
-                                  >
-                                    Delete
-                                  </button>
-                                </form>
+                                {/* Inside the table's form, so it sends its own payload rather than every row's fields. */}
+                                <button
+                                  type="submit"
+                                  formAction={async () => {
+                                    const fd = new FormData();
+                                    fd.set("id", row.id);
+                                    await deleteSubject(fd);
+                                  }}
+                                  formNoValidate
+                                  className="flex w-full px-3 py-2 text-left text-[0.8125rem] font-medium text-error hover:bg-error/10"
+                                  role="menuitem"
+                                >
+                                  Delete
+                                </button>
                               </div>
                             ) : null}
                           </div>
@@ -299,6 +256,11 @@ export function SubjectsAdminView({
               </tbody>
             </table>
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button type="submit">Save changes</Button>
+            <span className="text-[0.75rem] text-[var(--on-surface-variant)]">Saves names, key stages and active status for every subject. Drag rows to reorder; order saves straight away.</span>
+          </div>
+          </form>
         )}
 
         <div className="mt-6 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)] p-5 sm:p-6">

@@ -89,6 +89,14 @@ export default async function OnboardingPage({
       update: data,
       create: { tenantId: admin.tenantId, ...data }
     });
+    // Singular/plural vocabulary overrides these labels (lib/vocab.ts). Clear it so the words
+    // chosen here are the ones people see; they can be refined later under Admin › Language.
+    await prisma.tenantVocab.deleteMany({
+      where: {
+        tenantId: admin.tenantId,
+        key: { in: ["positive_points", "detentions", "internal_exclusions", "suspensions", "on_calls"] },
+      },
+    });
     nextRedirect("/onboarding?step=5");
   }
 

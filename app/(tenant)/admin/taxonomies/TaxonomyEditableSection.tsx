@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export type TaxonomyRow = {
@@ -35,25 +36,6 @@ function GripIcon({ className }: { className?: string }) {
   );
 }
 
-function SaveDiskIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points="17 21 17 13 7 13 7 21" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points="7 3 7 8 15 8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function CheckCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function EnvelopeIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -84,8 +66,7 @@ export function TaxonomyEditableSection({
   valueColumnHeader,
   addItemNoun,
   staffOptions,
-  updateItem,
-  toggleActive,
+  saveItems,
   deleteItem,
   reorderTaxonomy,
   addItem,
@@ -98,8 +79,7 @@ export function TaxonomyEditableSection({
   valueColumnHeader: string;
   addItemNoun: string;
   staffOptions?: StaffOption[];
-  updateItem: (formData: FormData) => Promise<void>;
-  toggleActive: (formData: FormData) => Promise<void>;
+  saveItems: (formData: FormData) => Promise<void>;
   deleteItem: (formData: FormData) => Promise<void>;
   reorderTaxonomy: (formData: FormData) => Promise<void>;
   addItem: (formData: FormData) => Promise<void>;
@@ -185,20 +165,20 @@ export function TaxonomyEditableSection({
             description="Add an entry below. Inactive items stay in the list but are hidden from staff when they choose a reason or location."
           />
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)]">
-            <table className="w-full min-w-[640px] border-collapse text-left">
-              <thead>
-                <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)]">
-                  <th className="w-10 px-2 py-3 sm:w-12" aria-hidden />
-                  <th className="px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">{valueColumnHeader}</th>
-                  <th className="w-[120px] px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Status</th>
-                  <th className="min-w-[240px] px-4 py-3 text-right text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => {
-                  const formId = `tax-update-${type}-${row.id}`;
-                  return (
+          <form action={saveItems}>
+            <input type="hidden" name="type" value={type} />
+            <div className="overflow-x-auto rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)]">
+              <table className="w-full min-w-[560px] border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)]">
+                    <th className="w-10 px-2 py-3 sm:w-12" aria-hidden />
+                    <th className="px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">{valueColumnHeader}</th>
+                    <th className="w-[110px] px-4 py-3 text-[0.625rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">Status</th>
+                    <th className="w-14 px-4 py-3" aria-label="More actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
                     <tr key={row.id} className="border-b border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] last:border-b-0" onDragEnter={() => handleDragEnter(row.id)}>
                       <td className="align-middle px-2 py-4">
                         <button
@@ -214,118 +194,93 @@ export function TaxonomyEditableSection({
                         </button>
                       </td>
                       <td className="min-w-0 px-4 py-4 align-middle">
-                        <form id={formId} action={updateItem} className="flex min-w-0 flex-col gap-2">
-                          <input type="hidden" name="type" value={type} />
-                          <input type="hidden" name="id" value={row.id} />
+                        <div className="flex min-w-0 flex-col gap-2">
+                          <input type="hidden" name="rowId" value={row.id} />
                           <div className="flex min-w-0 items-center gap-2">
-                            <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--surface-container)]" aria-hidden />
                             {field === "email" ? <EnvelopeIcon className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)]" /> : null}
                             {type === "recipient" ? (
                               <span className="min-w-0 truncate text-sm text-[var(--on-surface)]" title={row.value}>
                                 {row.value}
                               </span>
                             ) : (
-                              <input name="label" defaultValue={row.value} aria-label={valueInputLabel} className={FIELD} required />
+                              <input name={`label_${row.id}`} defaultValue={row.value} aria-label={valueInputLabel} className={FIELD} required />
                             )}
                           </div>
                           {type === "recipient" ? (
-                            <div className="flex flex-wrap items-center gap-3 pl-4 text-[0.75rem] text-[var(--on-surface-variant)]">
+                            <div className="flex flex-wrap items-center gap-3 text-[0.75rem] text-[var(--on-surface-variant)]">
                               <label className="inline-flex items-center gap-1.5">
-                                <input type="checkbox" name="notifiesBehaviour" defaultChecked={row.notifiesBehaviour !== false} />
+                                <input type="checkbox" name={`notifiesBehaviour_${row.id}`} defaultChecked={row.notifiesBehaviour !== false} />
                                 Behaviour
                               </label>
                               <label className="inline-flex items-center gap-1.5">
-                                <input type="checkbox" name="notifiesFirstAid" defaultChecked={row.notifiesFirstAid !== false} />
+                                <input type="checkbox" name={`notifiesFirstAid_${row.id}`} defaultChecked={row.notifiesFirstAid !== false} />
                                 First aid
                               </label>
                             </div>
                           ) : null}
                           {type === "loa" ? (
-                            <div className="flex flex-wrap items-center gap-3 pl-4 text-[0.75rem] text-[var(--on-surface-variant)]">
-                              <label className="inline-flex items-center gap-1.5">
-                                <input type="checkbox" name="requiresMedicalEvidence" defaultChecked={row.requiresMedicalEvidence === true} />
-                                Requires medical evidence for longer absences
-                              </label>
-                            </div>
+                            <label className="inline-flex items-center gap-1.5 text-[0.75rem] text-[var(--on-surface-variant)]">
+                              <input type="checkbox" name={`requiresMedicalEvidence_${row.id}`} defaultChecked={row.requiresMedicalEvidence === true} />
+                              Requires medical evidence for longer absences
+                            </label>
                           ) : null}
-                        </form>
+                        </div>
                       </td>
                       <td className="px-4 py-4 align-middle">
-                        <span
-                          className={`inline-flex rounded-md px-2.5 py-1 text-[0.6875rem] font-semibold ${
-                            row.active ? "bg-[#ECFDF5] text-[#166534]" : "bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]"
-                          }`}
-                        >
-                          {row.active ? "Active" : "Inactive"}
-                        </span>
+                        <label className="inline-flex items-center gap-2 text-[0.8125rem] text-[var(--on-surface)]">
+                          <input type="checkbox" name={`active_${row.id}`} defaultChecked={row.active} />
+                          Active
+                        </label>
                       </td>
                       <td className="whitespace-nowrap px-4 py-4 text-right align-middle">
-                        <div className="inline-flex flex-wrap items-center justify-end gap-2">
+                        <div className="relative inline-block" ref={menuOpenId === row.id ? menuRef : undefined}>
                           <button
-                            type="submit"
-                            form={formId}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] px-3 py-2 text-[0.8125rem] font-semibold text-[var(--on-surface)] shadow-sm calm-transition hover:bg-[var(--surface-container-low)]"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMenuOpenId((id) => (id === row.id ? null : row.id));
+                            }}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
+                            aria-expanded={menuOpenId === row.id}
+                            aria-haspopup="menu"
+                            title="More actions"
                           >
-                            <SaveDiskIcon className="h-4 w-4 shrink-0 text-[var(--on-surface-variant)]" />
-                            Save
+                            <MoreVerticalIcon className="h-5 w-5" />
                           </button>
-                          <form action={toggleActive} className="inline">
-                            <input type="hidden" name="type" value={type} />
-                            <input type="hidden" name="id" value={row.id} />
-                            <input type="hidden" name="active" value={String(row.active)} />
-                            <button
-                              type="submit"
-                              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[0.8125rem] font-semibold calm-transition ${
-                                row.active
-                                  ? "border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"
-                                  : "border-[#86EFAC] bg-[#ECFDF5] text-[#166534] hover:bg-[#D1FAE5]"
-                              }`}
+                          {menuOpenId === row.id ? (
+                            <div
+                              className="absolute right-0 top-full z-20 mt-1 min-w-[10rem] rounded-sm border border-border bg-[var(--surface-container-lowest)] py-1 shadow-none"
+                              role="menu"
                             >
-                              <CheckCircleIcon className="h-4 w-4 shrink-0" />
-                              {row.active ? "Deactivate" : "Activate"}
-                            </button>
-                          </form>
-                          <div className="relative inline-block" ref={menuOpenId === row.id ? menuRef : undefined}>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setMenuOpenId((id) => (id === row.id ? null : row.id));
-                              }}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] text-[var(--on-surface-variant)] calm-transition hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface)]"
-                              aria-expanded={menuOpenId === row.id}
-                              aria-haspopup="menu"
-                              title="More actions"
-                            >
-                              <MoreVerticalIcon className="h-5 w-5" />
-                            </button>
-                            {menuOpenId === row.id ? (
-                              <div
-                                className="absolute right-0 top-full z-20 mt-1 min-w-[10rem] rounded-sm border border-border bg-[var(--surface-container-lowest)] py-1 shadow-none"
-                                role="menu"
+                              {/* Inside the list's form, so it sends its own payload rather than every row's fields. */}
+                              <button
+                                type="submit"
+                                formAction={async () => {
+                                  const fd = new FormData();
+                                  fd.set("type", type);
+                                  fd.set("id", row.id);
+                                  await deleteItem(fd);
+                                }}
+                                formNoValidate
+                                className="flex w-full px-3 py-2 text-left text-[0.8125rem] font-medium text-error hover:bg-error/10"
+                                role="menuitem"
                               >
-                                <form action={deleteItem}>
-                                  <input type="hidden" name="type" value={type} />
-                                  <input type="hidden" name="id" value={row.id} />
-                                  <button
-                                    type="submit"
-                                    className="flex w-full px-3 py-2 text-left text-[0.8125rem] font-medium text-error hover:bg-error/10"
-                                    role="menuitem"
-                                  >
-                                    Delete
-                                  </button>
-                                </form>
-                              </div>
-                            ) : null}
-                          </div>
+                                Delete
+                              </button>
+                            </div>
+                          ) : null}
                         </div>
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button type="submit">Save changes</Button>
+              <span className="text-[0.75rem] text-[var(--on-surface-variant)]">Saves every row in this list. Drag rows to reorder; order saves straight away.</span>
+            </div>
+          </form>
         )}
 
         <div className="mt-6 rounded-xl border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-low)] p-5 sm:p-6">

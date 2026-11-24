@@ -5,8 +5,7 @@ import { requireAdminUser } from "@/lib/admin";
 import { SubjectsAdminView } from "@/components/admin/subjects-admin-view";
 import {
   addSubject,
-  updateSubject,
-  toggleSubjectActive,
+  saveSubjects,
   deleteSubject,
   reorderSubjects,
 } from "@/app/(tenant)/admin/subjects/actions";
@@ -38,8 +37,7 @@ export async function SubjectsAdminPanel() {
       <SubjectsAdminView
         rows={rows}
         addSubject={addSubject}
-        updateSubject={updateSubject}
-        toggleSubjectActive={toggleSubjectActive}
+        saveSubjects={saveSubjects}
         deleteSubject={deleteSubject}
         reorderSubjects={reorderSubjects}
       />

@@ -53,8 +53,7 @@ export function TaxonomiesAdminView({
   globalAuthoriserIds,
   scopedApproverIds,
   addItem,
-  updateItem,
-  toggleActive,
+  saveItems,
   deleteItem,
   reorderTaxonomy,
   removeAuthoriser,
@@ -73,8 +72,7 @@ export function TaxonomiesAdminView({
   globalAuthoriserIds: string[];
   scopedApproverIds: string[];
   addItem: (formData: FormData) => Promise<void>;
-  updateItem: (formData: FormData) => Promise<void>;
-  toggleActive: (formData: FormData) => Promise<void>;
+  saveItems: (formData: FormData) => Promise<void>;
   deleteItem: (formData: FormData) => Promise<void>;
   reorderTaxonomy: (formData: FormData) => Promise<void>;
   removeAuthoriser: (formData: FormData) => Promise<void>;
@@ -99,8 +97,7 @@ export function TaxonomiesAdminView({
           rows={loaRows}
           valueColumnHeader="Reason"
           addItemNoun="reason"
-          updateItem={updateItem}
-          toggleActive={toggleActive}
+          saveItems={saveItems}
           deleteItem={deleteItem}
           reorderTaxonomy={reorderTaxonomy}
           addItem={addItem}
@@ -116,8 +113,7 @@ export function TaxonomiesAdminView({
           rows={reasonRows}
           valueColumnHeader="Reason"
           addItemNoun="reason"
-          updateItem={updateItem}
-          toggleActive={toggleActive}
+          saveItems={saveItems}
           deleteItem={deleteItem}
           reorderTaxonomy={reorderTaxonomy}
           addItem={addItem}
@@ -133,8 +129,7 @@ export function TaxonomiesAdminView({
           rows={locationRows}
           valueColumnHeader="Location"
           addItemNoun="location"
-          updateItem={updateItem}
-          toggleActive={toggleActive}
+          saveItems={saveItems}
           deleteItem={deleteItem}
           reorderTaxonomy={reorderTaxonomy}
           addItem={addItem}
@@ -151,8 +146,7 @@ export function TaxonomiesAdminView({
           valueColumnHeader="Email"
           addItemNoun="recipient"
           staffOptions={staff}
-          updateItem={updateItem}
-          toggleActive={toggleActive}
+          saveItems={saveItems}
           deleteItem={deleteItem}
           reorderTaxonomy={reorderTaxonomy}
           addItem={addItem}

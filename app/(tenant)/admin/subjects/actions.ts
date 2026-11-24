@@ -80,3 +80,24 @@ export async function reorderSubjects(formData: FormData) {
   );
   revalidateAdmin("subjects");
 }
+
+/**
+ * Save every row of the Subjects table at once (names, key stages, active). Replaces a Save and an
+ * Activate/Deactivate button on each row. Fields are suffixed with the row id: name_<id>,
+ * stages_<id>, active_<id> (a checkbox, present when ticked).
+ */
+export async function saveSubjects(formData: FormData) {
+  await assertSafeServerAction(formData);
+  const admin = await requireAdminUser();
+  const ids = formData.getAll("rowId").map(String).filter(Boolean);
+  if (!ids.length) return;
+  const updates = ids.flatMap((id) => {
+    const name = String(formData.get(`name_${id}`) || "").trim();
+    if (!name) return [];
+    const stages = formData.getAll(`stages_${id}`).map(String).filter(isSubjectStage);
+    const active = formData.get(`active_${id}`) === "on";
+    return [prisma.subject.updateMany({ where: { id, tenantId: admin.tenantId }, data: { name, stages, active } })];
+  });
+  await prisma.$transaction(updates);
+  revalidateAdmin("subjects");
+}
