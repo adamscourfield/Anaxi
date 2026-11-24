@@ -2,7 +2,9 @@ import "./globals.css";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import { SessionProvider } from "@/components/session-provider";
+import { NavigationProgress } from "@/components/navigation-progress";
 import { motionRootCssProperties } from "@/lib/motion/tokens";
 
 const inter = localFont({ src: "./fonts/inter.woff2", weight: "300 700", variable: "--font-inter", display: "swap" });
@@ -39,6 +41,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       style={rootFontVars}
     >
       <body className="antialiased bg-[var(--surface-bright)] text-[var(--on-surface)]">
+          <Suspense fallback={null}>
+            <NavigationProgress />
+          </Suspense>
           <SessionProvider>{children}</SessionProvider>
         </body>
     </html>

@@ -1,0 +1,58 @@
+/* Page-change indicator. Coral is the app's accent; the pill uses the ink/card tokens. */
+.bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 9999;
+  height: 2px;
+  background: #ff6a52;
+  transform-origin: 0 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 300ms ease-out, opacity 200ms ease;
+}
+.bar[data-phase="loading"] { opacity: 1; }
+.bar[data-phase="done"] { opacity: 0; transition: transform 160ms ease-out, opacity 220ms ease 120ms; }
+.bar[data-phase="idle"] { transition: none; }
+
+.pill {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px 9px 12px;
+  border: 1px solid #e5e5e6;
+  border-radius: 999px;
+  background: #fff;
+  color: #1c1c1e;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 6px 24px rgba(28, 28, 30, 0.08);
+  transform: translate(-50%, 8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.pill[data-visible="true"] { opacity: 1; transform: translate(-50%, 0); }
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #e5e5e6;
+  border-top-color: #ff6a52;
+  animation: navSpin 700ms linear infinite;
+}
+
+@keyframes navSpin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bar, .pill { transition: opacity 150ms ease; }
+  .spinner { animation-duration: 1.6s; }
+}
+
+@media print {
+  .bar, .pill { display: none; }
+}
