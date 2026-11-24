@@ -363,7 +363,20 @@ export async function sendPasswordResetEmail(options: {
   fullName: string;
   resetUrl: string;
   tenantId?: string | null;
+  /** Set when a school admin reset the password, rather than the person asking. */
+  resetByAdmin?: { validHours: number };
 }): Promise<SendEmailResult> {
+  const lines = options.resetByAdmin
+    ? [
+        "A school administrator has reset your Anaxi password. Your old password no longer works.",
+        "Choose a new password using the button below.",
+        `This link is valid for ${options.resetByAdmin.validHours} hours.`,
+      ]
+    : [
+        "You requested a password reset for your Anaxi account.",
+        "This link is valid for 1 hour.",
+        "If you did not request this, you can ignore this email.",
+      ];
   return sendTemplatedEmail({
     to: options.to,
     subject: "Reset your Anaxi password",
@@ -372,11 +385,7 @@ export async function sendPasswordResetEmail(options: {
     template: "password_reset",
     payload: {
       greeting: `Hi ${options.fullName},`,
-      lines: [
-        "You requested a password reset for your Anaxi account.",
-        "This link is valid for 1 hour.",
-        "If you did not request this, you can ignore this email.",
-      ],
+      lines,
       cta: { label: "Reset password", href: options.resetUrl },
     },
   });

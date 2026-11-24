@@ -2,7 +2,6 @@ import type { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import { microsoftEnabled, resolveMicrosoftUser } from "@/lib/microsoftAuth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { getNextAuthSecret } from "@/lib/nextAuthSecret";
 import { isActivePlatformSuperAdmin } from "@/lib/platform";
 
@@ -33,13 +32,17 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
         tenantId: { label: "Tenant ID (optional)", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         const { prisma } = await import("@/lib/prisma");
         const bcrypt = (await import("bcryptjs")).default;
+        const { checkLoginRateLimit, ipFromHeaders } = await import("@/lib/loginRateLimit");
         const email = credentials?.email?.toLowerCase().trim();
         const password = credentials?.password ?? "";
         const tenantId = credentials?.tenantId?.trim() || null;
         if (!email || !password) return null;
+
+        const limit = await checkLoginRateLimit("signin", ipFromHeaders(req?.headers as Record<string, string> | undefined), email);
+        if (!limit.allowed) throw new Error("RATE_LIMITED");
 
         const candidates = await prisma.user.findMany({
           where: {
@@ -92,29 +95,41 @@ export const authOptions: NextAuthOptions = {
         }
       }
       if (trigger === "update" && session?.targetTenantId) {
+        // Switching school. A matching email is not proof of identity (any school
+        // admin can create an account with any email), so the target account must
+        // be linked to the one signed in: see lib/linkedAccounts.ts.
         const { prisma } = await import("@/lib/prisma");
-        const currentEmail = (token.user as any)?.email;
-        const targetUser = await prisma.user.findFirst({
-          where: {
-            email: currentEmail, tenantId: session.targetTenantId, isActive: true,
-            ...(token.microsoftIdentity ? {
-              microsoftTenantId: (token.microsoftIdentity as any).tid,
-              microsoftObjectId: (token.microsoftIdentity as any).oid,
-              role: { not: "SUPER_ADMIN" },
-            } : {}),
-          },
-          select: { id: true, tenantId: true, email: true, fullName: true, role: true, isActive: true },
-        });
-        if (targetUser) {
-          // Shadow SUPER_ADMIN rows in schools require a live platform super-admin.
+        const { findLinkedAccountInTenant } = await import("@/lib/linkedAccounts");
+        const current = token.user as { id?: string; email?: string; role?: string } | undefined;
+        const targetTenantId = String(session.targetTenantId);
+        const microsoft = token.microsoftIdentity as { tid?: string; oid?: string } | undefined;
+        if (current?.id && current.email) {
+          let targetId: string | null = null;
+          const linked = await findLinkedAccountInTenant(current.id, targetTenantId, microsoft);
+          if (linked && !(microsoft && linked.role === "SUPER_ADMIN")) targetId = linked.id;
+
+          // Platform super-admins move between their god-mode (SUPER_ADMIN) accounts.
+          // Trust comes from the account they are signed in as, never the email alone.
           if (
-            targetUser.role === "SUPER_ADMIN" &&
-            targetUser.tenantId !== PLATFORM_TENANT_ID
+            !targetId &&
+            !microsoft &&
+            current.role === "SUPER_ADMIN" &&
+            (await isActivePlatformSuperAdmin(current.email))
           ) {
-            const allowed = await isActivePlatformSuperAdmin(currentEmail);
-            if (!allowed) return token;
+            const shadow = await prisma.user.findFirst({
+              where: { email: current.email, tenantId: targetTenantId, isActive: true, role: "SUPER_ADMIN" },
+              select: { id: true },
+            });
+            targetId = shadow?.id ?? null;
           }
-          token.user = { ...targetUser, name: targetUser.fullName };
+
+          if (targetId) {
+            const targetUser = await prisma.user.findUnique({
+              where: { id: targetId },
+              select: { id: true, tenantId: true, email: true, fullName: true, role: true, isActive: true },
+            });
+            if (targetUser?.isActive) token.user = { ...targetUser, name: targetUser.fullName };
+          }
         }
       }
       return token;

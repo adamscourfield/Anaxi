@@ -1,24 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { checkRateLimit, clientIp } from "@/lib/rateLimit";
+import { clientIp } from "@/lib/rateLimit";
+import { checkLoginRateLimit } from "@/lib/loginRateLimit";
 import { authTenantsBodySchema } from "@/lib/validation/schemas";
 
 export async function POST(request: NextRequest) {
-  const limit = await checkRateLimit(`auth-tenants:${clientIp(request)}`, { max: 20, windowMs: 60_000 });
-  if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Too many attempts. Try again shortly." },
-      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec ?? 60) } },
-    );
-  }
-
   let email: string;
   let password: string;
   try {
     ({ email, password } = authTenantsBodySchema.parse(await request.json()));
   } catch {
     return NextResponse.json({ error: "Missing credentials" }, { status: 400 });
+  }
+
+  const limit = await checkLoginRateLimit("auth-tenants", clientIp(request), email);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many sign-in attempts. Try again in a few minutes." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } },
+    );
   }
 
   const candidates = await prisma.user.findMany({

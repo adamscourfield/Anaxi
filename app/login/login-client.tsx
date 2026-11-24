@@ -44,6 +44,10 @@ export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: b
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
+      if (res.status === 429) {
+        setError(data.error ?? "Too many sign-in attempts. Try again in a few minutes.");
+        return;
+      }
       const tenants: School[] = data.tenants ?? [];
       if (tenants.length === 0) {
         setError("Invalid email or password.");
@@ -79,7 +83,11 @@ export function LoginClient({ microsoftEnabled = false }: { microsoftEnabled?: b
       callbackUrl: "/home",
     });
     if (res?.error) {
-      setError("Authentication failed. Please try again.");
+      setError(
+        res.error === "RATE_LIMITED"
+          ? "Too many sign-in attempts. Try again in a few minutes."
+          : "Authentication failed. Please try again.",
+      );
       setStep("credentials");
       return;
     }

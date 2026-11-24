@@ -20,7 +20,7 @@ export const POST = withApi(async function POST(req: Request) {
   const updated = await prisma.$transaction(async (tx) => {
     const record = await tx.passwordResetToken.findUnique({
       where: { tokenHash },
-      include: { user: { select: { id: true } } },
+      include: { user: { select: { id: true, email: true, passwordHash: true } } },
     });
 
     if (!record || record.usedAt || record.expiresAt < new Date()) {
@@ -38,6 +38,15 @@ export const POST = withApi(async function POST(req: Request) {
       where: { id: record.userId },
       data: { passwordHash },
     });
+
+    // Keep linked accounts at other schools (same email, same password hash)
+    // in step, so the person can still switch between them.
+    if (record.user.passwordHash) {
+      await tx.user.updateMany({
+        where: { email: record.user.email, passwordHash: record.user.passwordHash, id: { not: record.userId } },
+        data: { passwordHash },
+      });
+    }
 
     return record;
   });

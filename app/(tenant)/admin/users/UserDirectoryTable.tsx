@@ -216,14 +216,14 @@ export function UserDirectoryTable({
   function handleResetPassword(u: UserRow) {
     if (
       !window.confirm(
-        `Reset password for ${u.fullName} to the default temporary password (Password123!)? They should change it on next login.`,
+        `Reset ${u.fullName}'s password? Their current password stops working at this school, and they'll be emailed a link to choose a new one.`,
       )
     ) {
       return;
     }
     const fd = new FormData();
     fd.set("id", u.id);
-    runRowAction(() => resetPasswordAction(fd), "Password reset");
+    runRowAction(() => resetPasswordAction(fd), "Password reset. They\u2019ve been emailed a link.");
   }
 
   function handleDeleteUser(u: UserRow) {

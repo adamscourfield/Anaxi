@@ -4,7 +4,11 @@ import { assertSafeServerAction } from "@/lib/serverActionGuard";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { sendOnboardingEmail } from "@/lib/email";
+import { createPasswordSetToken, sendOnboardingEmail, sendPasswordResetEmail } from "@/lib/email";
+import { getAppUrl } from "@/lib/email/format";
+import { randomUnusablePassword } from "@/lib/randomPassword";
+
+const ADMIN_RESET_LINK_HOURS = 72;
 import { avatarUploadErrorMessage, readAvatarFile } from "@/lib/avatarUpload";
 import {
   assertAdminCanMutateUser,
@@ -15,7 +19,7 @@ import { assertCanEditArborOwnedStaffFields } from "@/lib/integrations/arbor/fie
 import { fullNameSchema } from "@/lib/validation/schemas";
 
 export type ActionResult =
-  | { ok: true; linked?: boolean; linkedNewPassword?: boolean }
+  | { ok: true; linked?: boolean }
   | { ok: false; error: string };
 
 function actionError(e: unknown): string {
@@ -27,13 +31,13 @@ function actionError(e: unknown): string {
 }
 
 async function runAction(
-  fn: () => Promise<{ linked?: boolean; linkedNewPassword?: boolean } | void>,
+  fn: () => Promise<{ linked?: boolean } | void>,
 ): Promise<ActionResult> {
   try {
     const extra = await fn();
     revalidatePath("/admin/users");
     revalidatePath("/admin");
-    return { ok: true, linked: extra?.linked, linkedNewPassword: extra?.linkedNewPassword };
+    return { ok: true, linked: extra?.linked };
   } catch (e) {
     return { ok: false, error: actionError(e) };
   }
@@ -51,45 +55,32 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     if (!fullName || !email) throw new Error("Name and email are required.");
     assertAdminCannotAssignSuperAdminRole(admin, role);
 
-    // "Link accounts" reuses an existing password hash from another school's
-    // account for this same email, instead of setting a brand new password --
-    // so the person signs into every school with one email + one password
-    // (picking which school at login) rather than juggling a separate
-    // account per school. We only ever copy the hash, never the plaintext.
-    //
-    // The other account may not have a password yet at all (e.g. bulk-imported
-    // staff who haven't clicked their "set your password" link) -- in that case
-    // there's nothing to copy, so instead we hash the temporary password entered
-    // here and write it to BOTH rows, so the same credentials unlock either school.
+    // "Link accounts" copies the password hash from this person's account at
+    // another school, so they sign into every school with one email + one
+    // password and can switch between them (see lib/linkedAccounts.ts). We only
+    // ever copy the hash, never the plaintext, and we never write to the other
+    // school's account: an admin here must not be able to set a password there.
+    // If the other account has no password yet, there is nothing to link to, so
+    // this becomes a normal separate account.
     const wantsLink = formData.get("linkExisting") === "true";
     let passwordHash: string | null = null;
     let linked = false;
-    let linkedNewPassword = false;
-    let existingWithoutPasswordId: string | null = null;
     if (wantsLink) {
       const existing = await prisma.user.findFirst({
-        where: { email, isActive: true, tenantId: { not: admin.tenantId } },
+        where: { email, isActive: true, tenantId: { not: admin.tenantId }, passwordHash: { not: null } },
         orderBy: { id: "asc" },
-        select: { id: true, passwordHash: true },
+        select: { passwordHash: true },
       });
       if (existing?.passwordHash) {
         passwordHash = existing.passwordHash;
         linked = true;
-      } else if (existing) {
-        existingWithoutPasswordId = existing.id;
       }
     }
     if (!passwordHash) {
-      const password = String(formData.get("password") || "Password123!");
-      passwordHash = await bcrypt.hash(password, 10);
-    }
-    if (existingWithoutPasswordId) {
-      await prisma.user.update({
-        where: { id: existingWithoutPasswordId },
-        data: { passwordHash },
-      });
-      linked = true;
-      linkedNewPassword = true;
+      // No password typed: use an unguessable one. The onboarding email lets
+      // them set their own.
+      const typed = String(formData.get("password") || "");
+      passwordHash = await bcrypt.hash(typed || randomUnusablePassword(), 10);
     }
 
     const user = await (prisma as any).user.create({
@@ -108,9 +99,7 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
 
     // Someone linked to an account that already had a working password knows
     // it already -- an onboarding "set your password" email would be misleading.
-    // But if we just set a brand new shared password (linkedNewPassword), they
-    // still need to be told it, same as any other new account.
-    if (!linked || linkedNewPassword) {
+    if (!linked) {
       // Fire-and-forget — email failures should not block staff creation.
       sendOnboardingEmail({
         to: email,
@@ -122,7 +111,7 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       });
     }
 
-    return { linked, linkedNewPassword };
+    return { linked };
   });
 }
 
@@ -243,12 +232,29 @@ export async function resetPassword(formData: FormData): Promise<ActionResult> {
     const admin = await requireAdminUser();
     const id = String(formData.get("id"));
     await assertAdminCanMutateUser(admin, id, admin.tenantId);
-    const password = String(formData.get("password") || "Password123!");
-    const hash = await bcrypt.hash(password, 10);
+    const target = await (prisma as any).user.findFirst({
+      where: { id, tenantId: admin.tenantId },
+      select: { id: true, email: true, fullName: true },
+    });
+    if (!target) throw new Error("User not found.");
+    // Lock the old password (this school's account only) and email a link to
+    // choose a new one. There is no shared default password.
+    const hash = await bcrypt.hash(randomUnusablePassword(), 10);
     await (prisma as any).user.updateMany({
       where: { id, tenantId: admin.tenantId },
       data: { passwordHash: hash },
     });
+    const token = await createPasswordSetToken(target.id, ADMIN_RESET_LINK_HOURS);
+    const result = await sendPasswordResetEmail({
+      to: target.email,
+      fullName: target.fullName,
+      resetUrl: `${getAppUrl()}/login/reset-password?token=${token}`,
+      tenantId: admin.tenantId,
+      resetByAdmin: { validHours: ADMIN_RESET_LINK_HOURS },
+    });
+    if (result.status === "failed") {
+      throw new Error("Password reset, but the email could not be sent. Check the email log, then use Reset password again.");
+    }
   });
 }
 

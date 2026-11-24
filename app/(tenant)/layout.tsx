@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { findLinkedAccounts } from "@/lib/linkedAccounts";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { TenantLayoutClient } from "@/components/tenant-layout-client";
 import { getOpenOnCallCount } from "@/lib/oncall/badge";
@@ -22,10 +23,7 @@ export default async function TenantLayout({ children }: { children: React.React
     prisma.tenant.findUnique({ where: { id: user.tenantId }, select: { name: true } }),
     isSuperAdmin
       ? prisma.tenant.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } })
-      : prisma.user.findMany({
-          where: { email: user.email, isActive: true },
-          select: { tenantId: true, tenant: { select: { name: true } } },
-        }),
+      : findLinkedAccounts(user.id),
     coachCountPromise,
     prisma.user.findUnique({ where: { id: user.id }, select: { avatarUpdatedAt: true } }),
   ]);

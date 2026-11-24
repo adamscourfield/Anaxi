@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { randomUnusablePassword } from "@/lib/randomPassword";
 import { NextResponse } from "next/server";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { withApi } from "@/lib/apiRoute";
@@ -26,8 +27,8 @@ export const POST = withApi(async function POST(req: Request) {
   const enabled = new Set(request.integration.schools.map((school: { tenantId: string }) => school.tenantId));
   if (tenantIds.some((tenantId) => !enabled.has(tenantId))) return NextResponse.redirect(new URL("/god/integrations/arbor?staffProvisioning=invalid", req.url));
   try {
-    const existing = await db.user.findFirst({ where: { email, isActive: true, tenantId: { notIn: tenantIds } }, select: { passwordHash: true } });
-    const passwordHash = existing?.passwordHash ?? await bcrypt.hash("Password123!", 10);
+    const existing = await db.user.findFirst({ where: { email, isActive: true, tenantId: { notIn: tenantIds }, passwordHash: { not: null } }, select: { passwordHash: true } });
+    const passwordHash = existing?.passwordHash ?? await bcrypt.hash(randomUnusablePassword(), 10);
     const users = [] as Array<{ id: string; tenantId: string }>;
     for (const tenantId of tenantIds) {
       const existingInSchool = await db.user.findUnique({ where: { tenantId_email: { tenantId, email } }, select: { id: true, externalId: true } });
