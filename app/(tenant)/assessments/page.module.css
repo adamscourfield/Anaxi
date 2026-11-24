@@ -13,3 +13,9 @@
 .summary span[aria-hidden] { background: #fff; color: #e14e36; border: 1px solid #e5e5e6; border-radius: 12px; }
 @media (max-width: 1023px) { .summary { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 639px) { .summary { grid-template-columns: 1fr; } }
+/* A table inside a card is one surface: no second frame or inset (the global .table-shell border
+   outranks the Tailwind border-0 meant to remove it). */
+.page [data-ui-card]:has(.table-shell) { padding: 0; overflow: hidden; }
+.page [data-ui-card] :global(.table-shell) { border: 0; border-radius: 0; box-shadow: none; overflow-x: auto; }
+/* On phones the table scrolls sideways inside the card instead of being clipped. */
+.page [data-ui-card] :global(.table-shell) table { min-width: 640px; }

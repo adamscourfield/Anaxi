@@ -47,7 +47,7 @@ function formatAssessedDate(value: Date | string | null | undefined): string | n
 
   return parsed.toLocaleDateString("en-GB", {
     day: "numeric",
-    month: "long",
+    month: "short",
     year: "numeric",
   });
 }
@@ -229,6 +229,20 @@ export default async function CycleDetailPage({
             },
           }),
         ]);
+  // Distinct students per point. The Students column used to repeat the entries count
+  // (one row per student per subject), e.g. 1,648 "students" for a 180-student cohort.
+  const studentCountByPoint = new Map<string, number>(
+    await Promise.all(
+      pointIds.map(async (pointId) => {
+        const rows = await prisma.assessmentResult.findMany({
+          where: { tenantId: user.tenantId, assessment: { pointId } },
+          select: { studentId: true },
+          distinct: ["studentId"],
+        });
+        return [pointId, rows.length] as const;
+      }),
+    ),
+  );
   const integrityPct =
     integrityTotal === 0 ? null : Math.round((integrityValid / integrityTotal) * 1000) / 10;
   const integrityDisplay = integrityPct !== null ? `${integrityPct.toFixed(1)}%` : "—";
@@ -244,21 +258,19 @@ export default async function CycleDetailPage({
   const sortedPoints = [...cycle.points].sort(
     (a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0),
   );
-  let priorTotalEntries = 0;
-  if (sortedPoints.length >= 2) {
-    priorTotalEntries = sumPointEntries(sortedPoints[sortedPoints.length - 2]!);
-  }
+  // Compare the latest point with the one before it. This used to compare the whole cycle's total
+  // with the previous point, so two similar mocks showed as "+97%".
+  const latestPoint = sortedPoints[sortedPoints.length - 1];
+  const previousPoint = sortedPoints[sortedPoints.length - 2];
+  const latestEntries = latestPoint ? sumPointEntries(latestPoint) : 0;
+  const previousEntries = previousPoint ? sumPointEntries(previousPoint) : 0;
   const entriesTrendPct =
-    priorTotalEntries > 0
-      ? Math.round(((totalEntries - priorTotalEntries) / priorTotalEntries) * 100)
-      : totalEntries > 0
-        ? 100
-        : 0;
+    previousEntries > 0 ? Math.round(((latestEntries - previousEntries) / previousEntries) * 100) : 0;
   const entriesTrendLabel =
-    priorTotalEntries > 0
-      ? `${entriesTrendPct >= 0 ? "↗" : "↘"} ${entriesTrendPct >= 0 ? "+" : ""}${entriesTrendPct}% vs prior point`
+    previousEntries > 0 && latestPoint
+      ? `${latestPoint.label}: ${entriesTrendPct >= 0 ? "+" : ""}${entriesTrendPct}% vs ${previousPoint!.label}`
       : sortedPoints.length < 2
-        ? "Add a prior point to see trend"
+        ? "Add a second point to see the trend"
         : "First data in cycle";
 
   return (
@@ -273,16 +285,8 @@ export default async function CycleDetailPage({
       <PageHeader
         variant="ledger"
         className="!mb-0 border-0 !pb-0"
-        eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-muted"
-        eyebrow="Attainment cycle"
         titleClassName="text-[1.75rem] font-bold tracking-tight text-text md:text-[2rem]"
-        subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-muted"
         title={cycle.label}
-        subtitle={
-          cycle.cohortLabel
-            ? `${cycle.cohortLabel} · ${cycle.academicYear}`
-            : cycle.academicYear
-        }
         meta={
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[0.8125rem] text-muted">
             <span className="inline-flex items-center gap-1.5">
@@ -334,7 +338,7 @@ export default async function CycleDetailPage({
           <div>
             <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Entries recorded</p>
             <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalEntries.toLocaleString()}</p>
-            <p className={`mt-0.5 text-[0.75rem] font-semibold ${entriesTrendPct >= 0 ? "text-[var(--status-approved-text)]" : "text-[var(--status-denied-text)]"}`}>{entriesTrendLabel}</p>
+            <p className="mt-0.5 text-[0.75rem] text-muted">{entriesTrendLabel}</p>
           </div>
         </div>
         <div className="hidden" aria-hidden />
@@ -345,7 +349,7 @@ export default async function CycleDetailPage({
           <div>
             <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Data integrity</p>
             <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{integrityDisplay}</p>
-            <p className="mt-0.5 text-[0.75rem] text-muted">Rows marked present</p>
+            <p className="mt-0.5 text-[0.75rem] text-muted">Rows that passed validation</p>
           </div>
         </div>
       </div>
@@ -406,7 +410,7 @@ export default async function CycleDetailPage({
                   <tbody>
                     {cycle.points.map((point, idx) => {
                       const entries = sumPointEntries(point);
-                      const matched = entries;
+                      const matched = studentCountByPoint.get(point.id) ?? 0;
                       const hasData = entries > 0;
                       const assessedDateLabel = formatAssessedDate(point.assessedAt);
                       const ordinal = point.ordinal || idx + 1;

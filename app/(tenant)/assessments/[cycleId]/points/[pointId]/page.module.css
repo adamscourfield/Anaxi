@@ -103,7 +103,7 @@
 .page .tabs button[aria-selected="true"] svg { color: #e14e36; }
 .page .tabs button[aria-selected="false"]:hover { background: #fafafa; }
 .page svg { max-width: 100%; }
-.page th { font-family: var(--font-mono); font-size: 9.5px; font-weight: 500; }
+.page th { font-size: 10px; font-weight: 600; letter-spacing: .06em; color: #6e6e73; }
 .page table { border-collapse: collapse; }
 .page td { border-color: #e5e5e6; }
 .page :global(.space-y-6) > * + * { margin-top: 24px; }

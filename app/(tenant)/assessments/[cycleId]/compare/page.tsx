@@ -424,7 +424,8 @@ export default function ComparisonPage() {
               const avgDown = avgDelta !== null && avgDelta < 0;
               return [
                 {
-                  label: "Avg change",
+                  label: "Average change",
+                  note: "Per subject grade",
                   value: avgDelta !== null ? deltaLabel(avgDelta, data.subjects[0]?.gradeFormat ?? "GCSE") : "—",
                   colour: avgUp ? "text-[var(--success)]" : avgDown ? "text-[var(--error)]" : "text-[var(--on-surface)]",
                   icon: <IconAvgChange />,
@@ -432,6 +433,7 @@ export default function ComparisonPage() {
                 },
                 {
                   label: "Improved",
+                  note: "Subject grades that went up",
                   value: data.summary.totalImproved.toString(),
                   colour: "text-[var(--success)]",
                   icon: <IconTrendUp />,
@@ -439,6 +441,7 @@ export default function ComparisonPage() {
                 },
                 {
                   label: "Declined",
+                  note: "Subject grades that went down",
                   value: data.summary.totalDeclined.toString(),
                   colour: "text-[var(--error)]",
                   icon: <IconTrendDown />,
@@ -446,18 +449,20 @@ export default function ComparisonPage() {
                 },
                 {
                   label: "Unchanged",
+                  note: "Subject grades that stayed the same",
                   value: data.summary.totalUnchanged.toString(),
                   colour: "text-[var(--on-surface-muted)]",
                   icon: <IconEqual />,
                   iconBg: "bg-[var(--surface-container)] text-[var(--on-surface-muted)]",
                 },
-              ].map(({ label, value, colour, icon, iconBg }) => (
+              ].map(({ label, note, value, colour, icon, iconBg }) => (
                 <Card key={label} className="rounded-sm !p-5 shadow-none">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${iconBg}`}>{icon}</span>
                   </div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
                   <p className={`mt-1 text-2xl font-bold tabular-nums ${colour}`}>{value}</p>
+                  <p className="mt-1 text-[12px] text-[var(--on-surface-muted)]">{note}</p>
                 </Card>
               ));
             })()}

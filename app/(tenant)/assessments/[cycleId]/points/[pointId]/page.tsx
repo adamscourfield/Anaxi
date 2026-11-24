@@ -304,29 +304,6 @@ const kpiIconCircleBlue = "inline-flex h-12 w-12 shrink-0 items-center justify-c
 const kpiIconCircleGreen = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]";
 const kpiIconCircleAmber = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-600";
 
-function SubjectIcon({ subject }: { subject: string }) {
-  const s = subject.toLowerCase();
-  const paths = (() => {
-    if (s.includes("geog")) return (<><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>);
-    if (s.includes("phys")) return (<><circle cx="12" cy="12" r="3" /><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" /></>);
-    if (s.includes("chem")) return (<><path d="M9 3H5a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-4z" /><path d="M3 15h12M9 3v4" /></>);
-    if (s.includes("bio")) return (<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>);
-    if (s.includes("stat") || s.includes("math")) return (<><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></>);
-    if (s.includes("socio") || s.includes("psych") || s.includes("hist") || s.includes("poli")) return (<><circle cx="12" cy="8" r="4" /><path d="M8 16h8M10 20h4" /></>);
-    if (s.includes("french") || s.includes("spanish") || s.includes("german") || s.includes("language") || s.includes("mfl")) return (<><path d="M5 8l6 6M4 14l6-6 2-3" /><path d="M2 5h12M7 2h1M17 14l-5 5M13 19l5-5" /><path d="M15 13h6M18 10v1" /></>);
-    if (s.includes("re") || s.includes("relig")) return (<><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></>);
-    if (s.includes("music") || s.includes("drama") || s.includes("art") || s.includes("theatre")) return (<><circle cx="5.5" cy="17.5" r="2.5" /><circle cx="17.5" cy="15.5" r="2.5" /><polyline points="8 17 8 5 20 3 20 15" /><line x1="8" y1="11" x2="20" y2="9" /></>);
-    if (s.includes("comput") || s.includes("it") || s.includes("digital")) return (<><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></>);
-    if (s.includes("english") || s.includes("lit")) return (<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></>);
-    return (<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></>);
-  })();
-  return (
-    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container)] text-[var(--on-surface-muted)]">
-      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>{paths}</svg>
-    </span>
-  );
-}
-
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
 function gapCls(gap: number) {
@@ -452,20 +429,16 @@ function PctDistCompact({ distribution }: { distribution: BandCount[] }) {
 
 /** Consistent headline-measure card (E&M, Best English) — colour-coded to match the Subject Breakdown threshold columns. */
 function HeadlineMeasureCard({
-  href, label, value, context, accentBg, accentText, barClass,
+  href, label, value, context, barClass,
 }: {
   href?: string; label: string; value: number; context: string;
-  accentBg: string; accentText: string; barClass: string;
+  /** Unused since the decorative star was removed; kept so call sites stay unchanged. */
+  accentBg?: string; accentText?: string; barClass: string;
 }) {
   const inner = (
     <>
       <div className="flex items-start justify-between gap-2">
         <p className="text-[10px] font-bold uppercase tracking-widest text-muted">{label}</p>
-        <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${accentBg} ${accentText}`} aria-hidden>
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-          </svg>
-        </span>
       </div>
       <p className="mt-3 text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{value}%</p>
       <p className="mt-1.5 text-[11px] text-muted">{context}</p>
@@ -862,7 +835,7 @@ export default function ResultPointPage() {
           {/* GCSE Basics */}
           {isGcse && metrics.gcseBasics && (
             <section className="space-y-4 pt-1">
-              <SectionHeader title="English & Maths — Headline Measures" />
+              <SectionHeader title="English and maths headline measures" />
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <HeadlineMeasureCard
@@ -1043,7 +1016,7 @@ export default function ResultPointPage() {
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <SectionHeader
-                title="Subject Breakdown"
+                title="Subject breakdown"
                 subtitle={subjectFilter ? `${filteredSubjects.length} of ${metrics.subjects.length} subjects` : `${metrics.subjects.length} subjects`}
               />
               <div className="relative w-full sm:w-60">
@@ -1169,7 +1142,7 @@ export default function ResultPointPage() {
           {isGcse && (metrics.subjects.some((sm) => sm.pp) || metrics.subjects.some((sm) => sm.send)) && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <SectionHeader title="Equity Gap by Subject" subtitle="Percentage-point gap between cohorts" />
+                <SectionHeader title="Equity gaps by subject" subtitle="Percentage-point gap between cohorts" />
                 <div className="flex overflow-hidden rounded-lg border border-[var(--outline-variant)]/60 text-xs font-semibold">
                   <button type="button" aria-pressed={gapView === "pp"} onClick={() => setGapView("pp")} className={`px-4 py-1.5 calm-transition ${gapView === "pp" ? "bg-[var(--surface-container-high)] text-[var(--on-surface)]" : "text-[var(--on-surface-muted)] hover:bg-[var(--surface-container-low)]"}`}>Pupil Premium</button>
                   <button type="button" aria-pressed={gapView === "send"} onClick={() => setGapView("send")} className={`border-l border-[var(--outline-variant)]/60 px-4 py-1.5 calm-transition ${gapView === "send" ? "bg-[var(--surface-container-high)] text-[var(--on-surface)]" : "text-[var(--on-surface-muted)] hover:bg-[var(--surface-container-low)]"}`}>SEND</button>
@@ -1198,7 +1171,6 @@ export default function ResultPointPage() {
                             <tr key={sm.subject} className="group table-row calm-transition">
                               <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
                                 <div className="flex items-center gap-2.5">
-                                  <SubjectIcon subject={sm.subject} />
                                   <Link href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`} className="link-accent calm-transition">{sm.subject}</Link>
                                 </div>
                               </td>
@@ -1244,7 +1216,6 @@ export default function ResultPointPage() {
                             <tr key={sm.subject} className="group table-row calm-transition">
                               <td className="px-5 py-4 font-medium text-[var(--on-surface)]">
                                 <div className="flex items-center gap-2.5">
-                                  <SubjectIcon subject={sm.subject} />
                                   <Link href={`/assessments/${cycleId}/points/${pointId}/subjects/${encodeURIComponent(sm.subject)}`} className="link-accent calm-transition">{sm.subject}</Link>
                                 </div>
                               </td>
