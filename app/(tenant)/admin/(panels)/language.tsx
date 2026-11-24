@@ -7,12 +7,8 @@ import { revalidateAdmin } from "@/lib/admin-revalidate";
 import { prisma } from "@/lib/prisma";
 import { requireAdminUser } from "@/lib/admin";
 import { assertSafeServerAction } from "@/lib/serverActionGuard";
-import { requireFeature } from "@/lib/guards";
-import { getAllSignalDefinitionsForTenantLabels } from "@/modules/observations/getSignalsBySchoolType";
-import { getTenantSignalLabels, upsertTenantSignalLabel } from "@/modules/observations/tenantSignalLabels";
 import { Button } from "@/components/ui/button";
 import { AdminPageChrome } from "@/components/ui/admin-page-chrome";
-import { ObservationSignalLabelsSection } from "@/app/(tenant)/admin/observation-signal-labels/ObservationSignalLabelsSection";
 
 const BEHAVIOUR_FIELDS = [
   { key: "positivePointsLabel", heading: "Positive points label", default: "Positive Points" },
@@ -84,9 +80,10 @@ function TagIcon({ className }: { className?: string }) {
   );
 }
 
-function TerminologyCard({ children, className = "" }: { children: ReactNode; className?: string }) {
+function TerminologyCard({ children, className = "", id }: { children: ReactNode; className?: string; id?: string }) {
   return (
     <div
+      id={id}
       className={`rounded-sm border border-border/35 bg-background shadow-none ${className}`}
     >
       {children}
@@ -102,13 +99,10 @@ export async function LanguageAdminPanel() {
   });
   const observationsEnabled = observationsFeature?.enabled ?? false;
 
-  const [settings, signalLabels, vocab] = await Promise.all([
+  const [settings, vocab] = await Promise.all([
     (prisma as any).tenantSettings.findUnique({ where: { tenantId: user.tenantId } }),
-    getTenantSignalLabels(user.tenantId),
     prisma.tenantVocab.findMany({ where: { tenantId: user.tenantId }, orderBy: { key: "asc" } }),
   ]);
-  const schoolType = settings?.schoolType ?? "SECONDARY";
-  const signalCatalog = getAllSignalDefinitionsForTenantLabels(schoolType);
 
   const vocabByKey = new Map<string, any>((vocab as any[]).map((v: any) => [v.key, v]));
 
@@ -145,60 +139,12 @@ export async function LanguageAdminPanel() {
     revalidateAdmin("language");
   }
 
-  async function saveSignalLabels(formData: FormData) {
-    "use server";
-    await assertSafeServerAction(formData);
-    const admin = await requireAdminUser();
-    await requireFeature(admin.tenantId, "OBSERVATIONS");
-    const adminSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: admin.tenantId } });
-    for (const signal of getAllSignalDefinitionsForTenantLabels(adminSettings?.schoolType ?? "SECONDARY")) {
-      const displayName = String(formData.get(`display_${signal.key}`) || signal.displayNameDefault).trim();
-      const description = String(formData.get(`description_${signal.key}`) || "");
-      await upsertTenantSignalLabel(admin.tenantId, signal.key, displayName || signal.displayNameDefault, description);
-    }
-    revalidateAdmin("language");
-    revalidateAdmin("signals");
-    revalidatePath("/observe/new");
-    revalidatePath("/observe/history");
-  }
-
-  async function resetAllSignals(_formData?: FormData) {
-    "use server";
-    await assertSafeServerAction(_formData);
-    const admin = await requireAdminUser();
-    await requireFeature(admin.tenantId, "OBSERVATIONS");
-    const adminSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: admin.tenantId } });
-    for (const signal of getAllSignalDefinitionsForTenantLabels(adminSettings?.schoolType ?? "SECONDARY")) {
-      await upsertTenantSignalLabel(admin.tenantId, signal.key, signal.displayNameDefault, null);
-    }
-    revalidateAdmin("language");
-    revalidateAdmin("signals");
-    revalidatePath("/observe/new");
-    revalidatePath("/observe/history");
-  }
-
-  async function resetSignal(formData: FormData) {
-    "use server";
-    await assertSafeServerAction(formData);
-    const admin = await requireAdminUser();
-    await requireFeature(admin.tenantId, "OBSERVATIONS");
-    const key = String(formData.get("signalKey") || "");
-    const adminSettings = await (prisma as any).tenantSettings.findUnique({ where: { tenantId: admin.tenantId } });
-    const signal = getAllSignalDefinitionsForTenantLabels(adminSettings?.schoolType ?? "SECONDARY").find((s) => s.key === key);
-    if (!signal) return;
-    await upsertTenantSignalLabel(admin.tenantId, signal.key, signal.displayNameDefault, null);
-    revalidateAdmin("language");
-    revalidateAdmin("signals");
-    revalidatePath("/observe/new");
-    revalidatePath("/observe/history");
-  }
-
   return (
     <div className={`${styles.page} space-y-8 pb-8`}>
       <AdminPageChrome
         area="Language"
-        title="Terminology"
-        subtitle="Use your school’s language for behaviour, vocabulary and observation signals."
+        title="Language"
+        subtitle="Use your school’s own words for behaviour events across Anaxi."
       />
 
       {/* ── Behaviour Labels ─────────────────────────────────────────── */}
@@ -251,7 +197,7 @@ export async function LanguageAdminPanel() {
       </TerminologyCard>
 
       {/* ── Vocabulary ───────────────────────────────────────────────── */}
-      <TerminologyCard className="overflow-hidden">
+      <TerminologyCard className="overflow-hidden scroll-mt-24" id="vocabulary">
         <div className="border-b border-border/20 px-5 py-5 sm:px-7 sm:py-6">
           <h2 className="text-lg font-bold tracking-tight text-text">Vocabulary</h2>
           <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
@@ -325,17 +271,12 @@ export async function LanguageAdminPanel() {
         </form>
       </TerminologyCard>
 
-      {/* ── Observation Signal Labels ─────────────────────────────────── */}
+      {/* Observation signal wording is edited in one place: the Signals section. */}
       {observationsEnabled ? (
-        <ObservationSignalLabelsSection
-          signalCatalog={signalCatalog}
-          labels={signalLabels}
-          saveAll={saveSignalLabels}
-          resetOne={resetSignal}
-          resetAll={resetAllSignals}
-          showFooterSave
-          footerSaveLabel="Save signal labels"
-        />
+        <p className="text-[0.8125rem] text-muted">
+          Observation signal names and descriptions are edited under{" "}
+          <AdminSectionLink href="/admin?section=signals" className="link-accent">Signals</AdminSectionLink>.
+        </p>
       ) : null}
     </div>
   );

@@ -137,11 +137,11 @@ export async function TaxonomiesAdminPanel({
           <path d="M12 16v-5M12 8h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
         <p className="min-w-0">
-          <strong>Leave approval rules</strong> (groups) and <strong>per-person authorisers</strong> below both apply — a user can approve if they match either system. Configure groups in{" "}
+          Someone can approve leave if they are in a <strong>leave approval group</strong> or listed as an <strong>authoriser</strong> below. Set up groups in{" "}
           <a className="font-semibold text-[#2563EB] underline decoration-[#93C5FD] underline-offset-2 hover:text-[#1D4ED8]" href={adminSectionPath("leave-approvals")}>
             Leave approval rules
           </a>
-          . Here you manage dropdown values, notification emails, and legacy global/scoped authorisers.
+          . This page manages the dropdown lists, notification emails and individual authorisers.
         </p>
       </div>
 

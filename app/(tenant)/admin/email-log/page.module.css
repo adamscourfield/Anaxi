@@ -5,7 +5,8 @@
 .stats > div { padding:24px; }
 .stats span { display:block; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:#6e6e73; }
 .stats strong { display:block; margin-top:12px; font-size:30px; font-weight:600; letter-spacing:-.03em; }
-.stats > div:last-child strong { color:#e14e36; }
+/* Red only when something actually failed; a red "0" read as a problem. */
+.stats strong[data-alert="true"] { color:#e14e36; }
 .page > div[class*="overflow-x-auto"] { padding:0; }
 .page table { min-width:600px; }
 .page th { padding:16px 20px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; background:white; color:#6e6e73; border-color:#e5e5e6; }

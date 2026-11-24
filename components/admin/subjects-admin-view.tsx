@@ -68,7 +68,6 @@ function StageCheckboxes({ defaultStages }: { defaultStages: string[] }) {
           {SUBJECT_STAGE_LABELS[stage]}
         </label>
       ))}
-      <span className="text-[var(--on-surface-variant)]/70">(none checked = all stages)</span>
     </div>
   );
 }
@@ -164,8 +163,8 @@ export function SubjectsAdminView({
         <div className="min-w-0">
           <h2 className="text-lg font-bold tracking-tight text-[var(--on-surface)]">Subjects</h2>
           <p className="mt-1 text-[0.8125rem] leading-relaxed text-[var(--on-surface-variant)]">
-            The canonical subject names used across attainment uploads and grade entry. Tag each one to
-            the key stage(s) it applies to so it&rsquo;s only suggested where relevant.
+            The subject names used across attainment uploads and grade entry. Tick the key stages each
+            one applies to so it&rsquo;s only suggested where relevant; leave all unticked for every stage.
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">

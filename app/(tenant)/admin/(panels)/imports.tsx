@@ -19,7 +19,7 @@ export async function ImportsAdminPanel() {
     <div className={`${styles.page} space-y-8`}>
       <AdminPageChrome area="Imports" title="Import jobs" subtitle="Track status, row counts and validation issues for the latest 100 imports." />
       <section className={styles.stats} aria-label="Import summary">
-        {[{label:"Recent imports", value:jobs.length}, {label:"In progress", value:jobs.filter((j: any) => ["PENDING", "PROCESSING", "RUNNING"].includes(j.status)).length}, {label:"Failed", value:jobs.filter((j: any) => j.status === "FAILED").length}].map(stat => <div key={stat.label}><span>{stat.label}</span><strong>{stat.value}</strong></div>)}
+        {[{label:"Recent imports", value:jobs.length}, {label:"In progress", value:jobs.filter((j: any) => ["PENDING", "PROCESSING", "RUNNING"].includes(j.status)).length}, {label:"Failed", value:jobs.filter((j: any) => j.status === "FAILED").length}].map(stat => <div key={stat.label}><span>{stat.label}</span><strong data-alert={stat.label === "Failed" && stat.value > 0 ? "true" : undefined}>{stat.value}</strong></div>)}
       </section>
 
       <Card className="overflow-hidden p-0">

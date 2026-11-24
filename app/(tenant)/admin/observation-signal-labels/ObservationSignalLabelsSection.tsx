@@ -68,12 +68,11 @@ export function ObservationSignalLabelsSection({
 
       <form action={saveAll} className="block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse text-left text-[0.8125rem]">
+          <table className="w-full min-w-[720px] border-collapse text-left text-[0.8125rem]">
             <thead>
               <tr className={ROW_BORDER}>
-                <th className={`${TH} w-[220px]`}>Signal</th>
-                <th className={`${TH} min-w-[140px]`}>Default name</th>
-                <th className={`${TH} min-w-[160px]`}>
+                <th className={`${TH} w-[200px]`}>Signal</th>
+                <th className={`${TH} min-w-[180px]`}>
                   <span className="inline-flex items-center gap-1.5">
                     Display name
                     <span className="text-[#7C5CFF]" title="Shown in observation UI">
@@ -82,7 +81,7 @@ export function ObservationSignalLabelsSection({
                   </span>
                 </th>
                 <th className={`${TH} min-w-[240px]`}>Description</th>
-                <th className={`${TH} w-[120px] text-right sm:pr-6`}>Reset</th>
+                <th className={`${TH} w-[110px] text-right sm:pr-6`}><span className="sr-only">Reset to default</span></th>
               </tr>
             </thead>
             <tbody>
@@ -98,13 +97,11 @@ export function ObservationSignalLabelsSection({
                         <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#e5e5e6] bg-white">
                           <SignalKeyIcon signalKey={signal.key} />
                         </span>
-                        <span className="break-all pt-1.5 font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.04em] text-text">
-                          {signal.key}
+                        {/* One readable name (the default, which Reset restores); the internal key is not shown. */}
+                        <span className="pt-2 font-semibold leading-snug text-text" title={signal.key}>
+                          {signal.displayNameDefault}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-4 py-4 align-top text-[#6B7280] sm:px-5">
-                      <span className="leading-snug">{signal.displayNameDefault}</span>
                     </td>
                     <td className="px-4 py-4 align-top sm:px-5">
                       <input

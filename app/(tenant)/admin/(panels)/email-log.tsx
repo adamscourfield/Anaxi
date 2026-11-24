@@ -29,7 +29,7 @@ export async function EmailLogAdminPanel() {
       />
 
       <section className={styles.stats} aria-label="Email delivery summary">
-        {[{label:"Logged emails", value:logs.length}, {label:"Sent", value:logs.filter(log => log.status === "SENT").length}, {label:"Failed", value:failedCount}].map(stat => <div key={stat.label}><span>{stat.label}</span><strong>{stat.value}</strong></div>)}
+        {[{label:"Logged emails", value:logs.length}, {label:"Sent", value:logs.filter(log => log.status === "SENT").length}, {label:"Failed", value:failedCount}].map(stat => <div key={stat.label}><span>{stat.label}</span><strong data-alert={stat.label === "Failed" && stat.value > 0 ? "true" : undefined}>{stat.value}</strong></div>)}
       </section>
 
       <Card className="overflow-x-auto">

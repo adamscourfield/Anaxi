@@ -175,7 +175,12 @@ export function AdminWorkspace({
         <div className="min-w-0 flex-1">
           {showSkeleton ? <AdminPanelSkeleton section={activeSection} /> : null}
           {!showSkeleton && panelContent ? (
-            <div key={activeSection} id={`admin-panel-${activeSection}`}>
+            <div
+              key={activeSection}
+              id={`admin-panel-${activeSection}`}
+              // The side menu shows the current section; the "Administration › X" breadcrumb only repeats it.
+              className="[&_nav[aria-label=Breadcrumb]]:hidden"
+            >
               {panelContent}
             </div>
           ) : null}
