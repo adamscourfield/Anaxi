@@ -210,7 +210,8 @@ export function TenantNav({
       items: [
         ...(has("ASSESSMENTS") ? [navItem("Attainment", "/assessments")] : []),
         ...(has("STUDENTS") ? [navItem("Students", studentsHref)] : []),
-        navItem("Classes", "/classes"),
+        // Classes shows pupil outcomes, so it follows the Students area's rules.
+        ...(has("STUDENTS") && hasPermission(role, "students:read") ? [navItem("Classes", "/classes")] : []),
         ...(has("ON_CALL") ? [navItem("On call", "/on-call", onCallCount)] : []),
       ],
     },

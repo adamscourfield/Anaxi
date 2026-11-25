@@ -1542,6 +1542,14 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   });
   for (const t of teacherRecords) teacherByEmail.set(t.email, t.id);
 
+  // Class codes used in class names, e.g. "7A/Ma" (MIS style: group / subject).
+  const SUBJECT_CODE: Record<string, string> = {
+    English: "En", Maths: "Ma", Science: "Sc", Geography: "Gg", History: "Hi",
+    French: "Fr", RE: "Re", Music: "Mu", Graphics: "Gr", Art: "Ar",
+  };
+  // KS3 is taught in four streams; every subject shares the stream's class.
+  const Y7_STREAMS = ["7A", "7F", "7H", "7S"];
+
   // Upsert Subject records and create StudentSubjectTeacher links
   const y7StudentIds = studentIdsByYear["Y7"];
   const CLASS_SIZE = Math.ceil(y7StudentIds.length / 4);
@@ -1564,6 +1572,7 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
             studentId,
             subjectId: subjectRecord.id,
             teacherId,
+            className: `${Y7_STREAMS[classIdx]}/${SUBJECT_CODE[subjectName] ?? subjectName.slice(0, 2)}`,
             effectiveFrom: new Date("2024-09-01"),
           }],
           skipDuplicates: true,
@@ -1571,7 +1580,45 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
       }
     }
   }
-  console.log("  ✓  Y7 subject teacher assignments seeded (4 classes × 10 subjects)");
+  console.log("  ✓  Y7 subject teacher assignments seeded (4 streams × 10 subjects)");
+
+  // Year 11 sets for subjects with assessment results, so Classes shows attainment too.
+  const y11TeacherMap: Record<string, string[]> = {
+    Maths:     ["frank.robinson@demo.school", "grace.kim@demo.school", "harry.brown@demo.school", "isla.hughes@demo.school"],
+    Science:   ["kezia.edwards@demo.school", "liam.nguyen@demo.school", "maya.scott@demo.school", "nathan.powell@demo.school"],
+    History:   ["quinn.foster@demo.school", "rebecca.adeyemi@demo.school", "samuel.turner@demo.school", "tasha.wright@demo.school"],
+    Geography: ["piotr.kowalski@demo.school", "quinn.foster@demo.school", "rebecca.adeyemi@demo.school", "samuel.turner@demo.school"],
+  };
+  const y11Teachers = await prisma.user.findMany({
+    where: { tenantId: tenant.id, email: { in: [...new Set(Object.values(y11TeacherMap).flat())] } },
+    select: { id: true, email: true },
+  });
+  for (const t of y11Teachers) teacherByEmail.set(t.email, t.id);
+  const y11StudentIds = studentIdsByYear["Y11"] ?? [];
+  const Y11_SET_SIZE = Math.ceil(y11StudentIds.length / 4);
+  for (const [subjectName, teacherEmails] of Object.entries(y11TeacherMap)) {
+    const subjectRecord = await prisma.subject.upsert({
+      where: { tenantId_name: { tenantId: tenant.id, name: subjectName } },
+      update: {},
+      create: { tenantId: tenant.id, name: subjectName },
+    });
+    for (let setIdx = 0; setIdx < 4; setIdx++) {
+      const teacherId = teacherByEmail.get(teacherEmails[setIdx]);
+      if (!teacherId) continue;
+      await prisma.studentSubjectTeacher.createMany({
+        data: y11StudentIds.slice(setIdx * Y11_SET_SIZE, (setIdx + 1) * Y11_SET_SIZE).map((studentId) => ({
+          tenantId: tenant.id,
+          studentId,
+          subjectId: subjectRecord.id,
+          teacherId,
+          className: `11${String.fromCharCode(65 + setIdx)}/${SUBJECT_CODE[subjectName]}${setIdx + 1}`,
+          effectiveFrom: new Date("2024-09-01"),
+        })),
+        skipDuplicates: true,
+      });
+    }
+  }
+  console.log("  ✓  Y11 sets seeded (4 sets × 4 subjects)");
 
   console.log(`
 ✅  Demo seed complete!

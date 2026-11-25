@@ -4,7 +4,15 @@ import { hasRecordedGrade, normalizeGrade } from "@/modules/assessments/gradeNor
 import { prisma } from "@/lib/prisma";
 import { attendanceSummary, groupClassRosters, classSubjectKey, behaviourSnapshotGroups } from "./metrics";
 
-export async function loadClasses(tenantId: string, windowDays: number, behaviourThrough?: string | null) {
+export type LoadClassesOptions = {
+  /** Load just this class (its pupils' results and behaviour only), e.g. for the class page. */
+  classId?: string;
+  /** Behaviour events and assessment results. The directory doesn't need them, and they're the expensive part. */
+  outcomes?: boolean;
+};
+
+export async function loadClasses(tenantId: string, windowDays: number, behaviourThrough?: string | null, options: LoadClassesOptions = {}) {
+  const withOutcomes = options.outcomes ?? true;
   const now = new Date();
   const since = new Date(now.getTime() - windowDays * 86400000);
   const links = await prisma.studentSubjectTeacher.findMany({
@@ -21,8 +29,14 @@ export async function loadClasses(tenantId: string, windowDays: number, behaviou
     ks2Reading: link.student.ks2ReadingScaledScore ?? null, ks2Maths: link.student.ks2MathsScaledScore ?? null, id: link.student.id, name: link.student.fullName, yearGroup: link.student.yearGroup ?? "Unassigned",
     snapshot: link.student.snapshots[0] ? { ...link.student.snapshots[0], snapshotDate: link.student.snapshots[0].snapshotDate.toISOString(), attendancePct: Number(link.student.snapshots[0].attendancePct) } : null,
   }]));
-  const ids = [...pupils.keys()];
-  const [incidents, results] = ids.length ? await Promise.all([
+  const allGroups = groupClassRosters(links).filter(group => group.combined || ![...group.years].every(year => /^[789]$/.test(year.match(/\d+/)?.[0] ?? ""))).map(group => ({ ...group,
+    id: createHash("sha256").update(group.key).digest("hex").slice(0, 20),
+    yearGroup: [...group.years].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(" / "),
+  }));
+  const groups = options.classId ? allGroups.filter(group => group.id === options.classId) : allGroups;
+  // Only fetch outcomes for the pupils in the classes being shown.
+  const ids = [...new Set(groups.flatMap(group => [...group.pupilIds]))];
+  const [incidents, results] = withOutcomes && ids.length ? await Promise.all([
     prisma.behaviourIncident.groupBy({ by: ["studentId", "category"], where: { tenantId, studentId: { in: ids }, occurredAt: { gte: since, lte: now } }, _count: { _all: true }, _sum: { points: true } }),
     prisma.assessmentResult.findMany({ where: { tenantId, studentId: { in: ids }, assessment: { tenantId, point: { assessedAt: { lte: now }, cycle: { tenantId } } } },
       select: { studentId: true, rawValue: true, isValid: true, status: true, normalizedScore: true, assessment: { select: {
@@ -37,15 +51,11 @@ export async function loadClasses(tenantId: string, windowDays: number, behaviou
     if (event.category === "POSITIVE_POINTS") counts.positivePoints = event._sum.points ?? 0;
     pupilEvents.set(event.studentId, counts);
   }
-  const behaviourByPupil = behaviourThrough ? new Map((await prisma.studentSnapshot.findMany({
+  const behaviourByPupil = withOutcomes && behaviourThrough ? new Map((await prisma.studentSnapshot.findMany({
     where: { tenantId, studentId: { in: ids }, snapshotDate: { lte: new Date(`${behaviourThrough}T23:59:59.999Z`) } },
     orderBy: { snapshotDate: "desc" }, distinct: ["studentId"],
     select: { studentId: true, snapshotDate: true, countScope: true, positivePointsTotal: true, negativePointsTotal: true, detentionsCount: true, onCallsCount: true, latenessCount: true, internalExclusionsCount: true, suspensionsCount: true },
   })).map(s => [s.studentId, { ...s, snapshotDate: s.snapshotDate.toISOString() }])) : null;
-  const groups = groupClassRosters(links).filter(group => group.combined || ![...group.years].every(year => /^[789]$/.test(year.match(/\d+/)?.[0] ?? ""))).map(group => ({ ...group,
-    id: createHash("sha256").update(group.key).digest("hex").slice(0, 20),
-    yearGroup: [...group.years].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(" / "),
-  }));
   const byStudent = new Map<string, typeof results>();
   for (const result of results) {
     const list = byStudent.get(result.studentId) ?? [];

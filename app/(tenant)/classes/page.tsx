@@ -1,23 +1,38 @@
+import { redirect } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/page-header";
-import { ClassDashboard } from "@/components/classes/dashboard";
+import { ClassesDirectory } from "@/components/classes/directory";
 import { classSettings } from "@/modules/classes/settings";
 import { loadClasses } from "@/modules/classes/data";
+import { requireClassesAccess } from "@/modules/classes/access";
 
 import "./classes.css";
 
 export const metadata = { title: "Classes | Anaxi" };
 export const dynamic = "force-dynamic";
-function classWindow(value: string | string[] | undefined) { const number = Number(value); return [7, 14, 21, 28].includes(number) ? number : 21; }
+
 export default async function ClassesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const user = await getSessionUserOrThrow();
+  await requireClassesAccess(user);
   const params = await searchParams;
-  const windowDays = classWindow(params.window);
+  // Old links opened a class with ?class=<id>; classes now have their own page.
+  if (typeof params.class === "string" && params.class) redirect(`/classes/${params.class}`);
+
   const settings = await classSettings(user.tenantId);
-  const data = await loadClasses(user.tenantId, windowDays, settings.behaviourThrough);
-  const selected = data.classes.find(c => c.id === params.class) ?? data.classes.find(c => c.teachers.some(t => t.id === user.id)) ?? data.classes[0];
-  return <div className="class-enter space-y-6">
-    <PageHeader variant="ledger" title="Classes" subtitle="Your class, its teachers and every pupil’s outcomes in one place." />
-    {selected ? <ClassDashboard labels={settings.labels} key={selected.id} data={selected} classes={data.classes.map(c => ({ id: c.id, name: c.name, subject: c.subject }))} windowDays={windowDays} /> : <p className="class-panel p-8 text-muted">No current classes have been imported yet.</p>}
-  </div>;
+  const { classes } = await loadClasses(user.tenantId, 21, settings.behaviourThrough, { outcomes: false });
+  const myClassIds = classes.filter((c) => c.teachers.some((t) => t.id === user.id)).map((c) => c.id);
+
+  return (
+    <div className="class-page space-y-8">
+      <PageHeader
+        variant="ledger"
+        title="Classes"
+        subtitle="Every teaching group with its teachers and pupils. Open a class to see attendance, behaviour and attainment."
+      />
+      <ClassesDirectory
+        classes={classes.map(({ id, name, subject, yearGroup, teachers, count, attendance }) => ({ id, name, subject, yearGroup, teachers, count, attendance }))}
+        myClassIds={myClassIds}
+      />
+    </div>
+  );
 }
