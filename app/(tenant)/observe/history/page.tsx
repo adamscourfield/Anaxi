@@ -1,6 +1,7 @@
 import Link from "next/link";
 import styles from "./history.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { requireFeature } from "@/lib/guards";
 import type { UserRole } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
@@ -55,8 +56,7 @@ const PHASE_BADGE: Record<string, string> = {
 const PAGE_SIZE = 10;
 
 function formatLongDate(date: Date | string): string {
-  const d = new Date(date);
-  return `${d.getDate()} ${d.toLocaleDateString("en-GB", { month: "short" })} ${d.getFullYear()}`;
+  return new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
 }
 
 export default async function ObservationHistoryPage({
@@ -138,6 +138,7 @@ export default async function ObservationHistoryPage({
   else if (allowedTeacherIds) scopedFilterWhere.observedTeacherId = { in: Array.from(allowedTeacherIds) };
 
   const showPairMatrix = (user.role !== "TEACHER" && user.role !== "SUPPORT");
+  const canCreate = hasPermission(user.role, "observe:create");
 
   const [totalCount, observations, distinctSubjects, obsRowsForAnalysis, tenantCoachAssignments] =
     await Promise.all([
@@ -327,19 +328,16 @@ export default async function ObservationHistoryPage({
   return (
     <div className={`${styles.page} obs-history-scope`}>
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <PageHeader variant="ledger" className={styles.header} eyebrow="Teaching & development"
-        title="Observation history"
-        subtitle="Institutional observation record — filter by teacher, observer, dates, phase, and pedagogical signals."
+      <PageHeader variant="ledger" className={styles.header}
+        title={user.role === "TEACHER" || user.role === "SUPPORT" ? "Your observations" : "Observation history"}
+        subtitle={user.role === "TEACHER" || user.role === "SUPPORT" ? "Every observation of your lessons." : "Every observation you can see. Filter by teacher, dates, part of the lesson or signal."}
         actions={
-          (user.role !== "TEACHER" && user.role !== "SUPPORT") ? (
+          canCreate ? (
             <Link
               href="/observe/new"
-              className="inline-flex items-center gap-2 rounded-md bg-neutral-950 px-5 py-2.5 text-[0.875rem] font-semibold text-white shadow-sm calm-transition hover:bg-neutral-900"
+              className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-[#1c1c1e] px-5 text-[14px] font-medium text-white calm-transition hover:bg-[#333335]"
             >
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" clipRule="evenodd" />
-              </svg>
-              New Observation
+              New observation
             </Link>
           ) : undefined
         }
@@ -391,8 +389,8 @@ export default async function ObservationHistoryPage({
               <circle cx="11" cy="11" r="6.5" /><path d="m16.5 16.5 3 3" strokeLinecap="round" />
             </svg>
           </div>
-          <p className="text-[0.875rem] font-semibold text-text">No observations found</p>
-          <p className="mt-1 text-[0.8125rem] text-muted">Try widening your filters.</p>
+          <p className="text-[0.875rem] font-semibold text-text">No observations match</p>
+          <p className="mt-1 text-[0.8125rem] text-muted">Clear a filter or widen the dates.</p>
         </div>
       ) : (
         <div className="obs-history-table-shell table-shell">
@@ -403,10 +401,10 @@ export default async function ObservationHistoryPage({
                 <tr className="table-head-row text-left">
                   <th className="px-5 py-3.5">Teacher</th>
                   {(user.role !== "TEACHER" && user.role !== "SUPPORT") && <th className="px-4 py-3.5">Observer</th>}
-                  <th className="px-4 py-3.5">Subject / Year</th>
+                  <th className="px-4 py-3.5">Department and year</th>
                   <th className="px-4 py-3.5">Date</th>
-                  <th className="px-4 py-3.5">Phase</th>
-                  <th className="px-4 py-3.5">Pedagogical Signals</th>
+                  <th className="px-4 py-3.5">Part of lesson</th>
+                  <th className="px-4 py-3.5">Signals</th>
                 </tr>
               </thead>
               <tbody>
@@ -437,7 +435,7 @@ export default async function ObservationHistoryPage({
                       {/* Subject / Year */}
                       <td className="px-4 py-4">
                         <div className="font-semibold text-text">{obs.subject}</div>
-                        <div className="text-[0.75rem] text-muted">{formatYearGroup(obs.yearGroup)}{obs.setGroup ? ` • ${obs.setGroup}` : ""}</div>
+                        <div className="text-[0.75rem] text-muted">{formatYearGroup(obs.yearGroup)}{obs.classCode ? `, ${obs.classCode}` : ""}</div>
                       </td>
 
                       {/* Date */}
@@ -447,7 +445,7 @@ export default async function ObservationHistoryPage({
 
                       {/* Phase */}
                       <td className="px-4 py-4">
-                        <span className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.04em] ${phaseBadge}`}>
+                        <span className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[0.75rem] font-medium ${phaseBadge}`}>
                           {formatPhaseLabel(phase)}
                         </span>
                       </td>
@@ -503,7 +501,7 @@ export default async function ObservationHistoryPage({
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <span className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.04em] ${phaseBadge}`}>
+                    <span className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[0.75rem] font-medium ${phaseBadge}`}>
                       {formatPhaseLabel(phase)}
                     </span>
                     {signalValues.length > 0 && (

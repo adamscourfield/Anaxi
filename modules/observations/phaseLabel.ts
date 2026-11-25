@@ -2,12 +2,12 @@ import type { PillVariant } from "@/components/ui/status-pill";
 
 const PHASE_LABELS: Record<string, string> = {
   INSTRUCTION: "Instruction",
-  GUIDED_PRACTICE: "Guided Practice",
-  INDEPENDENT_PRACTICE: "Independent Practice",
-  UNKNOWN: "Not Recorded",
+  GUIDED_PRACTICE: "Guided practice",
+  INDEPENDENT_PRACTICE: "Independent practice",
+  UNKNOWN: "Several or not sure",
   THRESHOLD: "Threshold",
   TRANSITION_START: "Transition / start",
-  BOOKS: "Book Look",
+  BOOKS: "Book look",
 };
 
 const PHASE_VARIANTS: Record<string, PillVariant> = {
@@ -25,7 +25,7 @@ export function formatPhaseLabel(phase: string): string {
   return phase
     .replace(/_/g, " ")
     .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+    .replace(/^\w/, (c) => c.toUpperCase());
 }
 
 export function phaseVariant(phase: string): PillVariant {

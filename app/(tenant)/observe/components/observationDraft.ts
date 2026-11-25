@@ -28,11 +28,41 @@ export type ObservationDraft = {
   signalState: Record<string, SignalEntry>;
 };
 
+/** Today's date (YYYY-MM-DD) in UK time, worked out when called rather than at module load. */
+export function todayInSchoolZone(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}
+
+/** Year groups offered on the form, stored as "Y7" etc. to match imports and the demo data. */
+export function yearGroupOptions(schoolType: "PRIMARY" | "SECONDARY"): { value: string; label: string }[] {
+  if (schoolType === "PRIMARY") {
+    return [
+      { value: "Reception", label: "Reception" },
+      ...[1, 2, 3, 4, 5, 6].map((n) => ({ value: `Y${n}`, label: `Year ${n}` })),
+    ];
+  }
+  return [7, 8, 9, 10, 11, 12, 13].map((n) => ({ value: `Y${n}`, label: `Year ${n}` }));
+}
+
+/**
+ * Guess the year group from what the observer typed as the class, e.g.
+ * "10A/Ma1", "Year 9 set 2", "Y8 French". Returns "" when there is no clear year.
+ */
+export function guessYearGroup(classCode: string, schoolType: "PRIMARY" | "SECONDARY"): string {
+  const text = classCode.trim();
+  if (!text) return "";
+  if (/^(?:rec|reception)\b/i.test(text)) return schoolType === "PRIMARY" ? "Reception" : "";
+  const match = text.match(/\b(?:year|yr|y)\s*(\d{1,2})(?!\d)/i) || text.match(/^(\d{1,2})(?=[^\d]|$)/);
+  if (!match) return "";
+  const value = `Y${Number(match[1])}`;
+  return yearGroupOptions(schoolType).some((o) => o.value === value) ? value : "";
+}
+
 export const DEFAULT_CONTEXT: ObservationContextState = {
   teacherId: "",
   department: "",
   classCode: "",
-  observedAt: new Date().toISOString().split("T")[0],
+  observedAt: "",
   phase: "UNKNOWN",
   yearGroup: "",
   subject: "",
@@ -40,7 +70,7 @@ export const DEFAULT_CONTEXT: ObservationContextState = {
 };
 
 export const emptyDraft = (signalKeys: string[]): ObservationDraft => ({
-  context: DEFAULT_CONTEXT,
+  context: { ...DEFAULT_CONTEXT, observedAt: typeof window === "undefined" ? "" : todayInSchoolZone() },
   signalState: Object.fromEntries(signalKeys.map((key) => [key, { valueKey: null, notObserved: false }]))
 });
 
@@ -62,10 +92,18 @@ export function loadDraft(draftKey: string, signalKeys: string[]) {
 
 export function persistDraft(draftKey: string, draft: ObservationDraft) {
   if (typeof window === "undefined") return;
-  window.sessionStorage.setItem(draftKey, JSON.stringify(draft));
+  try {
+    window.sessionStorage.setItem(draftKey, JSON.stringify(draft));
+  } catch {
+    // Private browsing or a full store: the flow still works for this page.
+  }
 }
 
 export function clearDraft(draftKey: string) {
   if (typeof window === "undefined") return;
-  window.sessionStorage.removeItem(draftKey);
+  try {
+    window.sessionStorage.removeItem(draftKey);
+  } catch {
+    // Nothing to clear.
+  }
 }

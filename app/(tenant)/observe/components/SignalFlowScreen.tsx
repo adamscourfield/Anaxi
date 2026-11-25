@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import type { TenantSchoolType } from "@/lib/tenantSchoolType";
 import { getSignalsForPhase } from "@/modules/observations/getSignalsBySchoolType";
 import type { SignalDefinition } from "@/modules/observations/signalTypes";
-import { emptyDraft, loadDraft, persistDraft, ScaleKey } from "./observationDraft";
-import { SignalHelpSheet } from "./SignalHelpSheet";
-import styles from "../new/signals/signals.module.css";
-import { SignalTileGroup } from "./SignalTileGroup";
+import { emptyDraft, loadDraft, persistDraft, type ObservationDraft, type ScaleKey } from "./observationDraft";
+import { SignalMeter as Meter } from "./SignalMeter";
+import styles from "./flow.module.css";
 
 type LabelMap = Record<string, { displayName: string; description?: string }>;
 
+/** One signal per screen. Each choice is saved to the draft straight away. */
 export function SignalFlowScreen({
   draftKey,
   signals,
@@ -25,209 +26,197 @@ export function SignalFlowScreen({
 }) {
   const router = useRouter();
   const params = useSearchParams();
-  const [pendingValue, setPendingValue] = useState<ScaleKey | null>(null);
-  const [pendingNotObserved, setPendingNotObserved] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
-
-  const orderedByOrder = useMemo(() => [...signals].sort((a, b) => a.order - b.order), [signals]);
-  const signalKeys = useMemo(() => orderedByOrder.map((s) => s.key), [orderedByOrder]);
-  const [draft, setDraft] = useState(() => emptyDraft(signalKeys));
-  const [draftLoaded, setDraftLoaded] = useState(false);
+  const signalKeys = useMemo(() => signals.map((s) => s.key as string), [signals]);
+  const [draft, setDraft] = useState<ObservationDraft>(() => emptyDraft(signalKeys));
+  const [loaded, setLoaded] = useState(false);
+  const [index, setIndex] = useState(() => Math.max(0, Number(params.get("index")) || 0));
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     setDraft(loadDraft(draftKey, signalKeys));
-    setDraftLoaded(true);
+    setLoaded(true);
   }, [draftKey, signalKeys]);
 
-  const hasContext = Boolean(
-    draft.context.teacherId &&
-    (draft.context.department || draft.context.subject) &&
-    (draft.context.classCode || draft.context.yearGroup)
+  const ctx = draft.context;
+  const hasContext = Boolean(ctx.teacherId && ctx.subject && ctx.classCode && ctx.yearGroup && ctx.observedAt);
+  useEffect(() => {
+    if (loaded && !hasContext) router.replace("/observe/new");
+  }, [loaded, hasContext, router]);
+
+  const phaseSignals = useMemo(() => getSignalsForPhase(ctx.phase, schoolType), [ctx.phase, schoolType]);
+  const total = phaseSignals.length;
+  const current = Math.min(index, Math.max(total - 1, 0));
+  const signal = phaseSignals[current];
+  const entry = signal ? draft.signalState[signal.key] : undefined;
+
+  // Keep the address in step so a refresh lands on the same signal, without a server round trip.
+  useEffect(() => {
+    if (!loaded) return;
+    const url = `/observe/new/signals?index=${current}`;
+    if (window.location.pathname + window.location.search !== url) window.history.replaceState(null, "", url);
+  }, [current, loaded]);
+
+  const go = useCallback(
+    (next: number) => {
+      if (next >= total) {
+        router.push("/observe/new/review");
+        return;
+      }
+      setIndex(Math.max(0, next));
+      requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [router, total],
   );
 
-  const orderedSignals = useMemo(
-    () => getSignalsForPhase(draft.context.phase, schoolType),
-    [draft.context.phase, schoolType],
+  const save = useCallback(
+    (key: string, value: { valueKey: ScaleKey | null; notObserved: boolean }) => {
+      setDraft((d) => {
+        const next = { ...d, signalState: { ...d.signalState, [key]: value } };
+        persistDraft(draftKey, next);
+        return next;
+      });
+    },
+    [draftKey],
   );
 
-  const total = orderedSignals.length;
-  const currentIndex = Math.max(0, Math.min(Number(params.get("index") || "0"), Math.max(total - 1, 0)));
-  const currentSignal = orderedSignals[currentIndex];
+  const answered = Boolean(entry?.valueKey || entry?.notObserved);
+  const isLast = current === total - 1;
 
+  // Number keys pick a rating, Enter moves on. Ignored while typing elsewhere.
   useEffect(() => {
-    const saved = draft.signalState[currentSignal?.key];
-    if (saved?.notObserved) {
-      setPendingNotObserved(true);
-      setPendingValue(null);
-    } else if (saved?.valueKey) {
-      setPendingValue(saved.valueKey);
-      setPendingNotObserved(false);
-    } else {
-      setPendingValue(null);
-      setPendingNotObserved(false);
-    }
-  }, [currentIndex, currentSignal?.key, draft.signalState]);
+    if (!signal) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey || target?.closest("input, textarea, select, [role=dialog]")) return;
+      const n = Number(e.key);
+      if (n >= 1 && n <= signal.scale.length) {
+        e.preventDefault();
+        save(signal.key, { valueKey: signal.scale[n - 1].key as ScaleKey, notObserved: false });
+      } else if (e.key === "Enter" && answered && target?.tagName !== "BUTTON") {
+        e.preventDefault();
+        go(current + 1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [signal, answered, current, go, save]);
 
-  useEffect(() => {
-    if (draftLoaded && !hasContext) router.replace("/observe/new");
-  }, [draftLoaded, hasContext, router]);
+  if (!loaded || !hasContext || !signal) return <div className={`${styles.card} h-[520px]`} aria-busy />;
 
-  if (!draftLoaded || !hasContext) return null;
-
-  const goToIndex = (index: number) =>
-    router.push(`/observe/new/signals?index=${Math.max(0, Math.min(index, total - 1))}`);
-
-  const advance = () => {
-    if (currentIndex + 1 >= total) {
-      router.push("/observe/new/review");
-    } else {
-      goToIndex(currentIndex + 1);
-    }
-  };
-
-  const updateDraft = (updated: typeof draft) => {
-    setDraft(updated);
-    persistDraft(draftKey, updated);
-  };
-
-  const confirmAndAdvance = () => {
-    const entry = pendingNotObserved
-      ? { valueKey: null, notObserved: true }
-      : { valueKey: pendingValue, notObserved: false };
-    updateDraft({
-      ...draft,
-      signalState: { ...draft.signalState, [currentSignal.key]: entry },
-    });
-    advance();
-  };
-
-  const skipSignal = () => {
-    updateDraft({
-      ...draft,
-      signalState: {
-        ...draft.signalState,
-        [currentSignal.key]: { valueKey: null, notObserved: true },
-      },
-    });
-    advance();
-  };
-
-  const hasSelection = pendingValue !== null || pendingNotObserved;
-  const isLastSignal = currentIndex === total - 1;
-
-  const override = labelMap[currentSignal.key];
-  const title = override?.displayName || currentSignal.displayNameDefault;
-  const description = override?.description || currentSignal.descriptionDefault;
-
-  const scaleRows = currentSignal.scale.map((scale) => ({
-    label: scale.label,
-    guidance: currentSignal.scaleGuidance[scale.key],
-  }));
-
-  const scaleOptions = currentSignal.scale.map((scale) => ({
-    key: scale.key,
-    label: scale.label,
-    guidance: currentSignal.scaleGuidance[scale.key] || scale.description,
-  }));
+  const override = labelMap[signal.key];
+  const title = override?.displayName || signal.displayNameDefault;
+  const description = override?.description || signal.descriptionDefault;
+  const done = phaseSignals.filter((s) => draft.signalState[s.key]?.valueKey || draft.signalState[s.key]?.notObserved).length;
 
   return (
-    <div className={`${styles.page} w-full min-w-0 max-w-3xl py-8 md:mx-auto`}>
-      {/* Page header */}
-      <div className={`${styles.header} mb-3 flex items-start justify-between gap-4`}>
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-[1.875rem] font-bold tracking-tight text-text leading-tight">{title}</h1>
-          <span className="text-[0.9375rem] text-muted font-medium">
-            Signal {currentIndex + 1} of {total}
+    <div className="space-y-4">
+      <section className={`${styles.card} p-6 sm:p-7`} aria-labelledby="signal-title">
+        <div className="flex items-center justify-between gap-4 text-[13px] text-[#6e6e73]">
+          <span>
+            Signal {current + 1} of {total}
           </span>
-          <button
-            type="button"
-            onClick={() => setHelpOpen(true)}
-            className="flex h-7 w-7 items-center justify-center rounded-md bg-surface-container text-muted calm-transition hover:bg-surface-container-high hover:text-text"
-            aria-label="Signal guide"
-          >
-            <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4">
-              <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M6.5 6.5a1.5 1.5 0 1 1 1.5 1.5v1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              <circle cx="8" cy="11.5" r="0.6" fill="currentColor" />
-            </svg>
-          </button>
+          <span>{done} answered</span>
         </div>
-        <span className="shrink-0 text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-muted pt-2">
-          Stage 2: Signal Assessment
-        </span>
-      </div>
+        <div className="mt-3 flex gap-1" aria-hidden>
+          {phaseSignals.map((s, i) => {
+            const st = draft.signalState[s.key];
+            const filled = st?.valueKey || st?.notObserved;
+            return (
+              <span
+                key={s.key}
+                className={`h-1 flex-1 rounded-full ${i === current ? "bg-[#1c1c1e]" : filled ? "bg-[#8e8e93]" : "bg-[#ececee]"}`}
+              />
+            );
+          })}
+        </div>
 
-      {/* Stage progress bar */}
-      <div className={`${styles.progress} mb-8 flex items-center gap-1.5`}>
-        {[1, 2, 3].map((stage) => (
-          <div
-            key={stage}
-            className={`h-1.5 flex-1 rounded-md ${
-              stage <= 2 ? "bg-text" : "bg-border/30"
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Main card */}
-      <div className={`${styles.card} rounded-2xl border border-border/20 bg-surface-container-lowest px-4 py-6 shadow-ambient sm:px-8 sm:py-7`}>
-        <h2 className="mb-2 text-[1.375rem] font-bold tracking-tight text-text">
-          How would you assess {title}?
+        <h2
+          id="signal-title"
+          ref={headingRef}
+          tabIndex={-1}
+          className="mt-6 text-[22px] font-semibold leading-tight tracking-[-0.025em] outline-none"
+        >
+          {title}
         </h2>
-        <p className="mb-7 text-[0.875rem] leading-relaxed text-muted">{description}</p>
+        <p className="mt-2 max-w-[62ch] text-[14px] leading-relaxed text-[#6e6e73]">{description}</p>
 
-        <SignalTileGroup
-          options={scaleOptions}
-          selected={pendingValue}
-          onSelect={(value) => {
-            setPendingValue(value as ScaleKey);
-            setPendingNotObserved(false);
-          }}
-        />
-      </div>
+        {signal.lookFors?.length ? (
+          <details className="group mt-4 text-[13px]">
+            <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 font-medium text-[#3a3a3c] hover:text-[#1c1c1e] [&::-webkit-details-marker]:hidden">
+              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" aria-hidden>
+                <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              What to look for
+            </summary>
+            <ul className="mt-2 space-y-1 pl-5 text-[#3a3a3c]">
+              {signal.lookFors.map((item) => (
+                <li key={item} className="list-disc">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
 
-      {/* Bottom navigation */}
-      <div className={`${styles.footer} mt-6 flex items-center justify-between`}>
+        <div className={`${styles.choices} mt-6 grid-cols-1 sm:grid-cols-2`} role="radiogroup" aria-labelledby="signal-title">
+          {signal.scale.map((option, i) => {
+            const selected = entry?.valueKey === option.key;
+            return (
+              <button
+                key={option.key}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                data-signal-rating
+                className={styles.choice}
+                onClick={() => save(signal.key, { valueKey: option.key as ScaleKey, notObserved: false })}
+              >
+                <span className={styles.choiceTitle}>
+                  <span className="flex items-center gap-2.5">
+                    <Meter level={i + 1} />
+                    {option.label}
+                  </span>
+                  <span className={styles.radio} aria-hidden />
+                </span>
+                <span className={styles.choiceBody}>{signal.scaleGuidance[option.key] || option.description}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <button
           type="button"
-          onClick={skipSignal}
-          className="text-[0.875rem] font-medium text-muted calm-transition hover:text-text"
+          aria-pressed={Boolean(entry?.notObserved)}
+          className={`${styles.choice} mt-2 py-2.5 text-[13px] font-medium text-[#3a3a3c]`}
+          onClick={() => {
+            save(signal.key, { valueKey: null, notObserved: true });
+            go(current + 1);
+          }}
         >
-          Skip this Signal
+          <span className={styles.choiceTitle}>
+            <span>Didn&apos;t see this</span>
+            <span className={styles.radio} aria-hidden />
+          </span>
         </button>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (currentIndex > 0) goToIndex(currentIndex - 1);
-              else router.push("/observe/new");
-            }}
-            className="rounded-xl border border-border px-5 py-2.5 text-[0.875rem] font-medium text-text calm-transition hover:bg-surface-container"
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            disabled={!hasSelection}
-            onClick={confirmAndAdvance}
-            className="flex items-center gap-2 rounded-xl bg-text px-6 py-2.5 text-[0.875rem] font-semibold text-surface calm-transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {isLastSignal ? "Review & Submit" : "Next Signal"}
-            <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4">
-              <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      </section>
 
-      {/* Help sheet */}
-      <SignalHelpSheet
-        open={helpOpen}
-        onClose={() => setHelpOpen(false)}
-        description={description}
-        lookFors={currentSignal.lookFors}
-        scaleRows={scaleRows}
-      />
+      <div className={styles.footer}>
+        <Button
+          type="button"
+          variant="secondary"
+          className="h-10 min-h-0 px-5"
+          onClick={() => (current > 0 ? go(current - 1) : router.push("/observe/new"))}
+        >
+          {current > 0 ? "Previous signal" : "Lesson details"}
+        </Button>
+        <Button type="button" className="h-10 min-h-0 px-5" disabled={!answered} onClick={() => go(current + 1)}>
+          {isLast ? "Review" : "Next signal"}
+        </Button>
+      </div>
+      <p className="hidden text-center text-[12px] text-[#a1a1aa] sm:block">
+        Press 1 to {signal.scale.length} to rate, then Enter to move on.
+      </p>
     </div>
   );
 }
