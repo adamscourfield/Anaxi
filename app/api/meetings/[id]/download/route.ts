@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
+import { hasPermission } from "@/lib/rbac";
+import { MEETING_TYPE_LABELS, meetingSessionStatusLabel } from "@/modules/meetings/types";
+
+const UK = { timeZone: "Europe/London" } as const;
 import { getMeetingDetail } from "@/modules/meetings/service";
 import { apiErrorResponse } from "@/lib/apiErrors";
 
@@ -14,26 +18,26 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const isAttendee = meeting.attendees.some((a: any) => a.userId === user.id);
     const isCreator = meeting.createdByUserId === user.id;
-    if (!isCreator && !isAttendee) {
+    if (!isCreator && !isAttendee && !hasPermission(user.role, "meetings:view_all")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const start = new Date(meeting.startDateTime);
-    const dateStr = start.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-    const timeStr = start.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = start.toLocaleDateString("en-GB", { ...UK, day: "numeric", month: "long", year: "numeric" });
+    const timeStr = start.toLocaleTimeString("en-GB", { ...UK, hour: "2-digit", minute: "2-digit" });
 
     const attendeeNames = meeting.attendees.map((a: any) => a.user.fullName).join(", ");
     const actions = (meeting.actions ?? [])
-      .map((a: any) => `  - ${a.description} (Owner: ${a.owner.fullName}, Due: ${a.dueDate ? new Date(a.dueDate).toLocaleDateString("en-GB") : "N/A"}, Status: ${a.status})`)
+      .map((a: any) => `  - ${a.description} (Owner: ${a.owner.fullName}, Due: ${a.dueDate ? new Date(a.dueDate).toLocaleDateString("en-GB", UK) : "N/A"}, Status: ${a.status === "DONE" ? "Done" : a.status === "BLOCKED" ? "Blocked" : "Open"})`)
       .join("\n");
 
     const durationLine =
       meeting.startedAt && meeting.endedAt
         ? `Session duration: ${Math.round(
             (new Date(meeting.endedAt).getTime() - new Date(meeting.startedAt).getTime()) / 60000,
-          )} minutes (started ${new Date(meeting.startedAt).toLocaleString("en-GB")}, ended ${new Date(meeting.endedAt).toLocaleString("en-GB")})`
+          )} minutes (started ${new Date(meeting.startedAt).toLocaleString("en-GB", UK)}, ended ${new Date(meeting.endedAt).toLocaleString("en-GB", UK)})`
         : meeting.startedAt
-          ? `Live session started: ${new Date(meeting.startedAt).toLocaleString("en-GB")}`
+          ? `Live session started: ${new Date(meeting.startedAt).toLocaleString("en-GB", UK)}`
           : null;
 
     const content = [
@@ -42,8 +46,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       ``,
       `Title: ${meeting.title}`,
       `Date: ${dateStr} at ${timeStr}`,
-      `Type: ${meeting.type}`,
-      `Status: ${meeting.status}`,
+      `Type: ${MEETING_TYPE_LABELS[meeting.type] ?? meeting.type}`,
+      `Status: ${meetingSessionStatusLabel(meeting.status, meeting.endedAt)}`,
       durationLine,
       meeting.location ? `Location: ${meeting.location}` : null,
       `Attendees: ${attendeeNames}`,

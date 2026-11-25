@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MEETING_TYPE_LABELS } from "@/modules/meetings/types";
+import styles from "./meetings.module.css";
 
 function buildMeetingsHref(scope: "all" | "mine", type?: string): string {
   const params = new URLSearchParams();
@@ -12,67 +13,41 @@ function buildMeetingsHref(scope: "all" | "mine", type?: string): string {
   return q ? `/meetings?${q}` : "/meetings";
 }
 
-export function MeetingsFilters({
-  canViewAll,
-  scope,
-  type,
-}: {
-  canViewAll: boolean;
-  scope: "all" | "mine";
-  type?: string;
-}) {
+export function MeetingsFilters({ canViewAll, scope, type }: { canViewAll: boolean; scope: "all" | "mine"; type?: string }) {
   const router = useRouter();
-  const hasFilters = scope === "mine" || Boolean(type);
+  const hasFilters = (canViewAll && scope === "mine") || Boolean(type);
 
   return (
-    <div className="filter-panel">
-      <div className="filter-bar flex-wrap items-end gap-4">
-        {canViewAll && (
-          <div>
-            <span className="filter-field-label mb-1.5 block">Show</span>
-            <div className="filter-period-toggle">
-              <Link
-                href={buildMeetingsHref("all", type)}
-                className={`filter-period-btn ${scope === "all" ? "filter-period-btn-active" : ""}`}
-              >
-                All meetings
-              </Link>
-              <Link
-                href={buildMeetingsHref("mine", type)}
-                className={`filter-period-btn ${scope === "mine" ? "filter-period-btn-active" : ""}`}
-              >
-                My meetings
-              </Link>
-            </div>
-          </div>
-        )}
-
-        <label className="flex min-w-0 flex-col gap-1.5 sm:min-w-[200px]">
-          <span className="filter-field-label">Meeting type</span>
-          <select
-            value={type ?? ""}
-            onChange={(e) => {
-              const nextType = e.target.value || undefined;
-              router.push(buildMeetingsHref(scope, nextType));
-            }}
-            className="field field-filter-trigger min-w-0 !py-2.5 !text-sm"
-            aria-label="Filter by meeting type"
-          >
-            <option value="">All types</option>
-            {Object.entries(MEETING_TYPE_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {hasFilters && (
-          <Link href="/meetings" className="btn-filter-secondary text-center no-underline">
-            Clear filters
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter meetings">
+      {canViewAll ? (
+        <nav className={styles.segmented} aria-label="Whose meetings">
+          <Link href={buildMeetingsHref("all", type)} replace scroll={false} aria-current={scope === "all" ? "page" : undefined}>
+            Everyone&rsquo;s
           </Link>
-        )}
-      </div>
+          <Link href={buildMeetingsHref("mine", type)} replace scroll={false} aria-current={scope === "mine" ? "page" : undefined}>
+            Mine
+          </Link>
+        </nav>
+      ) : null}
+      <select
+        value={type ?? ""}
+        onChange={(e) => router.replace(buildMeetingsHref(scope, e.target.value || undefined), { scroll: false })}
+        className={styles.select}
+        data-active={type || undefined}
+        aria-label="Meeting type"
+      >
+        <option value="">All types</option>
+        {Object.entries(MEETING_TYPE_LABELS).map(([key, label]) => (
+          <option key={key} value={key}>
+            {label}
+          </option>
+        ))}
+      </select>
+      {hasFilters ? (
+        <Link href="/meetings" replace scroll={false} className="px-1 text-[13px] font-medium text-[#1c1c1e] underline-offset-4 hover:underline">
+          Clear filters
+        </Link>
+      ) : null}
     </div>
   );
 }

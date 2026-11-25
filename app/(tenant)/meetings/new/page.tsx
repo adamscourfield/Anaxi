@@ -18,7 +18,7 @@ export default async function NewMeetingPage() {
   });
 
   return (
-    <div className={`${styles.page} space-y-4`}>
+    <div className={styles.page}>
       <MeetingForm users={users} currentUserId={user.id} />
     </div>
   );

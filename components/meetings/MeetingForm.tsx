@@ -1,22 +1,27 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
-import { Avatar } from "@/components/ui/avatar";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/toast-provider";
 import { MEETING_TYPE_LABELS } from "@/modules/meetings/types";
+import styles from "./meeting.module.css";
 
 const MEETING_TYPES = Object.keys(MEETING_TYPE_LABELS) as Array<keyof typeof MEETING_TYPE_LABELS>;
+const LENGTHS = [15, 30, 45, 60, 90, 120];
 
 const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
+  SUPER_ADMIN: "Super admin",
   ADMIN: "Admin",
-  SLT: "Senior Leadership",
-  HEAD_TEACHER: "Head Teacher",
-  DEPUTY_HEAD: "Deputy Head",
-  HOD: "Head of Department",
+  SLT: "Senior leadership",
+  HOD: "Head of department",
+  LEADER: "Leader",
   TEACHER: "Teacher",
-  SUPPORT: "Support",
+  HR: "HR",
+  ON_CALL: "On call",
 };
 
 interface User {
@@ -26,181 +31,68 @@ interface User {
   role?: string;
 }
 
-interface MeetingFormProps {
-  users: User[];
-  currentUserId: string;
+type Field = "title" | "date" | "time";
+
+function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-/* ── Formatting toolbar for pre-meeting notes ───────────────────── */
-function NotesToolbar({
-  textareaRef,
-  value,
-  onChange,
-}: {
-  textareaRef: React.RefObject<HTMLTextAreaElement>;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  function insertFormatting(prefix: string, suffix: string, placeholder: string) {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const selected = value.slice(start, end) || placeholder;
-    const newValue = value.slice(0, start) + prefix + selected + suffix + value.slice(end);
-    onChange(newValue);
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
-    });
-  }
-
-  function insertList() {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const lineStart = value.lastIndexOf("\n", start - 1) + 1;
-    const newValue = value.slice(0, lineStart) + "- " + value.slice(lineStart);
-    onChange(newValue);
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.setSelectionRange(start + 2, start + 2);
-    });
-  }
-
-  return (
-    <div className="flex items-center gap-1">
-      <button
-        type="button"
-        onClick={() => insertFormatting("**", "**", "bold text")}
-        className="rounded p-1 text-muted hover:bg-[var(--surface-container)] hover:text-text calm-transition"
-        title="Bold"
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6V4z" />
-          <path d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6v-8z" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        onClick={() => insertFormatting("*", "*", "italic text")}
-        className="rounded p-1 text-muted hover:bg-[var(--surface-container)] hover:text-text calm-transition"
-        title="Italic"
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="19" y1="4" x2="10" y2="4" />
-          <line x1="14" y1="20" x2="5" y2="20" />
-          <line x1="15" y1="4" x2="9" y2="20" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        onClick={insertList}
-        className="rounded p-1 text-muted hover:bg-[var(--surface-container)] hover:text-text calm-transition"
-        title="Bullet list"
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="8" y1="6" x2="21" y2="6" />
-          <line x1="8" y1="12" x2="21" y2="12" />
-          <line x1="8" y1="18" x2="21" y2="18" />
-          <line x1="3" y1="6" x2="3.01" y2="6" />
-          <line x1="3" y1="12" x2="3.01" y2="12" />
-          <line x1="3" y1="18" x2="3.01" y2="18" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        className="rounded p-1 text-muted hover:bg-[var(--surface-container)] hover:text-text calm-transition"
-        title="Attachment"
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-    </div>
-  );
-}
-
-/* ── Main component ─────────────────────────────────────────────── */
-
-export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
+export function MeetingForm({ users, currentUserId }: { users: User[]; currentUserId: string }) {
   const router = useRouter();
-  const notesRef = useRef<HTMLTextAreaElement>(null);
-
-  const [attendeeSearch, setAttendeeSearch] = useState("");
-  const [selectedAttendees, setSelectedAttendees] = useState<User[]>(
-    users.filter((u) => u.id === currentUserId)
-  );
-  const [notes, setNotes] = useState("");
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState<string>("OTHER");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("09:00");
+  const [length, setLength] = useState(60);
   const [location, setLocation] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [saveAsDraft, setSaveAsDraft] = useState(false);
-  const submitIntentRef = useRef<"schedule" | "startNow">("schedule");
+  const [agenda, setAgenda] = useState("");
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<string[]>([currentUserId]);
+  const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState<null | "book" | "start">(null);
 
-  /** Redirect to list for scheduled meetings that are not starting in the next few minutes. */
-  const FUTURE_REDIRECT_THRESHOLD_MS = 5 * 60 * 1000;
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return users.filter((u) => !q || u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+  }, [users, search]);
+  const selectedUsers = users.filter((u) => selected.includes(u.id));
 
-  const filteredUsers = users.filter(
-    (u) =>
-      (u.fullName.toLowerCase().includes(attendeeSearch.toLowerCase()) ||
-        u.email.toLowerCase().includes(attendeeSearch.toLowerCase()))
-  );
-
-  function toggleAttendee(user: User) {
-    setSelectedAttendees((prev) =>
-      prev.some((a) => a.id === user.id)
-        ? prev.filter((a) => a.id !== user.id)
-        : [...prev, user]
-    );
+  function toggle(id: string) {
+    if (id === currentUserId) return; // the organiser is always in their own meeting
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
-  const isSelected = (user: User) => selectedAttendees.some((a) => a.id === user.id);
+  async function submit(mode: "book" | "start") {
+    const found: Partial<Record<Field, string>> = {};
+    if (!title.trim()) found.title = "Give the meeting a title.";
+    let start: Date | null = null;
+    if (mode === "book") {
+      if (!date) found.date = "Choose a date.";
+      if (!time) found.time = "Choose a start time.";
+      if (date && time) {
+        start = new Date(`${date}T${time}`);
+        if (start.getTime() < Date.now() - 60_000) found.date = "That time has already passed. Pick a later one, or start the meeting now.";
+      }
+    }
+    setErrors(found);
+    setFormError(null);
+    if (Object.keys(found).length) return;
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
-
-    const form = e.currentTarget;
-    const data = new FormData(form);
-    const intent = submitIntentRef.current;
-
-    const dateVal = data.get("date") as string;
-    const timeVal = data.get("time") as string;
-    const startDateTime = dateVal && timeVal ? new Date(`${dateVal}T${timeVal}`) : null;
-
-    // Default end time = start + 1 hour
-    const endDateTime = startDateTime
-      ? new Date(startDateTime.getTime() + 60 * 60 * 1000)
-      : null;
-
-    const startNow = intent === "startNow";
-    const isDraft = !startNow && saveAsDraft;
-
+    setSubmitting(mode);
     const body: Record<string, unknown> = {
-      title: data.get("title") as string,
-      type: data.get("type") as string,
-      location: location || undefined,
-      notes: notes || undefined,
-      attendeeIds: selectedAttendees.map((a) => a.id),
-      status: isDraft ? "PENDING" : "CONFIRMED",
+      title: title.trim(),
+      type,
+      location: location.trim() || undefined,
+      notes: agenda.trim() || undefined,
+      attendeeIds: selected,
+      status: "CONFIRMED",
     };
-
-    if (startNow) {
-      body.startNow = true;
-    } else {
-      body.startDateTime = startDateTime?.toISOString();
-      body.endDateTime = endDateTime?.toISOString();
+    if (mode === "start") body.startNow = true;
+    else {
+      body.startDateTime = start!.toISOString();
+      body.endDateTime = new Date(start!.getTime() + length * 60_000).toISOString();
     }
 
     try {
@@ -209,323 +101,204 @@ export function MeetingForm({ users, currentUserId }: MeetingFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const json = await res.json();
-        setError(json.error ?? "Something went wrong");
-        setSubmitting(false);
+        setFormError(typeof data?.error === "string" ? data.error : "The meeting wasn't saved. Try again.");
+        setSubmitting(null);
         return;
       }
-
-      const meeting = await res.json();
-      const scheduledStart = meeting.startDateTime
-        ? new Date(meeting.startDateTime).getTime()
-        : Date.now();
-      const goToDetail =
-        startNow ||
-        meeting.startedAt != null ||
-        scheduledStart - Date.now() <= FUTURE_REDIRECT_THRESHOLD_MS;
-      router.push(goToDetail ? `/meetings/${meeting.id}` : "/meetings");
-      setSubmitting(false);
+      const others = selected.length - 1;
+      toast(
+        mode === "start"
+          ? "Meeting started."
+          : others > 0
+            ? `Meeting booked. Invites sent to ${others} ${others === 1 ? "person" : "people"}.`
+            : "Meeting booked.",
+        "success",
+      );
+      router.push(`/meetings/${data.id}`);
     } catch {
-      setError("Network error");
-      setSubmitting(false);
+      setFormError("Couldn't reach Anaxi, so the meeting wasn't saved. Check your connection and try again.");
+      setSubmitting(null);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      {/* ── Page Header ─────────────────────────────────────────── */}
-      <PageHeader variant="ledger"
+    <div className={`${styles.page} space-y-8`}>
+      <PageHeader
+        variant="ledger"
         title="New meeting"
-        subtitle="Plan the agenda, choose attendees and set a time to meet."
-        actions={
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <button
-              type="submit"
-              onClick={() => {
-                submitIntentRef.current = "startNow";
-              }}
-              disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-4 py-2.5 text-sm font-semibold text-text calm-transition hover:bg-accent/15 disabled:opacity-60"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="5 3 19 12 5 21 5 3" strokeLinejoin="round" />
-              </svg>
-              {submitting ? "Starting..." : "Start meeting now"}
-            </button>
-            <button
-              type="submit"
-              onClick={() => {
-                submitIntentRef.current = "schedule";
-              }}
-              disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-text px-5 py-2.5 text-sm font-semibold text-bg calm-transition hover:opacity-90 disabled:opacity-60"
-            >
-              {submitting ? (saveAsDraft ? "Saving..." : "Creating...") : saveAsDraft ? "Save as Draft" : "Create Meeting"}
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          </div>
-        }
+        subtitle="Choose a time and who's coming. Everyone invited gets an email with the details."
+        eyebrow={<Breadcrumb items={[{ label: "Meetings", href: "/meetings" }, { label: "New meeting" }]} />}
       />
 
-      {error && (
-        <div className="mb-4 rounded-xl border border-error/20 bg-[var(--pill-error-bg)] px-4 py-3">
-          <p className="text-sm text-[var(--pill-error-text)]">{error}</p>
-        </div>
-      )}
-
-      {/* ── Two-column layout ───────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_340px]">
-        {/* Left: Form fields */}
-        <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-6 shadow-ambient space-y-5">
-          {/* Meeting Title */}
-          <div>
-            <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">
-              Meeting Title
-            </label>
+      <form
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submit("book");
+        }}
+        className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start"
+      >
+        <section className={`${styles.card} space-y-5 p-6`} aria-label="Meeting details">
+          <label className="block">
+            <span className={styles.label}>Title</span>
             <input
-              required
-              name="title"
-              className="field"
-              placeholder="e.g. Q3 Academic Standards Review"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setErrors((x) => ({ ...x, title: undefined }));
+              }}
+              className={styles.input}
+              placeholder="e.g. Year 11 mock results review"
+              aria-invalid={Boolean(errors.title)}
+              autoFocus
             />
+            {errors.title ? <span className="mt-1 block text-[13px] text-[var(--pill-error-text)]">{errors.title}</span> : null}
+          </label>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className={styles.label}>Type</span>
+              <select value={type} onChange={(e) => setType(e.target.value)} className={styles.input}>
+                {MEETING_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {MEETING_TYPE_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className={styles.label}>Where (optional)</span>
+              <input value={location} onChange={(e) => setLocation(e.target.value)} className={styles.input} placeholder="e.g. Conference room" />
+            </label>
           </div>
 
-          {/* Type + Location */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">
-                Meeting Type
-              </label>
-              <select name="type" defaultValue="OTHER" className="field">
-                {MEETING_TYPES.map((t) => (
-                  <option key={t} value={t}>{MEETING_TYPE_LABELS[t]}</option>
+          <fieldset>
+            <legend className={styles.label}>When</legend>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+              <input
+                type="date"
+                value={date}
+                min={todayLocal()}
+                onChange={(e) => {
+                  setDate(e.target.value);
+                  setErrors((x) => ({ ...x, date: undefined }));
+                }}
+                className={`${styles.input} col-span-2 sm:col-span-1`}
+                aria-label="Date"
+                aria-invalid={Boolean(errors.date)}
+              />
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => {
+                  setTime(e.target.value);
+                  setErrors((x) => ({ ...x, time: undefined }));
+                }}
+                className={styles.input}
+                aria-label="Start time"
+                aria-invalid={Boolean(errors.time)}
+              />
+              <select value={length} onChange={(e) => setLength(Number(e.target.value))} className={styles.input} aria-label="Length">
+                {LENGTHS.map((m) => (
+                  <option key={m} value={m}>
+                    {m < 60 ? `${m} min` : m === 60 ? "1 hour" : `${m / 60} hours`}
+                  </option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">
-                Location
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                </span>
-                <input
-                  name="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="field pl-9"
-                  placeholder="e.g. Boardroom A"
-                />
-              </div>
-            </div>
-          </div>
+            {errors.date || errors.time ? (
+              <span className="mt-1 block text-[13px] text-[var(--pill-error-text)]">{errors.date ?? errors.time}</span>
+            ) : null}
+          </fieldset>
 
-          {/* Date + Time */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">
-                Date
-              </label>
-              <input
-                required
-                type="date"
-                name="date"
-                className="field"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">
-                Time
-              </label>
-              <input
-                required
-                type="time"
-                name="time"
-                defaultValue="09:00"
-                className="field"
-              />
-            </div>
-          </div>
-
-          {/* Save as draft toggle */}
-          <label className="flex items-start gap-2.5">
-            <input
-              type="checkbox"
-              checked={saveAsDraft}
-              onChange={(e) => setSaveAsDraft(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-border"
+          <label className="block">
+            <span className={styles.label}>Agenda (optional)</span>
+            <textarea
+              value={agenda}
+              onChange={(e) => setAgenda(e.target.value)}
+              rows={6}
+              className={`${styles.input} h-auto min-h-[140px] resize-y py-2.5 leading-relaxed`}
+              placeholder="What you'll cover, and anything people should read beforehand. You'll take minutes on the meeting page."
             />
-            <span>
-              <span className="block text-sm font-medium text-text">Save as draft</span>
-              <span className="block text-[12px] text-muted">
-                Keep this unconfirmed for now — you can finalize it later.
-              </span>
-            </span>
           </label>
 
-          {/* Pre-Meeting Notes */}
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-muted">
-                Pre-Meeting Notes
-              </label>
-              <span className="text-[11px] text-muted">Auto-saves to cloud</span>
-            </div>
-            <textarea
-              ref={notesRef}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={6}
-              className="field resize-none"
-              placeholder="Outline the agenda, key objectives, or pre-read materials for the attendees..."
-            />
-            {/* Formatting toolbar */}
-            <div className="mt-2 flex items-center justify-between border-t border-border/20 pt-2">
-              <NotesToolbar textareaRef={notesRef} value={notes} onChange={setNotes} />
+          {formError ? (
+            <p role="alert" className="rounded-[10px] border border-[var(--pill-error-ring)] bg-[var(--pill-error-bg)] px-3.5 py-2.5 text-[13px] text-[var(--pill-error-text)]">
+              {formError}
+            </p>
+          ) : null}
+
+          <div className="flex flex-col-reverse gap-3 border-t border-[#efeff0] pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <Button asChild variant="ghost" className="h-10 min-h-0 px-4">
+              <Link href="/meetings">Cancel</Link>
+            </Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              <Button type="button" variant="secondary" className="h-10 min-h-0 px-5" disabled={submitting !== null} onClick={() => void submit("start")}>
+                {submitting === "start" ? "Starting…" : "Start it now instead"}
+              </Button>
+              <Button type="submit" className="h-10 min-h-0 px-5" disabled={submitting !== null}>
+                {submitting === "book" ? "Booking…" : "Book meeting"}
+              </Button>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Right: Attendees + Venue Status */}
-        <div className="space-y-4">
-          {/* Attendees panel */}
-          <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-ambient">
-            <h3 className="mb-3 text-sm font-bold text-text">Attendees</h3>
-
-            {/* Search */}
-            <div className="relative mb-3">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted">
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m16.5 16.5 3 3" strokeLinecap="round" />
-                </svg>
-              </span>
-              <input
-                type="text"
-                placeholder="Search staff members..."
-                value={attendeeSearch}
-                onChange={(e) => setAttendeeSearch(e.target.value)}
-                className="field pl-9 text-sm"
-              />
+        <section className={`${styles.card} p-5`} aria-labelledby="people-heading">
+          <div className="flex items-baseline justify-between">
+            <h2 id="people-heading" className="text-[15px] font-semibold">
+              People
+            </h2>
+            <span className="text-[12px] text-[#6e6e73]">{selected.length} invited</span>
+          </div>
+          {selectedUsers.length > 1 ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {selectedUsers.map((u) => (
+                <span key={u.id} className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e6] px-2.5 py-1 text-[12px]">
+                  {u.id === currentUserId ? `${u.fullName} (you)` : u.fullName}
+                  {u.id !== currentUserId ? (
+                    <button type="button" onClick={() => toggle(u.id)} className="text-[#6e6e73] hover:text-[#1c1c1e]" aria-label={`Remove ${u.fullName}`}>
+                      ×
+                    </button>
+                  ) : null}
+                </span>
+              ))}
             </div>
-
-            {/* Staff list */}
-            <div className="max-h-56 overflow-auto space-y-1">
-              {filteredUsers.map((u) => {
-                const selected = isSelected(u);
-                const isCurrentUser = u.id === currentUserId;
-                return (
-                  <button
-                    key={u.id}
-                    type="button"
-                    onClick={() => !isCurrentUser && toggleAttendee(u)}
-                    aria-pressed={selected}
-                    className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left calm-transition ${
-                      selected
-                        ? "bg-accent/10 border border-accent/20"
-                        : "hover:bg-surface-container-low border border-transparent"
-                    }`}
-                  >
-                    {/* Avatar */}
-                    <Avatar name={u.fullName} userId={u.id} size="md" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-text">{u.fullName}</p>
-                      <p className="truncate text-[11px] text-muted">
-                        {u.role ? (ROLE_LABELS[u.role] ?? u.role) : u.email}
-                      </p>
-                    </div>
-                    {selected && (
-                      <div className="shrink-0">
-                        {isCurrentUser ? (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-accent">
-                            <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          </div>
-                        ) : (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-error/10 text-error">
-                            <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M3 3l6 6M9 3l-6 6" strokeLinecap="round" />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-              {filteredUsers.length === 0 && (
-                <p className="py-3 text-center text-sm text-muted">No staff found</p>
-              )}
-            </div>
-
-            {/* Selected chips */}
-            {selectedAttendees.length > 0 && (
-              <div className="mt-3 border-t border-border/20 pt-3">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted">
-                  Selected ({selectedAttendees.length})
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedAttendees.map((a) => (
-                    <span
-                      key={a.id}
-                      className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-surface-container px-2.5 py-1 text-[11px] font-medium text-text"
-                    >
-                      {a.fullName}
-                      {a.id !== currentUserId && (
-                        <button
-                          type="button"
-                          onClick={() => toggleAttendee(a)}
-                          className="ml-0.5 text-muted hover:text-error calm-transition"
-                        >
-                          <svg viewBox="0 0 12 12" fill="none" className="h-2.5 w-2.5">
-                            <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                          </svg>
-                        </button>
-                      )}
+          ) : null}
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Find staff"
+            aria-label="Find staff to invite"
+            className={`${styles.input} mt-3`}
+          />
+          <ul className="mt-2 max-h-[360px] overflow-auto">
+            {filtered.map((u) => {
+              const isMe = u.id === currentUserId;
+              return (
+                <li key={u.id}>
+                  <label className={`flex cursor-pointer items-center gap-3 rounded-[10px] px-2 py-2 hover:bg-[#f7f7f8] ${isMe ? "cursor-default" : ""}`}>
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(u.id)}
+                      disabled={isMe}
+                      onChange={() => toggle(u.id)}
+                      className="h-4 w-4 accent-[#1c1c1e]"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px]">{isMe ? `${u.fullName} (you)` : u.fullName}</span>
+                      <span className="block truncate text-[12px] text-[#6e6e73]">{u.role ? (ROLE_LABELS[u.role] ?? u.role) : u.email}</span>
                     </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Venue Status */}
-          {location && (
-            <div className="rounded-2xl border border-border/50 bg-surface-container-lowest p-5 shadow-ambient">
-              <h3 className="mb-3 text-sm font-bold text-text">Venue Status</h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-2">
-                  <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-md bg-[var(--scale-consistent-bar)]" />
-                  <div>
-                    <p className="text-sm font-semibold text-text">{location} is Available</p>
-                    <p className="mt-0.5 text-[12px] text-muted">
-                      Room available for the selected time slot.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start justify-between gap-2 rounded-xl border border-border/30 bg-surface-container px-3 py-2.5">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Conflict Check</p>
-                    <p className="mt-0.5 text-[12px] text-muted">
-                      No scheduling conflicts found for selected attendees.
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-[11px] font-bold text-[var(--scale-consistent-text)]">Clear</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </form>
+                  </label>
+                </li>
+              );
+            })}
+            {!filtered.length ? <li className="py-4 text-center text-[13px] text-[#6e6e73]">No staff match.</li> : null}
+          </ul>
+        </section>
+      </form>
+    </div>
   );
 }

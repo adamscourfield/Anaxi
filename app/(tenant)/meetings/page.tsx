@@ -1,39 +1,20 @@
 import Link from "next/link";
 import styles from "./page.module.css";
+import listStyles from "@/components/meetings/meetings.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
-import { listMeetings, getMeetingStats } from "@/modules/meetings/service";
-import { MEETING_TYPE_LABELS, meetingSessionStatusLabel } from "@/modules/meetings/types";
-import { StatusPill } from "@/components/ui/status-pill";
-import { StatCard } from "@/components/ui/stat-card";
+import { getMyMeetingSummary, listMeetingsForPage } from "@/modules/meetings/service";
+import { MEETING_TYPE_LABELS } from "@/modules/meetings/types";
+import { formatMeetingSlot } from "@/modules/meetings/format";
+import { startOfDayInZone } from "@/modules/oncall/time";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PastMeetingsList } from "@/components/meetings/PastMeetingsList";
 import { MeetingsFilters } from "@/components/meetings/MeetingsFilters";
-import { Avatar } from "@/components/ui/avatar";
+import { MeetingRows, type MeetingRow } from "@/components/meetings/MeetingRows";
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-}
-
-function formatTimeUntil(date: Date): string {
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  if (diffMs <= 0) return "Starting now";
-  const mins = Math.round(diffMs / 60000);
-  if (mins < 60) return `Starts in ${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  const remainingMins = mins % 60;
-  return remainingMins > 0 ? `Starts in ${hrs}h ${remainingMins}m` : `Starts in ${hrs}h`;
-}
+const PAST_LIMIT = 60;
 
 export default async function MeetingsPage({
   searchParams,
@@ -45,49 +26,54 @@ export default async function MeetingsPage({
   const resolvedSearchParams = await searchParams;
 
   const canViewAll = hasPermission(user.role, "meetings:view_all");
-  const scope = resolvedSearchParams?.scope === "mine" ? "mine" : "all";
-  const showAll = canViewAll && scope !== "mine";
+  const canCreate = hasPermission(user.role, "meetings:create");
+  const scope = canViewAll && resolvedSearchParams?.scope !== "mine" ? "all" : "mine";
   const validTypes = Object.keys(MEETING_TYPE_LABELS);
-  const type =
-    resolvedSearchParams?.type && validTypes.includes(resolvedSearchParams.type) ? resolvedSearchParams.type : undefined;
-  const statsUserId = showAll ? undefined : user.id;
+  const type = resolvedSearchParams?.type && validTypes.includes(resolvedSearchParams.type) ? resolvedSearchParams.type : undefined;
 
   // Preserve the list's filter state so "Back" from a meeting returns to the same view.
   const currentQuery = new URLSearchParams();
-  if (scope === "mine") currentQuery.set("scope", "mine");
+  if (canViewAll && scope === "mine") currentQuery.set("scope", "mine");
   if (type) currentQuery.set("type", type);
-  const currentQueryString = currentQuery.toString();
-  const from = encodeURIComponent(`/meetings${currentQueryString ? `?${currentQueryString}` : ""}`);
-
-  const [meetings, stats] = await Promise.all([
-    listMeetings(user.tenantId, {
-      type,
-      isAttendee: !showAll,
-      userId: user.id,
-    }),
-    getMeetingStats(user.tenantId, statsUserId),
-  ]);
+  const qs = currentQuery.toString();
+  const from = encodeURIComponent(`/meetings${qs ? `?${qs}` : ""}`);
 
   const now = new Date();
-  const upcoming = (meetings as any[])
-    .filter((m) => new Date(m.startDateTime) >= now)
-    .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
-  const past = (meetings as any[])
-    .filter((m) => new Date(m.startDateTime) < now)
-    .sort((a, b) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime());
+  const todayStart = startOfDayInZone(now);
+  const [lists, mine] = await Promise.all([
+    listMeetingsForPage(user.tenantId, { type, attendeeUserId: scope === "mine" ? user.id : undefined, todayStart, pastLimit: PAST_LIMIT }),
+    getMyMeetingSummary(user.tenantId, user.id, now, todayStart),
+  ]);
+
+  const toRows = (rows: any[]): MeetingRow[] =>
+    rows.map((m) => ({
+      id: m.id,
+      title: m.title,
+      type: m.type,
+      status: m.status,
+      startDateTime: new Date(m.startDateTime).toISOString(),
+      endDateTime: new Date(m.endDateTime).toISOString(),
+      startedAt: m.startedAt ? new Date(m.startedAt).toISOString() : null,
+      endedAt: m.endedAt ? new Date(m.endedAt).toISOString() : null,
+      location: m.location ?? null,
+      createdBy: m.createdBy,
+      _count: m._count,
+    }));
+  const filtered = Boolean(type) || (canViewAll && scope === "mine");
+  const next = mine.nextMeeting;
 
   return (
-    <div className={`${styles.page} space-y-8`}>
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <PageHeader variant="ledger"
+    <div className={`${styles.page} space-y-10`}>
+      <PageHeader
+        variant="ledger"
         title="Meetings"
-        subtitle="Plan agendas, capture actions, and follow up after each session."
+        subtitle="Plan agendas, take minutes and agree actions, then follow them up."
         actions={
-          hasPermission(user.role, "meetings:create") ? (
-            <Button asChild className="h-10 min-h-0 rounded-md px-6 shadow-md">
-              <Link href="/meetings/new" className="gap-2">
-                <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4" aria-hidden>
-                  <path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5h-4.5a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z" />
+          canCreate ? (
+            <Button asChild className="h-10 min-h-0 gap-2 px-5">
+              <Link href="/meetings/new">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                  <path d="M12 5v14M5 12h14" />
                 </svg>
                 New meeting
               </Link>
@@ -96,192 +82,80 @@ export default async function MeetingsPage({
         }
       />
 
-      <MeetingsFilters canViewAll={canViewAll} scope={scope} type={type} />
-
-      {/* ── Stats Cards (KPI row — matches Explorer / Signals) ─────────── */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <StatCard
-          layout="kpi"
-          label="Open Actions"
-          value={stats.openActions}
-          tone="glass"
-          href="/my-actions"
-          icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          }
-          iconTileClassName="bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)]"
-          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
-          context={
-            stats.newActionsSinceMonday > 0 ? (
-              <span className="font-semibold text-[var(--success)]">
-                +{stats.newActionsSinceMonday} since Mon
-              </span>
+      <section className={listStyles.stats} aria-label="Your meetings at a glance">
+        <Link href="/my-actions" className={listStyles.stat}>
+          <p className="text-[12px] font-medium text-[#6e6e73]">Your open actions</p>
+          <p className="mt-1.5 text-[26px] font-semibold leading-none tracking-[-0.02em] tabular-nums">{mine.openActions}</p>
+          <p className="mt-2 text-[12px] text-[#6e6e73]">
+            {mine.overdueActions > 0 ? (
+              <span className="font-medium text-[var(--pill-error-text)]">{mine.overdueActions} overdue</span>
+            ) : mine.openActions > 0 ? (
+              "None overdue"
             ) : (
-              <span className="font-medium text-muted">No new this week</span>
-            )
-          }
-        />
-        <StatCard
-          layout="kpi"
-          label="Completion Rate"
-          value={`${stats.completionRate}%`}
-          tone="glass"
-          icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-          }
-          iconTileClassName="bg-[var(--status-approved-light)] text-[var(--status-approved-text)]"
-          valueClassName="mt-1 text-[2rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-text"
-          context={
-            stats.totalActions > 0 ? (
-              <span className="font-medium text-muted">
-                {Math.round((stats.completionRate / 100) * stats.totalActions)} of {stats.totalActions}{" "}
-                completed
-              </span>
-            ) : (
-              <span className="font-medium text-muted">No actions yet</span>
-            )
-          }
-        />
-        <StatCard
-          layout="kpi"
-          label="Next up"
-          value={stats.nextMeeting?.title ?? "—"}
-          tone="glass"
-          href={stats.nextMeeting?.id ? `/meetings/${stats.nextMeeting.id}` : undefined}
-          showChevron={Boolean(stats.nextMeeting?.id)}
-          icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-          }
-          iconTileClassName="bg-[var(--cat-indigo-bg)] text-[var(--cat-indigo-text)]"
-          valueClassName="mt-1 line-clamp-2 text-xl font-bold leading-snug tracking-[-0.02em] text-text sm:text-[1.35rem]"
-          context={
-            stats.nextMeeting ? (
-              <span className="font-medium text-muted">
-                {formatTimeUntil(new Date(stats.nextMeeting.startDateTime))}
-                {stats.nextMeeting.location ? ` · ${stats.nextMeeting.location}` : ""}
-              </span>
-            ) : (
-              <span className="font-medium text-muted">No upcoming meetings</span>
-            )
-          }
-        />
-      </div>
-
-      {/* ── Upcoming meetings ───────────────────────────────────────────── */}
-      <section>
-        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-lg font-bold tracking-[-0.02em] text-text">Upcoming meetings</h2>
-          {(scope === "mine" || type) && (
-            <p className="text-[0.8125rem] text-muted">
-              {upcoming.length + past.length} meeting{upcoming.length + past.length !== 1 ? "s" : ""} matching filters
+              "Nothing waiting on you"
+            )}
+          </p>
+        </Link>
+        {next ? (
+          <Link href={`/meetings/${next.id}?from=${from}`} className={listStyles.stat}>
+            <p className="text-[12px] font-medium text-[#6e6e73]">{next.startedAt ? "Happening now" : "Your next meeting"}</p>
+            <p className="mt-1.5 truncate text-[20px] font-semibold leading-tight tracking-[-0.01em]">{next.title}</p>
+            <p className="mt-2 text-[12px] text-[#6e6e73]">
+              {formatMeetingSlot(next.startDateTime, null, now)}
+              {next.location ? ` · ${next.location}` : ""}
             </p>
-          )}
-        </div>
-
-        {upcoming.length === 0 ? (
-          <EmptyState
-            mode="embedded"
-            title="No upcoming meetings"
-            description="Schedule a meeting to capture agendas, decisions, and follow-up actions."
-            action={
-              hasPermission(user.role, "meetings:create") ? (
-                <Button asChild>
-                  <Link href="/meetings/new">Schedule meeting</Link>
-                </Button>
-              ) : undefined
-            }
-          />
+          </Link>
         ) : (
-          <div className="table-shell">
-            <p className="sr-only" id="meetings-upcoming-scroll-hint">
-              This table scrolls horizontally on small screens.
-            </p>
-            <div className="overflow-x-auto" aria-describedby="meetings-upcoming-scroll-hint">
-              <table className="w-full text-sm">
-              <thead>
-                <tr className="table-head-row">
-                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Meeting title</th>
-                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Date &amp; time</th>
-                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Location</th>
-                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Organizer</th>
-                  <th className="px-5 py-3.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {upcoming.map((m: any) => {
-                  const start = new Date(m.startDateTime);
-                  const end = new Date(m.endDateTime);
-                  const typeLabel = MEETING_TYPE_LABELS[m.type] ?? m.type;
-                  const statusLabel = meetingSessionStatusLabel(m.status, m.endedAt);
-                  const statusVariant =
-                    m.status === "CANCELLED"
-                      ? "error"
-                      : m.endedAt
-                        ? "success"
-                        : m.status === "CONFIRMED"
-                          ? "success"
-                          : "warning";
-
-                  return (
-                    <tr key={m.id} className="table-row calm-transition">
-                      <td className="px-5 py-4">
-                        <Link href={`/meetings/${m.id}?from=${from}`} className="link-subtle font-semibold text-text">
-                          <p className="font-semibold text-text">{m.title}</p>
-                          <p className="text-xs text-muted">{typeLabel}</p>
-                        </Link>
-                      </td>
-                      <td className="px-5 py-4 text-text">
-                        <p>{start.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
-                        <p className="text-xs text-muted">
-                          {start.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} -{" "}
-                          {end.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                        </p>
-                      </td>
-                      <td className="px-5 py-4">
-                        {m.location ? (
-                          <span className="flex items-center gap-1.5 text-text">
-                            <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5 text-muted">
-                              <path fillRule="evenodd" d="M11.536 3.464a5 5 0 010 7.072L8 14.07l-3.536-3.535a5 5 0 117.072-7.072v.001zm-1.414 5.658a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" clipRule="evenodd" />
-                            </svg>
-                            {m.location}
-                          </span>
-                        ) : (
-                          <span className="text-muted">—</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <Avatar name={m.createdBy.fullName} userId={m.createdBy.id} size="md" />
-                          <span className="text-sm text-text">{m.createdBy.fullName}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <StatusPill variant={statusVariant as any} size="sm">{statusLabel}</StatusPill>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            </div>
+          <div className={listStyles.stat}>
+            <p className="text-[12px] font-medium text-[#6e6e73]">Your next meeting</p>
+            <p className="mt-1.5 text-[20px] font-semibold leading-tight text-[#a1a1aa]">None booked</p>
+            <p className="mt-2 text-[12px] text-[#6e6e73]">Meetings you&rsquo;re invited to appear here.</p>
           </div>
         )}
       </section>
 
-      {/* ── Past meetings ───────────────────────────────────────────────── */}
-      <section>
-        <h2 className="mb-5 text-lg font-bold tracking-[-0.02em] text-text">Past meetings</h2>
-        <PastMeetingsList meetings={past} from={from} />
+      <MeetingsFilters canViewAll={canViewAll} scope={scope} type={type} />
+
+      {lists.inProgress.length ? (
+        <section aria-labelledby="meetings-live" className="space-y-3">
+          <h2 id="meetings-live" className="text-[17px] font-semibold tracking-[-0.01em]">
+            Happening now
+          </h2>
+          <MeetingRows meetings={toRows(lists.inProgress)} from={from} variant="live" todayStart={todayStart.toISOString()} />
+        </section>
+      ) : null}
+
+      <section aria-labelledby="meetings-upcoming" className="space-y-3">
+        <h2 id="meetings-upcoming" className="text-[17px] font-semibold tracking-[-0.01em]">
+          Coming up
+        </h2>
+        {lists.upcoming.length ? (
+          <MeetingRows meetings={toRows(lists.upcoming)} from={from} variant="upcoming" todayStart={todayStart.toISOString()} />
+        ) : (
+          <EmptyState
+            mode="embedded"
+            title={filtered ? "Nothing coming up that matches" : "Nothing booked"}
+            description={filtered ? "Try another type, or clear the filters." : "New meetings you organise or are invited to appear here."}
+            action={
+              canCreate && !filtered ? (
+                <Button asChild variant="secondary">
+                  <Link href="/meetings/new">Plan a meeting</Link>
+                </Button>
+              ) : undefined
+            }
+          />
+        )}
+      </section>
+
+      <section aria-labelledby="meetings-past" className="space-y-3">
+        <h2 id="meetings-past" className="text-[17px] font-semibold tracking-[-0.01em]">
+          Past
+        </h2>
+        {lists.past.length ? (
+          <MeetingRows meetings={toRows(lists.past)} from={from} variant="past" todayStart={todayStart.toISOString()} pageSize={10} total={lists.pastTotal} />
+        ) : (
+          <EmptyState mode="embedded" title="No past meetings" description="Meetings move here once they've ended, with their minutes and actions." />
+        )}
       </section>
     </div>
   );

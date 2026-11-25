@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { StatusPill } from "@/components/ui/status-pill";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
-import { MetaText } from "@/components/ui/typography";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "@/components/toast-provider";
-import { Avatar } from "@/components/ui/avatar";
-
-const MEETING_CARD =
-  "rounded-sm border border-border bg-[var(--surface-container-lowest)] p-5 sm:p-6 shadow-none";
-
-const MEETING_FIELD =
-  "field w-full rounded-md border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm text-text outline-none transition focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_12%,transparent)]";
+import { formatMeetingDay, formatMeetingSlot, formatMeetingTime, formatMinutes, minutesBetween } from "@/modules/meetings/format";
+import { meetingState } from "./meetingStatus";
+import styles from "./meeting.module.css";
 
 interface Attendee {
   id: string;
@@ -33,293 +30,53 @@ interface Action {
 interface LiveMeetingViewProps {
   meetingId: string;
   title: string;
+  /** Meeting type label, e.g. "Department". */
   type: string;
   status: string;
   startDateTime: string;
+  endDateTime: string;
   startedAt: string | null;
   endedAt: string | null;
+  location: string | null;
+  organiser: string;
   attendees: Attendee[];
   initialNotes: string;
   actions: Action[];
+  currentUserId: string;
+  /** Edit the notes (organiser or meetings:edit). */
   canEdit: boolean;
-  canStartMeeting: boolean;
+  /** Start and end the meeting (organiser or meetings:edit). */
+  canRun: boolean;
   canAddActions: boolean;
+  /** Tick off actions you own. */
+  canCompleteOwnActions: boolean;
   canDelete: boolean;
-  avgActionsForType?: number;
-  previewMode?: boolean;
+  backHref: string;
 }
 
-/* ── Helpers ──────────────────────────────────────────────────────────── */
+type SaveState = "idle" | "pending" | "saving" | "saved" | "error";
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+const UK = { timeZone: "Europe/London" } as const;
+
+function dueLabel(action: Action): { text: string; overdue: boolean } | null {
+  if (!action.dueDate) return null;
+  const due = new Date(action.dueDate);
+  const todayKey = new Date().toLocaleDateString("en-CA", UK);
+  const dueKey = due.toLocaleDateString("en-CA", UK);
+  const overdue = action.status !== "DONE" && dueKey < todayKey;
+  const day = formatMeetingDay(due);
+  return { text: overdue ? `Overdue · was due ${day}` : `Due ${day.toLowerCase() === "today" ? "today" : day}`, overdue };
 }
 
-function getFirstName(name: string): string {
-  const parts = name.split(" ");
-  return parts[0] + (parts.length > 1 ? " " + parts[1][0] + "." : "");
-}
-
-function isDueToday(dueDate: Date | string): boolean {
-  const d = new Date(dueDate);
-  d.setHours(0, 0, 0, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return d.getTime() === today.getTime();
-}
-
-function isOverdue(dueDate: Date | string): boolean {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return new Date(dueDate) < today;
-}
-
-function formatDueDate(dueDate: Date | string): string {
-  const d = new Date(dueDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diff = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (diff === 0) return "Today";
-  if (diff < 0) return "OVERDUE";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-/* ── Timer Hook ──────────────────────────────────────────────────────── */
-
-function useElapsedTimer(startDateTime: string | null, endDateTime: string | null) {
-  const [elapsed, setElapsed] = useState(() => {
-    if (!startDateTime) return 0;
-    const startMs = new Date(startDateTime).getTime();
-    const endMs = endDateTime ? new Date(endDateTime).getTime() : Date.now();
-    const diff = endMs - startMs;
-    return Math.max(0, Math.floor(diff / 1000));
-  });
-
+function useNow(active: boolean) {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (!startDateTime) {
-      setElapsed(0);
-      return;
-    }
-    const startMs = new Date(startDateTime).getTime();
-
-    if (endDateTime) {
-      const endMs = new Date(endDateTime).getTime();
-      setElapsed(Math.max(0, Math.floor((endMs - startMs) / 1000)));
-      return;
-    }
-
-    const tick = () => {
-      const diff = Date.now() - startMs;
-      setElapsed(Math.max(0, Math.floor(diff / 1000)));
-    };
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [startDateTime, endDateTime]);
-
-  const hrs = String(Math.floor(elapsed / 3600)).padStart(2, "0");
-  const mins = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
-  const secs = String(elapsed % 60).padStart(2, "0");
-  return { formatted: `${hrs}:${mins}:${secs}`, seconds: elapsed };
+    if (!active) return;
+    const t = window.setInterval(() => setNow(Date.now()), 15_000);
+    return () => window.clearInterval(t);
+  }, [active]);
+  return now;
 }
-
-/* ── Avatar Stack ────────────────────────────────────────────────────── */
-
-const AVATAR_COLORS = [
-  "bg-[var(--scale-limited-light)] text-[var(--scale-limited-text)]",
-  "bg-[var(--scale-some-light)] text-[var(--scale-some-text)]",
-  "bg-[var(--scale-strong-light)] text-[var(--scale-strong-text)]",
-  "bg-[var(--scale-consistent-light)] text-[var(--scale-consistent-text)]",
-  "bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)]",
-  "bg-[var(--cat-indigo-bg)] text-[var(--cat-indigo-text)]",
-];
-
-function AvatarStack({ attendees }: { attendees: Attendee[] }) {
-  const maxShow = 4;
-  const shown = attendees.slice(0, maxShow);
-  const overflow = attendees.length - maxShow;
-
-  return (
-    <div className="flex items-center">
-          <div className="flex -space-x-2">
-        {shown.map((a, i) => (
-          <div key={a.id} className="rounded-full border-2 border-[var(--surface-container-lowest)]">
-            <Avatar name={a.user.fullName} userId={a.user.id} size="md" />
-          </div>
-        ))}
-        {overflow > 0 && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-[var(--surface-container-lowest)] bg-[var(--surface-container-low)] text-[11px] font-semibold text-muted">
-            +{overflow}
-          </div>
-        )}
-      </div>
-      <span className="ml-3 text-sm text-muted">
-        {attendees.length} Attendees Present
-      </span>
-    </div>
-  );
-}
-
-/* ── Formatting Toolbar ──────────────────────────────────────────────── */
-
-function LinkUrlDialog({
-  open,
-  onClose,
-  onConfirmUrl,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onConfirmUrl: (url: string) => boolean | void;
-}) {
-  const [url, setUrl] = useState("");
-  useEffect(() => {
-    if (open) setUrl("");
-  }, [open]);
-
-  return (
-    <ConfirmDialog
-      open={open}
-      title="Insert link"
-      confirmLabel="Insert"
-      cancelLabel="Cancel"
-      onClose={onClose}
-      onConfirm={() => {
-        const r = onConfirmUrl(url.trim());
-        if (r === false) return false;
-      }}
-    >
-      <label className="block">
-        <span className="sr-only">URL</span>
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://"
-          className="field mt-1 w-full"
-          autoFocus
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              const ok = onConfirmUrl(url.trim());
-              if (ok !== false) onClose();
-            }
-          }}
-        />
-      </label>
-    </ConfirmDialog>
-  );
-}
-
-function FormattingToolbar({
-  textareaRef,
-  value,
-  onChange,
-  onInsertLink,
-}: {
-  textareaRef: React.RefObject<HTMLTextAreaElement>;
-  value: string;
-  onChange: (v: string) => void;
-  onInsertLink: () => void;
-}) {
-  function insertFormatting(prefix: string, suffix: string, placeholder: string) {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const selected = value.slice(start, end) || placeholder;
-    const newValue = value.slice(0, start) + prefix + selected + suffix + value.slice(end);
-    onChange(newValue);
-    // Restore focus and selection
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
-    });
-  }
-
-  function insertList() {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    // Find start of current line
-    const lineStart = value.lastIndexOf("\n", start - 1) + 1;
-    const newValue = value.slice(0, lineStart) + "- " + value.slice(lineStart);
-    onChange(newValue);
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.setSelectionRange(start + 2, start + 2);
-    });
-  }
-
-  function insertLink() {
-    onInsertLink();
-  }
-
-  return (
-    <div className="flex items-center gap-1">
-      <button
-        type="button"
-        onClick={() => insertFormatting("**", "**", "bold text")}
-        className="rounded-md p-1.5 calm-transition hover:bg-[var(--surface-container-low)]"
-        
-        title="Bold"
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6V4z" />
-          <path d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6v-8z" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        onClick={() => insertFormatting("*", "*", "italic text")}
-        className="rounded-md p-1.5 calm-transition hover:bg-[var(--surface-container-low)]"
-        
-        title="Italic"
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="19" y1="4" x2="10" y2="4" />
-          <line x1="14" y1="20" x2="5" y2="20" />
-          <line x1="15" y1="4" x2="9" y2="20" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        onClick={insertList}
-        className="rounded-md p-1.5 calm-transition hover:bg-[var(--surface-container-low)]"
-        
-        title="Bullet List"
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="8" y1="6" x2="21" y2="6" />
-          <line x1="8" y1="12" x2="21" y2="12" />
-          <line x1="8" y1="18" x2="21" y2="18" />
-          <line x1="3" y1="6" x2="3.01" y2="6" />
-          <line x1="3" y1="12" x2="3.01" y2="12" />
-          <line x1="3" y1="18" x2="3.01" y2="18" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        onClick={insertLink}
-        className="rounded-md p-1.5 calm-transition hover:bg-[var(--surface-container-low)]"
-        
-        title="Insert Link"
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-          <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-        </svg>
-      </button>
-    </div>
-  );
-}
-
-/* ── Main Component ──────────────────────────────────────────────────── */
 
 export function LiveMeetingView({
   meetingId,
@@ -327,647 +84,472 @@ export function LiveMeetingView({
   type,
   status,
   startDateTime,
-  startedAt: initialStartedAt,
-  endedAt: initialEndedAt,
+  endDateTime,
+  startedAt,
+  endedAt,
+  location,
+  organiser,
   attendees,
   initialNotes,
   actions: initialActions,
+  currentUserId,
   canEdit,
-  canStartMeeting,
+  canRun,
   canAddActions,
+  canCompleteOwnActions,
   canDelete,
-  avgActionsForType = 0,
-  previewMode = false,
+  backHref,
 }: LiveMeetingViewProps) {
   const router = useRouter();
-  const timerAnchor = initialStartedAt;
-  const timerEnd = initialEndedAt;
-  const { formatted: timer, seconds: elapsedSeconds } = useElapsedTimer(timerAnchor, timerEnd);
+  const isCancelled = status === "CANCELLED";
+  const hasStarted = startedAt != null;
+  const hasEnded = endedAt != null;
+  const isLive = hasStarted && !hasEnded && !isCancelled;
+  const now = useNow(isLive);
+  const state = meetingState({ status, startedAt, endedAt, startDateTime });
+
+  /* ── Notes: autosave, and never lose the last few keystrokes ─────────── */
   const [notes, setNotes] = useState(initialNotes);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
-  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-  const [startingMeeting, setStartingMeeting] = useState(false);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const pendingNotes = useRef<string | null>(null);
+  const saveTimer = useRef<number | null>(null);
 
-  /* ── Local actions state (so new actions appear immediately) ───── */
-  const [localActions, setLocalActions] = useState<Action[]>(initialActions);
-
-  /* ── Action form state ─────────────────────────────────────────── */
-  const [taskDesc, setTaskDesc] = useState("");
-  const [assignToId, setAssignToId] = useState(attendees[0]?.userId ?? "");
-  const [dueDate, setDueDate] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [endMeetingOpen, setEndMeetingOpen] = useState(false);
-  const [deleteMeetingOpen, setDeleteMeetingOpen] = useState(false);
-  const [deletingMeeting, setDeletingMeeting] = useState(false);
-  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
-  const linkInsertRef = useRef<{ start: number; end: number; selected: string } | null>(null);
-
-  /* ── Auto-save notes ───────────────────────────────────────────── */
-  const handleNotesChange = useCallback(
-    (value: string) => {
-      setNotes(value);
-      setSaveStatus("saving");
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(async () => {
-        try {
-          const res = await fetch(`/api/meetings/${meetingId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ notes: value }),
-          });
-          if (res.ok) {
-            setSaveStatus("saved");
-            setLastSavedAt(new Date());
-          } else {
-            setSaveStatus("idle");
-            toast("Could not auto-save notes.", "error");
-          }
-        } catch {
-          setSaveStatus("idle");
-          toast("Could not auto-save notes.", "error");
-        }
-      }, 1500);
+  const saveNotes = useCallback(
+    async (value: string, opts: { keepalive?: boolean } = {}) => {
+      if (saveTimer.current) window.clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+      setSaveState("saving");
+      try {
+        const res = await fetch(`/api/meetings/${meetingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notes: value }),
+          keepalive: opts.keepalive,
+        });
+        if (!res.ok) throw new Error();
+        if (pendingNotes.current === value) pendingNotes.current = null;
+        setSaveState(pendingNotes.current === null ? "saved" : "pending");
+        setSavedAt(new Date());
+        return true;
+      } catch {
+        setSaveState("error");
+        return false;
+      }
     },
     [meetingId],
   );
 
-  function openInsertLinkDialog() {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    linkInsertRef.current = {
-      start: ta.selectionStart,
-      end: ta.selectionEnd,
-      selected: notes.slice(ta.selectionStart, ta.selectionEnd) || "link text",
+  const flushNotes = useCallback(
+    async (opts: { keepalive?: boolean } = {}) => (pendingNotes.current !== null ? saveNotes(pendingNotes.current, opts) : true),
+    [saveNotes],
+  );
+
+  function onNotesChange(value: string) {
+    setNotes(value);
+    pendingNotes.current = value;
+    setSaveState("pending");
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => void saveNotes(value), 1000);
+  }
+
+  useEffect(() => {
+    // Save on the way out, and warn if a save hasn't gone through yet.
+    const onHide = () => {
+      if (document.visibilityState === "hidden") void flushNotes({ keepalive: true });
     };
-    setLinkDialogOpen(true);
-  }
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (pendingNotes.current !== null) {
+        void flushNotes({ keepalive: true });
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [flushNotes]);
 
-  function applyInsertedLink(url: string): boolean {
-    const ta = textareaRef.current;
-    const p = linkInsertRef.current;
-    if (!ta || !p) {
-      setLinkDialogOpen(false);
-      return true;
-    }
-    if (!url) {
-      toast("Enter a URL for the link.", "error");
-      return false;
-    }
-    const formatted = `[${p.selected}](${url})`;
-    const newValue = notes.slice(0, p.start) + formatted + notes.slice(p.end);
-    handleNotesChange(newValue);
-    setLinkDialogOpen(false);
-    linkInsertRef.current = null;
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.setSelectionRange(p.start, p.start + formatted.length);
+  /* ── Start / end / delete ────────────────────────────────────────────── */
+  const [busy, setBusy] = useState<null | "start" | "end" | "delete">(null);
+  const [endOpen, setEndOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  async function patch(body: Record<string, unknown>, failure: string) {
+    const res = await fetch(`/api/meetings/${meetingId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
-    return true;
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(typeof data?.error === "string" ? data.error : failure);
+    }
   }
 
-  /* ── Start meeting (timer) ─────────────────────────────────────── */
-  async function handleStartMeeting() {
-    setStartingMeeting(true);
+  async function startMeeting() {
+    setBusy("start");
     try {
-      const now = new Date().toISOString();
-      const res = await fetch(`/api/meetings/${meetingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startedAt: now, status: "CONFIRMED" }),
-      });
-      if (!res.ok) {
-        let message = "Could not start the meeting.";
-        try {
-          const json = await res.json();
-          if (json?.error && typeof json.error === "string") message = json.error;
-        } catch {
-          /* ignore */
-        }
-        toast(message, "error");
-        return;
-      }
-      toast("Meeting started", "success");
+      await patch({ startedAt: new Date().toISOString(), status: "CONFIRMED" }, "The meeting didn't start. Try again.");
+      toast("Meeting started.", "success");
       router.refresh();
-    } catch {
-      toast("Network error while starting the meeting.", "error");
+    } catch (e) {
+      toast((e as Error).message, "error");
     } finally {
-      setStartingMeeting(false);
+      setBusy(null);
     }
   }
 
-  /* ── End meeting ───────────────────────────────────────────────── */
-  async function handleEndMeeting() {
+  async function endMeeting() {
+    setEndOpen(false);
+    setBusy("end");
     try {
-      const now = new Date().toISOString();
-      const res = await fetch(`/api/meetings/${meetingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ endedAt: now }),
-      });
-      if (!res.ok) {
-        let message = "Could not end the meeting.";
-        try {
-          const json = await res.json();
-          if (json?.error && typeof json.error === "string") message = json.error;
-        } catch {
-          /* ignore */
-        }
-        toast(message, "error");
-        return;
-      }
-      toast("Meeting ended", "success");
-      setEndMeetingOpen(false);
-      window.location.href = "/meetings";
-    } catch {
-      toast("Network error while ending the meeting.", "error");
+      if (!(await flushNotes())) throw new Error("Your latest notes didn't save, so the meeting is still open. Try again.");
+      await patch({ endedAt: new Date().toISOString() }, "The meeting didn't end. Try again.");
+      toast("Meeting ended. The minutes are ready to download.", "success");
+      router.refresh();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setBusy(null);
     }
   }
 
-  /* ── Delete meeting ────────────────────────────────────────────── */
-  async function handleDeleteMeeting() {
-    setDeleteMeetingOpen(false);
-    setDeletingMeeting(true);
+  async function deleteMeeting() {
+    setDeleteOpen(false);
+    setBusy("delete");
     try {
       const res = await fetch(`/api/meetings/${meetingId}`, { method: "DELETE" });
       if (!res.ok) {
-        let message = "Could not delete the meeting.";
-        try {
-          const json = await res.json();
-          if (json?.error && typeof json.error === "string") message = json.error;
-        } catch {
-          /* ignore */
-        }
-        toast(message, "error");
-        setDeletingMeeting(false);
-        return;
+        const data = await res.json().catch(() => ({}));
+        throw new Error(typeof data?.error === "string" ? data.error : "The meeting wasn't deleted. Try again.");
       }
-      toast("Meeting deleted", "success");
-      window.location.href = "/meetings";
-    } catch {
-      toast("Network error while deleting the meeting.", "error");
-      setDeletingMeeting(false);
+      pendingNotes.current = null;
+      toast("Meeting deleted. Attendees have been told it's cancelled.", "success");
+      router.push("/meetings");
+      router.refresh();
+    } catch (e) {
+      toast((e as Error).message, "error");
+      setBusy(null);
     }
   }
 
-  /* ── Save draft (manual) ───────────────────────────────────────── */
-  async function handleSaveDraft() {
-    setSaveStatus("saving");
-    try {
-      const res = await fetch(`/api/meetings/${meetingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes }),
-      });
-      setSaveStatus(res.ok ? "saved" : "idle");
-      if (res.ok) toast("Notes saved", "success");
-      else toast("Could not save notes.", "error");
-    } catch {
-      setSaveStatus("idle");
-      toast("Could not save notes.", "error");
-    }
-  }
+  /* ── Actions ──────────────────────────────────────────────────────────── */
+  const [actions, setActions] = useState<Action[]>(initialActions);
+  const [desc, setDesc] = useState("");
+  const [ownerId, setOwnerId] = useState(
+    attendees.some((a) => a.userId === currentUserId) ? currentUserId : (attendees[0]?.userId ?? ""),
+  );
+  const [due, setDue] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [completing, setCompleting] = useState<string | null>(null);
 
-  /* ── Add action ────────────────────────────────────────────────── */
-  async function handleAddAction(e: React.FormEvent) {
+  async function addAction(e: React.FormEvent) {
     e.preventDefault();
-    if (!taskDesc.trim()) return;
-    setSubmitting(true);
-    setFormError(null);
+    if (!desc.trim()) return;
+    setAdding(true);
     try {
       const res = await fetch(`/api/meetings/${meetingId}/actions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description: taskDesc,
-          ownerUserId: assignToId,
-          dueDate: dueDate || undefined,
-        }),
+        body: JSON.stringify({ description: desc.trim(), ownerUserId: ownerId, dueDate: due || undefined }),
       });
-      if (!res.ok) {
-        const json = await res.json();
-        setFormError(json.error ?? "Failed to create action");
-        toast(json.error ?? "Failed to create action", "error");
-      } else {
-        const newAction = await res.json();
-        // Add the new action to the local list immediately
-        setLocalActions((prev) => [
-          ...prev,
-          {
-            id: newAction.id,
-            description: newAction.description,
-            ownerUserId: newAction.ownerUserId,
-            owner: newAction.owner,
-            dueDate: newAction.dueDate ?? null,
-            status: newAction.status,
-          },
-        ]);
-        setTaskDesc("");
-        setDueDate("");
-        toast("Action added", "success");
-      }
-    } catch {
-      setFormError("Network error");
-      toast("Network error", "error");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(typeof data?.error === "string" ? data.error : "The action wasn't added. Try again.");
+      setActions((prev) => [
+        ...prev,
+        { id: data.id, description: data.description, ownerUserId: data.ownerUserId, owner: data.owner, dueDate: data.dueDate ?? null, status: data.status },
+      ]);
+      setDesc("");
+      setDue("");
+      toast(`Action added for ${data.owner?.fullName ?? "them"}.`, "success");
+    } catch (err) {
+      toast((err as Error).message, "error");
     } finally {
-      setSubmitting(false);
+      setAdding(false);
     }
   }
 
-  const isEnded = initialEndedAt != null || status === "CANCELLED";
-  const hasStarted = initialStartedAt != null;
-  const openActions = localActions.filter((a) => a.status === "OPEN");
-  const totalActions = localActions.length;
-
-  /* ── Efficiency Index calculation ──────────────────────────────── */
-  const elapsedMinutes = Math.max(1, Math.floor(elapsedSeconds / 60));
-  const actionsPerHour = totalActions > 0 ? Math.round((totalActions / elapsedMinutes) * 60) : 0;
-  const notesPerMinute = Math.round(notes.length / elapsedMinutes);
-
-  let efficiencyMessage = "";
-  let efficiencyDetail = "";
-
-  if (avgActionsForType > 0) {
-    const pctDiff = Math.round(((totalActions - avgActionsForType) / avgActionsForType) * 100);
-    if (totalActions === 0) {
-      efficiencyMessage = `No action items captured yet.`;
-      efficiencyDetail = `Typical ${type} meetings generate ${avgActionsForType} action item${avgActionsForType !== 1 ? "s" : ""}.`;
-    } else if (pctDiff > 0) {
-      efficiencyMessage = `${pctDiff}% more action items than typical.`;
-      efficiencyDetail = `This session has ${totalActions} action item${totalActions !== 1 ? "s" : ""} vs avg ${avgActionsForType} for ${type} meetings.`;
-    } else if (pctDiff < 0) {
-      efficiencyMessage = `${Math.abs(pctDiff)}% fewer action items than typical.`;
-      efficiencyDetail = `${totalActions} captured so far vs avg ${avgActionsForType} for ${type} meetings.`;
-    } else {
-      efficiencyMessage = `On track with typical ${type} meetings.`;
-      efficiencyDetail = `${totalActions} action item${totalActions !== 1 ? "s" : ""} — matching the average.`;
+  async function completeAction(action: Action) {
+    setCompleting(action.id);
+    try {
+      const res = await fetch(`/api/actions/${action.id}/complete`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      setActions((prev) => prev.map((a) => (a.id === action.id ? { ...a, status: "DONE" } : a)));
+      toast("Action done.", "success");
+    } catch {
+      toast("That action wasn't updated. Try again.", "error");
+    } finally {
+      setCompleting(null);
     }
-  } else if (elapsedMinutes >= 5) {
-    if (actionsPerHour >= 4) {
-      efficiencyMessage = `High action capture rate.`;
-      efficiencyDetail = `${actionsPerHour} action items/hour · ${notesPerMinute} chars/min in minutes.`;
-    } else if (notes.length > 100) {
-      efficiencyMessage = `Notes progressing well.`;
-      efficiencyDetail = `${notes.length} characters captured · ${openActions.length} open action item${openActions.length !== 1 ? "s" : ""}.`;
-    } else {
-      efficiencyMessage = `Session in early stages.`;
-      efficiencyDetail = `${totalActions} action item${totalActions !== 1 ? "s" : ""} · ${notes.length} chars in minutes so far.`;
-    }
-  } else {
-    efficiencyMessage = `Session just started.`;
-    efficiencyDetail = `Efficiency index will calculate after 5 minutes.`;
   }
 
-  const saveStatusLabel =
-    saveStatus === "saving"
+  const openCount = actions.filter((a) => a.status !== "DONE").length;
+  const runningFor = isLive ? formatMinutes(minutesBetween(startedAt!, new Date(now))) : null;
+  const lasted = hasStarted && hasEnded ? formatMinutes(minutesBetween(startedAt!, endedAt!)) : null;
+
+  const saveLabel =
+    saveState === "pending" || saveState === "saving"
       ? "Saving…"
-      : saveStatus === "saved" && lastSavedAt
-        ? `Saved ${lastSavedAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
-        : saveStatus === "saved"
-          ? "Saved"
-          : "Ready";
+      : saveState === "saved" && savedAt
+        ? `Saved at ${formatMeetingTime(savedAt)}`
+        : saveState === "error"
+          ? null
+          : canEdit
+            ? "Changes save automatically"
+            : "Only the organiser can edit these notes";
 
   return (
-    <div className="space-y-6 pb-8 pt-1">
-      {/* ── Header ─────────────────────────────────────────────────── */}
-      <div>
-        <div className="mb-2 flex flex-wrap items-center gap-3">
-          {hasStarted && !isEnded && (
-            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-success">
-              <span className="inline-block h-2 w-2 rounded-full bg-success" />
-              In progress
-            </span>
-          )}
-          {!hasStarted && !isEnded && (status === "CONFIRMED" || status === "PENDING") && (
-            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-              <span className="inline-block h-2 w-2 rounded-full bg-[var(--outline-variant)]" />
-              Not started
-            </span>
-          )}
-          {isEnded && (
-            <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-              <span className="inline-block h-2 w-2 rounded-full bg-[var(--outline-variant)]" />
-              Ended
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-2">
-
-            <div className="flex flex-wrap items-center gap-4">
-              <span
-                className="flex items-center gap-2 font-mono text-sm tabular-nums text-muted"
-                title={
-                  isEnded
-                    ? "Session duration (logged)"
-                    : hasStarted
-                      ? "Elapsed since start"
-                      : "Timer starts when you start the meeting"
-                }
-              >
-                <svg className="h-4 w-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 7v5l3 3" strokeLinecap="round" />
-                </svg>
-                {timer}
-              </span>
-              <AvatarStack attendees={attendees} />
+    <div className={`${styles.page} space-y-8`}>
+      <header className="space-y-4 border-b border-[#e5e5e6] pb-7">
+        <Breadcrumb items={[{ label: "Meetings", href: backHref }, { label: title }]} />
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.04em] text-[#1c1c1e]">
+              {title}
+              <span className="text-[#ff6a52]">.</span>
+            </h1>
+            <p className="mt-1 text-[15px] text-[#6e6e73]">
+              {[type, formatMeetingSlot(startedAt ?? startDateTime, hasStarted ? endedAt : endDateTime), location].filter(Boolean).join(" · ")}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-[#6e6e73]">
+              <StatusPill variant={state.variant} size="md">
+                {state.label}
+              </StatusPill>
+              {runningFor ? (
+                <span className="tabular-nums">
+                  Started {formatMeetingTime(startedAt!)} · running {runningFor}
+                </span>
+              ) : lasted ? (
+                <span className="tabular-nums">
+                  {formatMeetingTime(startedAt!)}–{formatMeetingTime(endedAt!)} · lasted {lasted}
+                </span>
+              ) : null}
+              <span>Organised by {organiser}</span>
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            {canStartMeeting && !isEnded && !hasStarted && (
-              <Button type="button" className="rounded-xl px-5 py-2.5 text-[0.8125rem]" disabled={startingMeeting}
-                onClick={() => void handleStartMeeting()}
-              >
-                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-                {startingMeeting ? "Starting..." : "Start meeting"}
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={previewMode}
-              onClick={handleSaveDraft}
-              className="rounded-xl px-4 py-2.5"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-                <polyline points="17 21 17 13 7 13 7 21" />
-                <polyline points="7 3 7 8 15 8" />
-              </svg>
-              Save Draft
-            </Button>
-            {!isEnded && (
-              <Button
-                variant="danger"
-                className="rounded-xl px-5 py-2.5 text-[0.8125rem]"
-                disabled={previewMode}
-                onClick={() => setEndMeetingOpen(true)}
-              >
-                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <rect x="7" y="7" width="10" height="10" rx="1" />
-                </svg>
-                End Meeting
-              </Button>
-            )}
-            {canDelete && (
-              <Button
-                type="button"
-                variant="ghost"
-                className="rounded-xl px-4 py-2.5 text-error hover:bg-error/10"
-                disabled={deletingMeeting}
-                onClick={() => setDeleteMeetingOpen(true)}
-              >
-                {deletingMeeting ? "Deleting…" : "Delete meeting"}
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Two-Column Layout ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_340px] lg:gap-6">
-        {/* ── Left: Live Minutes ───────────────────────────────────── */}
-        <div className={MEETING_CARD}>
-          {/* Minutes Header */}
-          <div className="mb-5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)]">
-                <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                  <polyline points="10 9 9 9 8 9" />
-                </svg>
-              </span>
-              <h2 className="text-lg font-bold text-text">
-                Live Minutes
-              </h2>
-            </div>
-            {canEdit && (
-              <FormattingToolbar
-                textareaRef={textareaRef}
-                value={notes}
-                onChange={(v) => handleNotesChange(v)}
-                onInsertLink={openInsertLinkDialog}
-              />
-            )}
-          </div>
-
-          {/* Notes textarea */}
-          <textarea
-            ref={textareaRef}
-            value={notes}
-            onChange={(e) => canEdit && handleNotesChange(e.target.value)}
-            readOnly={!canEdit}
-            rows={18}
-            className="w-full resize-none rounded-none border-0 bg-transparent px-1.5 py-1 font-sans text-sm leading-relaxed placeholder:text-muted focus:outline-none focus:ring-0"
-            
-            placeholder={`${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} - INTRODUCTION\n\nStart taking meeting minutes here...`}
-          />
-
-          {/* Footer */}
-          <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">
-              {saveStatusLabel}
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted">
-              Characters: {notes.length}
-            </span>
-          </div>
-        </div>
-
-        {/* ── Right Column ────────────────────────────────────────── */}
-        <div className="space-y-5">
-          {/* ── New Action Item Card ────────────────────────────────── */}
-          {canAddActions && !isEnded && (
-            <div className={MEETING_CARD}>
-              <div className="mb-4 flex items-center gap-2">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--status-approved-light)] text-[var(--status-approved-text)]">
-                  <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                    <polyline points="22 4 12 14.01 9 11.01" />
+          <div className="flex flex-wrap items-center gap-2">
+            {hasEnded ? (
+              <Button asChild variant="secondary" className="h-10 min-h-0 gap-2 px-5">
+                <a href={`/api/meetings/${meetingId}/download`} download>
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
+                  Download minutes
+                </a>
+              </Button>
+            ) : null}
+            {canRun && !isCancelled && !hasStarted ? (
+              <Button type="button" className="h-10 min-h-0 px-5" disabled={busy !== null} onClick={() => void startMeeting()}>
+                {busy === "start" ? "Starting…" : "Start meeting"}
+              </Button>
+            ) : null}
+            {canRun && isLive ? (
+              <Button type="button" className="h-10 min-h-0 px-5" disabled={busy !== null} onClick={() => setEndOpen(true)}>
+                {busy === "end" ? "Ending…" : "End meeting"}
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        {/* ── Notes ─────────────────────────────────────────────────── */}
+        <section className={styles.card} aria-labelledby="meeting-notes-heading">
+          <div className="flex items-baseline justify-between gap-3 px-6 pt-5">
+            <h2 id="meeting-notes-heading" className="text-[15px] font-semibold">
+              {hasStarted ? "Minutes" : "Agenda and notes"}
+            </h2>
+            <span className="text-[12px] text-[#6e6e73]" aria-live="polite">
+              {saveState === "error" ? (
+                <span className="text-[var(--pill-error-text)]">
+                  Not saved.{" "}
+                  <button type="button" className="font-medium underline underline-offset-2" onClick={() => void flushNotes()}>
+                    Try again
+                  </button>
                 </span>
-                <h3 className="text-base font-bold text-text">
-                  New Action Item
-                </h3>
-              </div>
-
-              {formError && (
-                <div className="mb-3 rounded-xl border border-error/20 bg-[var(--pill-error-bg)] px-3 py-2">
-                  <MetaText className="text-[var(--pill-error-text)]">{formError}</MetaText>
-                </div>
+              ) : (
+                saveLabel
               )}
-
-              <form onSubmit={handleAddAction} className="space-y-3">
-                <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
-                    Task Description
-                  </label>
-                  <input
-                    type="text"
-                    value={taskDesc}
-                    onChange={(e) => setTaskDesc(e.target.value)}
-                    placeholder="e.g., Update Science lab schedule"
-                    className="field w-full rounded-md border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm text-text outline-none transition focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_12%,transparent)]"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
-                      Assign To
-                    </label>
-                    <select
-                      value={assignToId}
-                      onChange={(e) => setAssignToId(e.target.value)}
-                      className="field w-full rounded-md border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm text-text outline-none transition focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_12%,transparent)]"
-                    >
-                      {attendees.map((a) => (
-                        <option key={a.userId} value={a.userId}>
-                          {a.user.fullName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-[0.08em] text-muted">
-                      Due Date
-                    </label>
-                    <input
-                      type="date"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      className="field w-full rounded-md border border-border bg-[var(--surface-container-lowest)] px-3 py-2.5 text-sm text-text outline-none transition focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--primary)_12%,transparent)]"
-                    />
-                  </div>
-                </div>
-                <Button
-                  type="submit"
-                  variant="danger"
-                  disabled={submitting}
-                  className="w-full rounded-xl py-3"
-                >
-                  {submitting ? "Adding…" : "Add Action Item"}
-                </Button>
-              </form>
+            </span>
+          </div>
+          {canEdit ? (
+            <textarea
+              value={notes}
+              onChange={(e) => onNotesChange(e.target.value)}
+              onBlur={() => void flushNotes()}
+              aria-labelledby="meeting-notes-heading"
+              className={styles.notes}
+              placeholder={
+                hasStarted
+                  ? "Write the minutes as you go: decisions, discussion points, anything to follow up."
+                  : "Set out the agenda so people know what to expect. You'll take minutes here once the meeting starts."
+              }
+            />
+          ) : (
+            <div className={`${styles.notes} whitespace-pre-wrap`}>
+              {notes.trim() ? notes : <span className="text-[#a1a1aa]">No notes yet.</span>}
             </div>
           )}
+        </section>
 
-          {/* ── Action Items ─────────────────────────────────────── */}
-          <div className={MEETING_CARD}>
-            <h3 className="mb-4 text-base font-bold text-text">
-              Action Items
-              {totalActions > 0 && (
-                <span
-                  className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-md bg-[var(--surface-container-low)] px-2 py-0.5 text-xs font-semibold text-muted"
-                >
-                  {totalActions}
-                </span>
-              )}
-            </h3>
-            {localActions.length === 0 ? (
-              <p className="text-sm text-muted">
-                No action items yet. Add one above.
-              </p>
-            ) : (
-              <div className="divide-y divide-border">
-                {localActions.map((action) => {
-                  const overdue = action.status === "OPEN" && action.dueDate && isOverdue(action.dueDate);
-                  const dueToday =
-                    action.status === "OPEN" && action.dueDate && isDueToday(action.dueDate) && !overdue;
+        <div className="space-y-6">
+          {/* ── Actions ───────────────────────────────────────────── */}
+          <section className={styles.card} aria-labelledby="meeting-actions-heading">
+            <div className="flex items-baseline justify-between gap-3 px-5 pt-5">
+              <h2 id="meeting-actions-heading" className="text-[15px] font-semibold">
+                Actions
+              </h2>
+              <span className="text-[12px] text-[#6e6e73]">
+                {actions.length ? `${openCount} of ${actions.length} still to do` : "None yet"}
+              </span>
+            </div>
+            {actions.length ? (
+              <ul className="mt-2">
+                {actions.map((a) => {
+                  const dueInfo = dueLabel(a);
+                  const mineToTick = canCompleteOwnActions && a.ownerUserId === currentUserId && a.status !== "DONE";
                   return (
-                    <div key={action.id} className="flex items-start gap-3 py-4 first:pt-0 last:pb-0">
-                      {/* Status circle */}
-                      <div className="mt-0.5 flex-shrink-0">
-                        {action.status === "DONE" ? (
-                          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-success">
-                            <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                              <polyline points="20 6 9 17 4 12" />
+                    <li key={a.id} className={styles.action} data-done={a.status === "DONE" || undefined}>
+                      {mineToTick ? (
+                        <button
+                          type="button"
+                          className={styles.tick}
+                          disabled={completing === a.id}
+                          onClick={() => void completeAction(a)}
+                          aria-label={`Mark "${a.description}" as done`}
+                          title="Mark as done"
+                        />
+                      ) : (
+                        <span className={styles.tick} data-state={a.status === "DONE" ? "done" : "open"} aria-hidden>
+                          {a.status === "DONE" ? (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                              <path d="m5 12 5 5 9-10" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                          </div>
-                        ) : overdue ? (
-                          <div className="relative flex h-5 w-5 items-center justify-center rounded-md bg-error">
-                            <span className="h-1.5 w-1.5 rounded-full bg-white" aria-hidden />
-                          </div>
-                        ) : (
-                          <div className="h-5 w-5 rounded-md border-2 border-border" />
-                        )}
-                      </div>
-                      {/* Task content */}
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={`text-sm font-medium leading-snug ${action.status === "DONE" ? "text-muted line-through" : ""}`}
-                          
-                        >
-                          {action.description}
+                          ) : null}
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-[14px] leading-snug">{a.description}</p>
+                        <p className="mt-0.5 text-[12px] text-[#6e6e73]">
+                          {a.owner.fullName}
+                          {a.status === "DONE" ? " · Done" : a.status === "BLOCKED" ? " · Blocked" : ""}
+                          {dueInfo && a.status !== "DONE" ? (
+                            <span className={dueInfo.overdue ? "font-medium text-[var(--pill-error-text)]" : undefined}> · {dueInfo.text}</span>
+                          ) : null}
                         </p>
-                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted">
-                          <span className="font-semibold">{getFirstName(action.owner.fullName)}</span>
-                          {action.dueDate && (
-                            <>
-                              <span aria-hidden>·</span>
-                              <span className={dueToday || overdue ? "font-semibold text-error" : "font-medium"}>
-                                {formatDueDate(action.dueDate)}
-                              </span>
-                            </>
-                          )}
-                        </div>
                       </div>
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
+            ) : (
+              <p className="px-5 pb-1 pt-2 text-[13px] text-[#6e6e73]">Agree who&rsquo;s doing what, and it&rsquo;ll land in their My Actions.</p>
             )}
-          </div>
+            {canAddActions && !isCancelled ? (
+              addOpen ? (
+                <form onSubmit={addAction} className="space-y-3 border-t border-[#f0f0f1] px-5 py-4">
+                  <label className="block">
+                    <span className={styles.label}>What needs doing</span>
+                    <input
+                      autoFocus
+                      value={desc}
+                      onChange={(e) => setDesc(e.target.value)}
+                      className={styles.input}
+                      placeholder="e.g. Share the revised Year 11 mock timetable"
+                      required
+                    />
+                  </label>
+                  <div className="grid grid-cols-[minmax(0,1fr)_140px] gap-2">
+                    <label className="block min-w-0">
+                      <span className={styles.label}>Who</span>
+                      <select value={ownerId} onChange={(e) => setOwnerId(e.target.value)} className={styles.input}>
+                        {attendees.map((a) => (
+                          <option key={a.userId} value={a.userId}>
+                            {a.userId === currentUserId ? `${a.user.fullName} (you)` : a.user.fullName}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className={styles.label}>By (optional)</span>
+                      <input type="date" value={due} onChange={(e) => setDue(e.target.value)} className={styles.input} />
+                    </label>
+                  </div>
+                  <div className="flex items-center justify-end gap-2 pt-1">
+                    <Button type="button" variant="ghost" className="h-9 min-h-0 px-3 text-[13px]" onClick={() => setAddOpen(false)}>
+                      Done
+                    </Button>
+                    <Button type="submit" variant="secondary" className="h-9 min-h-0 px-4 text-[13px]" disabled={adding || !desc.trim()}>
+                      {adding ? "Adding…" : "Add action"}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="border-t border-[#f0f0f1] px-5 py-3">
+                  <button type="button" className="text-[13px] font-medium text-[#1c1c1e] underline-offset-4 hover:underline" onClick={() => setAddOpen(true)}>
+                    + Add an action
+                  </button>
+                </div>
+              )
+            ) : (
+              <div className="h-3" />
+            )}
+          </section>
 
-          {/* ── Efficiency Index ────────────────────────────────────── */}
-          <div className="rounded-sm border border-border bg-[var(--primary-container)] p-5 text-[var(--on-primary-fixed)] shadow-none sm:p-6">
-            <div className="mb-2 flex items-center gap-2">
-              <svg className="h-5 w-5 shrink-0 text-[var(--info)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-                <polyline points="17 6 23 6 23 12" />
-              </svg>
-              <h3 className="text-lg font-bold">Efficiency Index</h3>
+          {/* ── People ────────────────────────────────────────────── */}
+          <section className={styles.card} aria-labelledby="meeting-people-heading">
+            <div className="flex items-baseline justify-between gap-3 px-5 pt-5">
+              <h2 id="meeting-people-heading" className="text-[15px] font-semibold">
+                People
+              </h2>
+              <span className="text-[12px] text-[#6e6e73]">{attendees.length} invited</span>
             </div>
-            <p className="text-sm font-semibold leading-snug">{efficiencyMessage}</p>
-            <p className="mt-1 text-sm leading-relaxed opacity-80">{efficiencyDetail}</p>
-          </div>
+            <ul className="px-5 pb-4 pt-2 text-[14px]">
+              {attendees.map((a) => (
+                <li key={a.userId} className="py-1.5">
+                  {a.user.fullName}
+                  {a.user.fullName === organiser ? <span className="text-[12px] text-[#6e6e73]"> · organiser</span> : null}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {canDelete ? (
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => setDeleteOpen(true)}
+              className="text-[13px] font-medium text-[var(--pill-error-text)] underline-offset-4 hover:underline disabled:opacity-40"
+            >
+              {busy === "delete" ? "Deleting…" : "Delete this meeting"}
+            </button>
+          ) : null}
         </div>
       </div>
 
-      <LinkUrlDialog
-        open={linkDialogOpen}
-        onClose={() => setLinkDialogOpen(false)}
-        onConfirmUrl={applyInsertedLink}
-      />
-      <DestructiveConfirmDialog
-        open={endMeetingOpen}
-        title="End meeting?"
+      <ConfirmDialog
+        open={endOpen}
+        title="End the meeting?"
         confirmLabel="End meeting"
-        cancelLabel="Cancel"
-        onClose={() => setEndMeetingOpen(false)}
-        onConfirm={() => void handleEndMeeting()}
+        cancelLabel="Keep going"
+        onClose={() => setEndOpen(false)}
+        onConfirm={() => void endMeeting()}
       >
-        This will mark the session as completed and return you to the meetings list.
-      </DestructiveConfirmDialog>
+        The minutes and actions are saved and ready to download. You can still tidy up the notes afterwards.
+      </ConfirmDialog>
       <DestructiveConfirmDialog
-        open={deleteMeetingOpen}
+        open={deleteOpen}
         title="Delete this meeting?"
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
-        onClose={() => setDeleteMeetingOpen(false)}
-        onConfirm={() => void handleDeleteMeeting()}
+        confirmLabel="Delete meeting"
+        cancelLabel="Keep it"
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={() => void deleteMeeting()}
       >
-        This will permanently remove this meeting, its notes, and its actions. This cannot be undone.
+        Its notes and actions are removed for everyone, and attendees get a cancellation email. This can&rsquo;t be undone.
       </DestructiveConfirmDialog>
     </div>
   );

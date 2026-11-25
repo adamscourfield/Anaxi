@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { sendMeetingInviteEmail } from "@/lib/email";
 import { requireFeature } from "@/lib/guards";
@@ -71,7 +71,8 @@ export async function POST(req: Request) {
       startedAt: startNow === true ? start : undefined,
     });
 
-    void Promise.allSettled(
+    // Invites go out after the response, but are still guaranteed to run.
+    after(() => Promise.allSettled(
       meeting.attendees.map(
         (attendee: { userId: string; user: { email: string; fullName: string } }) => {
           if (attendee.userId === user.id) return Promise.resolve();
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
           });
         }
       )
-    );
+    ));
 
     return NextResponse.json(meeting, { status: 201 });
   } catch (err) {

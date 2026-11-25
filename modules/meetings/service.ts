@@ -256,3 +256,80 @@ export async function getMeetingStats(tenantId: string, userId?: string) {
     nextMeeting,
   };
 }
+
+const LIST_SELECT = {
+  id: true,
+  title: true,
+  type: true,
+  status: true,
+  startDateTime: true,
+  endDateTime: true,
+  startedAt: true,
+  endedAt: true,
+  location: true,
+  createdBy: { select: { id: true, fullName: true } },
+  _count: { select: { actions: true, attendees: true } },
+} as const;
+
+/**
+ * Meetings for the Meetings page, split the way people think about them:
+ * happening now, coming up (including anything later today that hasn't started),
+ * and past (ended, or scheduled before today and never started). Past is capped,
+ * newest first, so the page doesn't load every meeting the school has ever had.
+ */
+export async function listMeetingsForPage(
+  tenantId: string,
+  filters: { type?: string; attendeeUserId?: string; todayStart: Date; pastLimit: number },
+) {
+  const base: Record<string, unknown> = { tenantId };
+  if (filters.type) base.type = filters.type;
+  // "Mine" means meetings you're invited to or organised.
+  if (filters.attendeeUserId)
+    base.AND = [{ OR: [{ attendees: { some: { userId: filters.attendeeUserId } } }, { createdByUserId: filters.attendeeUserId }] }];
+
+  const [inProgress, upcoming, past, pastTotal] = await Promise.all([
+    (prisma as any).meeting.findMany({
+      where: { ...base, startedAt: { not: null }, endedAt: null, status: { not: "CANCELLED" } },
+      select: LIST_SELECT,
+      orderBy: { startedAt: "asc" },
+    }),
+    (prisma as any).meeting.findMany({
+      where: { ...base, startedAt: null, endedAt: null, startDateTime: { gte: filters.todayStart } },
+      select: LIST_SELECT,
+      orderBy: { startDateTime: "asc" },
+      take: 100,
+    }),
+    (prisma as any).meeting.findMany({
+      where: { ...base, OR: [{ endedAt: { not: null } }, { startedAt: null, startDateTime: { lt: filters.todayStart } }] },
+      select: LIST_SELECT,
+      orderBy: { startDateTime: "desc" },
+      take: filters.pastLimit,
+    }),
+    (prisma as any).meeting.count({
+      where: { ...base, OR: [{ endedAt: { not: null } }, { startedAt: null, startDateTime: { lt: filters.todayStart } }] },
+    }),
+  ]);
+  return { inProgress, upcoming, past, pastTotal };
+}
+
+/** The viewer's own action numbers and next meeting (always personal, so they match My Actions). */
+export async function getMyMeetingSummary(tenantId: string, userId: string, now: Date, todayStart: Date) {
+  const [openActions, overdueActions, nextMeeting] = await Promise.all([
+    (prisma as any).meetingAction.count({ where: { tenantId, ownerUserId: userId, status: { in: ["OPEN", "BLOCKED"] } } }),
+    (prisma as any).meetingAction.count({ where: { tenantId, ownerUserId: userId, status: { in: ["OPEN", "BLOCKED"] }, dueDate: { lt: todayStart } } }),
+    (prisma as any).meeting.findFirst({
+      where: {
+        tenantId,
+        endedAt: null,
+        status: { not: "CANCELLED" },
+        AND: [
+          { OR: [{ attendees: { some: { userId } } }, { createdByUserId: userId }] },
+          { OR: [{ startedAt: { not: null } }, { startDateTime: { gte: now } }] },
+        ],
+      },
+      orderBy: { startDateTime: "asc" },
+      select: { id: true, title: true, startDateTime: true, startedAt: true, location: true },
+    }),
+  ]);
+  return { openActions, overdueActions, nextMeeting };
+}

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { apiErrorResponse } from "@/lib/apiErrors";
 import { sendMeetingCancelledEmail, sendMeetingUpdatedEmail } from "@/lib/email";
@@ -98,7 +98,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const meeting = await updateMeeting(user.tenantId, resolvedParams.id, { id: user.id, role: user.role }, input as any);
 
     if (notifyUpdate) {
-      void Promise.allSettled(
+      // Sent after the response so the editor isn't kept waiting, but still guaranteed to run.
+      after(() => Promise.allSettled(
         meeting.attendees.map(
           (attendee: { userId: string; user: { email: string; fullName: string } }) => {
             if (attendee.userId === user.id) return Promise.resolve();
@@ -115,7 +116,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             });
           },
         ),
-      );
+      ));
     }
 
     return NextResponse.json(meeting);
@@ -129,15 +130,19 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     const resolvedParams = await params;
     const user = await getSessionUserOrThrow();
     await requireFeature(user.tenantId, "MEETINGS");
-    if (!hasPermission(user.role, "meetings:delete")) {
+
+    const meeting = await getMeetingDetail(user.tenantId, resolvedParams.id);
+    // The organiser can always delete their own meeting; anyone else needs meetings:delete.
+    if (meeting.createdByUserId !== user.id && !hasPermission(user.role, "meetings:delete")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const meeting = await getMeetingDetail(user.tenantId, resolvedParams.id);
+    // Delete first, so nobody is told a meeting was cancelled when the delete failed.
+    await deleteMeeting(user.tenantId, resolvedParams.id, { id: user.id, role: user.role });
 
-    void Promise.allSettled(
-      meeting.attendees.map(
-        (attendee: { userId: string; user: { email: string; fullName: string } }) => {
+    after(() =>
+      Promise.allSettled(
+        meeting.attendees.map((attendee: { userId: string; user: { email: string; fullName: string } }) => {
           if (attendee.userId === user.id) return Promise.resolve();
           return sendMeetingCancelledEmail({
             to: attendee.user.email,
@@ -148,11 +153,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
             tenantId: user.tenantId,
             attendeeUserId: attendee.userId,
           });
-        },
+        }),
       ),
     );
-
-    await deleteMeeting(user.tenantId, resolvedParams.id, { id: user.id, role: user.role });
     return new NextResponse(null, { status: 204 });
   } catch (err) {
     return apiErrorResponse(err);

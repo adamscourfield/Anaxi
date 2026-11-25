@@ -23,7 +23,7 @@
 .class-segmented { display: inline-flex; padding: 3px; border: 1px solid #e5e5e6; border-radius: 10px; background: #fff; }
 .class-segmented a { padding: 6px 12px; border-radius: 7px; font-size: 13px; font-weight: 500; color: #6e6e73; text-decoration: none; }
 .class-segmented a:hover { color: #1c1c1e; }
-.class-segmented a[aria-current="page"] { background: #1c1c1e; color: #fff; }
+.class-page .class-segmented a[aria-current="page"][href] { background: #1c1c1e; color: #fff; }
 
 .class-teachers summary { cursor: pointer; font-size: 14px; color: #3a3a3c; list-style: none; }
 .class-teachers summary::-webkit-details-marker { display: none; }
