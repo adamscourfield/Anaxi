@@ -31,7 +31,7 @@ export function homeHeaderCopy(variant: HomeVariant): HomeHeaderCopy {
       return {
         eyebrow: "Today",
         title: "Your week",
-        subtitle: "Your observations, actions, and operational updates in one place.",
+        subtitle: "Your observations, actions and requests in one place.",
       };
   }
 }

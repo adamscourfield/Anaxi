@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { londonToday } from "@/modules/home/hydration";
+import { formatDue, isPastDue } from "@/modules/actions/dates";
 import { buildLeaderSummary, buildStudentSummary } from "@/modules/home/leaderSummary";
 import type { hydrateLeadershipHomeData } from "@/modules/home/hydration";
 import type { fetchLeaderWork } from "@/modules/home/leaderWork";
@@ -22,6 +23,9 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
     && londonToday().getTime() - new Date(data.attendanceHeadline.asOf).getTime() > 3 * 86400000;
   // A dash, not a phrase: "Missing history" ×3 at stat size wrapped and shouted. The sentence under the row explains why.
   const attendanceMissing = "—";
+  // With nothing imported at all, three empty comparisons and two caveats are noise.
+  const hasAttendance = data.attendanceHeadline.attendancePct !== null
+    || [data.attendanceTrend.weekPct, data.attendanceTrend.threeWeekPct, data.attendanceTrend.monthPct].some(v => v !== null);
   const teaching = `/insights/teaching?windowDays=${windowDays}`;
   const students = `/insights/students?windowDays=${windowDays}`;
   const teachersToReview = data.teacherRows.filter(t=>t.status === "SIGNIFICANT_DRIFT" || t.status === "EMERGING_DRIFT");
@@ -57,13 +61,14 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
       <div className={styles.summaryMeta}><span>Auto-generated from live school data</span><span>Teaching: last {windowDays} days vs preceding {windowDays}</span></div>
     </section>}
     {features.analysis && <section aria-labelledby="school-snapshot">
-      <div className={styles.head}><h2 id="school-snapshot">School snapshot</h2><span className={styles.eyebrow}>The numbers that matter</span></div>
+      <div className={styles.head}><h2 id="school-snapshot">School snapshot</h2></div>
       <div className={styles.snapshot}>
         {features.students && <Link className={`${styles.stat} ${styles.attendanceStat}`} href={`${students}&view=all&sort=attendance_asc`}>
           <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Attendance</span>
           <strong className={styles.value}>{data.attendanceHeadline.attendancePct === null ? "—" : `${data.attendanceHeadline.attendancePct.toFixed(1)}%`}</strong>
-          <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)} · Lesson marks</> : "Attendance history is being refreshed"}</p>
+          <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)} · Lesson marks</> : "No attendance has been imported yet. It appears here after the first sync from your MIS."}</p>
           {attendanceStale && <p>Attendance updates are overdue. Ask your administrator to check the school sync.</p>}
+          {hasAttendance && <>
           <div className={styles.attendanceComparisons}>
             <span>Last 7 days <b>{data.attendanceTrend.weekPct === null ? attendanceMissing : `${data.attendanceTrend.weekPct.toFixed(1)}%`}</b></span>
             <span>Last 21 days <b>{data.attendanceTrend.threeWeekPct === null ? attendanceMissing : `${data.attendanceTrend.threeWeekPct.toFixed(1)}%`}</b></span>
@@ -74,6 +79,7 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
             ? <p>Attendance comparisons could not be loaded. Please try again.</p>
             : [data.attendanceTrend.weekPct, data.attendanceTrend.threeWeekPct, data.attendanceTrend.monthPct].some(value => value === null)
               && <p>Comparisons need complete daily attendance totals for each period.</p>}
+          </>}
         </Link>}
         {features.observations && <Link className={styles.stat} href="/observe/history">
           <span className={styles.statTitle}><span className={styles.icon}><IconClipboard/></span>Lessons observed</span><strong className={styles.value}>{data.weekObsCount}</strong><p>Last 7 days</p><div className={styles.metricFooter}>Observation history<span aria-hidden="true">↗</span></div>
@@ -121,7 +127,7 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
       <section className={styles.work} aria-label="Today's work">
         <div className={styles.panel}><div className={styles.head}><div><span className={styles.eyebrow}>Your day</span><h2>Today’s work</h2></div><span className={styles.icon}><IconCalendar/></span></div>
           {features.leave && <><Link className={styles.workRow} href="/leave#pending-requests"><span className={styles.icon}><IconUmbrella/></span><span>Leave approvals</span><strong>{data.pendingLeaveCount}</strong><span className={styles.arrow}>→</span></Link>{data.pendingLeaveDetails.slice(0,2).map(l=><Link key={l.id} className={styles.row} href={`/leave/${l.id}`}><div><h3>{l.requesterName}</h3><small>{l.reasonLabel} · {date(l.startDate)}–{date(l.endDate)}</small></div><span className={styles.arrow}>→</span></Link>)}</>}
-          {work && <><Link className={styles.workRow} href="/my-actions"><span className={styles.icon}><IconClipboard/></span><span>Your open actions</span><strong>{work.actionCount??"—"}</strong><span className={styles.arrow}>→</span></Link>{work.actions===null?<p className={styles.empty}>Actions unavailable</p>:work.actions.slice(0,3).map(a=><Link className={styles.row} key={a.id} href="/my-actions"><div><h3>{a.description}</h3><small>{a.dueDate?`Due ${date(a.dueDate)}`:"No due date"}{a.status==="BLOCKED"?" · Blocked":""}</small></div><span className={styles.arrow}>→</span></Link>)}
+          {work && <><Link className={styles.workRow} href="/my-actions"><span className={styles.icon}><IconClipboard/></span><span>Your actions</span><strong>{work.actionCount??"—"}</strong><span className={styles.arrow}>→</span></Link>{work.actions===null?<p className={styles.empty}>Actions unavailable</p>:work.actions.slice(0,3).map(a=><Link className={styles.row} key={a.id} href="/my-actions"><div><h3>{a.description}</h3><small className={a.dueDate && isPastDue(a.dueDate) ? styles.late : undefined}>{a.dueDate?formatDue(a.dueDate):"No due date"}{a.status==="BLOCKED"?" · Blocked":""}</small></div><span className={styles.arrow}>→</span></Link>)}
           <Link className={styles.workRow} href="/meetings"><span className={styles.icon}><IconCalendar/></span><span>Your meetings today</span><strong>{work.meetings?.length??"—"}</strong><span className={styles.arrow}>→</span></Link>{work.meetings===null?<p className={styles.empty}>Meetings unavailable</p>:work.meetings.slice(0,3).map(m=><Link key={m.id} href={`/meetings/${m.id}`} className={styles.row}><div><h3>{m.title}</h3><small>{m.startDateTime.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:"Europe/London"})}{m.location?` · ${m.location}`:""}</small></div><span className={styles.arrow}>→</span></Link>)}</>}
           {features.students && <Link className={styles.workRow} href={`${students}&view=watchlist`}><span className={styles.icon}><IconUsersTwo/></span><span>Your student watchlist</span><strong>{data.watchlistStudents.length}</strong><span className={styles.arrow}>→</span></Link>}
           {!work && !features.leave && !features.students && <p className={styles.empty}>No work queues enabled.</p>}

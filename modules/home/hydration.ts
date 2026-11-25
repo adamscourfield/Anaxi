@@ -1,6 +1,7 @@
 import { fetchSchoolAttendance } from "./schoolAttendance";
 import { EMPTY_ATTENDANCE_TREND } from "./attendanceTrend";
 import { prisma } from "@/lib/prisma";
+import { startOfDayInZone } from "@/modules/oncall/time";
 import { SessionUser } from "@/lib/types";
 import { meetsGcseThreshold } from "@/modules/assessments/gradeNormalizer";
 import {
@@ -909,9 +910,16 @@ export async function hydrateTeacherHomeData({
 
   const loaDataPromise = assembly.has("operations.my-leave-status")
     ? safe(
+        // The request that still matters: awaiting a decision, or leave that hasn't finished yet.
         (prisma as any).lOARequest.findFirst({
-          where: { tenantId: user.tenantId, requesterId: user.id },
-          orderBy: { createdAt: "desc" },
+          where: {
+            tenantId: user.tenantId,
+            requesterId: user.id,
+            status: { not: "CANCELLED" },
+            OR: [{ status: "PENDING" }, { endDate: { gte: startOfDayInZone(new Date()) } }],
+          },
+          orderBy: { startDate: "asc" },
+          select: { id: true, startDate: true, endDate: true, status: true },
         }),
         null
       )
@@ -919,37 +927,48 @@ export async function hydrateTeacherHomeData({
 
   const onCallDataPromise = assembly.has("culture.my-oncall-status")
     ? safe(
+        // Only requests still in progress; resolved ones live on the On call page.
         (prisma as any).onCallRequest.findMany({
-          where: { tenantId: user.tenantId, requesterUserId: user.id },
+          where: { tenantId: user.tenantId, requesterUserId: user.id, status: { in: ["OPEN", "ACKNOWLEDGED"] } },
           orderBy: { createdAt: "desc" },
           take: 3,
-        }),
+          select: { id: true, createdAt: true, status: true, location: true, student: { select: { fullName: true } } },
+        }).then((rows: any[]) =>
+          rows.map((r) => ({ id: r.id, createdAt: r.createdAt, status: r.status, location: r.location ?? null, studentName: r.student?.fullName ?? null })),
+        ),
         [] as any[]
       )
     : Promise.resolve([] as any[]);
 
   const openActionsDataPromise = assembly.has("operations.my-open-actions")
     ? safe(
-        (prisma as any).meetingAction.findMany({
-          where: { tenantId: user.tenantId, ownerUserId: user.id, status: "OPEN" },
-          orderBy: [{ dueDate: "asc" }],
-          take: 5,
-        }),
-        [] as any[]
+        // Same set and order as My Actions' "To do": open and blocked, soonest due first.
+        Promise.all([
+          (prisma as any).meetingAction.findMany({
+            where: { tenantId: user.tenantId, ownerUserId: user.id, status: { in: ["OPEN", "BLOCKED"] } },
+            orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
+            take: 5,
+            select: { id: true, description: true, dueDate: true, status: true },
+          }),
+          (prisma as any).meetingAction.count({
+            where: { tenantId: user.tenantId, ownerUserId: user.id, status: { in: ["OPEN", "BLOCKED"] } },
+          }),
+        ]).then(([items, total]: [any[], number]) => ({ items, total })),
+        { items: [] as any[], total: 0 }
       )
-    : Promise.resolve([] as any[]);
+    : Promise.resolve({ items: [] as any[], total: 0 });
 
   const meetingsTodayPromise = assembly.has("operations.meetings-today")
     ? safe(
         (async () => {
-          const start = new Date();
-          start.setHours(0, 0, 0, 0);
-          const end = new Date();
-          end.setHours(23, 59, 59, 999);
+          // The school's day (UK), not the server's.
+          const start = startOfDayInZone(new Date());
+          const end = startOfDayInZone(new Date(start.getTime() + 36 * 3600 * 1000));
           const rows = await (prisma as any).meeting.findMany({
             where: {
               tenantId: user.tenantId,
-              startDateTime: { gte: start, lte: end },
+              status: { not: "CANCELLED" },
+              startDateTime: { gte: start, lt: end },
               OR: [{ createdByUserId: user.id }, { attendees: { some: { userId: user.id } } }],
             },
             orderBy: { startDateTime: "asc" },

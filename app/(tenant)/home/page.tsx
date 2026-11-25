@@ -51,6 +51,7 @@ import {
   IconUsersTwo,
 } from "@/components/home/home-chrome";
 import { avatarUrlFor } from "@/lib/avatarUpload";
+import { formatDue, isPastDue } from "@/modules/actions/dates";
 
 const DEFAULT_WINDOW_DAYS = 21;
 const ALLOWED_WINDOW_DAYS = [7, 14, 21, 28];
@@ -69,9 +70,9 @@ const RISK_STATUS_PILL: Record<RiskStatus, PillVariant> = {
   LOW_COVERAGE: "neutral",
 };
 
-type MeetingActionSummary = { id: string; description: string; dueDate: string | null; status: string };
+type MeetingActionSummary = { items: { id: string; description: string; dueDate: string | Date | null; status: string }[]; total: number };
 type LoaSummary = { startDate: string; endDate: string; status: string };
-type OnCallSummary = { id: string; createdAt: string; status: string };
+type OnCallSummary = { id: string; createdAt: string | Date; status: string; location: string | null; studentName: string | null };
 
 /** Observation signals use a 1–4 rubric (LIMITED … STRONG); means are averages on that scale. */
 const OBS_RUBRIC_MIN = 1;
@@ -267,7 +268,7 @@ function HodHome({
               <div className="rounded-sm bg-[var(--surface-container-low)] p-4 space-y-2.5">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-status-approved-light text-[10px] text-status-approved-text">✓</span>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Strengths</span>
+                  <span className="text-[13px] font-semibold text-text">Strengths</span>
                 </div>
                 <div className="space-y-2.5">
                   {selfProfile.signals
@@ -301,7 +302,7 @@ function HodHome({
                   <div className="rounded-sm bg-[var(--surface-container-low)] p-4 space-y-2.5">
                     <div className="flex items-center gap-2">
                       <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-scale-some-light text-[10px] text-scale-some-text">⚠</span>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Areas to watch</span>
+                      <span className="text-[13px] font-semibold text-text">Areas to watch</span>
                     </div>
                     <div className="space-y-2.5">
                       {hodWatchSignals.map((sig) => (
@@ -347,20 +348,17 @@ function HodHome({
             <h2 className="text-base font-bold tracking-[-0.01em]">Whole-school focus</h2>
           </div>
           <p className="text-sm font-medium">{wholeSchoolTop1.label}</p>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-on-primary/70">{wholeSchoolTop1.teachersCovered} teachers covered</span>
-              <span className="text-sm font-bold">{Math.round(wholeSchoolTop1.driftRate * 100)}%</span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/20">
-              <div
-                className="home-cpd-bar-fill h-full rounded-sm"
-                style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
-              />
-            </div>
+          <p className="text-sm text-on-primary/75">
+            {wholeSchoolTop1.teachersDriftingDown} of {wholeSchoolTop1.teachersCovered} teachers observed show a decline in this signal over the last {windowDays} days.
+          </p>
+          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/20" aria-hidden>
+            <div
+              className="home-cpd-bar-fill h-full rounded-sm"
+              style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
+            />
           </div>
-          <Link href={`/insights/teaching?view=cpd&windowDays=${windowDays}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
-            See CPD priorities ↗
+          <Link href={`/insights/teaching?view=cpd&windowDays=${windowDays}`} className="mt-2 inline-block text-[13px] font-medium text-on-primary/80 calm-transition hover:text-on-primary">
+            See CPD priorities →
           </Link>
         </Card>
       )}
@@ -406,7 +404,7 @@ function TeacherHome({
 }: {
   windowDays: number;
   selfProfile: Awaited<ReturnType<typeof computeTeacherSignalProfile>>;
-  openActions: MeetingActionSummary[];
+  openActions: MeetingActionSummary;
   loaRequest: LoaSummary | null;
   onCallRequests: OnCallSummary[];
   wholeSchoolTop1: CpdPriorityRow | null;
@@ -427,7 +425,9 @@ function TeacherHome({
     .slice(0, 2);
 
   const obsCount = selfProfile?.teacherCoverage ?? 0;
-  const actionCount = openActions.length;
+  const now = new Date();
+  const overdueActions = openActions.items.filter((a) => a.dueDate && isPastDue(a.dueDate, now)).length;
+  const ukDay = (d: string | Date) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" });
 
   const loaStatusLabel: Record<string, string> = {
     PENDING: "Pending review",
@@ -454,7 +454,6 @@ function TeacherHome({
           icon={<IconChartBar className="text-[var(--info)]" />}
           title="Your recent observations"
           subtitle={`${windowDays}-day window`}
-          end={obsCount > 0 ? <StatusPill variant="accent" size="sm">{obsCount} observation{obsCount !== 1 ? "s" : ""}</StatusPill> : null}
         />
 
         {!selfProfile || selfProfile.teacherCoverage === 0 ? (
@@ -469,7 +468,7 @@ function TeacherHome({
             <MetaText>
               {selfProfile.teacherCoverage} observation{selfProfile.teacherCoverage !== 1 ? "s" : ""} in last {windowDays} days
               {selfProfile.lastObservationAt && (
-                <> · Last: {new Date(selfProfile.lastObservationAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</>
+                <>. Last observed {ukDay(selfProfile.lastObservationAt)}.</>
               )}
             </MetaText>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -477,7 +476,7 @@ function TeacherHome({
                 <div className="rounded-sm bg-[var(--surface-container-low)] p-4 space-y-2.5">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-status-approved-light text-[10px] text-status-approved-text">✓</span>
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Strengths</span>
+                    <span className="text-[13px] font-semibold text-text">Strengths</span>
                   </div>
                   <div className="space-y-2.5">
                     {strengthSignals.map((sig) => (
@@ -503,7 +502,7 @@ function TeacherHome({
                 <div className="rounded-sm bg-[var(--surface-container-low)] p-4 space-y-2.5">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-scale-some-light text-[10px] text-scale-some-text">⚠</span>
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-text">Areas to watch</span>
+                    <span className="text-[13px] font-semibold text-text">Areas to watch</span>
                   </div>
                   <div className="space-y-2.5">
                     {watchSignals.map((sig) => (
@@ -538,38 +537,38 @@ function TeacherHome({
         )}
       </Card>
 
-      {/* ═══ Actions — only when there are open items ═══ */}
-      {hasMeetingsFeature && openActions.length > 0 && (
+      {/* ═══ Actions — only when there is something to do ═══ */}
+      {hasMeetingsFeature && openActions.total > 0 && (
         <Card className="space-y-4 rounded-sm !p-6 shadow-none">
           <div className="flex items-center justify-between">
             <HomeCardHeadingSm
               icon={<IconBolt className="text-scale-some-text" />}
               title="Your actions"
-              subtitle={`${openActions.length} open action${openActions.length !== 1 ? "s" : ""}`}
+              subtitle={`${openActions.total} to do${overdueActions ? `, ${overdueActions} overdue` : ""}`}
             />
             <Link href="/my-actions" className="link-accent shrink-0 text-sm">
-              View all →
+              {openActions.total > openActions.items.length ? `See all ${openActions.total}` : "Open My actions"}
             </Link>
           </div>
-          <ul className="space-y-1">
-            {openActions.slice(0, 5).map((action) => (
-              <li key={action.id}>
-                <Link href="/my-actions" className="home-row-link flex items-center justify-between gap-3 p-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-[var(--surface-container-low)] text-muted">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+          <ul className="divide-y divide-[#f0f0f1]">
+            {openActions.items.map((action) => {
+              const late = action.dueDate ? isPastDue(action.dueDate, now) : false;
+              return (
+                <li key={action.id}>
+                  <Link href="/my-actions" className="home-row-link flex flex-col gap-1 px-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <span className="min-w-0 text-sm font-medium text-text sm:truncate">{action.description}</span>
+                    <span className="flex shrink-0 items-center gap-2 text-[12px]">
+                      {action.status === "BLOCKED" ? <StatusPill variant="warning" size="sm">Blocked</StatusPill> : null}
+                      {action.dueDate ? (
+                        <span className={late ? "font-semibold text-[#b42318]" : "text-muted"}>{formatDue(action.dueDate, now)}</span>
+                      ) : (
+                        <span className="text-muted">No due date</span>
+                      )}
                     </span>
-                    <span className="text-sm font-medium text-text truncate">{action.description}</span>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    {action.dueDate && (
-                      <MetaText>Due {new Date(action.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</MetaText>
-                    )}
-                    <StatusPill variant="neutral" size="sm">{action.status ?? "Open"}</StatusPill>
-                  </div>
-                </Link>
-              </li>
-            ))}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </Card>
       )}
@@ -608,9 +607,9 @@ function TeacherHome({
                   <div className="flex items-center gap-2 text-sm font-medium text-text">
                     <LeaveCalendarIcon className="shrink-0 text-muted" />
                     <span>
-                      {new Date(loaRequest.startDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      {ukDay(loaRequest.startDate)}
                       {" – "}
-                      {new Date(loaRequest.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      {ukDay(loaRequest.endDate)}
                     </span>
                   </div>
                 </div>
@@ -632,28 +631,30 @@ function TeacherHome({
                   <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[var(--tertiary-container)] text-[var(--on-primary)] [&_svg]:h-4 [&_svg]:w-4">
                     <IconBell />
                   </span>
-                  <h2 className="text-base font-bold tracking-[-0.01em] text-text">On call</h2>
+                  <h2 className="text-base font-bold tracking-[-0.01em] text-text">Your on-call requests</h2>
                 </div>
-                {onCallRequests.some((r) => r.status === "OPEN") && (
-                  <StatusPill variant="error" size="sm">Open</StatusPill>
-                )}
+
               </div>
               <ul className="space-y-1.5">
                 {onCallRequests.slice(0, 3).map((req) => (
-                  <li key={req.id} className="flex items-center justify-between rounded-sm bg-[var(--surface-container-low)] p-3 calm-transition hover:bg-[var(--surface-container)]">
-                    <div className="flex items-center gap-2.5">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-[var(--surface-container)] text-muted [&_svg]:h-3 [&_svg]:w-3">
-                        <IconBell />
+                  <li key={req.id}>
+                    <Link href={`/on-call/${req.id}`} className="flex items-center justify-between gap-3 rounded-sm bg-[var(--surface-container-low)] p-3 calm-transition hover:bg-[var(--surface-container)]">
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-text">{req.studentName ?? "Request"}{req.location ? `, ${req.location}` : ""}</span>
+                        <span className="block text-[12px] text-muted">
+                          {new Date(req.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" })}
+                        </span>
                       </span>
-                      <span className="text-sm font-medium text-text">{new Date(req.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
-                    </div>
-                    <StatusPill variant={req.status === "OPEN" ? "error" : req.status === "APPROVED" ? "success" : "neutral"} size="sm">{req.status}</StatusPill>
+                      <StatusPill variant={req.status === "OPEN" ? "warning" : "info"} size="sm">
+                        {req.status === "OPEN" ? "Waiting" : "Acknowledged"}
+                      </StatusPill>
+                    </Link>
                   </li>
                 ))}
               </ul>
               <div className="flex flex-wrap gap-2">
                 <Link href="/on-call/new" className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
-                  Log on-call →
+                  New request →
                 </Link>
                 <Link href="/on-call" className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   View requests →
@@ -674,20 +675,17 @@ function TeacherHome({
             <h2 className="text-base font-bold tracking-[-0.01em]">Whole-school focus</h2>
           </div>
           <p className="text-sm font-medium">{wholeSchoolTop1.label}</p>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-on-primary/70">School-wide signal movement</span>
-              <span className="text-sm font-bold">{Math.round(wholeSchoolTop1.driftRate * 100)}%</span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/20">
-              <div
-                className="home-cpd-bar-fill h-full rounded-sm"
-                style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
-              />
-            </div>
+          <p className="text-sm text-on-primary/75">
+            {wholeSchoolTop1.teachersDriftingDown} of {wholeSchoolTop1.teachersCovered} teachers observed show a decline in this signal over the last {windowDays} days.
+          </p>
+          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/20" aria-hidden>
+            <div
+              className="home-cpd-bar-fill h-full rounded-sm"
+              style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
+            />
           </div>
-          <Link href={`/insights/teaching?view=cpd&windowDays=${windowDays}`} className="mt-2 inline-block text-[0.75rem] font-semibold uppercase tracking-[0.05em] text-on-primary/80 calm-transition hover:text-on-primary">
-            See CPD priorities ↗
+          <Link href={`/insights/teaching?view=cpd&windowDays=${windowDays}`} className="mt-2 inline-block text-[13px] font-medium text-on-primary/80 calm-transition hover:text-on-primary">
+            See CPD priorities →
           </Link>
         </Card>
       )}
@@ -840,7 +838,7 @@ export default async function HomePage({
       const teacherProps = {
         windowDays,
         selfProfile: coachData.selfProfile,
-        openActions: coachData.openActionsData as MeetingActionSummary[],
+        openActions: coachData.openActionsData as MeetingActionSummary,
         loaRequest: coachData.loaData as LoaSummary | null,
         onCallRequests: coachData.onCallData as OnCallSummary[],
         userId: user.id,
@@ -865,7 +863,7 @@ export default async function HomePage({
       <TeacherHome
         windowDays={windowDays}
         selfProfile={teacherData.selfProfile}
-        openActions={teacherData.openActionsData as MeetingActionSummary[]}
+        openActions={teacherData.openActionsData as MeetingActionSummary}
         loaRequest={teacherData.loaData as LoaSummary | null}
         onCallRequests={teacherData.onCallData as OnCallSummary[]}
         wholeSchoolTop1={teacherData.wholeSchoolTop1}
