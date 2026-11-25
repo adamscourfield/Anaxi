@@ -29,7 +29,9 @@ export async function loadClasses(tenantId: string, windowDays: number, behaviou
     ks2Reading: link.student.ks2ReadingScaledScore ?? null, ks2Maths: link.student.ks2MathsScaledScore ?? null, id: link.student.id, name: link.student.fullName, yearGroup: link.student.yearGroup ?? "Unassigned",
     snapshot: link.student.snapshots[0] ? { ...link.student.snapshots[0], snapshotDate: link.student.snapshots[0].snapshotDate.toISOString(), attendancePct: Number(link.student.snapshots[0].attendancePct) } : null,
   }]));
-  const allGroups = groupClassRosters(links).filter(group => group.combined || ![...group.years].every(year => /^[789]$/.test(year.match(/\d+/)?.[0] ?? ""))).map(group => ({ ...group,
+  // Every named class is shown. KS3 stream names (e.g. 7A/Ma, 7A/En) combine into one
+  // "All subjects" class per stream; any other KS3 class (e.g. 7x1/Sc) shows as its own class.
+  const allGroups = groupClassRosters(links).map(group => ({ ...group,
     id: createHash("sha256").update(group.key).digest("hex").slice(0, 20),
     yearGroup: [...group.years].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(" / "),
   }));
