@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getTenantEmailBranding, getAppUrl } from "@/lib/email/format";
 import { sendTemplatedEmail } from "@/lib/email/send";
 import { shouldSendUserEmail } from "@/lib/email/send";
+import { STATUS_LABELS } from "./types";
 
 export async function sendOnCallNotification(
   tenantId: string,
@@ -62,7 +63,7 @@ export async function sendOnCallNotification(
 
     const branding = await getTenantEmailBranding(tenantId);
     const requestUrl = `${getAppUrl()}/on-call/${request.id}`;
-    const requestTypeLabel = request.requestType === "FIRST_AID" ? "First Aid" : "Behaviour";
+    const requestTypeLabel = request.requestType === "FIRST_AID" ? "First aid" : "Behaviour";
     const emergencyFlag = request.isEmergency ? " [EMERGENCY]" : "";
 
     const subjectMap: Record<typeof type, string> = {
@@ -81,7 +82,7 @@ export async function sendOnCallNotification(
     const lines = [
       introMap[type],
       `Request type: ${requestTypeLabel}`,
-      `Status: ${request.status}`,
+      `Status: ${STATUS_LABELS[request.status as keyof typeof STATUS_LABELS] ?? request.status}`,
       ...(request.isEmergency ? ["", "EMERGENCY — please respond urgently."] : []),
     ];
 

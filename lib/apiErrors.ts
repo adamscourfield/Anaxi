@@ -3,6 +3,17 @@ import { ZodError } from "zod";
 import { isProduction } from "@/lib/env";
 import { captureException } from "@/lib/observability";
 
+/**
+ * The request was valid but the record has moved on (e.g. someone else
+ * acknowledged it first). The message is shown to the user, so write it for them.
+ */
+export class ConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConflictError";
+  }
+}
+
 /** Map thrown auth/feature errors to HTTP responses. */
 const NOT_FOUND_MESSAGES = new Set([
   "meeting not found",
@@ -33,6 +44,10 @@ export function apiErrorResponse(err: unknown, fallbackMessage = "Request failed
       { error: "Validation failed", details: err.flatten() },
       { status: 400 },
     );
+  }
+
+  if (err instanceof ConflictError) {
+    return NextResponse.json({ error: err.message }, { status: 409 });
   }
 
   const message = err instanceof Error ? err.message : fallbackMessage;

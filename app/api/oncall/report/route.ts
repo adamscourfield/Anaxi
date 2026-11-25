@@ -4,14 +4,29 @@ import { hasOnCallPermission } from "@/lib/rbac";
 import { getOpenAndAcknowledgedRequests, getResolvedRequests } from "@/modules/oncall/service";
 import { parseResolvedHistoryRange, resolvedHistoryRangeStart, REQUEST_TYPE_LABELS, STATUS_LABELS } from "@/modules/oncall/types";
 import { apiErrorResponse } from "@/lib/apiErrors";
+import { SCHOOL_TIME_ZONE } from "@/modules/oncall/time";
 
 function esc(value: unknown): string {
-  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+  let text = String(value ?? "");
+  // Stop spreadsheet apps treating free text (e.g. notes) as a formula.
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
 }
 
+/** UK local date and time, e.g. 2026-11-25 09:41, which spreadsheets read as a date. */
 function fmt(date: unknown): string {
   if (!date) return "";
-  return new Date(date as string).toISOString();
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: SCHOOL_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(date as string));
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
 }
 
 /** CSV export of the on-call inbox, mirroring what's visible on the on-call page for the same range. */
@@ -19,6 +34,8 @@ export async function GET(req: Request) {
   try {
     const user = await getSessionUserOrThrow();
     const canViewResolveTime = hasOnCallPermission(user.role, "oncall:view_resolve_time");
+    // Staff who can't see every request only get the ones they raised, same as the page.
+    const canViewAll = hasOnCallPermission(user.role, "oncall:view_all");
 
     const { searchParams } = new URL(req.url);
     const range = parseResolvedHistoryRange(searchParams.get("range") ?? undefined);
@@ -27,6 +44,7 @@ export async function GET(req: Request) {
     const filters = {
       yearGroup: searchParams.get("yearGroup") || undefined,
       reasonCategory: searchParams.get("reason") || undefined,
+      requesterUserId: canViewAll ? undefined : user.id,
     };
 
     const [openRequests, resolvedRequests] = await Promise.all([
@@ -45,7 +63,7 @@ export async function GET(req: Request) {
       "Requester",
       "Responder",
       "Notes",
-      "Created at",
+      "Raised at",
       ...(canViewResolveTime ? ["Acknowledged at", "Resolved at"] : []),
     ];
 
@@ -70,10 +88,9 @@ export async function GET(req: Request) {
     }
 
     const csv = rows.join("\n");
+    const today = fmt(new Date()).slice(0, 10);
     const filename =
-      scope === "resolved"
-        ? `on-call-resolved-report_${range}_${new Date().toISOString().slice(0, 10)}.csv`
-        : `on-call-report_${range}_${new Date().toISOString().slice(0, 10)}.csv`;
+      scope === "resolved" ? `on-call-resolved-report_${range}_${today}.csv` : `on-call-report_${range}_${today}.csv`;
 
     return new NextResponse(csv, {
       headers: {

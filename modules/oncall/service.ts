@@ -1,5 +1,6 @@
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { ConflictError } from "@/lib/apiErrors";
 import { OnCallRequestInput, AcknowledgeOnCallInput, ResolveOnCallInput } from "./types";
 
 const TIMELINE_ORDERED = {
@@ -15,6 +16,28 @@ const REQUEST_INCLUDE = {
   responder: { select: { id: true, fullName: true } },
   timelineEvents: TIMELINE_ORDERED,
 };
+
+/**
+ * Why an action could not apply: the request moved on while the user was
+ * looking at it (someone else acknowledged/resolved it, or it was cancelled).
+ */
+async function conflictFor(requestId: string, tenantId: string): Promise<ConflictError> {
+  const current = await (prisma as any).onCallRequest.findFirst({
+    where: { id: requestId, tenantId },
+    select: { status: true, responder: { select: { fullName: true } } },
+  });
+  const who = current?.responder?.fullName;
+  switch (current?.status) {
+    case "ACKNOWLEDGED":
+      return new ConflictError(who ? `${who} has already acknowledged this request.` : "This request has already been acknowledged.");
+    case "RESOLVED":
+      return new ConflictError(who ? `${who} has already resolved this request.` : "This request has already been resolved.");
+    case "CANCELLED":
+      return new ConflictError("This request was cancelled by the person who raised it.");
+    default:
+      return new ConflictError("This request has changed. Refresh to see the latest.");
+  }
+}
 
 export async function createOnCallRequest(
   tenantId: string,
@@ -85,7 +108,7 @@ export async function acknowledgeOnCallRequest(
       },
     });
 
-    if (updated.count !== 1) throw new Error("request is not OPEN");
+    if (updated.count !== 1) throw await conflictFor(requestId, tenantId);
 
     await tx.onCallTimelineEvent.create({
       data: {
@@ -118,29 +141,28 @@ export async function resolveOnCallRequest(
   });
   if (!existing) throw new Error("request not found");
 
-  const responderForEvent = existing.responderUserId ?? responderId;
+  // The responder stays whoever took it on (or the resolver, if nobody did);
+  // the timeline credits the person who actually resolved it.
+  const responderUserId = existing.responderUserId ?? responderId;
 
   const next = await (prisma as any).$transaction(async (tx: any) => {
     const updated = await tx.onCallRequest.updateMany({
       where: { id: requestId, tenantId, status: { in: ["OPEN", "ACKNOWLEDGED"] } },
       data: {
         status: "RESOLVED",
-        responderUserId: responderForEvent,
+        responderUserId,
         resolvedAt: new Date(),
       },
     });
 
-    if (updated.count !== 1) {
-      if (existing.status === "RESOLVED") throw new Error("request already resolved");
-      throw new Error("request is cancelled");
-    }
+    if (updated.count !== 1) throw await conflictFor(requestId, tenantId);
 
     await tx.onCallTimelineEvent.create({
       data: {
         tenantId,
         requestId,
         type: "RESOLVED",
-        actorUserId: responderForEvent,
+        actorUserId: responderId,
       },
     });
 
@@ -171,7 +193,7 @@ export async function cancelOnCallRequest(
       where: { id: requestId, tenantId, requesterUserId: userId, status: "OPEN" },
       data: { status: "CANCELLED" },
     });
-    if (updated.count !== 1) throw new Error("only OPEN requests can be cancelled");
+    if (updated.count !== 1) throw await conflictFor(requestId, tenantId);
 
     await tx.onCallTimelineEvent.create({
       data: {
@@ -212,12 +234,15 @@ export async function getOpenRequests(tenantId: string) {
 export interface OnCallRequestFilters {
   yearGroup?: string;
   reasonCategory?: string;
+  /** Limit to requests this person raised (staff without oncall:view_all). */
+  requesterUserId?: string;
 }
 
 function filtersWhere(filters: OnCallRequestFilters): Record<string, unknown> {
   return {
     ...(filters.yearGroup ? { student: { yearGroup: filters.yearGroup } } : {}),
     ...(filters.reasonCategory ? { behaviourReasonCategory: filters.reasonCategory } : {}),
+    ...(filters.requesterUserId ? { requesterUserId: filters.requesterUserId } : {}),
   };
 }
 
@@ -255,11 +280,11 @@ export async function getResolvedRequests(
   });
 }
 
-/** Minimal rows for today's headline stats (volume, avg response, resolution rate). */
+/** Minimal rows for today's headline stats (volume, time to respond, time to resolve). */
 export async function getTodayActivity(tenantId: string, todayStart: Date) {
   return (prisma as any).onCallRequest.findMany({
     where: { tenantId, createdAt: { gte: todayStart } },
-    select: { status: true, createdAt: true, resolvedAt: true },
+    select: { status: true, createdAt: true, acknowledgedAt: true, resolvedAt: true },
   });
 }
 

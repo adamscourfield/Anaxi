@@ -3,6 +3,7 @@ import { hasOnCallPermission } from "@/lib/rbac";
 import { getRequestDetail } from "@/modules/oncall/service";
 import { OnCallDetail } from "@/components/oncall/OnCallDetail";
 import { notFound } from "next/navigation";
+import { getTenantVocab } from "@/lib/vocab";
 
 export default async function OnCallDetailPage({
   params,
@@ -12,28 +13,21 @@ export default async function OnCallDetailPage({
   searchParams?: Promise<{ from?: string }>;
 }) {
   const user = await getSessionUserOrThrow();
+  const vocab = await getTenantVocab(user.tenantId);
   const resolvedParams = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const backHref =
-    resolvedSearchParams.from && resolvedSearchParams.from.startsWith("/")
-      ? resolvedSearchParams.from
-      : "/on-call";
-
-  if (process.env.NODE_ENV === "development" && resolvedParams.id === "design-preview") {
-    return <OnCallDetail backHref={backHref} canViewResolveTime request={{
-      id: "design-preview", status: "ACKNOWLEDGED", requestType: "BEHAVIOUR",
-      student: { fullName: "Example student", upn: "Preview", yearGroup: "10" },
-      location: "Room 12", behaviourReasonCategory: "Classroom support",
-      notes: "Please support the student with a calm return to learning.",
-      requester: { fullName: "Example teacher" }, responder: { id: "preview", fullName: "Support team" },
-      createdAt: "2026-10-11T09:00:00Z", acknowledgedAt: "2026-10-11T09:02:00Z",
-    }} />;
-  }
+  // Only ever go back to an On Call page on this site ("//evil.example" is an external URL).
+  const from = resolvedSearchParams.from ?? "";
+  const backHref = /^\/on-call(?:[/?]|$)/.test(from) ? from : "/on-call";
 
   let request: Awaited<ReturnType<typeof getRequestDetail>>;
   try {
     request = await getRequestDetail(user.tenantId, resolvedParams.id);
   } catch {
+    notFound();
+  }
+  // Staff without view_all (e.g. teachers) can open the requests they raised, not anyone else's.
+  if (!hasOnCallPermission(user.role, "oncall:view_all") && request.requesterUserId !== user.id) {
     notFound();
   }
 
@@ -48,7 +42,12 @@ export default async function OnCallDetailPage({
     (request as { timelineEvents?: unknown[] }).timelineEvents?.map((e: any) => ({
       id: e.id as string,
       type: e.type as "CREATED" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED",
-      createdAt: e.createdAt instanceof Date ? e.createdAt.toISOString() : String(e.createdAt),
+      createdAt:
+        e.type === "RESOLVED" && !canViewResolveTime
+          ? null
+          : e.createdAt instanceof Date
+            ? e.createdAt.toISOString()
+            : String(e.createdAt),
       actor: e.actor ? { id: e.actor.id as string, fullName: e.actor.fullName as string } : null,
     })) ?? [];
 
@@ -56,8 +55,11 @@ export default async function OnCallDetailPage({
     <OnCallDetail
       request={{
         ...request,
+        // Resolve times are for staff allowed to see them only; don't send them to anyone else.
+        resolvedAt: canViewResolveTime ? request.resolvedAt : null,
         timelineEvents,
       }}
+      inboxLabel={vocab.on_calls.singular}
       canAcknowledge={canAcknowledge}
       canResolve={canResolve}
       canCancel={canCancel}

@@ -1,3 +1,5 @@
+import { startOfDayInZone } from "./time";
+
 export interface OnCallRequestInput {
   studentId: string;
   requestType: "BEHAVIOUR" | "FIRST_AID";
@@ -38,7 +40,7 @@ export interface OnCallRequestDetail {
 
 export const REQUEST_TYPE_LABELS: Record<"BEHAVIOUR" | "FIRST_AID", string> = {
   BEHAVIOUR: "Behaviour",
-  FIRST_AID: "First Aid",
+  FIRST_AID: "First aid",
 };
 
 export const STATUS_LABELS: Record<"OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED", string> = {
@@ -86,11 +88,8 @@ export function parseResolvedHistoryRange(value: string | undefined): ResolvedHi
 
 /** Start-of-window boundary for a resolved-history range, or null for "all time" (no lower bound). */
 export function resolvedHistoryRangeStart(range: ResolvedHistoryRange, now: Date): Date | null {
+  if (range === "today") return startOfDayInZone(now);
   const start = new Date(now);
-  if (range === "today") {
-    start.setHours(0, 0, 0, 0);
-    return start;
-  }
   if (range === "7d") {
     start.setDate(start.getDate() - 7);
     return start;

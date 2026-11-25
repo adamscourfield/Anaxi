@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { hasOnCallPermission } from "@/lib/rbac";
 import { acknowledgeOnCallRequest } from "@/modules/oncall/service";
@@ -15,7 +15,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const body = await req.json().catch(() => ({}));
     const request = await acknowledgeOnCallRequest(resolvedParams.id, user.tenantId, user.id, body);
-    await sendOnCallNotification(user.tenantId, request, "acknowledged");
+    // Emails go out after the response, so the person acting isn't kept waiting
+    // on every recipient (sends are throttled to the email provider's rate limit).
+    after(() => sendOnCallNotification(user.tenantId, request, "acknowledged"));
 
     return NextResponse.json(request);
   } catch (err) {

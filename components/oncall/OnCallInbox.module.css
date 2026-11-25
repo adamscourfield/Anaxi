@@ -1,0 +1,70 @@
+/* On Call inbox: 14px cards, hairline dividers, emergency rows marked by a red edge. */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid #e5e5e6;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+.stat {
+  position: relative;
+  min-width: 0;
+  padding: 18px 20px;
+  border-color: #e5e5e6;
+}
+.stat:nth-child(odd) { border-right: 1px solid #e5e5e6; }
+.stat:nth-child(-n + 2) { border-bottom: 1px solid #e5e5e6; }
+.stat[data-alert]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #ff6a52;
+}
+@media (min-width: 1024px) {
+  .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .stat:nth-child(-n + 2) { border-bottom: 0; }
+  .stat:not(:last-child) { border-right: 1px solid #e5e5e6; }
+}
+
+.tableCard {
+  overflow-x: auto;
+  border: 1px solid #e5e5e6;
+  border-radius: 14px;
+  background: #fff;
+}
+.headRow { border-bottom: 1px solid #e5e5e6; background: #fafafa; }
+.row { border-bottom: 1px solid #f0f0f1; transition: background-color 120ms ease; }
+.row:last-child { border-bottom: 0; }
+.row:hover { background: #fafafa; }
+.row[data-emergency] { background: color-mix(in srgb, var(--pill-error-bg) 45%, white); }
+.row[data-emergency] > td:first-child { box-shadow: inset 3px 0 0 var(--error, #d92d20); }
+
+.card {
+  cursor: pointer;
+  list-style: none;
+  padding: 14px 16px;
+  border: 1px solid #e5e5e6;
+  border-radius: 14px;
+  background: #fff;
+}
+.card[data-emergency] {
+  border-color: color-mix(in srgb, var(--error, #d92d20) 40%, #e5e5e6);
+  box-shadow: inset 3px 0 0 var(--error, #d92d20);
+}
+
+.select {
+  height: 36px;
+  border: 1px solid #e5e5e6;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0 32px 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1c1c1e;
+}

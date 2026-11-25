@@ -1,38 +1,41 @@
 "use client";
 
-import { type ReactNode, useMemo, useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import styles from "./OnCallDetail.module.css";
-
-import { OnCallStatusBadge } from "./OnCallStatusBadge";
-import { REQUEST_TYPE_LABELS } from "@/modules/oncall/types";
-import { StatusPill } from "@/components/ui/status-pill";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { toast } from "@/components/toast-provider";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
-
-/** RELAY family palette. */
-const INDIGO = "#e14e36";
-const INDIGO_SOFT = "#ffffff";
-const SLATE_900 = "#1c1c1e";
-const SLATE_600 = "#6e6e73";
-const NEUTRAL_WELL_BG = "#ffffff";
-const DIVIDER = "#e5e5e6";
+import {
+  LiveIndicator,
+  StatusTag,
+  TypeTag,
+  formatDuration,
+  formatWhen,
+  formatYearGroup,
+  since,
+  useLiveRefresh,
+  useOnCallAction,
+  type OnCallStatus,
+  type OnCallType,
+} from "./shared";
+import styles from "./OnCallDetail.module.css";
 
 export type OnCallTimelineEventSerialized = {
   id: string;
   type: "CREATED" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED";
-  createdAt: Date | string;
+  /** Null when the viewer may not see this time (resolve times). */
+  createdAt: Date | string | null;
   actor?: { id: string; fullName: string } | null;
 };
 
 interface OnCallDetailRequest {
   id: string;
-  status: "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED";
-  requestType: "BEHAVIOUR" | "FIRST_AID";
+  status: OnCallStatus;
+  requestType: OnCallType;
   isEmergency?: boolean;
-  student: { fullName: string; upn: string | null; yearGroup?: string | null };
+  student: { id?: string; fullName: string; upn: string | null; yearGroup?: string | null };
   location: string;
   behaviourReasonCategory?: string | null;
   notes?: string | null;
@@ -53,491 +56,357 @@ interface OnCallDetailProps {
   canDelete?: boolean;
   /** SLT/Admin/Super Admin only -- everyone else sees that a request was resolved, not when. */
   canViewResolveTime?: boolean;
-  /** Where "Back to on call inbox" returns to -- preserves the inbox's filter state when set. */
+  /** Where the breadcrumb returns to -- preserves the inbox's filter state when set. */
   backHref?: string;
+  /** The school's name for On Call (Admin › Language). */
+  inboxLabel?: string;
 }
 
-function fmt(d?: Date | string | null) {
-  if (!d) return null;
-  return new Date(d).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
-}
-
-const TIMELINE_LABELS: Record<OnCallTimelineEventSerialized["type"], string> = {
-  CREATED: "Created",
+const STEP_LABEL: Record<OnCallTimelineEventSerialized["type"], string> = {
+  CREATED: "Raised",
   ACKNOWLEDGED: "Acknowledged",
   RESOLVED: "Resolved",
   CANCELLED: "Cancelled",
 };
 
-function IconWell({ tone, children }: { tone: "indigo" | "neutral"; children: ReactNode }) {
-  const isIndigo = tone === "indigo";
-  return (
-    <span
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
-      style={{
-        backgroundColor: isIndigo ? INDIGO_SOFT : NEUTRAL_WELL_BG,
-        color: INDIGO,
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-function DetailLine({
-  icon,
-  label,
-  value,
-  iconTone = "neutral",
-}: {
-  icon: ReactNode;
-  label: string;
-  value: ReactNode;
-  iconTone?: "indigo" | "neutral";
-}) {
-  return (
-    <div className="flex gap-3 border-b py-3.5 last:border-b-0 sm:gap-4" style={{ borderColor: DIVIDER }}>
-      <IconWell tone={iconTone}>{icon}</IconWell>
-      <div className="min-w-0 flex-1">
-        <p
-          className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em]"
-          style={{ color: SLATE_600 }}
-        >
-          {label}
-        </p>
-        <div
-          className="mt-0.5 text-[0.9375rem] font-semibold leading-snug"
-          style={{ color: SLATE_900 }}
-        >
-          {value}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function OnCallDetail({ request, canAcknowledge, canResolve, canCancel, canDelete, canViewResolveTime, backHref = "/on-call" }: OnCallDetailProps) {
+export function OnCallDetail({
+  request,
+  canAcknowledge,
+  canResolve,
+  canCancel,
+  canDelete,
+  canViewResolveTime,
+  backHref = "/on-call",
+  inboxLabel = "On Call",
+}: OnCallDetailProps) {
   const router = useRouter();
-  const [actionPending, setActionPending] = useState<string | null>(null);
+  const action = useOnCallAction();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const isLive = request.status === "OPEN" || request.status === "ACKNOWLEDGED";
+  const { updatedAt, now } = useLiveRefresh(action.anyPending || !isLive);
 
-  const timelineEntries = useMemo(() => {
-    const fromDb = request.timelineEvents;
-    if (fromDb && fromDb.length > 0) {
-      return [...fromDb].sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      );
-    }
-    const fallback: OnCallTimelineEventSerialized[] = [
-      { id: "fb-created", type: "CREATED", createdAt: request.createdAt, actor: null },
-    ];
-    if (request.acknowledgedAt) {
-      fallback.push({
-        id: "fb-ack",
-        type: "ACKNOWLEDGED",
-        createdAt: request.acknowledgedAt,
-        actor: request.responder ?? null,
-      });
-    }
-    if (request.resolvedAt) {
-      fallback.push({
-        id: "fb-res",
-        type: "RESOLVED",
-        createdAt: request.resolvedAt,
-        actor: request.responder ?? null,
-      });
-    }
-    return fallback;
-  }, [request]);
-
-  async function handleAction(action: "acknowledge" | "resolve" | "cancel") {
-    setActionPending(action);
-    try {
-      const res = await fetch(`/api/oncall/${request.id}/${action}`, { method: "POST" });
-      if (res.ok) {
-        const msg =
-          action === "acknowledge"
-            ? "Request acknowledged"
-            : action === "resolve"
-              ? "Request resolved"
-              : "Request cancelled";
-        toast(msg, "success");
-        router.refresh();
-      } else {
-        let message = "Something went wrong.";
-        try {
-          const data = await res.json();
-          if (data?.error && typeof data.error === "string") message = data.error;
-        } catch {
-          /* ignore */
-        }
-        toast(message, "error");
-      }
-    } catch {
-      toast("Network error", "error");
-    } finally {
-      setActionPending(null);
-    }
-  }
+  const busy = action.anyPending || deleting;
+  const showAcknowledge = canAcknowledge && request.status === "OPEN";
+  const showResolve = canResolve && isLive;
+  const showCancel = canCancel && request.status === "OPEN";
 
   async function handleDelete() {
     setDeleteOpen(false);
-    setActionPending("delete");
+    setDeleting(true);
     try {
       const res = await fetch(`/api/oncall/${request.id}`, { method: "DELETE" });
       if (res.ok) {
-        toast("Request deleted", "success");
+        toast("Call-out deleted.", "success");
         router.push(backHref);
         router.refresh();
-      } else {
-        let message = "Something went wrong.";
-        try {
-          const data = await res.json();
-          if (data?.error && typeof data.error === "string") message = data.error;
-        } catch {
-          /* ignore */
-        }
-        toast(message, "error");
+        return;
       }
+      const data = await res.json().catch(() => ({}));
+      toast(typeof data?.error === "string" ? data.error : "The call-out wasn't deleted. Try again.", "error");
     } catch {
-      toast("Network error", "error");
+      toast("Couldn't reach Anaxi. Check your connection and try again.", "error");
     } finally {
-      setActionPending(null);
+      setDeleting(false);
     }
   }
 
-  const surfaceCard =
-    "rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
+  // The next step is the primary action; resolving straight from "Waiting" stays available as a secondary one.
+  const primary = showAcknowledge ? "acknowledge" : showResolve ? "resolve" : null;
+  const run = (kind: "acknowledge" | "resolve" | "cancel") => void action.run(request.id, kind);
 
-  /** Full-height vertical track for timeline markers (mock: line runs top to bottom of card). */
-  const TIMELINE_LINE_LEFT = "16px";
-
-  const hasActions =
-    (canAcknowledge && request.status === "OPEN") ||
-    (canResolve && (request.status === "OPEN" || request.status === "ACKNOWLEDGED")) ||
-    (canCancel && request.status === "OPEN") ||
-    canDelete;
+  const timeline = buildTimeline(request);
+  const yearAndUpn = [request.student.yearGroup ? formatYearGroup(request.student.yearGroup) : null, request.student.upn ? `UPN ${request.student.upn}` : null]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <div className={`${styles.page} w-full min-w-0 space-y-6 pb-24 pt-1 md:pb-8`}>
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex min-w-0 gap-3 sm:gap-4">
-          <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl sm:h-14 sm:w-14"
-            style={{ backgroundColor: INDIGO_SOFT, color: INDIGO }}
-          >
-            <svg className="h-6 w-6 sm:h-7 sm:w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path
-                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
+    <div className={`${styles.page} w-full min-w-0 space-y-8 pb-28 md:pb-8`}>
+      <header className="space-y-4 border-b border-[#e5e5e6] pb-7">
+        <Breadcrumb items={[{ label: inboxLabel, href: backHref }, { label: request.student.fullName }]} />
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
-            <h1
-              className="text-[1.65rem] font-bold leading-tight tracking-[-0.03em] sm:text-[1.875rem]"
-              style={{ color: SLATE_900 }}
-            >
-              On-call request<span className={styles.dot}>.</span>
+            <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.04em] text-[#1c1c1e]">
+              {request.student.fullName}
+              <span className="text-[#ff6a52]">.</span>
             </h1>
-            <p className="mt-1 text-[0.9375rem]" style={{ color: SLATE_600 }}>
-              {request.student.fullName} · {REQUEST_TYPE_LABELS[request.requestType]}
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <OnCallStatusBadge
-                status={request.status}
-                className={
-                  request.status === "OPEN"
-                    ? "!bg-[#FEE2E2] !text-[#B91C1C] !ring-1 !ring-inset !ring-[#FECACA]"
-                    : ""
-                }
-              />
-              <StatusPill
-                variant="neutral"
-                size="sm"
-                className="!bg-[#ffffff] !text-[#1c1c1e] !ring-0"
-              >
-                {REQUEST_TYPE_LABELS[request.requestType]}
-              </StatusPill>
-              {request.isEmergency ? (
-                <StatusPill variant="error" size="sm">
-                  Emergency
-                </StatusPill>
-              ) : null}
+            {yearAndUpn ? <p className="mt-1 text-[15px] text-[#6e6e73]">{yearAndUpn}</p> : null}
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <StatusTag status={request.status} size="md" />
+              <TypeTag type={request.requestType} emergency={request.isEmergency} />
+              {isLive ? <LiveIndicator updatedAt={updatedAt} now={now} /> : null}
             </div>
           </div>
+          <div className="hidden flex-wrap items-center gap-2 md:flex">
+            <ActionButtons
+              primary={primary}
+              showResolve={Boolean(showResolve)}
+              showCancel={Boolean(showCancel)}
+              busy={busy}
+              isPending={(k) => action.isPending(request.id, k)}
+              run={run}
+            />
+          </div>
         </div>
+      </header>
 
-        <Link
-          href={backHref}
-          className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-[#e5e5e6] bg-[var(--surface-container-lowest)] px-4 py-2.5 text-[0.8125rem] font-semibold shadow-sm calm-transition hover:bg-[#F9FAFB] lg:self-auto"
-          style={{ color: SLATE_900 }}
-        >
-          <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#6e6e73" strokeWidth="2" aria-hidden>
-            <path d="M4 4h16v16H4z" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="m22 6-10 7L4 6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back to on call inbox
-        </Link>
-      </div>
+      <StatusLine request={request} now={now} canViewResolveTime={canViewResolveTime} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)] lg:items-start">
-        <div className="flex min-h-0 flex-col gap-6">
-          <div className={`${surfaceCard} overflow-hidden px-4 py-1 sm:px-5`}>
-            <h2
-              className="border-b px-1 py-4 text-base font-bold"
-              style={{ borderColor: DIVIDER, color: SLATE_900 }}
-            >
-              Request details
-            </h2>
-            <div className="px-1">
-              <DetailLine
-                iconTone="indigo"
-                icon={
-                  <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" strokeLinecap="round" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                }
-                label="Student"
-                value={`${request.student.fullName} (${request.student.upn ?? "—"})`}
-              />
-              <DetailLine
-                iconTone="indigo"
-                icon={
-                  <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
-                  </svg>
-                }
-                label="Year group"
-                value={request.student.yearGroup ? `Year ${request.student.yearGroup.replace(/^(?:Year\s*|Y)/i, "")}` : "—"}
-              />
-              <DetailLine
-                icon={
-                  <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                }
-                label="Location"
-                value={request.location}
-              />
-              {request.behaviourReasonCategory ? (
-                <DetailLine
-                  icon={
-                    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  }
-                  label="Reason"
-                  value={request.behaviourReasonCategory}
-                />
-              ) : null}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-start">
+        <section className={styles.card} aria-labelledby="oncall-details-heading">
+          <h2 id="oncall-details-heading" className="text-[15px] font-semibold text-[#1c1c1e]">
+            Details
+          </h2>
+          <dl className={styles.details}>
+            <Row label="Where">{request.location}</Row>
+            <Row label="What's needed">
+              <TypeTag type={request.requestType} />
+            </Row>
+            {request.behaviourReasonCategory ? <Row label="Reason">{request.behaviourReasonCategory}</Row> : null}
+            <Row label="Notes">
               {request.notes ? (
-                <DetailLine
-                  icon={
-                    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  }
-                  label="Notes"
-                  value={request.notes}
-                />
-              ) : null}
-              <DetailLine
-                icon={
-                  <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                    <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V9a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v1M10 10.5V9a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M18 11c0 6-8 10-8 10S2 17 2 11a8 8 0 0 1 16 0Z" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                }
-                label="Raised by"
-                value={request.requester.fullName}
-              />
-              {request.responder ? (
-                <DetailLine
-                  icon={
-                    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" strokeLinecap="round" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" />
-                    </svg>
-                  }
-                  label="Responder"
-                  value={request.responder.fullName}
-                />
-              ) : null}
-            </div>
-          </div>
-
-          {hasActions ? (
-            <div className={`${surfaceCard} hidden p-5 sm:p-6 md:block`}>
-              <div className="flex flex-wrap gap-3">
-                {canAcknowledge && request.status === "OPEN" ? (
-                  <Button
-                    type="button"
-                    className="rounded-xl px-5 py-2.5 text-[0.8125rem] font-semibold text-white shadow-sm hover:opacity-95"
-                    style={{ backgroundColor: SLATE_900 }}
-                    disabled={!!actionPending}
-                    onClick={() => handleAction("acknowledge")}
-                  >
-                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-                      <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    {actionPending === "acknowledge" ? "Working…" : "Acknowledge"}
-                  </Button>
-                ) : null}
-                {canResolve && (request.status === "OPEN" || request.status === "ACKNOWLEDGED") ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="rounded-xl border border-[#E0E7FF] px-5 py-2.5 text-[0.8125rem] font-semibold shadow-sm"
-                    style={{ backgroundColor: INDIGO_SOFT, color: SLATE_900 }}
-                    disabled={!!actionPending}
-                    onClick={() => handleAction("resolve")}
-                  >
-                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M4 22v-7" strokeLinecap="round" />
-                    </svg>
-                    {actionPending === "resolve" ? "Working…" : "Resolve"}
-                  </Button>
-                ) : null}
-                {canCancel && request.status === "OPEN" ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="rounded-xl px-4 py-2.5 text-[0.8125rem]"
-                    disabled={!!actionPending}
-                    onClick={() => handleAction("cancel")}
-                  >
-                    {actionPending === "cancel" ? "Working…" : "Cancel request"}
-                  </Button>
-                ) : null}
-                {canDelete ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="rounded-xl px-4 py-2.5 text-[0.8125rem] text-error hover:bg-error/10"
-                    disabled={!!actionPending}
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    {actionPending === "delete" ? "Working…" : "Delete request"}
-                  </Button>
-                ) : null}
-              </div>
-              {canAcknowledge && request.status === "OPEN" ? (
-                <p className="mt-3 block max-w-md text-[0.8125rem] leading-relaxed" style={{ color: SLATE_600 }}>
-                  Acknowledge this request to indicate it is being handled.
-                </p>
-              ) : null}
-            </div>
+                <span className="whitespace-pre-wrap">{request.notes}</span>
+              ) : (
+                <span className="text-[#a1a1aa]">None added</span>
+              )}
+            </Row>
+            <Row label="Raised by">{request.requester.fullName}</Row>
+            <Row label="Handled by">
+              {request.responder ? request.responder.fullName : <span className="text-[#a1a1aa]">Nobody yet</span>}
+            </Row>
+          </dl>
+          {request.student.id ? (
+            <Link
+              href={`/students/${request.student.id}`}
+              className="mt-5 inline-flex text-[13px] font-medium text-[#1c1c1e] underline-offset-4 hover:underline"
+            >
+              View {request.student.fullName.split(" ")[0]}&rsquo;s profile
+            </Link>
           ) : null}
-        </div>
+        </section>
 
-        <aside className={`${surfaceCard} flex min-h-0 flex-col p-5 sm:p-6`}>
-          <h2 className="text-base font-bold" style={{ color: SLATE_900 }}>
+        <aside className={styles.card} aria-labelledby="oncall-timeline-heading">
+          <h2 id="oncall-timeline-heading" className="text-[15px] font-semibold text-[#1c1c1e]">
             Timeline
           </h2>
-          <div className="relative mt-5 flex min-h-0 flex-1 flex-col">
-            {/* Continuous vertical line — spans full height of timeline column (grid-stretched aside). */}
-            <div
-              className="pointer-events-none absolute top-0 bottom-0 z-0 w-px bg-[#e5e5e6]"
-              style={{ left: TIMELINE_LINE_LEFT }}
-              aria-hidden
-            />
-            <ul className="relative z-[1] flex-1 space-y-4 pb-1">
-              {timelineEntries.map((ev) => (
-                <li key={ev.id} className="relative flex gap-3">
-                  <div className="relative z-[1] flex w-8 shrink-0 justify-center pt-1">
-                    <span
-                      className="box-border h-3 w-3 shrink-0 rounded-md border-[3px] border-solid border-[#e14e36] bg-white"
-                      aria-hidden
-                    />
-                  </div>
-                  <div
-                    className="min-w-0 flex-1 rounded-lg px-3.5 py-2.5"
-                    style={{ backgroundColor: INDIGO_SOFT }}
-                  >
-                    <p className="text-[0.8125rem] font-bold" style={{ color: SLATE_900 }}>
-                      {TIMELINE_LABELS[ev.type]}
-                    </p>
-                    {!(ev.type === "RESOLVED" && !canViewResolveTime) && (
-                      <p className="mt-0.5 text-[0.8125rem]" style={{ color: SLATE_600 }}>
-                        {fmt(ev.createdAt)}
-                      </p>
-                    )}
-                    {ev.actor?.fullName ? (
-                      <p className="mt-1 text-[0.75rem]" style={{ color: SLATE_600 }}>
-                        by {ev.actor.fullName}
-                      </p>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ol className={styles.timeline}>
+            {timeline.map((step) => (
+              <li key={step.key} className={styles.step} data-state={step.state}>
+                <span className={styles.dot} aria-hidden />
+                <p className="text-[14px] font-semibold text-[#1c1c1e]">{step.label}</p>
+                {step.state === "pending" ? (
+                  <p className="text-[13px] text-[#a1a1aa]">{step.pendingText}</p>
+                ) : (
+                  <>
+                    {step.at ? <p className="text-[13px] tabular-nums text-[#3a3a3c]">{formatWhen(step.at)}</p> : null}
+                    {step.by ? <p className="text-[13px] text-[#6e6e73]">by {step.by}</p> : null}
+                    {step.after ? <p className="text-[12px] text-[#6e6e73]">{step.after}</p> : null}
+                  </>
+                )}
+              </li>
+            ))}
+          </ol>
         </aside>
       </div>
 
-      {hasActions ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-[color-mix(in_srgb,var(--surface-container-lowest)_92%,transparent)] p-4 backdrop-blur-md md:hidden">
-          <div className="mx-auto flex max-w-lg flex-wrap gap-2">
-            {canAcknowledge && request.status === "OPEN" ? (
-              <Button
-                type="button"
-                className="flex-1 rounded-xl"
-                disabled={!!actionPending}
-                onClick={() => handleAction("acknowledge")}
-              >
-                {actionPending === "acknowledge" ? "Working…" : "Acknowledge"}
-              </Button>
-            ) : null}
-            {canResolve && (request.status === "OPEN" || request.status === "ACKNOWLEDGED") ? (
-              <Button
-                type="button"
-                variant="primary"
-                className="flex-1"
-                disabled={!!actionPending}
-                onClick={() => handleAction("resolve")}
-              >
-                {actionPending === "resolve" ? "Working…" : "Resolve"}
-              </Button>
-            ) : null}
-            {canCancel && request.status === "OPEN" ? (
-              <Button type="button" variant="ghost" disabled={!!actionPending} onClick={() => handleAction("cancel")}>
-                Cancel
-              </Button>
-            ) : null}
-            {canDelete ? (
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-error"
-                disabled={!!actionPending}
-                onClick={() => setDeleteOpen(true)}
-              >
-                Delete
-              </Button>
-            ) : null}
+      {canDelete ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setDeleteOpen(true)}
+            className="text-[13px] font-medium text-[var(--pill-error-text)] underline-offset-4 hover:underline disabled:opacity-40"
+          >
+            {deleting ? "Deleting…" : "Delete this call-out"}
+          </button>
+        </div>
+      ) : null}
+
+      {primary || showCancel ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#e5e5e6] bg-white/95 p-4 backdrop-blur md:hidden">
+          <div className="mx-auto flex max-w-lg flex-wrap gap-2 [&>*]:flex-1 [&>*]:whitespace-nowrap">
+            <ActionButtons
+              primary={primary}
+              showResolve={Boolean(showResolve)}
+              showCancel={Boolean(showCancel)}
+              busy={busy}
+              isPending={(k) => action.isPending(request.id, k)}
+              run={run}
+            />
           </div>
         </div>
       ) : null}
 
       <DestructiveConfirmDialog
         open={deleteOpen}
-        title="Delete on-call request?"
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        title="Delete this call-out?"
+        confirmLabel="Delete call-out"
+        cancelLabel="Keep it"
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
       >
-        This will permanently remove this on-call request and its timeline. This cannot be undone.
+        It will be removed from On Call, reports and the timeline for everyone. This can&rsquo;t be undone. To close a
+        call-out that&rsquo;s been dealt with, resolve it instead.
       </DestructiveConfirmDialog>
     </div>
   );
+}
+
+function ActionButtons({
+  primary,
+  showResolve,
+  showCancel,
+  busy,
+  isPending,
+  run,
+}: {
+  primary: "acknowledge" | "resolve" | null;
+  showResolve: boolean;
+  showCancel: boolean;
+  busy: boolean;
+  isPending: (kind: "acknowledge" | "resolve" | "cancel") => boolean;
+  run: (kind: "acknowledge" | "resolve" | "cancel") => void;
+}) {
+  return (
+    <>
+      {showCancel ? (
+        <Button type="button" variant="ghost" className="h-10 min-h-0 px-4" disabled={busy} onClick={() => run("cancel")}>
+          {isPending("cancel") ? "Cancelling…" : "Cancel call-out"}
+        </Button>
+      ) : null}
+      {primary === "acknowledge" && showResolve ? (
+        <Button type="button" variant="secondary" className="h-10 min-h-0 px-5" disabled={busy} onClick={() => run("resolve")}>
+          {isPending("resolve") ? "Resolving…" : "Resolve"}
+        </Button>
+      ) : null}
+      {primary ? (
+        <Button type="button" className="h-10 min-h-0 px-5" disabled={busy} onClick={() => run(primary)}>
+          {isPending(primary) ? (primary === "acknowledge" ? "Acknowledging…" : "Resolving…") : primary === "acknowledge" ? "Acknowledge" : "Resolve"}
+        </Button>
+      ) : null}
+    </>
+  );
+}
+
+/** One plain sentence about where this call-out is up to. */
+function StatusLine({
+  request,
+  now,
+  canViewResolveTime,
+}: {
+  request: OnCallDetailRequest;
+  now: number;
+  canViewResolveTime?: boolean;
+}) {
+  let text: ReactNode;
+  switch (request.status) {
+    case "OPEN":
+      text = (
+        <>
+          Waiting for someone to acknowledge. Raised <strong className="font-semibold">{since(request.createdAt, now)}</strong> ago.
+        </>
+      );
+      break;
+    case "ACKNOWLEDGED":
+      text = (
+        <>
+          <strong className="font-semibold">{request.responder?.fullName ?? "A colleague"}</strong> acknowledged this
+          {request.acknowledgedAt ? ` ${since(request.acknowledgedAt, now)} ago` : ""} and is dealing with it.
+        </>
+      );
+      break;
+    case "RESOLVED":
+      text =
+        canViewResolveTime && request.resolvedAt ? (
+          <>
+            Resolved {formatWhen(request.resolvedAt)}, {formatDuration(new Date(request.resolvedAt).getTime() - new Date(request.createdAt).getTime())} after it was raised.
+          </>
+        ) : (
+          <>This call-out has been resolved.</>
+        );
+      break;
+    case "CANCELLED":
+      text = <>The person who raised this cancelled it.</>;
+      break;
+  }
+  return (
+    <p className={styles.statusLine} data-status={request.status} data-emergency={request.isEmergency && (request.status === "OPEN" || request.status === "ACKNOWLEDGED") ? "" : undefined}>
+      {text}
+    </p>
+  );
+}
+
+function Row({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="grid gap-1 py-3.5 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-4">
+      <dt className="text-[13px] text-[#6e6e73]">{label}</dt>
+      <dd className="min-w-0 text-[14px] text-[#1c1c1e]">{children}</dd>
+    </div>
+  );
+}
+
+type TimelineStep = {
+  key: string;
+  label: string;
+  state: "done" | "pending" | "cancelled";
+  at?: Date | string | null;
+  by?: string | null;
+  after?: string | null;
+  pendingText?: string;
+};
+
+function buildTimeline(request: OnCallDetailRequest): TimelineStep[] {
+  const events = [...(request.timelineEvents ?? [])].sort(
+    (a, b) => new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime(),
+  );
+  const find = (type: OnCallTimelineEventSerialized["type"]) => events.find((e) => e.type === type);
+  const created = find("CREATED");
+  const acknowledged = find("ACKNOWLEDGED");
+  const resolved = find("RESOLVED");
+  const cancelled = find("CANCELLED");
+  const raisedAt = new Date(request.createdAt).getTime();
+
+  const steps: TimelineStep[] = [
+    {
+      key: "raised",
+      label: STEP_LABEL.CREATED,
+      state: "done",
+      at: created?.createdAt ?? request.createdAt,
+      by: created?.actor?.fullName ?? request.requester.fullName,
+    },
+  ];
+
+  if (request.status === "CANCELLED") {
+    steps.push({ key: "cancelled", label: STEP_LABEL.CANCELLED, state: "cancelled", at: cancelled?.createdAt, by: cancelled?.actor?.fullName });
+    return steps;
+  }
+
+  const ackAt = acknowledged?.createdAt ?? request.acknowledgedAt;
+  if (ackAt) {
+    steps.push({
+      key: "acknowledged",
+      label: STEP_LABEL.ACKNOWLEDGED,
+      state: "done",
+      at: ackAt,
+      by: acknowledged?.actor?.fullName ?? request.responder?.fullName,
+      after: `after ${formatDuration(new Date(ackAt).getTime() - raisedAt)}`,
+    });
+  } else if (request.status === "OPEN") {
+    steps.push({ key: "acknowledged", label: STEP_LABEL.ACKNOWLEDGED, state: "pending", pendingText: "Not yet" });
+  }
+
+  if (request.status === "RESOLVED") {
+    const resolvedAt = resolved ? resolved.createdAt : request.resolvedAt;
+    steps.push({
+      key: "resolved",
+      label: STEP_LABEL.RESOLVED,
+      state: "done",
+      at: resolvedAt,
+      by: resolved?.actor?.fullName ?? null,
+      after: resolvedAt ? `${formatDuration(new Date(resolvedAt).getTime() - raisedAt)} after it was raised` : null,
+    });
+  } else {
+    steps.push({ key: "resolved", label: STEP_LABEL.RESOLVED, state: "pending", pendingText: "Not yet" });
+  }
+  return steps;
 }

@@ -268,7 +268,7 @@ describe("acknowledgeOnCallRequest", () => {
     );
     await expect(
       acknowledgeOnCallRequest("req_1", "tenant_1", "responder_1")
-    ).rejects.toThrow("request is not OPEN");
+    ).rejects.toThrow("This request has already been resolved.");
   });
 
   it("throws when request not found", async () => {
@@ -300,6 +300,27 @@ describe("resolveOnCallRequest", () => {
     expect(result.status).toBe("RESOLVED");
   });
 
+  it("credits the person who resolved it on the timeline, and keeps the original responder", async () => {
+    (prisma as any).onCallRequest.findFirst.mockReset();
+    (prisma as any).onCallRequest.findFirst.mockResolvedValue(
+      mockRequest({ status: "ACKNOWLEDGED", responderUserId: "responder_1" }),
+    );
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const createEvent = vi.fn();
+    (prisma as any).$transaction.mockImplementation(async (cb: (tx: any) => Promise<unknown>) =>
+      cb({
+        onCallRequest: {
+          updateMany,
+          findFirst: vi.fn().mockResolvedValue(mockRequest({ status: "RESOLVED" })),
+        },
+        onCallTimelineEvent: { create: createEvent },
+      }),
+    );
+    await resolveOnCallRequest("req_1", "tenant_1", "resolver_2");
+    expect(updateMany.mock.calls[0][0].data.responderUserId).toBe("responder_1");
+    expect(createEvent.mock.calls[0][0].data.actorUserId).toBe("resolver_2");
+  });
+
   it("throws when request already resolved", async () => {
     (prisma as any).onCallRequest.findFirst.mockReset();
     (prisma as any).onCallRequest.findFirst.mockResolvedValue(mockRequest({ status: "RESOLVED" }));
@@ -314,7 +335,7 @@ describe("resolveOnCallRequest", () => {
     );
     await expect(
       resolveOnCallRequest("req_1", "tenant_1", "responder_1")
-    ).rejects.toThrow("request already resolved");
+    ).rejects.toThrow("This request has already been resolved.");
   });
 
   it("throws when request is cancelled", async () => {
@@ -331,7 +352,7 @@ describe("resolveOnCallRequest", () => {
     );
     await expect(
       resolveOnCallRequest("req_1", "tenant_1", "responder_1")
-    ).rejects.toThrow("request is cancelled");
+    ).rejects.toThrow("This request was cancelled by the person who raised it.");
   });
 });
 
@@ -375,7 +396,7 @@ describe("cancelOnCallRequest", () => {
     );
     await expect(
       cancelOnCallRequest("req_1", "tenant_1", "user_1")
-    ).rejects.toThrow("only OPEN requests can be cancelled");
+    ).rejects.toThrow("This request has already been acknowledged.");
   });
 
   it("throws when request not found", async () => {

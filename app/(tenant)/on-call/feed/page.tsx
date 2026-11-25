@@ -1,22 +1,17 @@
 import Link from "next/link";
 import styles from "./page.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
+import { hasOnCallPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { getTenantVocab } from "@/lib/vocab";
-import { REQUEST_TYPE_LABELS } from "@/modules/oncall/types";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
-import { PillVariant, StatusPill } from "@/components/ui/status-pill";
+import { OnCallFeed, type FeedRow } from "@/components/oncall/OnCallFeed";
+import { startOfDayInZone, SCHOOL_TIME_ZONE } from "@/modules/oncall/time";
 
-const FEED_STATUS_PILL: Record<string, PillVariant> = {
-  OPEN: "error",
-  ACKNOWLEDGED: "neutral",
-  RESOLVED: "success",
-  CANCELLED: "error",
-};
+const STATUSES = ["OPEN", "ACKNOWLEDGED", "RESOLVED", "CANCELLED"] as const;
 
+/** Every call-out raised today, newest first: the running log for the school day. */
 export default async function OnCallFeedPage({
   searchParams,
 }: {
@@ -25,132 +20,95 @@ export default async function OnCallFeedPage({
   const user = await getSessionUserOrThrow();
   const vocab = await getTenantVocab(user.tenantId);
   const resolvedSearchParams = (await searchParams) ?? {};
+  // Staff without view_all (e.g. teachers) see the requests they raised, not the whole school's.
+  const canViewAll = hasOnCallPermission(user.role, "oncall:view_all");
 
-  const status = resolvedSearchParams.status || "";
+  const requestedStatus = resolvedSearchParams.status || "";
+  const status = (STATUSES as readonly string[]).includes(requestedStatus) ? requestedStatus : "";
   const yearGroup = resolvedSearchParams.yearGroup || "";
-  const emailError = resolvedSearchParams.emailError || "";
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const start = startOfDayInZone(now);
+  const scope = { tenantId: user.tenantId, createdAt: { gte: start }, ...(canViewAll ? {} : { requesterUserId: user.id }) };
 
-  const requests = await (prisma as any).onCallRequest.findMany({
-    where: {
-      tenantId: user.tenantId,
-      createdAt: { gte: start },
-      ...(status ? { status } : {}),
-      ...(yearGroup ? { student: { yearGroup } } : {}),
-    },
-    include: { student: true, requester: true },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
+  const [requests, statusCounts, yearGroupRows] = await Promise.all([
+    (prisma as any).onCallRequest.findMany({
+      where: { ...scope, ...(status ? { status } : {}), ...(yearGroup ? { student: { yearGroup } } : {}) },
+      select: {
+        id: true,
+        status: true,
+        requestType: true,
+        isEmergency: true,
+        location: true,
+        behaviourReasonCategory: true,
+        createdAt: true,
+        student: { select: { fullName: true, yearGroup: true } },
+        requester: { select: { fullName: true } },
+        responder: { select: { fullName: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 300,
+    }),
+    // Counts per status for the chips, within the year-group filter.
+    (prisma as any).onCallRequest.groupBy({
+      by: ["status"],
+      where: { ...scope, ...(yearGroup ? { student: { yearGroup } } : {}) },
+      _count: { _all: true },
+    }),
+    (prisma as any).student.findMany({
+      where: { tenantId: user.tenantId, status: "ACTIVE" },
+      select: { yearGroup: true },
+      distinct: ["yearGroup"],
+    }),
+  ]);
 
-  const todayLabel = start.toLocaleDateString(undefined, {
-    weekday: "short",
+  const rows: FeedRow[] = (requests as any[]).map((r) => ({
+    id: r.id,
+    status: r.status,
+    requestType: r.requestType,
+    isEmergency: r.isEmergency,
+    location: r.location,
+    reason: r.behaviourReasonCategory ?? null,
+    createdAt: r.createdAt.toISOString(),
+    student: { fullName: r.student?.fullName ?? "Unknown student", yearGroup: r.student?.yearGroup ?? null },
+    requester: r.requester?.fullName ?? "",
+    responder: r.responder?.fullName ?? null,
+  }));
+
+  const counts = Object.fromEntries(
+    (statusCounts as { status: string; _count: { _all: number } }[]).map((c) => [c.status, c._count._all]),
+  ) as Record<string, number>;
+
+  const yearGroupOptions = (yearGroupRows as { yearGroup: string | null }[])
+    .map((s) => s.yearGroup)
+    .filter((yg): yg is string => Boolean(yg))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+  const todayLabel = now.toLocaleDateString("en-GB", {
+    weekday: "long",
     day: "numeric",
-    month: "short",
+    month: "long",
+    timeZone: SCHOOL_TIME_ZONE,
   });
 
   return (
     <div className={`${styles.page} w-full min-w-0 space-y-8`}>
-      <PageHeader variant="ledger"
-        title={`Today's ${vocab.on_calls.plural} feed`}
-        actions={<Link href="/on-call" className={styles.action}>Back to inbox</Link>}
-        subtitle={`${requests.length} request${requests.length === 1 ? "" : "s"} · ${todayLabel}`}
+      <PageHeader
+        variant="ledger"
+        title="Today's log"
+        subtitle={`${canViewAll ? "Every call-out" : "Every call-out you've"} raised on ${todayLabel}, newest first.`}
+        actions={
+          <Button variant="secondary" asChild className="h-10 min-h-0 px-5">
+            <Link href="/on-call">Back to {vocab.on_calls.singular}</Link>
+          </Button>
+        }
       />
-
-      {emailError ? (
-        <Card className="border-error/40 bg-error/10 p-3">
-          <p className="text-sm font-medium text-error">Email dispatch warning: {emailError}</p>
-        </Card>
-      ) : null}
-
-      <div className="filter-panel">
-        <form className={styles.filters} method="get">
-          <label className="flex min-w-0 flex-col gap-1.5 sm:min-w-[200px]">
-            <span className="filter-field-label">Status</span>
-            <select
-              name="status"
-              defaultValue={status}
-              className="field field-filter-trigger min-w-0 !py-2.5 !text-sm"
-            >
-              <option value="">All statuses</option>
-              <option value="OPEN">Open</option>
-              <option value="ACKNOWLEDGED">Acknowledged</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
-          </label>
-
-          <label className="flex min-w-0 flex-col gap-1.5 sm:min-w-[160px]">
-            <span className="filter-field-label">Year group</span>
-            <input
-              name="yearGroup"
-              defaultValue={yearGroup}
-              placeholder="e.g. 10"
-              className="field field-filter-trigger !py-2.5 !text-sm"
-            />
-          </label>
-
-          <div className="filter-actions filter-actions--inline !ml-0 w-full sm:w-auto lg:ml-0">
-            <button type="submit" className="btn-filter-primary">
-              Apply
-            </button>
-            <Link href="/on-call/feed" className="btn-filter-secondary text-center no-underline">
-              Reset
-            </Link>
-          </div>
-        </form>
-      </div>
-
-      {requests.length === 0 ? (
-        <EmptyState
-          title="No feed entries for today"
-          description={`No ${vocab.on_calls.plural.toLowerCase()} match your current filters.`}
-          action={
-            <Link href="/on-call/feed">
-              <Button type="button" variant="secondary">Clear filters</Button>
-            </Link>
-          }
-        />
-      ) : (
-        <div className="table-shell">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead>
-                <tr className="table-head-row">
-                  <th className="px-5 py-3.5">Time</th>
-                  <th className="px-4 py-3.5">Student</th>
-                  <th className="px-4 py-3.5 text-center">Category</th>
-                  <th className="px-4 py-3.5">Location</th>
-                  <th className="px-4 py-3.5">Reason</th>
-                  <th className="px-4 py-3.5 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(requests as any[]).map((r: any) => (
-                  <tr key={r.id} className="table-row calm-transition">
-                    <td className="px-5 py-3.5 whitespace-nowrap">
-                      <Link className="link-accent font-medium underline-offset-2" href={`/on-call/${r.id}`}>
-                        {new Date(r.createdAt).toLocaleTimeString()}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      {r.student?.fullName}
-                      <span className="ml-2 text-muted">{r.student?.yearGroup ? `Year ${r.student.yearGroup.replace(/^(?:Year\s*|Y)/i, "")}` : "—"}</span>
-                    </td>
-                    <td className="px-4 py-3.5 text-center">{REQUEST_TYPE_LABELS[r.requestType as keyof typeof REQUEST_TYPE_LABELS] ?? r.requestType}</td>
-                    <td className="px-4 py-3.5">{r.location || "-"}</td>
-                    <td className="px-4 py-3.5">{r.behaviourReasonCategory || "-"}</td>
-                    <td className="px-4 py-3.5 text-center">
-                      <StatusPill variant={FEED_STATUS_PILL[r.status] ?? "neutral"}>{r.status}</StatusPill>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <OnCallFeed
+        rows={rows}
+        status={status}
+        yearGroup={yearGroup}
+        counts={counts}
+        yearGroupOptions={yearGroupOptions}
+      />
     </div>
   );
 }

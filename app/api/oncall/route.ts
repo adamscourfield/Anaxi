@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { hasOnCallPermission } from "@/lib/rbac";
 import { createOnCallRequest, getRequestsByStatus } from "@/modules/oncall/service";
@@ -29,7 +29,9 @@ export async function POST(req: Request) {
       isEmergency: Boolean(isEmergency),
     });
 
-    await sendOnCallNotification(user.tenantId, request, "created");
+    // Emails go out after the response, so the person acting isn't kept waiting
+    // on every recipient (sends are throttled to the email provider's rate limit).
+    after(() => sendOnCallNotification(user.tenantId, request, "created"));
 
     return NextResponse.json(request, { status: 201 });
   } catch (err) {
@@ -43,8 +45,10 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") ?? undefined;
-    const take = Math.min(Number(searchParams.get("take") ?? "20"), 100);
-    const skip = Number(searchParams.get("skip") ?? "0");
+    const takeParam = Number(searchParams.get("take") ?? "20");
+    const skipParam = Number(searchParams.get("skip") ?? "0");
+    const take = Number.isFinite(takeParam) ? Math.min(Math.max(Math.trunc(takeParam), 1), 100) : 20;
+    const skip = Number.isFinite(skipParam) ? Math.max(Math.trunc(skipParam), 0) : 0;
 
     const canViewAll = hasOnCallPermission(user.role, "oncall:view_all");
 

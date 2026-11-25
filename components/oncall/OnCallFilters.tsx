@@ -35,7 +35,7 @@ export function OnCallFilters({
   const hasFilters = Boolean(yearGroup) || Boolean(reason);
 
   const selectClass =
-    "h-10 w-full min-w-0 rounded-[10px] border border-[#e5e5e6] bg-white pl-3 pr-9 text-[13px] font-medium text-[#1c1c1e] sm:w-auto sm:min-w-[168px]";
+    "h-9 w-full min-w-0 rounded-[10px] border border-[#e5e5e6] bg-white pl-3 pr-9 text-[13px] font-medium text-[#1c1c1e] sm:w-auto sm:min-w-[160px]";
   // A filter that is doing something gets a dark outline, so a narrowed list is never mistaken for the full one.
   const activeStyle = { borderColor: "#1c1c1e", boxShadow: "inset 0 0 0 1px #1c1c1e" };
 
@@ -43,11 +43,11 @@ export function OnCallFilters({
     <div
       role="group"
       aria-label="Filter on-call requests"
-      className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:justify-end"
+      className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap"
     >
       <select
         value={yearGroup ?? ""}
-        onChange={(e) => router.push(buildOnCallHref(range, e.target.value || undefined, reason))}
+        onChange={(e) => router.replace(buildOnCallHref(range, e.target.value || undefined, reason), { scroll: false })}
         className={selectClass}
         style={yearGroup ? activeStyle : undefined}
         aria-label="Filter by year group"
@@ -62,7 +62,7 @@ export function OnCallFilters({
 
       <select
         value={reason ?? ""}
-        onChange={(e) => router.push(buildOnCallHref(range, yearGroup, e.target.value || undefined))}
+        onChange={(e) => router.replace(buildOnCallHref(range, yearGroup, e.target.value || undefined), { scroll: false })}
         className={selectClass}
         style={reason ? activeStyle : undefined}
         aria-label="Filter by behaviour reason"
@@ -78,7 +78,9 @@ export function OnCallFilters({
       {hasFilters && (
         <Link
           href={buildOnCallHref(range)}
-          className="link-muted-accent col-span-2 text-[13px] font-medium sm:col-span-1 sm:px-1"
+          replace
+          scroll={false}
+          className="col-span-2 text-[13px] font-medium text-[#1c1c1e] underline-offset-4 hover:underline sm:col-span-1 sm:px-1"
         >
           Clear filters
         </Link>
