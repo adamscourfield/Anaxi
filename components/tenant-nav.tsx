@@ -189,7 +189,7 @@ export function TenantNav({
   });
 
   const sections: NavSection[] = [
-    { label: "Overview", items: [navItem("Home", "/home"), navItem("My actions", "/my-actions"), ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Insights", "/insights")] : [])] },
+    { label: "Overview", items: [navItem("Home", "/home"), ...(has("MEETINGS") && hasPermission(role, "actions:view_own") ? [navItem("My actions", "/my-actions")] : []), ...(has("ANALYSIS") && canSeeAnalysis ? [navItem("Insights", "/insights")] : [])] },
     {
       label: "Instruction",
       items: [

@@ -14,9 +14,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { reason } = body;
-    if (!reason) return NextResponse.json({ error: "reason required" }, { status: 400 });
+    const body = await req.json().catch(() => ({}));
+    const reason = typeof body?.reason === "string" ? body.reason : "";
+    if (!reason.trim()) return NextResponse.json({ error: "Say what it's waiting on." }, { status: 400 });
 
     const action = await blockAction(user.tenantId, resolvedParams.id, user.id, reason);
     return NextResponse.json(action);

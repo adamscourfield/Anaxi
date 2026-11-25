@@ -11,6 +11,7 @@ import {
   calculateDaysUntilDue,
   isActionOverdue,
 } from "@/modules/actions/service";
+import { daysUntilDue, dueBucket, formatDue, isPastDue } from "@/modules/actions/dates";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -95,6 +96,30 @@ describe("calculateDaysUntilDue", () => {
   it("returns negative for past date", () => {
     const past = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
     expect(calculateDaysUntilDue(past)).toBeLessThan(0);
+  });
+});
+
+describe("due dates are UK calendar days", () => {
+  it("an action due today is not overdue, even late in the evening", () => {
+    const due = new Date("2026-06-10T00:00:00Z");
+    expect(isPastDue(due, new Date("2026-06-10T22:30:00Z"))).toBe(false);
+    expect(daysUntilDue(due, new Date("2026-06-10T22:30:00Z"))).toBe(0);
+  });
+
+  it("becomes overdue the next UK day", () => {
+    const due = new Date("2026-06-10T00:00:00Z");
+    // 23:30 UTC on the 10th is 00:30 on the 11th in London (BST).
+    expect(isPastDue(due, new Date("2026-06-10T23:30:00Z"))).toBe(true);
+  });
+
+  it("labels and buckets", () => {
+    const now = new Date("2026-11-25T11:00:00Z");
+    expect(formatDue(new Date("2026-11-25T00:00:00Z"), now)).toBe("Due today");
+    expect(formatDue(new Date("2026-11-26T00:00:00Z"), now)).toBe("Due tomorrow");
+    expect(formatDue(new Date("2026-11-22T00:00:00Z"), now)).toBe("3 days overdue");
+    expect(dueBucket(new Date("2026-11-30T00:00:00Z"), now)).toBe("week");
+    expect(dueBucket(new Date("2026-12-30T00:00:00Z"), now)).toBe("later");
+    expect(dueBucket(null, now)).toBe("none");
   });
 });
 
@@ -218,6 +243,10 @@ describe("blockAction", () => {
       blockAction("tenant_1", "action_1", "other_user", "reason")
     ).rejects.toThrow("only owner can block action");
   });
+
+  it("requires a reason", async () => {
+    await expect(blockAction("tenant_1", "action_1", "user_1", "   ")).rejects.toThrow("reason required");
+  });
 });
 
 describe("updateActionStatus", () => {
@@ -237,6 +266,17 @@ describe("updateActionStatus", () => {
       updateActionStatus("tenant_1", "action_1", "other_user", { status: "DONE" })
     ).rejects.toThrow("only owner can update action status");
   });
+
+  it("rejects unknown statuses", async () => {
+    await expect(updateActionStatus("tenant_1", "action_1", "user_1", { status: "NOPE" as any })).rejects.toThrow("Invalid status");
+  });
+
+  it("reopening clears the block reason and completion", async () => {
+    (prisma as any).meetingAction.update.mockResolvedValue(mockAction({ status: "OPEN" }));
+    await updateActionStatus("tenant_1", "action_1", "user_1", { status: "OPEN" });
+    const data = (prisma as any).meetingAction.update.mock.calls[0][0].data;
+    expect(data).toMatchObject({ status: "OPEN", blockReason: null, completedAt: null, completedByUserId: null });
+  });
 });
 
 describe("getMyActions", () => {
@@ -245,7 +285,8 @@ describe("getMyActions", () => {
     const overdue = mockAction({ id: "a1", dueDate: new Date(Date.now() - 2 * 86400000), status: "OPEN" });
     const open = mockAction({ id: "a2", dueDate: new Date(Date.now() + 5 * 86400000), status: "OPEN" });
     const done = mockAction({ id: "a3", status: "DONE" });
-    (prisma as any).meetingAction.findMany.mockResolvedValue([overdue, open, done]);
+    (prisma as any).meetingAction.findMany.mockResolvedValueOnce([overdue, open]).mockResolvedValueOnce([done]);
+    (prisma as any).meetingAction.count.mockResolvedValue(1);
   });
 
   it("returns grouped actions", async () => {
@@ -253,6 +294,7 @@ describe("getMyActions", () => {
     expect(grouped.OPEN).toHaveLength(2);
     expect(grouped.DONE).toHaveLength(1);
     expect(grouped.BLOCKED).toHaveLength(0);
+    expect(grouped.doneTotal).toBe(1);
   });
 
   it("flags overdue actions", async () => {
@@ -269,7 +311,7 @@ describe("getOverdueActions", () => {
     expect(count).toBe(3);
     expect((prisma as any).meetingAction.count).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ status: "OPEN", ownerUserId: "user_1" }),
+        where: expect.objectContaining({ status: { in: ["OPEN", "BLOCKED"] }, ownerUserId: "user_1" }),
       })
     );
   });

@@ -34,11 +34,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { status } = body;
+    const body = await req.json().catch(() => ({}));
+    const status = typeof body?.status === "string" ? body.status : "";
     if (!status) return NextResponse.json({ error: "status required" }, { status: 400 });
+    const reason = typeof body?.reason === "string" ? body.reason : undefined;
 
-    const action = await updateActionStatus(user.tenantId, resolvedParams.id, user.id, { status });
+    const action = await updateActionStatus(user.tenantId, resolvedParams.id, user.id, { status, notes: reason });
     return NextResponse.json(action);
   } catch (err) {
     return apiErrorResponse(err);

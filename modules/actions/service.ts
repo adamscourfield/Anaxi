@@ -1,5 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { startOfDayInZone } from "@/modules/oncall/time";
 import { CreateActionInput, UpdateActionStatusInput } from "./types";
+import { daysUntilDue, isPastDue } from "./dates";
+
+const VALID_STATUSES = new Set(["OPEN", "DONE", "BLOCKED"]);
+const MAX_REASON = 500;
+/** Done actions shown on My Actions; older ones stay on their meeting. */
+export const RECENT_DONE_LIMIT = 30;
 
 const ACTION_INCLUDE = {
   owner: { select: { id: true, fullName: true, email: true } },
@@ -54,15 +61,20 @@ export async function updateActionStatus(
   userId: string,
   input: UpdateActionStatusInput
 ) {
+  if (!VALID_STATUSES.has(input.status)) throw new Error("Invalid status");
   const action = await (prisma as any).meetingAction.findFirst({
     where: { id: actionId, tenantId },
   });
   if (!action) throw new Error("action not found");
   if (action.ownerUserId !== userId) throw new Error("only owner can update action status");
 
+  if (input.status === "DONE") return completeAction(tenantId, actionId, userId);
+  if (input.status === "BLOCKED") return blockAction(tenantId, actionId, userId, input.notes ?? "");
+
+  // Reopening clears whatever made it blocked or done.
   return (prisma as any).meetingAction.update({
     where: { id: actionId },
-    data: { status: input.status },
+    data: { status: "OPEN", blockReason: null, completedAt: null, completedByUserId: null },
     include: ACTION_INCLUDE,
   });
 }
@@ -76,7 +88,7 @@ export async function completeAction(tenantId: string, actionId: string, userId:
 
   return (prisma as any).meetingAction.update({
     where: { id: actionId },
-    data: { status: "DONE", completedAt: new Date(), completedByUserId: userId },
+    data: { status: "DONE", completedAt: new Date(), completedByUserId: userId, blockReason: null },
     include: ACTION_INCLUDE,
   });
 }
@@ -93,52 +105,58 @@ export async function blockAction(
   if (!action) throw new Error("action not found");
   if (action.ownerUserId !== userId) throw new Error("only owner can block action");
 
-  const trimmedReason = reason.trim();
+  const trimmedReason = reason.trim().slice(0, MAX_REASON);
+  if (!trimmedReason) throw new Error("reason required");
 
   return (prisma as any).meetingAction.update({
     where: { id: actionId },
-    data: { status: "BLOCKED", blockReason: trimmedReason || null },
+    data: { status: "BLOCKED", blockReason: trimmedReason, completedAt: null, completedByUserId: null },
     include: ACTION_INCLUDE,
   });
 }
 
-export async function getMyActions(tenantId: string, userId: string) {
-  const actions = await (prisma as any).meetingAction.findMany({
-    where: { tenantId, ownerUserId: userId },
-    include: ACTION_INCLUDE,
-    orderBy: [{ status: "asc" }, { dueDate: "asc" }],
-  });
+export async function getMyActions(tenantId: string, userId: string, now: Date = new Date()) {
+  const [active, done, doneTotal] = await Promise.all([
+    (prisma as any).meetingAction.findMany({
+      where: { tenantId, ownerUserId: userId, status: { in: ["OPEN", "BLOCKED"] } },
+      include: ACTION_INCLUDE,
+      orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
+    }),
+    (prisma as any).meetingAction.findMany({
+      where: { tenantId, ownerUserId: userId, status: "DONE" },
+      include: ACTION_INCLUDE,
+      orderBy: [{ completedAt: { sort: "desc", nulls: "last" } }, { updatedAt: "desc" }],
+      take: RECENT_DONE_LIMIT,
+    }),
+    (prisma as any).meetingAction.count({ where: { tenantId, ownerUserId: userId, status: "DONE" } }),
+  ]);
 
-  const now = new Date();
-  const grouped: Record<string, typeof actions> = { OPEN: [], BLOCKED: [], DONE: [] };
-  for (const action of actions) {
-    const key = action.status as string;
-    if (!grouped[key]) grouped[key] = [];
+  const grouped: Record<"OPEN" | "BLOCKED" | "DONE", any[]> & { doneTotal: number } = {
+    OPEN: [],
+    BLOCKED: [],
+    DONE: [],
+    doneTotal: doneTotal ?? 0,
+  };
+  for (const action of [...(active ?? []), ...(done ?? [])]) {
+    const key = action.status as "OPEN" | "BLOCKED" | "DONE";
+    if (!grouped[key]) continue;
     grouped[key].push({
       ...action,
-      isOverdue: isActionOverdue(action.dueDate),
-      daysUntilDue: action.dueDate ? calculateDaysUntilDue(action.dueDate) : null,
+      isOverdue: key !== "DONE" && isPastDue(action.dueDate, now),
+      daysUntilDue: action.dueDate ? daysUntilDue(action.dueDate, now) : null,
     });
   }
-
-  grouped.OPEN.sort((a: any, b: any) => {
-    if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-    if (a.dueDate) return -1;
-    if (b.dueDate) return 1;
-    return 0;
-  });
-
   return grouped;
 }
 
-export async function getOverdueActions(tenantId: string, userId: string) {
-  const now = new Date();
+/** Open or blocked actions whose due day (UK) has passed. Matches the Meetings summary. */
+export async function getOverdueActions(tenantId: string, userId: string, now: Date = new Date()) {
   return (prisma as any).meetingAction.count({
     where: {
       tenantId,
       ownerUserId: userId,
-      status: "OPEN",
-      dueDate: { lt: now },
+      status: { in: ["OPEN", "BLOCKED"] },
+      dueDate: { lt: startOfDayInZone(now) },
     },
   });
 }
@@ -151,14 +169,11 @@ export async function getActionsByOwner(tenantId: string, ownerUserId: string) {
   });
 }
 
+/** Kept for older callers; see ./dates for the UK calendar-day rules. */
 export function calculateDaysUntilDue(dueDate: Date): number {
-  const now = new Date();
-  const due = new Date(dueDate);
-  const diffMs = due.getTime() - now.getTime();
-  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return daysUntilDue(dueDate);
 }
 
 export function isActionOverdue(dueDate: Date | null | undefined): boolean {
-  if (!dueDate) return false;
-  return calculateDaysUntilDue(dueDate) < 0;
+  return isPastDue(dueDate);
 }
