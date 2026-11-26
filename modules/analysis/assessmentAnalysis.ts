@@ -13,7 +13,15 @@ import { prisma } from "@/lib/prisma";
 
 const PRIOR_LOW_THRESHOLD = 95;
 const PRIOR_HIGH_THRESHOLD = 105;
-const OUTLIER_Z_THRESHOLD = 1.0;
+/**
+ * Outliers compare like with like: a student's standing in a subject (in year-group standard
+ * deviations) against their standing across their other subjects. 1.5 flags roughly 1 student in
+ * 6 to 1 in 25 when subjects correlate as they do in real schools (r ≈ 0.5–0.7). The previous
+ * rule (≥ 1 SD from the student's own raw average) flagged nearly every student whatever the data.
+ */
+const OUTLIER_Z_THRESHOLD = 1.5;
+const OUTLIER_MIN_SUBJECTS = 4;
+const OUTLIER_MIN_COHORT = 10;
 const MOVEMENT_STABLE_BAND = 0.02;
 const MIN_GROUP_SIZE = 3;
 const ELIGIBLE_RESULT_STATUSES = ["VALIDATED", "PUBLISHED", "LOCKED"];
@@ -149,23 +157,33 @@ export function getMovementLabel(movement: number | null): MovementLabel {
   return "STABLE";
 }
 
-export function computeOutliers(
-  subjectScores: Array<{ subject: string; normalizedScore: number }>,
-): SubjectOutlier[] {
-  if (subjectScores.length < 2) return [];
-  const scores = subjectScores.map((s) => s.normalizedScore);
-  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const variance =
-    scores.reduce((sum, s) => sum + Math.pow(s - mean, 2), 0) / scores.length;
-  const stdDev = Math.sqrt(variance);
-  if (stdDev < 0.01) return [];
-  return subjectScores
-    .map(({ subject, normalizedScore }) => {
-      const zScore = (normalizedScore - mean) / stdDev;
+export type OutlierInput = {
+  subject: string;
+  normalizedScore: number;
+  /** Mean and standard deviation of everyone in the year group who sat this subject. */
+  cohortMean: number;
+  cohortStdDev: number;
+  cohortSize: number;
+};
+
+/**
+ * Subjects where a student is out of line with themselves, after allowing for how hard each
+ * subject was. zScore is the subject's standing (in cohort SDs) minus the student's average
+ * standing across subjects: −1.6 means 1.6 SDs further behind the year group than usual.
+ */
+export function computeOutliers(subjectScores: OutlierInput[]): SubjectOutlier[] {
+  const usable = subjectScores.filter((s) => s.cohortSize >= OUTLIER_MIN_COHORT && s.cohortStdDev >= 0.01);
+  if (usable.length < OUTLIER_MIN_SUBJECTS) return [];
+  const standings = usable.map((s) => (s.normalizedScore - s.cohortMean) / s.cohortStdDev);
+  const usualStanding = standings.reduce((a, b) => a + b, 0) / standings.length;
+  const studentMean = usable.reduce((a, s) => a + s.normalizedScore, 0) / usable.length;
+  return usable
+    .map((s, i) => {
+      const zScore = standings[i] - usualStanding;
       return {
-        subject,
-        normalizedScore,
-        studentMean: mean,
+        subject: s.subject,
+        normalizedScore: s.normalizedScore,
+        studentMean,
         zScore,
         direction: zScore < 0 ? ("UNDER" as const) : ("OVER" as const),
       };
@@ -610,12 +628,6 @@ export async function computeAssessmentAnalysis(
       (s) => s.normalizedScore !== null,
     );
     const overallMean = computeMean(scoredSubjects.map((s) => s.normalizedScore!));
-    const outliers = computeOutliers(
-      scoredSubjects.map((s) => ({
-        subject: s.subject,
-        normalizedScore: s.normalizedScore!,
-      })),
-    );
 
     studentRows.push({
       studentId: student.id,
@@ -628,8 +640,37 @@ export async function computeAssessmentAnalysis(
       ks2ReadingScaledScore: student.ks2ReadingScaledScore,
       subjects: subjectResults,
       overallMean,
-      outliers,
+      outliers: [],
     });
+  }
+
+  // ── 8b. Outliers need every student's results first (year-group mean and spread per subject)
+
+  const cohortScores = new Map<string, number[]>();
+  for (const row of studentRows) {
+    for (const sub of row.subjects) {
+      if (sub.normalizedScore === null) continue;
+      const key = `${sub.cycleId}:${sub.yearGroup}:${sub.subject}`;
+      const list = cohortScores.get(key);
+      if (list) list.push(sub.normalizedScore);
+      else cohortScores.set(key, [sub.normalizedScore]);
+    }
+  }
+  const cohortStats = new Map(
+    [...cohortScores].map(([key, values]) => {
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const sd = Math.sqrt(values.reduce((a, v) => a + (v - mean) ** 2, 0) / values.length);
+      return [key, { mean, sd, n: values.length }];
+    }),
+  );
+  for (const row of studentRows) {
+    row.outliers = computeOutliers(
+      row.subjects.flatMap((sub) => {
+        const stats = cohortStats.get(`${sub.cycleId}:${sub.yearGroup}:${sub.subject}`);
+        if (sub.normalizedScore === null || !stats) return [];
+        return [{ subject: sub.subject, normalizedScore: sub.normalizedScore, cohortMean: stats.mean, cohortStdDev: stats.sd, cohortSize: stats.n }];
+      }),
+    );
   }
 
   // ── 9. School-wide band averages (baseline for value-add) ───────────────────

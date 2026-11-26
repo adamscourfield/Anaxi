@@ -212,7 +212,7 @@ export default async function AssessmentStudentsPage({
                                   <span
                                     key={o.subject}
                                     className={`${s.tag} ${o.direction === "UNDER" ? s.down : s.up}`}
-                                    title={`${o.direction === "UNDER" ? "Well below" : "Well above"} this student's average (z = ${o.zScore.toFixed(2)})`}
+                                    title={`${Math.abs(o.zScore).toFixed(1)} standard deviations ${o.direction === "UNDER" ? "further behind" : "further ahead of"} the year group than this student usually is`}
                                   >
                                     {o.direction === "UNDER" ? "↓" : "↑"} {o.subject}
                                   </span>
@@ -233,7 +233,8 @@ export default async function AssessmentStudentsPage({
           )}
           <p className={s.note}>
             Mean is a 0–100 index that puts different grade scales on one footing; it is not a percentage. Movement compares
-            {analysis?.cycles[0]?.previousPointLabel ? ` ${analysis.cycles[0].previousPointLabel} with ${analysis.cycles[0].currentPointLabel}` : " the two most recent result points"}. An outlier is a subject at least one standard deviation from the student&apos;s own average.
+            {analysis?.cycles[0]?.previousPointLabel ? ` ${analysis.cycles[0].previousPointLabel} with ${analysis.cycles[0].currentPointLabel}` : " the two most recent result points"}. An outlier is a subject where the student sits at least 1.5 standard deviations further behind or ahead of the year
+            group than they usually do, so a subject everyone found hard doesn&apos;t count. It needs four or more subjects, each taken by at least ten students.
           </p>
         </>
       )}

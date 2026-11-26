@@ -72,108 +72,49 @@ describe("getMovementLabel", () => {
 
 // ─── computeOutliers ─────────────────────────────────────────────────────────
 
+/** Year-group stats where every subject has mean 0.6 and SD 0.1, unless overridden. */
+function cohort(subject: string, score: number, mean = 0.6, sd = 0.1, size = 30) {
+  return { subject, normalizedScore: score, cohortMean: mean, cohortStdDev: sd, cohortSize: size };
+}
+
 describe("computeOutliers", () => {
-  it("fewer than 2 subjects → no outliers", () => {
-    expect(computeOutliers([{ subject: "Maths", normalizedScore: 0.8 }])).toEqual([]);
+  it("needs at least four comparable subjects", () => {
+    expect(computeOutliers([cohort("Maths", 0.9), cohort("English", 0.6), cohort("Art", 0.1)])).toEqual([]);
   });
 
-  it("no variation → no outliers", () => {
-    const scores = [
-      { subject: "Maths", normalizedScore: 0.8 },
-      { subject: "English", normalizedScore: 0.8 },
-      { subject: "Science", normalizedScore: 0.8 },
-    ];
+  it("ignores subjects with too few students or no spread to compare against", () => {
+    const scores = [cohort("Maths", 0.7), cohort("English", 0.7), cohort("Science", 0.7), cohort("History", 0.7, 0.6, 0.1, 5), cohort("Art", 0.1, 0.6, 0.001)];
     expect(computeOutliers(scores)).toEqual([]);
   });
 
-  it("detects UNDER outlier", () => {
-    // Student scores well in most subjects but poorly in one
-    const scores = [
-      { subject: "Maths", normalizedScore: 0.9 },
-      { subject: "English", normalizedScore: 0.85 },
-      { subject: "Science", normalizedScore: 0.88 },
-      { subject: "History", normalizedScore: 0.87 },
-      { subject: "Art", normalizedScore: 0.2 },  // clear outlier
-    ];
-    const outliers = computeOutliers(scores);
-    expect(outliers.some((o) => o.subject === "Art" && o.direction === "UNDER")).toBe(true);
+  it("flags a subject far behind the student's usual standing", () => {
+    // One SD above the year group everywhere except Art, where they are 1.5 SD below.
+    const scores = [cohort("Maths", 0.7), cohort("English", 0.7), cohort("Science", 0.7), cohort("History", 0.7), cohort("Art", 0.45)];
+    const art = computeOutliers(scores).find((o) => o.subject === "Art");
+    expect(art?.direction).toBe("UNDER");
+    expect(art!.zScore).toBeLessThan(-1.5);
   });
 
-  it("detects OVER outlier", () => {
-    const scores = [
-      { subject: "Maths", normalizedScore: 0.4 },
-      { subject: "English", normalizedScore: 0.45 },
-      { subject: "Science", normalizedScore: 0.42 },
-      { subject: "History", normalizedScore: 0.43 },
-      { subject: "Art", normalizedScore: 0.95 },  // clear outlier
-    ];
-    const outliers = computeOutliers(scores);
-    expect(outliers.some((o) => o.subject === "Art" && o.direction === "OVER")).toBe(true);
+  it("flags a subject far ahead of the student's usual standing", () => {
+    const scores = [cohort("Maths", 0.5), cohort("English", 0.5), cohort("Science", 0.5), cohort("History", 0.5), cohort("Art", 0.8)];
+    expect(computeOutliers(scores).map((o) => [o.subject, o.direction])).toEqual([["Art", "OVER"]]);
   });
 
-  it("outlier has correct z-score sign", () => {
-    const scores = [
-      { subject: "Maths", normalizedScore: 0.9 },
-      { subject: "English", normalizedScore: 0.85 },
-      { subject: "Science", normalizedScore: 0.88 },
-      { subject: "History", normalizedScore: 0.87 },
-      { subject: "Art", normalizedScore: 0.2 },
-    ];
-    const outliers = computeOutliers(scores);
-    const art = outliers.find((o) => o.subject === "Art");
-    expect(art).toBeDefined();
-    expect(art!.zScore).toBeLessThan(0);
-    expect(art!.direction).toBe("UNDER");
-  });
-
-  it("studentMean is set correctly on outlier", () => {
-    const scores = [
-      { subject: "Maths", normalizedScore: 0.8 },
-      { subject: "English", normalizedScore: 0.6 },
-      { subject: "Science", normalizedScore: 0.7 },
-      { subject: "History", normalizedScore: 0.75 },
-      { subject: "Art", normalizedScore: 0.1 },
-    ];
-    const expectedMean = (0.8 + 0.6 + 0.7 + 0.75 + 0.1) / 5;
-    const outliers = computeOutliers(scores);
-    const art = outliers.find((o) => o.subject === "Art");
-    if (art) {
-      expect(art.studentMean).toBeCloseTo(expectedMean, 5);
-    }
-  });
-
-  it("returns no outliers when all scores are equal", () => {
-    const scores = [
-      { subject: "Maths", normalizedScore: 0.75 },
-      { subject: "English", normalizedScore: 0.75 },
-      { subject: "Science", normalizedScore: 0.75 },
-      { subject: "History", normalizedScore: 0.75 },
-    ];
+  it("allows for a subject that was marked harder for everyone", () => {
+    // Raw Physics score is far below the student's other subjects, but the whole year group
+    // scored low in Physics, so the student sits in the same place as everywhere else.
+    const scores = [cohort("Maths", 0.7), cohort("English", 0.7), cohort("Science", 0.7), cohort("History", 0.7), cohort("Physics", 0.4, 0.3)];
     expect(computeOutliers(scores)).toEqual([]);
   });
 
-  it("returns no outliers when variation is below the stdDev floor", () => {
-    // All scores within 0.5 percentage points — stdDev < 0.01 → returns []
-    const scores = [
-      { subject: "Maths", normalizedScore: 0.750 },
-      { subject: "English", normalizedScore: 0.752 },
-      { subject: "Science", normalizedScore: 0.751 },
-      { subject: "History", normalizedScore: 0.749 },
-    ];
+  it("doesn't flag ordinary variation", () => {
+    const scores = [cohort("Maths", 0.72), cohort("English", 0.64), cohort("Science", 0.69), cohort("History", 0.6), cohort("Art", 0.66)];
     expect(computeOutliers(scores)).toEqual([]);
   });
 
-  it("returns both UNDER and OVER outliers when present", () => {
-    const scores = [
-      { subject: "Maths", normalizedScore: 0.99 },
-      { subject: "English", normalizedScore: 0.5 },
-      { subject: "Science", normalizedScore: 0.5 },
-      { subject: "History", normalizedScore: 0.5 },
-      { subject: "Art", normalizedScore: 0.01 },
-    ];
-    const outliers = computeOutliers(scores);
-    const directions = outliers.map((o) => o.direction);
-    expect(directions).toContain("UNDER");
-    expect(directions).toContain("OVER");
+  it("reports the student's own mean alongside each outlier", () => {
+    const scores = [cohort("Maths", 0.7), cohort("English", 0.7), cohort("Science", 0.7), cohort("History", 0.7), cohort("Art", 0.45)];
+    const art = computeOutliers(scores).find((o) => o.subject === "Art");
+    expect(art!.studentMean).toBeCloseTo((0.7 * 4 + 0.45) / 5, 5);
   });
 });
