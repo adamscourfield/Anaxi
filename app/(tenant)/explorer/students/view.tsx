@@ -16,6 +16,7 @@ import {
 } from "@/modules/authz";
 import { computeStudentRiskIndex } from "@/modules/analysis/studentRisk";
 import {
+  buildActiveChips,
   buildStudentsListUrl,
   countBands,
   DEFAULT_VIEW_MODE,
@@ -43,97 +44,6 @@ function firstParam(
 ): string {
   const v = params[key];
   return (Array.isArray(v) ? v[0] : v) ?? "";
-}
-
-function buildActiveChips(
-  basePath: string,
-  urlBase: StudentsUrlParams,
-  filters: StudentsListFilters,
-): { key: string; label: string; removeHref: string }[] {
-  const chips: { key: string; label: string; removeHref: string }[] = [];
-
-  const omit = (overrides: Partial<StudentsUrlParams>) =>
-    buildStudentsListUrl(basePath, { ...urlBase, ...overrides, page: undefined });
-
-  if (filters.studentSearch) {
-    chips.push({
-      key: "search",
-      label: `Search: ${filters.studentSearch}`,
-      removeHref: omit({ studentSearch: undefined }),
-    });
-  }
-  if (filters.yearGroup) {
-    chips.push({
-      key: "year",
-      label: `Year: ${filters.yearGroup}`,
-      removeHref: omit({ yearGroup: undefined }),
-    });
-  }
-  if (filters.band) {
-    chips.push({
-      key: "band",
-      label: `Band: ${filters.band}`,
-      removeHref: omit({ band: undefined }),
-    });
-  } else if (filters.view === "attention") {
-    chips.push({
-      key: "view",
-      label: "Needs attention",
-      removeHref: omit({ view: "all" }),
-    });
-  } else if (filters.view !== "all") {
-    chips.push({
-      key: "view",
-      label: `View: ${filters.view}`,
-      removeHref: omit({ view: DEFAULT_VIEW_MODE }),
-    });
-  }
-  if (filters.send === "true") {
-    chips.push({ key: "send", label: "SEN: Yes", removeHref: omit({ send: undefined }) });
-  }
-  if (filters.send === "false") {
-    chips.push({ key: "send", label: "SEN: No", removeHref: omit({ send: undefined }) });
-  }
-  if (filters.pp === "true") {
-    chips.push({ key: "pp", label: "PP: Yes", removeHref: omit({ pp: undefined }) });
-  }
-  if (filters.pp === "false") {
-    chips.push({ key: "pp", label: "PP: No", removeHref: omit({ pp: undefined }) });
-  }
-  if (filters.confidence === "HIGH") {
-    chips.push({ key: "confidence", label: "Confidence: High", removeHref: omit({ confidence: undefined }) });
-  }
-  if (filters.confidence === "LOW") {
-    chips.push({ key: "confidence", label: "Confidence: Low", removeHref: omit({ confidence: undefined }) });
-  }
-  if (filters.watchlistOnly) {
-    chips.push({
-      key: "watchlist",
-      label: "Watchlist only",
-      removeHref: omit({ watchlist: undefined }),
-    });
-  }
-  if (filters.attendanceBelow80) {
-    chips.push({
-      key: "att",
-      label: "Below 80% attendance",
-      removeHref: omit({ attendanceBelow: undefined }),
-    });
-  }
-  if (urlBase.status === "archived") {
-    chips.push({ key: "status", label: "Archived students", removeHref: omit({ status: undefined }) });
-  } else if (urlBase.status === "all") {
-    chips.push({ key: "status", label: "Active + archived", removeHref: omit({ status: undefined }) });
-  }
-  if (urlBase.windowDays !== 21) {
-    chips.push({
-      key: "window",
-      label: `${urlBase.windowDays}-day window`,
-      removeHref: omit({ windowDays: 21 }),
-    });
-  }
-
-  return chips;
 }
 
 export default async function StudentsPage({
@@ -335,7 +245,7 @@ export default async function StudentsPage({
       />
 
       <section className={styles.directory} aria-label="Student records">
-      <div className={styles.listHeading}><div><h2>{statusFilter === "archived" ? "Archived students" : effectiveView === "attention" ? "Students needing attention" : "All students"}</h2></div><span className={styles.resultCount}>{totalFiltered.toLocaleString("en-GB")} students</span></div>
+      <div className={styles.listHeading}><div><h2>{statusFilter === "archived" ? "Archived students" : effectiveView === "attention" ? "Students needing attention" : "All students"}</h2></div><span className={styles.resultCount}>{totalFiltered.toLocaleString("en-GB")} {totalFiltered === 1 ? "student" : "students"}</span></div>
 
       <section className={styles.filters} aria-label="Find students">
       <StudentsBandChips
@@ -390,7 +300,8 @@ export default async function StudentsPage({
       </section>
 
       <p className="text-[0.75rem] text-muted">
-        {windowDays}-day window · Updated {computedAt.toLocaleDateString("en-GB")}
+        Based on the last {windowDays} days. Worked out{" "}
+        {computedAt.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Europe/London" })}.
       </p>
     </div>
   );

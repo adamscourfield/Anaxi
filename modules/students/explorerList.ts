@@ -99,8 +99,12 @@ export function filterStudentRows(
     result = result.filter((r) => r.yearGroup === filters.yearGroup);
   }
   if (filters.studentSearch) {
-    const q = filters.studentSearch.toLowerCase();
-    result = result.filter((r) => (r.studentName ?? "").toLowerCase().includes(q));
+    // Every word must appear somewhere in the name, in any order: "adams aiden" finds Aiden Adams.
+    const words = filters.studentSearch.toLowerCase().split(/\s+/).filter(Boolean);
+    result = result.filter((r) => {
+      const name = (r.studentName ?? "").toLowerCase();
+      return words.every((w) => name.includes(w));
+    });
   }
   if (filters.send === "true") result = result.filter((r) => r.sendFlag);
   if (filters.send === "false") result = result.filter((r) => !r.sendFlag);
@@ -227,4 +231,42 @@ export function formatDelta(value: number | null): string {
   if (value === null) return "—";
   if (value > 0) return `+${value}`;
   return String(value);
+}
+
+export type StudentsActiveChip = { key: string; label: string; removeHref: string };
+
+/** Removable chips for every filter in play, shared by the school directory and My students. */
+export function buildActiveChips(
+  basePath: string,
+  urlBase: StudentsUrlParams,
+  filters: StudentsListFilters,
+): StudentsActiveChip[] {
+  const chips: StudentsActiveChip[] = [];
+  const omit = (overrides: Partial<StudentsUrlParams>) =>
+    buildStudentsListUrl(basePath, { ...urlBase, ...overrides, page: undefined });
+
+  if (filters.studentSearch) chips.push({ key: "search", label: `“${filters.studentSearch}”`, removeHref: omit({ studentSearch: undefined }) });
+  if (filters.yearGroup) chips.push({ key: "year", label: formatYearChip(filters.yearGroup), removeHref: omit({ yearGroup: undefined }) });
+  if (filters.band && filters.band in BAND_LABELS) {
+    chips.push({ key: "band", label: BAND_LABELS[filters.band as RiskBand], removeHref: omit({ band: undefined, view: undefined }) });
+  } else if (filters.view === "attention") {
+    chips.push({ key: "view", label: "Needs attention", removeHref: omit({ view: "all" }) });
+  }
+  if (filters.send === "true") chips.push({ key: "send", label: "SEN", removeHref: omit({ send: undefined }) });
+  if (filters.send === "false") chips.push({ key: "send", label: "Not SEN", removeHref: omit({ send: undefined }) });
+  if (filters.pp === "true") chips.push({ key: "pp", label: "Pupil premium", removeHref: omit({ pp: undefined }) });
+  if (filters.pp === "false") chips.push({ key: "pp", label: "Not pupil premium", removeHref: omit({ pp: undefined }) });
+  if (filters.confidence === "HIGH") chips.push({ key: "confidence", label: "Enough data", removeHref: omit({ confidence: undefined }) });
+  if (filters.confidence === "LOW") chips.push({ key: "confidence", label: "Limited data", removeHref: omit({ confidence: undefined }) });
+  if (filters.watchlistOnly) chips.push({ key: "watchlist", label: "Your watchlist", removeHref: omit({ watchlist: undefined }) });
+  if (filters.attendanceBelow80) chips.push({ key: "att", label: "Attendance below 80%", removeHref: omit({ attendanceBelow: undefined }) });
+  if (urlBase.status === "archived") chips.push({ key: "status", label: "Archived", removeHref: omit({ status: undefined }) });
+  else if (urlBase.status === "all") chips.push({ key: "status", label: "Active and archived", removeHref: omit({ status: undefined }) });
+  if (urlBase.windowDays !== 21) chips.push({ key: "window", label: `Last ${urlBase.windowDays} days`, removeHref: omit({ windowDays: 21 }) });
+  return chips;
+}
+
+function formatYearChip(value: string): string {
+  const m = /^Y?(\d{1,2})$/i.exec(value.trim());
+  return m ? `Year ${Number(m[1])}` : value;
 }

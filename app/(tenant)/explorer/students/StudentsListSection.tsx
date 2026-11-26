@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "@/components/toast-provider";
 import type { StudentRiskRow, RiskBand } from "@/modules/analysis/studentRisk";
 import {
   BAND_LABELS,
@@ -67,6 +69,7 @@ export function StudentsListSection({
   canManageStudents = false,
   showStatusColumn = false,
 }: Props) {
+  const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
 
@@ -100,8 +103,19 @@ export function StudentsListSection({
   const runBulk = (add: boolean) => {
     const ids = [...selected];
     startTransition(async () => {
-      await bulkToggleWatchlist(ids, add);
-      setSelected(new Set());
+      try {
+        const { updated } = await bulkToggleWatchlist(ids, add);
+        setSelected(new Set());
+        router.refresh();
+        toast(
+          add
+            ? `Added ${updated} student${updated === 1 ? "" : "s"} to your watchlist`
+            : `Removed ${updated} student${updated === 1 ? "" : "s"} from your watchlist`,
+          "success",
+        );
+      } catch {
+        toast("Couldn't update your watchlist. Try again.", "error");
+      }
     });
   };
 
@@ -111,8 +125,14 @@ export function StudentsListSection({
       .map((r) => r.studentId);
     if (ids.length === 0) return;
     startTransition(async () => {
-      await bulkSetStudentStatus(ids, status);
-      setSelected(new Set());
+      try {
+        const { updated } = await bulkSetStudentStatus(ids, status);
+        setSelected(new Set());
+        router.refresh();
+        toast(`${status === "ARCHIVED" ? "Archived" : "Restored"} ${updated} student${updated === 1 ? "" : "s"}`, "success");
+      } catch {
+        toast("Couldn't change their status. Try again.", "error");
+      }
     });
   };
 
@@ -156,7 +176,7 @@ export function StudentsListSection({
               onClick={() => runBulkStatus("ACTIVE")}
               className="btn-filter-secondary text-[0.8125rem]"
             >
-              Unarchive {selectedArchivedCount === selected.size ? "selected" : `${selectedArchivedCount} archived`}
+              Restore {selectedArchivedCount === selected.size ? "selected" : `${selectedArchivedCount} archived`}
             </button>
           )}
           <button
@@ -188,12 +208,12 @@ export function StudentsListSection({
                   </div>
                 </div>
                 {row.status === "ARCHIVED" ? (
-                  <span className="shrink-0 rounded-md bg-surface-container-high px-2 py-0.5 text-[10px] font-bold uppercase text-muted">
+                  <span className="shrink-0 rounded-md bg-surface-container-high px-2 py-0.5 text-[11px] font-semibold text-muted">
                     Archived
                   </span>
                 ) : (
                   <span
-                    className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${bandPillClass(row.band)}`}
+                    className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold ${bandPillClass(row.band)}`}
                   >
                     {BAND_LABELS[row.band]}
                   </span>
@@ -212,7 +232,7 @@ export function StudentsListSection({
                 </div>
               )}
               {row.confidence === "LOW" && (
-                <p className="mt-1 text-[10px] font-medium text-risk-priority-text">Low confidence</p>
+                <p className="mt-1 text-[11px] text-muted">Limited data for this period</p>
               )}
               <div className="mt-3 flex flex-wrap gap-3 text-xs">
                 <span className="tabular-nums">
@@ -224,10 +244,10 @@ export function StudentsListSection({
                 {showBehaviourColumns && (
                   <>
                     <span className={deltaClass(row.detentionsDelta, true)}>
-                      Det Δ {formatDelta(row.detentionsDelta)}
+                      Detentions {formatDelta(row.detentionsDelta)}
                     </span>
                     <span className={deltaClass(row.onCallsDelta, true)}>
-                      On-call Δ {formatDelta(row.onCallsDelta)}
+                      On calls {formatDelta(row.onCallsDelta)}
                     </span>
                   </>
                 )}
@@ -267,9 +287,9 @@ export function StudentsListSection({
               <th className="px-4 py-3">Attendance</th>
               {showBehaviourColumns && (
                 <>
-                  <th className="px-4 py-3 text-right">Det Δ</th>
-                  <th className="px-4 py-3 text-right">On-call Δ</th>
-                  <th className="px-4 py-3 text-right">Susp Δ</th>
+                  <th className="px-4 py-3 text-right" title="Change in detentions against the previous period">Detentions</th>
+                  <th className="px-4 py-3 text-right" title="Change in on-call requests against the previous period">On calls</th>
+                  <th className="px-4 py-3 text-right" title="Change in suspensions against the previous period">Suspensions</th>
                 </>
               )}
             </tr>
@@ -306,7 +326,7 @@ export function StudentsListSection({
                   {showStatusColumn && (
                     <td className="px-4 py-4">
                       <span
-                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${
                           row.status === "ARCHIVED"
                             ? "bg-surface-container-high text-muted"
                             : "bg-[var(--pill-success-bg)] text-[var(--pill-success-text)]"
@@ -328,11 +348,14 @@ export function StudentsListSection({
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs text-muted">No drivers</span>
+                        <span className="text-xs text-muted">Nothing flagged</span>
                       )}
                       {row.confidence === "LOW" && (
-                        <span className="rounded-md bg-risk-priority-bg px-2 py-0.5 text-[10px] font-semibold text-risk-priority-text">
-                          Low conf.
+                        <span
+                          title="Not much behaviour or attendance data for this period, so treat the band with care."
+                          className="rounded-md bg-surface-container-low px-2 py-0.5 text-[10px] font-semibold text-muted"
+                        >
+                          Limited data
                         </span>
                       )}
                     </div>
@@ -359,7 +382,7 @@ export function StudentsListSection({
                       <span className="text-xs text-muted">Not scored</span>
                     ) : (
                       <span
-                        className={`inline-flex items-center rounded-md px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${bandPillClass(row.band)}`}
+                        className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-[12px] font-medium ${bandPillClass(row.band)}`}
                       >
                         {BAND_LABELS[row.band]}
                       </span>
@@ -404,15 +427,7 @@ export function StudentsListSection({
         </table>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 px-5 py-3.5">
-        <p className="text-[0.8125rem] text-muted">
-          Showing{" "}
-          <span className="font-semibold text-text">
-            {totalFiltered > 0 ? pageStart + 1 : 0}-{pageEnd}
-          </span>{" "}
-          of <span className="font-semibold text-text">{totalFiltered.toLocaleString()}</span>{" "}
-          students
-        </p>
+      <div className="border-t border-border/20 px-5 py-3.5">
         {pagination}
       </div>
     </div>

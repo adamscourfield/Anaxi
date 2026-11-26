@@ -8,11 +8,13 @@ import { parseWindow } from "@/lib/explorerUtils";
 import { computeStudentRiskIndex } from "@/modules/analysis/studentRisk";
 import { getTeacherStudentIds } from "@/modules/students/teacherScope";
 import {
+  buildActiveChips,
   buildStudentsListUrl,
   countBands,
   DEFAULT_VIEW_MODE,
   filterStudentRows,
   getPageSize,
+  parseSortMode,
   parseViewMode,
   type StudentsListFilters,
   type StudentsUrlParams,
@@ -23,6 +25,8 @@ import { StudentsBandChips } from "@/app/(tenant)/explorer/students/StudentsBand
 import { StudentsCriticalBanner } from "@/app/(tenant)/explorer/students/StudentsCriticalBanner";
 import { StudentsListSection } from "@/app/(tenant)/explorer/students/StudentsListSection";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { prisma } from "@/lib/prisma";
+import { studentAvatarUrlFor } from "@/lib/avatarUpload";
 
 const BASE_PATH = "/students/my";
 
@@ -32,52 +36,6 @@ function firstParam(
 ): string {
   const v = params[key];
   return (Array.isArray(v) ? v[0] : v) ?? "";
-}
-
-function buildActiveChips(
-  basePath: string,
-  urlBase: StudentsUrlParams,
-  filters: StudentsListFilters,
-): { key: string; label: string; removeHref: string }[] {
-  const chips: { key: string; label: string; removeHref: string }[] = [];
-  const omit = (overrides: Partial<StudentsUrlParams>) =>
-    buildStudentsListUrl(basePath, { ...urlBase, ...overrides, page: undefined });
-
-  if (filters.studentSearch) {
-    chips.push({
-      key: "search",
-      label: `Search: ${filters.studentSearch}`,
-      removeHref: omit({ studentSearch: undefined }),
-    });
-  }
-  if (filters.yearGroup) {
-    chips.push({
-      key: "year",
-      label: `Year: ${filters.yearGroup}`,
-      removeHref: omit({ yearGroup: undefined }),
-    });
-  }
-  if (filters.band) {
-    chips.push({
-      key: "band",
-      label: `Band: ${filters.band}`,
-      removeHref: omit({ band: undefined }),
-    });
-  } else if (filters.view === "attention") {
-    chips.push({
-      key: "view",
-      label: "Needs attention",
-      removeHref: omit({ view: "all" }),
-    });
-  }
-  if (filters.watchlistOnly) {
-    chips.push({
-      key: "watchlist",
-      label: "Watchlist only",
-      removeHref: omit({ watchlist: undefined }),
-    });
-  }
-  return chips;
 }
 
 export default async function MyStudentsPage({
@@ -100,6 +58,8 @@ export default async function MyStudentsPage({
   const sendFilter = firstParam(params, "send");
   const ppFilter = firstParam(params, "pp");
   const watchlistFilter = firstParam(params, "watchlist") === "1";
+  const confidenceFilter = firstParam(params, "confidence");
+  const sortMode = parseSortMode(firstParam(params, "sort"));
   const attendanceBelow = firstParam(params, "attendanceBelow") === "1";
   const viewMode = parseViewMode(firstParam(params, "view"), bandFilter);
   const currentPage = Math.max(1, Number(firstParam(params, "page")) || 1);
@@ -142,9 +102,10 @@ export default async function MyStudentsPage({
     studentSearch,
     send: sendFilter,
     pp: ppFilter,
-    confidence: "",
+    confidence: confidenceFilter,
     watchlistOnly: watchlistFilter,
     attendanceBelow80: attendanceBelow,
+    sort: sortMode,
   };
 
   const rows = filterStudentRows(allRows, filters);
@@ -160,6 +121,8 @@ export default async function MyStudentsPage({
     pp: ppFilter || undefined,
     watchlist: watchlistFilter ? "1" : undefined,
     attendanceBelow: attendanceBelow ? "1" : undefined,
+    confidence: confidenceFilter || undefined,
+    sort: sortMode,
     scope: "my",
   };
 
@@ -172,7 +135,17 @@ export default async function MyStudentsPage({
   const safePage = Math.min(currentPage, totalPages);
   const pageStart = (safePage - 1) * perPage;
   const pageEnd = Math.min(pageStart + perPage, totalFiltered);
-  const pageRows = rows.slice(pageStart, pageEnd);
+  const pageRowsRaw = rows.slice(pageStart, pageEnd);
+  const avatarRows = pageRowsRaw.length
+    ? await (prisma as any).student.findMany({
+        where: { tenantId: user.tenantId, id: { in: pageRowsRaw.map((row) => row.studentId) } },
+        select: { id: true, avatarUpdatedAt: true },
+      })
+    : [];
+  const avatarById = new Map<string, string | null>(
+    avatarRows.map((s: { id: string; avatarUpdatedAt: Date | null }) => [s.id, studentAvatarUrlFor(s.id, s.avatarUpdatedAt)]),
+  );
+  const pageRows = pageRowsRaw.map((row) => ({ ...row, avatarUrl: avatarById.get(row.studentId) ?? null }));
 
   // Average only over students who have attendance recorded. Counting the rest as 0% (and dividing by
   // everyone) dragged the figure down whenever data was incomplete, and showed "0.0%" when there was none.
@@ -240,7 +213,7 @@ export default async function MyStudentsPage({
           <div>
             <h2>{viewMode === "attention" ? "Students needing attention" : "Students in your classes"}</h2>
           </div>
-          <span className={styles.resultCount}>{totalFiltered.toLocaleString("en-GB")} students</span>
+          <span className={styles.resultCount}>{totalFiltered.toLocaleString("en-GB")} {totalFiltered === 1 ? "student" : "students"}</span>
         </div>
 
         <section className={styles.filters} aria-label="Find students">

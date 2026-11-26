@@ -80,16 +80,16 @@ export function StudentsKpiStrip({
   return (
     <div className="students-summary grid grid-cols-2 gap-4 lg:grid-cols-4">
       <KpiCard
-        label="Cohort"
+        label="Students"
         value={cohortCount.toLocaleString()}
         href={allHref}
-        meta={`${windowDays}-day analysis window`}
+        meta={`Active on roll. Risk is based on the last ${windowDays} days.`}
       />
       <KpiCard
-        label="Avg attendance"
+        label="Average attendance"
         value={avgAttendance === null ? "—" : `${avgAttendance.toFixed(1)}%`}
         href={allHref}
-        meta={avgAttendance === null ? "No attendance recorded in this window" : "Mean across students with recorded attendance"}
+        meta={avgAttendance === null ? "No attendance imported for this period" : "Across students with attendance recorded"}
       />
       <KpiCard
         label="Needs attention"
@@ -101,21 +101,22 @@ export function StudentsKpiStrip({
         meta={
           priorityCount > 0 ? (
             <>
-              Students in urgent or priority bands ·{" "}
+              Urgent or priority.{" "}
               <Link href={attentionHref} className="font-medium text-accent hover:underline">
-                Review queue
+                See who
               </Link>
             </>
           ) : (
-            "No students in urgent or priority bands"
+            "Nobody is urgent or priority"
           )
         }
       />
       <KpiCard
         label="Below 80% attendance"
-        value={String(lowAttendanceCount)}
+        // With no attendance imported, 0 would read as "everyone is fine".
+        value={avgAttendance === null ? "—" : String(lowAttendanceCount)}
         href={lowAttHref}
-        meta="With recorded attendance in window"
+        meta={avgAttendance === null ? "Shows once attendance is imported" : "Students with attendance recorded"}
       />
     </div>
   );

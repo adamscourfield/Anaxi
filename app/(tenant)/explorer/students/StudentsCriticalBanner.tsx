@@ -39,9 +39,8 @@ export function StudentsCriticalBanner({
             {priorityCount} student{priorityCount !== 1 ? "s" : ""} need attention
           </p>
           <p className="mt-0.5 text-[0.8125rem] text-muted">
-            Urgent or priority pastoral risk in the last {windowDays} days. Data updated{" "}
-            {computedAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} on{" "}
-            {computedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}.
+            Urgent or priority over the last {windowDays} days. Worked out{" "}
+            {computedAt.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Europe/London" })}.
           </p>
         </div>
       </div>
@@ -49,7 +48,7 @@ export function StudentsCriticalBanner({
         href={reviewHref}
         className="anx-btn-pill-primary shrink-0 self-start calm-transition sm:self-center"
       >
-        Review queue
+        See who
       </Link>
     </div>
   );
