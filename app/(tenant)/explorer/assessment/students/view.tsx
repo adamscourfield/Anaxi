@@ -1,68 +1,53 @@
-import styles from "./students.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { TablePagination } from "@/components/ui/table-pagination";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { buildViewerContext } from "@/lib/viewerContext";
-import { PageHeader } from "@/components/ui/page-header";
 import { Avatar } from "@/components/ui/avatar";
-import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import {
-  canViewExplorer,
-  canViewAssessmentExplorer,
-  canExportExplorer,
-} from "@/modules/authz";
+  AttainmentEvidenceShell,
+  EvidenceEmpty,
+  EvidencePagination,
+  evidenceHref,
+  evidenceStyles as s,
+} from "@/components/insights/attainment-evidence";
+import { canViewExplorer, canViewAssessmentExplorer, canExportExplorer } from "@/modules/authz";
 import {
   computeAssessmentAnalysis,
   type AssessmentStudentRow,
   type MovementLabel,
 } from "@/modules/analysis/assessmentAnalysis";
-import { parseWindow } from "@/lib/explorerUtils";
-import { formatYearGroup } from "@/lib/yearGroup";
+import { resolveAttainmentCycle } from "@/modules/analysis/attainmentCycle";
+import { average, formatIndex } from "@/modules/analysis/attainmentFormat";
+import { compareYearGroups, formatYearGroup } from "@/lib/yearGroup";
 
-/* ─── Constants ─────────────────────────────────────────────────────────────── */
+const PER_PAGE = 25;
 
-const PER_PAGE = 20;
+const MOVEMENT: Record<MovementLabel, { label: string; className: string }> = {
+  IMPROVING: { label: "Improving", className: s.positive },
+  DECLINING: { label: "Declining", className: s.concern },
+  STABLE: { label: "Stable", className: s.muted },
+  NO_PRIOR: { label: "No previous result", className: s.muted },
+};
 
-function fmt(n: number | null): string {
-  if (n === null) return "—";
-  return (n * 100).toFixed(1) + "%";
-}
-
-function movementLabel(m: MovementLabel): { label: string; cls: string } {
-  switch (m) {
-    case "IMPROVING": return { label: "↑ Improving", cls: "text-[var(--pill-success-text)]" };
-    case "DECLINING": return { label: "↓ Declining", cls: "text-[var(--error)]" };
-    case "STABLE": return { label: "→ Stable", cls: "text-muted" };
-    case "NO_PRIOR": return { label: "No prior", cls: "text-muted" };
-  }
-}
-
-function overallMovementLabel(row: AssessmentStudentRow): MovementLabel {
-  const movements = row.subjects.map((s) => s.movement).filter((m): m is number => m !== null);
-  if (movements.length === 0) return "NO_PRIOR";
-  const avg = movements.reduce((a, b) => a + b, 0) / movements.length;
+/** Overall direction across a student's subjects (average change, ±2 index points counts as stable). */
+function overallMovement(row: AssessmentStudentRow): MovementLabel {
+  const avg = average(row.subjects.map((sub) => sub.movement));
+  if (avg === null) return "NO_PRIOR";
   if (avg > 0.02) return "IMPROVING";
   if (avg < -0.02) return "DECLINING";
   return "STABLE";
 }
 
-function averageScaleScore(row: AssessmentStudentRow): string {
-  const scores = [row.ks2MathsScaledScore, row.ks2ReadingScaledScore]
-    .filter((score): score is number => score != null);
-  if (scores.length === 0) return "—";
-  const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-  return Number.isInteger(average) ? String(average) : average.toFixed(1);
+function ks2Average(row: AssessmentStudentRow): string {
+  const avg = average([row.ks2MathsScaledScore, row.ks2ReadingScaledScore]);
+  if (avg === null) return "—";
+  return Number.isInteger(avg) ? String(avg) : avg.toFixed(1);
 }
 
-function getInitials(name: string): string {
-  const parts = name.trim().split(" ").filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0]! + parts[parts.length - 1][0]!).toUpperCase();
-  return name.substring(0, 2).toUpperCase();
+function one(value: string | string[] | undefined): string {
+  return (Array.isArray(value) ? value[0] : value) ?? "";
 }
-
-/* ─── Page ───────────────────────────────────────────────────────────────────── */
 
 export default async function AssessmentStudentsPage({
   searchParams,
@@ -72,288 +57,186 @@ export default async function AssessmentStudentsPage({
   const params = await searchParams;
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
+  const viewer = await buildViewerContext(user);
+  if (!canViewExplorer(viewer) || !canViewAssessmentExplorer(viewer)) notFound();
 
-  const viewerContext = await buildViewerContext(user);
+  const search = one(params.q).trim();
+  const yearGroup = one(params.yearGroup);
+  const movement = one(params.movement);
+  const send = one(params.send) === "1";
+  const pp = one(params.pp) === "1";
 
-  if (!canViewExplorer(viewerContext) || !canViewAssessmentExplorer(viewerContext)) notFound();
+  const { cycles, selected } = await resolveAttainmentCycle(user.tenantId, one(params.cycle));
+  const analysis = selected ? await computeAssessmentAnalysis(user.tenantId, { cycleId: selected.id }) : null;
+  const students = analysis?.students ?? [];
 
-  const windowDays = parseWindow(
-    Array.isArray(params.windowDays) ? params.windowDays[0] : params.windowDays,
-  );
-  const cycleId = Array.isArray(params.cycle) ? params.cycle[0] : params.cycle;
-  const search = (Array.isArray(params.q) ? params.q[0] : params.q) ?? "";
-  const yearGroupFilter = (Array.isArray(params.yearGroup) ? params.yearGroup[0] : params.yearGroup) ?? "";
-  const movementFilter = (Array.isArray(params.movement) ? params.movement[0] : params.movement) ?? "";
-  const sendFilter = (Array.isArray(params.send) ? params.send[0] : params.send) ?? "";
-  const ppFilter = (Array.isArray(params.pp) ? params.pp[0] : params.pp) ?? "";
-  const currentPage = Math.max(1, Number(Array.isArray(params.page) ? params.page[0] : params.page) || 1);
+  const words = search.toLowerCase().split(/\s+/).filter(Boolean);
+  const rows = students
+    .filter((r) => words.every((w) => r.studentName.toLowerCase().includes(w)))
+    .filter((r) => !yearGroup || r.yearGroup === yearGroup)
+    .filter((r) => !movement || overallMovement(r) === movement)
+    .filter((r) => !send || r.sendFlag)
+    .filter((r) => !pp || r.ppFlag)
+    .sort((a, b) => {
+      // Largest single-subject drop first, then higher overall mean.
+      const worstA = Math.min(0, ...a.subjects.map((x) => x.movement ?? 0));
+      const worstB = Math.min(0, ...b.subjects.map((x) => x.movement ?? 0));
+      if (Math.abs(worstA - worstB) > 0.001) return worstA - worstB;
+      return (b.overallMean ?? 0) - (a.overallMean ?? 0);
+    });
 
-  const assessment = await computeAssessmentAnalysis(
-    user.tenantId,
-    cycleId ? { cycleId } : undefined,
-  );
+  const yearGroups = Array.from(new Set(students.map((r) => r.yearGroup).filter((y): y is string => Boolean(y)))).sort(compareYearGroups);
+  const pageCount = Math.max(1, Math.ceil(rows.length / PER_PAGE));
+  const page = Math.min(pageCount, Math.max(1, Number.parseInt(one(params.page), 10) || 1));
+  const pageRows = rows.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  const showExport = canExportExplorer(viewerContext);
+  const filters = {
+    cycle: selected?.id,
+    q: search || undefined,
+    yearGroup: yearGroup || undefined,
+    movement: movement || undefined,
+    send: send ? "1" : undefined,
+    pp: pp ? "1" : undefined,
+  };
+  const pageHref = (p: number) => evidenceHref("students", { ...filters, page: p > 1 ? String(p) : undefined });
+  const from = encodeURIComponent(pageHref(page));
+  const hasFilters = Boolean(search || yearGroup || movement || send || pp);
 
-  // ── Apply filters ───────────────────────────────────────────────────────────
-
-  let rows = assessment.students;
-
-  if (search) {
-    const q = search.toLowerCase();
-    rows = rows.filter((r) => r.studentName.toLowerCase().includes(q));
-  }
-  if (yearGroupFilter) {
-    rows = rows.filter((r) => r.yearGroup === yearGroupFilter);
-  }
-  if (movementFilter) {
-    rows = rows.filter((r) => overallMovementLabel(r) === movementFilter);
-  }
-  if (sendFilter === "1") {
-    rows = rows.filter((r) => r.sendFlag);
-  }
-  if (ppFilter === "1") {
-    rows = rows.filter((r) => r.ppFlag);
-  }
-
-  // Sort: declining first (by worst movement), then by overall mean descending
-  rows = [...rows].sort((a, b) => {
-    const movA = a.subjects.map((s) => s.movement ?? 0);
-    const movB = b.subjects.map((s) => s.movement ?? 0);
-    const worstA = movA.length > 0 ? Math.min(...movA) : 0;
-    const worstB = movB.length > 0 ? Math.min(...movB) : 0;
-    if (Math.abs(worstA - worstB) > 0.001) return worstA - worstB;
-    return (b.overallMean ?? 0) - (a.overallMean ?? 0);
-  });
-
-  const yearGroups = Array.from(
-    new Set(assessment.students.map((r) => r.yearGroup).filter(Boolean)),
-  ).sort() as string[];
-
-  // ── Pagination ──────────────────────────────────────────────────────────────
-
-  const totalFiltered = rows.length;
-  const totalPages = Math.max(1, Math.ceil(totalFiltered / PER_PAGE));
-  const safePage = Math.min(currentPage, totalPages);
-  const pageStart = (safePage - 1) * PER_PAGE;
-  const pageRows = rows.slice(pageStart, pageStart + PER_PAGE);
-
-  function pageUrl(p: number): string {
-    const merged: Record<string, string> = {
-      windowDays: String(windowDays),
-      ...(cycleId ? { cycle: cycleId } : {}),
-      ...(search ? { q: search } : {}),
-      ...(yearGroupFilter ? { yearGroup: yearGroupFilter } : {}),
-      ...(movementFilter ? { movement: movementFilter } : {}),
-      ...(sendFilter ? { send: sendFilter } : {}),
-      ...(ppFilter ? { pp: ppFilter } : {}),
-      ...(p > 1 ? { page: String(p) } : {}),
-    };
-    return `/insights/attainment/student-evidence?${new URLSearchParams(merged)}`;
-  }
-
-  const computedAtStr = assessment.computedAt.toLocaleDateString("en-GB");
+  const declining = students.filter((r) => overallMovement(r) === "DECLINING");
 
   return (
-    <div className={`${styles.page} space-y-8`}>
-      <ExplorerBackLink />
-
-      <PageHeader
-        variant="ledger"
-        eyebrow="Explorer · Assessment"
-        title="Students"
-        subtitle="Attainment, movement from prior, and cross-subject outliers for every tracked student."
-        actions={
-          showExport ? (
-            <form action="/api/explorer/export" method="POST" className="inline">
-              <input type="hidden" name="view" value="ASSESSMENT_STUDENTS" />
-              <input type="hidden" name="windowDays" value={String(windowDays)} />
-              {cycleId && <input type="hidden" name="cycle" value={cycleId} />}
-              <button type="submit" className="anx-btn-pill-ghost calm-transition font-semibold">
-                <svg className="anx-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-                  <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
-                  <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
-                </svg>
-                Export CSV
-              </button>
-            </form>
-          ) : undefined
-        }
-      />
-
-      {/* ── KPI cards ───────────────────────────────────────────────────────── */}
-      <div className={styles.metrics}>
-          <div className="explorer-kpi-tile p-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Tracked</p>
-            <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-text">{assessment.students.length}</p>
-          </div>
-          <div className="explorer-kpi-tile p-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Declining</p>
-            <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-[var(--error)]">
-              {assessment.students.filter((s) => overallMovementLabel(s) === "DECLINING").length}
-            </p>
-          </div>
-          <div className="explorer-kpi-tile p-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">With outliers</p>
-            <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-text">
-              {assessment.students.filter((s) => s.outliers.length > 0).length}
-            </p>
-          </div>
-          <div className="explorer-kpi-tile p-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">SEND declining</p>
-            <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-text">
-              {assessment.students.filter((s) => s.sendFlag && overallMovementLabel(s) === "DECLINING").length}
-            </p>
-          </div>
-      </div>
-
-      {/* ── Filters ─────────────────────────────────────────────────────────── */}
-      <form method="GET" className="flex flex-wrap items-center gap-3">
-        <input type="hidden" name="windowDays" value={String(windowDays)} />
-        {cycleId && <input type="hidden" name="cycle" value={cycleId} />}
-        <input
-          aria-label="Search students"
-          type="search"
-          name="q"
-          defaultValue={search}
-          placeholder="Search student…"
-          className="h-9 min-w-[160px] rounded-lg border border-border bg-white px-3 text-[13px] text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
+    <AttainmentEvidenceShell
+      page="students"
+      title="Student results"
+      subtitle="Every student with results in this cycle: their mean, how they've moved since the previous result point, and subjects well above or below their own average."
+      cycles={cycles}
+      selected={selected}
+      cycleHref={(id) => evidenceHref("students", { ...filters, cycle: id })}
+      exportView={canExportExplorer(viewer) ? "ASSESSMENT_STUDENTS" : undefined}
+    >
+      {!selected || !students.length ? (
+        <EvidenceEmpty
+          title="No results to show"
+          body={selected ? "This cycle has no validated, published or locked results yet." : "Set up an assessment cycle to see student results."}
         />
-        <select aria-label="Year group" name="yearGroup" defaultValue={yearGroupFilter} className="h-9 rounded-lg border border-border bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-accent/40">
-          <option value="">All year groups</option>
-          {yearGroups.map((yg) => <option key={yg} value={yg}>{formatYearGroup(yg)}</option>)}
-        </select>
-        <select aria-label="Movement" name="movement" defaultValue={movementFilter} className="h-9 rounded-lg border border-border bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-accent/40">
-          <option value="">All movement</option>
-          <option value="DECLINING">Declining</option>
-          <option value="STABLE">Stable</option>
-          <option value="IMPROVING">Improving</option>
-          <option value="NO_PRIOR">No prior</option>
-        </select>
-        <label className="flex items-center gap-1.5 text-[12px] text-muted">
-          <input type="checkbox" name="send" value="1" defaultChecked={sendFilter === "1"} className="rounded" />
-          SEND only
-        </label>
-        <label className="flex items-center gap-1.5 text-[12px] text-muted">
-          <input type="checkbox" name="pp" value="1" defaultChecked={ppFilter === "1"} className="rounded" />
-          PP only
-        </label>
-        <button type="submit" className="h-9 rounded-lg bg-accent px-4 text-[13px] font-semibold text-on-primary calm-transition hover:opacity-90">
-          Filter
-        </button>
-        {(search || yearGroupFilter || movementFilter || sendFilter || ppFilter) && (
-          <Link href={`/insights/attainment/student-evidence?windowDays=${windowDays}${cycleId ? `&cycle=${cycleId}` : ""}`} className="text-[12px] text-muted hover:text-text">
-            Clear filters
-          </Link>
-        )}
-      </form>
-
-      {/* ── Table ───────────────────────────────────────────────────────────── */}
-      {pageRows.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
-          <p className="text-[0.875rem] font-semibold text-text">
-            {assessment.students.length === 0 ? "No assessment data available" : "No matches"}
-          </p>
-          <p className="mt-1 text-[0.8125rem] text-muted">
-            {assessment.students.length === 0 ? "Ensure assessment cycles have published results." : "Try adjusting your filters."}
-          </p>
-        </div>
       ) : (
-        <div className="table-shell">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="table-head-row text-left">
-                  <th className="px-5 py-3">Student</th>
-                  <th className="px-4 py-3">Year</th>
-                  <th className="px-4 py-3">Flags</th>
-                  <th className="px-4 py-3" title="Average of available KS2 maths and reading scaled scores">Average scale score</th>
-                  <th className="px-4 py-3">Overall mean</th>
-                  <th className="px-4 py-3">Movement</th>
-                  <th className="px-4 py-3">Subjects</th>
-                  <th className="px-4 py-3">Outliers</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageRows.map((row) => {
-                  const mvLabel = overallMovementLabel(row);
-                  const mv = movementLabel(mvLabel);
-                  const uniqueSubjects = Array.from(new Set(row.subjects.map((s) => s.subject)));
-                  const hasOutliers = row.outliers.length > 0;
-                  const underOutliers = row.outliers.filter((o) => o.direction === "UNDER");
-
-                  return (
-                    <tr key={row.studentId} className={`group table-row calm-transition ${mvLabel === "DECLINING" ? "bg-[color-mix(in_srgb,var(--scale-limited-light,#FEE2E2)_12%,transparent)]" : ""}`}>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <Avatar name={row.studentName} studentId={row.studentId} size="md" tone="muted" />
-                          <span className="font-medium text-text">{row.studentName}</span>
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3.5 text-muted">{formatYearGroup(row.yearGroup)}</td>
-                      <td className="px-4 py-3.5">
-                        <div className="flex gap-1">
-                          {row.sendFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[var(--pill-warning-bg)] text-[var(--pill-warning-text)]">SEND</span>}
-                          {row.ppFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[color-mix(in_srgb,#8B5CF6_15%,transparent)] text-[#6D28D9]">PP</span>}
-                          {!row.sendFlag && !row.ppFlag && <span className="text-xs text-muted">—</span>}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 tabular-nums font-semibold text-text">
-                        {averageScaleScore(row)}
-                      </td>
-                      <td className="px-4 py-3.5 tabular-nums font-semibold text-text">
-                        {fmt(row.overallMean)}
-                      </td>
-                      <td className={`px-4 py-3.5 text-[12px] font-medium ${mv.cls}`}>
-                        {mv.label}
-                      </td>
-                      <td className="px-4 py-3.5 text-[12px] text-muted">
-                        {uniqueSubjects.length > 0
-                          ? uniqueSubjects.slice(0, 3).join(", ") + (uniqueSubjects.length > 3 ? ` +${uniqueSubjects.length - 3}` : "")
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3.5">
-                        {hasOutliers ? (
-                          <div className="flex flex-wrap gap-1">
-                            {underOutliers.map((o) => (
-                              <span key={o.subject} title={`z=${o.zScore.toFixed(2)}`} className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[var(--pill-error-bg)] text-[var(--pill-error-text)]">
-                                ↓ {o.subject}
-                              </span>
-                            ))}
-                            {row.outliers
-                              .filter((o) => o.direction === "OVER")
-                              .map((o) => (
-                                <span key={o.subject} title={`z=${o.zScore.toFixed(2)}`} className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[var(--pill-success-bg)] text-[var(--pill-success-text)]">
-                                  ↑ {o.subject}
-                                </span>
-                              ))}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <>
+          <div className={s.summary}>
+            <div className={s.tile}><span>Students with results</span><strong>{students.length}</strong></div>
+            <div className={s.tile}><span>Declining overall</span><strong>{declining.length}</strong><p>Average change below −2 points</p></div>
+            <div className={s.tile}><span>Improving overall</span><strong>{students.filter((r) => overallMovement(r) === "IMPROVING").length}</strong><p>Average change above +2 points</p></div>
+            <div className={s.tile}><span>SEND, declining overall</span><strong>{declining.filter((r) => r.sendFlag).length}</strong><p>of {students.filter((r) => r.sendFlag).length} SEND students</p></div>
           </div>
 
-          <TablePagination
-            page={safePage}
-            totalPages={totalPages}
-            totalItems={totalFiltered}
-            pageSize={PER_PAGE}
-            itemLabel="students"
-            pageHrefBase={pageUrl(1)}
-          />
-        </div>
-      )}
+          <section className={s.controls} aria-label="Filter students">
+            <form method="GET">
+              <input type="hidden" name="cycle" value={selected.id} />
+              <label className={s.field}>
+                Student name
+                <input type="search" name="q" defaultValue={search} placeholder="Find a student…" />
+              </label>
+              <label className={s.field}>
+                Year group
+                <select name="yearGroup" defaultValue={yearGroup}>
+                  <option value="">All year groups</option>
+                  {yearGroups.map((yg) => <option key={yg} value={yg}>{formatYearGroup(yg)}</option>)}
+                </select>
+              </label>
+              <label className={s.field}>
+                Overall movement
+                <select name="movement" defaultValue={movement}>
+                  <option value="">All</option>
+                  <option value="DECLINING">Declining</option>
+                  <option value="STABLE">Stable</option>
+                  <option value="IMPROVING">Improving</option>
+                  <option value="NO_PRIOR">No previous result</option>
+                </select>
+              </label>
+              <label className={s.check}><input type="checkbox" name="send" value="1" defaultChecked={send} /> SEND only</label>
+              <label className={s.check}><input type="checkbox" name="pp" value="1" defaultChecked={pp} /> Pupil premium only</label>
+              <button type="submit">Apply</button>
+              {hasFilters && <Link className={s.clear} href={evidenceHref("students", { cycle: selected.id })}>Clear</Link>}
+            </form>
+          </section>
 
-      <p className="text-[0.75rem] text-muted">
-        Explorer · Assessment · Students · Updated {computedAtStr}
-      </p>
-    </div>
+          <div className={s.heading}>
+            <h2>Students</h2>
+            <span>{rows.length} {rows.length === 1 ? "student" : "students"} · largest single-subject drop first</span>
+          </div>
+
+          {!rows.length ? (
+            <EvidenceEmpty title="No students match these filters" body="Try a different name, year group or movement." />
+          ) : (
+            <div className={s.card}>
+              <div className={s.scroll}>
+                <table className={s.table}>
+                  <thead>
+                    <tr>
+                      <th>Student</th>
+                      <th>Year</th>
+                      <th className={s.num} title="Average of KS2 maths and reading scaled scores, where known">KS2 average</th>
+                      <th className={s.num} title="Mean normalised score on a 0–100 index">Mean</th>
+                      <th>Movement</th>
+                      <th>Subjects</th>
+                      <th>Outliers</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageRows.map((row) => {
+                      const mv = MOVEMENT[overallMovement(row)];
+                      const subjects = Array.from(new Set(row.subjects.map((x) => x.subject)));
+                      const flags = [row.sendFlag && "SEND", row.ppFlag && "Pupil premium"].filter(Boolean).join(" · ");
+                      return (
+                        <tr key={row.studentId}>
+                          <td>
+                            <div className={s.person}>
+                              <Avatar name={row.studentName} studentId={row.studentId} size="sm" tone="muted" />
+                              <span>
+                                <Link href={`/students/${row.studentId}?from=${from}#attainment`}>{row.studentName}</Link>
+                                {flags && <span className={s.sub}>{flags}</span>}
+                              </span>
+                            </div>
+                          </td>
+                          <td className={`${s.nowrap} ${s.muted}`}>{formatYearGroup(row.yearGroup)}</td>
+                          <td className={`${s.num} ${s.muted}`}>{ks2Average(row)}</td>
+                          <td className={`${s.num} ${s.strong}`}>{formatIndex(row.overallMean)}</td>
+                          <td className={`${s.nowrap} ${mv.className}`}>{mv.label}</td>
+                          <td className={s.subjects}>
+                            {subjects.slice(0, 3).join(", ")}
+                            {subjects.length > 3 && ` and ${subjects.length - 3} more`}
+                          </td>
+                          <td>
+                            {row.outliers.length ? (
+                              <div className={s.tags}>
+                                {[...row.outliers].sort((a, b) => a.zScore - b.zScore).map((o) => (
+                                  <span
+                                    key={o.subject}
+                                    className={`${s.tag} ${o.direction === "UNDER" ? s.down : s.up}`}
+                                    title={`${o.direction === "UNDER" ? "Well below" : "Well above"} this student's average (z = ${o.zScore.toFixed(2)})`}
+                                  >
+                                    {o.direction === "UNDER" ? "↓" : "↑"} {o.subject}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className={s.muted}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <EvidencePagination page={page} pageCount={pageCount} total={rows.length} perPage={PER_PAGE} itemLabel="students" href={pageHref} />
+            </div>
+          )}
+          <p className={s.note}>
+            Mean is a 0–100 index that puts different grade scales on one footing; it is not a percentage. Movement compares
+            {analysis?.cycles[0]?.previousPointLabel ? ` ${analysis.cycles[0].previousPointLabel} with ${analysis.cycles[0].currentPointLabel}` : " the two most recent result points"}. An outlier is a subject at least one standard deviation from the student&apos;s own average.
+          </p>
+        </>
+      )}
+    </AttainmentEvidenceShell>
   );
 }

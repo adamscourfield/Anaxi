@@ -1,56 +1,46 @@
-import styles from "../students/students.module.css";
-import cohortStyles from "./cohorts.module.css";
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { buildViewerContext } from "@/lib/viewerContext";
-import { parseWindow } from "@/lib/explorerUtils";
-import { PageHeader } from "@/components/ui/page-header";
-import { ExplorerBackLink } from "@/components/explorer/explorer-chrome";
 import {
-  canViewExplorer,
-  canViewAssessmentExplorer,
-  canExportExplorer,
-} from "@/modules/authz";
-import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
-import { formatYearGroup } from "@/lib/yearGroup";
+  AttainmentEvidenceShell,
+  EvidenceEmpty,
+  evidenceHref,
+  evidenceStyles as s,
+} from "@/components/insights/attainment-evidence";
+import { canViewExplorer, canViewAssessmentExplorer, canExportExplorer } from "@/modules/authz";
+import { computeAssessmentAnalysis, type AssessmentCohortRow } from "@/modules/analysis/assessmentAnalysis";
+import { resolveAttainmentCycle } from "@/modules/analysis/attainmentCycle";
+import {
+  average,
+  changeTone,
+  formatIndex,
+  formatIndexChange,
+  gapTone,
+  type AttainmentTone,
+} from "@/modules/analysis/attainmentFormat";
+import { compareYearGroups, formatYearGroup } from "@/lib/yearGroup";
 
-/* ─── Helpers ───────────────────────────────────────────────────────────────── */
+const MEASURES = {
+  mean: { label: "Mean", help: "Mean score on the 0–100 index. Darker cells scored higher." },
+  movement: { label: "Change", help: "Change in mean since the previous result point, in index points." },
+  sendGap: { label: "SEND gap", help: "Non-SEND mean minus SEND mean, in index points. Positive means SEND students scored lower." },
+  ppGap: { label: "PP gap", help: "Non-pupil-premium mean minus pupil premium mean, in index points. Positive means pupil premium students scored lower." },
+} as const;
+type Measure = keyof typeof MEASURES;
 
-function fmt(n: number | null, digits = 1): string {
-  if (n === null) return "—";
-  return (n * 100).toFixed(digits) + "%";
+function one(value: string | string[] | undefined): string {
+  return (Array.isArray(value) ? value[0] : value) ?? "";
 }
 
-function movementStr(m: number | null): string {
-  if (m === null) return "—";
-  return (m >= 0 ? "+" : "") + (m * 100).toFixed(1) + "pp";
+/** One ink hue, stronger for higher means; 40 and below is unshaded, 85 and above is darkest. */
+function heatStyle(mean: number | null): CSSProperties | undefined {
+  if (mean === null) return undefined;
+  const t = Math.min(1, Math.max(0, (mean - 0.4) / 0.45));
+  return { background: `rgba(28, 28, 30, ${(0.03 + t * 0.13).toFixed(3)})` };
 }
-
-function cellHeatClass(mean: number | null): string {
-  if (mean === null) return "text-muted bg-transparent";
-  if (mean >= 0.7) return "bg-[color-mix(in_srgb,var(--scale-consistent-light,#DCFCE7)_60%,transparent)] text-[#166534]";
-  if (mean >= 0.55) return "bg-[color-mix(in_srgb,#FEF9C3_60%,transparent)] text-[#713F12]";
-  if (mean >= 0.4) return "bg-[color-mix(in_srgb,var(--scale-limited-light,#FEE2E2)_40%,transparent)] text-[#991B1B]";
-  return "bg-[color-mix(in_srgb,var(--scale-limited-light,#FEE2E2)_70%,transparent)] font-semibold text-[#7F1D1D]";
-}
-
-function gapClass(gap: number | null): string {
-  if (gap === null) return "text-muted";
-  if (gap > 0.15) return "text-[var(--error)] font-semibold";
-  if (gap > 0.08) return "text-[var(--error)]";
-  return "text-muted";
-}
-
-function movementClass(m: number | null): string {
-  if (m === null) return "text-muted";
-  if (m < -0.05) return "text-[var(--error)]";
-  if (m > 0.05) return "text-[var(--pill-success-text)]";
-  return "text-muted";
-}
-
-/* ─── Page ───────────────────────────────────────────────────────────────────── */
 
 export default async function AssessmentCohortsPage({
   searchParams,
@@ -60,292 +50,163 @@ export default async function AssessmentCohortsPage({
   const params = await searchParams;
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ANALYSIS");
+  const viewer = await buildViewerContext(user);
+  if (!canViewExplorer(viewer) || !canViewAssessmentExplorer(viewer)) notFound();
 
-  const viewerContext = await buildViewerContext(user);
+  const measure: Measure = one(params.view) in MEASURES ? (one(params.view) as Measure) : "mean";
+  const yearGroup = one(params.yearGroup);
 
-  if (!canViewExplorer(viewerContext) || !canViewAssessmentExplorer(viewerContext)) notFound();
+  const { cycles, selected } = await resolveAttainmentCycle(user.tenantId, one(params.cycle));
+  const analysis = selected ? await computeAssessmentAnalysis(user.tenantId, { cycleId: selected.id }) : null;
+  const all = analysis?.cohorts ?? [];
+  const yearGroups = Array.from(new Set(all.map((r) => r.yearGroup))).sort(compareYearGroups);
+  const rows = yearGroup ? all.filter((r) => r.yearGroup === yearGroup) : all;
+  const subjects = Array.from(new Set(rows.map((r) => r.subject))).sort();
+  const shownYears = yearGroup ? yearGroups.filter((y) => y === yearGroup) : yearGroups;
+  const lookup = new Map(rows.map((r) => [`${r.yearGroup}|${r.subject}`, r]));
 
-  const windowDays = parseWindow(
-    Array.isArray(params.windowDays) ? params.windowDays[0] : params.windowDays,
-  );
-  const cycleId = Array.isArray(params.cycle) ? params.cycle[0] : params.cycle;
-  const yearGroupFilter = (Array.isArray(params.yearGroup) ? params.yearGroup[0] : params.yearGroup) ?? "";
-  const viewMode = (Array.isArray(params.view) ? params.view[0] : params.view) ?? "mean";
+  const filters = { cycle: selected?.id, view: measure === "mean" ? undefined : measure, yearGroup: yearGroup || undefined };
+  const tone = (t: AttainmentTone) => (t === "concern" ? s.concern : t === "positive" ? s.positive : "");
 
-  const assessment = await computeAssessmentAnalysis(
-    user.tenantId,
-    cycleId ? { cycleId } : undefined,
-  );
-
-  const showExport = canExportExplorer(viewerContext);
-
-  // ── Build pivot ─────────────────────────────────────────────────────────────
-
-  let cohortRows = assessment.cohorts;
-  if (yearGroupFilter) {
-    cohortRows = cohortRows.filter((r) => r.yearGroup === yearGroupFilter);
-  }
-
-  const yearGroups = Array.from(new Set(assessment.cohorts.map((r) => r.yearGroup))).sort();
-  const subjects = Array.from(new Set(cohortRows.map((r) => r.subject))).sort();
-
-  // Build lookup: yearGroup → subject → row
-  const lookup = new Map<string, Map<string, typeof cohortRows[0]>>();
-  for (const row of cohortRows) {
-    if (!lookup.has(row.yearGroup)) lookup.set(row.yearGroup, new Map());
-    lookup.get(row.yearGroup)!.set(row.subject, row);
-  }
-
-  const displayYearGroups = yearGroupFilter ? [yearGroupFilter] : yearGroups;
-
-  // KPI derivations
-  const schoolWideMean =
-    cohortRows.filter((r) => r.meanNormalizedScore !== null).length > 0
-      ? cohortRows.filter((r) => r.meanNormalizedScore !== null).reduce((s, r) => s + r.meanNormalizedScore!, 0) /
-        cohortRows.filter((r) => r.meanNormalizedScore !== null).length
-      : null;
-
-  const avgSendGap =
-    cohortRows.filter((r) => r.sendGap !== null).length > 0
-      ? cohortRows.filter((r) => r.sendGap !== null).reduce((s, r) => s + r.sendGap!, 0) /
-        cohortRows.filter((r) => r.sendGap !== null).length
-      : null;
-
-  const avgPpGap =
-    cohortRows.filter((r) => r.ppGap !== null).length > 0
-      ? cohortRows.filter((r) => r.ppGap !== null).reduce((s, r) => s + r.ppGap!, 0) /
-        cohortRows.filter((r) => r.ppGap !== null).length
-      : null;
-
-  const decliningCells = cohortRows.filter((r) => r.movement !== null && r.movement < -0.05).length;
-
-  const computedAtStr = assessment.computedAt.toLocaleDateString("en-GB");
-
-  function viewUrl(v: string): string {
-    const qs = new URLSearchParams({
-      windowDays: String(windowDays),
-      ...(cycleId ? { cycle: cycleId } : {}),
-      ...(yearGroupFilter ? { yearGroup: yearGroupFilter } : {}),
-      view: v,
-    });
-    return `/insights/attainment/group-evidence?${qs}`;
-  }
-
-  function yearUrl(yg: string): string {
-    const qs = new URLSearchParams({
-      windowDays: String(windowDays),
-      ...(cycleId ? { cycle: cycleId } : {}),
-      view: viewMode,
-      ...(yearGroupFilter === yg ? {} : { yearGroup: yg }),
-    });
-    return `/insights/attainment/group-evidence?${qs}`;
-  }
-
-  function getCellValue(row: typeof cohortRows[0] | undefined): string {
-    if (!row) return "—";
-    switch (viewMode) {
-      case "mean": return fmt(row.meanNormalizedScore);
-      case "movement": return movementStr(row.movement);
-      case "sendGap": return row.sendGap !== null ? fmt(row.sendGap) : "—";
-      case "ppGap": return row.ppGap !== null ? fmt(row.ppGap) : "—";
-      default: return fmt(row.meanNormalizedScore);
+  function cell(row: AssessmentCohortRow | undefined) {
+    if (!row) return { text: "—", className: s.muted, style: undefined };
+    switch (measure) {
+      case "movement": return { text: formatIndexChange(row.movement), className: tone(changeTone(row.movement)), style: undefined };
+      case "sendGap": return { text: formatIndexChange(row.sendGap), className: tone(gapTone(row.sendGap)), style: undefined };
+      case "ppGap": return { text: formatIndexChange(row.ppGap), className: tone(gapTone(row.ppGap)), style: undefined };
+      default: return { text: formatIndex(row.meanNormalizedScore), className: "", style: heatStyle(row.meanNormalizedScore) };
     }
   }
 
-  function getCellClass(row: typeof cohortRows[0] | undefined): string {
-    if (!row) return "text-muted bg-transparent";
-    switch (viewMode) {
-      case "mean": return cellHeatClass(row.meanNormalizedScore);
-      case "movement": return movementClass(row.movement);
-      case "sendGap": return gapClass(row.sendGap);
-      case "ppGap": return gapClass(row.ppGap);
-      default: return cellHeatClass(row.meanNormalizedScore);
-    }
-  }
+  const declining = rows.filter((r) => changeTone(r.movement) === "concern").length;
+  const bandRows = rows
+    .filter((r) => r.lowPriorMean !== null || r.midPriorMean !== null || r.highPriorMean !== null)
+    .sort((a, b) => compareYearGroups(a.yearGroup, b.yearGroup) || a.subject.localeCompare(b.subject));
 
   return (
-    <div className={`${styles.page} ${cohortStyles.page} space-y-8`}>
-      <ExplorerBackLink />
-
-      <PageHeader
-        variant="ledger"
-        eyebrow="Explorer · Assessment"
-        title="Cohorts"
-        subtitle="Year group × subject pivot with prior attainment bands, SEND/PP gaps, and movement."
-        actions={
-          showExport ? (
-            <form action="/api/explorer/export" method="POST" className="inline">
-              <input type="hidden" name="view" value="ASSESSMENT_COHORTS" />
-              <input type="hidden" name="windowDays" value={String(windowDays)} />
-              {cycleId && <input type="hidden" name="cycle" value={cycleId} />}
-              <button type="submit" className="anx-btn-pill-ghost calm-transition font-semibold">
-                <svg className="anx-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-                  <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
-                  <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" />
-                </svg>
-                Export CSV
-              </button>
-            </form>
-          ) : undefined
-        }
-      />
-
-      {/* ── KPI strip ───────────────────────────────────────────────────────── */}
-      <div className={styles.metrics}>
-          <div className="explorer-kpi-tile p-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">School-wide mean</p>
-            <p className="mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] text-text">{fmt(schoolWideMean)}</p>
-          </div>
-          <div className="explorer-kpi-tile p-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Declining cells</p>
-            <p className={`mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] ${decliningCells > 0 ? "text-[var(--error)]" : "text-text"}`}>{decliningCells}</p>
-            <p className="text-[11px] text-muted">year × subject pairs</p>
-          </div>
-          <div className="explorer-kpi-tile p-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Avg SEND gap</p>
-            <p className={`mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] ${avgSendGap !== null && avgSendGap > 0.08 ? "text-[var(--error)]" : "text-text"}`}>{fmt(avgSendGap)}</p>
-          </div>
-          <div className="explorer-kpi-tile p-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Avg PP gap</p>
-            <p className={`mt-1 text-[2.25rem] font-bold tabular-nums tracking-[-0.03em] ${avgPpGap !== null && avgPpGap > 0.08 ? "text-[var(--error)]" : "text-text"}`}>{fmt(avgPpGap)}</p>
-          </div>
-      </div>
-
-      {/* ── View mode + year group filters ───────────────────────────────────── */}
-      <div className={cohortStyles.filters}>
-        <div className="flex items-center gap-1">
-          <span className="mr-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Show:</span>
-          {[
-            { key: "mean", label: "Mean score" },
-            { key: "movement", label: "Movement" },
-            { key: "sendGap", label: "SEND gap" },
-            { key: "ppGap", label: "PP gap" },
-          ].map(({ key, label }) => (
-            <Link
-              key={key}
-              aria-current={viewMode === key ? "true" : undefined}
-              href={viewUrl(key)}
-              className={`rounded-md px-2.5 py-1 text-[11px] font-medium calm-transition ${
-                viewMode === key
-                  ? "bg-accent text-on-primary"
-                  : "border border-border text-muted hover:border-accent/50 hover:text-text"
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-        {yearGroups.length > 1 && (
-          <div className="flex items-center gap-1">
-            <span className="mr-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Year:</span>
-            {yearGroupFilter && (
-              <Link
-                href={yearUrl(yearGroupFilter)}
-                className="rounded-md border border-border px-2.5 py-1 text-[11px] font-medium text-muted calm-transition hover:border-accent/50 hover:text-text"
-              >
-                All
-              </Link>
-            )}
-            {yearGroups.map((yg) => (
-              <Link
-                key={yg}
-                aria-current={yearGroupFilter === yg ? "true" : undefined}
-                href={yearUrl(yg)}
-                className={`rounded-md px-2.5 py-1 text-[11px] font-medium calm-transition ${
-                  yearGroupFilter === yg
-                    ? "bg-accent text-on-primary"
-                    : "border border-border text-muted hover:border-accent/50 hover:text-text"
-                }`}
-              >
-                {yg}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Heat-map pivot grid ───────────────────────────────────────────────── */}
-      {subjects.length === 0 || displayYearGroups.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
-          <p className="text-[0.875rem] font-semibold text-text">No cohort data available</p>
-          <p className="mt-1 text-[0.8125rem] text-muted">Ensure assessment cycles have published results linked to year groups.</p>
-        </div>
+    <AttainmentEvidenceShell
+      page="groups"
+      title="Group breakdown"
+      subtitle="Year group and subject side by side, with results by prior attainment and the SEND and pupil premium gaps."
+      cycles={cycles}
+      selected={selected}
+      cycleHref={(id) => evidenceHref("groups", { ...filters, cycle: id, yearGroup: undefined })}
+      exportView={canExportExplorer(viewer) ? "ASSESSMENT_COHORTS" : undefined}
+    >
+      {!selected || !all.length ? (
+        <EvidenceEmpty
+          title="No group results to show"
+          body={selected ? "This cycle has no validated, published or locked results linked to year groups yet." : "Set up an assessment cycle to see group results."}
+        />
       ) : (
-        <div className="table-shell overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="table-head-row text-left">
-                <th className="px-5 py-3 font-semibold">Year group</th>
-                {subjects.map((s) => (
-                  <th key={s} className="px-3 py-3 text-center text-[11px] font-medium">{s}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {displayYearGroups.map((yg) => {
-                const subjectMap = lookup.get(yg);
-                return (
-                  <tr key={yg} className="group table-row">
-                    <td className="px-5 py-3 font-semibold text-text">{formatYearGroup(yg)}</td>
-                    {subjects.map((s) => {
-                      const row = subjectMap?.get(s);
-                      const cellVal = getCellValue(row);
-                      const cellCls = getCellClass(row);
-                      return (
-                        <td key={s} className={`px-3 py-3 text-center text-[12px] tabular-nums transition-colors ${cellCls}`}>
-                          {cellVal}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+        <>
+          <div className={s.summary}>
+            <div className={s.tile}><span>Mean across groups</span><strong>{formatIndex(average(rows.map((r) => r.meanNormalizedScore)))}</strong><p>0–100 index</p></div>
+            <div className={s.tile}><span>Groups down 5+ points</span><strong>{declining}</strong><p>of {rows.length} year and subject groups</p></div>
+            <div className={s.tile}><span>Average SEND gap</span><strong>{formatIndexChange(average(rows.map((r) => r.sendGap)))}</strong><p>Index points</p></div>
+            <div className={s.tile}><span>Average PP gap</span><strong>{formatIndexChange(average(rows.map((r) => r.ppGap)))}</strong><p>Index points</p></div>
+          </div>
 
-      {/* ── Prior attainment band breakdown ──────────────────────────────────── */}
-      {cohortRows.some((r) => r.lowPriorMean !== null || r.midPriorMean !== null || r.highPriorMean !== null) && (
-        <div className="rounded-2xl border border-border bg-surface-container-low p-6">
-          <h2 className="mb-4 text-sm font-semibold text-text">Prior attainment band breakdown</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-[12px]">
-              <thead>
-                <tr className="text-left text-muted">
-                  <th className="pb-2 pr-4 font-medium">Year</th>
-                  <th className="pb-2 pr-4 font-medium">Subject</th>
-                  <th className="pb-2 pr-4 font-medium">Low prior</th>
-                  <th className="pb-2 pr-4 font-medium">Mid prior</th>
-                  <th className="pb-2 pr-4 font-medium">High prior</th>
-                  <th className="pb-2 pr-4 font-medium">SEND gap</th>
-                  <th className="pb-2 font-medium">PP gap</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cohortRows
-                  .filter((r) => r.lowPriorMean !== null || r.midPriorMean !== null || r.highPriorMean !== null)
-                  .map((r) => (
-                    <tr key={`${r.yearGroup}-${r.subject}`} className="border-t border-border/10">
-                      <td className="py-1.5 pr-4 font-medium text-text">{formatYearGroup(r.yearGroup)}</td>
-                      <td className="py-1.5 pr-4 text-text">{r.subject}</td>
-                      <td className={`py-1.5 pr-4 tabular-nums ${cellHeatClass(r.lowPriorMean)}`}>{fmt(r.lowPriorMean)}</td>
-                      <td className={`py-1.5 pr-4 tabular-nums ${cellHeatClass(r.midPriorMean)}`}>{fmt(r.midPriorMean)}</td>
-                      <td className={`py-1.5 pr-4 tabular-nums ${cellHeatClass(r.highPriorMean)}`}>{fmt(r.highPriorMean)}</td>
-                      <td className={`py-1.5 pr-4 tabular-nums ${gapClass(r.sendGap)}`}>{r.sendGap !== null ? fmt(r.sendGap) : "—"}</td>
-                      <td className={`py-1.5 tabular-nums ${gapClass(r.ppGap)}`}>{r.ppGap !== null ? fmt(r.ppGap) : "—"}</td>
+          <div className={s.bar}>
+            <nav className={s.segmented} aria-label="Measure shown in the grid">
+              {(Object.keys(MEASURES) as Measure[]).map((m) => (
+                <Link key={m} href={evidenceHref("groups", { ...filters, view: m === "mean" ? undefined : m })} aria-current={measure === m ? "true" : undefined}>
+                  {MEASURES[m].label}
+                </Link>
+              ))}
+            </nav>
+            {yearGroups.length > 1 && (
+              <nav className={s.segmented} aria-label="Year group">
+                <Link href={evidenceHref("groups", { ...filters, yearGroup: undefined })} aria-current={!yearGroup ? "true" : undefined}>All years</Link>
+                {yearGroups.map((yg) => (
+                  <Link key={yg} href={evidenceHref("groups", { ...filters, yearGroup: yg })} aria-current={yearGroup === yg ? "true" : undefined}>
+                    {formatYearGroup(yg)}
+                  </Link>
+                ))}
+              </nav>
+            )}
+          </div>
+
+          <div className={s.card}>
+            <div className={s.cardHead}>
+              <div>
+                <h3>{MEASURES[measure].label} by year group and subject</h3>
+                <p>{MEASURES[measure].help}</p>
+              </div>
+            </div>
+            <div className={s.scroll}>
+              <table className={s.table}>
+                <thead>
+                  <tr>
+                    <th>Year group</th>
+                    {subjects.map((sub) => <th key={sub} className={s.heat}>{sub}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {shownYears.map((yg) => (
+                    <tr key={yg}>
+                      <td className={`${s.nowrap} ${s.strong}`}>{formatYearGroup(yg)}</td>
+                      {subjects.map((sub) => {
+                        const c = cell(lookup.get(`${yg}|${sub}`));
+                        return <td key={sub} className={`${s.heat} ${c.className}`} style={c.style}>{c.text}</td>;
+                      })}
                     </tr>
                   ))}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
 
-      <p className="text-[0.75rem] text-muted">
-        Explorer · Assessment · Cohorts · Updated {computedAtStr}
-      </p>
-    </div>
+          {bandRows.length > 0 && (
+            <div className={s.card}>
+              <div className={s.cardHead}>
+                <div>
+                  <h3>Results by prior attainment</h3>
+                  <p>Mean for students with low, middle and high prior attainment, alongside each group&apos;s gaps.</p>
+                </div>
+              </div>
+              <div className={s.scroll}>
+                <table className={s.table}>
+                  <thead>
+                    <tr>
+                      <th>Year</th>
+                      <th>Subject</th>
+                      <th className={s.num}>Students</th>
+                      <th className={s.num}>Low prior</th>
+                      <th className={s.num}>Middle prior</th>
+                      <th className={s.num}>High prior</th>
+                      <th className={s.num}>Change</th>
+                      <th className={s.num}>SEND gap</th>
+                      <th className={s.num}>PP gap</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bandRows.map((r) => (
+                      <tr key={`${r.yearGroup}|${r.subject}`}>
+                        <td className={`${s.nowrap} ${s.muted}`}>{formatYearGroup(r.yearGroup)}</td>
+                        <td className={`${s.nowrap} ${s.strong}`}>{r.subject}</td>
+                        <td className={`${s.num} ${s.muted}`}>{r.studentCount}</td>
+                        <td className={s.num}>{formatIndex(r.lowPriorMean)}</td>
+                        <td className={s.num}>{formatIndex(r.midPriorMean)}</td>
+                        <td className={s.num}>{formatIndex(r.highPriorMean)}</td>
+                        <td className={`${s.num} ${tone(changeTone(r.movement))}`}>{formatIndexChange(r.movement)}</td>
+                        <td className={`${s.num} ${tone(gapTone(r.sendGap))}`}>{formatIndexChange(r.sendGap)}</td>
+                        <td className={`${s.num} ${tone(gapTone(r.ppGap))}`}>{formatIndexChange(r.ppGap)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <p className={s.note}>
+            Scores are normalised to a 0–100 index so different grade scales can be compared; they are not percentages. Prior attainment bands come from KS2
+            scaled scores (below 95, 95–105, above 105). Gaps and band means need at least three students and are left blank otherwise. Red marks a drop of
+            5 points or more, or a gap above 8 points.
+          </p>
+        </>
+      )}
+    </AttainmentEvidenceShell>
   );
 }

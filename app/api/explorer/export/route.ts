@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getSignalDefinitionsForSchoolType } from "@/modules/observations/getSignalsBySchoolType";
 import {
   canExportExplorer,
+  canViewAssessmentExplorer,
   canViewBehaviourExplorer,
   canViewStudentAnalysis,
   canViewTeacherAnalysis,
@@ -18,6 +19,15 @@ import { computeDepartmentPivot } from "@/modules/analysis/departmentPivot";
 import { computeStudentRiskIndex } from "@/modules/analysis/studentRisk";
 import { computeCohortPivot } from "@/modules/analysis/cohortPivot";
 import { withApi } from "@/lib/apiRoute";
+import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
+import { resolveAttainmentCycle } from "@/modules/analysis/attainmentCycle";
+import { filterVisibleTeachers, visibleAttainmentTeacherIds } from "@/modules/analysis/attainmentScope";
+import { average } from "@/modules/analysis/attainmentFormat";
+
+/** Normalised 0–1 score → index with one decimal, blank when missing. */
+function idx(value: number | null | undefined): string {
+  return value === null || value === undefined ? "" : (value * 100).toFixed(1);
+}
 
 const WINDOW_OPTIONS = [7, 21, 28, 90] as const;
 type WindowDays = (typeof WINDOW_OPTIONS)[number];
@@ -66,6 +76,10 @@ export const POST = withApi(async function POST(req: NextRequest | Request) {
 
     const isBehaviourView = view === "BEHAVIOUR_STUDENTS_TABLE" || view === "BEHAVIOUR_COHORTS_PIVOT";
     if (isBehaviourView && !canViewBehaviourExplorer(viewerContext)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const isAssessmentView = view === "ASSESSMENT_STUDENTS" || view === "ASSESSMENT_COHORTS" || view === "ASSESSMENT_TEACHERS";
+    if (isAssessmentView && !canViewAssessmentExplorer(viewerContext)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -179,7 +193,7 @@ export const POST = withApi(async function POST(req: NextRequest | Request) {
           ])
         );
       }
-    } else if (view === "PRIORITIES_CPD") {
+    } else if (view === "PRIORITIES_CPD" || view === "CPD_SIGNAL_PRIORITIES") {
       const hodMemberships = await (prisma as any).departmentMembership.findMany({
         where: { userId: user.id, isHeadOfDepartment: true },
         include: { department: true },
@@ -398,6 +412,49 @@ export const POST = withApi(async function POST(req: NextRequest | Request) {
           row.internalExclusionsDelta !== null ? row.internalExclusionsDelta : "",
         ]));
       }
+    } else if (isAssessmentView) {
+      const { selected } = await resolveAttainmentCycle(user.tenantId, (body.get("cycle") as string) ?? "");
+      if (!selected) return NextResponse.json({ error: "No assessment cycle" }, { status: 404 });
+      const analysis = await computeAssessmentAnalysis(user.tenantId, { cycleId: selected.id });
+      csvLines.push(`# cycle: ${selected.label}`, "# scores: 0-100 index (not percentages); changes, value-added and gaps in index points");
+      if (view === "ASSESSMENT_STUDENTS") {
+        csvLines.push(buildRow(["Student", "YearGroup", "SEND", "PupilPremium", "KS2Maths", "KS2Reading", "PriorBand", "Mean", "AverageChange", "Subjects", "DecliningSubjects", "OutliersBelow", "OutliersAbove"]));
+        for (const r of analysis.students) {
+          csvLines.push(buildRow([
+            r.studentName, r.yearGroup, r.sendFlag ? "Y" : "N", r.ppFlag ? "Y" : "N",
+            r.ks2MathsScaledScore, r.ks2ReadingScaledScore, r.priorBand,
+            idx(r.overallMean), idx(average(r.subjects.map((x) => x.movement))),
+            Array.from(new Set(r.subjects.map((x) => x.subject))).join("; "),
+            r.subjects.filter((x) => x.movementLabel === "DECLINING").map((x) => x.subject).join("; "),
+            r.outliers.filter((o) => o.direction === "UNDER").map((o) => o.subject).join("; "),
+            r.outliers.filter((o) => o.direction === "OVER").map((o) => o.subject).join("; "),
+          ]));
+        }
+      } else if (view === "ASSESSMENT_COHORTS") {
+        csvLines.push(buildRow(["YearGroup", "Subject", "Students", "Mean", "Change", "LowPriorMean", "MidPriorMean", "HighPriorMean", "SENDMean", "NonSENDMean", "SENDGap", "PPMean", "NonPPMean", "PPGap", "Declining", "Stable", "Improving"]));
+        for (const r of analysis.cohorts) {
+          csvLines.push(buildRow([
+            r.yearGroup, r.subject, r.studentCount, idx(r.meanNormalizedScore), idx(r.movement),
+            idx(r.lowPriorMean), idx(r.midPriorMean), idx(r.highPriorMean),
+            idx(r.sendMean), idx(r.nonSendMean), idx(r.sendGap), idx(r.ppMean), idx(r.nonPpMean), idx(r.ppGap),
+            r.decliningCount, r.stableCount, r.improvingCount,
+          ]));
+        }
+      } else {
+        const visible = await visibleAttainmentTeacherIds(user.tenantId, viewerContext);
+        csvLines.push(buildRow(["Teacher", "Departments", "Subject", "YearGroup", "Students", "Mean", "ValueAdded", "Change", "SENDGap", "PPGap", "Declining", "Stable", "Improving", "TeacherMean", "TeacherValueAdded"]));
+        for (const t of filterVisibleTeachers(analysis.teachers, visible)) {
+          for (const sub of t.subjects) {
+            csvLines.push(buildRow([
+              t.teacherName, t.departmentNames.join("; "), sub.subject, sub.yearGroup, sub.studentCount,
+              idx(sub.meanNormalizedScore), idx(sub.valueAdd), idx(sub.movement), idx(sub.sendGap), idx(sub.ppGap),
+              sub.decliningCount, sub.stableCount, sub.improvingCount, idx(t.overallMean), idx(t.overallValueAdd),
+            ]));
+          }
+        }
+      }
+    } else {
+      return NextResponse.json({ error: "Unknown export" }, { status: 400 });
     }
 
     const csv = csvLines.join("\n");
