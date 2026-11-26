@@ -119,8 +119,11 @@ const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     "leave:request", "leave:approve",
     "analysis:view", "analysis:view_behaviour", "analysis:export",
   ],
+  // Same meetings and actions access as a teacher (a leader given an action must be able to see it).
   LEADER: [
     "oncall:create", "oncall:cancel", "students:read",
+    "meetings:create", "meetings:view_own",
+    "actions:create", "actions:manage", "actions:view_own",
     "observe:view", "observe:create",
     "leave:request",
   ],

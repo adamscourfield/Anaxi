@@ -17,6 +17,7 @@ import { filterVisibleTeachers, visibleAttainmentTeacherIds } from "@/modules/an
 import { average, changeTone, formatIndexChange, formatIndexPoints } from "@/modules/analysis/attainmentFormat";
 import { parseWindow, VALID_WINDOWS } from "@/lib/explorerUtils";
 import { formatYearGroup } from "@/lib/yearGroup";
+import { isDownInSeveralSubjects } from "@/modules/analysis/attainmentConcern";
 import correlationStyles from "./assessment.module.css";
 
 const RAPID_DROP = -0.08;
@@ -55,7 +56,7 @@ export default async function AssessmentHubPage({
   const cycleParam = selected?.id;
   const windowParam = windowDays === 21 ? undefined : String(windowDays);
 
-  const withDecline = students.filter((st) => st.subjects.some((sub) => sub.movementLabel === "DECLINING"));
+  const downInSeveral = students.filter(isDownInSeveralSubjects);
   const belowExpected = teachers
     .filter((t) => changeTone(t.overallValueAdd) === "concern")
     .sort((a, b) => (a.overallValueAdd ?? 0) - (b.overallValueAdd ?? 0));
@@ -96,8 +97,8 @@ export default async function AssessmentHubPage({
             <Link className={s.tile} href={evidenceHref("students", { cycle: cycleParam })}>
               <span>Students with results</span><strong>{students.length}</strong>
             </Link>
-            <Link className={s.tile} href={`/insights/attainment?view=students&movement=DECLINING&cycle=${cycleParam}`}>
-              <span>With a subject decline</span><strong>{withDecline.length}</strong><p>Down more than 2 points in at least one subject</p>
+            <Link className={s.tile} href={`/insights/attainment?view=students&movement=SEVERAL_DOWN&cycle=${cycleParam}`}>
+              <span>Down in 3 or more subjects</span><strong>{downInSeveral.length}</strong><p>10+ points (a grade or more at GCSE) in each</p>
             </Link>
             <Link className={s.tile} href={evidenceHref("groups", { cycle: cycleParam, view: "sendGap" })}>
               <span>SEND gap</span><strong>{formatIndexChange(sendGap)}</strong>

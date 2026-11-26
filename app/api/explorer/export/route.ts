@@ -23,6 +23,7 @@ import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis
 import { resolveAttainmentCycle } from "@/modules/analysis/attainmentCycle";
 import { filterVisibleTeachers, visibleAttainmentTeacherIds } from "@/modules/analysis/attainmentScope";
 import { average } from "@/modules/analysis/attainmentFormat";
+import { isDownInSeveralSubjects, subjectsDown } from "@/modules/analysis/attainmentConcern";
 
 /** Normalised 0–1 score → index with one decimal, blank when missing. */
 function idx(value: number | null | undefined): string {
@@ -418,7 +419,7 @@ export const POST = withApi(async function POST(req: NextRequest | Request) {
       const analysis = await computeAssessmentAnalysis(user.tenantId, { cycleId: selected.id });
       csvLines.push(`# cycle: ${selected.label}`, "# scores: 0-100 index (not percentages); changes, value-added and gaps in index points");
       if (view === "ASSESSMENT_STUDENTS") {
-        csvLines.push(buildRow(["Student", "YearGroup", "SEND", "PupilPremium", "KS2Maths", "KS2Reading", "PriorBand", "Mean", "AverageChange", "Subjects", "DecliningSubjects", "OutliersBelow", "OutliersAbove"]));
+        csvLines.push(buildRow(["Student", "YearGroup", "SEND", "PupilPremium", "KS2Maths", "KS2Reading", "PriorBand", "Mean", "AverageChange", "Subjects", "DecliningSubjects", "SubjectsDown10Plus", "DownIn3PlusSubjects", "OutliersBelow", "OutliersAbove"]));
         for (const r of analysis.students) {
           csvLines.push(buildRow([
             r.studentName, r.yearGroup, r.sendFlag ? "Y" : "N", r.ppFlag ? "Y" : "N",
@@ -426,6 +427,8 @@ export const POST = withApi(async function POST(req: NextRequest | Request) {
             idx(r.overallMean), idx(average(r.subjects.map((x) => x.movement))),
             Array.from(new Set(r.subjects.map((x) => x.subject))).join("; "),
             r.subjects.filter((x) => x.movementLabel === "DECLINING").map((x) => x.subject).join("; "),
+            subjectsDown(r.subjects).map((x) => x.subject).join("; "),
+            isDownInSeveralSubjects(r) ? "Y" : "N",
             r.outliers.filter((o) => o.direction === "UNDER").map((o) => o.subject).join("; "),
             r.outliers.filter((o) => o.direction === "OVER").map((o) => o.subject).join("; "),
           ]));
