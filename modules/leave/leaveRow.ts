@@ -1,4 +1,4 @@
-import { businessDaysBetween } from "@/lib/leaveDates";
+import { businessDaysBetween, formatLeaveBoundary, formatLeaveRange } from "@/lib/leaveDates";
 import { loaStatusUiBucket, type LoaStatusUiBucket } from "@/lib/leaveStatus";
 
 export type LeaveRow = {
@@ -18,34 +18,6 @@ export type LeaveRow = {
   inArbor: boolean;
   inITrent: boolean;
 };
-
-/** Requests created before time-of-day support default to local midnight -- don't show a "12:00 am" time for those. */
-function hasTimeOfDay(date: Date) {
-  return date.getHours() !== 0 || date.getMinutes() !== 0;
-}
-
-function fmtTime(date: Date) {
-  return date.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
-}
-
-function fmt(date: Date) {
-  const base = date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-  return hasTimeOfDay(date) ? `${base}, ${fmtTime(date)}` : base;
-}
-
-function fmtShortRange(start: Date, end: Date) {
-  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
-  const withTime = (date: Date, label: string) => (hasTimeOfDay(date) ? `${label} ${fmtTime(date)}` : label);
-  const a = withTime(start, start.toLocaleDateString("en-GB", opts));
-  if (start.toDateString() === end.toDateString() && !hasTimeOfDay(start) && !hasTimeOfDay(end)) return a;
-  const sameMonth =
-    start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth();
-  // Only drop the end month for plain day ranges ("19 — 24 Oct" style). With a time attached,
-  // "24 1:12 pm" reads as nonsense, so keep "24 Oct 1:12 pm".
-  const compactEnd = sameMonth && !hasTimeOfDay(start) && !hasTimeOfDay(end);
-  const b = withTime(end, end.toLocaleDateString("en-GB", compactEnd ? { day: "numeric" } : opts));
-  return `${a} — ${b}`;
-}
 
 const AVATAR_COLORS = [
   "bg-cat-violet-bg text-cat-violet-text",
@@ -87,9 +59,9 @@ export function mapLoaRequestToLeaveRow(r: {
   const name = r.requester?.fullName ?? null;
   return {
     id: r.id,
-    startDate: fmt(start),
-    endDate: fmt(end),
-    dateRangeLine: fmtShortRange(start, end),
+    startDate: formatLeaveBoundary(start, "short"),
+    endDate: formatLeaveBoundary(end, "short"),
+    dateRangeLine: formatLeaveRange(start, end, new Date().getUTCFullYear()),
     days: businessDaysBetween(start, end),
     status: loaStatusUiBucket(r.status),
     statusRaw: r.status,

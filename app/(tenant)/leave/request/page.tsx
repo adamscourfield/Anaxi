@@ -27,7 +27,14 @@ export default async function LeaveRequestPage({
     orderBy: { label: "asc" },
   });
 
-  const today = new Date().toISOString().slice(0, 16);
+  // Today in the UK, with 9am as the starting time if they switch off "All day".
+  const today = `${new Date().toLocaleDateString("en-CA", { timeZone: "Europe/London" })}T09:00`;
+  // After a rejected submit, put back what they chose.
+  const safe = (v: unknown, re: RegExp) => (typeof v === "string" && re.test(v) ? v : "");
+  const DT = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/;
+  const keptStart = safe(params.startAt, DT);
+  const keptEnd = safe(params.endAt, DT);
+  const keptReason = safe(params.reasonId, /^[\w-]{1,40}$/);
 
   const twelveMonthsAgo = new Date();
   twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
@@ -58,7 +65,7 @@ export default async function LeaveRequestPage({
       <PageHeader
         variant="ledger"
         title="Request leave"
-        subtitle="Choose your dates and leave type, then add any cover requirements."
+        subtitle="Choose the dates and type of leave, then say what needs covering."
         eyebrow={
           <Breadcrumb
             items={[
@@ -74,22 +81,23 @@ export default async function LeaveRequestPage({
         }
       />
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
         <div className="lg:col-span-2">
           {errorMessage ? (
             <div
               role="alert"
-              className="mb-5 rounded-xl border border-[color-mix(in_srgb,var(--error)_35%,transparent)] bg-[color-mix(in_srgb,var(--error)_06%,var(--surface-container-lowest))] px-4 py-3 text-[0.875rem] text-[var(--error)]"
+              className="mb-5 rounded-[10px] border border-[var(--pill-error-ring)] bg-[var(--pill-error-bg)] px-4 py-3 text-[14px] text-[var(--pill-error-text)]"
             >
               {errorMessage}
             </div>
           ) : null}
           <form action={createLoaRequest} encType="multipart/form-data" className="space-y-5">
-            <div className="home-hero-glass rounded-sm border border-border p-5 shadow-none sm:p-6">
-              <LeaveDateTimeFields defaultValue={today} />
+            <div className={styles.card}>
+              <LeaveDateTimeFields defaultValue={today} initialStart={keptStart} initialEnd={keptEnd} />
             </div>
 
             <LeaveReasonFields
+              defaultReasonId={keptReason}
               reasons={reasons.map((reason: any) => ({
                 id: reason.id,
                 label: reason.label,
@@ -98,74 +106,42 @@ export default async function LeaveRequestPage({
             />
 
             <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-end">
-              <SubmitButton className="w-full gap-2 rounded-md px-8 py-3 shadow-md sm:ml-auto sm:w-auto" pendingLabel="Submitting…">
-                Submit request
-                <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>
-                  <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <SubmitButton className="h-11 min-h-0 w-full px-6 sm:ml-auto sm:w-auto" pendingLabel="Sending…">
+                Send request
               </SubmitButton>
             </div>
           </form>
         </div>
 
-        <div className="space-y-5">
-          <div className="home-hero-glass rounded-2xl border border-[color-mix(in_srgb,var(--outline-variant)_16%,transparent)] px-5 py-5 sm:px-6">
-            <h3 className="mb-4 text-base font-bold tracking-[-0.02em] text-text">Leave policy</h3>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--status-approved-light)] text-[var(--status-approved-text)]">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                    <polyline points="22 4 12 14.01 9 11.01" />
-                  </svg>
-                </div>
-                <p className="text-[0.8125rem] leading-relaxed text-muted">
-                  Medical evidence is required for medical absences of {LEAVE_MEDICAL_MIN_BUSINESS_DAYS} or more consecutive working days. Not required for other leave types.
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="space-y-4">
+          <section className={styles.card}>
+            <h2 className="text-[15px] font-semibold">Before you submit</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#6e6e73]">
+              Medical leave of {LEAVE_MEDICAL_MIN_BUSINESS_DAYS} or more working days needs evidence, such as a fit note. Other types
+              don&apos;t. Your request goes to the people who approve your leave, and you&apos;ll get an email when it&apos;s decided.
+            </p>
+          </section>
 
-          <div className="explorer-kpi-tile flex gap-4 rounded-2xl p-5 sm:p-6">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[var(--cat-violet-bg)] text-[var(--cat-violet-text)]">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted">Past 12 months</p>
-              {Object.keys(leaveSummary).length === 0 ? (
-                <p className="mt-2 text-[0.8125rem] leading-relaxed text-muted">No leave taken in the past 12 months.</p>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  {Object.entries(leaveSummary).map(([label, days]) => (
-                    <div key={label} className="flex items-center justify-between border-b border-[color-mix(in_srgb,var(--outline-variant)_18%,transparent)] pb-3 last:border-0 last:pb-0">
-                      <span className="text-[0.875rem] font-semibold text-text">{label}</span>
-                      <div className="flex items-center gap-2">
-                        <div className="h-1 w-14 overflow-hidden rounded-sm bg-[var(--surface-container-high)]">
-                          <div
-                            className="h-full rounded-md bg-[var(--accent)]"
-                            style={{ width: `${Math.min(100, (days / 20) * 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-[0.8125rem] font-bold tabular-nums text-text">
-                          {days} day{days !== 1 ? "s" : ""}
-                        </span>
-                      </div>
+          <section className={styles.card}>
+            <h2 className="text-[15px] font-semibold">Your last 12 months</h2>
+            <p className="mt-1 text-[12px] text-[#6e6e73]">Approved and pending leave, in working days.</p>
+            {Object.keys(leaveSummary).length === 0 ? (
+              <p className="mt-4 text-[13px] text-[#6e6e73]">None so far.</p>
+            ) : (
+              <dl className="mt-3 divide-y divide-[#f0f0f1]">
+                {Object.entries(leaveSummary)
+                  .sort((x, y) => y[1] - x[1])
+                  .map(([label, days]) => (
+                    <div key={label} className="flex items-center justify-between py-2.5 text-[13px]">
+                      <dt className="text-[#3a3a3c]">{label}</dt>
+                      <dd className="font-semibold tabular-nums">
+                        {days} day{days !== 1 ? "s" : ""}
+                      </dd>
                     </div>
                   ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border-l-[3px] border-l-[var(--warning)] bg-[color-mix(in_srgb,var(--pill-warning-bg)_55%,var(--surface-container-lowest))] px-5 py-5 ring-1 ring-inset ring-[color-mix(in_srgb,var(--pill-warning-ring)_35%,transparent)]">
-            <p className="text-[1.35rem] font-serif leading-none text-[var(--warning-text)]">&ldquo;</p>
-            <p className="mt-2 text-[0.8125rem] italic leading-relaxed text-[var(--warning-text)]">
-              Ensuring educational continuity is our priority. Please ensure your cover notes are detailed.
-            </p>
-          </div>
+              </dl>
+            )}
+          </section>
         </div>
       </div>
     </div>

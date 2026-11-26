@@ -3,8 +3,8 @@ import { validateLeavePolicy } from "@/lib/leavePolicy";
 
 describe("validateLeavePolicy", () => {
   const base = {
-    startDate: new Date(2026, 5, 10),
-    endDate: new Date(2026, 5, 12),
+    startDate: new Date(Date.UTC(2026, 5, 10)),
+    endDate: new Date(Date.UTC(2026, 5, 12)),
     medicalEvidenceUrl: null as string | null,
     reasonRequiresMedicalEvidence: true,
     existingRequests: [] as Array<{ id: string; startDate: Date; endDate: Date; status: string }>,
@@ -14,8 +14,8 @@ describe("validateLeavePolicy", () => {
     expect(
       validateLeavePolicy({
         ...base,
-        startDate: new Date(2026, 5, 1),
-        endDate: new Date(2026, 5, 1),
+        startDate: new Date(Date.UTC(2026, 5, 1)),
+        endDate: new Date(Date.UTC(2026, 5, 1)),
         medicalEvidenceUrl: "/file",
       }),
     ).toBeNull();
@@ -42,8 +42,8 @@ describe("validateLeavePolicy", () => {
         existingRequests: [
           {
             id: "other",
-            startDate: new Date(2026, 5, 11),
-            endDate: new Date(2026, 5, 13),
+            startDate: new Date(Date.UTC(2026, 5, 11)),
+            endDate: new Date(Date.UTC(2026, 5, 13)),
             status: "PENDING",
           },
         ],
@@ -59,12 +59,22 @@ describe("validateLeavePolicy", () => {
         existingRequests: [
           {
             id: "other",
-            startDate: new Date(2026, 8, 16),
-            endDate: new Date(2026, 8, 16),
+            startDate: new Date(Date.UTC(2026, 8, 16)),
+            endDate: new Date(Date.UTC(2026, 8, 16)),
             status: "PENDING",
           },
         ],
       }),
     ).toBeNull();
+  });
+
+  it("rejects a request with no working days in it", () => {
+    expect(
+      validateLeavePolicy({
+        ...base,
+        startDate: new Date(Date.UTC(2026, 11, 12)),
+        endDate: new Date(Date.UTC(2026, 11, 13)),
+      }),
+    ).toBe("NO_WORKING_DAYS");
   });
 });

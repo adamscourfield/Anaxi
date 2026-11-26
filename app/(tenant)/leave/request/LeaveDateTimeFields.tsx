@@ -8,13 +8,24 @@ function splitDateTime(value: string): { date: string; time: string } {
   return { date: date ?? "", time: time ?? "00:00" };
 }
 
-export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) {
+export function LeaveDateTimeFields({
+  defaultValue,
+  initialStart = "",
+  initialEnd = "",
+}: {
+  defaultValue: string;
+  /** Values sent back after a rejected submit. */
+  initialStart?: string;
+  initialEnd?: string;
+}) {
   const initial = splitDateTime(defaultValue);
-  const [allDay, setAllDay] = useState(true);
-  const [startDate, setStartDate] = useState(initial.date);
-  const [startTime, setStartTime] = useState(initial.time);
-  const [endDate, setEndDate] = useState(initial.date);
-  const [endTime, setEndTime] = useState(initial.time);
+  const start = initialStart ? splitDateTime(initialStart.includes("T") ? initialStart : `${initialStart}T${initial.time}`) : initial;
+  const end = initialEnd ? splitDateTime(initialEnd.includes("T") ? initialEnd : `${initialEnd}T${initial.time}`) : initial;
+  const [allDay, setAllDay] = useState(!initialStart.includes("T"));
+  const [startDate, setStartDate] = useState(start.date);
+  const [startTime, setStartTime] = useState(start.time);
+  const [endDate, setEndDate] = useState(end.date);
+  const [endTime, setEndTime] = useState(end.time);
 
   const startAt = allDay ? startDate : `${startDate}T${startTime}`;
   const endAt = allDay ? endDate : `${endDate}T${endTime}`;
@@ -30,6 +41,7 @@ export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) 
         />
         All day
       </label>
+      {!allDay ? <p className="-mt-2 text-[12px] text-[#6e6e73]">Use times for part of a day, like an appointment.</p> : null}
 
       <input type="hidden" name="startAt" value={startAt} />
       <input type="hidden" name="endAt" value={endAt} />
@@ -42,8 +54,13 @@ export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) 
               required
               type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="field min-w-0 flex-1 rounded-xl bg-[var(--surface-container-low)]/80"
+              onChange={(e) => {
+                const v = e.target.value;
+                setStartDate(v);
+                // Keep the end from sitting before the start.
+                if (v && (!endDate || endDate < v)) setEndDate(v);
+              }}
+              className="field min-w-0 flex-1"
             />
             {!allDay ? (
               <input
@@ -52,7 +69,7 @@ export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) 
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="field !w-32 shrink-0 rounded-xl bg-[var(--surface-container-low)]/80"
+                className="field !w-32 shrink-0"
               />
             ) : null}
           </div>
@@ -63,8 +80,8 @@ export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) 
           required
           hint={
             allDay
-              ? "Last day of absence (inclusive)."
-              : "Last moment of absence (inclusive)."
+              ? "Your last day off."
+              : "When you're back."
           }
         >
           <div className="flex gap-2">
@@ -73,8 +90,9 @@ export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) 
               required
               type="date"
               value={endDate}
+              min={startDate || undefined}
               onChange={(e) => setEndDate(e.target.value)}
-              className="field min-w-0 flex-1 rounded-xl bg-[var(--surface-container-low)]/80"
+              className="field min-w-0 flex-1"
             />
             {!allDay ? (
               <input
@@ -83,7 +101,7 @@ export function LeaveDateTimeFields({ defaultValue }: { defaultValue: string }) 
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="field !w-32 shrink-0 rounded-xl bg-[var(--surface-container-low)]/80"
+                className="field !w-32 shrink-0"
               />
             ) : null}
           </div>

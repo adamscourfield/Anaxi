@@ -1,12 +1,10 @@
-import type { ReactNode } from "react";
-import styles from "./page.module.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeatureForPage } from "@/lib/guards";
 import { canManageLoa } from "@/lib/loa";
-import { businessDaysBetween } from "@/lib/leaveDates";
-import { isPendingStatus, loaStatusLabel, normalizeLoaStatus } from "@/lib/leaveStatus";
+import { businessDaysBetween, formatLeaveBoundary, formatLeaveRange, leaveDayKey } from "@/lib/leaveDates";
+import { isPendingStatus, loaStatusLabel, loaStatusUiBucket, normalizeLoaStatus } from "@/lib/leaveStatus";
 import { prisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/rbac";
 import { cancelLoaRequest, decideLoaRequest } from "../actions";
@@ -14,182 +12,40 @@ import { DeleteLoaRequestButton } from "../DeleteLoaRequestButton";
 import { PageHeader } from "@/components/ui/page-header";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { StatusPill } from "@/components/ui/status-pill";
 import { SubmitButton } from "@/components/ui/submit-button";
+import styles from "./page.module.css";
 
-const LEAVE_ELEVATED_CARD =
-  "overflow-hidden rounded-sm border border-border bg-[var(--surface-container-lowest)] shadow-none";
-
-/** Requests created before time-of-day support default to local midnight -- don't show a "12:00 am" time for those. */
-function hasTimeOfDay(date: Date) {
-  return date.getHours() !== 0 || date.getMinutes() !== 0;
-}
-
-function fmt(date: Date) {
-  const base = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-  if (!hasTimeOfDay(date)) return base;
-  const time = date.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true });
-  return `${base}, ${time}`;
-}
-
-function fmtSubmitted(date: Date) {
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function CalendarGlyph({ className, muted }: { className?: string; muted?: boolean }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={muted ? "currentColor" : "var(--accent)"}
-      strokeWidth="2"
-      aria-hidden
-    >
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ClockGlyph({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" aria-hidden>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function BookmarkGlyph({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" aria-hidden>
-      <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function DocGlyph({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" aria-hidden>
-      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-const STATUS_STYLES: Record<string, { badge: string; iconWrap: string; icon: ReactNode; label: string }> = {
-  PENDING: {
-    badge: "border border-[#FDBA74] bg-[#FFF7ED] text-[#9A3412]",
-    iconWrap: "text-[#EA580C]",
-    label: "Pending approval",
-    icon: (
-      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 3" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  APPROVED_WITH_PAY: {
-    badge: "border border-emerald-200 bg-emerald-50 text-emerald-900",
-    iconWrap: "text-emerald-600",
-    label: "Approved with pay",
-    icon: (
-      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <polyline points="20 6 9 17 4 12" />
-      </svg>
-    ),
-  },
-  APPROVED_WITHOUT_PAY: {
-    badge: "border border-amber-200 bg-amber-50 text-amber-950",
-    iconWrap: "text-amber-600",
-    label: "Approved without pay",
-    icon: (
-      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <polyline points="20 6 9 17 4 12" />
-      </svg>
-    ),
-  },
-  APPROVED: {
-    badge: "border border-emerald-200 bg-emerald-50 text-emerald-900",
-    iconWrap: "text-emerald-600",
-    label: "Approved",
-    icon: (
-      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <polyline points="20 6 9 17 4 12" />
-      </svg>
-    ),
-  },
-  CANCELLED: {
-    badge: "border border-border bg-[var(--surface-container-low)] text-muted",
-    iconWrap: "text-muted",
-    label: "Cancelled",
-    icon: (
-      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </svg>
-    ),
-  },
-  DENIED: {
-    badge: "border border-red-200 bg-red-50 text-red-900",
-    iconWrap: "text-red-600",
-    label: "Denied",
-    icon: (
-      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </svg>
-    ),
-  },
+const ERRORS: Record<string, string> = {
+  CHOOSE_DECISION: "Choose approve with pay, approve without pay, or deny.",
+  ALREADY_DECIDED: "This request was decided or cancelled before your change was saved. Here's where it stands now.",
+  OWN_REQUEST: "You can't decide your own leave request.",
+  NOTES_TOO_LONG: "Keep decision notes under 2,000 characters.",
 };
 
-function InfoCell({
-  icon,
-  label,
-  value,
-  className,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  className?: string;
-}) {
-  return (
-    <div className={`flex gap-3 p-4 sm:p-5 ${className ?? ""}`}>
-      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-container-low)] text-accent">
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-          {label}
-        </p>
-        <p className="mt-1 text-[0.9375rem] font-bold leading-snug text-text">
-          {value}
-        </p>
-      </div>
-    </div>
-  );
+const UK_STAMP: Intl.DateTimeFormatOptions = {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+  timeZone: "Europe/London",
+};
+
+function pillVariant(status: string) {
+  const bucket = loaStatusUiBucket(status);
+  if (bucket === "APPROVED") return normalizeLoaStatus(status) === "APPROVED_WITHOUT_PAY" ? "warning" : "success";
+  if (bucket === "DENIED") return "error";
+  if (bucket === "CANCELLED") return "neutral";
+  return "warning";
 }
 
-function NotesBlock({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="rounded-xl border border-border bg-[var(--surface-container-lowest)] px-4 py-4 sm:px-5">
-      <div className="flex gap-3">
-        <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-container-low)] text-accent">
-          <DocGlyph className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-            {title}
-          </p>
-          <div className="mt-1.5 text-[0.875rem] leading-relaxed text-text">
-            {children}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+const DECISIONS = [
+  { value: "APPROVED_WITH_PAY", label: "Approve with pay", body: "Paid leave." },
+  { value: "APPROVED_WITHOUT_PAY", label: "Approve without pay", body: "Leave is unpaid." },
+  { value: "DENIED", label: "Deny", body: "Say why in the notes." },
+] as const;
 
 export default async function LeaveDetailPage({
   params,
@@ -200,254 +56,205 @@ export default async function LeaveDetailPage({
 }) {
   const user = await getSessionUserOrThrow();
   await requireFeatureForPage(user.tenantId, "LEAVE");
-  const resolvedParams = await params;
+  const { id } = await params;
   const query = (await searchParams) ?? {};
 
-  const preview = process.env.NODE_ENV === "development" && resolvedParams.id === "design-preview";
-  const request = preview ? {
-    id:"design-preview", requesterId:user.id, requester:{fullName:"Example staff member"},
-    reason:{label:"Personal leave"}, status:"PENDING" as const,
-    startDate:new Date("2026-10-19T00:00:00"), endDate:new Date("2026-10-20T00:00:00"),
-    createdAt:new Date("2026-10-11T09:00:00"), updatedAt:new Date("2026-10-11T09:00:00"),
-    reasonText:"A personal appointment requiring time away from school.",
-    coverRequirements:"Cover notes will be shared with the team before the absence.",
-    medicalEvidenceUrl:null, notes:null, decisionNotes:null,
-  } : await prisma.lOARequest.findFirst({
-    where: { id: resolvedParams.id, tenantId: user.tenantId },
-    include: { requester: true, reason: true },
+  const request = await prisma.lOARequest.findFirst({
+    where: { id, tenantId: user.tenantId },
+    include: { requester: { select: { id: true, fullName: true } }, reason: true },
   });
   if (!request) notFound();
 
   const isOwner = request.requesterId === user.id;
-  const manager = !preview && !isOwner && (await canManageLoa(user, request.requesterId));
+  const manager = !isOwner && (await canManageLoa(user, request.requesterId));
   if (!manager && !isOwner) notFound();
+
+  const decidedBy =
+    request.decidedById && request.decidedById !== request.requesterId
+      ? await prisma.user.findFirst({
+          where: { id: request.decidedById, tenantId: user.tenantId },
+          select: { fullName: true },
+        })
+      : null;
 
   const startDate = new Date(request.startDate);
   const endDate = new Date(request.endDate);
   const days = businessDaysBetween(startDate, endDate);
+  const pending = isPendingStatus(request.status);
   const status = normalizeLoaStatus(request.status) as string;
-  const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES.PENDING;
-  const canCancel = !preview && isOwner && isPendingStatus(request.status);
-  const canDelete = !preview && hasPermission(user.role, "leave:delete");
+  const canCancel = isOwner && pending;
+  const canDecide = manager && pending;
+  const canDelete = hasPermission(user.role, "leave:delete");
 
   const fromCalendar = query.from === "calendar";
   const calendarMonth = String(query.month || "");
-  const calendarBackHref =
+  const backHref =
     fromCalendar && /^\d{4}-\d{2}$/.test(calendarMonth)
-      ? `/leave/calendar?month=${calendarMonth}`
+      ? `/leave?view=calendar&month=${calendarMonth}`
       : fromCalendar
-        ? "/leave/calendar"
+        ? "/leave?view=calendar"
         : "/leave";
 
-  const surfaceCard = LEAVE_ELEVATED_CARD;
+  const error = ERRORS[String(query.error || "")] ?? null;
+  const justDecided = query.decided === "1" && !pending;
+  const sameDay = leaveDayKey(startDate) === leaveDayKey(endDate);
+  const name = request.requester?.fullName ?? "Unknown member of staff";
+  const evidenceHref =
+    request.medicalEvidenceUrl && request.medicalEvidenceUrl.startsWith("/api/leave/evidence/") ? request.medicalEvidenceUrl : null;
+
+  const facts: [string, string][] = [
+    ...((sameDay
+      ? [["Date", formatLeaveRange(startDate, endDate, -1)]]
+      : [
+          ["From", formatLeaveBoundary(startDate)],
+          ["Until", formatLeaveBoundary(endDate)],
+        ]) as [string, string][]),
+    ["Working days", String(days)],
+    ["Type", request.reason?.label ?? "Leave"],
+    ["Sent", new Date(request.createdAt).toLocaleString("en-GB", UK_STAMP)],
+  ];
+  if (!pending && request.decidedAt) {
+    const when = new Date(request.decidedAt).toLocaleString("en-GB", UK_STAMP);
+    facts.push(
+      status === "CANCELLED"
+        ? ["Cancelled", when]
+        : ["Decided", decidedBy ? `${when} by ${decidedBy.fullName}` : when],
+    );
+  }
+
+  const notes: [string, string][] = [];
+  if (request.reasonText) notes.push(["Details", request.reasonText]);
+  if (request.coverRequirements) notes.push(["Cover needed", request.coverRequirements]);
+  if (request.notes) notes.push(["Notes", request.notes]);
 
   return (
-    <div className={`${styles.page} mx-auto max-w-3xl space-y-6 pb-24 pt-1 md:pb-8`}>
+    <div className={`${styles.page} mx-auto w-full max-w-3xl space-y-6 pb-16`}>
       <PageHeader
-        variant="ledger"
-        title={request.requester?.fullName ?? "Staff member"}
-        eyebrow={
-          <Breadcrumb
-            items={[
-              { label: "Leave", href: "/leave" },
-              { label: "Request detail" },
-            ]}
-          />
-        }
-        meta={
-          <span
-            className={`inline-flex shrink-0 items-center gap-2 rounded-md px-3.5 py-1.5 text-[0.8125rem] font-semibold ${statusStyle.badge}`}
-          >
-            <span className={statusStyle.iconWrap}>{statusStyle.icon}</span>
-            {loaStatusLabel(status)}
-          </span>
-        }
+        title={isOwner ? "Your leave request" : name}
+        eyebrow={<Breadcrumb items={[{ label: "Leave", href: backHref }, { label: isOwner ? "Your request" : name }]} />}
+        meta={<StatusPill variant={pillVariant(request.status)}>{pending ? "Waiting for a decision" : loaStatusLabel(status)}</StatusPill>}
         actions={
-          <Button variant="secondary" asChild>
-            <Link href={calendarBackHref}>{fromCalendar ? "Back to calendar" : "Back to requests"}</Link>
+          <Button variant="secondary" asChild className="h-10 min-h-0 px-4">
+            <Link href={backHref}>{fromCalendar ? "Back to calendar" : "Back to leave"}</Link>
           </Button>
         }
       />
 
-      {/* Request summary */}
-      <div className={surfaceCard}>
-        <div className="px-6 py-7 sm:px-8 sm:py-8">
-
-          <div className="overflow-hidden rounded-xl border border-border bg-[var(--surface-container-lowest)]">
-            <div className="grid grid-cols-1 sm:grid-cols-2">
-              <InfoCell
-                icon={<CalendarGlyph className="h-5 w-5" />}
-                label="Start"
-                value={fmt(startDate)}
-                className="border-b border-border sm:border-r sm:border-b-0"
-              />
-              <InfoCell
-                icon={<CalendarGlyph className="h-5 w-5" />}
-                label="End"
-                value={fmt(endDate)}
-                className="border-b border-border sm:border-b-0"
-              />
-              <InfoCell
-                icon={<ClockGlyph className="h-5 w-5" />}
-                label="Duration"
-                value={`${days} working day${days !== 1 ? "s" : ""}`}
-                className="border-b border-border sm:border-r sm:border-t sm:border-border sm:border-b-0"
-              />
-              <InfoCell
-                icon={<BookmarkGlyph className="h-5 w-5" />}
-                label="Reason"
-                value={request.reason?.label ?? "—"}
-                className="sm:border-t sm:border-border sm:border-b-0"
-              />
-            </div>
-          </div>
-
-          <div className="mt-5 space-y-4">
-            {request.reasonText ? (
-              <NotesBlock title="Reason for leave">{request.reasonText}</NotesBlock>
-            ) : null}
-            {request.coverRequirements ? (
-              <NotesBlock title="Cover requirements">{request.coverRequirements}</NotesBlock>
-            ) : null}
-            {request.medicalEvidenceUrl ? (
-              <NotesBlock title="Medical evidence">
-                <a
-                  href={request.medicalEvidenceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link-accent font-medium"
-                >
-                  View uploaded document
-                </a>
-              </NotesBlock>
-            ) : null}
-            {request.notes ? <NotesBlock title="Additional notes">{request.notes}</NotesBlock> : null}
-            {request.decisionNotes ? (
-              <NotesBlock title="Decision notes">{request.decisionNotes}</NotesBlock>
-            ) : null}
-          </div>
-
-          <p className="mt-6 flex items-center gap-2 text-[0.8125rem] text-muted">
-            <CalendarGlyph muted className="h-4 w-4 shrink-0 opacity-80" />
-            <span>
-              Submitted <span className="font-medium text-text">{fmtSubmitted(new Date(request.createdAt))}</span>
-            </span>
-          </p>
-        </div>
-      </div>
-
-      {canCancel ? (
-        <div className={surfaceCard}>
-          <div className="flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-            <div>
-              <h2 className="text-lg font-bold text-text">Withdraw request</h2>
-              <p className="mt-1 text-[0.8125rem] text-muted">
-                Cancel this request before it is decided. You can submit a new request later.
-              </p>
-            </div>
-            <form action={cancelLoaRequest}>
-              <input type="hidden" name="requestId" value={request.id} />
-              <button
-                type="submit"
-                className="rounded-xl border border-[color-mix(in_srgb,var(--error)_40%,transparent)] px-5 py-2.5 text-[0.875rem] font-semibold text-[var(--error)] calm-transition hover:bg-[var(--status-denied-light)]"
-              >
-                Cancel request
-              </button>
-            </form>
-          </div>
-        </div>
+      {error ? (
+        <p role="alert" className={styles.error}>
+          {error}
+        </p>
+      ) : justDecided ? (
+        <p role="status" className={styles.saved}>
+          Decision saved.
+        </p>
       ) : null}
 
-
-      <section aria-labelledby="leave-audit-heading" className={surfaceCard}>
-        <div className="border-b border-border px-6 py-5 sm:px-8">
-          <h2 id="leave-audit-heading" className="text-lg font-bold text-text">
-            Audit trail
-          </h2>
-          <p className="mt-1 text-[0.8125rem] text-muted">
-            Submitted {fmtSubmitted(new Date(request.createdAt))}
-            {request.updatedAt ? ` · Last updated ${fmtSubmitted(new Date(request.updatedAt))}` : ""}
-          </p>
-        </div>
+      <section className={styles.card} aria-label="Request">
+        <dl className={styles.facts}>
+          {facts.map(([k, v]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+        {notes.length || evidenceHref ? (
+          <div className={styles.notes}>
+            {notes.map(([k, v]) => (
+              <div key={k}>
+                <h2>{k}</h2>
+                <p>{v}</p>
+              </div>
+            ))}
+            {evidenceHref ? (
+              <div>
+                <h2>Evidence</h2>
+                <p>
+                  <a href={evidenceHref} target="_blank" rel="noopener noreferrer" className={styles.link}>
+                    Open the uploaded file
+                  </a>
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
-      {manager && isPendingStatus(request.status) ? (
-        <div className={surfaceCard}>
-          <div className="border-b border-border px-6 py-6 sm:px-8">
-            <h2 className="text-lg font-bold text-text">Make a decision</h2>
-            <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted">
-              Your decision will be recorded with a timestamp.
-            </p>
-          </div>
-          <form action={decideLoaRequest} className="space-y-6 px-6 py-5 sm:px-8 sm:py-8">
-            <input type="hidden" name="requestId" value={request.id} />
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <label className="group relative flex cursor-pointer flex-col gap-3 rounded-xl border border-emerald-500 bg-[#ECFDF5] p-4 calm-transition hover:bg-[#D1FAE5] has-[:checked]:ring-2 has-[:checked]:ring-emerald-500/25">
-                <input type="radio" name="decisionType" value="APPROVED_WITH_PAY" defaultChecked className="sr-only peer" />
-                <span className="flex h-10 w-10 items-center justify-center rounded-md border border-emerald-500/50 bg-white text-emerald-600">
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <span className="text-[0.8125rem] font-bold leading-snug text-emerald-800">Approve with pay</span>
-              </label>
-
-              <label className="group relative flex cursor-pointer flex-col gap-3 rounded-xl border border-orange-500 bg-[#FFF7ED] p-4 calm-transition hover:bg-[#FFEDD5] has-[:checked]:ring-2 has-[:checked]:ring-orange-500/25">
-                <input type="radio" name="decisionType" value="APPROVED_WITHOUT_PAY" className="sr-only peer" />
-                <span className="flex h-10 w-10 items-center justify-center rounded-md border border-orange-500/50 bg-white text-orange-600">
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <span className="text-[0.8125rem] font-bold leading-snug text-[#9A3412]">Approve without pay</span>
-              </label>
-
-              <label className="group relative flex cursor-pointer flex-col gap-3 rounded-xl border border-red-500 bg-[#FEF2F2] p-4 calm-transition hover:bg-[#FEE2E2] has-[:checked]:ring-2 has-[:checked]:ring-red-500/25">
-                <input type="radio" name="decisionType" value="DENIED" className="sr-only peer" />
-                <span className="flex h-10 w-10 items-center justify-center rounded-md border border-red-500/50 bg-white text-red-600">
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <line x1="18" y1="6" x2="6" y2="18" strokeLinecap="round" />
-                    <line x1="6" y1="6" x2="18" y2="18" strokeLinecap="round" />
-                  </svg>
-                </span>
-                <span className="text-[0.8125rem] font-bold leading-snug text-red-800">Deny</span>
-              </label>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="decision-notes" className="block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">
-                Decision notes <span className="font-normal normal-case tracking-normal">· optional</span>
-              </label>
-              <textarea
-                id="decision-notes"
-                name="decisionNotes"
-                rows={4}
-                className="field min-h-[100px] w-full resize-y rounded-xl"
-                placeholder="Any notes for the requester..."
-              />
-            </div>
-
-            <SubmitButton className="flex w-full items-center justify-center rounded-xl py-3.5 text-[0.9375rem]">
-              Save decision
-            </SubmitButton>
-          </form>
-        </div>
+      {request.decisionNotes ? (
+        <section className={`${styles.card} p-6`}>
+          <h2 className="text-[15px] font-semibold">{decidedBy ? `Note from ${decidedBy.fullName.split(" ")[0]}` : "Decision note"}</h2>
+          <p className="mt-2 whitespace-pre-wrap text-[14px] leading-relaxed">{request.decisionNotes}</p>
+        </section>
       ) : null}
 
-      {/* Destructive action last, after the decision and audit trail. */}
-      {canDelete ? (
-        <div className={surfaceCard}>
-          <div className="flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-            <div>
-              <h2 className="text-lg font-bold text-text">Delete request</h2>
-              <p className="mt-1 text-[0.8125rem] text-muted">
-                Permanently remove this leave request from the record. This cannot be undone.
-              </p>
+      {canDecide ? (
+        <section className={`${styles.card} p-6`} aria-labelledby="leave-decide">
+          <h2 id="leave-decide" className="text-[17px] font-semibold tracking-[-0.02em]">
+            Your decision
+          </h2>
+          <p className="mt-1 text-[13px] text-[#6e6e73]">{name.split(" ")[0]} is told as soon as you save.</p>
+          <form action={decideLoaRequest} className="mt-5 space-y-5">
+            <input type="hidden" name="requestId" value={request.id} />
+            <fieldset>
+              <legend className="sr-only">Decision</legend>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {DECISIONS.map((d) => (
+                  <label key={d.value} className={styles.choice} data-tone={d.value === "DENIED" ? "deny" : undefined}>
+                    <input type="radio" name="decisionType" value={d.value} required className="sr-only" />
+                    <span className={styles.choiceTitle}>
+                      {d.label}
+                      <span className={styles.radio} aria-hidden />
+                    </span>
+                    <span className={styles.choiceBody}>{d.body}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <label className="block">
+              <span className="mb-1.5 block text-[13px] font-semibold">
+                Note to {name.split(" ")[0]} <span className="font-normal text-[#6e6e73]">(optional)</span>
+              </span>
+              <textarea
+                name="decisionNotes"
+                rows={3}
+                maxLength={2000}
+                className={styles.textarea}
+                placeholder="e.g. Approved. Please leave cover work in the shared drive."
+              />
+            </label>
+            <div className="flex justify-end">
+              <SubmitButton className="h-11 min-h-0 px-6" pendingLabel="Saving…">
+                Save decision
+              </SubmitButton>
             </div>
-            <DeleteLoaRequestButton requestId={request.id} />
+          </form>
+        </section>
+      ) : null}
+
+      {canCancel ? (
+        <section className={`${styles.card} flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between`}>
+          <div>
+            <h2 className="text-[15px] font-semibold">Cancel this request</h2>
+            <p className="mt-1 text-[13px] text-[#6e6e73]">You can do this until it&apos;s decided. You can send a new one any time.</p>
           </div>
-        </div>
+          <form action={cancelLoaRequest}>
+            <input type="hidden" name="requestId" value={request.id} />
+            <SubmitButton variant="secondary" className="h-10 min-h-0 px-4" pendingLabel="Cancelling…">
+              Cancel request
+            </SubmitButton>
+          </form>
+        </section>
+      ) : null}
+
+      {canDelete ? (
+        <section className={`${styles.card} flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between`}>
+          <div>
+            <h2 className="text-[15px] font-semibold">Delete request</h2>
+            <p className="mt-1 text-[13px] text-[#6e6e73]">Removes it from every record, including history. This can&apos;t be undone.</p>
+          </div>
+          <DeleteLoaRequestButton requestId={request.id} />
+        </section>
       ) : null}
     </div>
   );

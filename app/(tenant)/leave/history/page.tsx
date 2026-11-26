@@ -37,7 +37,7 @@ export default async function LeaveHistoryPage() {
     <div className={`${styles.page} space-y-8`}>
       <PageHeader variant="ledger"
         title="Leave history"
-        subtitle="Browse every leave request and filter by status or keyword."
+        subtitle="Every leave request you can see. Search by name, type or date."
       />
 
       <LeaveHistoryTable

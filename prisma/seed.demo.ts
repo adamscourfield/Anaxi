@@ -859,6 +859,13 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   // ── Step 8: LOA Requests ───────────────────────────────────────────────────
   console.log("  📝  Creating LOA requests…");
   const loaStatuses = ["PENDING", "PENDING", "APPROVED", "APPROVED", "APPROVED", "DENIED", "PENDING"];
+  const leaveDay = (offsetDays: number) => {
+    const d = new Date();
+    const day = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + offsetDays));
+    // Nudge weekends to the following Monday so every request has working days in it.
+    while (day.getUTCDay() === 0 || day.getUTCDay() === 6) day.setUTCDate(day.getUTCDate() + 1);
+    return day;
+  };
   for (let i = 0; i < 10; i++) {
     const teacher = teacherUsers[i % teacherUsers.length];
     const reason = loaReasonRecords[i % loaReasonRecords.length];
@@ -869,8 +876,9 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
         tenantId: tenant.id,
         requesterId: teacher.id,
         reasonId: reason.id,
-        startDate: daysAgo(-startOffset), // future
-        endDate: daysAgo(-(startOffset + randInt(1, 5))),
+        // All-day leave: whole dates at 00:00 UTC (the app's leave convention), starting on a weekday.
+        startDate: leaveDay(startOffset),
+        endDate: leaveDay(startOffset + randInt(0, 4)),
         notes: `Cover required for ${teacher.fullName}.`,
         status,
       },

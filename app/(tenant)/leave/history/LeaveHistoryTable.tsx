@@ -144,8 +144,8 @@ export function LeaveHistoryTable({
             <thead>
               <tr className="table-head-row text-left">
                 {isManager && <th className="px-5 py-3.5">Staff member</th>}
-                <th className="px-5 py-3.5">Requested dates</th>
-                <th className="px-5 py-3.5">Reason</th>
+                <th className="px-5 py-3.5">Dates</th>
+                <th className="px-5 py-3.5">Type</th>
                 <th className="px-5 py-3.5 text-right">Status</th>
                 {canTrackHrSystems &&
                   HR_SYSTEM_FLAGS.map(({ field, label }) => (

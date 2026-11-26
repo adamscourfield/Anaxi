@@ -5,6 +5,7 @@ import { requireFeature } from "@/lib/guards";
 import { canManageLoa } from "@/lib/loa";
 import { prisma } from "@/lib/prisma";
 import { withApi } from "@/lib/apiRoute";
+import { medicalEvidencePublicPath } from "@/lib/leaveMedicalUpload";
 
 export const GET = withApi(async function GET(
   _req: Request,
@@ -16,11 +17,15 @@ export const GET = withApi(async function GET(
     await requireFeature(user.tenantId, "LEAVE");
 
     const fileToken = path.basename(resolvedParams.fileToken);
+    // Tokens are 32 hex characters. Match exactly, never by substring.
+    if (!/^[a-f0-9]{32}$/.test(fileToken)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     const loa = await prisma.lOARequest.findFirst({
       where: {
         tenantId: user.tenantId,
-        medicalEvidenceUrl: { contains: fileToken },
+        medicalEvidenceUrl: medicalEvidencePublicPath(fileToken),
       },
       select: { requesterId: true, medicalEvidenceData: true, medicalEvidenceMimeType: true },
     });
@@ -38,6 +43,8 @@ export const GET = withApi(async function GET(
       headers: {
         "Content-Type": loa.medicalEvidenceMimeType ?? "application/octet-stream",
         "Cache-Control": "private, no-store",
+        "Content-Disposition": "inline",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch {

@@ -184,7 +184,8 @@ export async function sendLeaveSubmittedEmail(options: {
   approverUserIds: string[];
 }): Promise<SendEmailResult> {
   const branding = await getTenantEmailBranding(options.tenantId);
-  const dates = formatDateRange(options.startDate, options.endDate, branding.timezone);
+  // Leave dates are wall-clock values stored as UTC (see lib/leaveDates.ts), so format them in UTC.
+  const dates = formatDateRange(options.startDate, options.endDate, "UTC");
   const reviewUrl = `${getAppUrl()}/leave/${options.leaveRequestId}`;
   const subject = `Leave request from ${options.requesterName} needs review`;
 
@@ -335,7 +336,8 @@ export async function sendLeavePendingReminderEmail(options: {
   }
 
   const branding = await getTenantEmailBranding(options.tenantId);
-  const dates = formatDateRange(options.startDate, options.endDate, branding.timezone);
+  // Leave dates are wall-clock values stored as UTC (see lib/leaveDates.ts), so format them in UTC.
+  const dates = formatDateRange(options.startDate, options.endDate, "UTC");
   const reviewUrl = `${getAppUrl()}/leave/${options.leaveRequestId}`;
 
   return sendTemplatedEmail({

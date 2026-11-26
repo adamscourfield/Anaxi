@@ -5,6 +5,7 @@ export const LEAVE_MEDICAL_MIN_BUSINESS_DAYS = 3;
 
 export type LeavePolicyViolation =
   | "INVALID_DATES"
+  | "NO_WORKING_DAYS"
   | "MEDICAL_REQUIRED"
   | "OVERLAPPING_LEAVE";
 
@@ -31,6 +32,7 @@ export function validateLeavePolicy(input: LeavePolicyInput): LeavePolicyViolati
   }
 
   const businessDays = businessDaysBetween(startDate, endDate);
+  if (businessDays === 0) return "NO_WORKING_DAYS";
 
   if (reasonRequiresMedicalEvidence && businessDays >= LEAVE_MEDICAL_MIN_BUSINESS_DAYS && !medicalEvidenceUrl?.trim()) {
     return "MEDICAL_REQUIRED";
@@ -50,9 +52,10 @@ export function validateLeavePolicy(input: LeavePolicyInput): LeavePolicyViolati
 }
 
 export function leavePolicyMessageForCode(code: string): string {
-  if (code === "INVALID_REASON") return "Please select a valid leave reason.";
-  if (code === "INVALID_REQUEST") return "Please check your dates and try again.";
-  if (code === "INVALID_DATES" || code === "MEDICAL_REQUIRED" || code === "OVERLAPPING_LEAVE") {
+  if (code === "INVALID_REASON") return "Choose a type of leave.";
+  if (code === "INVALID_REQUEST") return "Check the dates and try again.";
+  if (code === "INVALID_EVIDENCE") return "The evidence file couldn't be read. Upload a PDF or image under the size limit.";
+  if (code === "INVALID_DATES" || code === "NO_WORKING_DAYS" || code === "MEDICAL_REQUIRED" || code === "OVERLAPPING_LEAVE") {
     return leavePolicyErrorMessage(code as LeavePolicyViolation);
   }
   return "Unable to submit this request.";
@@ -61,11 +64,13 @@ export function leavePolicyMessageForCode(code: string): string {
 export function leavePolicyErrorMessage(code: LeavePolicyViolation): string {
   switch (code) {
     case "INVALID_DATES":
-      return "End date must be on or after the start date.";
+      return "The end must be on or after the start.";
+    case "NO_WORKING_DAYS":
+      return "These dates fall on a weekend, so there's no leave to request.";
     case "MEDICAL_REQUIRED":
       return `Medical evidence is required for medical absences of ${LEAVE_MEDICAL_MIN_BUSINESS_DAYS} or more consecutive working days.`;
     case "OVERLAPPING_LEAVE":
-      return "These dates overlap an existing pending or approved leave request.";
+      return "These dates overlap leave you've already requested or had approved.";
     default:
       return "This leave request could not be submitted.";
   }

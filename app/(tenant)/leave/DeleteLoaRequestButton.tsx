@@ -13,7 +13,7 @@ export function DeleteLoaRequestButton({ requestId }: { requestId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-xl border border-[color-mix(in_srgb,var(--error)_40%,transparent)] px-5 py-2.5 text-[0.875rem] font-semibold text-[var(--error)] calm-transition hover:bg-[var(--status-denied-light)]"
+        className="inline-flex h-10 items-center rounded-[10px] border border-[var(--pill-error-ring)] bg-white px-4 text-[14px] font-medium text-[var(--pill-error-text)] calm-transition hover:bg-[var(--pill-error-bg)]"
       >
         Delete request
       </button>
