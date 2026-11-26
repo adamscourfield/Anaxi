@@ -84,7 +84,7 @@
 .page :global(.obs-history-window)::before { content:""; position:absolute; left:0; top:23px; bottom:23px; width:3px; border-radius:0 3px 3px 0; background:#ff8a72; }
 .page :global(.obs-history-window) p,.page :global(.obs-history-window) a,.page :global(.obs-history-window) svg { color:#c1cbd3; }
 .page :global(.obs-history-window) p { font-size:11px; line-height:1.8; }
-.page :global(.obs-history-window) > div > div:first-child > p:first-child,.page :global(.obs-history-window) > div > div:last-child > p:first-child { font-size:9px; letter-spacing:.13em; font-weight:500; }
+.page :global(.obs-history-window) > div > div:first-child > p:first-child,.page :global(.obs-history-window) > div > div:last-child > p:first-child { font-size:12px; letter-spacing:0; font-weight:600; color:#fff; }
 .page :global(.obs-history-window) > div > div:last-child > div:first-of-type p { color:#fff; font-size:20px; font-weight:500; letter-spacing:-.035em; line-height:1.4; }
 .page :global(.obs-history-window) > div > div:last-child > div:first-of-type svg { width:19px; height:19px; }
 .page :global(.obs-history-window) a { font-size:10px; font-weight:500; }

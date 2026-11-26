@@ -28,10 +28,10 @@ const PRESET_META: Record<
   ObservationAnalysisPreset,
   { label: string; short: string }
 > = {
-  week: { label: "Last week", short: "Week" },
-  month: { label: "Last month", short: "Month" },
-  academic_year: { label: "Academic year", short: "Academic year" },
-  "26w": { label: "~26 weeks", short: "26 weeks" },
+  week: { label: "Last 7 days", short: "7 days" },
+  month: { label: "Last 30 days", short: "30 days" },
+  academic_year: { label: "This academic year", short: "This year" },
+  "26w": { label: "Last 26 weeks", short: "26 weeks" },
 };
 
 type TooltipState = { x: number; y: number; text: string } | null;
@@ -269,8 +269,17 @@ function timelineTooltipMetricLine(mode: TimelineSeriesMode, count: number): str
     const c = Math.round(count);
     return `${n} observation${c === 1 ? "" : "s"} this week`;
   }
-  if (mode === "cumulative") return `${n} observations cumulative (through this week)`;
-  return `${n} avg observations/week (4-week window)`;
+  if (mode === "cumulative") return `${n} observations so far`;
+  return `${n} a week on average over 4 weeks`;
+}
+
+/** True when `weekKey` (a Monday, YYYY-MM-DD) is the week we're in now. */
+function isCurrentWeek(weekKey: string): boolean {
+  const start = new Date(`${weekKey}T00:00:00`);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 7);
+  const now = new Date();
+  return now >= start && now < end;
 }
 
 function barWidthPct(count: number, max: number): number {
@@ -282,9 +291,10 @@ function formatObsDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString("en-GB", {
     weekday: "short",
-    day: "2-digit",
+    day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: "Europe/London",
   });
 }
 
@@ -331,7 +341,7 @@ function CoachingPairFilterForm({
         <input key={`${k}=${v}`} type="hidden" name={k} value={v} />
       ))}
       <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:max-w-[220px]">
-        <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Coach</span>
+        <span className="text-[0.6875rem] font-semibold text-muted">Coach</span>
         <FormSelect
           name="coachingCoach"
           defaultValue={coachId}
@@ -343,7 +353,7 @@ function CoachingPairFilterForm({
         />
       </label>
       <label className="flex min-w-0 flex-1 flex-col gap-1.5 sm:max-w-[220px]">
-        <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Coachee</span>
+        <span className="text-[0.6875rem] font-semibold text-muted">Coachee</span>
         <FormSelect
           name="coachingCoachee"
           defaultValue={coacheeId}
@@ -449,6 +459,7 @@ export function ObservationHistoryAnalysis({
     if (n === 0) {
       return {
         d: "",
+        partialD: "",
         fillD: "",
         points: [] as { x: number; y: number; label: string; count: number; weekKey: string }[],
         w,
@@ -472,8 +483,13 @@ export function ObservationHistoryAnalysis({
       const dx = (p.x - prev.x) / 3;
       return `C ${prev.x + dx} ${prev.y} ${p.x - dx} ${p.y} ${p.x} ${p.y}`;
     }).join(" ");
+    // The current week isn't over, so its count is still climbing: draw that last stretch dashed.
+    const lastKey = pts[pts.length - 1]?.weekKey;
+    const partial = Boolean(lastKey) && pts.length > 1 && isCurrentWeek(lastKey);
+    const solidD = partial ? lineD.slice(0, lineD.lastIndexOf(" C ")) : lineD;
+    const partialD = partial ? `M ${pts[pts.length - 2].x} ${pts[pts.length - 2].y} ${lineD.slice(lineD.lastIndexOf(" C ") + 1)}` : "";
     const fillD = `${lineD} L ${pts[pts.length - 1].x.toFixed(1)} ${(padT + innerH).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(padT + innerH).toFixed(1)} Z`;
-    return { d: lineD, fillD, points: pts, w, h, padL, padR, padT, padB };
+    return { d: solidD, partialD, fillD, points: pts, w, h, padL, padR, padT, padB };
   }, [chartTimelineWeeks, maxTimeline]);
 
   const linePointsRef = useRef(linePoints);
@@ -619,48 +635,14 @@ export function ObservationHistoryAnalysis({
 
       <div className={`${analysisCardClass} obs-history-window overflow-hidden p-5 md:p-6`}>
         <div className="flex flex-col gap-8 md:flex-row md:items-stretch md:gap-0">
-          {/* Analysis copy + quick presets */}
+          {/* What the charts cover */}
           <div className="min-w-0 flex-1 md:pr-8">
-            <p
-              className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-muted"
-            >
-              Analysis
-            </p>
+            <p className="text-[0.8125rem] font-semibold">Chart period</p>
             <p className="mt-2 max-w-xl text-[0.8125rem] leading-relaxed text-muted">
-              Charts use the same filters as the table. When you set table date filters, the chart window is the overlap
-              with the range you pick below (UK academic year: 1 Sep – 31 Aug). Weeks start on Monday.
+              The charts use the same filters as the list below. If you&apos;ve set dates on the list, they only cover the
+              part that overlaps this period. Weeks start on Monday.
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] text-muted">
-              <Link
-                href={analysisHref("week", historyFilterQueryString)}
-                className="inline-flex items-center gap-1.5 calm-transition hover:text-text"
-              >
-                <CalendarOutlineIcon className="h-3.5 w-3.5 shrink-0" stroke="currentColor" />
-                Last week (7 days)
-              </Link>
-              <span className="select-none text-muted/50" aria-hidden>
-                ·
-              </span>
-              <Link
-                href={analysisHref("month", historyFilterQueryString)}
-                className="inline-flex items-center gap-1.5 calm-transition hover:text-text"
-              >
-                <CalendarOutlineIcon className="h-3.5 w-3.5 shrink-0" stroke="currentColor" />
-                Last month (30 days)
-              </Link>
-              <span className="select-none text-muted/50" aria-hidden>
-                ·
-              </span>
-              <Link
-                href={analysisHref("academic_year", historyFilterQueryString)}
-                className="inline-flex items-center gap-1.5 calm-transition hover:text-text"
-              >
-                <CalendarOutlineIcon className="h-3.5 w-3.5 shrink-0" stroke="currentColor" />
-                Academic year (from 1 September)
-              </Link>
-            </div>
           </div>
-
           <div
             className="hidden shrink-0 self-stretch w-px bg-border/35 md:block"
             aria-hidden
@@ -668,9 +650,7 @@ export function ObservationHistoryAnalysis({
 
           {/* Current window + segmented control */}
           <div className="min-w-0 flex-1 md:pl-8">
-            <p className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-muted">
-              Current window
-            </p>
+            <p className="text-[0.8125rem] font-semibold">Showing</p>
             <div className="mt-3 flex items-start gap-2.5">
               <CalendarOutlineIcon className="mt-0.5 h-6 w-6 shrink-0 text-muted" stroke="currentColor" />
               <p className="text-[0.9375rem] font-bold leading-snug text-neutral-950">
@@ -706,8 +686,8 @@ export function ObservationHistoryAnalysis({
         {emptyIntersection ? (
           <p className="mt-6 rounded-lg border border-scale-some/30 bg-scale-some-light/80 px-3 py-2 text-[0.8125rem] text-text md:mt-8">
             {chartFellBackToTableDates
-              ? "The chart range you picked does not overlap your table date filters, so the charts below use your table date range instead. Widen the table dates or choose another chart range."
-              : "No overlap between this chart range and your table date filters — widen dates or pick another range."}
+              ? "This period doesn't overlap the dates set on the list, so the charts use the list's dates instead. Widen the list dates or pick another period."
+              : "This period doesn't overlap the dates set on the list. Widen the list dates or pick another period."}
           </p>
         ) : null}
       </div>
@@ -716,18 +696,17 @@ export function ObservationHistoryAnalysis({
         <div className={`${analysisCardClass} obs-history-chart-card flex flex-col p-5 md:p-6`}>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-[var(--on-surface-variant)]">
+              <h3 className="text-[0.6875rem] font-semibold text-[var(--on-surface-variant)]">
                 Observations by observer role
               </h3>
-              <InfoCircleIcon title="Counts reflect observers in your current table filters and the chart window above." />
             </div>
-            <p className="mt-1 text-[0.8125rem] text-[var(--on-surface-variant)]">Hover a bar for the exact count.</p>
+            <p className="mt-1 text-[0.8125rem] text-[var(--on-surface-variant)]">Who recorded the observations in this period.</p>
           </div>
           {!hasRoles ? (
-            <p className="mt-4 text-sm text-muted">No observations in the current filter.</p>
+            <p className="mt-4 text-sm text-muted">No observations in this period.</p>
           ) : (
             <>
-              <p className="obs-history-role-total"><strong>{roleCounts.reduce((total, row) => total + row.count, 0).toLocaleString()}</strong><span>observations in this window</span></p>
+              <p className="obs-history-role-total"><strong>{roleCounts.reduce((total, row) => total + row.count, 0).toLocaleString()}</strong><span>observations in this period</span></p>
               <ul className="mt-5 space-y-3.5">
                 {roleCounts.map((row, rank) => {
                   const isLead = rank === 0;
@@ -772,10 +751,7 @@ export function ObservationHistoryAnalysis({
                   );
                 })}
               </ul>
-              <p className="mt-auto pt-5 text-[0.6875rem] text-[var(--on-surface-variant)]">
-                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-sm align-middle bg-[#ff6a52]" />{" "}
-                Total observations
-              </p>
+
             </>
           )}
         </div>
@@ -784,7 +760,7 @@ export function ObservationHistoryAnalysis({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-text">
+                <h3 className="text-[0.6875rem] font-semibold text-text">
                   Observations over time
                 </h3>
                 <InfoCircleIcon
@@ -799,10 +775,10 @@ export function ObservationHistoryAnalysis({
               </div>
               <p className="mt-1 text-[0.8125rem] text-[var(--on-surface-variant)]">
                 {timelineSeriesMode === "weekly"
-                  ? "Move along the chart: the guide follows the line and the tooltip shows counts for that week."
+                  ? "How many observations each week. Point at the line for a week's count."
                   : timelineSeriesMode === "cumulative"
-                    ? "The line shows how total observations build across the selected window."
-                    : "Useful for spotting sustained pace without week-to-week noise."}
+                    ? "The running total across the period."
+                    : "The average over each four weeks, to show the pace without the week-to-week noise."}
               </p>
             </div>
             <div className="relative shrink-0 self-start">
@@ -813,23 +789,29 @@ export function ObservationHistoryAnalysis({
                 className="h-10 min-w-[11.5rem] max-w-[16rem] appearance-none rounded-lg border border-[color-mix(in_srgb,var(--outline-variant)_55%,transparent)] bg-[var(--surface-container-lowest)] py-2 pl-3 pr-9 text-[0.75rem] font-semibold text-[var(--on-surface)] shadow-sm outline-none calm-transition hover:border-[color-mix(in_srgb,var(--outline-variant)_45%,transparent)] focus:border-[#CBD5E1] focus:ring-2 focus:ring-[rgba(15,23,42,0.06)]"
                 aria-label="Observations over time: series type"
               >
-                <option value="weekly">Observations per week</option>
-                <option value="cumulative">Cumulative total</option>
-                <option value="moving_avg">4-week rolling average</option>
+                <option value="weekly">Per week</option>
+                <option value="cumulative">Running total</option>
+                <option value="moving_avg">4-week average</option>
               </select>
               <ChevronDownMini className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--on-surface-variant)]" />
             </div>
           </div>
           {!hasTimeline ? (
-            <p className="mt-4 text-sm text-muted">No weeks in range.</p>
+            <p className="mt-4 text-sm text-muted">No weeks in this period.</p>
           ) : (
             (() => {
               const { padL, padT, plotW, plotH, pts, snapIdx, hoverX } = timelineSvgPlot;
               return (
-                <div className="mt-4 w-full flex-1 overflow-x-auto bg-white pt-3">
+                <div
+                  className="mt-4 w-full flex-1 overflow-x-auto bg-white pt-3"
+                  // On a phone the chart scrolls sideways: start at the most recent weeks.
+                  ref={(el) => {
+                    if (el && el.scrollWidth > el.clientWidth && el.scrollLeft === 0) el.scrollLeft = el.scrollWidth;
+                  }}
+                >
                   <svg
                     viewBox={`0 0 ${linePoints.w} ${linePoints.h}`}
-                    className="h-48 w-full min-w-[280px] cursor-crosshair calm-transition"
+                    className="h-auto w-full min-w-[560px] cursor-crosshair calm-transition"
                     preserveAspectRatio="xMidYMid meet"
                     role="img"
                     aria-label={
@@ -906,7 +888,7 @@ export function ObservationHistoryAnalysis({
                             key={`x-${p.weekKey}`}
                             x={p.x}
                             y={linePoints.h - 6}
-                            textAnchor="middle"
+                            textAnchor={n > 1 && i === n - 1 ? "end" : n > 1 && i === 0 ? "start" : "middle"}
                             className="pointer-events-none select-none"
                             fill="#9CA3AF"
                             fontSize="10"
@@ -932,6 +914,17 @@ export function ObservationHistoryAnalysis({
                       pathLength={1}
                       strokeOpacity={1}
                     />
+                    {linePoints.partialD ? (
+                      <path
+                        d={linePoints.partialD}
+                        fill="none"
+                        stroke={OBS_CHART_INK}
+                        strokeWidth="2"
+                        strokeDasharray="4 5"
+                        strokeLinecap="round"
+                        className="pointer-events-none"
+                      />
+                    ) : null}
                     {hoverX != null ? (
                       <line
                         x1={hoverX}
@@ -973,7 +966,10 @@ export function ObservationHistoryAnalysis({
                       style={{ touchAction: "none" }}
                     />
                   </svg>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.6875rem] text-[var(--on-surface-variant)]">
+                  {linePoints.partialD ? (
+                    <p className="sticky left-0 mt-1 text-[0.6875rem] text-[var(--on-surface-variant)]">The dashed end is this week so far.</p>
+                  ) : null}
+                  <div className="sticky left-0 mt-2 flex w-fit max-w-full flex-wrap items-center gap-x-2 gap-y-1 text-[0.6875rem] text-[var(--on-surface-variant)]">
                     <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke={OBS_CHART_INK} strokeWidth="2" aria-hidden>
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                       <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
@@ -1006,16 +1002,16 @@ export function ObservationHistoryAnalysis({
                                 )}
                           </span>{" "}
                           {timelineSeriesMode === "weekly"
-                            ? "total in window"
+                            ? "in total"
                             : timelineSeriesMode === "cumulative"
-                              ? "cumulative (end of range)"
+                              ? "by the end"
                               : (
                                 <>
-                                  latest 4-wk avg ·{" "}
+                                  a week recently, out of{" "}
                                   <span className="font-semibold text-text">
                                     {rawObservationsInWindow.toLocaleString()}
                                   </span>{" "}
-                                  obs. total
+                                  in total
                                 </>
                                 )}
                         </span>
@@ -1030,12 +1026,12 @@ export function ObservationHistoryAnalysis({
 
       {showCoachingSection ? (
         <div className={`${analysisCardClass} obs-history-coaching p-5 md:p-6`} id="coaching-coverage">
-            <h3 className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-text">
-              Coaching pairs — weekly coverage
+            <h3 className="text-[0.6875rem] font-semibold text-text">
+              Coaching pairs, week by week
             </h3>
             <p className="mt-1 max-w-3xl text-[0.8125rem] text-[var(--on-surface-variant)]">
-              Black squares mark a week with at least one observation where this coach observed this coachee. Light grey
-              weeks have none. Hover for the observation date; click a black square to open details.
+              Each square is a week. Dark means the coach observed their coachee that week; select one to open the
+              observation. Light means no observation that week.
             </p>
             {coachingCoachFilterOptions.length > 0 || coachingCoacheeFilterOptions.length > 0 ? (
               <CoachingPairFilterForm
@@ -1061,13 +1057,10 @@ export function ObservationHistoryAnalysis({
                       <tr className="table-head-row text-left">
                         <th className="w-48 px-5 py-3.5 whitespace-nowrap">Pair</th>
                         <th className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-1.5">
-                            Coaching obs.
-                            <InfoCircleIcon title="Coaching observations within this analysis period" />
-                          </span>
+                          Observations
                         </th>
-                        <th className="px-4 py-3.5 whitespace-nowrap">Weeks with obs.</th>
-                        <th className="min-w-[240px] px-4 py-3.5 whitespace-nowrap">Weeks (oldest → newest)</th>
+                        <th className="px-4 py-3.5 whitespace-nowrap">Weeks observed</th>
+                        <th className="min-w-[240px] px-4 py-3.5 whitespace-nowrap">Weeks, oldest first</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1098,9 +1091,9 @@ export function ObservationHistoryAnalysis({
                                       key={i}
                                       href={`/observe/${obsId}`}
                                       className="inline-flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-sm bg-[var(--obs-coaching-hit)] calm-transition hover:ring-2 hover:ring-neutral-950/25 hover:ring-offset-1 hover:ring-offset-surface-container-lowest"
-                                      title={`Observation ${formatObsDate(iso)} — click for details`}
+                                      title={`Observation on ${formatObsDate(iso)}`}
                                       onMouseEnter={(e) =>
-                                        showTip(e, `Observation\n${formatObsDate(iso)}\nClick to open`)
+                                        showTip(e, `Observation\n${formatObsDate(iso)}`)
                                       }
                                       onMouseMove={moveTip}
                                       onMouseLeave={hideTip}
@@ -1133,8 +1126,8 @@ export function ObservationHistoryAnalysis({
                         {p.coachName} <span className="font-normal text-muted">→</span> {p.coacheeName}
                       </p>
                       <p className="mt-1 text-[0.8125rem] text-muted">
-                        {p.observationCount} coaching observation{p.observationCount === 1 ? "" : "s"} this period ·{" "}
-                        {p.weeksWithObservation}/{p.weekHit.length} weeks with obs.
+                        {p.observationCount} observation{p.observationCount === 1 ? "" : "s"}, in {p.weeksWithObservation} of{" "}
+                        {p.weekHit.length} weeks
                       </p>
                       <div className="mt-2 flex flex-wrap gap-0.5">
                         {p.weekHit.map((hit, i) => {

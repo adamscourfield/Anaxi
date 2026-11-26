@@ -36,7 +36,7 @@ function startOfWeekMonday(d: Date): Date {
 }
 
 function formatWeekLabel(weekStart: Date): string {
-  return weekStart.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+  return weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
 function enumerateWeeks(start: Date, end: Date): Date[] {

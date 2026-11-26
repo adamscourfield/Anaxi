@@ -196,7 +196,7 @@ describe("coaching academic-year coverage", () => {
       showCoachingSection: true,
     });
     const pair = result.pairWeekly[0];
-    expect(pair.weekLabels[0]).toMatch(/^01 Sep/);
+    expect(pair.weekLabels[0]).toMatch(/^1 Sep/);
     expect(pair.weekHit).toHaveLength(7);
     expect(pair.observationCount).toBe(1);
     expect(pair.weeksWithObservation).toBe(1);
@@ -211,7 +211,7 @@ describe("coaching academic-year coverage", () => {
         range: { start, end: new Date(2026, 0, 20) }, observations: [],
         coachAssignments: [{ coachUserId: "c", coacheeUserId: "t", coachName: "Coach", coacheeName: "Teacher" }], showCoachingSection: true,
       });
-      expect(result.pairWeekly[0].weekLabels[0]).toMatch(start.getFullYear() === 2025 ? /^01 Sep/ : /^05 Jan/);
+      expect(result.pairWeekly[0].weekLabels[0]).toMatch(start.getFullYear() === 2025 ? /^1 Sep/ : /^5 Jan/);
     }
   });
 });

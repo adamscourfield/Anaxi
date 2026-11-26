@@ -42,8 +42,8 @@ export type ObservationAnalysisPreset = "week" | "month" | "academic_year" | "26
 export const OBSERVATION_ANALYSIS_PRESETS: ObservationAnalysisPreset[] = [
   "week",
   "month",
-  "academic_year",
   "26w",
+  "academic_year",
 ];
 
 export function parseObservationAnalysisPreset(raw: string): ObservationAnalysisPreset | null {
@@ -82,7 +82,7 @@ export function presetRange(
     return {
       start,
       end: cappedEnd,
-      label: "Academic year (1 Sep – 31 Aug)",
+      label: "This academic year, from 1 September",
     };
   }
   const start = new Date(end);
@@ -91,7 +91,7 @@ export function presetRange(
   return {
     start: s,
     end,
-    label: "Last ~26 weeks",
+    label: "Last 26 weeks",
   };
 }
 
@@ -178,19 +178,19 @@ export function resolveObservationAnalysisRangeUnified(params: {
     return {
       start: preset.start,
       end: preset.end,
-      label: `${preset.label} (no overlap with table date filters)`,
+      label: `${preset.label} (outside your list dates)`,
       preset: params.analysisPreset,
       emptyIntersection: true,
     };
   }
 
   const fmt = (d: Date) =>
-    d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
   return {
     start: inter.start,
     end: inter.end,
-    label: `${preset.label} · ${fmt(inter.start)} – ${fmt(inter.end)}`,
+    label: `${fmt(inter.start)} – ${fmt(inter.end)}`,
     preset: params.analysisPreset,
     emptyIntersection: false,
   };
