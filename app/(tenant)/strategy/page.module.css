@@ -1,40 +1,62 @@
-.page { color:#1c1c1e; --accent:#ff6a52; --accentHover:#e14e36; }
-.page h1 { letter-spacing:-.045em; }
-.toolbar { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto; gap:24px; align-items:end; padding:24px; border:1px solid #e5e5e6; border-radius:14px; background:white; }
-.toolbar > label:not(:last-child) { display:flex; flex-direction:column; gap:8px; font-size:11px; color:#6e6e73; }
-.toolbar input[type="search"], .toolbar select { width:100%; min-width:0; height:40px; padding:0 12px; border:1px solid #e5e5e6; border-radius:10px; background:white; color:#1c1c1e; font-size:14px; }
-.tile { background:white; border:1px solid #e5e5e6; border-radius:14px; padding:24px; box-shadow:0 14px 34px -22px #1c1c1e2e; }
+.page { min-width: 0; color: #1c1c1e; }
+.page h1 { font-weight: 600; letter-spacing: -.045em; }
 
-.page button svg, .dialog button svg { color:inherit; }
+.boardHeading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.boardHeading h2 { font-size: 20px; font-weight: 600; letter-spacing: -.025em; }
+.boardHeading p { margin-top: 4px; font-size: 13px; color: #6e6e73; }
+.newButton { flex-shrink: 0; height: 40px; padding: 0 18px; border-radius: 10px; background: #1c1c1e; color: #fff; font-size: 14px; font-weight: 500; }
+.newButton:hover { background: #333335; }
+.newButton:focus-visible { outline: 2px solid rgba(28,28,30,.35); outline-offset: 2px; }
 
-.page button[class*="border-dashed"] { border:1px solid #1c1c1e; min-height:180px; }
-.tile button { padding:4px 8px; }
-.dialog { background:white; color:#1c1c1e; --accent:#ff6a52; --accentHover:#e14e36; }
-.dialog input, .dialog textarea, .dialog select { background:white; color:#1c1c1e; border-color:#e5e5e6; border-radius:10px; }
-.dialog span[class*="124,105" ] { background:white; color:#ff6a52; border:1px solid #e5e5e6; box-shadow:none; }
-.dialog [class*="text-[#7C69EF]"] { color:#ff6a52; }
-.dialog div[class*="border-[rgba(124"] { border-color:#e5e5e6; }
-@media(max-width:640px) { .toolbar { grid-template-columns:1fr; gap:16px; padding:20px; } }
-.dialog { border-radius:14px !important; border-color:#e5e5e6; box-shadow:0 24px 70px -30px #1c1c1e66; }
-.dialog input:focus, .dialog textarea:focus, .dialog select:focus { outline-color:#ff6a52; }
-.boardHeading { display:flex; align-items:center; justify-content:space-between; gap:20px; }
-.boardHeading h2 { font-size:20px; font-weight:600; letter-spacing:-.025em; }
-.boardHeading p { margin-top:5px; font-size:13px; color:#6e6e73; }
-.newButton { display:inline-flex; align-items:center; gap:10px; padding:11px 18px; font-size:13px; font-weight:600; flex-shrink:0; }
-.newButton span { font-size:20px; line-height:1; }
-.completedToggle { display:flex; align-items:center; gap:10px; height:40px; font-size:13px; color:#6e6e73; white-space:nowrap; }
-.checkbox { width:16px; height:16px; accent-color:#1c1c1e; }
-.empty { display:flex; justify-content:center; align-items:center; min-height:280px; padding:40px 24px; border:1px solid #e5e5e6; border-radius:14px; background:white; box-shadow:0 14px 34px -22px #1c1c1e2e; }
-.empty svg { color:#ff6a52; }
+.toolbar { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 16px; align-items: end; }
+.toolbar > label:not(.completedToggle) { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: #6e6e73; }
+.toolbar input[type="search"], .toolbar select { width: 100%; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid #d4d4d8; border-radius: 10px; background: #fff; color: #1c1c1e; font-size: 14px; box-shadow: none; }
+.toolbar input[type="search"]:focus, .toolbar select:focus { outline: none; border-color: #1c1c1e; box-shadow: inset 0 0 0 1px #1c1c1e; }
+.completedToggle { display: flex; align-items: center; gap: 8px; height: 40px; font-size: 13px; color: #3a3a3c; white-space: nowrap; cursor: pointer; }
+.checkbox { width: 16px; height: 16px; accent-color: #1c1c1e; }
 
-.page :global(.calm-transition), .page :global(.motion-safe\:hover\:-translate-y-0\.5) { transition:color 160ms ease, background-color 160ms ease, border-color 160ms ease; }
-.page .tile:hover { transform:none; box-shadow:0 14px 34px -22px #1c1c1e2e; }
-.tile > div:first-child > span { background:white; color:#6e6e73; border:1px solid #e5e5e6; box-shadow:none; }
-.tile > div:first-child > span[class*="pill-error"] { color:#e14e36; border-color:#ff6a5266; }
-@media(max-width:640px) { .boardHeading { align-items:start; } .boardHeading h2 { font-size:18px; } .newButton { padding:10px 12px; } }
-.empty > div { border:0; box-shadow:none; background:transparent; }
-/* The per-card "+ Add" is quiet so "New strategy" stays the one primary action. */
-.page .tile button[class*="bg-accent"] { background:#fff; color:#1c1c1e; border:1px solid #e5e5e6; }
-.page .tile button[class*="bg-accent"]:hover { background:#f4f4f5; }
-.newButton { background:#1c1c1e; color:#fff; border-radius:10px; }
-.newButton:hover { background:#2e2e31; }
+.tile { display: flex; flex-direction: column; min-width: 0; padding: 20px 22px; border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; }
+.tile[data-completed] { background: #fafafa; }
+.tile[data-completed] h3 { color: #6e6e73; }
+
+.priority { display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: 7px; border: 1px solid #e5e5e6; font-size: 12px; font-weight: 500; color: #3a3a3c; background: #fff; }
+.priority[data-priority="critical"] { border-color: var(--pill-error-ring); background: var(--pill-error-bg); color: var(--pill-error-text); }
+.priority[data-priority="high"] { border-color: var(--pill-warning-ring); background: var(--pill-warning-bg); color: var(--pill-warning-text); }
+.priority[data-priority="done"] { border-color: var(--pill-success-ring); background: var(--pill-success-bg); color: var(--pill-success-text); }
+
+.meta { display: grid; gap: 4px; margin-top: 10px; }
+.meta > div { display: flex; gap: 8px; font-size: 13px; }
+.meta dt { width: 48px; flex: none; color: #6e6e73; }
+.meta dd { min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
+
+.addAction { padding: 2px 0; font-size: 12px; font-weight: 500; color: #3a3a3c; text-decoration: underline; text-decoration-color: #d4d4d8; text-underline-offset: 3px; }
+.addAction:hover { color: #1c1c1e; text-decoration-color: #1c1c1e; }
+.action { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-top: 1px solid #f4f4f5; }
+.action:first-child { border-top: 0; }
+.action[data-busy] { opacity: .4; }
+.assignee { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 7px; border-radius: 6px; background: #f4f4f5; font-size: 11px; font-weight: 500; color: #3a3a3c; }
+.removeAction { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin-top: -2px; border-radius: 6px; color: #a1a1aa; }
+.removeAction:hover { background: #fdecec; color: #b42318; }
+.removeAction:focus-visible { outline: 2px solid rgba(28,28,30,.35); }
+/* On devices with a mouse, keep the remove button out of the way until the row is pointed at. */
+@media (hover: hover) {
+  .action .removeAction { opacity: 0; }
+  .action:hover .removeAction, .removeAction:focus-visible { opacity: 1; }
+}
+
+.label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #1c1c1e; }
+.input { width: 100%; height: 40px; padding: 0 12px; border: 1px solid #d4d4d8; border-radius: 10px; background: #fff; font-size: 14px; color: #1c1c1e; box-shadow: none; }
+.input:focus { outline: none; border-color: #1c1c1e; box-shadow: inset 0 0 0 1px #1c1c1e; }
+.inputSmall { height: 36px; font-size: 13px; }
+.textarea { height: auto; min-height: 120px; padding: 10px 12px; line-height: 1.55; resize: vertical; }
+
+.dialog { border: 1px solid #e5e5e6; border-radius: 14px; background: #fff; color: #1c1c1e; box-shadow: 0 24px 70px -30px #1c1c1e66; }
+
+.empty { display: flex; justify-content: center; align-items: center; min-height: 260px; padding: 40px 24px; border: 1px dashed #e5e5e6; border-radius: 14px; background: #fff; }
+.empty > div { border: 0; box-shadow: none; background: transparent; }
+
+@media (max-width: 640px) {
+  .toolbar { grid-template-columns: 1fr 1fr; }
+  .toolbar > label:first-child { grid-column: 1 / -1; }
+  .boardHeading h2 { font-size: 18px; }
+}

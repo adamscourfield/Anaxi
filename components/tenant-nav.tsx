@@ -1,5 +1,6 @@
 "use client";
 
+import { canViewStrategy } from "@/modules/strategy/access";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -178,7 +179,7 @@ export function TenantNav({
   const canAccessAdminSettings = hasPermission(role, "admin:settings");
   const canSeeAnalysis = hasAnyPermission(role, ["analysis:view", "analysis:export"]);
   const canSeeTeacherDirectory = canAccessTeacherDirectory(role, coacheeCount);
-  const canViewStrategy = role === "SUPER_ADMIN" || role === "ADMIN" || role === "SLT";
+  const canSeeStrategy = canViewStrategy(role);
   const studentsHref = "/students";
 
   const navItem = (label: string, href: string, badgeCount?: number): NavItem => ({
@@ -220,7 +221,7 @@ export function TenantNav({
       items: [
         ...(has("MEETINGS") ? [navItem("Meetings", "/meetings")] : []),
         ...(has("LEAVE") ? [navItem("Leave of absence", "/leave", leaveCount)] : []),
-        ...(has("STRATEGY") && canViewStrategy ? [navItem("Strategy Board", "/strategy")] : []),
+        ...(has("STRATEGY") && canSeeStrategy ? [navItem("Strategy Board", "/strategy")] : []),
       ],
     },
     {

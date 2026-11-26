@@ -1,26 +1,19 @@
 import { notFound } from "next/navigation";
+import { requireFeatureForPage } from "@/lib/guards";
+import { canManageStrategy, canViewStrategy } from "@/modules/strategy/access";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Card } from "@/components/ui/card"; // used for db error display
+import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import styles from "./page.module.css";
 import { StrategyBoardClient } from "./StrategyBoardClient";
-
-// ─── Auth guard ───────────────────────────────────────────────────────────────
-
-function canViewStrategy(role: string): boolean {
-  return ["SUPER_ADMIN", "ADMIN", "SLT", "HEAD_TEACHER", "DEPUTY_HEAD"].includes(role);
-}
-
-function canManageStrategy(role: string): boolean {
-  return ["SUPER_ADMIN", "ADMIN", "SLT", "HEAD_TEACHER"].includes(role);
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function StrategyPage() {
   const user = await getSessionUserOrThrow();
 
+  await requireFeatureForPage(user.tenantId, "STRATEGY");
   if (!canViewStrategy(user.role)) notFound();
 
   let areas: any[] = [];
@@ -39,6 +32,7 @@ export default async function StrategyPage() {
       ],
     });
   } catch (err: any) {
+    console.error("[strategy] failed to load", err);
     dbError = err?.message ?? "Database error";
   }
 
@@ -62,19 +56,13 @@ export default async function StrategyPage() {
       {/* Header */}
       <PageHeader variant="ledger"
         title="Strategy Board"
-        subtitle="Set school priorities and keep their actions moving."
-
+        subtitle="The school's priorities, who leads each one, and the actions that move them on."
       />
 
-      {/* DB error — table may need to be created via prisma db push */}
       {dbError && (
-        <Card className="border-error/30 bg-error/5 p-4 text-sm">
-          <p className="font-semibold text-error">Database setup required</p>
-          <p className="mt-1 text-muted">
-            The Strategy Board tables are not yet in the database. Run{" "}
-            <code className="rounded bg-bg px-1 py-0.5 font-mono text-xs">npx prisma db push</code>{" "}
-            to create them, then reload this page.
-          </p>
+        <Card className="p-5 text-sm">
+          <p className="font-semibold">The Strategy Board couldn&apos;t load</p>
+          <p className="mt-1 text-muted">Refresh the page. If it keeps happening, contact Anaxi support.</p>
           {process.env.NODE_ENV === "development" && (
             <p className="mt-2 break-all font-mono text-[11px] text-muted">{dbError}</p>
           )}
