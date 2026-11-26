@@ -1,7 +1,7 @@
 import Link from "next/link";
 import styles from "./page.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { hasOnCallPermission } from "@/lib/rbac";
+import { canSeeSchoolOnCall, hasOnCallPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { getTenantVocab } from "@/lib/vocab";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,8 @@ export default async function OnCallFeedPage({
   const user = await getSessionUserOrThrow();
   const vocab = await getTenantVocab(user.tenantId);
   const resolvedSearchParams = (await searchParams) ?? {};
-  // Staff without view_all (e.g. teachers) see the requests they raised, not the whole school's.
-  const canViewAll = hasOnCallPermission(user.role, "oncall:view_all");
+  // Every member of staff sees the whole school's call-outs.
+  const canViewAll = canSeeSchoolOnCall(user.role);
 
   const requestedStatus = resolvedSearchParams.status || "";
   const status = (STATUSES as readonly string[]).includes(requestedStatus) ? requestedStatus : "";

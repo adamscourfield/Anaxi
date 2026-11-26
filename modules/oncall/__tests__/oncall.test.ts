@@ -550,3 +550,12 @@ describe("resolved history range helpers", () => {
     expect(resolvedHistoryRangeStart("all", now)).toBeNull();
   });
 });
+
+describe("on call dashboard visibility", () => {
+  it("lets every member of staff see the whole school's call-outs", async () => {
+    const { canSeeSchoolOnCall } = await import("@/lib/rbac");
+    for (const role of ["SUPER_ADMIN", "ADMIN", "SLT", "HOD", "LEADER", "TEACHER", "SUPPORT", "HR", "ON_CALL"] as const) {
+      expect(canSeeSchoolOnCall(role)).toBe(true);
+    }
+  });
+});

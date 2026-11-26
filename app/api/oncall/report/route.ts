@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { hasOnCallPermission } from "@/lib/rbac";
+import { canSeeSchoolOnCall, hasOnCallPermission } from "@/lib/rbac";
 import { getOpenAndAcknowledgedRequests, getResolvedRequests } from "@/modules/oncall/service";
 import { parseResolvedHistoryRange, resolvedHistoryRangeStart, REQUEST_TYPE_LABELS, STATUS_LABELS } from "@/modules/oncall/types";
 import { apiErrorResponse } from "@/lib/apiErrors";
@@ -34,8 +34,8 @@ export async function GET(req: Request) {
   try {
     const user = await getSessionUserOrThrow();
     const canViewResolveTime = hasOnCallPermission(user.role, "oncall:view_resolve_time");
-    // Staff who can't see every request only get the ones they raised, same as the page.
-    const canViewAll = hasOnCallPermission(user.role, "oncall:view_all");
+    // Same scope as the page: every member of staff sees the whole school's call-outs.
+    const canViewAll = canSeeSchoolOnCall(user.role);
 
     const { searchParams } = new URL(req.url);
     const range = parseResolvedHistoryRange(searchParams.get("range") ?? undefined);

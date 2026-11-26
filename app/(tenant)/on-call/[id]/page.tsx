@@ -1,5 +1,5 @@
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { hasOnCallPermission } from "@/lib/rbac";
+import { canSeeSchoolOnCall, hasOnCallPermission } from "@/lib/rbac";
 import { getRequestDetail } from "@/modules/oncall/service";
 import { OnCallDetail } from "@/components/oncall/OnCallDetail";
 import { notFound } from "next/navigation";
@@ -26,8 +26,8 @@ export default async function OnCallDetailPage({
   } catch {
     notFound();
   }
-  // Staff without view_all (e.g. teachers) can open the requests they raised, not anyone else's.
-  if (!hasOnCallPermission(user.role, "oncall:view_all") && request.requesterUserId !== user.id) {
+  // Any member of staff can open a call-out from the school dashboard.
+  if (!canSeeSchoolOnCall(user.role) && request.requesterUserId !== user.id) {
     notFound();
   }
 

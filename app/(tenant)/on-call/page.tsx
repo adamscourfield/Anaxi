@@ -1,7 +1,7 @@
 import Link from "next/link";
 import styles from "./page.module.css";
 import { getSessionUserOrThrow } from "@/lib/auth";
-import { hasOnCallPermission } from "@/lib/rbac";
+import { canSeeSchoolOnCall, hasOnCallPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { getOpenAndAcknowledgedRequests, getResolvedRequests, getTodayActivity } from "@/modules/oncall/service";
 import { parseResolvedHistoryRange, resolvedHistoryRangeStart } from "@/modules/oncall/types";
@@ -28,8 +28,8 @@ export default async function OnCallHomePage({
   const canResolve = hasOnCallPermission(user.role, "oncall:resolve");
   const canViewResolveTime = hasOnCallPermission(user.role, "oncall:view_resolve_time");
   const canCreate = hasOnCallPermission(user.role, "oncall:create");
-  // Staff without view_all (e.g. teachers) see the requests they raised, not the whole school's.
-  const canViewAll = hasOnCallPermission(user.role, "oncall:view_all");
+  // Every member of staff sees the whole school's call-outs.
+  const canViewAll = canSeeSchoolOnCall(user.role);
 
   const resolvedSearchParams = (await searchParams) ?? {};
   const range = parseResolvedHistoryRange(resolvedSearchParams.range);

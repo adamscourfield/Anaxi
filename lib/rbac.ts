@@ -148,6 +148,16 @@ export function hasOnCallPermission(role: UserRole, permission: OnCallPermission
   return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
 }
 
+/**
+ * Who sees the whole school's On call dashboard: every member of staff. Staff rely on it to see
+ * what is happening across the school, not just their own call-outs. (On 25 Nov 2026 this was
+ * narrowed to oncall:view_all and staff lost the dashboard; restored 26 Nov.) Acting on requests
+ * and seeing resolve times are still controlled by their own permissions.
+ */
+export function canSeeSchoolOnCall(role: UserRole): boolean {
+  return Boolean(ROLE_PERMISSIONS[role]);
+}
+
 export function hasPermission(role: UserRole, permission: AppPermission): boolean {
   return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
 }
