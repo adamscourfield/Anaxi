@@ -14,6 +14,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { formatYearGroup, normalizeYearGroup } from "@/lib/yearGroup";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireAssessmentWrite, requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
@@ -46,7 +47,7 @@ export const POST = withApi(async function POST(
   }
 
   const body = await req.json();
-  const yearGroup = String(body?.yearGroup || "").trim();
+  const yearGroup = normalizeYearGroup(String(body?.yearGroup || "")) ?? "";
   const gradeFormat = String(body?.gradeFormat || "GCSE") as GradeFormat;
   const subjects = Array.isArray(body?.subjects) ? (body.subjects as string[]) : [];
   const entries = Array.isArray(body?.entries) ? (body.entries as GridEntry[]) : [];
@@ -105,7 +106,7 @@ export const POST = withApi(async function POST(
         pointId: resolvedParams.pointId,
         subject,
         yearGroup,
-        title: `${subject} — ${yearGroup} (${point.label})`,
+        title: `${subject} — ${formatYearGroup(yearGroup)} (${point.label})`,
         gradeFormat,
         createdByUserId: user.id,
       });
@@ -169,7 +170,8 @@ export const GET = withApi(async function GET(_req: Request, { params }: { param
     include: { cycle: true, assessments: { include: { results: { select: { studentId: true, rawValue: true } } } } },
   });
   if (!point) return NextResponse.json({ error: "Result point not found" }, { status: 404 });
-  const yearGroups = [...new Set(point.assessments.map(a => a.yearGroup))];
+  // An assessment can cover several years ("Y7, Y8, Y9"); match students in any of them.
+  const yearGroups = [...new Set(point.assessments.flatMap(a => (normalizeYearGroup(a.yearGroup) ?? "").split(", ").filter(Boolean)))];
   const resultStudentIds = point.assessments.flatMap(a => a.results.map(r => r.studentId));
   const students = await prisma.student.findMany({
     where: { tenantId: user.tenantId, status: "ACTIVE", OR: [{ yearGroup: { in: yearGroups } }, { id: { in: resultStudentIds } }] },

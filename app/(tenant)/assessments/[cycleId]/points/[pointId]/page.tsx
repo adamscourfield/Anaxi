@@ -53,6 +53,7 @@ import {
   thresholdHeaderGcse,
   resultStatusPillClasses,
 } from "@/modules/assessments/attainmentColours";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1853,7 +1854,7 @@ function Progress8Tab({
             <tbody>
               {data.byYearGroup.map((yg) => (
                 <tr key={yg.yearGroup} className="border-b border-[var(--outline-variant)]/70 last:border-0">
-                  <td className="px-5 py-3 font-medium text-text">{yg.yearGroup}</td>
+                  <td className="px-5 py-3 font-medium text-text">{formatYearGroup(yg.yearGroup)}</td>
                   <td className="px-3 py-3 text-center tabular-nums text-[var(--on-surface-muted)]">{yg.count}</td>
                   <td className={`px-3 py-3 text-center tabular-nums ${p8ColorClass(yg.averageP8)}`}>
                     {formatP8(yg.averageP8)}

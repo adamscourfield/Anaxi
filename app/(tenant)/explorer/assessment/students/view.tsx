@@ -19,6 +19,7 @@ import {
   type MovementLabel,
 } from "@/modules/analysis/assessmentAnalysis";
 import { parseWindow } from "@/lib/explorerUtils";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 /* ─── Constants ─────────────────────────────────────────────────────────────── */
 
@@ -221,7 +222,7 @@ export default async function AssessmentStudentsPage({
         />
         <select aria-label="Year group" name="yearGroup" defaultValue={yearGroupFilter} className="h-9 rounded-lg border border-border bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-accent/40">
           <option value="">All year groups</option>
-          {yearGroups.map((yg) => <option key={yg} value={yg}>{yg}</option>)}
+          {yearGroups.map((yg) => <option key={yg} value={yg}>{formatYearGroup(yg)}</option>)}
         </select>
         <select aria-label="Movement" name="movement" defaultValue={movementFilter} className="h-9 rounded-lg border border-border bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-accent/40">
           <option value="">All movement</option>
@@ -290,7 +291,7 @@ export default async function AssessmentStudentsPage({
                           <span className="font-medium text-text">{row.studentName}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-muted">{row.yearGroup ?? "—"}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-muted">{formatYearGroup(row.yearGroup)}</td>
                       <td className="px-4 py-3.5">
                         <div className="flex gap-1">
                           {row.sendFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase bg-[var(--pill-warning-bg)] text-[var(--pill-warning-text)]">SEND</span>}

@@ -24,6 +24,7 @@ import {
 import { BehaviourAnalysisFilters } from "./BehaviourAnalysisFilters";
 import { BehaviourAnalysisCollapsibleSection } from "./BehaviourAnalysisCollapsibleSection";
 import { OnCallBreakdownCharts } from "./OnCallBreakdownCharts";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 /* ─── Constants ────────────────────────────────────────────────────────────── */
 
@@ -493,7 +494,7 @@ export default async function AnalysisPage({
                             </Link>
                           </div>
                         </td>
-                        <td className="text-muted">{row.yearGroup?.replace(/^Y(?:ear)?\s*(\d+)$/i, "Year $1") ?? "—"}</td>
+                        <td className="text-muted">{formatYearGroup(row.yearGroup)}</td>
                         <td className="text-right tabular-nums text-muted">{row.suspensionsCount}</td>
                         <td className="tabular-nums text-muted">{fmtSnapshotDate(row.snapshotDate)}</td>
                       </tr>
@@ -600,7 +601,7 @@ export default async function AnalysisPage({
                             {student.band === "URGENT" ? "Urgent" : "Priority"}
                           </StatusPill>
                         </td>
-                        <td className="text-muted">{student.yearGroup?.replace(/^Y(?:ear)?\s*(\d+)$/i, "Year $1") ?? "—"}</td>
+                        <td className="text-muted">{formatYearGroup(student.yearGroup)}</td>
                         <td>
                           <div className="flex flex-wrap gap-1.5">
                             {student.ppFlag ? (

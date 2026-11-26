@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useMemo, useState } from "react";
 import type { HeatmapCellIncident } from "@/modules/home/hydration";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 export type { HeatmapCellIncident };
 
@@ -124,7 +125,7 @@ function IncidentPopup({
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)] px-6 py-5">
           <div>
             <h2 id={titleId} className="text-base font-bold tracking-[-0.01em] text-text">
-              {cell.yearGroup} · {cell.columnLabel}
+              {formatYearGroup(cell.yearGroup)} · {cell.columnLabel}
             </h2>
             <p className="mt-0.5 text-xs text-muted">
               {cell.value} incident{cell.value === 1 ? "" : "s"}
@@ -234,7 +235,7 @@ export function BehaviourHeatmap({
 
       <p className="text-[11px] font-medium text-muted">
         {hoverCell
-          ? `${hoverCell.yearGroup} · ${hoverCell.columnLabel}: ${hoverCell.value} incident${hoverCell.value === 1 ? "" : "s"}`
+          ? `${formatYearGroup(hoverCell.yearGroup)} · ${hoverCell.columnLabel}: ${hoverCell.value} incident${hoverCell.value === 1 ? "" : "s"}`
           : hasIncidents
             ? "Click a cell to see incidents. Hover to preview."
             : "Hover a cell to inspect a specific day pattern."}
@@ -265,7 +266,7 @@ export function BehaviourHeatmap({
                   scope="row"
                   className="py-1 pr-3 text-left text-[11px] font-medium text-muted"
                 >
-                  {yg}
+                  {formatYearGroup(yg)}
                 </th>
                 {(matrix[ri] ?? []).map((val, ci) => {
                   const opacity = coralOpacity(val, maxVal);

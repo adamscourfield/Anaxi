@@ -10,6 +10,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { normalizeYearGroup } from "@/lib/yearGroup";
 import { normalizeGrade, detectNonGradeStatus } from "./gradeNormalizer";
 import type { AssessmentCsvRecord } from "./csv";
 import type { GradeFormat } from "@prisma/client";
@@ -211,7 +212,7 @@ export async function createAssessment(input: CreateAssessmentInput) {
       tenantId: input.tenantId,
       pointId: input.pointId,
       subject: input.subject,
-      yearGroup: input.yearGroup,
+      yearGroup: normalizeYearGroup(input.yearGroup) ?? input.yearGroup,
       title: input.title,
       gradeFormat: input.gradeFormat,
       maxScore: input.maxScore ?? null,

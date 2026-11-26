@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizeYearGroup } from "@/lib/yearGroup";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireRole } from "@/lib/guards";
 import { logger } from "@/lib/logger";
@@ -116,7 +117,7 @@ export async function POST(req: Request) {
       tenantId: user.tenantId,
       classCode: row.classCode,
       subject: row.subject,
-      yearGroup: row.yearGroup,
+      yearGroup: normalizeYearGroup(row.yearGroup) ?? row.yearGroup,
       teacherUserId: userByEmail.get(row.teacherEmail.toLowerCase()) ?? null,
       teacherEmailRaw: row.teacherEmail,
       room: row.room,

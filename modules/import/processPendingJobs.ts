@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { normalizeYearGroup } from "@/lib/yearGroup";
 import { readImportFile } from "@/lib/importStorage";
 import { failedImportStatus, successImportStatus } from "@/lib/importJobStatus";
 import { logger } from "@/lib/logger";
@@ -44,7 +45,7 @@ async function processStudentsSnapshotJob(job: ImportJob): Promise<void> {
           tenantId: job.tenantId,
           upn: row.upn,
           fullName: row.fullName,
-          yearGroup: row.yearGroup,
+          yearGroup: normalizeYearGroup(row.yearGroup),
           ks2ReadingScaledScore: row.ks2ReadingScaledScore,
           ks2MathsScaledScore: row.ks2MathsScaledScore,
           sendFlag: row.sendFlag,
@@ -53,7 +54,7 @@ async function processStudentsSnapshotJob(job: ImportJob): Promise<void> {
         },
         update: {
           fullName: row.fullName,
-          yearGroup: row.yearGroup,
+          yearGroup: normalizeYearGroup(row.yearGroup),
           ...ks2ScoreUpdate(row),
           sendFlag: row.sendFlag,
           ppFlag: row.ppFlag,

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormSelect } from "@/components/ui/form-select";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 const VALID_WINDOWS = [7, 21, 28] as const;
 
@@ -70,7 +71,7 @@ export function BehaviourAnalysisFilters({
             defaultValue={defaults.yearGroup}
             placeholder="All years"
             triggerClassName={triggerField}
-            options={[{ value: "", label: "All years" }, ...yearGroups.map((yg) => ({ value: yg, label: yg.replace(/^Y(?:ear)?\s*(\d+)$/i, "Year $1") }))]}
+            options={[{ value: "", label: "All years" }, ...yearGroups.map((yg) => ({ value: yg, label: formatYearGroup(yg) }))]}
           />
         </label>
 

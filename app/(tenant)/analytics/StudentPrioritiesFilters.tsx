@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormSelect } from "@/components/ui/form-select";
 import type { RiskBand } from "@/modules/analysis/studentRisk";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 const BAND_OPTIONS: { value: RiskBand; label: string }[] = [
   { value: "URGENT", label: "Urgent" },
@@ -60,7 +61,7 @@ export function StudentPrioritiesFilters({
               triggerClassName={triggerWhite}
               options={[
                 { value: "", label: "All years" },
-                ...yearGroups.map((y) => ({ value: y, label: y.replace(/^(?:Year\s*|Y)?(\d+)$/i, "Year $1") })),
+                ...yearGroups.map((y) => ({ value: y, label: formatYearGroup(y) })),
               ]}
             />
           </label>

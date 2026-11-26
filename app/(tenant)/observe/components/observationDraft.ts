@@ -33,11 +33,11 @@ export function todayInSchoolZone(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
 }
 
-/** Year groups offered on the form, stored as "Y7" etc. to match imports and the demo data. */
+/** Year groups offered on the form, stored as "Y7" ("R" for Reception), as everywhere else (lib/yearGroup). */
 export function yearGroupOptions(schoolType: "PRIMARY" | "SECONDARY"): { value: string; label: string }[] {
   if (schoolType === "PRIMARY") {
     return [
-      { value: "Reception", label: "Reception" },
+      { value: "R", label: "Reception" },
       ...[1, 2, 3, 4, 5, 6].map((n) => ({ value: `Y${n}`, label: `Year ${n}` })),
     ];
   }
@@ -51,7 +51,7 @@ export function yearGroupOptions(schoolType: "PRIMARY" | "SECONDARY"): { value: 
 export function guessYearGroup(classCode: string, schoolType: "PRIMARY" | "SECONDARY"): string {
   const text = classCode.trim();
   if (!text) return "";
-  if (/^(?:rec|reception)\b/i.test(text)) return schoolType === "PRIMARY" ? "Reception" : "";
+  if (/^(?:rec|reception)\b/i.test(text)) return schoolType === "PRIMARY" ? "R" : "";
   const match = text.match(/\b(?:year|yr|y)\s*(\d{1,2})(?!\d)/i) || text.match(/^(\d{1,2})(?=[^\d]|$)/);
   if (!match) return "";
   const value = `Y${Number(match[1])}`;

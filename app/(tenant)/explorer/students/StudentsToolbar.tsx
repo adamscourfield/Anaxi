@@ -13,6 +13,7 @@ import {
   type StudentsUrlParams,
   type StudentsViewMode,
 } from "@/modules/students/explorerList";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 const SORT_OPTIONS: { value: StudentsSortMode; label: string }[] = [
   { value: "risk", label: "Risk (default)" },
@@ -251,7 +252,7 @@ export function StudentsToolbar({
               triggerClassName={triggerWhite}
               options={[
                 { value: "", label: "All year groups" },
-                ...yearGroups.map((yg) => ({ value: yg, label: yg })),
+                ...yearGroups.map((yg) => ({ value: yg, label: formatYearGroup(yg) })),
               ]}
               onChange={(v) => {
                 setYearGroup(v);

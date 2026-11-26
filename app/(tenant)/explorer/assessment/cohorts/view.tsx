@@ -14,6 +14,7 @@ import {
   canExportExplorer,
 } from "@/modules/authz";
 import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 /* ─── Helpers ───────────────────────────────────────────────────────────────── */
 
@@ -286,7 +287,7 @@ export default async function AssessmentCohortsPage({
                 const subjectMap = lookup.get(yg);
                 return (
                   <tr key={yg} className="group table-row">
-                    <td className="px-5 py-3 font-semibold text-text">{yg}</td>
+                    <td className="px-5 py-3 font-semibold text-text">{formatYearGroup(yg)}</td>
                     {subjects.map((s) => {
                       const row = subjectMap?.get(s);
                       const cellVal = getCellValue(row);
@@ -327,7 +328,7 @@ export default async function AssessmentCohortsPage({
                   .filter((r) => r.lowPriorMean !== null || r.midPriorMean !== null || r.highPriorMean !== null)
                   .map((r) => (
                     <tr key={`${r.yearGroup}-${r.subject}`} className="border-t border-border/10">
-                      <td className="py-1.5 pr-4 font-medium text-text">{r.yearGroup}</td>
+                      <td className="py-1.5 pr-4 font-medium text-text">{formatYearGroup(r.yearGroup)}</td>
                       <td className="py-1.5 pr-4 text-text">{r.subject}</td>
                       <td className={`py-1.5 pr-4 tabular-nums ${cellHeatClass(r.lowPriorMean)}`}>{fmt(r.lowPriorMean)}</td>
                       <td className={`py-1.5 pr-4 tabular-nums ${cellHeatClass(r.midPriorMean)}`}>{fmt(r.midPriorMean)}</td>

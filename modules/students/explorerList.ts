@@ -1,3 +1,4 @@
+import { formatYearGroup } from "@/lib/yearGroup";
 import type { RiskBand, StudentRiskRow } from "@/modules/analysis/studentRisk";
 
 export const BAND_ORDER: RiskBand[] = ["URGENT", "PRIORITY", "WATCH", "STABLE"];
@@ -267,6 +268,5 @@ export function buildActiveChips(
 }
 
 function formatYearChip(value: string): string {
-  const m = /^Y?(\d{1,2})$/i.exec(value.trim());
-  return m ? `Year ${Number(m[1])}` : value;
+  return formatYearGroup(value);
 }

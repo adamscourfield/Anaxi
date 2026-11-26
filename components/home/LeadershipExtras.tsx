@@ -7,6 +7,7 @@ import type { HomeAttainmentHeadline } from "@/modules/home/hydration";
 import { CohortPivotRow } from "@/modules/analysis/cohortPivot";
 import { CpdPriorityRow } from "@/modules/analysis/cpdPriorities";
 import { IconTrendDown, IconTrendUp } from "@/components/home/home-chrome";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 export function MeetingsTodayCard({ count }: { count: number }) {
   return (
@@ -47,7 +48,7 @@ export function CohortChangeCard({ cohortRows, windowDays }: { cohortRows: Cohor
         {declining.map((row) => (
           <li key={row.yearGroup} className="flex items-center justify-between gap-3 rounded-lg bg-[var(--surface-container-low)] px-3 py-2">
             <span className="text-sm font-medium text-text">
-              Year {row.yearGroup.trim().replace(/^(?:year\s*|y(?=\d))+/i, "")}
+              {formatYearGroup(row.yearGroup)}
             </span>
             <span className="text-sm font-semibold tabular-nums text-[var(--pill-error-text)]">
               {(row.attendanceDelta ?? 0).toFixed(1)}%

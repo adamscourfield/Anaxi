@@ -16,6 +16,7 @@ import {
 } from "@/modules/authz";
 import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
 import { parseWindow } from "@/lib/explorerUtils";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 /* ─── Constants ─────────────────────────────────────────────────────────────── */
 
@@ -353,7 +354,7 @@ export default async function AssessmentTeachersPage({
                             {row.subjects.map((sub) => (
                               <tr key={`${sub.subject}-${sub.yearGroup}`} className="border-t border-border/10">
                                 <td className="py-1.5 pr-4 font-medium text-text">{sub.subject}</td>
-                                <td className="py-1.5 pr-4 text-muted">{sub.yearGroup}</td>
+                                <td className="py-1.5 pr-4 text-muted">{formatYearGroup(sub.yearGroup)}</td>
                                 <td className="py-1.5 pr-4 tabular-nums">{fmt(sub.meanNormalizedScore)}</td>
                                 <td className={`py-1.5 pr-4 tabular-nums ${valueAddCellClass(sub.valueAdd)}`}>{valueAddStr(sub.valueAdd)}</td>
                                 <td className={`py-1.5 pr-4 tabular-nums ${gapClass(sub.sendGap)}`}>{sub.sendGap !== null ? fmt(sub.sendGap) : "—"}</td>

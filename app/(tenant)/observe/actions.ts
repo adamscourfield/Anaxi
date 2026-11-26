@@ -1,5 +1,6 @@
 "use server";
 import { assertSafeServerAction } from "@/lib/serverActionGuard";
+import { normalizeYearGroup } from "@/lib/yearGroup";
 
 import { after } from "next/server";
 import { revalidatePath } from "next/cache";
@@ -48,7 +49,7 @@ export async function submitObservationDraft(
   }
 
   const observedTeacherId = String(formData.get("observedTeacherId") || "").trim();
-  const yearGroup = String(formData.get("yearGroup") || "").trim();
+  const yearGroup = normalizeYearGroup(String(formData.get("yearGroup") || "")) ?? "";
   const subject = String(formData.get("subject") || "").trim();
   const classCode = String(formData.get("classCode") || "").trim() || null;
   const phase = String(formData.get("phase") || "").trim();

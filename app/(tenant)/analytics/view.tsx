@@ -19,6 +19,7 @@ import {
 } from "@/modules/analysis/cpdPriorities";
 import { computeStudentRiskIndex, RiskBand, Confidence, BAND_ORDER } from "@/modules/analysis/studentRisk";
 import { getTenantVocab } from "@/lib/vocab";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 const TABS = ["teachers", "cpd", "students"] as const;
 type Tab = (typeof TABS)[number];
@@ -938,7 +939,7 @@ async function StudentsTab({
                         </span>
                       </Link>
                     </td>
-                    <td className="text-[#6B7280]">{row.yearGroup?.replace(/^(?:Year\s*|Y)?(\d+)$/i, "Year $1") ?? "—"}</td>
+                    <td className="text-[#6B7280]">{formatYearGroup(row.yearGroup)}</td>
                     <td>
                       <span className={`rounded-md px-2.5 py-1 text-xs font-medium ${BAND_PILL[row.band]}`}>
                         {BAND_LABELS[row.band]}

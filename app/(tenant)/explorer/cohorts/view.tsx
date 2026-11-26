@@ -15,6 +15,7 @@ import {
   computeCohortPivot,
   type CohortPivotRow,
 } from "@/modules/analysis/cohortPivot";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 /* ─── Constants ────────────────────────────────────────────────────────────── */
 
@@ -51,11 +52,6 @@ function fmtNum(val: number | null, decimals = 2): string {
 }
 
 /* ─── Page ─────────────────────────────────────────────────────────────────── */
-
-function formatYearGroup(value: string): string {
-  const match = value.trim().match(/^(?:Y(?:ear)?\s*)?(\d+)$/i);
-  return match ? `Year ${match[1]}` : value;
-}
 
 export default async function CohortsPage({
   searchParams,

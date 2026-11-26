@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { canonicalYearGroup, formatYearGroup } from "@/lib/yearGroup";
 import { notFound } from "next/navigation";
 import { requireSuperAdminUser } from "@/lib/admin";
 import { Button } from "@/components/ui/button";
@@ -35,10 +36,7 @@ function currentAcademicYear(now = new Date()): string {
   return `${start}/${start + 1}`;
 }
 
-function normalisedYearGroup(value: string | null | undefined): string | null {
-  const match = value?.trim().match(/^(?:Year|Y)\s*0?(\d{1,2})$/i);
-  return match ? `Y${Number(match[1])}` : null;
-}
+const normalisedYearGroup = canonicalYearGroup;
 
 function gradeValue(mark: ArborMark): string {
   return arborAssessmentMarkValue(mark) ?? "No recorded grade";
@@ -393,7 +391,7 @@ export default async function ArborAssessmentMarkSheetPage({
                 {rows.map(({ externalId, mark, student }) => (
                   <tr key={externalId}>
                     <td className="px-4 py-3 font-medium">{student?.fullName ?? arborStudentName(mark) ?? "Former pupil not yet synced"}</td>
-                    <td className="px-4 py-3">{student?.yearGroup?.replace(/^Y/i, "Year ") ?? yearGroup.replace(/^Y/, "Year ")}</td>
+                    <td className="px-4 py-3">{formatYearGroup(student?.yearGroup ?? yearGroup)}</td>
                     <td className="px-4 py-3 text-muted">{student ? student.status === "ARCHIVED" ? "Archived" : "Linked" : "Historic pupil"}</td>
                     <td className="px-4 py-3">{mark.assessmentDate ? new Date(mark.assessmentDate).toLocaleDateString("en-GB") : "Not supplied"}</td>
                     <td className="px-4 py-3 font-semibold">{gradeValue(mark)}</td>

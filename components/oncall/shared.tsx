@@ -1,4 +1,5 @@
 "use client";
+import { formatYearGroup as formatYearGroupLabel } from "@/lib/yearGroup";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -119,9 +120,8 @@ export function since(d: Date | string, now = Date.now()): string {
 }
 
 export function formatYearGroup(yearGroup: string | null | undefined): string {
-  if (!yearGroup) return "No year group";
-  const digits = yearGroup.replace(/\D/g, "");
-  return `Year ${digits || yearGroup}`;
+  if (!yearGroup?.trim()) return "No year group";
+  return formatYearGroupLabel(yearGroup);
 }
 
 /* ── Live updates ────────────────────────────────────────────────────── */

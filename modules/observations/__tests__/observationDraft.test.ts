@@ -19,7 +19,7 @@ describe("guessYearGroup", () => {
   });
 
   it("handles primary years and reception", () => {
-    expect(guessYearGroup("Reception Oak", "PRIMARY")).toBe("Reception");
+    expect(guessYearGroup("Reception Oak", "PRIMARY")).toBe("R");
     expect(guessYearGroup("Year 4 Willow", "PRIMARY")).toBe("Y4");
     expect(guessYearGroup("Year 9", "PRIMARY")).toBe("");
   });
@@ -28,7 +28,7 @@ describe("guessYearGroup", () => {
 describe("yearGroupOptions", () => {
   it("offers the right range per phase", () => {
     expect(yearGroupOptions("SECONDARY").map((o) => o.value)).toEqual(["Y7", "Y8", "Y9", "Y10", "Y11", "Y12", "Y13"]);
-    expect(yearGroupOptions("PRIMARY")[0].value).toBe("Reception");
+    expect(yearGroupOptions("PRIMARY")[0].value).toBe("R");
   });
 });
 

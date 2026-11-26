@@ -3,11 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ResolvedHistoryRange } from "@/modules/oncall/types";
-
-function formatYearGroup(yearGroup: string): string {
-  const digits = yearGroup.replace(/\D/g, "");
-  return `Year ${digits || yearGroup}`;
-}
+import { formatYearGroup } from "@/lib/yearGroup";
 
 function buildOnCallHref(range: ResolvedHistoryRange, yearGroup?: string, reason?: string): string {
   const params = new URLSearchParams();

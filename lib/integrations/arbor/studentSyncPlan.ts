@@ -1,4 +1,5 @@
 import type { ArborStudentRecord } from "./types";
+import { canonicalYearGroup } from "@/lib/yearGroup";
 import { arborYearGroupCode, routeArborStudentByAcademicLevel } from "./studentRouting";
 
 export type ExistingAnaxiStudent = {
@@ -21,14 +22,7 @@ function normaliseName(value: string): string {
   return value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
 }
 
-function normaliseYearGroup(value: string | null | undefined): string | null {
-  const raw = value?.trim().toLowerCase() ?? "";
-  if (!raw) return null;
-  if (raw === "n" || raw.startsWith("nursery")) return "N";
-  if (raw === "reception" || raw === "r") return "R";
-  const match = raw.match(/^(?:year|y)?\s*0?([1-9]|1[0-3])$/);
-  return match ? `Y${Number(match[1])}` : null;
-}
+const normaliseYearGroup = canonicalYearGroup;
 
 export function arborStudentFullName(student: ArborStudentRecord): string {
   const firstName = student.preferredFirstName?.trim() || student.legalFirstName;

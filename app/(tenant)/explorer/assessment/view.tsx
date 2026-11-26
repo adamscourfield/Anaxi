@@ -13,6 +13,7 @@ import {
 import { computeAssessmentAnalysis } from "@/modules/analysis/assessmentAnalysis";
 import { computeAttainmentBehaviourCorrelation } from "@/modules/analysis/attainmentBehaviourCorrelation";
 import { parseWindow } from "@/lib/explorerUtils";
+import { formatYearGroup } from "@/lib/yearGroup";
 
 function fmt2(n: number | null): string {
   if (n === null) return "—";
@@ -340,7 +341,7 @@ export default async function AssessmentHubPage({
                         {s.sendFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-[var(--pill-warning-bg)] text-[var(--pill-warning-text)]">SEND</span>}
                         {s.ppFlag && <span className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-[var(--cat-violet-bg,#EDE9FE)] text-[var(--cat-violet-text,#5B21B6)]">PP</span>}
                       </div>
-                      <p className="text-[11px] text-muted">Yr {s.yearGroup} · {decliningSubjects.join(", ")}</p>
+                      <p className="text-[11px] text-muted">{formatYearGroup(s.yearGroup)} · {decliningSubjects.join(", ")}</p>
                     </div>
                     <span className="shrink-0 text-[13px] font-semibold tabular-nums text-[var(--error)]">
                       ↓ {decliningSubjects.length} subj.
