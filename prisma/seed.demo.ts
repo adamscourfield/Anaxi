@@ -15,6 +15,18 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import {
+  aLevelGrade,
+  gcseGrade,
+  indexFromUpn,
+  isAbsent,
+  ks2Score,
+  percentageScore,
+  studentAbility,
+  subjectStanding,
+  takesSubject,
+  teacherEffect,
+} from "./demoAttainment";
 import bcrypt from "bcryptjs";
 import { seedProgress8Benchmarks } from "../modules/assessments/progress8";
 import { getSignalDefinitionsForSchoolType } from "../modules/observations/getSignalsBySchoolType";
@@ -431,7 +443,19 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
     });
     teacherUsers.push({ ...created, dept });
   }
-  console.log(`  ✓  ${1 + sltUsers.length + hodUsers.length + teacherUsers.length} users created`);
+  // One account for each remaining role, so every permission path can be tried in the demo.
+  const otherRoleDefs = [
+    { email: "hannah.osborne@demo.school", fullName: "Hannah Osborne", role: "LEADER" as const }, // teaching and learning lead, coaches six teachers
+    { email: "priya.nair@demo.school", fullName: "Priya Nair", role: "HR" as const, canApproveAllLoa: true },
+    { email: "tom.fielding@demo.school", fullName: "Tom Fielding", role: "SUPPORT" as const }, // teaching assistant
+    { email: "marcus.reid@demo.school", fullName: "Marcus Reid", role: "ON_CALL" as const, receivesOnCallEmails: true },
+  ];
+  const otherRoleUsers: typeof admin[] = [];
+  for (const u of otherRoleDefs) {
+    otherRoleUsers.push(await prisma.user.create({ data: { tenantId: tenant.id, ...u, isActive: true, passwordHash } }));
+  }
+  const leaderUser = otherRoleUsers[0];
+  console.log(`  ✓  ${1 + sltUsers.length + hodUsers.length + teacherUsers.length + otherRoleUsers.length} users created`);
 
   // ── Step 3: Departments + Memberships ──────────────────────────────────────
   console.log("  🏛️  Creating departments…");
@@ -486,10 +510,12 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   // Sarah Chen coaches teachers 01–06 (0-indexed 0–5)
   // James Morrison coaches teachers 07–12 (0-indexed 6–11)
   // Patricia Okafor coaches teachers 13–18 (0-indexed 12–17)
+  // Hannah Osborne (LEADER) coaches teachers 19–24 (0-indexed 18–23)
   const coachBatches: [typeof sltUsers[0], number, number][] = [
     [sltUsers[0], 0, 5],
     [sltUsers[1], 6, 11],
     [sltUsers[2], 12, 17],
+    [leaderUser, 18, 23],
   ];
   for (const [coach, start, end] of coachBatches) {
     for (let i = start; i <= end; i++) {
@@ -561,14 +587,15 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
       const isSEND = i % 10 === 0; // every 10th
       const isPP = i % 5 === 0;    // every 5th
 
+      const ability = studentAbility(upn, { pp: isPP, send: isSEND });
       const student = await prisma.student.create({
         data: {
           tenantId: tenant.id,
           upn,
           fullName: name,
           yearGroup: year,
-          ks2ReadingScaledScore: randInt(84, 120),
-          ks2MathsScaledScore: randInt(84, 120),
+          ks2ReadingScaledScore: ks2Score(upn, ability, "reading"),
+          ks2MathsScaledScore: ks2Score(upn, ability, "maths"),
           sendFlag: isSEND,
           ppFlag: isPP,
           status: "ACTIVE",
@@ -986,6 +1013,7 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
     "OPEN", "OPEN", "DONE", "OPEN", "OPEN",
   ];
 
+  let firstMeetingId = "";
   for (let mIdx = 0; mIdx < 10; mIdx++) {
     const creator = mIdx < 3 ? sltUsers[mIdx % sltUsers.length] : admin;
     const mDate = daysAgo(randInt(-7, 14)); // mix of past and upcoming
@@ -1002,6 +1030,7 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
         createdByUserId: creator.id,
       },
     });
+    if (mIdx === 0) firstMeetingId = meeting.id;
 
     // Add 2–4 attendees
     const numAttendees = randInt(2, 4);
@@ -1038,7 +1067,69 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
       });
     }
   }
+  // A full action list for Alice Thornton (a teacher, and an attendee of the first meeting), so
+  // My actions has overdue, due-soon, blocked, done and undated items to show.
+  const alice = teacherUsers[0];
+  const aliceActions: Array<{ description: string; due: number | null; status: "OPEN" | "DONE" | "BLOCKED"; blockReason?: string }> = [
+    { description: "Send Year 9 parents the revised homework timetable", due: -4, status: "OPEN" },
+    { description: "Book the hall for the Year 11 mock results assembly", due: -1, status: "OPEN" },
+    { description: "Share the reading-age data with the English department", due: 1, status: "OPEN" },
+    { description: "Draft the behaviour policy summary for governors", due: 4, status: "BLOCKED", blockReason: "Waiting for the final wording from the head" },
+    { description: "Collect consent forms for the Science Museum trip", due: 11, status: "OPEN" },
+    { description: "Review seating plans for 9B and 9D", due: null, status: "OPEN" },
+    { description: "Order replacement mini-whiteboards", due: -2, status: "BLOCKED", blockReason: "Budget code not yet approved" },
+    { description: "Update the department calendar with moderation dates", due: -7, status: "DONE" },
+    { description: "Email Ben about the cover rota", due: -3, status: "DONE" },
+  ];
+  for (const a of aliceActions) {
+    await prisma.meetingAction.create({
+      data: {
+        tenantId: tenant.id,
+        meetingId: firstMeetingId,
+        description: a.description,
+        ownerUserId: alice.id,
+        dueDate: a.due === null ? null : daysAgo(-a.due),
+        status: a.status,
+        blockReason: a.blockReason ?? null,
+        createdByUserId: sltUsers[0].id,
+        completedAt: a.status === "DONE" ? daysAgo(1) : null,
+        completedByUserId: a.status === "DONE" ? alice.id : null,
+      },
+    });
+  }
   console.log("  ✓  Meetings + actions created");
+
+  // ── Strategy Board ─────────────────────────────────────────────────────────
+  const strategyAreas = [
+    {
+      title: "Attendance above 95%", category: "95%", priority: "critical", owner: "Sarah Chen", completed: false,
+      description: "Raise whole-school attendance through first-day calls, tutor follow-up and a weekly review of persistent absence.",
+      notes: ["First-day absence calls by 9:30am | Attendance team", "Weekly persistent-absence review"],
+    },
+    {
+      title: "KS3 reading fluency", category: "Reading age +12 months", priority: "high", owner: "James Morrison", completed: false,
+      description: "Daily guided reading in tutor time for Years 7 and 8, with termly reading-age tests.",
+      notes: ["Buy class sets for Year 7 | Library"],
+    },
+    {
+      title: "Consistent behaviour routines", category: "Detentions down 20%", priority: "medium", owner: "Alice Thornton", completed: false,
+      description: "One set of classroom routines, practised in September and checked through learning walks.",
+      notes: [],
+    },
+    {
+      title: "Revamp the parents' evening booking", category: "Gold Standard", priority: "low", owner: "Ben Okafor", completed: true,
+      description: "Move to online booking and video appointments.",
+      notes: [],
+    },
+  ];
+  for (const area of strategyAreas) {
+    const { notes, ...data } = area;
+    const created = await prisma.strategyArea.create({ data: { tenantId: tenant.id, ...data, createdById: sltUsers[0].id } });
+    for (const text of notes) {
+      await prisma.strategyNote.create({ data: { tenantId: tenant.id, strategyAreaId: created.id, text, createdById: sltUsers[0].id } });
+    }
+  }
+  console.log("  ✓  Strategy Board areas created");
 
   // ─── Assessments ───────────────────────────────────────────────────────────
 
@@ -1052,43 +1143,6 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
     "Statistics", "Sociology",
   ];
 
-  const gcseGrades = [9, 8, 7, 6, 5, 4, 3, 2, 1] as const;
-  type GcseGrade = (typeof gcseGrades)[number];
-
-  // Grade distribution weights: bell-curve centred around 5-6
-  const gradeWeights = [2, 5, 10, 18, 22, 20, 13, 7, 3]; // 9,8,7,6,5,4,3,2,1
-
-  function pickGcseGrade(baseShift = 0): GcseGrade {
-    const weights = gradeWeights.map((w, i) => {
-      const shift = i + baseShift;
-      return Math.max(1, w + shift * (shift > 0 ? -1 : 2));
-    });
-    const total = weights.reduce((a, b) => a + b, 0);
-    let r = rng() * total;
-    for (let i = 0; i < weights.length; i++) {
-      r -= weights[i];
-      if (r <= 0) return gcseGrades[i];
-    }
-    return 4;
-  }
-
-  const aLevelGrades = ["A*", "A", "B", "C", "D", "E", "U"] as const;
-  type ALevelGrade = (typeof aLevelGrades)[number];
-  const aLevelWeights = [8, 20, 28, 22, 13, 7, 2]; // A*, A, B, C, D, E, U
-
-  function pickALevelGrade(baseShift = 0): ALevelGrade {
-    const weights = aLevelWeights.map((w, i) => {
-      const shift = i + baseShift;
-      return Math.max(1, w - Math.abs(baseShift) * 1.5);
-    });
-    const total = weights.reduce((a, b) => a + b, 0);
-    let r = rng() * total;
-    for (let i = 0; i < weights.length; i++) {
-      r -= weights[i];
-      if (r <= 0) return aLevelGrades[i];
-    }
-    return "C";
-  }
 
   // ── GCSE: Year 11 Mock cycle ──
   const gcseCycle = await prisma.assessmentCycle.upsert({
@@ -1142,19 +1196,21 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   });
 
   // Fetch Y11 students
-  const y11Students = await prisma.student.findMany({
+  const y11Students = (await prisma.student.findMany({
     where: { tenantId: tenant.id, yearGroup: "Y11" },
     select: { id: true, upn: true, fullName: true, ppFlag: true, sendFlag: true },
-  });
+    orderBy: { upn: "asc" },
+  })).map((st) => ({ ...st, upn: st.upn ?? st.id }));
 
   // Create GCSE assessments for both mock points
   for (const point of [gcseMock1, gcseMock2]) {
     for (const subject of gcseSubjects) {
       // Determine enrolled students first to set entryCount
       const isCoreSubjectPre = ["Maths", "English Language", "English Literature"].includes(subject);
+      // The same students take a subject at both mocks.
       const preEnrolled = isCoreSubjectPre
         ? y11Students
-        : y11Students.filter(() => rng() > 0.35);
+        : y11Students.filter((st) => takesSubject(st.upn, subject, 0.65));
       const expectedCount = preEnrolled.length;
 
       const assessment = await prisma.assessment.upsert({
@@ -1177,22 +1233,16 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
         },
       });
 
-      // Use pre-enrolled students (already computed above)
-      const isCoreSubject = isCoreSubjectPre;
-      const enrolledStudents = preEnrolled;
+      const pointIndex = point.label === "Mock 2" ? 1 : 0;
+      for (const student of preEnrolled) {
+        const ability = studentAbility(student.upn, { pp: student.ppFlag, send: student.sendFlag });
+        const effect = teacherEffect("Y11", subject, indexFromUpn(student.upn, 11));
+        const rawGrade = gcseGrade(subjectStanding(student.upn, ability, subject, pointIndex, effect), subject);
 
-      for (const student of enrolledStudents) {
-        // PP students slightly lower grades on average
-        const baseShift = student.ppFlag ? 1 : student.sendFlag ? 2 : 0;
-        // Mock 2 = slight improvement on average
-        const mockShift = point.label === "Mock 2" ? -1 : 0;
-        const rawGrade = pickGcseGrade(baseShift + mockShift);
-
-        // 3% absent
-        const isAbsent = rng() < 0.03;
-        const rawValue = isAbsent ? "Absent" : String(rawGrade);
-        const status = isAbsent ? "ABSENT" : "PRESENT";
-        const normalizedScore = isAbsent ? null : rawGrade / 9;
+        const absent = isAbsent(student.upn, subject, pointIndex, 0.03);
+        const rawValue = absent ? "Absent" : String(rawGrade);
+        const status = absent ? "ABSENT" : "PRESENT";
+        const normalizedScore = absent ? null : rawGrade / 9;
 
         await prisma.assessmentResult.upsert({
           where: {
@@ -1241,31 +1291,30 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
     "Vatavu Cosmin", "Vickers Jessica", "Wireko Asante",
   ];
 
-  const y13Students: Array<{ id: string; ppFlag: boolean; sendFlag: boolean }> = [];
+  const y13Students: Array<{ id: string; upn: string; ppFlag: boolean; sendFlag: boolean }> = [];
   for (let i = 0; i < y13StudentNames.length; i++) {
     const name = y13StudentNames[i];
     const upn = `D13${String(i + 1).padStart(3, "0")}`;
+    const ppFlag = i % 7 === 0;
+    const sendFlag = i % 12 === 0;
+    // Sixth formers are a selected group, so they sit higher than the school average.
+    const ability = studentAbility(upn, { pp: ppFlag, send: sendFlag }) + 0.6;
+    const ks2 = { ks2ReadingScaledScore: ks2Score(upn, ability, "reading"), ks2MathsScaledScore: ks2Score(upn, ability, "maths") };
     const student = await prisma.student.upsert({
       where: { tenantId_upn: { tenantId: tenant.id, upn } },
-      update: {
-        fullName: name,
-        yearGroup: "Y13",
-        ks2ReadingScaledScore: randInt(84, 120),
-        ks2MathsScaledScore: randInt(84, 120),
-      },
+      update: { fullName: name, yearGroup: "Y13", ...ks2 },
       create: {
         tenantId: tenant.id,
         upn,
         fullName: name,
         yearGroup: "Y13",
-        ks2ReadingScaledScore: randInt(84, 120),
-        ks2MathsScaledScore: randInt(84, 120),
-        ppFlag: i % 7 === 0,
-        sendFlag: i % 12 === 0,
+        ...ks2,
+        ppFlag,
+        sendFlag,
         status: "ACTIVE",
       },
     });
-    y13Students.push({ id: student.id, ppFlag: student.ppFlag, sendFlag: student.sendFlag });
+    y13Students.push({ id: student.id, upn, ppFlag: student.ppFlag, sendFlag: student.sendFlag });
   }
 
   const aLevelCycle = await prisma.assessmentCycle.upsert({
@@ -1354,17 +1403,18 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
         },
       });
 
+      const pointIndex = point.label === "Mock 2" ? 1 : 0;
       for (const student of studentsForSubject) {
-        const baseShift = student.ppFlag ? 1 : 0;
-        const rawGrade = pickALevelGrade(baseShift);
-        const isAbsent = rng() < 0.02;
-        const rawValue = isAbsent ? "Absent" : rawGrade;
-        const status = isAbsent ? "ABSENT" : "PRESENT";
+        const ability = studentAbility(student.upn, { pp: student.ppFlag, send: student.sendFlag }) + 0.6;
+        const rawGrade = aLevelGrade(subjectStanding(student.upn, ability, subject, pointIndex), subject);
+        const absent = isAbsent(student.upn, subject, pointIndex, 0.02);
+        const rawValue = absent ? "Absent" : rawGrade;
+        const status = absent ? "ABSENT" : "PRESENT";
 
         const A_LEVEL_SCORE: Record<string, number> = {
           "A*": 1.0, A: 6 / 7, B: 5 / 7, C: 4 / 7, D: 3 / 7, E: 2 / 7, U: 0,
         };
-        const normalizedScore = isAbsent ? null : (A_LEVEL_SCORE[rawGrade] ?? null);
+        const normalizedScore = absent ? null : (A_LEVEL_SCORE[rawGrade] ?? null);
 
         await prisma.assessmentResult.upsert({
           where: {
@@ -1398,11 +1448,6 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
     "RE", "Music", "Graphics", "Art",
   ];
 
-  function pickPercentageScore(baseShift = 0): number {
-    // Generates a percentage score with a rough bell curve centred ~60%
-    const raw = 30 + rng() * 70 + baseShift * 5;
-    return Math.max(0, Math.min(100, Math.round(raw)));
-  }
 
   const y7Cycle = await prisma.assessmentCycle.upsert({
     where: { tenantId_label: { tenantId: tenant.id, label: "Year 7 Assessment 2024/25" } },
@@ -1455,21 +1500,21 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   });
 
   // Fetch Y7 students
-  const y7Students = await prisma.student.findMany({
+  const y7Students = (await prisma.student.findMany({
     where: { tenantId: tenant.id, yearGroup: "Y7" },
     select: { id: true, upn: true, fullName: true, ppFlag: true, sendFlag: true },
-  });
+    orderBy: { upn: "asc" },
+  })).map((st) => ({ ...st, upn: st.upn ?? st.id }));
 
   for (const point of [y7Point1, y7Point2]) {
-    // Slight score improvement from A1 → A2
-    const pointShift = point.ordinal === 2 ? 1 : 0;
+    const pointIndex = point.ordinal === 2 ? 1 : 0;
 
     for (const subject of y7Subjects) {
       const isCoreSubject = ["English", "Maths", "Science"].includes(subject);
-      // Optional subjects: ~85% of students enrolled
+      // Optional subjects: ~85% of students, the same students at both points
       const enrolledStudents = isCoreSubject
         ? y7Students
-        : y7Students.filter(() => rng() > 0.15);
+        : y7Students.filter((st) => takesSubject(st.upn, subject, 0.85));
 
       const assessment = await prisma.assessment.upsert({
         where: {
@@ -1492,11 +1537,12 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
       });
 
       for (const student of enrolledStudents) {
-        const isAbsent = rng() < 0.05; // 5% absent rate
-        const baseShift = student.ppFlag ? -1 : (student.sendFlag ? -0.5 : 0);
-        const score = isAbsent ? null : pickPercentageScore(baseShift + pointShift);
-        const rawValue = isAbsent ? "Absent" : `${score}%`;
-        const normalizedScore = isAbsent || score === null ? null : score / 100;
+        const absent = isAbsent(student.upn, subject, pointIndex, 0.05);
+        const ability = studentAbility(student.upn, { pp: student.ppFlag, send: student.sendFlag });
+        const effect = teacherEffect("Y7", subject, indexFromUpn(student.upn, 7));
+        const score = absent ? null : percentageScore(subjectStanding(student.upn, ability, subject, pointIndex, effect), subject);
+        const rawValue = absent ? "Absent" : `${score}%`;
+        const normalizedScore = absent || score === null ? null : score / 100;
 
         await prisma.assessmentResult.upsert({
           where: {
@@ -1506,14 +1552,14 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
               studentId: student.id,
             },
           },
-          update: { rawValue, normalizedScore, status: isAbsent ? "ABSENT" : "PRESENT" },
+          update: { rawValue, normalizedScore, status: absent ? "ABSENT" : "PRESENT" },
           create: {
             tenantId: tenant.id,
             assessmentId: assessment.id,
             studentId: student.id,
             rawValue,
             normalizedScore,
-            status: isAbsent ? "ABSENT" : "PRESENT",
+            status: absent ? "ABSENT" : "PRESENT",
           },
         });
       }
@@ -1529,7 +1575,7 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
 
   // Teacher mapping per subject (4 teachers = 4 classes per subject)
   const y7TeacherMap: Record<string, string[]> = {
-    English:   ["alice.thornton@demo.school", "ben.carter@demo.school", "chloe.davies@demo.school", "emily.patel@demo.school"],
+    English:   ["alice.thornton@demo.school", "ben.okafor@demo.school", "chloe.davies@demo.school", "emily.patel@demo.school"],
     Maths:     ["frank.robinson@demo.school", "grace.kim@demo.school", "harry.brown@demo.school", "isla.hughes@demo.school"],
     Science:   ["kezia.edwards@demo.school", "liam.nguyen@demo.school", "maya.scott@demo.school", "nathan.powell@demo.school"],
     Geography: ["piotr.kowalski@demo.school", "quinn.foster@demo.school", "rebecca.adeyemi@demo.school", "samuel.turner@demo.school"],
@@ -1634,7 +1680,11 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   Tenant:   Demo Academy  (id: ${DEMO_TENANT_ID})
   Admin:    admin@demo.school / Password123!
   SLT:      sarah.chen@demo.school / james.morrison@demo.school / patricia.okafor@demo.school
-  Teachers: alice.thornton@demo.school … diana.osei@demo.school (Password123!)
+  HOD:      emma.walsh (English) / david.kumar (Maths) / rachel.thompson (Science) / michael.stevens (Humanities) / isabelle.martin (Languages) / tony.adesanya (PE)
+  Leader:   hannah.osborne@demo.school (coaches six Humanities and Languages teachers)
+  HR:       priya.nair@demo.school    Support: tom.fielding@demo.school    On call: marcus.reid@demo.school
+  Teachers: alice.thornton@demo.school … diana.osei@demo.school
+  Password for every account: Password123!
 
   Patterns seeded:
   • 7 drifting teachers (retrieval check, CFU, directed questioning drift down)
@@ -1645,8 +1695,11 @@ export async function seedDemo(prisma: PrismaClient, isReset = false) {
   • 15+ urgent students (attendance/onCalls/suspension triggers)
   • 10 LOA requests (mix Pending/Approved/Denied)
   • 20 OnCall events
-  • 10 meetings + 30 actions (mix overdue/due soon)
+  • 10 meetings + 39 actions (mix overdue/due soon; Alice Thornton has a full list)
+  • 4 Strategy Board areas with notes
   • Year 7 Assessment 2024/25 (% format, 10 subjects, 2 points: A1 Nov / A2 Mar)
+  • Attainment follows each student's general level (subjects correlate ~0.7, KS2 predicts results);
+    ~8% decline and ~6% improve between points; 7F/En and 11D/Hi4 sit below expected
 `);
 }
 
