@@ -25,17 +25,23 @@ export default async function ObservationReviewPage() {
       orderBy: { fullName: "asc" },
       select: { id: true, fullName: true },
     }),
-    (prisma as any).observation.groupBy({
-      by: ["observedTeacherId"],
-      where: { tenantId: user.tenantId },
-      _count: { _all: true },
-    }),
+    ["ADMIN", "SLT", "SUPER_ADMIN"].includes(user.role)
+      ? (prisma as any).observation.groupBy({
+          by: ["observedTeacherId"],
+          where: { tenantId: user.tenantId },
+          _count: { _all: true },
+        })
+      : Promise.resolve([]),
   ]);
   const signalDefs = getSignalDefinitionsForSchoolType(schoolType);
 
+  // Only leaders see how often a colleague has been observed.
+  const showPriorCounts = ["ADMIN", "SLT", "SUPER_ADMIN"].includes(user.role);
   const priorCountByTeacherId: Record<string, number> = {};
-  for (const row of observationCounts as { observedTeacherId: string; _count: { _all: number } }[]) {
-    priorCountByTeacherId[row.observedTeacherId] = row._count._all;
+  if (showPriorCounts) {
+    for (const row of observationCounts as { observedTeacherId: string; _count: { _all: number } }[]) {
+      priorCountByTeacherId[row.observedTeacherId] = row._count._all;
+    }
   }
 
   return (
@@ -47,7 +53,7 @@ export default async function ObservationReviewPage() {
         action={submitObservationDraft}
         schoolType={schoolType}
         teachers={teachers as { id: string; fullName: string }[]}
-        priorCountByTeacherId={priorCountByTeacherId}
+        priorCountByTeacherId={showPriorCounts ? priorCountByTeacherId : null}
       />
     </ObservationStageLayout>
   );

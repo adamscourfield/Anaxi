@@ -42,7 +42,8 @@ export function ReviewList({
   action: (state: SubmitObservationState, formData: FormData) => Promise<SubmitObservationState>;
   schoolType: TenantSchoolType;
   teachers: { id: string; fullName: string }[];
-  priorCountByTeacherId: Record<string, number>;
+  /** Null when the viewer shouldn't see how often colleagues have been observed. */
+  priorCountByTeacherId: Record<string, number> | null;
 }) {
   const router = useRouter();
   const signalKeys = useMemo(() => signals.map((s) => s.key as string), [signals]);
@@ -72,7 +73,7 @@ export function ReviewList({
   const rated = phaseSignals.filter((s) => draft.signalState[s.key]?.valueKey).length;
   const unseen = phaseSignals.filter((s) => draft.signalState[s.key]?.notObserved).length;
   const teacher = teachers.find((t) => t.id === ctx.teacherId);
-  const prior = priorCountByTeacherId[ctx.teacherId] ?? 0;
+  const prior = priorCountByTeacherId ? priorCountByTeacherId[ctx.teacherId] ?? 0 : null;
 
   const setNote = (contextNote: string) =>
     setDraft((d) => {
@@ -173,9 +174,11 @@ export function ReviewList({
             <h2 id="review-who" className="text-[17px] font-semibold tracking-[-0.02em]">
               {teacher?.fullName ?? "Unknown member of staff"}
             </h2>
-            <p className="mt-0.5 text-[13px] text-[#6e6e73]">
-              {prior === 0 ? "First observation on record" : `${prior} earlier observation${prior === 1 ? "" : "s"}`}
-            </p>
+            {prior !== null ? (
+              <p className="mt-0.5 text-[13px] text-[#6e6e73]">
+                {prior === 0 ? "First observation on record" : `${prior} earlier observation${prior === 1 ? "" : "s"}`}
+              </p>
+            ) : null}
           </div>
           <dl className={`${styles.facts} border-t border-[#f0f0f1]`}>
             {facts.map(([k, v]) => (

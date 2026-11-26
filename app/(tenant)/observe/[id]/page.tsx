@@ -78,6 +78,15 @@ export default async function ObservationDetailPage({
   // Same answer as a missing record, so the page doesn't confirm the observation exists.
   if (!canView) notFound();
 
+  // How often a colleague has been observed is for leaders, their line managers and the person themselves,
+  // not for a peer who happened to observe them.
+  const observedDeptIds = new Set((observedDeptMemberships as any[]).map((m: any) => m.departmentId));
+  const canSeeHistory =
+    observation.observedTeacherId === user.id ||
+    ["ADMIN", "SLT", "SUPER_ADMIN"].includes(user.role) ||
+    (hodMemberships as any[]).some((m: any) => observedDeptIds.has(m.departmentId)) ||
+    (coachAssignments as any[]).some((a: any) => a.coacheeUserId === observation.observedTeacherId);
+
   const [labelMap, schoolType, earlierCount] = await Promise.all([
     getTenantSignalLabels(user.tenantId),
     getTenantSchoolType(user.tenantId),
@@ -117,11 +126,10 @@ export default async function ObservationDetailPage({
     ["Year", formatYearGroup(observation.yearGroup)],
     ["Department", observation.subject || "—"],
     ["Part of lesson", observation.phase === "UNKNOWN" ? "Several or not sure" : formatPhaseLabel(observation.phase)],
-    ["Observer", observerName],
-    [
-      "Earlier observations",
-      earlierCount === 0 ? "None, this was the first" : String(earlierCount),
-    ],
+    ["Observer", observation.observerId === user.id ? "You" : observerName],
+    ...(canSeeHistory
+      ? ([["Earlier observations", earlierCount === 0 ? "None, this was the first" : String(earlierCount)]] as [string, string][])
+      : []),
   ];
 
   return (
@@ -130,7 +138,7 @@ export default async function ObservationDetailPage({
 
       <PageHeader
         title={isOwn ? "Your observation" : teacherName}
-        subtitle={`${dateLabel}. Observed by ${observerName}.`}
+        subtitle={`${dateLabel}. Observed by ${observation.observerId === user.id ? "you" : observerName}.`}
         eyebrow={<Breadcrumb items={[{ label: "Observations", href: backHref }, { label: isOwn ? "Your observation" : teacherName }]} />}
         actions={<PrintExportButtons />}
       />
@@ -211,7 +219,7 @@ export default async function ObservationDetailPage({
               ))}
             </dl>
           </section>
-          {earlierCount > 0 && !isOwn ? (
+          {canSeeHistory && earlierCount > 0 && !isOwn ? (
             <Link
               href={`/observe/history?teacherId=${observation.observedTeacherId}#observation-records`}
               className="block px-1 text-[13px] font-medium text-[#3a3a3c] underline-offset-4 hover:text-[#1c1c1e] hover:underline print:hidden"

@@ -134,3 +134,9 @@
 .page :global(.obs-history-role-total) strong { font-size:40px; line-height:1.1; color:var(--ink); font-weight:500; letter-spacing:-.055em; font-variant-numeric:tabular-nums; }
 .page :global(.obs-history-role-total) span { font-size:10px; }
 .page :global(#coaching-coverage),.page :global(#observation-analysis) { scroll-margin-top:20px; }
+
+/* Teachers: switch between their own lessons and the ones they recorded. */
+.scope { display: inline-flex; justify-self: start; padding: 3px; border: 1px solid #e5e5e6; border-radius: 10px; background: #fff; }
+.scope a { padding: 6px 12px; border-radius: 7px; font-size: 13px; font-weight: 500; color: #6e6e73; text-decoration: none; }
+.scope a:hover { color: #1c1c1e; }
+.scope a[aria-current="page"][href] { background: #1c1c1e; color: #fff; }

@@ -23,6 +23,7 @@ interface HistoryFiltersProps {
   preservedAnalysisPreset?: string;
   preservedCoachingCoachId?: string;
   preservedCoachingCoacheeId?: string;
+  preservedScope?: string;
   showTeacherFilters: boolean;
   hasFilters: boolean;
 }
@@ -37,6 +38,7 @@ export function HistoryFilters({
   preservedAnalysisPreset,
   preservedCoachingCoachId,
   preservedCoachingCoacheeId,
+  preservedScope,
   showTeacherFilters,
   hasFilters,
 }: HistoryFiltersProps) {
@@ -61,6 +63,7 @@ export function HistoryFilters({
   if (preservedAnalysisPreset && preservedAnalysisPreset !== "academic_year") clearParams.set("analysis", preservedAnalysisPreset);
   if (preservedCoachingCoachId) clearParams.set("coachingCoach", preservedCoachingCoachId);
   if (preservedCoachingCoacheeId) clearParams.set("coachingCoachee", preservedCoachingCoacheeId);
+  if (preservedScope) clearParams.set("scope", preservedScope);
   const clearHref = `/observe/history${clearParams.size ? `?${clearParams}` : ""}`;
 
   function keepRecordsInView() {
@@ -108,6 +111,7 @@ export function HistoryFilters({
         {preservedCoachingCoachId ? (
           <input type="hidden" name="coachingCoach" value={preservedCoachingCoachId} />
         ) : null}
+        {preservedScope ? <input type="hidden" name="scope" value={preservedScope} /> : null}
         {preservedCoachingCoacheeId ? (
           <input type="hidden" name="coachingCoachee" value={preservedCoachingCoacheeId} />
         ) : null}

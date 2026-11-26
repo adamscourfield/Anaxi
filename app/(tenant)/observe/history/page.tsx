@@ -20,6 +20,7 @@ import {
 import {
   buildObservationHistoryWhere,
   OBSERVATION_HISTORY_PHASE_FILTERS,
+  parseObservationHistoryScope,
 } from "@/modules/observations/observationHistoryWhere";
 import { Avatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/page-header";
@@ -89,6 +90,8 @@ export default async function ObservationHistoryPage({
   const analysisPreset = parseObservationAnalysisPreset(analysisPresetRaw) ?? "academic_year";
   const coachingCoachIdRaw = String(resolvedSearchParams.coachingCoach || "").trim();
   const coachingCoacheeIdRaw = String(resolvedSearchParams.coachingCoachee || "").trim();
+  const isClassroomStaff = user.role === "TEACHER" || user.role === "SUPPORT";
+  const scope = isClassroomStaff ? parseObservationHistoryScope(String(resolvedSearchParams.scope || "")) : "";
 
   const [teachers, observers, hodMemberships, coachAssignments, tenantSignalLabels] = await Promise.all([
     (prisma as any).user.findMany({ where: { tenantId: user.tenantId, isActive: true }, orderBy: { fullName: "asc" } }),
@@ -127,6 +130,7 @@ export default async function ObservationHistoryPage({
     windowStart,
     hodVisibleUserIds,
     coacheeUserIds,
+    scope,
   });
 
   const visibleTeachers = allowedTeacherIds
@@ -134,8 +138,8 @@ export default async function ObservationHistoryPage({
     : (teachers as any[]);
 
   const scopedFilterWhere: any = { tenantId: user.tenantId };
-  if (user.role === "TEACHER" || user.role === "SUPPORT") scopedFilterWhere.observedTeacherId = user.id;
-  else if (allowedTeacherIds) scopedFilterWhere.observedTeacherId = { in: Array.from(allowedTeacherIds) };
+  if (isClassroomStaff) scopedFilterWhere.OR = [{ observedTeacherId: user.id }, { observerId: user.id }];
+  else if (allowedTeacherIds) scopedFilterWhere.OR = [{ observedTeacherId: { in: Array.from(allowedTeacherIds) } }, { observerId: user.id }];
 
   const showPairMatrix = (user.role !== "TEACHER" && user.role !== "SUPPORT");
   const canCreate = hasPermission(user.role, "observe:create");
@@ -298,6 +302,7 @@ export default async function ObservationHistoryPage({
     if (to) params.set("to", to);
     if (phaseFilter) params.set("phase", phaseFilter);
     if (signalKeyFilter) params.set("signalKey", signalKeyFilter);
+    if (scope) params.set("scope", scope);
     if (useWindow) params.set("window", String(windowDays));
     if (analysisPreset !== "academic_year") params.set("analysis", analysisPreset);
     if (coachingCoachId) params.set("coachingCoach", coachingCoachId);
@@ -316,6 +321,7 @@ export default async function ObservationHistoryPage({
   if (to) historyFilterQuery.set("to", to);
   if (phaseFilter) historyFilterQuery.set("phase", phaseFilter);
   if (signalKeyFilter) historyFilterQuery.set("signalKey", signalKeyFilter);
+  if (scope) historyFilterQuery.set("scope", scope);
   if (useWindow) historyFilterQuery.set("window", String(windowDays));
   if (analysisPreset !== "academic_year") historyFilterQuery.set("analysis", analysisPreset);
   if (coachingCoachId) historyFilterQuery.set("coachingCoach", coachingCoachId);
@@ -330,7 +336,7 @@ export default async function ObservationHistoryPage({
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <PageHeader variant="ledger" className={styles.header}
         title={user.role === "TEACHER" || user.role === "SUPPORT" ? "Your observations" : "Observation history"}
-        subtitle={user.role === "TEACHER" || user.role === "SUPPORT" ? "Every observation of your lessons." : "Every observation you can see. Filter by teacher, dates, part of the lesson or signal."}
+        subtitle={isClassroomStaff ? "Observations of your lessons, and the ones you've recorded." : "Every observation you can see. Filter by teacher, dates, part of the lesson or signal."}
         actions={
           canCreate ? (
             <Link
@@ -342,6 +348,23 @@ export default async function ObservationHistoryPage({
           ) : undefined
         }
       />
+
+      {isClassroomStaff ? (
+        <nav className={styles.scope} aria-label="Which observations">
+          {([["", "All"], ["of", "Of your lessons"], ["by", "Recorded by you"]] as const).map(([value, label]) => {
+            const params = new URLSearchParams(historyFilterQueryString);
+            params.delete("page");
+            if (value) params.set("scope", value);
+            else params.delete("scope");
+            const qs = params.toString();
+            return (
+              <Link key={label} href={`/observe/history${qs ? `?${qs}` : ""}`} aria-current={scope === value ? "page" : undefined}>
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+      ) : null}
 
       <nav className={styles.sectionNav} aria-label="Observation history sections"><a href="#observation-analysis">Overview</a>{showPairMatrix ? <a href="#coaching-coverage">Coaching coverage</a> : null}<a href="#observation-records">Observation records <span>{Number(totalCount).toLocaleString("en-GB")}</span></a></nav>
 
@@ -377,6 +400,7 @@ export default async function ObservationHistoryPage({
         preservedAnalysisPreset={analysisPreset}
         preservedCoachingCoachId={coachingCoachId}
         preservedCoachingCoacheeId={coachingCoacheeId}
+        preservedScope={scope || undefined}
         showTeacherFilters={(user.role !== "TEACHER" && user.role !== "SUPPORT")}
         hasFilters={hasFilters}
       />
@@ -400,7 +424,7 @@ export default async function ObservationHistoryPage({
               <thead>
                 <tr className="table-head-row text-left">
                   <th className="px-5 py-3.5">Teacher</th>
-                  {(user.role !== "TEACHER" && user.role !== "SUPPORT") && <th className="px-4 py-3.5">Observer</th>}
+                  <th className="px-4 py-3.5">Observer</th>
                   <th className="px-4 py-3.5">Department and year</th>
                   <th className="px-4 py-3.5">Date</th>
                   <th className="px-4 py-3.5">Part of lesson</th>
@@ -420,17 +444,15 @@ export default async function ObservationHistoryPage({
                         <div className="flex items-center gap-3 min-w-0">
                           <Avatar name={obs.observedTeacher?.fullName ?? "?"} userId={obs.observedTeacherId} size="sm" />
                           <span className="truncate font-semibold text-text group-hover:text-accent calm-transition">
-                            {obs.observedTeacher?.fullName ?? "—"}
+                            {obs.observedTeacherId === user.id ? "You" : obs.observedTeacher?.fullName ?? "—"}
                           </span>
                         </div>
                       </td>
 
                       {/* Observer */}
-                      {(user.role !== "TEACHER" && user.role !== "SUPPORT") && (
-                        <td className="px-4 py-4 text-muted">
-                          {obs.observer?.fullName ?? "—"}
-                        </td>
-                      )}
+                      <td className="px-4 py-4 text-muted">
+                        {obs.observerId === user.id ? "You" : obs.observer?.fullName ?? "—"}
+                      </td>
 
                       {/* Subject / Year */}
                       <td className="px-4 py-4">
@@ -484,14 +506,14 @@ export default async function ObservationHistoryPage({
                       <div className="flex items-center gap-2.5">
                         <Avatar name={obs.observedTeacher?.fullName ?? "?"} userId={obs.observedTeacherId} size="sm" />
                         <span className="truncate text-[0.875rem] font-semibold text-text">
-                          {obs.observedTeacher?.fullName ?? "—"}
+                          {obs.observedTeacherId === user.id ? "You" : obs.observedTeacher?.fullName ?? "—"}
                         </span>
                       </div>
                       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-muted">
                         <span>{obs.subject} · {formatYearGroup(obs.yearGroup)}</span>
                         <span className="tabular-nums">{formatLongDate(obs.observedAt)}</span>
-                        {(user.role !== "TEACHER" && user.role !== "SUPPORT") && obs.observer?.fullName && (
-                          <span>by {obs.observer.fullName}</span>
+                        {obs.observer?.fullName && (
+                          <span>by {obs.observerId === user.id ? "you" : obs.observer.fullName}</span>
                         )}
                       </div>
                     </div>
