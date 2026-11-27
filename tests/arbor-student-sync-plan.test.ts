@@ -15,6 +15,11 @@ const student = (id: string, name: string, level: string | null) => ({
 });
 
 describe("Arbor student sync plan", () => {
+  it("skips a pupil whose leaving date has passed even when a year group remains", () => {
+    const leaver = { ...student("leaver", "Ada", "Year 7"), leavingDate: "2000-01-01" };
+    expect(buildStudentSyncPlan([leaver], { SECONDARY: "secondary" }, [])[0].action).toBe("SKIP");
+  });
+
   it("creates, adopts, updates, and skips without adopting ambiguous matches", () => {
     const plan = buildStudentSyncPlan(
       [student("linked", "Ada", "Year 7"), student("adopt", "Ben", "Year 8"), student("new", "Cara", "Year 9"), student("old", "Dan", null), student("ambiguous", "Eve", "Year 10")],

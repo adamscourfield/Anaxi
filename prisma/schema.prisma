@@ -70,6 +70,7 @@ model User {
   receivesFirstAidEmails        Boolean                    @default(false)
   avatarImage                   Bytes?
   avatarMimeType                String?
+  avatarLastCheckedAt DateTime?
   avatarUpdatedAt               DateTime?
   /// Prevents an Arbor photo refresh from overwriting a picture uploaded in Anaxi.
   avatarDataSource              DataSource?
@@ -276,6 +277,7 @@ model Student {
   /// to ARCHIVED rather than keeping them indefinitely.
   avatarImage           Bytes?
   avatarMimeType        String?
+  avatarLastCheckedAt DateTime?
   avatarUpdatedAt       DateTime?
   /// Prevents an Arbor photo refresh from overwriting a picture uploaded in Anaxi.
   avatarDataSource      DataSource?

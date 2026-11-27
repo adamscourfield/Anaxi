@@ -12,6 +12,8 @@ import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
+export const maxDuration = 300;
+
 export const POST = withApi(async function POST(req: Request) {
   const cronDenied = assertCronAuthorized(req);
   const isScheduledRun = !cronDenied && req.headers.get("x-arbor-scheduled-sync") === "1";
@@ -72,10 +74,12 @@ export const POST = withApi(async function POST(req: Request) {
     // Arbor keeps historic leavers in its response without a current academic level.
     // Archive only records already owned by Arbor and explicitly identified this way.
     const offRollExternalIds = new Set(plan.filter((item) => item.action === "SKIP").map((item) => item.arborStudent.id));
+    const destinations = new Map(plan.filter((item) => item.tenantId && item.action !== "REVIEW").map((item) => [item.arborStudent.id, item.tenantId]));
     for (const student of existingStudents) {
-      if (student.status !== "ACTIVE" || student.dataSource !== "ARBOR" || !student.externalId || !offRollExternalIds.has(student.externalId)) continue;
+      const movedSchool = student.externalId && destinations.has(student.externalId) && destinations.get(student.externalId) !== student.tenantId;
+      if (student.status !== "ACTIVE" || student.dataSource !== "ARBOR" || !student.externalId || (!offRollExternalIds.has(student.externalId) && !movedSchool)) continue;
       const before = student;
-      await db.student.update({ where: { id: student.id }, data: { status: "ARCHIVED" } });
+      await db.student.update({ where: { id: student.id }, data: { status: "ARCHIVED", avatarImage: null, avatarMimeType: null, avatarUpdatedAt: null, avatarDataSource: null, avatarLastCheckedAt: null } });
       await db.sharedIntegrationSyncChange.create({
         data: { syncRunId: run.id, tenantId: student.tenantId, entityType: "Student", entityId: student.id, changeType: "UPDATE", beforeJson: before, afterJson: { ...before, status: "ARCHIVED" } },
       });

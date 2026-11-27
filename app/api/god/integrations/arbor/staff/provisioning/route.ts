@@ -10,6 +10,8 @@ import { arborStaffFullName } from "@/lib/integrations/arbor/staffSyncPlan";
 import type { ArborCredentials, ArborStaffRecord } from "@/lib/integrations/arbor/types";
 import { prisma } from "@/lib/prisma";
 
+export const maxDuration = 300;
+
 function staffEmail(staff: ArborStaffRecord): string | null {
   const value = staff.emailAddresses.map((address) => address.displayName.trim()).find((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
   return value?.toLowerCase() ?? null;

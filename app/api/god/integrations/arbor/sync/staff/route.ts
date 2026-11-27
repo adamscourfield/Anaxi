@@ -11,6 +11,8 @@ import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
+export const maxDuration = 300;
+
 export const POST = withApi(async function POST(req: Request) {
   const cronDenied = assertCronAuthorized(req);
   const isScheduledRun = !cronDenied && req.headers.get("x-arbor-scheduled-sync") === "1";
@@ -50,7 +52,7 @@ export const POST = withApi(async function POST(req: Request) {
       new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAllStaff(),
       db.user.findMany({
         where: { tenantId: { in: tenantIds } },
-        select: { id: true, tenantId: true, fullName: true, externalId: true, dataSource: true },
+        select: { id: true, tenantId: true, fullName: true, externalId: true, dataSource: true, isActive: true },
       }),
     ]);
     const plan = buildStaffSyncPlan(arborStaff, tenantIds, users);
@@ -62,7 +64,7 @@ export const POST = withApi(async function POST(req: Request) {
       if (item.action === "SKIP" || item.action === "REVIEW" || (isScheduledRun && item.action === "ADOPT")) continue;
       if (!item.existingUser) throw new Error("Staff sync plan lost its existing user.");
       const before = item.existingUser;
-      const data = { fullName: arborStaffFullName(item.arborStaff), externalId: item.arborStaff.id, dataSource: "ARBOR" };
+      const data = { fullName: arborStaffFullName(item.arborStaff), externalId: item.arborStaff.id, dataSource: "ARBOR", isActive: true };
       const user = await db.user.update({ where: { id: before.id }, data });
       await db.sharedIntegrationSyncChange.create({
         data: {
@@ -79,9 +81,21 @@ export const POST = withApi(async function POST(req: Request) {
       else updated++;
     }
 
+    // Deactivate only explicitly inactive Arbor records from a complete successful fetch.
+    const inactiveIds = arborStaff.filter((staff) => !staff.isActiveInSchool).map((staff) => staff.id);
+    let deactivated = 0;
+    for (const user of users) {
+      if (user.dataSource !== "ARBOR" || !user.isActive || !inactiveIds.includes(user.externalId)) continue;
+      await db.user.update({ where: { id: user.id }, data: { isActive: false } });
+      await db.sharedIntegrationSyncChange.create({ data: {
+        syncRunId: run.id, tenantId: user.tenantId, entityType: "User", entityId: user.id,
+        changeType: "UPDATE", beforeJson: user, afterJson: { ...user, isActive: false },
+      } });
+      deactivated++;
+    }
     await db.sharedIntegrationSyncRun.update({
       where: { id: run.id },
-      data: { status: "SUCCESS", recordsProcessed: linked + updated, recordsUpdated: linked + updated, finishedAt: new Date() },
+      data: { status: "SUCCESS", recordsProcessed: linked + updated + deactivated, recordsUpdated: linked + updated + deactivated, finishedAt: new Date() },
     });
     await db.sharedIntegration.update({ where: { id: integration.id }, data: { lastSyncedAt: new Date(), lastSyncStatus: "SUCCESS", lastSyncError: null } });
     if (actor) {
@@ -89,7 +103,7 @@ export const POST = withApi(async function POST(req: Request) {
         data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.staff_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { linked, updated } },
       });
     }
-    if (isScheduledRun) return NextResponse.json({ linked, updated, skippedUnmatched: plan.filter((item) => item.action === "SKIP").length });
+    if (isScheduledRun) return NextResponse.json({ linked, updated, deactivated: deactivated, skippedUnmatched: plan.filter((item) => item.action === "SKIP").length });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("staffSync", "success");
     url.searchParams.set("linked", String(linked));

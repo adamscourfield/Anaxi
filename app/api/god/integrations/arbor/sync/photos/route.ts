@@ -10,6 +10,8 @@ import type { ArborCredentials } from "@/lib/integrations/arbor/types";
 import { PLATFORM_TENANT_ID } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
+export const maxDuration = 300;
+
 const BATCH_SIZE = 25;
 // Refresh Arbor-sourced photos monthly, while allowing the initial backlog to clear first.
 const REFRESH_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
@@ -45,18 +47,58 @@ export const POST = withApi(async function POST(req: Request) {
       return NextResponse.redirect(new URL("/god/integrations/arbor?photoSync=not-connected", req.url));
     }
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
+    const retryBefore = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const refreshBefore = new Date(Date.now() - REFRESH_AFTER_MS);
+    const photoWhere = {
+      tenantId: { in: tenantIds }, dataSource: "ARBOR", externalId: { not: null },
+      AND: [{ OR: [{ avatarLastCheckedAt: null }, { avatarLastCheckedAt: { lt: retryBefore } }] }],
+      OR: [
+        { avatarDataSource: null, avatarUpdatedAt: null },
+        { avatarDataSource: "ARBOR", avatarUpdatedAt: { lt: refreshBefore } },
+      ],
+    };
+    const photoQuery = {
+      select: { id: true, externalId: true },
+      orderBy: [{ avatarUpdatedAt: { sort: "asc", nulls: "first" } }, { id: "asc" }],
+      take: BATCH_SIZE,
+    };
     const [students, staff] = await Promise.all([
-    db.student.findMany({ where: { tenantId: { in: tenantIds }, status: "ACTIVE", dataSource: "ARBOR", externalId: { not: null }, OR: [{ avatarDataSource: null, avatarUpdatedAt: null }, { avatarDataSource: "ARBOR", avatarUpdatedAt: { lt: refreshBefore } }] }, select: { id: true, externalId: true }, orderBy: { avatarUpdatedAt: "asc" }, take: BATCH_SIZE }),
-    db.user.findMany({ where: { tenantId: { in: tenantIds }, isActive: true, dataSource: "ARBOR", externalId: { not: null }, OR: [{ avatarDataSource: null, avatarUpdatedAt: null }, { avatarDataSource: "ARBOR", avatarUpdatedAt: { lt: refreshBefore } }] }, select: { id: true, externalId: true }, orderBy: { avatarUpdatedAt: "asc" }, take: BATCH_SIZE }),
+      db.student.findMany({ ...photoQuery, where: { ...photoWhere, status: "ACTIVE" } }),
+      db.user.findMany({ ...photoQuery, where: { ...photoWhere, isActive: true } }),
     ]);
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
     let studentPhotos = 0, staffPhotos = 0, unavailable = 0, failed = 0;
     for (const student of students) {
-      try { const photo = await client.getStudentPhoto(student.externalId); if (photo) { await db.student.update({ where: { id: student.id }, data: { avatarImage: photo.bytes, avatarMimeType: photo.mimeType, avatarUpdatedAt: new Date(), avatarDataSource: "ARBOR" } }); studentPhotos++; } else unavailable++; } catch { failed++; }
+      try {
+        const photo = await client.getStudentPhoto(student.externalId);
+        if (photo) {
+          await db.student.update({ where: { id: student.id }, data: {
+            avatarImage: photo.bytes, avatarMimeType: photo.mimeType,
+            avatarUpdatedAt: new Date(), avatarDataSource: "ARBOR",
+          } });
+          studentPhotos++;
+        } else unavailable++;
+      } catch {
+        failed++;
+      } finally {
+        await db.student.update({ where: { id: student.id }, data: { avatarLastCheckedAt: new Date() } });
+      }
     }
     for (const user of staff) {
-      try { const photo = await client.getStaffPhoto(user.externalId); if (photo) { await db.user.update({ where: { id: user.id }, data: { avatarImage: photo.bytes, avatarMimeType: photo.mimeType, avatarUpdatedAt: new Date(), avatarDataSource: "ARBOR" } }); staffPhotos++; } else unavailable++; } catch { failed++; }
+      try {
+        const photo = await client.getStaffPhoto(user.externalId);
+        if (photo) {
+          await db.user.update({ where: { id: user.id }, data: {
+            avatarImage: photo.bytes, avatarMimeType: photo.mimeType,
+            avatarUpdatedAt: new Date(), avatarDataSource: "ARBOR",
+          } });
+          staffPhotos++;
+        } else unavailable++;
+      } catch {
+        failed++;
+      } finally {
+        await db.user.update({ where: { id: user.id }, data: { avatarLastCheckedAt: new Date() } });
+      }
     }
     if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.photos_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { studentPhotos, staffPhotos, unavailable, failed } } });
     if (scheduled) return NextResponse.json({ studentPhotos, staffPhotos, unavailable, failed, batchesRemaining: students.length === BATCH_SIZE || staff.length === BATCH_SIZE });

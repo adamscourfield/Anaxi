@@ -83,18 +83,6 @@ jobs:
         run: |
           test -n "$ANAXI_APP_URL"
           test -n "$ANAXI_CRON_SECRET"
-          curl --fail --silent --show-error \
-            --retry 2 \
-            --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
-            "${ANAXI_APP_URL%/}/api/cron/arbor-students"
-          curl --fail --silent --show-error \
-            --retry 2 \
-            --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
-            "${ANAXI_APP_URL%/}/api/cron/arbor-staff"
-          curl --fail --silent --show-error \
-            --retry 2 \
-            --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
-            "${ANAXI_APP_URL%/}/api/cron/arbor-staff-provisioning"
           # Timetable roster pages are deliberately small to stay within function
           # limits. Repeat the protected call to complete a whole school overnight.
           # Current direct class enrolments span 25 pages for the largest
@@ -112,12 +100,6 @@ jobs:
               --retry 2 \
               --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
               "${ANAXI_APP_URL%/}/api/cron/arbor-timetable-historic"
-          done
-          for _ in $(seq 1 8); do
-            curl --fail --silent --show-error \
-              --retry 2 \
-              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
-              "${ANAXI_APP_URL%/}/api/cron/arbor-photos"
           done
           for _ in $(seq 1 8); do
             curl --fail --silent --show-error \

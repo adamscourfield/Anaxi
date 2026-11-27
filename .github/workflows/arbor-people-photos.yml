@@ -1,0 +1,47 @@
+name: Arbor people and photos
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+concurrency:
+  group: arbor-people-photos
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Sync people and photos
+        env:
+          ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
+          ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          run_sync() {
+            curl --fail --silent --show-error --retry 2 \
+              --header "Authorization: Bearer $ANAXI_CRON_SECRET" \
+              "${ANAXI_APP_URL%/}/api/cron/arbor-$1" > /tmp/sync-result.json
+            python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/sync-result.json'))
+          print(json.dumps(d))
+          connections = d.get('connections')
+          if not isinstance(connections, list) or not connections:
+              raise SystemExit('No connection results returned')
+          for connection in connections:
+              body = connection.get('body') or {}
+              if not connection.get('ok') or body.get('error') or body.get('skipped'):
+                  raise SystemExit('Sync failed')
+          PY
+          }
+          run_sync students
+          run_sync staff
+          run_sync staff-provisioning
+          for batch in $(seq 1 60); do
+            run_sync photos
+            if python3 -c 'import json,sys; d=json.load(open("/tmp/sync-result.json")); sys.exit(0 if any(c.get("body",{}).get("batchesRemaining") for c in d["connections"]) else 1)'; then
+              sleep 45
+            else
+              break
+            fi
+          done

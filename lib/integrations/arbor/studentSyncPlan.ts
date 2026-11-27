@@ -49,7 +49,9 @@ export function buildStudentSyncPlan(
     candidatesByNameAndYear.set(key, [...(candidatesByNameAndYear.get(key) ?? []), existing]);
   }
 
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   return arborStudents.map((arborStudent) => {
+    if (arborStudent.leavingDate && arborStudent.leavingDate.slice(0, 10) < today) return { action: "SKIP", arborStudent };
     const destination = routeArborStudentByAcademicLevel(arborStudent.displayAcademicLevel?.displayName);
     if (destination === "SKIP_OFF_ROLL") return { action: "SKIP", arborStudent };
     if (destination === "REVIEW") return { action: "REVIEW", arborStudent };
