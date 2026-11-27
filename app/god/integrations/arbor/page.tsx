@@ -282,7 +282,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
         take: 100,
         select: { entityType: true, status: true, recordsCreated: true, recordsUpdated: true, startedAt: true, finishedAt: true, errorSummary: true },
       }),
-      (prisma as any).staffProvisioningRequest.findMany({ where: { integrationId: integration.id, status: "PENDING" }, orderBy: { createdAt: "asc" }, take: 50 }),
+      (prisma as any).staffProvisioningRequest.findMany({ where: { integrationId: integration.id, status: "PENDING" }, orderBy: { createdAt: "asc" } }),
     ])
     : [null, []];
   const latestRunByEntity = new Map<string, { entityType: string; status: string; recordsCreated: number; recordsUpdated: number; startedAt: Date; finishedAt: Date | null; errorSummary: string | null }>();
@@ -1077,6 +1077,41 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                 </div>
               </div>
             </CollapsibleCard>
+
+            <section id="staff-review" className="scroll-mt-6">
+              <Card className="space-y-4">
+                <H3>Staff awaiting review ({staffProvisioningRequests.length})</H3>
+                <MetaText>Choose the school and role for each new Arbor staff member. Select both schools when appropriate.</MetaText>
+                {staffProvisioningRequests.length === 0 ? <MetaText>No staff awaiting review.</MetaText> : null}
+                {staffProvisioningRequests.map((request: { id: string; fullName: string; email: string | null }) => (
+                  <details key={request.id} className="rounded-md border border-border p-4">
+                    <summary className="cursor-pointer font-medium">{request.fullName} · {request.email ?? "Email needed"}</summary>
+                    <form method="post" action={connectionAction("/api/god/integrations/arbor/staff/provision")} className="mt-4 space-y-4">
+                      <CsrfInput token={csrfToken} />
+                      <input type="hidden" name="requestId" value={request.id} />
+                      <label className="block">Email
+                        <input type="email" name="email" required defaultValue={request.email ?? ""} className="field mt-1 w-full" />
+                      </label>
+                      <fieldset className="space-y-2">
+                        <legend className="font-medium">School access</legend>
+                        {integration.schools.map((school: { tenantId: string; tenant: { name: string } }) => (
+                          <label key={school.tenantId} className="flex items-center gap-2">
+                            <input type="checkbox" name="tenantId" value={school.tenantId} />{school.tenant.name}
+                          </label>
+                        ))}
+                      </fieldset>
+                      <label className="block">Role
+                        <select name="role" required defaultValue="" className="field mt-1 w-full">
+                          <option value="" disabled>Choose a role</option>
+                          {[["TEACHER", "Teacher"], ["SUPPORT", "Support"], ["HOD", "Head of department"], ["LEADER", "Leader"], ["SLT", "SLT"], ["HR", "HR"], ["ON_CALL", "On call"], ["ADMIN", "School admin"]].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </select>
+                      </label>
+                      <SubmitButton>Create staff account</SubmitButton>
+                    </form>
+                  </details>
+                ))}
+              </Card>
+            </section>
 
             <CollapsibleCard id="people" title="Staff and student syncing" icon={SECTION_ICON.people} iconClassName={SECTION_TILE_CLASS.people} defaultOpen={false} attention={visibleAlert("people", peopleAlert)} attentionKey="people" attentionFingerprint={peopleAlert ?? undefined} attentionMessage="The people sync needs review. Check the latest result below before acknowledging it." connectionId={integration.id} csrfToken={csrfToken}>
               <div className="space-y-4">

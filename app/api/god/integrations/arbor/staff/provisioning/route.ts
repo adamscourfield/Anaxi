@@ -35,6 +35,10 @@ export const POST = withApi(async function POST(req: Request) {
       new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAllStaff(),
       db.user.findMany({ where: { tenantId: { in: tenantIds }, externalId: { not: null } }, select: { externalId: true } }),
     ]);
+    await db.staffProvisioningRequest.updateMany({
+      where: { integrationId: integration.id, status: "PENDING", arborStaffId: { in: staff.filter((record) => !record.isActiveInSchool).map((record) => record.id) } },
+      data: { status: "DISMISSED", dismissedAt: new Date() },
+    });
     const linkedIds = new Set(users.map((user: { externalId: string }) => user.externalId));
     const candidates = staff.filter((record) => record.isActiveInSchool && !linkedIds.has(record.id));
     if (candidates.length) await db.staffProvisioningRequest.createMany({
