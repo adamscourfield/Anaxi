@@ -67,6 +67,7 @@ export const POST = withApi(async function POST(req: Request) {
       db.user.findMany({ ...photoQuery, where: { ...photoWhere, isActive: true } }),
     ]);
     const client = new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext));
+    const failedReasons: Record<string, number> = {};
     let studentPhotos = 0, staffPhotos = 0, unavailable = 0, failed = 0;
     for (const student of students) {
       try {
@@ -78,8 +79,12 @@ export const POST = withApi(async function POST(req: Request) {
           } });
           studentPhotos++;
         } else unavailable++;
-      } catch {
+      } catch (error) {
         failed++;
+        const message = error instanceof Error ? error.message : "";
+        const httpStatus = message.match(/^Arbor photo endpoint returned HTTP (\d+)\.$/);
+        const reason = httpStatus ? `Arbor HTTP ${httpStatus[1]}` : "Photo download or storage failed";
+        failedReasons[reason] = (failedReasons[reason] ?? 0) + 1;
       } finally {
         await db.student.update({ where: { id: student.id }, data: { avatarLastCheckedAt: new Date() } });
       }
@@ -94,14 +99,18 @@ export const POST = withApi(async function POST(req: Request) {
           } });
           staffPhotos++;
         } else unavailable++;
-      } catch {
+      } catch (error) {
         failed++;
+        const message = error instanceof Error ? error.message : "";
+        const httpStatus = message.match(/^Arbor photo endpoint returned HTTP (\d+)\.$/);
+        const reason = httpStatus ? `Arbor HTTP ${httpStatus[1]}` : "Photo download or storage failed";
+        failedReasons[reason] = (failedReasons[reason] ?? 0) + 1;
       } finally {
         await db.user.update({ where: { id: user.id }, data: { avatarLastCheckedAt: new Date() } });
       }
     }
     if (actor) await db.auditLog.create({ data: { tenantId: PLATFORM_TENANT_ID, actorUserId: actor.id, action: "integration.arbor.photos_synced", targetType: "SharedIntegration", targetId: integration.id, afterJson: { studentPhotos, staffPhotos, unavailable, failed } } });
-    if (scheduled) return NextResponse.json({ studentPhotos, staffPhotos, unavailable, failed, batchesRemaining: students.length === BATCH_SIZE || staff.length === BATCH_SIZE });
+    if (scheduled) return NextResponse.json({ studentPhotos, staffPhotos, unavailable, failed, failedReasons, batchesRemaining: students.length === BATCH_SIZE || staff.length === BATCH_SIZE });
     const url = new URL("/god/integrations/arbor", req.url); url.searchParams.set("photoSync", "success"); url.searchParams.set("studentPhotos", String(studentPhotos)); url.searchParams.set("staffPhotos", String(staffPhotos)); url.searchParams.set("unavailable", String(unavailable)); url.searchParams.set("failed", String(failed)); return NextResponse.redirect(url);
   } catch (error) {
     if (scheduled) return NextResponse.json({ error: "Arbor photo sync could not start", code: scheduledFailureCode(error) }, { status: 500 });

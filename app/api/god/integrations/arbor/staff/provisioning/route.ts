@@ -75,6 +75,16 @@ export const POST = withApi(async function POST(req: Request) {
       data: candidates.map((record) => ({ integrationId: integration.id, arborStaffId: record.id, fullName: arborStaffFullName(record), email: staffEmail(record), isTeachingStaff: record.isActiveTeachingInSchool })),
       skipDuplicates: true,
     }) : { count: 0 };
+    const pending = await db.staffProvisioningRequest.findMany({
+      where: { integrationId: integration.id, status: "PENDING" }, select: { id: true, arborStaffId: true },
+    });
+    const staffById = new Map(staff.map((record) => [record.id, record]));
+    for (const request of pending) {
+      const record = staffById.get(request.arborStaffId);
+      if (record) await db.staffProvisioningRequest.update({
+        where: { id: request.id }, data: { arborJobTitle: record.displayJobTitle?.trim() || null },
+      });
+    }
     let createdDateField: string | null = null;
     let creationDatesUpdated = 0;
     let staffDateFields: string[] = [];

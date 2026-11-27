@@ -1084,11 +1084,12 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                 <H3>Staff awaiting review ({staffProvisioningRequests.length})</H3>
                 <MetaText>Choose the school and role for each new Arbor staff member. Select both schools when appropriate.</MetaText>
                 {staffProvisioningRequests.length === 0 ? <MetaText>No staff awaiting review.</MetaText> : null}
-                {staffProvisioningRequests.map((request: { id: string; fullName: string; email: string | null; arborCreatedAt: Date | null }) => (
+                {staffProvisioningRequests.map((request: { id: string; fullName: string; email: string | null; arborCreatedAt: Date | null; arborJobTitle: string | null }) => (
                   <div key={request.id} className="flex items-start gap-4 rounded-md border border-border p-4">
                   <details className="min-w-0 flex-1">
                     <summary className="cursor-pointer font-medium">
                       {request.fullName} · {request.email ?? "Email needed"}
+                      <span className="ml-3 text-xs font-normal text-muted">Job role in Arbor · {request.arborJobTitle || "Not provided"}</span>
                       <span className="ml-3 text-xs font-normal text-muted">Date created in Arbor · {request.arborCreatedAt ? new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric" }).format(request.arborCreatedAt) : "Unavailable"}</span>
                     </summary>
                     <form method="post" action={connectionAction("/api/god/integrations/arbor/staff/provision")} className="mt-4 space-y-4">

@@ -8,7 +8,7 @@ on:
         description: Records to refresh
         type: choice
         default: all
-        options: [all, staff-review]
+        options: [all, staff-review, photos]
 concurrency:
   group: ${{ inputs.scope == 'staff-review' && 'arbor-staff-review' || 'arbor-people-photos' }}
   cancel-in-progress: false
@@ -45,9 +45,11 @@ jobs:
             run_sync staff-provisioning
             exit 0
           fi
-          run_sync students
-          run_sync staff
-          run_sync staff-provisioning
+          if [ "$SYNC_SCOPE" != "photos" ]; then
+            run_sync students
+            run_sync staff
+            run_sync staff-provisioning
+          fi
           for batch in $(seq 1 60); do
             run_sync photos
             if python3 -c 'import json,sys; d=json.load(open("/tmp/sync-result.json")); sys.exit(0 if any(c.get("body",{}).get("batchesRemaining") for c in d["connections"]) else 1)'; then
