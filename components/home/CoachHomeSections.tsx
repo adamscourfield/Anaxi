@@ -31,16 +31,15 @@ export function CoacheePrioritiesCard({
   coacheeCount: number;
 }) {
   return (
-    <Card className="flex min-h-0 flex-col gap-5 rounded-sm !p-6 shadow-none">
+    <Card className="flex min-h-0 flex-col gap-5 !rounded-[14px] !p-6 shadow-none">
       <HomeCardHeading
         icon={<IconUsersTwo />}
-        iconTileClassName="bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-none [&_svg]:text-[var(--on-primary)]"
         title="Your coachees"
         subtitle={`${coacheeCount} assigned · ${windowDays}-day window`}
         end={
           <Link
             href={`/insights/teaching?view=teachers&windowDays=${windowDays}`}
-            className="link-accent shrink-0 text-xs font-semibold"
+            className="shrink-0 text-xs font-semibold text-text underline decoration-[#d4d4d8] underline-offset-4 calm-transition hover:decoration-[#1c1c1e]"
           >
             All priorities →
           </Link>

@@ -63,10 +63,10 @@ export function LeaderBriefing({data,work,windowDays,features,reasons}: Props) {
     {features.analysis && <section aria-labelledby="school-snapshot">
       <div className={styles.head}><h2 id="school-snapshot">School snapshot</h2></div>
       <div className={styles.snapshot}>
-        {features.students && <Link className={`${styles.stat} ${styles.attendanceStat}`} href={`${students}&view=all&sort=attendance_asc`}>
+        {features.students && <Link className={`${styles.stat} ${styles.attendanceStat} ${hasAttendance ? "" : styles.attendanceEmpty}`} href={`${students}&view=all&sort=attendance_asc`}>
           <span className={styles.statTitle}><span className={styles.icon}><IconUsersTwo/></span>Attendance</span>
-          <strong className={styles.value}>{data.attendanceHeadline.attendancePct === null ? "—" : `${data.attendanceHeadline.attendancePct.toFixed(1)}%`}</strong>
-          <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)} · Lesson marks</> : "No attendance has been imported yet. It appears here after the first sync from your MIS."}</p>
+          <strong className={styles.value}>{data.attendanceHeadline.attendancePct === null ? (hasAttendance ? "—" : "Not connected yet") : `${data.attendanceHeadline.attendancePct.toFixed(1)}%`}</strong>
+          <p>{data.attendanceHeadline.asOf ? <>Academic year to date · {data.attendanceHeadline.studentsCovered} students<br/>Updated {date(data.attendanceHeadline.asOf)} · Lesson marks</> : "Attendance appears here after the first sync from your MIS."}</p>
           {attendanceStale && <p>Attendance updates are overdue. Ask your administrator to check the school sync.</p>}
           {hasAttendance && <>
           <div className={styles.attendanceComparisons}>

@@ -11,14 +11,14 @@ export function MeetingsTodayList({
   if (meetings.length === 0) return null;
 
   return (
-    <Card className="space-y-4 rounded-sm !p-6 shadow-none">
+    <Card className="space-y-4 !rounded-[14px] !p-6 shadow-none">
       <div className="flex items-center justify-between">
         <HomeCardHeadingSm
-          icon={<IconCalendar className="text-[var(--info)]" />}
+          icon={<IconCalendar />}
           title="Meetings today"
           subtitle={`${meetings.length} on your calendar`}
         />
-        <Link href="/meetings" className="link-accent shrink-0 text-sm">
+        <Link href="/meetings" className="shrink-0 text-sm font-medium text-text underline decoration-[#d4d4d8] underline-offset-4 calm-transition hover:decoration-[#1c1c1e]">
           View all →
         </Link>
       </div>

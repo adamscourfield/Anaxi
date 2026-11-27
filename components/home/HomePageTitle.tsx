@@ -1,7 +1,6 @@
 import styles from "./LeadershipHeader.module.css";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { HomePageHeader } from "@/components/home/home-chrome";
 import { QuickActionButton } from "@/components/dashboard/QuickActionButton";
 import { InsightWindowSelector } from "@/components/home/InsightWindowSelector";
 import type { HomeHeaderCopy } from "@/modules/home/headerCopy";
@@ -33,35 +32,18 @@ export function HomePageTitle({
     ) : null;
 
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" });
-  if (["SLT", "ADMIN", "SUPER_ADMIN"].includes(role)) {
-    return <header className={styles.header}>
-      <div>
-        <div className={styles.kicker}><span>Leadership workspace</span><span className={styles.divider} aria-hidden="true"/><span>{today}</span></div>
-        <h1 className={styles.title}>{copy.title}<span>.</span></h1>
-        <p className={styles.subtitle}>{copy.subtitle}</p>
-      </div>
-      <div className={styles.actions}>{adminLink}{quickActionItems.length > 0 && <QuickActionButton items={quickActionItems}/>}</div>
-    </header>;
-  }
-
-  return (
-    <HomePageHeader
-      eyebrow={today}
-      title={copy.title}
-      subtitle={copy.subtitle}
-      actions={
-        <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-          {showWindowSelector ? (
-            <div className="min-w-0 flex-1 sm:flex-initial">
-              <InsightWindowSelector windowDays={windowDays} extraQuery={windowExtraQuery} />
-            </div>
-          ) : null}
-          <div className="flex shrink-0 flex-wrap items-center gap-2 self-center">
-            {adminLink}
-            {quickActionItems.length > 0 ? <QuickActionButton items={quickActionItems} /> : null}
-          </div>
-        </div>
-      }
-    />
-  );
+  const leadership = ["SLT", "ADMIN", "SUPER_ADMIN"].includes(role);
+  // One header for every role, so the home page reads as one product.
+  return <header className={styles.header}>
+    <div>
+      <div className={styles.kicker}>{leadership && <><span>Leadership workspace</span><span className={styles.divider} aria-hidden="true"/></>}<span>{today}</span></div>
+      <h1 className={styles.title}>{copy.title}<span>.</span></h1>
+      <p className={styles.subtitle}>{copy.subtitle}</p>
+    </div>
+    <div className={styles.actions}>
+      {showWindowSelector ? <InsightWindowSelector windowDays={windowDays} extraQuery={windowExtraQuery} /> : null}
+      {adminLink}
+      {quickActionItems.length > 0 && <QuickActionButton items={quickActionItems}/>}
+    </div>
+  </header>;
 }

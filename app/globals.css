@@ -1344,20 +1344,16 @@ textarea:focus-visible {
 }
 
 .home-cpd-hero {
-  border-radius: var(--radius-lg);
-  background: linear-gradient(
-    155deg,
-    var(--primary-container) 0%,
-    color-mix(in srgb, var(--primary-container) 82%, var(--on-primary-fixed-variant)) 50%,
-    var(--primary-container) 100%
-  ) !important;
+  /* Matches the leadership briefing card: neutral ink, 14px corners. */
+  border-radius: 14px;
+  background: #1c1c1e radial-gradient(ellipse at 100% 0%, #3a3a3c 0%, transparent 62%) !important;
   color: var(--on-primary);
-  border: 1px solid color-mix(in srgb, var(--on-primary) 12%, transparent);
-  box-shadow: none;
+  border: 1px solid #2c2c2e;
+  box-shadow: 0 14px 34px -22px #1c1c1e66;
 }
 
 .home-cpd-hero .home-cpd-bar-fill {
-  background: var(--coral);
+  background: #fff;
 }
 
 @media (prefers-reduced-motion: no-preference) {

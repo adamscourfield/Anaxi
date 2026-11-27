@@ -93,7 +93,7 @@ export function HomeCardHeading({
   const tile =
     iconTileClassName ??
     (iconVariant === "accent"
-      ? "bg-[var(--tertiary-container)] text-[var(--on-primary)]"
+      ? "border border-[#e5e5e6] bg-[#f6f6f7] text-[#1c1c1e]"
       : iconVariant === "muted"
         ? "bg-[var(--surface-container)] text-muted"
         : "bg-[var(--surface-container)] text-text");
@@ -103,7 +103,7 @@ export function HomeCardHeading({
       <div className="flex min-w-0 items-center gap-3.5">
         {icon ? (
           <span
-            className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-sm shadow-none [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem] ${tile}`}
+            className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] shadow-none [&_svg]:h-[1.125rem] [&_svg]:w-[1.125rem] ${tile}`}
           >
             {icon}
           </span>
@@ -133,7 +133,7 @@ export function HomeCardHeadingSm({
     <div className="flex min-w-0 items-start justify-between gap-2">
       <div className="flex min-w-0 items-center gap-2">
         {icon ? (
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-container)] text-sm text-text [&_svg]:h-4 [&_svg]:w-4">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-[#e5e5e6] bg-[#f6f6f7] text-sm text-text [&_svg]:h-4 [&_svg]:w-4">
             {icon}
           </span>
         ) : null}

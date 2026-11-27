@@ -154,14 +154,13 @@ function HodHome({
       )}
 
       {/* ═══ Dept staff signals ═══ */}
-      <Card className="flex min-h-0 flex-col gap-6 rounded-sm !p-6 shadow-none">
+      <Card className="flex min-h-0 flex-col gap-6 !rounded-[14px] !p-6 shadow-none">
         <HomeCardHeading
           icon={<IconSparkles />}
-          iconTileClassName="bg-[var(--tertiary-container)] text-[var(--on-primary)] shadow-none [&_svg]:text-[var(--on-primary)]"
           title={`${deptName} staff signals`}
           subtitle={`${windowDays}-day window · ${deptTeacherRows.length} teacher${deptTeacherRows.length !== 1 ? "s" : ""} · ${deptObsCount} observations`}
           end={
-            <Link href={`/insights/teaching?view=teachers&windowDays=${windowDays}&department=${deptId}`} className="link-accent shrink-0 text-xs font-semibold">
+            <Link href={`/insights/teaching?view=teachers&windowDays=${windowDays}&department=${deptId}`} className="shrink-0 text-xs font-semibold text-text underline decoration-[#d4d4d8] underline-offset-4 calm-transition hover:decoration-[#1c1c1e]">
               Teaching insights →
             </Link>
           }
@@ -173,7 +172,7 @@ function HodHome({
           <div className="space-y-6">
             {topDeptCpd.length > 0 && (
               <div className="space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">CPD priorities</p>
+                <p className="text-[12px] font-medium text-muted">CPD priorities</p>
                 <div className="divide-y divide-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]">
                   {topDeptCpd.map((row) => (
                     <Link
@@ -183,9 +182,9 @@ function HodHome({
                     >
                       <div className="min-w-0 flex-1 space-y-1.5">
                         <p className="text-sm font-medium text-text">{row.label}</p>
-                        <div className="h-1 w-full overflow-hidden rounded-sm bg-[var(--surface-container)]">
+                        <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--surface-container)]">
                           <div
-                            className="home-stat-bar-fill h-full rounded-sm bg-[var(--coral)]"
+                            className="home-stat-bar-fill h-full rounded-full bg-[#1c1c1e]"
                             style={{ width: `${Math.min(Math.round(row.driftRate * 100), 100)}%` }}
                           />
                         </div>
@@ -211,7 +210,7 @@ function HodHome({
 
             {topDeptTeachers.length > 0 && (
               <div className="space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Teacher priorities</p>
+                <p className="text-[12px] font-medium text-muted">Teacher priorities</p>
                 <ul className="space-y-1">
                   {topDeptTeachers.map((row) => (
                     <li key={row.teacherMembershipId}>
@@ -240,9 +239,9 @@ function HodHome({
       </Card>
 
       {/* ═══ Your observations ═══ */}
-      <Card className="space-y-4 rounded-sm !p-6 shadow-none">
+      <Card className="space-y-4 !rounded-[14px] !p-6 shadow-none">
         <HomeCardHeadingSm
-          icon={<IconChartBar className="text-[var(--info)]" />}
+          icon={<IconChartBar />}
           title="Your recent observations"
           subtitle={
             selfProfile && selfProfile.teacherCoverage > 0
@@ -265,9 +264,9 @@ function HodHome({
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-sm bg-[var(--surface-container-low)] p-4 space-y-2.5">
+              <div className="rounded-[10px] bg-[var(--surface-container-low)] p-4 space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-status-approved-light text-[10px] text-status-approved-text">✓</span>
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-[6px] border border-[#e5e5e6] bg-white text-[10px] text-[#1c1c1e]">✓</span>
                   <span className="text-[13px] font-semibold text-text">Strengths</span>
                 </div>
                 <div className="space-y-2.5">
@@ -279,13 +278,13 @@ function HodHome({
                       <div key={sig.signalKey} className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                          <span className="text-[11px] font-bold text-scale-strong-text tabular-nums">
+                          <span className="text-[12px] font-semibold text-text tabular-nums">
                             {sig.currentMean !== null ? formatSignalRubricMean(sig.currentMean) : "—"}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-sm bg-status-approved-light">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e4e4e7]">
                           <div
-                            className="home-stat-bar-fill h-full rounded-sm bg-scale-strong calm-transition"
+                            className="home-stat-bar-fill h-full rounded-full bg-[#1c1c1e] calm-transition"
                             style={{ width: sig.currentMean !== null ? `${signalRubricMeanBarWidthPct(sig.currentMean)}%` : "0%" }}
                           />
                         </div>
@@ -299,9 +298,9 @@ function HodHome({
                   .sort((a, b) => (a.delta ?? 0) - (b.delta ?? 0))
                   .slice(0, 2);
                 return (
-                  <div className="rounded-sm bg-[var(--surface-container-low)] p-4 space-y-2.5">
+                  <div className="rounded-[10px] bg-[var(--surface-container-low)] p-4 space-y-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-scale-some-light text-[10px] text-scale-some-text">⚠</span>
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-[6px] border border-[#e5e5e6] bg-white text-[10px] text-[#1c1c1e]">⚠</span>
                       <span className="text-[13px] font-semibold text-text">Areas to watch</span>
                     </div>
                     <div className="space-y-2.5">
@@ -309,13 +308,13 @@ function HodHome({
                         <div key={sig.signalKey} className="space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                            <span className="text-[11px] font-bold text-[var(--warning-text)] tabular-nums">
+                            <span className="text-[12px] font-semibold text-[#3a3a3c] tabular-nums">
                               {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
                             </span>
                           </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-scale-some-light">
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e4e4e7]">
                             <div
-                              className="h-full rounded-sm bg-scale-some-bar calm-transition"
+                              className="h-full rounded-full bg-[#8e8e93] calm-transition"
                               style={{ width: sig.delta !== null ? `${signalRubricDeltaBarWidthPct(sig.delta)}%` : "0%" }}
                             />
                           </div>
@@ -327,10 +326,10 @@ function HodHome({
               })()}
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
-              <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+              <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-[10px] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                 View your signal profile →
               </Link>
-              <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+              <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-[10px] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                 View observations →
               </Link>
             </div>
@@ -340,7 +339,7 @@ function HodHome({
 
       {/* ═══ Whole-school focus ═══ */}
       {wholeSchoolTop1 && (
-        <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary rounded-2xl">
+        <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary !rounded-[14px]">
           <div className="flex items-center gap-2">
             <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
               <IconSparkles />
@@ -351,9 +350,9 @@ function HodHome({
           <p className="text-sm text-on-primary/75">
             {wholeSchoolTop1.teachersDriftingDown} of {wholeSchoolTop1.teachersCovered} teachers observed show a decline in this signal over the last {windowDays} days.
           </p>
-          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/20" aria-hidden>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20" aria-hidden>
             <div
-              className="home-cpd-bar-fill h-full rounded-sm"
+              className="home-cpd-bar-fill h-full rounded-full"
               style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
             />
           </div>
@@ -449,9 +448,9 @@ function TeacherHome({
   return (
     <div className="w-full min-w-0 space-y-8">
       {/* ═══ Your recent observations ═══ */}
-      <Card className="flex min-h-0 flex-col gap-5 rounded-sm !p-6 shadow-none">
+      <Card className="flex min-h-0 flex-col gap-5 !rounded-[14px] !p-6 shadow-none">
         <HomeCardHeading
-          icon={<IconChartBar className="text-[var(--info)]" />}
+          icon={<IconChartBar />}
           title="Your recent observations"
           subtitle={`${windowDays}-day window`}
         />
@@ -473,9 +472,9 @@ function TeacherHome({
             </MetaText>
             <div className="grid gap-4 sm:grid-cols-2">
               {strengthSignals.length > 0 && (
-                <div className="rounded-sm bg-[var(--surface-container-low)] p-4 space-y-2.5">
+                <div className="rounded-[10px] bg-[var(--surface-container-low)] p-4 space-y-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-status-approved-light text-[10px] text-status-approved-text">✓</span>
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-[6px] border border-[#e5e5e6] bg-white text-[10px] text-[#1c1c1e]">✓</span>
                     <span className="text-[13px] font-semibold text-text">Strengths</span>
                   </div>
                   <div className="space-y-2.5">
@@ -483,13 +482,13 @@ function TeacherHome({
                       <div key={sig.signalKey} className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                          <span className="text-[11px] font-bold text-scale-strong-text tabular-nums">
+                          <span className="text-[12px] font-semibold text-text tabular-nums">
                             {sig.currentMean !== null ? formatSignalRubricMean(sig.currentMean) : "—"}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-sm bg-status-approved-light">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e4e4e7]">
                           <div
-                            className="h-full rounded-sm bg-scale-strong calm-transition"
+                            className="h-full rounded-full bg-[#1c1c1e] calm-transition"
                             style={{ width: sig.currentMean !== null ? `${signalRubricMeanBarWidthPct(sig.currentMean)}%` : "0%" }}
                           />
                         </div>
@@ -499,9 +498,9 @@ function TeacherHome({
                 </div>
               )}
               {watchSignals.length > 0 && (
-                <div className="rounded-sm bg-[var(--surface-container-low)] p-4 space-y-2.5">
+                <div className="rounded-[10px] bg-[var(--surface-container-low)] p-4 space-y-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-sm bg-scale-some-light text-[10px] text-scale-some-text">⚠</span>
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-[6px] border border-[#e5e5e6] bg-white text-[10px] text-[#1c1c1e]">⚠</span>
                     <span className="text-[13px] font-semibold text-text">Areas to watch</span>
                   </div>
                   <div className="space-y-2.5">
@@ -509,13 +508,13 @@ function TeacherHome({
                       <div key={sig.signalKey} className="space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-[12px] font-medium text-text">{sig.label}</span>
-                          <span className="text-[11px] font-bold text-[var(--warning-text)] tabular-nums">
+                          <span className="text-[12px] font-semibold text-[#3a3a3c] tabular-nums">
                             {sig.delta !== null ? `${formatSignalRubricDelta(sig.delta)} vs prior` : "—"}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-sm bg-scale-some-light">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e4e4e7]">
                           <div
-                            className="h-full rounded-sm bg-scale-some-bar calm-transition"
+                            className="h-full rounded-full bg-[#8e8e93] calm-transition"
                             style={{ width: sig.delta !== null ? `${signalRubricDeltaBarWidthPct(sig.delta)}%` : "0%" }}
                           />
                         </div>
@@ -526,10 +525,10 @@ function TeacherHome({
               )}
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
-              <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+              <Link href={`/analysis/teachers/${userId}?window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-[10px] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                 View your signal profile →
               </Link>
-              <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+              <Link href={`/observe/history?teacherId=${userId}&window=${windowDays}`} className="inline-flex items-center gap-1.5 rounded-[10px] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                 View observations →
               </Link>
             </div>
@@ -539,14 +538,14 @@ function TeacherHome({
 
       {/* ═══ Actions — only when there is something to do ═══ */}
       {hasMeetingsFeature && openActions.total > 0 && (
-        <Card className="space-y-4 rounded-sm !p-6 shadow-none">
+        <Card className="space-y-4 !rounded-[14px] !p-6 shadow-none">
           <div className="flex items-center justify-between">
             <HomeCardHeadingSm
-              icon={<IconBolt className="text-scale-some-text" />}
+              icon={<IconBolt />}
               title="Your actions"
               subtitle={`${openActions.total} to do${overdueActions ? `, ${overdueActions} overdue` : ""}`}
             />
-            <Link href="/my-actions" className="link-accent shrink-0 text-sm">
+            <Link href="/my-actions" className="shrink-0 text-sm font-medium text-text underline decoration-[#d4d4d8] underline-offset-4 calm-transition hover:decoration-[#1c1c1e]">
               {openActions.total > openActions.items.length ? `See all ${openActions.total}` : "Open My actions"}
             </Link>
           </div>
@@ -588,10 +587,10 @@ function TeacherHome({
       {((hasLeaveFeature && loaRequest) || (hasOnCallFeature && onCallRequests.length > 0)) ? (
         <section className="grid gap-4 sm:grid-cols-2">
           {hasLeaveFeature && loaRequest ? (
-            <Card className="space-y-4 rounded-sm !p-5 shadow-none">
+            <Card className="space-y-4 !rounded-[14px] !p-5 shadow-none">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[var(--surface-container)] text-muted">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#e5e5e6] bg-[#f6f6f7] text-[#1c1c1e]">
                     <LeaveCalendarIcon />
                   </span>
                   <h2 className="text-base font-bold tracking-[-0.01em] text-text">Leave of absence</h2>
@@ -603,7 +602,7 @@ function TeacherHome({
                 )}
               </div>
               {loaRequest && (
-                <div className="rounded-sm bg-[var(--surface-container-low)] p-3">
+                <div className="rounded-[10px] bg-[var(--surface-container-low)] p-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-text">
                     <LeaveCalendarIcon className="shrink-0 text-muted" />
                     <span>
@@ -615,20 +614,20 @@ function TeacherHome({
                 </div>
               )}
               <div className="flex flex-wrap gap-2">
-                <Link href="/leave/request" className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+                <Link href="/leave/request" className="inline-flex items-center gap-1.5 rounded-[10px] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   Request leave →
                 </Link>
-                <Link href="/leave" className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+                <Link href="/leave" className="inline-flex items-center gap-1.5 rounded-[10px] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   View status →
                 </Link>
               </div>
             </Card>
           ) : null}
           {hasOnCallFeature && onCallRequests.length > 0 ? (
-            <Card className="space-y-4 rounded-sm !p-5 shadow-none">
+            <Card className="space-y-4 !rounded-[14px] !p-5 shadow-none">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[var(--tertiary-container)] text-[var(--on-primary)] [&_svg]:h-4 [&_svg]:w-4">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#e5e5e6] bg-[#f6f6f7] text-[#1c1c1e] [&_svg]:h-4 [&_svg]:w-4">
                     <IconBell />
                   </span>
                   <h2 className="text-base font-bold tracking-[-0.01em] text-text">Your on-call requests</h2>
@@ -638,7 +637,7 @@ function TeacherHome({
               <ul className="space-y-1.5">
                 {onCallRequests.slice(0, 3).map((req) => (
                   <li key={req.id}>
-                    <Link href={`/on-call/${req.id}`} className="flex items-center justify-between gap-3 rounded-sm bg-[var(--surface-container-low)] p-3 calm-transition hover:bg-[var(--surface-container)]">
+                    <Link href={`/on-call/${req.id}`} className="flex items-center justify-between gap-3 rounded-[10px] bg-[var(--surface-container-low)] p-3 calm-transition hover:bg-[var(--surface-container)]">
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium text-text">{req.studentName ?? "Request"}{req.location ? `, ${req.location}` : ""}</span>
                         <span className="block text-[12px] text-muted">
@@ -653,10 +652,10 @@ function TeacherHome({
                 ))}
               </ul>
               <div className="flex flex-wrap gap-2">
-                <Link href="/on-call/new" className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+                <Link href="/on-call/new" className="inline-flex items-center gap-1.5 rounded-[10px] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   New request →
                 </Link>
-                <Link href="/on-call" className="inline-flex items-center gap-1.5 rounded-sm bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
+                <Link href="/on-call" className="inline-flex items-center gap-1.5 rounded-[10px] bg-[var(--surface-container-low)] px-3 py-2 text-[12px] font-medium text-text calm-transition hover:bg-[var(--surface-container)] anx-hover-elevate">
                   View requests →
                 </Link>
               </div>
@@ -667,7 +666,7 @@ function TeacherHome({
 
       {/* ═══ Whole-school focus ═══ */}
       {showWholeSchoolFocus && wholeSchoolTop1 && (
-        <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary rounded-2xl">
+        <Card className="home-cpd-hero space-y-4 !p-6 !text-on-primary !rounded-[14px]">
           <div className="flex items-center gap-2">
             <span className="text-[var(--on-primary)] [&_svg]:h-5 [&_svg]:w-5">
               <IconSparkles />
@@ -678,9 +677,9 @@ function TeacherHome({
           <p className="text-sm text-on-primary/75">
             {wholeSchoolTop1.teachersDriftingDown} of {wholeSchoolTop1.teachersCovered} teachers observed show a decline in this signal over the last {windowDays} days.
           </p>
-          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/20" aria-hidden>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20" aria-hidden>
             <div
-              className="home-cpd-bar-fill h-full rounded-sm"
+              className="home-cpd-bar-fill h-full rounded-full"
               style={{ width: `${Math.min(Math.round(wholeSchoolTop1.driftRate * 100), 100)}%` }}
             />
           </div>

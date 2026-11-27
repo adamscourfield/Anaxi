@@ -42,7 +42,7 @@ export function AttentionStrip({ items }: { items: AttentionItem[] }) {
             )}
             <span className={`relative inline-flex h-2 w-2 rounded-full ${criticalCount > 0 ? "bg-[var(--error)]" : "bg-[var(--warning)]"}`} />
           </span>
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted">
+          <h2 className="text-[13px] font-semibold text-text">
             Needs attention
           </h2>
         </div>
