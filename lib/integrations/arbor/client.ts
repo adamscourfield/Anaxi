@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import type { StatutoryAttendanceRecord } from "./statutoryAttendance";
 import { arborAcademicUnitSubject } from "./academicUnitSubject";
 import { historicAcademicYearStart, historicEnrolmentIncluded } from "./historicEnrolment";
@@ -914,13 +915,34 @@ export class ArborClient {
     const response = await fetch(this.restUrl(path), { headers: { Authorization: this.basicAuthorization() } });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`Arbor photo endpoint returned HTTP ${response.status}.`);
+    const maxSourceBytes = 25 * 1024 * 1024;
     const declaredSize = Number(response.headers.get("content-length") ?? "0");
-    if (declaredSize > 2 * 1024 * 1024) throw new Error("Arbor returned a photo larger than 2MB.");
-    const bytes = Buffer.from(await response.arrayBuffer());
+    if (declaredSize > maxSourceBytes) throw new Error("Arbor returned a photo larger than 25MB.");
+    if (!response.body) return null;
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxSourceBytes) {
+        await reader.cancel();
+        throw new Error("Arbor returned a photo larger than 25MB.");
+      }
+      chunks.push(value);
+    }
+    const bytes = Buffer.concat(chunks);
     if (bytes.length === 0) return null;
-    if (bytes.length > 2 * 1024 * 1024) throw new Error("Arbor returned a photo larger than 2MB.");
     const mimeType = photoMimeType(bytes);
     if (!mimeType) throw new Error("Arbor returned a photo in an unsupported format.");
+    if (bytes.length > 2 * 1024 * 1024) {
+      const thumbnail = await sharp(bytes, { limitInputPixels: 64 * 1024 * 1024 })
+        .rotate().resize({ width: 512, height: 512, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 85 }).toBuffer();
+      if (thumbnail.length > 2 * 1024 * 1024) throw new Error("Arbor photo thumbnail exceeds 2MB.");
+      return { bytes: thumbnail, mimeType: "image/webp" };
+    }
     return { bytes, mimeType };
   }
 
