@@ -164,7 +164,6 @@ export const pointTypePillClasses: Record<string, string> = {
 /** Result status pills (soft) */
 export const resultStatusPillClasses: Record<string, string> = {
   DRAFT: "bg-surface-container text-muted",
-  VALIDATED: "bg-cat-blue-bg text-cat-blue-text",
   PUBLISHED: "bg-status-approved-light text-status-approved-text",
   LOCKED: "bg-primary text-on-primary",
 };

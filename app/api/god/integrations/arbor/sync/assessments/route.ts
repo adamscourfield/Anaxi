@@ -67,7 +67,7 @@ async function ensureAssessment(db: any, tenantId: string, createdByUserId: stri
   });
   const point = await db.assessmentPoint.upsert({
     where: { tenantId_dataSource_externalId: { tenantId, dataSource: "ARBOR", externalId: mapping.pointExternalId } },
-    create: { tenantId, cycleId: cycle.id, label: mapping.pointLabel, ordinal: mapping.pointOrdinal, pointType: mapping.pointType, resultStatus: "VALIDATED", sourceType: "arbor", isFinalPoint: mapping.isFinalPoint, dateTaken, assessedAt, externalId: mapping.pointExternalId, dataSource: "ARBOR" },
+    create: { tenantId, cycleId: cycle.id, label: mapping.pointLabel, ordinal: mapping.pointOrdinal, pointType: mapping.pointType, resultStatus: "PUBLISHED", sourceType: "arbor", isFinalPoint: mapping.isFinalPoint, dateTaken, assessedAt, externalId: mapping.pointExternalId, dataSource: "ARBOR" },
     // Keep a super admin's Anaxi result-point label (for example, "End of
     // Year") while Arbor continues to update its ordering and type metadata.
     update: { ordinal: mapping.pointOrdinal, pointType: mapping.pointType, isFinalPoint: mapping.isFinalPoint, ...(dateTaken ? { dateTaken, assessedAt } : {}) },

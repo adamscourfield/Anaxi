@@ -64,9 +64,11 @@ export const PATCH = withApi(async function PATCH(
   if (!point) return NextResponse.json({ error: "Result point not found" }, { status: 404 });
 
   const body = await req.json();
-  const { resultStatus, label } = body;
+  const { label } = body;
+  // "Validated" was merged into "Published"; a page opened before the change may still send it.
+  const resultStatus = body.resultStatus === "VALIDATED" ? "PUBLISHED" : body.resultStatus;
 
-  const validStatuses: ResultStatus[] = ["DRAFT", "VALIDATED", "PUBLISHED", "LOCKED"];
+  const validStatuses: ResultStatus[] = ["DRAFT", "PUBLISHED", "LOCKED"];
   if (resultStatus && !validStatuses.includes(resultStatus)) {
     return NextResponse.json({ error: "Invalid resultStatus" }, { status: 400 });
   }

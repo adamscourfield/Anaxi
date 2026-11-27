@@ -157,7 +157,7 @@ export async function computeAttainmentBehaviourCorrelation(
     where: { tenantId, isActive: true },
     include: {
       points: {
-        where: { resultStatus: { in: ["PUBLISHED", "VALIDATED", "LOCKED"] } },
+        where: { resultStatus: { in: ["PUBLISHED", "LOCKED"] } },
         orderBy: { ordinal: "desc" },
         take: 1,
         select: { id: true },

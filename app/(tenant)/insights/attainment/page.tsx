@@ -20,7 +20,7 @@ export default async function AttainmentInsights({searchParams}:{searchParams:Pr
   await requireFeature(user.tenantId,"ANALYSIS");
   const viewer = await buildViewerContext(user);
   if(!canViewExplorer(viewer)||!canViewAssessmentExplorer(viewer))notFound();
-  const cycles = await prisma.assessmentCycle.findMany({where:{tenantId:user.tenantId,isActive:true},select:{id:true,label:true,points:{where:{resultStatus:{in:["VALIDATED","PUBLISHED","LOCKED"]}},orderBy:{ordinal:"asc"},select:{id:true,label:true,assessedAt:true}}},orderBy:{label:"asc"}});
+  const cycles = await prisma.assessmentCycle.findMany({where:{tenantId:user.tenantId,isActive:true},select:{id:true,label:true,points:{where:{resultStatus:{in:["PUBLISHED","LOCKED"]}},orderBy:{ordinal:"asc"},select:{id:true,label:true,assessedAt:true}}},orderBy:{label:"asc"}});
   const selected = cycles.find(c=>c.id===value("cycle"))??cycles.find(c=>c.points.length)??cycles[0];
   const data = selected?await computeAssessmentAnalysis(user.tenantId,{cycleId:selected.id}):null;
   const view = ["subjects","groups","students"].includes(value("view"))?value("view"):"overview";
@@ -61,7 +61,7 @@ export default async function AttainmentInsights({searchParams}:{searchParams:Pr
       {view==="students"&&<><label>Student name<input type="search" name="q" defaultValue={value("q")} placeholder="Find a student…"/></label><label>Subject movement<select name="movement" defaultValue={value("movement")}><option value="">All movements</option><option value="SEVERAL_DOWN">Down in 3 or more subjects</option><option value="DECLINING">At least one decline</option><option value="IMPROVING">At least one improvement</option><option value="NO_PRIOR">Missing previous result</option></select></label></>}
     </div><button type="submit">Apply</button><Link className={styles.clear} href={href({subject:"",yearGroup:"",q:"",movement:"",send:"",pp:""})}>Clear</Link></form></section>
     <div className={styles.comparison}><span className={styles.dot} aria-hidden="true"/><div><strong>{previous?previous.label:"No previous result point"} <span aria-hidden="true">→</span> {current?.label??"No eligible results"}</strong><p>{previous?previous.assessedAt.toLocaleDateString("en-GB")+" → ":""}{current?.assessedAt.toLocaleDateString("en-GB")??"Upload or publish results in the assessment workspace."} · Assessment dates are independent of the observation and pastoral comparison periods.</p></div>{selected&&previous&&current&&<Link href={`/assessments/${selected.id}/compare?from=${previous.id}&to=${current.id}`}>Compare points →</Link>}</div>
-    {!current?<p className={styles.empty}>This cycle has no validated, published or locked result points yet.</p>:<>
+    {!current?<p className={styles.empty}>This cycle has no published or locked result points yet.</p>:<>
       {(view==="overview")&&<>
         <div className={styles.summary}>{[[filtered.length,"Students with results"],[comparable.length,"Comparable subject results"],[previous?downInSeveral.length:"—","Down in 3 or more subjects"]].map(([n,l])=><div key={l}><span>{l}</span><strong>{n}</strong></div>)}</div>
         <div className={styles.heading}><h2>Worth a closer look</h2><Link href={href({view:"students",movement:"SEVERAL_DOWN"})}>View all →</Link></div>

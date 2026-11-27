@@ -45,7 +45,6 @@ a.name:hover { text-decoration: underline; text-underline-offset: 3px; }
 .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #3a3a3c; white-space: nowrap; }
 .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--dot, #a1a1aa); }
 .draft { --dot: #a1a1aa; }
-.validated { --dot: #3b82f6; }
 .published { --dot: #16a34a; }
 .locked { --dot: #1c1c1e; }
 

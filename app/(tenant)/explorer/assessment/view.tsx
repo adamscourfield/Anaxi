@@ -84,7 +84,7 @@ export default async function AssessmentHubPage({
       {!selected || !students.length ? (
         <EvidenceEmpty
           title="No results to analyse"
-          body={selected ? "This cycle has no validated, published or locked results yet." : "Set up an assessment cycle to see attainment analysis."}
+          body={selected ? "This cycle has no published or locked results yet." : "Set up an assessment cycle to see attainment analysis."}
         />
       ) : (
         <>

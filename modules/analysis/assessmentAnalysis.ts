@@ -24,7 +24,7 @@ const OUTLIER_MIN_SUBJECTS = 4;
 const OUTLIER_MIN_COHORT = 10;
 const MOVEMENT_STABLE_BAND = 0.02;
 const MIN_GROUP_SIZE = 3;
-const ELIGIBLE_RESULT_STATUSES = ["VALIDATED", "PUBLISHED", "LOCKED"];
+const ELIGIBLE_RESULT_STATUSES = ["PUBLISHED", "LOCKED"];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

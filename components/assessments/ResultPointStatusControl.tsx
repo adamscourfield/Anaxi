@@ -7,11 +7,10 @@ import { toast } from "@/components/toast-provider";
 import { STATUS_CLASS, STATUS_LABEL, STATUS_MEANING } from "./resultStatus";
 import w from "./workspace.module.css";
 
-/** Allowed moves from each status (unchanged). Unlocking is checked again on the server. */
+/** Allowed moves from each status. Unlocking is checked again on the server. */
 const NEXT_OPTIONS: Record<ResultStatus, ResultStatus[]> = {
-  DRAFT: ["VALIDATED", "PUBLISHED", "LOCKED"],
-  VALIDATED: ["DRAFT", "PUBLISHED", "LOCKED"],
-  PUBLISHED: ["VALIDATED", "LOCKED"],
+  DRAFT: ["PUBLISHED", "LOCKED"],
+  PUBLISHED: ["DRAFT", "LOCKED"],
   LOCKED: ["PUBLISHED"],
 };
 

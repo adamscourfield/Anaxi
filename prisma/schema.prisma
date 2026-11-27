@@ -1497,7 +1497,6 @@ enum PointType {
 
 enum ResultStatus {
   DRAFT
-  VALIDATED
   PUBLISHED
   LOCKED
 }

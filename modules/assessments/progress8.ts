@@ -24,7 +24,7 @@ type StudentProgress8Row = {
 };
 
 export type Progress8DashboardSummary = {
-  /** Where the figures come from: the newest active GCSE cycle's latest validated, published or locked point. */
+  /** Where the figures come from: the newest active GCSE cycle's latest published or locked point. */
   cycleLabel: string;
   pointLabel: string;
   studentCountWithExpected: number;
@@ -191,7 +191,7 @@ function calculateStudentActualAttainment8(results: ScoredResult[]): number | nu
   return round2(totalPoints);
 }
 
-const P8_ELIGIBLE = ["VALIDATED", "PUBLISHED", "LOCKED"] as const;
+const P8_ELIGIBLE = ["PUBLISHED", "LOCKED"] as const;
 
 async function buildStudentProgress8Rows(
   tenantId: string,

@@ -469,7 +469,7 @@ const POINT_TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Draft", VALIDATED: "Validated", PUBLISHED: "Published", LOCKED: "Locked",
+  DRAFT: "Draft", PUBLISHED: "Published", LOCKED: "Locked",
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────

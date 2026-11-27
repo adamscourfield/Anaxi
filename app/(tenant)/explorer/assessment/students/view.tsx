@@ -117,7 +117,7 @@ export default async function AssessmentStudentsPage({
       {!selected || !students.length ? (
         <EvidenceEmpty
           title="No results to show"
-          body={selected ? "This cycle has no validated, published or locked results yet." : "Set up an assessment cycle to see student results."}
+          body={selected ? "This cycle has no published or locked results yet." : "Set up an assessment cycle to see student results."}
         />
       ) : (
         <>

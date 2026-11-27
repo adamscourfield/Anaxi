@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 export type AttainmentCycleOption = { id: string; label: string; hasResults: boolean };
 
-const ELIGIBLE = ["VALIDATED", "PUBLISHED", "LOCKED"] as const;
+const ELIGIBLE = ["PUBLISHED", "LOCKED"] as const;
 
 /**
  * The assessment cycles a school can analyse, and the one to show.

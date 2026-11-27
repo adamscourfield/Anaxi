@@ -43,9 +43,10 @@ export const POST = withApi(async function POST(req: Request) {
     ? pointType
     : "INTERNAL_MOCK";
 
-  const validStatuses: ResultStatus[] = ["DRAFT", "VALIDATED", "PUBLISHED", "LOCKED"];
-  const resolvedStatus: ResultStatus = validStatuses.includes(resultStatus)
-    ? resultStatus
+  const validStatuses: ResultStatus[] = ["DRAFT", "PUBLISHED", "LOCKED"];
+  const requestedStatus = resultStatus === "VALIDATED" ? "PUBLISHED" : resultStatus; // merged into Published
+  const resolvedStatus: ResultStatus = validStatuses.includes(requestedStatus)
+    ? requestedStatus
     : "DRAFT";
 
   const cycle = await prisma.assessmentCycle.findFirst({

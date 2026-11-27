@@ -150,7 +150,7 @@ export default async function AssessmentsPage() {
                   <p>
                     {p8
                       ? `${p8.cycleLabel}, ${p8.pointLabel} · ${p8.studentCountWithPrediction} students with KS2 data`
-                      : "Needs a GCSE cycle with validated or published results"}
+                      : "Needs a GCSE cycle with published results"}
                   </p>
                 </div>
               </div>

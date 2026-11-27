@@ -96,7 +96,7 @@ export default async function AssessmentCohortsPage({
       {!selected || !all.length ? (
         <EvidenceEmpty
           title="No group results to show"
-          body={selected ? "This cycle has no validated, published or locked results linked to year groups yet." : "Set up an assessment cycle to see group results."}
+          body={selected ? "This cycle has no published or locked results linked to year groups yet." : "Set up an assessment cycle to see group results."}
         />
       ) : (
         <>

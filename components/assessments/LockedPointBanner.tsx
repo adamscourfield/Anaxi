@@ -3,8 +3,7 @@ import type { ResultStatus } from "@prisma/client";
 
 const STATUS_HINT: Partial<Record<ResultStatus, string>> = {
   DRAFT: "Draft — data can be edited via CSV re-import.",
-  VALIDATED: "Validated — ready for leadership review.",
-  PUBLISHED: "Published — visible for school reporting.",
+  PUBLISHED: "Published — checked and used in attainment insights.",
   LOCKED: "Locked — uploads are disabled. Unlock from the cycle page to re-import CSV.",
 };
 

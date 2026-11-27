@@ -118,7 +118,6 @@ export const RESULT_POINT_TYPE_BADGE: Record<string, string> = {
 /** Result point lifecycle. */
 export const RESULT_STATUS_BADGE: Record<string, string> = {
   DRAFT: "bg-surface-container-high text-on-surface-variant",
-  VALIDATED: "bg-cat-blue-bg text-cat-blue-text",
   PUBLISHED: "bg-scale-strong-light text-scale-strong-text",
   LOCKED: "bg-primary text-on-primary",
 };

@@ -125,7 +125,7 @@ export default function EnterGradesPage() {
   const studentName = useMemo(() => new Map((sheet?.students ?? []).map((s) => [s.id, s.fullName])), [sheet]);
 
   const locked = sheet?.point.status === "LOCKED";
-  const inUse = sheet?.point.status === "PUBLISHED" || sheet?.point.status === "VALIDATED";
+  const inUse = sheet?.point.status === "PUBLISHED";
 
   function update(id: string, subject: string, value: string) {
     setValues((v) => ({ ...v, [id]: { ...v[id], [subject]: value } }));
@@ -267,7 +267,7 @@ export default function EnterGradesPage() {
         <p className={styles.notice}>These results are in use. Saved changes show straight away in attainment insights and on student profiles.</p>
       )}
       {sheet?.point.status === "DRAFT" && (
-        <p className={styles.notice}>These results are a draft: they show on student profiles but are left out of attainment insights until validated.</p>
+        <p className={styles.notice}>These results are a draft: they show on student profiles but are left out of attainment insights until published.</p>
       )}
       {error && (
         <div role="alert" className={styles.error}>
