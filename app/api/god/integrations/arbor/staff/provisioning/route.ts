@@ -41,14 +41,14 @@ export const POST = withApi(async function POST(req: Request) {
     });
     const linkedIds = new Set(users.map((user: { externalId: string }) => user.externalId));
     const candidates = staff.filter((record) => record.isActiveInSchool && !linkedIds.has(record.id));
-    if (candidates.length) await db.staffProvisioningRequest.createMany({
+    const queued = candidates.length ? await db.staffProvisioningRequest.createMany({
       data: candidates.map((record) => ({ integrationId: integration.id, arborStaffId: record.id, fullName: arborStaffFullName(record), email: staffEmail(record), isTeachingStaff: record.isActiveTeachingInSchool })),
       skipDuplicates: true,
-    });
-    if (scheduled) return NextResponse.json({ queued: candidates.length });
+    }) : { count: 0 };
+    if (scheduled) return NextResponse.json({ queued: queued.count });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("staffProvisioning", "success");
-    url.searchParams.set("staffProvisioningQueued", String(candidates.length));
+    url.searchParams.set("staffProvisioningQueued", String(queued.count));
     return NextResponse.redirect(url);
   } catch {
     return scheduled ? NextResponse.json({ error: "Staff provisioning discovery failed." }, { status: 500 }) : NextResponse.redirect(new URL("/god/integrations/arbor?staffProvisioning=failed", req.url));

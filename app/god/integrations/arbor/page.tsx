@@ -938,6 +938,7 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
         </StatusBanner>
       ) : null}
       {params?.staffProvisioning === "success" ? <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">New Arbor staff checked.</div><MetaText className="mt-1">{previewCount(params.staffProvisioningQueued)} staff record(s) were added to the approval queue. No account has been created yet.</MetaText></Card> : null}
+      {params?.staffProvisioning === "ignored" ? <StatusBanner variant="success" title="Staff record ignored.">This Arbor record will stay out of the staff review queue.</StatusBanner> : null}
       {params?.staffProvisioning === "provisioned" ? <Card className="border-success/30 bg-[var(--pill-success-bg)]"><div className="font-medium text-success">Staff account created.</div><MetaText className="mt-1">The selected school account(s) were created or linked, and an invitation was sent.</MetaText></Card> : null}
       {params?.staffProvisioning === "failed" || params?.staffProvisioning === "invalid" || params?.staffProvisioning === "not-found" || params?.staffProvisioning === "not-connected" ? <Card className="border-error/30 bg-[var(--pill-error-bg)]"><div className="font-medium text-error">Staff provisioning needs attention.</div><MetaText className="mt-1">No new staff access was granted.</MetaText></Card> : null}
 
@@ -1107,6 +1108,12 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                         </select>
                       </label>
                       <SubmitButton>Create staff account</SubmitButton>
+                    </form>
+                    <form method="post" action={connectionAction("/api/god/integrations/arbor/staff/ignore")} className="mt-3">
+                      <CsrfInput token={csrfToken} />
+                      <input type="hidden" name="requestId" value={request.id} />
+                      <SubmitButton variant="secondary">Ignore</SubmitButton>
+                      <MetaText className="mt-2">Keep this Arbor record out of Anaxi and future staff reviews.</MetaText>
                     </form>
                   </details>
                 ))}
