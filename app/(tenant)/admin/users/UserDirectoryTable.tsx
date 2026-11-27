@@ -12,6 +12,7 @@ import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm";
 import { EditUserModal, TeacherOption } from "./EditUserModal";
 import type { SummaryFilter } from "./UserDirectorySummary";
 import type { ActionResult } from "./actions";
+import { ROLE_LABELS } from "@/lib/roleLabels";
 
 export type UserRow = {
   id: string;
@@ -31,17 +32,6 @@ export type UserRow = {
 
 const ADMIN_ROLES = new Set(["ADMIN", "SLT", "SUPER_ADMIN"]);
 
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
-  ADMIN: "Administrator",
-  SLT: "Senior Leader",
-  HOD: "Head of Dept",
-  LEADER: "Leader",
-  TEACHER: "Teacher",
-  SUPPORT: "Support",
-  HR: "HR Officer",
-  ON_CALL: "On-Call Staff",
-};
 
 const ROLE_OPTIONS_ALL = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
 

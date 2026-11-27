@@ -9,20 +9,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/toast-provider";
 import { MEETING_TYPE_LABELS } from "@/modules/meetings/types";
 import styles from "./meeting.module.css";
+import { ROLE_LABELS } from "@/lib/roleLabels";
 
 const MEETING_TYPES = Object.keys(MEETING_TYPE_LABELS) as Array<keyof typeof MEETING_TYPE_LABELS>;
 const LENGTHS = [15, 30, 45, 60, 90, 120];
 
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super admin",
-  ADMIN: "Admin",
-  SLT: "Senior leadership",
-  HOD: "Head of department",
-  LEADER: "Leader",
-  TEACHER: "Teacher",
-  HR: "HR",
-  ON_CALL: "On call",
-};
 
 interface User {
   id: string;

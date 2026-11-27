@@ -13,6 +13,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { TenantUiProvider } from "@/components/tenant-ui-context";
 import { SkipToContent } from "@/components/skip-to-content";
 import { FeatureKey, UserRole } from "@/lib/types";
+import { formatRole } from "@/lib/roleLabels";
 
 function MenuIcon({ className }: { className?: string }) {
   return (
@@ -34,20 +35,6 @@ function userInitials(name: string): string {
     .toUpperCase();
 }
 
-function formatRole(role: string): string {
-  const map: Record<string, string> = {
-    SUPER_ADMIN: "Super Admin",
-    ADMIN: "Admin",
-    SLT: "Senior Leader",
-    HOD: "Head of Dept",
-    LEADER: "Leader",
-    TEACHER: "Teacher",
-    HR: "HR",
-    ON_CALL: "On Call",
-    SUPPORT: "Support",
-  };
-  return map[role] ?? role;
-}
 
 type TenantLayoutClientProps = {
   children: React.ReactNode;
@@ -156,7 +143,7 @@ export function TenantLayoutClient({
               <span className="max-w-[140px] truncate text-[13px] font-bold leading-tight tracking-[-0.01em] text-[var(--on-surface)]">
                 {userFullName || userEmail}
               </span>
-              <span className="text-[10px] font-semibold tracking-[0.08em] uppercase text-[var(--outline)]">
+              <span className="text-[11px] leading-tight text-[var(--outline)]">
                 {formatRole(userRole)}
               </span>
             </div>

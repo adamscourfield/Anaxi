@@ -267,10 +267,10 @@ export function TenantNav({
           </span>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-sans text-[13px] font-bold tracking-[0.04em] uppercase text-[var(--on-surface)]">
+              <span className="font-sans text-[15px] font-semibold leading-tight tracking-[-0.02em] text-[var(--on-surface)]">
                 Anaxi
               </span>
-              <span className="text-[9px] font-semibold tracking-[0.12em] uppercase text-[var(--outline)]">Future Education</span>
+              <span className="text-[11px] leading-tight text-[var(--outline)]">Future education</span>
             </div>
           )}
         </Link>
@@ -294,7 +294,7 @@ export function TenantNav({
           {sections.map((section) => (
             <div key={section.label}>
               {!collapsed && (
-                <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--outline)]">
+                <div className="mb-1.5 px-3 text-[12px] font-medium text-[var(--outline)]">
                   {section.label}
                 </div>
               )}

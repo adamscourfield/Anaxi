@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { toast } from "@/components/toast-provider";
 import { AvatarUploader } from "@/components/ui/avatar-uploader";
 import type { ActionResult } from "./actions";
+import { ASSIGNABLE_ROLE_OPTIONS, SUPER_ADMIN_ROLE_OPTION } from "@/lib/roleLabels";
 
 export type EditableUser = {
   id: string;
@@ -38,17 +39,7 @@ export type EditUserModalProps = {
   canAssignSuperAdmin: boolean;
 };
 
-const ROLE_OPTIONS: { value: string; label: string }[] = [
-  { value: "SUPER_ADMIN", label: "Super Admin" },
-  { value: "ADMIN", label: "Administrator" },
-  { value: "SLT", label: "Senior Leader" },
-  { value: "HOD", label: "Head of Dept" },
-  { value: "LEADER", label: "Leader" },
-  { value: "TEACHER", label: "Teacher" },
-  { value: "SUPPORT", label: "Support" },
-  { value: "HR", label: "HR Officer" },
-  { value: "ON_CALL", label: "On-Call Staff" },
-];
+const ROLE_OPTIONS: { value: string; label: string }[] = [SUPER_ADMIN_ROLE_OPTION, ...ASSIGNABLE_ROLE_OPTIONS];
 
 const LOA_CAPABLE_ROLES = new Set(["HOD", "SLT", "HR", "ADMIN", "SUPER_ADMIN", "LEADER"]);
 

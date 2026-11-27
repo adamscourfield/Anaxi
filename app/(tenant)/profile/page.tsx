@@ -7,16 +7,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { AvatarUploader } from "@/components/ui/avatar-uploader";
 import styles from "./page.module.css";
 import { updateOwnAvatar } from "./actions";
-
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
-  ADMIN: "Administrator",
-  SLT: "Senior Leadership",
-  HOD: "Head of Department",
-  LEADER: "Leader",
-  TEACHER: "Teacher",
-  SUPPORT: "Support",
-};
+import { ROLE_LABELS } from "@/lib/roleLabels";
 
 export default async function ProfilePage() {
   const user = await getSessionUserOrThrow();

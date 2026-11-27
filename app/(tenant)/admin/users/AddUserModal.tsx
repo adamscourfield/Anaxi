@@ -7,17 +7,9 @@ import { FormField } from "@/components/ui/form-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { toast } from "@/components/toast-provider";
 import type { ActionResult } from "./actions";
+import { ASSIGNABLE_ROLE_OPTIONS, SUPER_ADMIN_ROLE_OPTION } from "@/lib/roleLabels";
 
-const ROLE_OPTIONS: { value: string; label: string }[] = [
-  { value: "ADMIN", label: "Administrator" },
-  { value: "SLT", label: "Senior Leader" },
-  { value: "HOD", label: "Head of Dept" },
-  { value: "LEADER", label: "Leader" },
-  { value: "TEACHER", label: "Teacher" },
-  { value: "SUPPORT", label: "Support" },
-  { value: "HR", label: "HR Officer" },
-  { value: "ON_CALL", label: "On-Call Staff" },
-];
+const ROLE_OPTIONS: { value: string; label: string }[] = ASSIGNABLE_ROLE_OPTIONS;
 
 function CloseIcon() {
   return (
@@ -47,7 +39,7 @@ export function AddUserModal({
   const lookupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const roleOptions = canAssignSuperAdmin
-    ? [{ value: "SUPER_ADMIN", label: "Super Admin" }, ...ROLE_OPTIONS]
+    ? [SUPER_ADMIN_ROLE_OPTION, ...ROLE_OPTIONS]
     : ROLE_OPTIONS;
 
   useEffect(() => {
