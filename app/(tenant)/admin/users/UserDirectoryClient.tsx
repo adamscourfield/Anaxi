@@ -42,7 +42,7 @@ export function UserDirectoryClient({
   deleteUserAction: (formData: FormData) => Promise<ActionResult>;
   avatarAction: (formData: FormData) => Promise<ActionResult>;
 }) {
-  const [summaryFilter, setSummaryFilter] = useState<SummaryFilter>({ status: "all", roleGroup: "all" });
+  const [summaryFilter, setSummaryFilter] = useState<SummaryFilter>({ status: "active", roleGroup: "all" });
 
   return (
     <>
