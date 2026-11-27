@@ -33,7 +33,7 @@ export const POST = withApi(async function POST(req: Request) {
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
     const [staff, users] = await Promise.all([
       new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAllStaff(),
-      db.user.findMany({ where: { tenantId: { in: tenantIds } }, select: { id: true, externalId: true, email: true, dataSource: true } }),
+      db.user.findMany({ where: { tenantId: { in: tenantIds } }, select: { id: true, tenantId: true, externalId: true, email: true, dataSource: true } }),
     ]);
     await db.staffProvisioningRequest.updateMany({
       where: { integrationId: integration.id, status: "PENDING", arborStaffId: { in: staff.filter((record) => !record.isActiveInSchool).map((record) => record.id) } },
@@ -52,6 +52,7 @@ export const POST = withApi(async function POST(req: Request) {
       if (!email || activeStaff.filter((other) => staffEmail(other) === email).length !== 1) continue;
       const matches = users.filter((user: { email: string; externalId: string | null }) => user.email.trim().toLowerCase() === email && !user.externalId);
       for (const user of matches) {
+        if (users.some((existing: { tenantId: string; dataSource: string; externalId: string | null }) => existing.tenantId === user.tenantId && existing.dataSource === "ARBOR" && existing.externalId === record.id)) continue;
         const linked = await db.user.updateMany({
           where: { id: user.id, externalId: null },
           data: { externalId: record.id, dataSource: "ARBOR" },
@@ -74,7 +75,8 @@ export const POST = withApi(async function POST(req: Request) {
     url.searchParams.set("staffProvisioning", "success");
     url.searchParams.set("staffProvisioningQueued", String(queued.count));
     return NextResponse.redirect(url);
-  } catch {
-    return scheduled ? NextResponse.json({ error: "Staff provisioning discovery failed." }, { status: 500 }) : NextResponse.redirect(new URL("/god/integrations/arbor?staffProvisioning=failed", req.url));
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? String(error.code) : "DISCOVERY_FAILED";
+    return scheduled ? NextResponse.json({ error: "Staff provisioning discovery failed.", code }, { status: 500 }) : NextResponse.redirect(new URL("/god/integrations/arbor?staffProvisioning=failed", req.url));
   }
 });
