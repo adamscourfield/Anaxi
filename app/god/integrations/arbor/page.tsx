@@ -1085,7 +1085,8 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                 <MetaText>Choose the school and role for each new Arbor staff member. Select both schools when appropriate.</MetaText>
                 {staffProvisioningRequests.length === 0 ? <MetaText>No staff awaiting review.</MetaText> : null}
                 {staffProvisioningRequests.map((request: { id: string; fullName: string; email: string | null }) => (
-                  <details key={request.id} className="rounded-md border border-border p-4">
+                  <div key={request.id} className="flex items-start gap-4 rounded-md border border-border p-4">
+                  <details className="min-w-0 flex-1">
                     <summary className="cursor-pointer font-medium">{request.fullName} · {request.email ?? "Email needed"}</summary>
                     <form method="post" action={connectionAction("/api/god/integrations/arbor/staff/provision")} className="mt-4 space-y-4">
                       <CsrfInput token={csrfToken} />
@@ -1109,13 +1110,13 @@ function MenuItemForm({ action, csrfToken, hidden, children }: { action: string;
                       </label>
                       <SubmitButton>Create staff account</SubmitButton>
                     </form>
-                    <form method="post" action={connectionAction("/api/god/integrations/arbor/staff/ignore")} className="mt-3">
+                  </details>
+                    <form method="post" action={connectionAction("/api/god/integrations/arbor/staff/ignore")} className="shrink-0">
                       <CsrfInput token={csrfToken} />
                       <input type="hidden" name="requestId" value={request.id} />
-                      <SubmitButton variant="secondary">Ignore</SubmitButton>
-                      <MetaText className="mt-2">Keep this Arbor record out of Anaxi and future staff reviews.</MetaText>
+                      <SubmitButton variant="secondary" aria-label={`Ignore ${request.fullName}`} title="Keep this Arbor record out of future staff reviews">Ignore</SubmitButton>
                     </form>
-                  </details>
+                  </div>
                 ))}
               </Card>
             </section>
