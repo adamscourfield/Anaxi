@@ -83,7 +83,8 @@ export const POST = withApi(async function POST(req: Request) {
         failed++;
         const message = error instanceof Error ? error.message : "";
         const httpStatus = message.match(/^Arbor photo endpoint returned HTTP (\d+)\.$/);
-        const reason = httpStatus ? `Arbor HTTP ${httpStatus[1]}` : "Photo download or storage failed";
+        const knownPhotoError = ["Arbor returned a photo larger than 2MB.", "Arbor returned a photo in an unsupported format."].includes(message);
+        const reason = httpStatus ? `Arbor HTTP ${httpStatus[1]}` : knownPhotoError ? message : "Photo download or storage failed";
         failedReasons[reason] = (failedReasons[reason] ?? 0) + 1;
       } finally {
         await db.student.update({ where: { id: student.id }, data: { avatarLastCheckedAt: new Date() } });
@@ -103,7 +104,8 @@ export const POST = withApi(async function POST(req: Request) {
         failed++;
         const message = error instanceof Error ? error.message : "";
         const httpStatus = message.match(/^Arbor photo endpoint returned HTTP (\d+)\.$/);
-        const reason = httpStatus ? `Arbor HTTP ${httpStatus[1]}` : "Photo download or storage failed";
+        const knownPhotoError = ["Arbor returned a photo larger than 2MB.", "Arbor returned a photo in an unsupported format."].includes(message);
+        const reason = httpStatus ? `Arbor HTTP ${httpStatus[1]}` : knownPhotoError ? message : "Photo download or storage failed";
         failedReasons[reason] = (failedReasons[reason] ?? 0) + 1;
       } finally {
         await db.user.update({ where: { id: user.id }, data: { avatarLastCheckedAt: new Date() } });
