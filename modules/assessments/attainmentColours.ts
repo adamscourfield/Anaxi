@@ -94,17 +94,18 @@ export const notMetPillClass =
   "inline-flex items-center rounded-full bg-status-denied-light px-2 py-0.5 text-xs font-semibold text-status-denied-text";
 
 /** Table header / numeric accent for GCSE threshold columns */
+/** Threshold percentages are plain figures, not warnings: one ink colour for all of them. */
 export const thresholdHeaderGcse = {
-  t4: "text-scale-some-text",
-  t5: "text-cat-violet-text",
-  t7: "text-scale-consistent-text",
+  t4: "text-[#1c1c1e]",
+  t5: "text-[#1c1c1e]",
+  t7: "text-[#1c1c1e]",
 } as const;
 
 export const thresholdHeaderALevel = {
-  aStar: "text-scale-strong-text",
-  aPlus: "text-scale-consistent-text",
-  bPlus: "text-[var(--info)]",
-  cPlus: "text-cat-violet-text",
+  aStar: "text-[#1c1c1e]",
+  aPlus: "text-[#1c1c1e]",
+  bPlus: "text-[#1c1c1e]",
+  cPlus: "text-[#1c1c1e]",
 } as const;
 
 /** PP / SEND column accents */

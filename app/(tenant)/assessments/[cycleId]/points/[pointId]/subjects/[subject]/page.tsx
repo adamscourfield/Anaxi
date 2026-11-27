@@ -414,6 +414,22 @@ export default async function SubjectDetailPage({
 
   const hasFilters = !!(filterQ || filterPp || filterSend);
   const basePath = `/assessments/${cycleId}/points/${pointId}/subjects/${encodedSubject}`;
+  // 25 students a page, keeping the filters in the links.
+  const PER_PAGE = 25;
+  const pageCount = Math.max(1, Math.ceil(students.length / PER_PAGE));
+  const rawPage = Array.isArray(rawParams.page) ? rawParams.page[0] : rawParams.page;
+  const page = Math.min(pageCount, Math.max(1, Number.parseInt(rawPage ?? "", 10) || 1));
+  const pageHref = (n: number) => {
+    const qs = new URLSearchParams();
+    if (filterQ) qs.set("q", filterQ);
+    if (filterPp) qs.set("pp", filterPp);
+    if (filterSend) qs.set("send", filterSend);
+    if (n > 1) qs.set("page", String(n));
+    const q = qs.toString();
+    return q ? `${basePath}?${q}` : basePath;
+  };
+  const filteredCount = students.length;
+  students = students.slice((page - 1) * PER_PAGE, page * PER_PAGE);
   const fromParam = `?from=${encodeURIComponent(basePath)}`;
 
   const formatLabel = isGcse ? "GCSE" : isPercentage ? (assessment.gradeFormat === "RAW" ? "Raw score" : "Percentage") : "A-Level";
@@ -432,7 +448,6 @@ export default async function SubjectDetailPage({
 
       {/* Page Header */}
       <PageHeader variant="ledger"
-        eyebrow="Subject"
         title={subjectName}
         subtitle={`${formatLabel} · ${graded.length} students assessed${
           isPercentage && pctYearMean !== null ? ` · Year mean ${round1(pctYearMean)}%` : ""
@@ -497,17 +512,17 @@ export default async function SubjectDetailPage({
         <div className="grid grid-cols-2 gap-5">
           {pctPpMean !== null && pctNonPpMean !== null && (
             <div className="space-y-3">
-              <h2 className="text-xl font-bold text-text">Pupil Premium Gap</h2>
+              <h2 className="text-xl font-bold text-text">Pupil premium gap</h2>
               <p className="text-sm text-muted">{ppResults.length} PP · {nonPpResults.length} Non-PP</p>
               <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
+                  <span className="text-xs font-medium text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonPpMean - pctPpMean)} />
                 </div>
-                {[{ label: "NON-PP", value: round1(pctNonPpMean), cls: "bg-[var(--on-surface)]" }, { label: "PP", value: round1(pctPpMean), cls: ppBarFillClass }].map(({ label, value, cls }) => (
+                {[{ label: "Non-PP", value: round1(pctNonPpMean), cls: "bg-[var(--on-surface)]" }, { label: "PP", value: round1(pctPpMean), cls: ppBarFillClass }].map(({ label, value, cls }) => (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
+                      <span className="text-[12px] font-medium text-[var(--on-surface-muted)]">{label}</span>
                       <span className="text-lg font-bold tabular-nums text-[var(--on-surface)]">{value}%</span>
                     </div>
                     <div className="h-3 w-full overflow-hidden rounded-md bg-[var(--surface-container)]">
@@ -520,17 +535,17 @@ export default async function SubjectDetailPage({
           )}
           {pctSendMean !== null && pctNonSendMean !== null && (
             <div className="space-y-3">
-              <h2 className="text-xl font-bold text-text">SEND Gap</h2>
+              <h2 className="text-xl font-bold text-text">SEND gap</h2>
               <p className="text-sm text-muted">{sendResults.length} SEND · {nonSendResults.length} Non-SEND</p>
               <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Mean score gap</span>
+                  <span className="text-xs font-medium text-[var(--on-surface-muted)]">Mean score gap</span>
                   <GapBadge gap={Math.round(pctNonSendMean - pctSendMean)} />
                 </div>
-                {[{ label: "NON-SEND", value: round1(pctNonSendMean), cls: "bg-[var(--on-surface)]" }, { label: "SEND", value: round1(pctSendMean), cls: sendBarFillClass }].map(({ label, value, cls }) => (
+                {[{ label: "Non-SEND", value: round1(pctNonSendMean), cls: "bg-[var(--on-surface)]" }, { label: "SEND", value: round1(pctSendMean), cls: sendBarFillClass }].map(({ label, value, cls }) => (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{label}</span>
+                      <span className="text-[12px] font-medium text-[var(--on-surface-muted)]">{label}</span>
                       <span className="text-lg font-bold tabular-nums text-[var(--on-surface)]">{value}%</span>
                     </div>
                     <div className="h-3 w-full overflow-hidden rounded-md bg-[var(--surface-container)]">
@@ -548,20 +563,20 @@ export default async function SubjectDetailPage({
       {isGcse && ppData && sendData && (
         <div className="grid grid-cols-2 gap-5">
           <div className="space-y-3">
-              <h2 className="text-xl font-bold text-text">Pupil Premium Gap</h2>
+              <h2 className="text-xl font-bold text-text">Pupil premium gap</h2>
               <p className="text-sm text-muted">{ppData.ppCount} PP · {ppData.nonPpCount} Non-PP</p>
             <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-5">
               {[{ label: "4+", pp: ppData.ppT4, nonPp: ppData.nonPpT4, gap: ppData.gap4, cls: thresholdHeaderGcse.t4 }, { label: "5+", pp: ppData.ppT5, nonPp: ppData.nonPpT5, gap: ppData.gap5, cls: thresholdHeaderGcse.t5 }].map(({ label, pp, nonPp, gap, cls }, idx) => (
                 <div key={label} className={idx > 0 ? "border-t border-[var(--outline-variant)]/20 pt-5" : ""}>
                   <div className="flex items-center justify-between mb-3">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${cls}`}>{label} Threshold</span>
+                    <span className={`text-xs font-medium ${cls}`}>{label} threshold</span>
                     <GapBadge gap={gap} />
                   </div>
                   <div className="space-y-2">
-                    {[{ name: "NON-PP", val: nonPp, bar: "bg-[var(--on-surface)]" }, { name: "PP", val: pp, bar: ppBarFillClass }].map(({ name, val, bar }) => (
+                    {[{ name: "Non-PP", val: nonPp, bar: "bg-[var(--on-surface)]" }, { name: "PP", val: pp, bar: ppBarFillClass }].map(({ name, val, bar }) => (
                       <div key={name}>
                         <div className="flex justify-between items-baseline mb-1">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
+                          <span className="text-[12px] font-medium text-[var(--on-surface-muted)]">{name}</span>
                           <span className="text-base font-bold tabular-nums text-[var(--on-surface)]">{val}%</span>
                         </div>
                         <div className="h-3 w-full overflow-hidden rounded-md bg-[var(--surface-container)]">
@@ -575,20 +590,20 @@ export default async function SubjectDetailPage({
             </div>
           </div>
           <div className="space-y-3">
-              <h2 className="text-xl font-bold text-text">SEND Gap</h2>
+              <h2 className="text-xl font-bold text-text">SEND gap</h2>
               <p className="text-sm text-muted">{sendData.sendCount} SEND · {sendData.nonSendCount} Non-SEND</p>
             <div className="rounded-2xl bg-[var(--surface-container-lowest)] p-5 shadow-ambient space-y-5">
               {[{ label: "4+", send: sendData.sendT4, nonSend: sendData.nonSendT4, gap: sendData.gap4, cls: thresholdHeaderGcse.t4 }, { label: "5+", send: sendData.sendT5, nonSend: sendData.nonSendT5, gap: sendData.gap5, cls: thresholdHeaderGcse.t5 }].map(({ label, send, nonSend, gap, cls }, idx) => (
                 <div key={label} className={idx > 0 ? "border-t border-[var(--outline-variant)]/20 pt-5" : ""}>
                   <div className="flex items-center justify-between mb-3">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${cls}`}>{label} Threshold</span>
+                    <span className={`text-xs font-medium ${cls}`}>{label} threshold</span>
                     <GapBadge gap={gap} />
                   </div>
                   <div className="space-y-2">
-                    {[{ name: "NON-SEND", val: nonSend, bar: "bg-[var(--on-surface)]" }, { name: "SEND", val: send, bar: sendBarFillClass }].map(({ name, val, bar }) => (
+                    {[{ name: "Non-SEND", val: nonSend, bar: "bg-[var(--on-surface)]" }, { name: "SEND", val: send, bar: sendBarFillClass }].map(({ name, val, bar }) => (
                       <div key={name}>
                         <div className="flex justify-between items-baseline mb-1">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-muted)]">{name}</span>
+                          <span className="text-[12px] font-medium text-[var(--on-surface-muted)]">{name}</span>
                           <span className="text-base font-bold tabular-nums text-[var(--on-surface)]">{val}%</span>
                         </div>
                         <div className="h-3 w-full overflow-hidden rounded-md bg-[var(--surface-container)]">
@@ -624,13 +639,13 @@ export default async function SubjectDetailPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="table-head-row text-left">
-                  <th className="px-4 py-3 text-center w-10">RANK</th>
-                  <th className="px-5 py-3">NAME</th>
-                  <th className="px-4 py-3">FLAGS</th>
-                  {isPercentage && <th className="px-4 py-3">CLASS</th>}
-                  <th className="px-4 py-3 text-center">{isPercentage ? "SCORE" : "GRADE"}</th>
-                  <th className="hidden px-4 py-3 text-center md:table-cell">OVERALL AVG</th>
-                  <th className="hidden px-4 py-3 text-center md:table-cell">VS AVG</th>
+                  <th className="px-4 py-3 text-center w-10">Rank</th>
+                  <th className="px-5 py-3">Name</th>
+                  <th className="px-4 py-3">Flags</th>
+                  {isPercentage && <th className="px-4 py-3">Class</th>}
+                  <th className="px-4 py-3 text-center">{isPercentage ? "Score" : "Grade"}</th>
+                  <th className="hidden px-4 py-3 text-center md:table-cell">Overall average</th>
+                  <th className="hidden px-4 py-3 text-center md:table-cell">vs average</th>
                 </tr>
               </thead>
               <tbody>
@@ -730,10 +745,21 @@ export default async function SubjectDetailPage({
             </table>
           </div>
           <div className="border-t border-border/20 px-5 py-3.5">
-            <p className="text-[0.8125rem] text-muted">
-              Showing <span className="font-semibold text-text">{students.length}</span> of{" "}
-              <span className="font-semibold text-text">{allStudents.length}</span> students in {subjectName}
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-3 text-[0.8125rem] text-muted">
+              <p>
+                {filteredCount > PER_PAGE
+                  ? `${(page - 1) * PER_PAGE + 1}–${Math.min(filteredCount, page * PER_PAGE)} of ${filteredCount}`
+                  : `${filteredCount}`}{" "}
+                {hasFilters ? `matching students (of ${allStudents.length})` : "students"} in {subjectName}
+              </p>
+              {pageCount > 1 && (
+                <nav aria-label="Student pages" className="flex items-center gap-4">
+                  {page > 1 && <Link className="text-text hover:underline" href={pageHref(page - 1)}>← Previous</Link>}
+                  <span>Page {page} of {pageCount}</span>
+                  {page < pageCount && <Link className="text-text hover:underline" href={pageHref(page + 1)}>Next →</Link>}
+                </nav>
+              )}
+            </div>
           </div>
         </div>
       </div>

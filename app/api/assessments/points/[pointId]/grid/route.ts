@@ -10,7 +10,10 @@
  *   yearGroup   — e.g. "Year 11"
  *   gradeFormat — GCSE | A_LEVEL | PERCENTAGE | RAW
  *   subjects    — string[] of subject column names, in column order
- *   entries     — [{ upn, studentName, values: { [subject]: rawValue } }]
+ *   entries     — [{ studentId?, upn, studentName, values: { [subject]: rawValue } }]
+ *   mode        — "changes": entries are only the cells that changed, and a blank value
+ *                 removes that student's grade. Without it (older clients), a blank cell is
+ *                 skipped as "not taken" and nothing is removed.
  */
 
 import { NextResponse } from "next/server";
@@ -24,7 +27,7 @@ import type { AssessmentCsvRecord } from "@/modules/assessments/csv";
 import type { GradeFormat } from "@prisma/client";
 import { withApi } from "@/lib/apiRoute";
 
-type GridEntry = { upn: string; studentName: string; values: Record<string, string> };
+type GridEntry = { studentId?: string; upn: string; studentName: string; values: Record<string, string> };
 
 export const POST = withApi(async function POST(
   req: Request,
@@ -51,6 +54,7 @@ export const POST = withApi(async function POST(
   const gradeFormat = String(body?.gradeFormat || "GCSE") as GradeFormat;
   const subjects = Array.isArray(body?.subjects) ? (body.subjects as string[]) : [];
   const entries = Array.isArray(body?.entries) ? (body.entries as GridEntry[]) : [];
+  const changesOnly = body?.mode === "changes";
 
   if (!yearGroup) return NextResponse.json({ error: "yearGroup is required" }, { status: 400 });
   const validFormats: GradeFormat[] = ["GCSE", "A_LEVEL", "PERCENTAGE", "RAW"];
@@ -60,12 +64,20 @@ export const POST = withApi(async function POST(
   if (subjects.length === 0) return NextResponse.json({ error: "At least one subject is required" }, { status: 400 });
 
   const recordsBySubject = new Map<string, AssessmentCsvRecord[]>();
+  const clearedBySubject = new Map<string, string[]>();
   const parseErrors: Array<{ rowNumber: number; field: string; message: string }> = [];
 
   entries.forEach((entry, idx) => {
     for (const subject of subjects) {
       const rawValue = String(entry.values?.[subject] ?? "").trim();
-      if (!rawValue) continue; // blank cell = subject not taken
+      if (!rawValue) {
+        // A cleared cell removes the grade; on older clients a blank meant "not taken".
+        if (changesOnly && entry.studentId) {
+          if (!clearedBySubject.has(subject)) clearedBySubject.set(subject, []);
+          clearedBySubject.get(subject)!.push(entry.studentId);
+        }
+        continue;
+      }
 
       const nonGrade = detectNonGradeStatus(rawValue);
       if (!nonGrade) {
@@ -78,6 +90,7 @@ export const POST = withApi(async function POST(
 
       if (!recordsBySubject.has(subject)) recordsBySubject.set(subject, []);
       recordsBySubject.get(subject)!.push({
+        studentId: entry.studentId || undefined,
         upn: entry.upn,
         studentName: entry.studentName,
         subject,
@@ -86,19 +99,29 @@ export const POST = withApi(async function POST(
     }
   });
 
-  if (recordsBySubject.size === 0) {
+  if (parseErrors.length) {
+    // Save nothing if any grade is invalid, so a save is never half done.
+    return NextResponse.json(
+      { error: `${parseErrors.length} grade${parseErrors.length === 1 ? " doesn't" : "s don't"} match the grade format.`, parseErrors: parseErrors.length, parseErrorDetails: parseErrors.slice(0, 50) },
+      { status: 400 }
+    );
+  }
+  if (recordsBySubject.size === 0 && clearedBySubject.size === 0) {
     return NextResponse.json(
       { error: "No grades entered. Fill in at least one cell before saving." },
       { status: 400 }
     );
   }
 
-  const results: Array<{ subject: string; assessmentId: string; rowsProcessed: number; rowsFailed: number }> = [];
+  const results: Array<{ subject: string; assessmentId: string; rowsProcessed: number; rowsFailed: number; rowsCleared: number }> = [];
 
-  for (const [subject, records] of recordsBySubject) {
+  for (const subject of new Set([...recordsBySubject.keys(), ...clearedBySubject.keys()])) {
+    const records = recordsBySubject.get(subject) ?? [];
+    const cleared = clearedBySubject.get(subject) ?? [];
     let assessment = await prisma.assessment.findFirst({
       where: { tenantId: user.tenantId, pointId: resolvedParams.pointId, subject, yearGroup },
     });
+    if (!assessment && records.length === 0) continue; // nothing to clear
 
     if (!assessment) {
       assessment = await createAssessment({
@@ -112,13 +135,20 @@ export const POST = withApi(async function POST(
       });
     }
 
-    const summary = await importAssessmentResults(records, [], {
-      tenantId: user.tenantId,
-      assessmentId: assessment.id,
-      gradeFormat,
-      uploadedByUserId: user.id,
-      fileName: "grid-entry",
-    });
+    const rowsCleared = cleared.length
+      ? (await prisma.assessmentResult.deleteMany({
+          where: { tenantId: user.tenantId, assessmentId: assessment.id, studentId: { in: cleared } },
+        })).count
+      : 0;
+    const summary = records.length
+      ? await importAssessmentResults(records, [], {
+          tenantId: user.tenantId,
+          assessmentId: assessment.id,
+          gradeFormat,
+          uploadedByUserId: user.id,
+          fileName: "grid-entry",
+        })
+      : { rowsProcessed: 0, rowsFailed: 0 };
 
     const resultCount = await prisma.assessmentResult.count({
       where: { assessmentId: assessment.id, tenantId: user.tenantId },
@@ -139,6 +169,7 @@ export const POST = withApi(async function POST(
       assessmentId: assessment.id,
       rowsProcessed: summary.rowsProcessed,
       rowsFailed: summary.rowsFailed,
+      rowsCleared,
     });
   }
 
@@ -151,6 +182,7 @@ export const POST = withApi(async function POST(
       subjectsImported: results.length,
       totalProcessed,
       totalFailed,
+      totalCleared: results.reduce((s, r) => s + r.rowsCleared, 0),
       results,
       parseErrors: parseErrors.length,
       parseErrorDetails: parseErrors.slice(0, 50),

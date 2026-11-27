@@ -24,6 +24,9 @@ type StudentProgress8Row = {
 };
 
 export type Progress8DashboardSummary = {
+  /** Where the figures come from: the newest active GCSE cycle's latest validated, published or locked point. */
+  cycleLabel: string;
+  pointLabel: string;
   studentCountWithExpected: number;
   studentCountWithActual: number;
   studentCountWithPrediction: number;
@@ -188,11 +191,19 @@ function calculateStudentActualAttainment8(results: ScoredResult[]): number | nu
   return round2(totalPoints);
 }
 
-async function buildStudentProgress8Rows(tenantId: string): Promise<StudentProgress8Row[]> {
+const P8_ELIGIBLE = ["VALIDATED", "PUBLISHED", "LOCKED"] as const;
+
+async function buildStudentProgress8Rows(
+  tenantId: string,
+): Promise<{ rows: StudentProgress8Row[]; cycleLabel: string; pointLabel: string } | null> {
+  // The newest active GCSE cycle that has checked results, and its latest such point.
+  // (Previously: any active GCSE cycle, and its latest point even if still a draft.)
   const activeCycle = await prisma.assessmentCycle.findFirst({
-    where: { tenantId, isActive: true, qualificationType: "GCSE" },
+    where: { tenantId, isActive: true, qualificationType: "GCSE", points: { some: { resultStatus: { in: [...P8_ELIGIBLE] } } } },
+    orderBy: [{ academicYear: "desc" }, { createdAt: "desc" }],
     include: {
       points: {
+        where: { resultStatus: { in: [...P8_ELIGIBLE] } },
         orderBy: { ordinal: "desc" },
         take: 1,
         include: {
@@ -217,7 +228,7 @@ async function buildStudentProgress8Rows(tenantId: string): Promise<StudentProgr
   });
 
   const latestPoint = activeCycle?.points[0];
-  if (!latestPoint) return [];
+  if (!activeCycle || !latestPoint) return null;
 
   const students = await prisma.student.findMany({
     where: { tenantId, status: "ACTIVE" },
@@ -249,7 +260,8 @@ async function buildStudentProgress8Rows(tenantId: string): Promise<StudentProgr
     }
   }
 
-  return students.map((student) => {
+  // Only students with results at this point (not every student in the school).
+  const rows = students.filter((student) => resultsByStudent.has(student.id)).map((student) => {
     const benchmarkScore = getProgress8BenchmarkLookupScore(
       student.ks2ReadingScaledScore,
       student.ks2MathsScaledScore
@@ -269,11 +281,13 @@ async function buildStudentProgress8Rows(tenantId: string): Promise<StudentProgr
       predictedProgress8,
     };
   });
+  return { rows, cycleLabel: activeCycle.label, pointLabel: latestPoint.label };
 }
 
 export async function getProgress8DashboardSummary(tenantId: string): Promise<Progress8DashboardSummary | null> {
-  const rows = await buildStudentProgress8Rows(tenantId);
-  if (rows.length === 0) return null;
+  const built = await buildStudentProgress8Rows(tenantId);
+  if (!built || built.rows.length === 0) return null;
+  const { rows } = built;
 
   const actualValues = rows
     .map((row) => row.actualAttainment8)
@@ -286,6 +300,8 @@ export async function getProgress8DashboardSummary(tenantId: string): Promise<Pr
     .filter((value): value is number => value !== null);
 
   return {
+    cycleLabel: built.cycleLabel,
+    pointLabel: built.pointLabel,
     studentCountWithActual: actualValues.length,
     studentCountWithExpected: expectedValues.length,
     studentCountWithPrediction: predictedValues.length,

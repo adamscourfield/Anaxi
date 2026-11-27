@@ -32,7 +32,7 @@ export function SubjectStudentsFilterBar({
       >
         {/* Name search */}
         <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[200px] lg:max-w-[360px]">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Search</span>
+          <span className="text-[12px] font-medium text-muted">Search</span>
           <div className="relative">
             <svg
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
@@ -57,7 +57,7 @@ export function SubjectStudentsFilterBar({
 
         {/* PP filter */}
         <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Pupil premium</span>
+          <span className="text-[12px] font-medium text-muted">Pupil premium</span>
           <select name="pp" defaultValue={defaultPp} className={`field ${triggerWhite}`}>
             <option value="">All</option>
             <option value="true">PP</option>
@@ -67,7 +67,7 @@ export function SubjectStudentsFilterBar({
 
         {/* SEND filter */}
         <label className="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-[140px]">
-          <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">SEND</span>
+          <span className="text-[12px] font-medium text-muted">SEND</span>
           <select name="send" defaultValue={defaultSend} className={`field ${triggerWhite}`}>
             <option value="">All</option>
             <option value="true">SEND</option>
@@ -78,7 +78,7 @@ export function SubjectStudentsFilterBar({
         {/* Actions */}
         <div className="filter-actions">
           <button type="submit" className="btn-filter-primary">
-            Apply Filters
+            Apply filters
           </button>
           {hasFilters && (
             <Link href={basePath} className="btn-filter-secondary">

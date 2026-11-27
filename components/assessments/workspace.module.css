@@ -1,0 +1,75 @@
+/* Attainment workspace (cycles, cycle, result point): ink, 10px controls, 14px cards, sentence case. */
+.page { display: grid; gap: 24px; min-width: 0; color: #1c1c1e; }
+.page > * { min-width: 0; }
+
+.button, .buttonSecondary, .buttonDanger { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 10px; font-size: 13px; font-weight: 600; white-space: nowrap; transition: background .16s ease, border-color .16s ease, color .16s ease; }
+.button { background: #1c1c1e; color: #fff; }
+.button:hover { background: #353537; }
+.buttonSecondary { background: #fff; color: #1c1c1e; border: 1px solid #d4d4d8; }
+.buttonSecondary:hover { background: #f4f4f5; border-color: #a1a1aa; }
+.buttonDanger { background: #fff; color: #b42318; border: 1px solid #f3c4bb; }
+.buttonDanger:hover { background: #fff6f4; }
+.button svg, .buttonSecondary svg { width: 15px; height: 15px; }
+.small { min-height: 34px; padding: 0 12px; font-size: 12px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.summary { display: grid; grid-template-columns: repeat(var(--tiles, 3), minmax(0, 1fr)); gap: 12px; }
+.tile { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; padding: 16px 20px; min-width: 0; }
+.tile > span { display: block; color: #6e6e73; font-size: 12px; }
+.tile strong { display: block; font-size: 28px; font-weight: 600; line-height: 1.3; margin-top: 4px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.tile p { color: #6e6e73; font-size: 12px; margin-top: 2px; line-height: 1.5; }
+
+.heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px 16px; }
+.heading h2 { font-size: 19px; font-weight: 600; letter-spacing: -.03em; }
+.heading p { font-size: 12px; color: #6e6e73; margin-top: 3px; }
+.note { font-size: 12px; color: #6e6e73; line-height: 1.6; max-width: 80ch; }
+
+.card { background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; min-width: 0; overflow: hidden; }
+.scroll { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th { text-align: left; font-size: 12px; font-weight: 500; color: #6e6e73; padding: 11px 14px; border-bottom: 1px solid #e5e5e6; white-space: nowrap; }
+.table td { padding: 14px; border-bottom: 1px solid #f0f0f1; vertical-align: middle; }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover td { background: #fafafa; }
+.table th:first-child, .table td:first-child { padding-left: 20px; }
+.table th:last-child, .table td:last-child { padding-right: 20px; }
+.num { text-align: right !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.muted { color: #6e6e73; }
+.nowrap { white-space: nowrap; }
+.name { font-weight: 600; font-size: 14px; }
+a.name:hover { text-decoration: underline; text-underline-offset: 3px; }
+.sub { display: block; font-size: 12px; color: #6e6e73; margin-top: 2px; font-weight: 400; }
+.archived td { color: #6e6e73; }
+
+/* Status: one quiet style; only the state word changes, with a dot that carries the meaning */
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #3a3a3c; white-space: nowrap; }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--dot, #a1a1aa); }
+.draft { --dot: #a1a1aa; }
+.validated { --dot: #3b82f6; }
+.published { --dot: #16a34a; }
+.locked { --dot: #1c1c1e; }
+
+.empty { border: 1px dashed #d4d4d8; border-radius: 14px; padding: 40px 20px; text-align: center; }
+.empty h2 { font-size: 16px; font-weight: 600; }
+.empty p { font-size: 13px; color: #6e6e73; margin: 4px auto 16px; max-width: 52ch; }
+
+.page a:focus-visible, .page button:focus-visible, .page select:focus-visible { outline: 2px solid #ff6a52; outline-offset: 2px; }
+
+@media (max-width: 900px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+  .summary { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile { padding: 12px 14px; }
+  .tile strong { font-size: 24px; }
+  .table th:first-child, .table td:first-child { padding-left: 16px; }
+}
+
+/* Status drop-down: the coloured dot plus a native select, so it works with keyboard and screen readers */
+.statusSelect { position: relative; display: inline-flex; align-items: center; }
+.statusSelect::before { content: ""; position: absolute; left: 10px; width: 7px; height: 7px; border-radius: 50%; background: var(--dot, #a1a1aa); pointer-events: none; }
+.statusSelect select { appearance: none; min-height: 32px; padding: 0 28px 0 23px; border: 1px solid #e5e5e6; border-radius: 10px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236e6e73' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center; font-size: 12px; font-weight: 500; color: #1c1c1e; cursor: pointer; }
+.statusSelect select:hover { border-color: #a1a1aa; }
+.statusSelect select:disabled { opacity: .6; cursor: progress; }
+
+.manage { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; border-top: 1px solid #e5e5e6; padding-top: 18px; }
+.manage h2 { font-size: 15px; font-weight: 600; }
+.manage p { font-size: 12px; color: #6e6e73; margin-top: 2px; }

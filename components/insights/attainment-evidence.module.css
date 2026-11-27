@@ -54,7 +54,7 @@ a.tile:hover { border-color: #ff6a52; }
 .cardHead p { font-size: 12px; color: #6e6e73; margin-top: 3px; }
 .cardHead a { font-size: 12px; color: #6e6e73; white-space: nowrap; }
 .cardHead a:hover { color: #1c1c1e; }
-.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scroll { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .table th { text-align: left; font-size: 12px; font-weight: 500; color: #6e6e73; padding: 11px 14px; border-bottom: 1px solid #e5e5e6; white-space: nowrap; background: #fff; }
 .table td { padding: 12px 14px; border-bottom: 1px solid #f0f0f1; vertical-align: middle; }

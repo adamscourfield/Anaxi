@@ -17,6 +17,7 @@ import { displayGrade } from "@/modules/assessments/gradeNormalizer";
 import type { GradeFormat } from "@prisma/client";
 import { meetsGcseThreshold } from "@/modules/assessments/gradeNormalizer";
 import { withApi } from "@/lib/apiRoute";
+import { normalizeYearGroup } from "@/lib/yearGroup";
 
 const A_LEVEL_SCORE: Record<string, number> = {
   "A*": 7, A: 6, B: 5, C: 4, D: 3, E: 2, U: 1,
@@ -73,7 +74,7 @@ export const GET = withApi(async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const fromPointId = searchParams.get("fromPointId");
   const toPointId = searchParams.get("toPointId");
-  const yearGroup = searchParams.get("yearGroup") || undefined;
+  const yearGroup = normalizeYearGroup(searchParams.get("yearGroup")) ?? undefined;
 
   if (!fromPointId || !toPointId) {
     return NextResponse.json({ error: "fromPointId and toPointId are required" }, { status: 400 });

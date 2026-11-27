@@ -82,7 +82,7 @@ export function EMTargetGroupToolbar({
 
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:justify-end xl:flex-col xl:self-end">
           <button type="submit" className="btn-filter-primary btn-filter-primary--pill justify-center">
-            Apply Filters
+            Apply filters
           </button>
           {hasFilters ? (
             <Link href={basePath} className="btn-filter-secondary justify-center text-center no-underline">

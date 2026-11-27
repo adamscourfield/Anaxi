@@ -15,6 +15,7 @@ import { LockedPointBanner } from "@/components/assessments/LockedPointBanner";
 import { toast } from "@/components/toast-provider";
 import { stageForQualificationType } from "@/lib/subjectStages";
 import type { GradeFormat } from "@prisma/client";
+import { canonicalYearGroup, formatYearGroup } from "@/lib/yearGroup";
 
 const UPLOAD_STEPS = [
   { id: "setup", label: "File & format" },
@@ -158,6 +159,12 @@ export default function UploadSubjectResultsPage() {
         setQualificationType(point?.cycle?.qualificationType ?? "GCSE");
         setIsLocked(point?.resultStatus === "LOCKED");
         setHasExistingUpload((point?.assessments?.length ?? 0) > 0);
+        // Start from the year group this point already uses (or the one in the cycle's name),
+        // so uploads land on the existing subjects instead of beside them.
+        const known = (point?.assessments ?? [])
+          .map((x: { yearGroup: string | null }) => canonicalYearGroup(x.yearGroup))
+          .find(Boolean) ?? canonicalYearGroup(/\b(?:year|yr|y)\s*\d{1,2}\b/i.exec(point?.cycle?.label ?? "")?.[0]);
+        if (known) setYearGroup((current) => (current.trim() ? current : formatYearGroup(known)));
         if (point?.cycle?.qualificationType === "A_LEVEL") setGradeFormat("A_LEVEL");
         else if (point?.cycle?.qualificationType === "GCSE") setGradeFormat("GCSE");
         else if (point?.cycle?.qualificationType === "PERCENTAGE") setGradeFormat("PERCENTAGE");
@@ -353,7 +360,7 @@ export default function UploadSubjectResultsPage() {
 
       {hasExistingUpload && (
         <p className="rounded-xl border border-border bg-surface-container-low px-4 py-3 text-sm text-muted">
-          Re-importing replaces existing subject results for this year group on this result point. Other snapshots are unchanged.
+          Uploading a subject again updates the grades for the students in the file. Grades for students not in the file are kept. Other result points are unchanged.
         </p>
       )}
 

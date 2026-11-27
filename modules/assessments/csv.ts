@@ -27,6 +27,8 @@ import type { GradeFormat } from "@prisma/client";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type AssessmentCsvRecord = {
+  /** Known student (in-app grid entry). Checked against the school; takes priority over UPN and name. */
+  studentId?: string;
   upn: string;
   studentName: string;
   subject: string;

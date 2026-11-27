@@ -11,6 +11,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
+import w from "@/components/assessments/workspace.module.css";
+import { STATUS_CLASS, STATUS_MEANING } from "@/components/assessments/resultStatus";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -300,10 +302,10 @@ function IconShieldKpi() {
   );
 }
 
-const kpiIconCircleViolet = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]";
-const kpiIconCircleBlue = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]";
-const kpiIconCircleGreen = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]";
-const kpiIconCircleAmber = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-600";
+const kpiIconCircleViolet = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[#f4f4f5] text-[#6e6e73]";
+const kpiIconCircleBlue = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[#f4f4f5] text-[#6e6e73]";
+const kpiIconCircleGreen = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[#f4f4f5] text-[#6e6e73]";
+const kpiIconCircleAmber = "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[#f4f4f5] text-[#6e6e73]";
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
@@ -418,7 +420,7 @@ function PctDistCompact({ distribution }: { distribution: BandCount[] }) {
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 border-t border-[var(--outline-variant)]/15 pt-1">
         {thresholds.map(({ label, count, pct }) => (
           <span key={label} className="text-[9px] text-[var(--on-surface-muted)]">
-            <span className="font-bold uppercase tracking-wide">{label}</span>{" "}
+            <span className="font-medium">{label}</span>{" "}
             <span className="font-semibold tabular-nums text-[var(--on-surface)]">{pct}%</span>
             <span className="tabular-nums"> ({count})</span>
           </span>
@@ -439,7 +441,7 @@ function HeadlineMeasureCard({
   const inner = (
     <>
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted">{label}</p>
+        <p className="text-[12px] font-medium text-muted">{label}</p>
       </div>
       <p className="mt-3 text-[32px] font-bold leading-none tracking-[-0.02em] text-text">{value}%</p>
       <p className="mt-1.5 text-[11px] text-muted">{context}</p>
@@ -661,65 +663,27 @@ export default function ResultPointPage() {
 
   // Build meta badges for PageHeader
   const metaBadges = point ? (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className={`rounded-md px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${POINT_TYPE_COLOURS[point.pointType]}`}>
-        {POINT_TYPE_LABELS[point.pointType]}
-      </span>
-      <span className={`rounded-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${RESULT_STATUS_BADGE[point.resultStatus] ?? "bg-surface-container-high text-on-surface-variant"}`}>
+    <p className={styles.meta}>
+      <span>{POINT_TYPE_LABELS[point.pointType]}</span>
+      <span className={`${w.status} ${STATUS_CLASS[point.resultStatus as keyof typeof STATUS_CLASS]}`} title={STATUS_MEANING[point.resultStatus as keyof typeof STATUS_MEANING]}>
         {STATUS_LABELS[point.resultStatus]}
       </span>
-      {point.isFinalPoint && (
-        <span className={finalPointChipClass}>
-          Final
-        </span>
-      )}
-    </div>
+      {point.isFinalPoint && <span>Final results</span>}
+    </p>
   ) : null;
 
   const headerActions = point ? (
-    <div className="flex flex-wrap items-center gap-2">
-      {point.resultStatus !== "LOCKED" && (
-        point.dataSource === "ARBOR" ? (
-          <Button asChild variant="secondary">
-            <Link href={`/assessments/${cycleId}/points/${pointId}/corrections`}>Correct Arbor marks</Link>
-          </Button>
-        ) : null
+    <div className={w.actions}>
+      {point.resultStatus !== "LOCKED" && point.dataSource === "ARBOR" && (
+        <Link className={w.buttonSecondary} href={`/assessments/${cycleId}/points/${pointId}/corrections`}>Correct Arbor marks</Link>
       )}
       {point.resultStatus !== "LOCKED" && (
-        <Button asChild variant="secondary">
-          <Link href={`/assessments/${cycleId}/points/${pointId}/upload`}>
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path
-                d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v9m-4-4 4-4 4 4" />
-            </svg>
-            Upload results
-          </Link>
-        </Button>
+        <>
+          <Link className={w.buttonSecondary} href={`/assessments/${cycleId}/points/${pointId}/enter`}>Enter grades</Link>
+          <Link className={w.buttonSecondary} href={`/assessments/${cycleId}/points/${pointId}/upload`}>Upload</Link>
+        </>
       )}
-      {point.resultStatus !== "LOCKED" && (
-        <Button asChild variant="secondary">
-          <Link href={`/assessments/${cycleId}/points/${pointId}/enter`}>
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <rect x="3" y="4" width="18" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M3 10h18M9 10v10" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Enter grades
-          </Link>
-        </Button>
-      )}
-      <Button asChild>
-        <Link href={`/assessments/${cycleId}/compare?from=${pointId}`}>
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M18 8V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v10M8 16l4-4 4 4" />
-          </svg>
-          Compare
-        </Link>
-      </Button>
+      <Link className={w.button} href={`/assessments/${cycleId}/compare?from=${pointId}`}>Compare with another point</Link>
     </div>
   ) : null;
 
@@ -737,11 +701,8 @@ export default function ResultPointPage() {
       <PageHeader
         variant="ledger"
         className="!mb-0 border-0 !pb-0"
-        eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-[#6B7280]"
-        titleClassName="text-[1.75rem] font-bold tracking-tight text-[#111827] md:text-[2rem]"
-        subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-[#374151]"
         title={point?.label ?? "Result point"}
-        subtitle="Analysis for all uploaded subjects at this snapshot."
+        subtitle={point ? `${point.cycle.label}. Results for every subject at this point.` : undefined}
         meta={metaBadges}
         actions={headerActions}
       />
@@ -783,16 +744,16 @@ export default function ResultPointPage() {
         <>
           {/* Summary stats */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Students Assessed" value={metrics.totalStudents} context="Enrolled total" icon={<IconUsersKpi />} iconTileClassName={kpiIconCircleViolet} />
-            <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Grade Entries" value={metrics.totalEntries.toLocaleString()} context="Across all subjects" icon={<IconClipboardKpi />} iconTileClassName={kpiIconCircleBlue} />
-            <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Subjects" value={metrics.subjects.length} context="Reporting departments" icon={<IconBookOpenKpi />} iconTileClassName={kpiIconCircleGreen} />
+            <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Students" value={metrics.totalStudents} context="With at least one grade" icon={<IconUsersKpi />} iconTileClassName={kpiIconCircleViolet} />
+            <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Grades entered" value={metrics.totalEntries.toLocaleString("en-GB")} context="Across all subjects" icon={<IconClipboardKpi />} iconTileClassName={kpiIconCircleBlue} />
+            <StatCard layout="kpi" tone="glass" accentPlacement="none" label="Subjects" value={metrics.subjects.length} context="With grades" icon={<IconBookOpenKpi />} iconTileClassName={kpiIconCircleGreen} />
             <StatCard
               layout="kpi"
               tone="glass"
               accentPlacement="none"
-              label="Data integrity"
+              label="Grades passing checks"
               value={metrics.dataIntegrityPct != null ? `${metrics.dataIntegrityPct.toFixed(1)}%` : "—"}
-              context="Validated rows in uploads"
+              context="Checked as they're entered"
               icon={<IconShieldKpi />}
               iconTileClassName={kpiIconCircleAmber}
             />
@@ -804,7 +765,7 @@ export default function ResultPointPage() {
               const labels: Record<string, string> = {
                 attainment: "Overview",
                 pastoral: "Pastoral",
-                teaching: "Teacher Impact",
+                teaching: "Teacher impact",
                 progress8: "Progress 8",
               };
               return (
@@ -844,27 +805,27 @@ export default function ResultPointPage() {
                   label="E&M 4+"
                   value={metrics.gcseBasics.em4}
                   context="English Language & Maths, both ≥ grade 4"
-                  accentBg="bg-scale-some-light" accentText="text-scale-some-text" barClass="bg-scale-some"
+                  accentBg="bg-[#f4f4f5]" accentText="text-[#1c1c1e]" barClass="bg-[#1c1c1e]"
                 />
                 <HeadlineMeasureCard
                   href={`/assessments/${cycleId}/points/${pointId}/em/5`}
                   label="E&M 5+"
                   value={metrics.gcseBasics.em5}
                   context="English Language & Maths, both ≥ grade 5"
-                  accentBg="bg-cat-violet-bg" accentText="text-cat-violet-text" barClass="bg-cat-violet-text"
+                  accentBg="bg-[#f4f4f5]" accentText="text-[#1c1c1e]" barClass="bg-[#1c1c1e]"
                 />
                 <HeadlineMeasureCard
                   href={`/assessments/${cycleId}/points/${pointId}/em/7`}
                   label="E&M 7+"
                   value={metrics.gcseBasics.em7}
                   context="English Language & Maths, both ≥ grade 7"
-                  accentBg="bg-scale-consistent-bg" accentText="text-scale-consistent-text" barClass="bg-scale-consistent"
+                  accentBg="bg-[#f4f4f5]" accentText="text-[#1c1c1e]" barClass="bg-[#1c1c1e]"
                 />
               </div>
 
               {metrics.bestEnglish && (
                 <div className="space-y-3 pt-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  <p className="text-xs font-medium text-muted">
                     Best English ({metrics.bestEnglish.hasLanguage && metrics.bestEnglish.hasLiterature ? "better of Language / Literature" : metrics.bestEnglish.hasLiterature ? "Literature" : "Language"})
                   </p>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -872,19 +833,19 @@ export default function ResultPointPage() {
                       label="Best English 4+"
                       value={metrics.bestEnglish.be4}
                       context={`${metrics.bestEnglish.presentCount} students with an English result`}
-                      accentBg="bg-scale-some-light" accentText="text-scale-some-text" barClass="bg-scale-some"
+                      accentBg="bg-[#f4f4f5]" accentText="text-[#1c1c1e]" barClass="bg-[#1c1c1e]"
                     />
                     <HeadlineMeasureCard
                       label="Best English 5+"
                       value={metrics.bestEnglish.be5}
                       context={`${metrics.bestEnglish.presentCount} students with an English result`}
-                      accentBg="bg-cat-violet-bg" accentText="text-cat-violet-text" barClass="bg-cat-violet-text"
+                      accentBg="bg-[#f4f4f5]" accentText="text-[#1c1c1e]" barClass="bg-[#1c1c1e]"
                     />
                     <HeadlineMeasureCard
                       label="Best English 7+"
                       value={metrics.bestEnglish.be7}
                       context={`${metrics.bestEnglish.presentCount} students with an English result`}
-                      accentBg="bg-scale-consistent-bg" accentText="text-scale-consistent-text" barClass="bg-scale-consistent"
+                      accentBg="bg-[#f4f4f5]" accentText="text-[#1c1c1e]" barClass="bg-[#1c1c1e]"
                     />
                   </div>
                 </div>
@@ -893,7 +854,7 @@ export default function ResultPointPage() {
               {/* PP / SEND gap headline cards (toggle) */}
               <div className="space-y-3 pt-2">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">Equity gaps (English & Maths)</p>
+                  <p className="text-xs font-medium text-muted">Equity gaps (English & Maths)</p>
                   <div className="segmented-toggle w-fit shrink-0" role="tablist" aria-label="Gap comparison group">
                     <button
                       type="button"
@@ -918,8 +879,8 @@ export default function ResultPointPage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {gcseGapView === "pp"
                     ? [
-                        { label: "PP Gap — 4+ threshold", cohort: metrics.gcseBasics.ppEm4, baseline: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4, baselineLabel: "NON-PP", cohortLabel: "PP STUDENTS" },
-                        { label: "PP Gap — 5+ threshold", cohort: metrics.gcseBasics.ppEm5, baseline: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5, baselineLabel: "NON-PP", cohortLabel: "PP STUDENTS" },
+                        { label: "PP gap — 4+ threshold", cohort: metrics.gcseBasics.ppEm4, baseline: metrics.gcseBasics.nonPpEm4, gap: metrics.gcseBasics.gap4, baselineLabel: "Non-PP", cohortLabel: "PP students" },
+                        { label: "PP gap — 5+ threshold", cohort: metrics.gcseBasics.ppEm5, baseline: metrics.gcseBasics.nonPpEm5, gap: metrics.gcseBasics.gap5, baselineLabel: "Non-PP", cohortLabel: "PP students" },
                       ].map(({ label, cohort, baseline, gap, baselineLabel, cohortLabel }) => (
                         <div key={label} className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
                           <div className="flex items-start justify-between">
@@ -932,7 +893,7 @@ export default function ResultPointPage() {
                           <div className="mt-6 space-y-4">
                             <div>
                               <div className="mb-2 flex items-baseline justify-between">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary-container)]">{baselineLabel}</span>
+                                <span className="text-[12px] font-medium text-[var(--primary-container)]">{baselineLabel}</span>
                                 <span className="text-xl font-bold leading-none tracking-tight text-text">{formatCohortPct(baseline)}</span>
                               </div>
                               <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
@@ -941,7 +902,7 @@ export default function ResultPointPage() {
                             </div>
                             <div>
                               <div className="mb-2 flex items-baseline justify-between">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">{cohortLabel}</span>
+                                <span className="text-[12px] font-medium text-muted">{cohortLabel}</span>
                                 <span className="text-xl font-bold leading-none tracking-tight text-muted">{formatCohortPct(cohort)}</span>
                               </div>
                               <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
@@ -952,8 +913,8 @@ export default function ResultPointPage() {
                         </div>
                       ))
                     : [
-                        { label: "SEND Gap — 4+ threshold", cohort: metrics.gcseBasics.sendEm4, baseline: metrics.gcseBasics.nonSendEm4, gap: metrics.gcseBasics.sendGap4, baselineLabel: "NON-SEND", cohortLabel: "SEND STUDENTS" },
-                        { label: "SEND Gap — 5+ threshold", cohort: metrics.gcseBasics.sendEm5, baseline: metrics.gcseBasics.nonSendEm5, gap: metrics.gcseBasics.sendGap5, baselineLabel: "NON-SEND", cohortLabel: "SEND STUDENTS" },
+                        { label: "SEND gap — 4+ threshold", cohort: metrics.gcseBasics.sendEm4, baseline: metrics.gcseBasics.nonSendEm4, gap: metrics.gcseBasics.sendGap4, baselineLabel: "Non-SEND", cohortLabel: "SEND students" },
+                        { label: "SEND gap — 5+ threshold", cohort: metrics.gcseBasics.sendEm5, baseline: metrics.gcseBasics.nonSendEm5, gap: metrics.gcseBasics.sendGap5, baselineLabel: "Non-SEND", cohortLabel: "SEND students" },
                       ].map(({ label, cohort, baseline, gap, baselineLabel, cohortLabel }) => (
                         <div key={label} className="rounded-2xl border border-border bg-[var(--surface-container-lowest)] p-5 shadow-ambient">
                           <div className="flex items-start justify-between">
@@ -966,7 +927,7 @@ export default function ResultPointPage() {
                           <div className="mt-6 space-y-4">
                             <div>
                               <div className="mb-2 flex items-baseline justify-between">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--info)]">{baselineLabel}</span>
+                                <span className="text-[12px] font-medium text-[var(--info)]">{baselineLabel}</span>
                                 <span className="text-xl font-bold leading-none tracking-tight text-text">{formatCohortPct(baseline)}</span>
                               </div>
                               <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
@@ -975,7 +936,7 @@ export default function ResultPointPage() {
                             </div>
                             <div>
                               <div className="mb-2 flex items-baseline justify-between">
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">{cohortLabel}</span>
+                                <span className="text-[12px] font-medium text-muted">{cohortLabel}</span>
                                 <span className="text-xl font-bold leading-none tracking-tight text-muted">{formatCohortPct(cohort)}</span>
                               </div>
                               <div className="flex h-2 w-full overflow-hidden rounded-sm bg-surface-container-low">
@@ -1002,7 +963,7 @@ export default function ResultPointPage() {
                   { label: "C+ pass", val: metrics.aLevelSummary.cPlusPct, cls: aLevelBarClasses.cPlus },
                 ].map(({ label, val, cls }) => (
                   <div key={label} className="rounded-xl bg-[var(--surface-container-low)] p-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
+                    <p className="text-[12px] font-medium text-[var(--on-surface-muted)]">{label}</p>
                     <p className="mt-0.5 text-2xl font-bold tabular-nums text-[var(--on-surface)]">{val}%</p>
                     <div className="mt-1.5 h-1 overflow-hidden rounded-sm bg-[var(--surface-container)]">
                       <div className={`h-full rounded-md ${cls}`} style={{ width: `${val}%` }} />
@@ -1253,7 +1214,7 @@ export default function ResultPointPage() {
                 />
                 <Card className="space-y-3">
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--on-surface-muted)]">
+                    <p className="text-xs font-medium text-[var(--on-surface-muted)]">
                       Score distribution (histogram)
                     </p>
                     <p className="text-[0.8125rem] leading-snug text-muted">
@@ -1395,7 +1356,7 @@ export default function ResultPointPage() {
                                       {/* Teaching group breakdown */}
                                       {sm.teachingGroups.length > 0 && (
                                         <div>
-                                          <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">Class vs year mean ({sm.mean}%)</p>
+                                          <p className="mb-2 text-[12px] font-medium text-[var(--on-surface-muted)]">Class vs year mean ({sm.mean}%)</p>
                                           <div className="space-y-1.5">
                                             {sm.teachingGroups.map((tg) => (
                                               <div key={tg.group} className="flex items-center gap-2">
@@ -1419,7 +1380,7 @@ export default function ResultPointPage() {
                                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         {[{ title: "Top 10", students: sm.topStudents, cls: "text-[var(--success)]" }, { title: "Bottom 10", students: sm.bottomStudents, cls: "text-[var(--error)]" }].map(({ title, students, cls }) => (
                                           <div key={title}>
-                                            <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{title}</p>
+                                            <p className="mb-1.5 text-[12px] font-medium text-[var(--on-surface-muted)]">{title}</p>
                                             <div className="space-y-0.5">
                                               {students.map((s) => (
                                                 <div key={s.studentId} className="flex items-center justify-between gap-2">
@@ -1730,7 +1691,7 @@ function Progress8Tab({
     <th
       key={col}
       scope="col"
-      className="cursor-pointer select-none px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
+      className="cursor-pointer select-none px-3 py-3 text-center text-[12px] font-medium text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
       onClick={() => toggle(col)}
     >
       <span className="inline-flex items-center justify-center gap-1">
@@ -1783,7 +1744,7 @@ function Progress8Tab({
             </svg>
           </span>
           <div>
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Predicted P8</p>
+            <p className="text-[12px] font-medium text-muted">Predicted P8</p>
             <p className={`mt-0.5 text-xl font-bold tabular-nums ${p8KpiClass(data.cohort.averageP8)}`}>
               {formatP8(data.cohort.averageP8)}
             </p>
@@ -1798,7 +1759,7 @@ function Progress8Tab({
             </svg>
           </span>
           <div>
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Above 0</p>
+            <p className="text-[12px] font-medium text-muted">Above 0</p>
             <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{positivePct}%</p>
             <p className="mt-0.5 text-[0.75rem] text-muted">{data.cohort.positiveCount} of {data.cohort.totalWithP8}</p>
           </div>
@@ -1812,7 +1773,7 @@ function Progress8Tab({
             </svg>
           </span>
           <div>
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">PP predicted P8</p>
+            <p className="text-[12px] font-medium text-muted">PP predicted P8</p>
             <p className={`mt-0.5 text-xl font-bold tabular-nums ${p8KpiClass(data.ppSummary.averageP8)}`}>
               {formatP8(data.ppSummary.averageP8)}
             </p>
@@ -1827,7 +1788,7 @@ function Progress8Tab({
             </svg>
           </span>
           <div>
-            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">SEND predicted P8</p>
+            <p className="text-[12px] font-medium text-muted">SEND predicted P8</p>
             <p className={`mt-0.5 text-xl font-bold tabular-nums ${p8KpiClass(data.sendSummary.averageP8)}`}>
               {formatP8(data.sendSummary.averageP8)}
             </p>
@@ -1845,10 +1806,10 @@ function Progress8Tab({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--outline-variant)]">
-                <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Year Group</th>
-                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Students</th>
-                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Avg P8</th>
-                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Above 0</th>
+                <th className="px-5 py-3 text-left text-[12px] font-medium text-[var(--on-surface-muted)]">Year Group</th>
+                <th className="px-3 py-3 text-center text-[12px] font-medium text-[var(--on-surface-muted)]">Students</th>
+                <th className="px-3 py-3 text-center text-[12px] font-medium text-[var(--on-surface-muted)]">Avg P8</th>
+                <th className="px-3 py-3 text-center text-[12px] font-medium text-[var(--on-surface-muted)]">Above 0</th>
               </tr>
             </thead>
             <tbody>
@@ -1915,8 +1876,8 @@ function Progress8Tab({
           <table className="w-full min-w-[560px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-[var(--outline-variant)]">
-                <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Student</th>
-                <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">Year</th>
+                <th className="px-5 py-3 text-left text-[12px] font-medium text-[var(--on-surface-muted)]">Student</th>
+                <th className="px-3 py-3 text-center text-[12px] font-medium text-[var(--on-surface-muted)]">Year</th>
                 {sortTh("expectedA8", "Exp. A8")}
                 {sortTh("actualA8", "Act. A8")}
                 {sortTh("p8", "P8 Score")}
@@ -2296,7 +2257,7 @@ function PastoralTab({
     <th
       key={col}
       scope="col"
-      className="cursor-pointer select-none px-3 py-3.5 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
+      className="cursor-pointer select-none px-3 py-3.5 text-center text-[12px] font-medium text-[var(--on-surface-muted)] hover:text-[var(--on-surface)] calm-transition whitespace-nowrap"
       onClick={() => toggle(col)}
     >
       <span className="inline-flex items-center justify-center gap-1">
@@ -2391,7 +2352,7 @@ function PastoralTab({
               {k.icon}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{k.label}</p>
+              <p className="text-[12px] font-medium text-[var(--on-surface-muted)]">{k.label}</p>
               <p className={`mt-0.5 text-2xl font-black tabular-nums leading-tight ${k.warn ? "text-[var(--error)]" : "text-[var(--on-surface)]"}`}>
                 {k.value}
               </p>
@@ -2455,7 +2416,7 @@ function PastoralTab({
           </p>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">
+              <p className="mb-2 text-[12px] font-medium text-[var(--on-surface-muted)]">
                 Attendance vs Score
               </p>
               <PastoralScatter
@@ -2467,7 +2428,7 @@ function PastoralTab({
               />
             </div>
             <div>
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">
+              <p className="mb-2 text-[12px] font-medium text-[var(--on-surface-muted)]">
                 Detentions vs Score
               </p>
               <PastoralScatter
@@ -2522,7 +2483,7 @@ function PastoralTab({
               <tr className="border-y border-[var(--outline-variant)]">
                 <th
                   scope="col"
-                  className="px-5 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--on-surface-muted)]"
+                  className="px-5 py-3.5 text-left text-[12px] font-medium text-[var(--on-surface-muted)]"
                 >
                   Student
                 </th>
@@ -2645,13 +2606,13 @@ function PastoralModal({
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10 bg-[var(--surface-container-low)] border-b border-[var(--outline-variant)]/20">
                 <tr>
-                  <th className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">STUDENT</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">SCORE</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">ATTENDANCE</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">LATES</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">DETENTIONS</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">EXCL.</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">ON CALLS</th>
+                  <th className="px-5 py-3 text-left text-[12px] font-medium text-[var(--on-surface-muted)]">Student</th>
+                  <th className="px-4 py-3 text-right text-[12px] font-medium text-[var(--on-surface-muted)]">Score</th>
+                  <th className="px-4 py-3 text-right text-[12px] font-medium text-[var(--on-surface-muted)]">Attendance</th>
+                  <th className="px-4 py-3 text-right text-[12px] font-medium text-[var(--on-surface-muted)]">Lates</th>
+                  <th className="px-4 py-3 text-right text-[12px] font-medium text-[var(--on-surface-muted)]">Detentions</th>
+                  <th className="px-4 py-3 text-right text-[12px] font-medium text-[var(--on-surface-muted)]">Exclusions</th>
+                  <th className="px-4 py-3 text-right text-[12px] font-medium text-[var(--on-surface-muted)]">On calls</th>
                 </tr>
               </thead>
               <tbody>
@@ -2777,7 +2738,7 @@ function TeachingTab({
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-sm">
-            <thead className="bg-[var(--surface-container-low)] text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-muted)]">
+            <thead className="bg-[var(--surface-container-low)] text-[12px] font-medium text-[var(--on-surface-muted)]">
               <tr>
                 <th className="px-5 py-3">Teacher</th>
                 <th className="px-4 py-3">Subject</th>
@@ -2888,9 +2849,9 @@ function TeachingModal({
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10 bg-[var(--surface-container-low)] border-b border-[var(--outline-variant)]/20">
                 <tr>
-                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)] w-8">#</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">STUDENT</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">SCORE</th>
+                  <th className="px-4 py-3 text-left text-[12px] font-medium text-[var(--on-surface-muted)] w-8">#</th>
+                  <th className="px-4 py-3 text-left text-[12px] font-medium text-[var(--on-surface-muted)]">Student</th>
+                  <th className="px-4 py-3 text-right text-[12px] font-medium text-[var(--on-surface-muted)]">Score</th>
                 </tr>
               </thead>
               <tbody>

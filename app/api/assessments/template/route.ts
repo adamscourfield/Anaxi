@@ -4,6 +4,7 @@ import { requireFeature } from "@/lib/guards";
 import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { withApi } from "@/lib/apiRoute";
+import { normalizeYearGroup } from "@/lib/yearGroup";
 
 export const GET = withApi(async function GET(req: Request) {
   const user = await getSessionUserOrThrow();
@@ -13,7 +14,7 @@ export const GET = withApi(async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const yearGroup = String(searchParams.get("yearGroup") || "").trim();
+  const yearGroup = normalizeYearGroup(String(searchParams.get("yearGroup") || "")) ?? "";
   const subjects = String(searchParams.get("subjects") || "")
     .split(",")
     .map((s) => s.trim())

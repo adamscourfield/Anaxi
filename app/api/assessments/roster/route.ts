@@ -3,6 +3,7 @@ import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature, requireAssessmentWrite } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { withApi } from "@/lib/apiRoute";
+import { normalizeYearGroup } from "@/lib/yearGroup";
 
 /** Full (unpaginated) student roster for a year group, for the grade-entry grid. */
 export const GET = withApi(async function GET(req: Request) {
@@ -11,7 +12,7 @@ export const GET = withApi(async function GET(req: Request) {
   requireAssessmentWrite(user);
 
   const { searchParams } = new URL(req.url);
-  const yearGroup = String(searchParams.get("yearGroup") || "").trim();
+  const yearGroup = normalizeYearGroup(String(searchParams.get("yearGroup") || "")) ?? "";
   if (!yearGroup) return NextResponse.json({ error: "yearGroup is required" }, { status: 400 });
 
   const students = await prisma.student.findMany({

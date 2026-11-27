@@ -15,7 +15,6 @@ import {
   TeacherRiskRow,
 } from "@/modules/analysis/teacherRisk";
 import { computeCohortPivot, CohortPivotRow } from "@/modules/analysis/cohortPivot";
-import { getProgress8DashboardSummary, type Progress8DashboardSummary } from "@/modules/assessments/progress8";
 import { computeStudentRiskIndex, StudentRiskRow } from "@/modules/analysis/studentRisk";
 import { HomeAssembly } from "@/modules/home/assembler";
 import { addDays, attendancePercentage, dateKey } from "@/lib/integrations/arbor/attendanceSync";
@@ -49,7 +48,6 @@ export type AttainmentSummary = {
   subjectCount: number;
   studentCount: number;
   totalResults: number;
-  progress8: Progress8DashboardSummary | null;
   triangulatedCount: number;
   urgentCount: number;
   priorityCount: number;
@@ -392,7 +390,6 @@ export async function hydrateLeadershipHomeData({
               subjectCount,
               studentCount,
               totalResults,
-              progress8: await getProgress8DashboardSummary(user.tenantId),
               triangulatedCount: tri.meta.total,
               urgentCount: tri.meta.urgent,
               priorityCount: tri.meta.priority,

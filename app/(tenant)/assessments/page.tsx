@@ -1,127 +1,90 @@
+import Link from "next/link";
+import type { QualificationType } from "@prisma/client";
 import { getSessionUserOrThrow } from "@/lib/auth";
 import { requireFeature } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card } from "@/components/ui/card";
-import { DataTableEmpty } from "@/components/ui/data-table-empty";
-import { Button } from "@/components/ui/button";
 import { AttainmentPageShell } from "@/components/assessments/AttainmentPageShell";
 import { getProgress8DashboardSummary } from "@/modules/assessments/progress8";
-import Link from "next/link";
+import { formatYearGroup } from "@/lib/yearGroup";
+import w from "@/components/assessments/workspace.module.css";
+import { STATUS_CLASS, STATUS_LABEL } from "@/components/assessments/resultStatus";
 import styles from "./page.module.css";
-import type { QualificationType, PointType } from "@prisma/client";
-import { qualificationTypePillClasses } from "@/modules/assessments/attainmentColours";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const QUAL_LABELS: Record<QualificationType, string> = {
+const QUALIFICATION: Record<QualificationType, string> = {
   GCSE: "GCSE",
-  A_LEVEL: "A Level",
+  A_LEVEL: "A level",
   PERCENTAGE: "Percentage",
   OTHER: "Other",
 };
 
-const QUAL_COLOURS = qualificationTypePillClasses;
+type Cycle = Awaited<ReturnType<typeof loadCycles>>[number];
 
-function totalEntries(cycle: {
-  points: Array<{ assessments: Array<{ entryCount: number; _count: { results: number } }> }>;
-}): number {
-  return cycle.points.reduce(
-    (s, p) => s + p.assessments.reduce((ss, a) => ss + a._count.results, 0),
-    0
-  );
+function loadCycles(tenantId: string) {
+  return prisma.assessmentCycle.findMany({
+    where: { tenantId },
+    include: {
+      points: {
+        orderBy: { ordinal: "asc" },
+        include: { assessments: { select: { subject: true, yearGroup: true, _count: { select: { results: true } } } } },
+      },
+    },
+    orderBy: [{ isActive: "desc" }, { startDate: "desc" }],
+  });
 }
 
-function totalSubjects(cycle: {
-  points: Array<{ assessments: Array<{ subject: string }> }>;
-}): number {
-  const subjects = new Set<string>();
-  for (const p of cycle.points) {
-    for (const a of p.assessments) subjects.add(a.subject);
-  }
-  return subjects.size;
+function cycleFacts(cycle: Cycle) {
+  const subjects = new Set(cycle.points.flatMap((p) => p.assessments.map((a) => a.subject)));
+  const grades = cycle.points.reduce((s, p) => s + p.assessments.reduce((ss, a) => ss + a._count.results, 0), 0);
+  const yearGroup = cycle.points.flatMap((p) => p.assessments.map((a) => a.yearGroup)).find(Boolean);
+  const latest = [...cycle.points].reverse().find((p) => p.assessments.length > 0) ?? cycle.points.at(-1) ?? null;
+  return { subjects: subjects.size, grades, yearGroup: cycle.cohortLabel || (yearGroup ? formatYearGroup(yearGroup) : ""), latest };
 }
 
-// ─── Cycle table ─────────────────────────────────────────────────────────────
-
-type CycleRow = {
-  id: string;
-  label: string;
-  cohortLabel: string;
-  qualificationType: QualificationType;
-  academicYear: string;
-  isActive: boolean;
-  points: Array<{
-    id: string;
-    pointType: PointType;
-    assessments: Array<{ subject: string; entryCount: number; matchedStudentCount: number; _count: { results: number } }>;
-  }>;
-};
-
-function CycleTable({ cycles, emptyLabel }: { cycles: CycleRow[]; emptyLabel: string }) {
-  if (cycles.length === 0) {
-    return <p className="text-sm text-[var(--on-surface-muted)]">{emptyLabel}</p>;
-  }
+function CycleTable({ cycles }: { cycles: Cycle[] }) {
   return (
-    <div className="table-shell">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+    <div className={w.card}>
+      <div className={w.scroll}>
+        <table className={`${w.table} ${styles.cycles}`}>
           <thead>
-            <tr className="table-head-row">
-              <th className="px-5 py-3 text-left">Cycle</th>
-              <th className="px-4 py-3 text-left">Cohort</th>
-              <th className="px-4 py-3 text-right">Points</th>
-              <th className="px-4 py-3 text-right">Subjects</th>
-              <th className="px-5 py-3 text-right">Entries</th>
+            <tr>
+              <th>Cycle</th>
+              <th>Year group</th>
+              <th>Latest results</th>
+              <th className={w.num}>Result points</th>
+              <th className={w.num}>Subjects</th>
+              <th className={w.num}>Grades entered</th>
             </tr>
           </thead>
           <tbody>
             {cycles.map((cycle) => {
-              const entries = totalEntries(cycle);
-              const subjects = totalSubjects(cycle);
+              const f = cycleFacts(cycle);
               return (
-                <tr
-                  key={cycle.id}
-                  className={`table-row group ${!cycle.isActive ? "opacity-75 bg-[var(--surface-container-low)]/40" : ""}`}
-                >
-                  <td className="px-5 py-3.5">
-                    <Link
-                      href={`/assessments/${cycle.id}`}
-                      className="flex items-center gap-2.5 group/link"
-                    >
-                      <div>
-                        <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
-                          <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${QUAL_COLOURS[cycle.qualificationType]}`}>
-                            {QUAL_LABELS[cycle.qualificationType]}
-                          </span>
-                          {cycle.isActive ? (
-                            <span className="rounded bg-[var(--pill-success-bg)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--pill-success-text)] ring-1 ring-inset ring-[var(--pill-success-ring)]">
-                              Active
-                            </span>
-                          ) : (
-                            <span className="rounded bg-[var(--surface-container-high)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--outline-variant)_35%,transparent)]">
-                              Archived
-                            </span>
-                          )}
-                        </div>
-                        <span className="font-semibold text-[var(--on-surface)] group-hover/link:text-[var(--accent)] calm-transition">
-                          {cycle.label}
-                        </span>
-                      </div>
+                <tr key={cycle.id} className={cycle.isActive ? "" : w.archived}>
+                  <td>
+                    <Link className={w.name} href={`/assessments/${cycle.id}`}>
+                      {cycle.label}
                     </Link>
+                    <span className={w.sub}>
+                      {[QUALIFICATION[cycle.qualificationType], cycle.academicYear].filter(Boolean).join(" · ")}
+                    </span>
                   </td>
-                  <td className="px-4 py-3.5 text-[var(--on-surface-muted)]">
-                    {cycle.cohortLabel || <span className="text-[var(--on-surface-muted)]/40">—</span>}
+                  <td className={`${w.nowrap} ${w.muted}`}>{f.yearGroup || "—"}</td>
+                  <td className={w.nowrap}>
+                    {f.latest ? (
+                      <>
+                        {f.latest.label}
+                        <span className={w.sub}>
+                          <span className={`${w.status} ${STATUS_CLASS[f.latest.resultStatus]}`}>{STATUS_LABEL[f.latest.resultStatus]}</span>
+                        </span>
+                      </>
+                    ) : (
+                      <span className={w.muted}>No result points yet</span>
+                    )}
                   </td>
-                  <td className="px-4 py-3.5 text-right tabular-nums font-semibold text-[var(--on-surface)]">
-                    {cycle.points.length}
-                  </td>
-                  <td className="px-4 py-3.5 text-right tabular-nums text-[var(--on-surface-muted)]">
-                    {subjects}
-                  </td>
-                  <td className="px-5 py-3.5 text-right tabular-nums text-[var(--on-surface-muted)]">
-                    {entries > 0 ? entries.toLocaleString() : <span className="text-[var(--on-surface-muted)]/40">—</span>}
-                  </td>
+                  <td className={`${w.num} ${w.muted}`}>{cycle.points.length}</td>
+                  <td className={`${w.num} ${w.muted}`}>{f.subjects}</td>
+                  <td className={w.num}>{f.grades ? f.grades.toLocaleString("en-GB") : "—"}</td>
                 </tr>
               );
             })}
@@ -132,169 +95,91 @@ function CycleTable({ cycles, emptyLabel }: { cycles: CycleRow[]; emptyLabel: st
   );
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default async function AssessmentsPage() {
   const user = await getSessionUserOrThrow();
   await requireFeature(user.tenantId, "ASSESSMENTS");
 
-  const cycles = await prisma.assessmentCycle.findMany({
-    where: { tenantId: user.tenantId },
-    include: {
-      points: {
-        orderBy: { ordinal: "asc" },
-        include: {
-          assessments: {
-            select: {
-              subject: true,
-              entryCount: true,
-              matchedStudentCount: true,
-              _count: { select: { results: true } },
-            },
-          },
-        },
-      },
-    },
-    orderBy: [{ isActive: "desc" }, { startDate: "desc" }],
-  });
-
-  const activeCycles = cycles.filter((c) => c.isActive);
-  const archivedCycles = cycles.filter((c) => !c.isActive);
-
-  const totalActive = activeCycles.length;
-  const totalSubjectsAll = new Set(
-    cycles.flatMap((c) => c.points.flatMap((p) => p.assessments.map((a) => a.subject))),
-  ).size;
-  const totalEntriesAll = cycles.reduce(
-    (s, c) => s + c.points.reduce((ss, p) => ss + p.assessments.reduce((sss, a) => sss + a._count.results, 0), 0),
-    0,
-  );
-  const progress8Summary = await getProgress8DashboardSummary(user.tenantId);
+  const [cycles, p8] = await Promise.all([loadCycles(user.tenantId), getProgress8DashboardSummary(user.tenantId)]);
+  const active = cycles.filter((c) => c.isActive);
+  const archived = cycles.filter((c) => !c.isActive);
+  const gradesActive = active.reduce((s, c) => s + cycleFacts(c).grades, 0);
+  const p8Value = p8?.averagePredictedProgress8 ?? null;
 
   return (
-    <div className={styles.page}><AttainmentPageShell>
-      <PageHeader
-        variant="ledger"
-        className="!mb-0 border-0 !pb-0"
-        eyebrowClassName="text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-muted"
-        eyebrow="Attainment"
-        titleClassName="text-[1.75rem] font-bold tracking-tight text-text md:text-[2rem]"
-        subtitleClassName="max-w-3xl text-[0.9375rem] font-medium leading-relaxed text-muted"
-        title="Cycles"
-        subtitle="Attainment cycles and grade imports — track cohort outcomes from baseline through to final results."
-        actions={
-          <Button
-            asChild
-            className="h-10 min-h-0 rounded-sm border border-border bg-[var(--on-surface)] px-5 text-sm font-semibold text-[var(--surface-bright)] shadow-none hover:bg-[var(--on-surface)]/90 hover:opacity-95"
-          >
-            <Link href="/assessments/new" className="gap-2">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              New cycle
-            </Link>
-          </Button>
-        }
-      />
-
-      {cycles.length === 0 && (
-        <Card className="overflow-hidden p-0">
-          <DataTableEmpty
-            title="No attainment cycles yet"
-            description="Create a cycle for a cohort to start tracking attainment across the academic year."
-            action={
-              <Button asChild>
-                <Link href="/assessments/new">Create your first cycle</Link>
-              </Button>
+    <div className={styles.page}>
+      <AttainmentPageShell>
+        <div className={w.page}>
+          <PageHeader
+            variant="ledger"
+            title="Attainment"
+            subtitle="Each cycle follows one year group's results through the year, from the first assessment to final grades."
+            actions={
+              <Link href="/assessments/new" className={w.button}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                New cycle
+              </Link>
             }
           />
-        </Card>
-      )}
 
-      {/* Active cycles */}
-      {activeCycles.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-muted)]">
-            Active Cycles
-          </h2>
-          <Card className="overflow-hidden p-0">
-            <CycleTable cycles={activeCycles} emptyLabel="No active cycles" />
-          </Card>
-        </section>
-      )}
+          {cycles.length === 0 ? (
+            <div className={w.empty}>
+              <h2>No cycles yet</h2>
+              <p>Create a cycle for a year group, add its result points (mocks, assessments), then upload or type in the grades.</p>
+              <Link href="/assessments/new" className={w.button}>
+                Create the first cycle
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className={w.summary}>
+                <div className={w.tile}>
+                  <span>Active cycles</span>
+                  <strong>{active.length}</strong>
+                  {archived.length > 0 && <p>{archived.length} archived</p>}
+                </div>
+                <div className={w.tile}>
+                  <span>Grades entered</span>
+                  <strong>{gradesActive.toLocaleString("en-GB")}</strong>
+                  <p>Across active cycles</p>
+                </div>
+                <div className={w.tile}>
+                  <span>Predicted Progress 8</span>
+                  <strong>{p8Value === null ? "—" : `${p8Value > 0 ? "+" : p8Value < 0 ? "−" : ""}${Math.abs(p8Value).toFixed(2)}`}</strong>
+                  <p>
+                    {p8
+                      ? `${p8.cycleLabel}, ${p8.pointLabel} · ${p8.studentCountWithPrediction} students with KS2 data`
+                      : "Needs a GCSE cycle with validated or published results"}
+                  </p>
+                </div>
+              </div>
 
-      {/* Archived cycles */}
-      {archivedCycles.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--on-surface-muted)]">
-            Archived Cycles
-          </h2>
-          <Card className="overflow-hidden p-0">
-            <CycleTable cycles={archivedCycles} emptyLabel="No archived cycles" />
-          </Card>
-        </section>
-      )}
-
-      {(activeCycles.length > 0 || archivedCycles.length > 0) && (
-        <div className={styles.summary}>
-          <div className="flex min-w-0 flex-1 items-start gap-3 sm:p-5">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l4-4 4 4 6-8" />
-              </svg>
-            </span>
-            <div>
-              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">All cycles</p>
-              <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalActive} active</p>
-            </div>
-          </div>
-          <div className="hidden" aria-hidden />
-          <div className="flex min-w-0 flex-1 items-start gap-3 sm:p-5">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="9" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
-            <div>
-              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Total subjects</p>
-              <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalSubjectsAll}</p>
-            </div>
-          </div>
-          <div className="hidden" aria-hidden />
-          <div className="flex min-w-0 flex-1 items-start gap-3 sm:p-5">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeLinejoin="round" />
-                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" />
-              </svg>
-            </span>
-            <div>
-              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Total entries</p>
-              <p className="mt-0.5 text-xl font-bold tabular-nums text-text">{totalEntriesAll.toLocaleString()}</p>
-            </div>
-          </div>
-          <div className="hidden" aria-hidden />
-          <div className="flex min-w-0 flex-1 items-start gap-3 sm:p-5">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--surface-container-low)] text-muted [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-                <path d="M4 18h16" strokeLinecap="round" />
-                <path d="M7 15l3-3 3 2 4-5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
-            <div>
-              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">Predicted Progress 8</p>
-              <p className="mt-0.5 text-xl font-bold tabular-nums text-text">
-                {progress8Summary?.averagePredictedProgress8 !== null && progress8Summary?.averagePredictedProgress8 !== undefined
-                  ? `${progress8Summary.averagePredictedProgress8 > 0 ? "+" : ""}${progress8Summary.averagePredictedProgress8.toFixed(2)}`
-                  : "—"}
+              {active.length > 0 && (
+                <section className={styles.section} aria-labelledby="active-cycles">
+                  <div className={w.heading}>
+                    <h2 id="active-cycles">Active cycles</h2>
+                  </div>
+                  <CycleTable cycles={active} />
+                </section>
+              )}
+              {archived.length > 0 && (
+                <section className={styles.section} aria-labelledby="archived-cycles">
+                  <div className={w.heading}>
+                    <h2 id="archived-cycles">Archived</h2>
+                    <p>Kept for comparison. Archived cycles don&apos;t appear in attainment insights.</p>
+                  </div>
+                  <CycleTable cycles={archived} />
+                </section>
+              )}
+              <p className={w.note}>
+                Predicted Progress 8 compares each student&apos;s grades at that result point with the Attainment 8 expected for students
+                with the same KS2 scores. It is an estimate from in-school results, not an official figure.
               </p>
-            </div>
-          </div>
+            </>
+          )}
         </div>
-      )}
-    </AttainmentPageShell></div>
+      </AttainmentPageShell>
+    </div>
   );
 }

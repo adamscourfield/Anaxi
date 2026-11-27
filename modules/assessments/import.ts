@@ -62,6 +62,7 @@ export async function importAssessmentResults(
   });
 
   // Build student lookup: prefer UPN, fall back to name-based matching
+  const ids = [...new Set(records.map((r) => r.studentId).filter((id): id is string => Boolean(id)))];
   const upns = [...new Set(records.map((r) => r.upn).filter(Boolean))];
   const names = [...new Set(records.map((r) => r.studentName).filter(Boolean))];
 
@@ -69,6 +70,7 @@ export async function importAssessmentResults(
     where: {
       tenantId,
       OR: [
+        ...(ids.length > 0 ? [{ id: { in: ids } }] : []),
         ...(upns.length > 0 ? [{ upn: { in: upns } }] : []),
         ...(names.length > 0 ? [{ fullName: { in: names } }] : []),
       ],
@@ -76,6 +78,7 @@ export async function importAssessmentResults(
     select: { id: true, upn: true, fullName: true },
   });
 
+  const knownIds = new Set(allStudents.map((s) => s.id));
   const studentByUpn = new Map(
     allStudents.filter((s) => s.upn).map((s) => [s.upn!, s.id])
   );
@@ -92,9 +95,11 @@ export async function importAssessmentResults(
     const record = records[i];
     const rowNum = i + 2; // 1-indexed + header row
 
-    // Resolve student ID: UPN first, then name
-    let studentId = record.upn ? studentByUpn.get(record.upn) : undefined;
-    if (!studentId && record.studentName) {
+    // Resolve student: a known ID (from this school) first, then UPN, then name
+    // (an ID that isn't in this school never falls back to matching by name)
+    let studentId = record.studentId ? (knownIds.has(record.studentId) ? record.studentId : undefined) : undefined;
+    if (!record.studentId && record.upn) studentId = studentByUpn.get(record.upn);
+    if (!record.studentId && !studentId && record.studentName) {
       studentId = studentByName.get(record.studentName.toLowerCase().trim());
     }
     if (!studentId) {

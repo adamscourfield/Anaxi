@@ -23,6 +23,7 @@ import { parseAssessmentCsv, detectSubjectColumns } from "@/modules/assessments/
 import { importAssessmentResults, createAssessment } from "@/modules/assessments/import";
 import type { GradeFormat } from "@prisma/client";
 import { withApi } from "@/lib/apiRoute";
+import { formatYearGroup, normalizeYearGroup } from "@/lib/yearGroup";
 
 export const POST = withApi(async function POST(
   req: Request,
@@ -48,7 +49,8 @@ export const POST = withApi(async function POST(
 
   const form = await req.formData();
   const file = form.get("file") as File | null;
-  const yearGroup = String(form.get("yearGroup") || "");
+  // Stored as "Y11" etc. Look up and create with the same form, or a re-upload makes a duplicate.
+  const yearGroup = normalizeYearGroup(String(form.get("yearGroup") || "")) ?? "";
   const gradeFormat = String(form.get("gradeFormat") || "GCSE") as GradeFormat;
   const subjectsRaw = String(form.get("subjects") || "");
   const singleSubject = String(form.get("subject") || "");
@@ -132,7 +134,7 @@ export const POST = withApi(async function POST(
         pointId: resolvedParams.pointId,
         subject,
         yearGroup,
-        title: `${subject} — ${yearGroup} (${point.label})`,
+        title: `${subject} — ${formatYearGroup(yearGroup)} (${point.label})`,
         gradeFormat,
         createdByUserId: user.id,
       });

@@ -356,7 +356,7 @@ export default function ComparisonPage() {
       <Card className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-5 items-end">
           <div className="sm:col-span-2 space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">From</label>
+            <label className="text-xs font-medium text-[var(--on-surface-muted)]">From</label>
             <select className="field w-full" value={fromId} onChange={(e) => setFromId(e.target.value)}>
               <option value="">Select point…</option>
               {cyclePoints.map((p) => (
@@ -366,7 +366,7 @@ export default function ComparisonPage() {
           </div>
           <div className="text-center text-lg text-[var(--on-surface-muted)] pb-1">→</div>
           <div className="sm:col-span-2 space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wide text-[var(--on-surface-muted)]">To</label>
+            <label className="text-xs font-medium text-[var(--on-surface-muted)]">To</label>
             <select className="field w-full" value={toId} onChange={(e) => setToId(e.target.value)}>
               <option value="">Select point…</option>
               {cyclePoints.filter((p) => p.id !== fromId).map((p) => (
@@ -460,7 +460,7 @@ export default function ComparisonPage() {
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${iconBg}`}>{icon}</span>
                   </div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
+                  <p className="text-[12px] font-medium text-[var(--on-surface-muted)]">{label}</p>
                   <p className={`mt-1 text-2xl font-bold tabular-nums ${colour}`}>{value}</p>
                   <p className="mt-1 text-[12px] text-[var(--on-surface-muted)]">{note}</p>
                 </Card>
@@ -578,7 +578,7 @@ export default function ComparisonPage() {
                               <div className="max-h-64 overflow-y-auto">
                                 <table className="w-full text-xs">
                                   <thead>
-                                    <tr className="text-[9px] font-semibold uppercase tracking-wide text-[var(--on-surface-muted)]">
+                                    <tr className="text-[9px] font-medium text-[var(--on-surface-muted)]">
                                       <th className="pb-1.5 pr-3 text-left">Student</th>
                                       <th className="pb-1.5 pr-3 text-center">From</th>
                                       <th className="pb-1.5 pr-3 text-center">To</th>
@@ -647,7 +647,7 @@ export default function ComparisonPage() {
                   },
                 ].map(({ label, value, sub, colour }, i) => (
                   <div key={label} className={`flex flex-1 flex-col justify-center px-5 py-4 ${i > 0 ? "sm:border-l sm:border-[var(--outline-variant)]" : ""}`}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</p>
+                    <p className="text-[12px] font-medium text-[var(--on-surface-muted)]">{label}</p>
                     <p className={`mt-0.5 text-2xl font-bold tabular-nums ${colour}`}>{value}</p>
                     <p className="mt-0.5 text-[10px] text-[var(--on-surface-muted)]">{sub}</p>
                   </div>
@@ -786,7 +786,7 @@ export default function ComparisonPage() {
                     },
                   ].map(({ title, students, positive }) => (
                     <div key={title}>
-                      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[var(--on-surface-muted)]">{title}</p>
+                      <p className="mb-2 text-[12px] font-medium text-[var(--on-surface-muted)]">{title}</p>
                       {students.length === 0 ? (
                         <p className="text-xs text-[var(--on-surface-muted)]">None</p>
                       ) : (

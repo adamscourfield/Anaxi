@@ -269,7 +269,7 @@ export default async function EMThresholdPage({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-5">
         <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+          <p className="text-[12px] font-medium text-muted">
             English {targetThreshold}+
           </p>
           <p className="mt-4 text-4xl font-bold leading-none tracking-tight text-text tabular-nums">{engPct}%</p>
@@ -278,7 +278,7 @@ export default async function EMThresholdPage({
           </p>
         </div>
         <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+          <p className="text-[12px] font-medium text-muted">
             Maths {targetThreshold}+
           </p>
           <p className="mt-4 text-4xl font-bold leading-none tracking-tight text-text tabular-nums">{mathsPct}%</p>
@@ -287,7 +287,7 @@ export default async function EMThresholdPage({
           </p>
         </div>
         <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">PP vs Non-PP gap</p>
+          <p className="text-[12px] font-medium text-muted">PP vs Non-PP gap</p>
           <p className="mt-4 text-4xl font-bold leading-none tracking-tight text-text tabular-nums">
             {Math.abs(nonPpPct - ppPct)}pp
           </p>
@@ -297,7 +297,7 @@ export default async function EMThresholdPage({
           </p>
         </div>
         <div className="rounded-sm border border-border bg-[var(--surface-container-lowest)] p-6 shadow-none">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">SEND vs Non-SEND gap</p>
+          <p className="text-[12px] font-medium text-muted">SEND vs Non-SEND gap</p>
           <p className="mt-4 text-4xl font-bold leading-none tracking-tight text-text tabular-nums">
             {Math.abs(nonSendPct - sendPct)}pp
           </p>

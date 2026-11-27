@@ -151,7 +151,7 @@ export function SubjectDistributionSection({
             <div className="flex flex-wrap gap-6 border-t border-[var(--outline-variant)]/20 pt-4">
               {pctThresholds.map(({ label, count, pct }) => (
                 <div key={label} className="flex items-baseline gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-muted)]">{label}</span>
+                  <span className="text-xs font-medium text-[var(--on-surface-muted)]">{label}</span>
                   <span className="text-2xl font-bold tabular-nums text-[var(--on-surface)]">{pct}%</span>
                   <span className="text-xs text-[var(--on-surface-muted)]">({count})</span>
                 </div>
@@ -222,7 +222,7 @@ export function SubjectDistributionSection({
                       const pct = distTotal > 0 ? Math.round((count / distTotal) * 100) : 0;
                       return (
                         <div key={label} className="flex items-baseline gap-2">
-                          <span className={`text-sm font-bold uppercase tracking-wider ${cls}`}>{label}</span>
+                          <span className={`text-sm font-medium ${cls}`}>{label}</span>
                           <span className={`text-3xl font-bold tabular-nums leading-none ${cls}`}>{pct}%</span>
                           <span className="text-sm text-[var(--on-surface-muted)]">({count} students)</span>
                         </div>

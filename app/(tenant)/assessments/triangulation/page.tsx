@@ -82,15 +82,15 @@ export default async function TriangulationPage() {
       {/* Summary stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="space-y-0.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-muted)]">Total flagged</p>
+          <p className="text-[12px] font-medium text-[var(--on-surface-muted)]">Total flagged</p>
           <p className="text-2xl font-bold text-[var(--on-surface)]">{meta.total}</p>
         </Card>
         <Card className="space-y-0.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-muted)]">Urgent</p>
+          <p className="text-[12px] font-medium text-[var(--on-surface-muted)]">Urgent</p>
           <p className="text-2xl font-bold text-[var(--error)]">{meta.urgent}</p>
         </Card>
         <Card className="space-y-0.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-muted)]">Priority</p>
+          <p className="text-[12px] font-medium text-[var(--on-surface-muted)]">Priority</p>
           <p className="text-2xl font-bold text-[var(--warning-text)]">{meta.priority}</p>
         </Card>
       </div>
@@ -137,7 +137,7 @@ export default async function TriangulationPage() {
 
               {/* Assessment results */}
               <div className="border-t border-[var(--outline-variant)]/30 pt-3">
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-muted)]">
+                <p className="mb-2 text-[12px] font-medium text-[var(--on-surface-muted)]">
                   Assessment results · {student.attainmentResults[0]?.pointLabel ?? ""}
                 </p>
                 <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">

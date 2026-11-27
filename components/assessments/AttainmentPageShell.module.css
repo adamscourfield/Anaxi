@@ -1,0 +1,4 @@
+/* Every attainment page: sentence case and readable labels, whatever shared component draws them. */
+.shell :global(.uppercase) { text-transform: none; letter-spacing: normal; }
+.shell :global(.table-head-row) th { text-transform: none; letter-spacing: normal; font-size: 12px; font-weight: 500; color: #6e6e73; }
+.shell :global([class*="tracking-widest"]), .shell :global([class*="tracking-[0.1"]) { letter-spacing: normal; }

@@ -10,13 +10,13 @@
 .page th { color: #6e6e73; font-size: 10px; letter-spacing: .08em; font-weight: 600; }
 .summary { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
 .summary > div:not([aria-hidden]) { padding: 20px; background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; box-shadow: 0 14px 34px -22px #1c1c1e2e; }
-.summary span[aria-hidden] { background: #fff; color: #e14e36; border: 1px solid #e5e5e6; border-radius: 12px; }
+.summary span[aria-hidden] { background: #fff; color: #6e6e73; border: 1px solid #e5e5e6; border-radius: 12px; }
 @media (max-width: 1023px) { .summary { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 639px) { .summary { grid-template-columns: 1fr; } }
 
 .page select { background: #fff; border: 1px solid #e5e5e6; border-radius: 10px; min-height: 42px; }
 
-.page span:has(> svg) { background: #fff; color: #e14e36; border: 1px solid #e5e5e6; border-radius: 12px; }
+.page span:has(> svg) { background: #fff; color: #6e6e73; border: 1px solid #e5e5e6; border-radius: 12px; }
 
 .page [data-ui-card], .page :global(.grid) > * { min-width: 0; }
 
@@ -38,7 +38,7 @@
 .page .tabs button[aria-selected="true"] { background: #1c1c1e; color: #fff; }
 .page .tabs button[aria-selected="false"]:hover { background: #fff; color: #1c1c1e; }
 .quartileChart { padding: 20px; background: #fff; border: 1px solid #e5e5e6; border-radius: 14px; }
-.chartLabel { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #6e6e73; margin-bottom: 24px; }
+.chartLabel { font-size: 12px; font-weight: 500; color: #6e6e73; margin-bottom: 24px; }
 .chartRows { display: flex; flex-direction: column; gap: 18px; }
 .page .chartRow {
   display: grid; grid-template-columns: 22px minmax(0,1fr) 48px; align-items: center; gap: 10px;
@@ -48,7 +48,7 @@
 .page .chartRow:hover { background: transparent; color: #1c1c1e; }
 .chartRowLabel { font-size: 11px; color: #6e6e73; }
 .chartTrack { height: 10px; background: #f3f3f4; border-radius: 999px; overflow: hidden; }
-.chartFill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg,#ff6a52,#e14e36); transition: width .9s cubic-bezier(.16,1,.3,1); }
+.chartFill { display: block; height: 100%; border-radius: 999px; background: #1c1c1e; transition: width .9s cubic-bezier(.16,1,.3,1); }
 .chartValue { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
 .page .chartRow:hover .chartFill { filter: brightness(.93); }
 @media (prefers-reduced-motion: reduce) { .chartFill { transition: none; } }
@@ -80,7 +80,7 @@
 .pastoralStat { padding: 18px; box-shadow: none; }
 .pastoralStat > div:first-child {
   width: 36px; height: 36px; border-radius: 10px;
-  border: 1px solid #e5e5e6; background: #fff; color: #e14e36;
+  border: 1px solid #e5e5e6; background: #fff; color: #6e6e73;
 }
 .page :global(.home-hero-glass) > div { min-height: 0; padding: 18px; }
 .page :global(.home-hero-glass) span:has(> svg) { width: 36px; height: 36px; }
@@ -100,7 +100,7 @@
 .page .tabs button[aria-selected="true"] {
   background: #f5f5f5; border-color: #e5e5e6; color: #1c1c1e;
 }
-.page .tabs button[aria-selected="true"] svg { color: #e14e36; }
+.page .tabs button[aria-selected="true"] svg { color: #1c1c1e; }
 .page .tabs button[aria-selected="false"]:hover { background: #fafafa; }
 .page svg { max-width: 100%; }
 .page th { font-size: 10px; font-weight: 600; letter-spacing: .06em; color: #6e6e73; }
@@ -130,7 +130,7 @@
 .page button.subjectDisclosure[aria-expanded="true"] { background: #fafafa; }
 .page button.subjectDisclosure p:first-child { color: #1c1c1e; font-size: 14px; font-weight: 600; }
 .page button.subjectDisclosure p + p { color: #6e6e73; margin-top: 3px; line-height: 1.5; }
-.page button.subjectDisclosure > svg { color: #e14e36; width: 18px; height: 18px; transition: transform 180ms; }
+.page button.subjectDisclosure > svg { color: #6e6e73; width: 18px; height: 18px; transition: transform 180ms; }
 .page button.subjectDisclosure:focus-visible { outline: 2px solid #ff6a52; outline-offset: -3px; }
 @media (max-width: 640px) { .page button.subjectDisclosure { padding: 14px; } }
 @media (prefers-reduced-motion: reduce) { .page button.subjectDisclosure, .page button.subjectDisclosure > svg { transition: none; } }
@@ -142,7 +142,7 @@
 .page button.teachingClassLink:hover { background: #fff3ef; border-color: #ffd4c8; }
 .page button.teachingClassLink:focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
 .teachingClassName { display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
-.teachingClassName > span { color: #e14e36; font-size: 14px; }
+.teachingClassName > span { color: #6e6e73; font-size: 14px; }
 .teachingClassMeta { color: #6e6e73; font-size: 12px; font-weight: 400; line-height: 1.5; }
 .teachingClassHeading > div { flex-shrink: 0; }
 @media (max-width: 640px) { .teachingClassHeading { align-items: flex-start; gap: 12px; }.teachingClassMeta { font-size: 11px; } }
@@ -160,7 +160,7 @@
 .teachingToolbar select { width: 240px; padding: 8px 12px; font-size: 13px; color: #1c1c1e; }
 .teachingToolbar > span { color: #6e6e73; font-size: 12px; padding-bottom: 10px; }
 .page button.teachingTableLink { display: inline-flex; align-items: center; gap: 8px; padding: 5px 7px; margin-left: -7px; background: transparent; color: #1c1c1e; border-radius: 7px; text-align: left; font-weight: 500; }
-.page button.teachingTableLink > span { color: #e14e36; }
+.page button.teachingTableLink > span { color: #6e6e73; }
 .page button.teachingTableLink:hover:not(:disabled) { background: #fff3ef; }
 .page button.teachingTableLink:disabled { cursor: default; }
 .page button.teachingTableLink:disabled > span { display: none; }
@@ -179,11 +179,11 @@
 .teachingDialogPosition { position: relative; min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 28px; pointer-events: none; }
 .teachingDialog { pointer-events: auto; width: 100%; max-width: 700px; max-height: calc(100dvh - 56px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #ffffffb3; border-radius: 18px; background: #fff; box-shadow: 0 24px 80px -24px #1c1c1e66; }
 .teachingDialogHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 24px 26px 20px; border-bottom: 1px solid #e5e5e6; background: #ffffffeb; }
-.teachingDialogEyebrow { color: #e14e36; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 7px; }
+.teachingDialogEyebrow { color: #6e6e73; font-size: 12px; font-weight: 500; margin-bottom: 7px; }
 .teachingDialogHeader h2 { font-size: 23px; font-weight: 600; letter-spacing: -.025em; line-height: 1.3; }
 .teachingDialogHeader h2 + p { color: #6e6e73; font-size: 12px; margin-top: 6px; }
 button.teachingDialogClose { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; background: #fff; color: #6e6e73; border: 1px solid #e5e5e6; border-radius: 50%; transition: background 160ms, color 160ms; }
-button.teachingDialogClose:hover { background: #fff3ef; color: #e14e36; border-color: #ffb9aa; }
+button.teachingDialogClose:hover { background: #f4f4f5; color: #1c1c1e; border-color: #a1a1aa; }
 .teachingDialog table { font-size: 13px; border-collapse: collapse; }
 .teachingDialog thead { background: #fafafa; border-bottom: 1px solid #e5e5e6; }
 .teachingDialog th { color: #6e6e73; font-size: 10px; letter-spacing: .08em; font-weight: 500; padding: 11px 24px; }
@@ -191,10 +191,11 @@ button.teachingDialogClose:hover { background: #fff3ef; color: #e14e36; border-c
 .teachingDialog tbody tr { background: #fff; transition: background 160ms; }
 .teachingDialog tbody tr:hover { background: #fff8f5; }
 .teachingDialog td a { color: #1c1c1e; font-weight: 500; }
-.teachingDialog td a:hover { color: #e14e36; }
+.teachingDialog td a:hover { color: #1c1c1e; text-decoration: underline; }
 .teachingDialog :is(a,button):focus-visible { outline: 2px solid #ff6a52; outline-offset: 3px; }
 .teachingDialogFooter { padding: 12px 24px; border-top: 1px solid #e5e5e6; font-size: 11px; color: #6e6e73; background: #fafafa; }
 @media (prefers-reduced-motion: no-preference) { .teachingDialog { animation: teachingDialogIn 260ms cubic-bezier(.22,1,.36,1); } }
 @keyframes teachingDialogIn { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: none; } }
 @media (max-width: 640px) { .teachingDialogPosition { padding: 12px; }.teachingDialog { max-height: calc(100dvh - 24px); }.teachingDialogHeader { padding: 20px; }.teachingDialog td,.teachingDialog th { padding: 11px 14px; } }
 @media (prefers-reduced-motion: reduce) { .teachingDialog * { transition: none; } }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 13px; color: #6e6e73; }
