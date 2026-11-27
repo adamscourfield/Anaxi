@@ -3,8 +3,14 @@ on:
   schedule:
     - cron: "30 2 * * *"
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Records to refresh
+        type: choice
+        default: all
+        options: [all, staff-review]
 concurrency:
-  group: arbor-people-photos
+  group: ${{ inputs.scope == 'staff-review' && 'arbor-staff-review' || 'arbor-people-photos' }}
   cancel-in-progress: false
 jobs:
   sync:
@@ -13,6 +19,7 @@ jobs:
     steps:
       - name: Sync people and photos
         env:
+          SYNC_SCOPE: ${{ inputs.scope || 'all' }}
           ANAXI_APP_URL: ${{ secrets.ANAXI_APP_URL }}
           ANAXI_CRON_SECRET: ${{ secrets.ANAXI_CRON_SECRET }}
         run: |
@@ -34,6 +41,10 @@ jobs:
                   raise SystemExit('Sync failed')
           PY
           }
+          if [ "$SYNC_SCOPE" = "staff-review" ]; then
+            run_sync staff-provisioning
+            exit 0
+          fi
           run_sync students
           run_sync staff
           run_sync staff-provisioning

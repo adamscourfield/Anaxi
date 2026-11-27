@@ -33,19 +33,43 @@ export const POST = withApi(async function POST(req: Request) {
     const tenantIds = integration.schools.map((school: { tenantId: string }) => school.tenantId);
     const [staff, users] = await Promise.all([
       new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAllStaff(),
-      db.user.findMany({ where: { tenantId: { in: tenantIds }, externalId: { not: null } }, select: { externalId: true } }),
+      db.user.findMany({ where: { tenantId: { in: tenantIds } }, select: { id: true, externalId: true, email: true, dataSource: true } }),
     ]);
     await db.staffProvisioningRequest.updateMany({
       where: { integrationId: integration.id, status: "PENDING", arborStaffId: { in: staff.filter((record) => !record.isActiveInSchool).map((record) => record.id) } },
       data: { status: "DISMISSED", dismissedAt: new Date() },
     });
-    const linkedIds = new Set(users.map((user: { externalId: string }) => user.externalId));
+    const linkedIds = new Set(users.filter((user: { dataSource: string }) => user.dataSource === "ARBOR").map((user: { externalId: string }) => user.externalId));
+    const ignored = await db.staffProvisioningRequest.findMany({
+      where: { integrationId: integration.id, status: "DISMISSED" }, select: { arborStaffId: true },
+    });
+    const ignoredIds = new Set(ignored.map((request: { arborStaffId: string }) => request.arborStaffId));
+    const activeStaff = staff.filter((record) => record.isActiveInSchool);
+    let linkedExisting = 0;
+    for (const record of activeStaff) {
+      if (ignoredIds.has(record.id)) continue;
+      const email = staffEmail(record);
+      if (!email || activeStaff.filter((other) => staffEmail(other) === email).length !== 1) continue;
+      const matches = users.filter((user: { email: string; externalId: string | null }) => user.email.trim().toLowerCase() === email && !user.externalId);
+      for (const user of matches) {
+        const linked = await db.user.updateMany({
+          where: { id: user.id, externalId: null },
+          data: { externalId: record.id, dataSource: "ARBOR" },
+        });
+        if (linked.count) { linkedExisting++; linkedIds.add(record.id); }
+      }
+    }
+    // Retain resolved rows so discovery is idempotent and ignored records stay ignored.
+    await db.staffProvisioningRequest.updateMany({
+      where: { integrationId: integration.id, status: "PENDING", arborStaffId: { in: [...linkedIds].filter(Boolean) } },
+      data: { status: "PROVISIONED", provisionedAt: new Date() },
+    });
     const candidates = staff.filter((record) => record.isActiveInSchool && !linkedIds.has(record.id));
     const queued = candidates.length ? await db.staffProvisioningRequest.createMany({
       data: candidates.map((record) => ({ integrationId: integration.id, arborStaffId: record.id, fullName: arborStaffFullName(record), email: staffEmail(record), isTeachingStaff: record.isActiveTeachingInSchool })),
       skipDuplicates: true,
     }) : { count: 0 };
-    if (scheduled) return NextResponse.json({ queued: queued.count });
+    if (scheduled) return NextResponse.json({ queued: queued.count, linkedExisting });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("staffProvisioning", "success");
     url.searchParams.set("staffProvisioningQueued", String(queued.count));
