@@ -98,6 +98,9 @@ export const POST = withApi(async function POST(req: Request) {
         dataSource: "ARBOR",
       };
 
+      if (item.action === "UPDATE" && item.existingStudent?.fullName === data.fullName
+        && item.existingStudent.yearGroup === data.yearGroup && item.existingStudent.status === data.status) continue;
+
       if (item.action === "CREATE") {
         const student = await db.student.create({ data: { tenantId: item.tenantId, ...data } });
         await db.sharedIntegrationSyncChange.create({

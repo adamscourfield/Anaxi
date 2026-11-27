@@ -65,6 +65,7 @@ export const POST = withApi(async function POST(req: Request) {
       if (!item.existingUser) throw new Error("Staff sync plan lost its existing user.");
       const before = item.existingUser;
       const data = { fullName: arborStaffFullName(item.arborStaff), externalId: item.arborStaff.id, dataSource: "ARBOR", isActive: true };
+      if (item.action === "UPDATE" && before.fullName === data.fullName && before.isActive === true) continue;
       const user = await db.user.update({ where: { id: before.id }, data });
       await db.sharedIntegrationSyncChange.create({
         data: {

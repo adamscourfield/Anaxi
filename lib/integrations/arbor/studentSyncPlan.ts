@@ -9,6 +9,7 @@ export type ExistingAnaxiStudent = {
   yearGroup: string | null;
   externalId: string | null;
   dataSource: string;
+  status?: string;
 };
 
 export type StudentSyncPlanItem = {

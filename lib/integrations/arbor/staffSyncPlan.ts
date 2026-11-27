@@ -6,6 +6,7 @@ export type ExistingAnaxiStaff = {
   fullName: string;
   externalId: string | null;
   dataSource: string;
+  isActive?: boolean;
 };
 
 export type StaffSyncPlanItem = {

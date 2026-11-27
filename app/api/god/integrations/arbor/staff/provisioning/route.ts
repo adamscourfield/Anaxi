@@ -92,9 +92,11 @@ export const POST = withApi(async function POST(req: Request) {
       const creation = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).getStaffCreationDates();
       createdDateField = creation.field;
       staffDateFields = creation.availableFields.filter((field) => /creat|date/i.test(field));
-      for (const [arborStaffId, arborCreatedAt] of creation.dates) {
+      for (const request of pending) {
+        const arborCreatedAt = creation.dates.get(request.arborStaffId);
+        if (!arborCreatedAt) continue;
         const result = await db.staffProvisioningRequest.updateMany({
-          where: { integrationId: integration.id, arborStaffId, status: "PENDING" }, data: { arborCreatedAt },
+          where: { id: request.id, status: "PENDING" }, data: { arborCreatedAt },
         });
         creationDatesUpdated += result.count;
       }
