@@ -35,9 +35,14 @@ export const POST = withApi(async function POST(req: Request) {
       new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).listAllStaff(),
       db.user.findMany({ where: { tenantId: { in: tenantIds } }, select: { id: true, tenantId: true, externalId: true, email: true, dataSource: true } }),
     ]);
+    // A returning staff member can re-enter review; an explicit Ignore remains permanent.
+    await db.staffProvisioningRequest.updateMany({
+      where: { integrationId: integration.id, status: "DISMISSED", dismissedAt: null, arborStaffId: { in: staff.filter((record) => record.isActiveInSchool).map((record) => record.id) } },
+      data: { status: "PENDING" },
+    });
     await db.staffProvisioningRequest.updateMany({
       where: { integrationId: integration.id, status: "PENDING", arborStaffId: { in: staff.filter((record) => !record.isActiveInSchool).map((record) => record.id) } },
-      data: { status: "DISMISSED", dismissedAt: new Date() },
+      data: { status: "DISMISSED", dismissedAt: null },
     });
     const linkedIds = new Set(users.filter((user: { dataSource: string }) => user.dataSource === "ARBOR").map((user: { externalId: string }) => user.externalId));
     const ignored = await db.staffProvisioningRequest.findMany({
