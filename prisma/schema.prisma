@@ -810,6 +810,8 @@ model StaffProvisioningRequest {
 
   @@unique([integrationId, arborStaffId])
   @@index([integrationId, status, createdAt])
+  arborCreatedAt DateTime?
+
 }
 
 /// Audit trail for a run from a platform-managed integration. Kept separate from

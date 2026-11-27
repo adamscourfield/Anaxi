@@ -75,7 +75,23 @@ export const POST = withApi(async function POST(req: Request) {
       data: candidates.map((record) => ({ integrationId: integration.id, arborStaffId: record.id, fullName: arborStaffFullName(record), email: staffEmail(record), isTeachingStaff: record.isActiveTeachingInSchool })),
       skipDuplicates: true,
     }) : { count: 0 };
-    if (scheduled) return NextResponse.json({ queued: queued.count, linkedExisting });
+    let createdDateField: string | null = null;
+    let creationDatesUpdated = 0;
+    let staffDateFields: string[] = [];
+    try {
+      const creation = await new ArborClient(decryptCredentials<ArborCredentials>(integration.credentialsCiphertext)).getStaffCreationDates();
+      createdDateField = creation.field;
+      staffDateFields = creation.availableFields.filter((field) => /creat|date/i.test(field));
+      for (const [arborStaffId, arborCreatedAt] of creation.dates) {
+        const result = await db.staffProvisioningRequest.updateMany({
+          where: { integrationId: integration.id, arborStaffId, status: "PENDING" }, data: { arborCreatedAt },
+        });
+        creationDatesUpdated += result.count;
+      }
+    } catch {
+      // Some Arbor grants omit creation metadata; retain any previously confirmed source date.
+    }
+    if (scheduled) return NextResponse.json({ queued: queued.count, linkedExisting, createdDateField, creationDatesUpdated, staffDateFields });
     const url = new URL("/god/integrations/arbor", req.url);
     url.searchParams.set("staffProvisioning", "success");
     url.searchParams.set("staffProvisioningQueued", String(queued.count));

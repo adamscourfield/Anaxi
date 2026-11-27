@@ -924,6 +924,28 @@ export class ArborClient {
     return { bytes, mimeType };
   }
 
+  /** Discover the source timestamp separately so optional metadata cannot break people sync. */
+  async getStaffCreationDates(): Promise<{ field: string | null; dates: Map<string, Date>; availableFields: string[] }> {
+    const schema = await runArborGraphqlQuery<{
+      __type: { fields: Array<{ name: string }> } | null;
+    }>(this.credentials, '{ __type(name: "Staff") { fields { name } } }');
+    const availableFields = (schema.__type?.fields ?? []).map((item) => item.name);
+    const field = schema.__type?.fields.find((item) => /^(?:_?created(?:datetime|date|at|on|timestamp)|creation(?:date|datetime))$/i.test(item.name))?.name ?? null;
+    const dates = new Map<string, Date>();
+    if (!field) return { field, dates, availableFields };
+    for (let page = 0; page < 200; page++) {
+      const data = await runArborGraphqlQuery<{ Staff: Array<Record<string, string | null>> }>(this.credentials,
+        `{ Staff(page_size: 500, page_num: ${page}) { id ${field} } }`);
+      for (const record of data.Staff) {
+        const value = record[field];
+        const date = value && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value) : null;
+        if (record.id && date && !Number.isNaN(date.getTime())) dates.set(record.id, date);
+      }
+      if (data.Staff.length < 500) return { field, dates, availableFields };
+    }
+    throw new Error("Staff creation-date pagination exceeded its safe limit.");
+  }
+
   async listStaff(pageSize = 500, pageNum = 0): Promise<ArborStaffRecord[]> {
     const query = `{
       Staff(page_size: ${pageSize}, page_num: ${pageNum}) {
